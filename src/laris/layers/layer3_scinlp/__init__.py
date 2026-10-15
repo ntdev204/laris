@@ -5,6 +5,7 @@ extraction (claims, methods, datasets, metrics, results, limitations, assumption
 anchored to immutable physical evidence coordinates.
 """
 
+from laris.layers.layer3_scinlp.extractor import ScientificDiscourseExtractor
 from laris.layers.layer3_scinlp.schemas import (
     DEFAULT_CONFIDENCE_THRESHOLD,
     MIN_EXTRACTION_CONFIDENCE,
@@ -33,6 +34,7 @@ __all__ = [
     "FormulaRecord",
     "DiscourseExtractionSet",
     "DiscourseExtractorContract",
+    "ScientificDiscourseExtractor",
     "MIN_EXTRACTION_CONFIDENCE",
     "DEFAULT_CONFIDENCE_THRESHOLD",
 ]
