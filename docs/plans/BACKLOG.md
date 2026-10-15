@@ -130,8 +130,9 @@ This document serves as the single source of truth for active task tracking, exe
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | `M5-EVID-001` | Versioned Evidence Graph Construction | `MOD-GRAPH-001` | `IN_PROGRESS` | `M4-SCINLP-003` |
-| `M5-EVID-001-SUB-01` | Define versioned evidence graph nodes, edges and persistence interface | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-EVID-001` |
-| `M5-EVID-001-SUB-02` | Add graph persistence, migration and edge provenance tests | `MOD-GRAPH-001` | `READY` | `M5-EVID-001-SUB-01` |
+| `M5-EVID-001-SUB-01` | Define versioned evidence graph nodes, edges and persistence interface | `MOD-GRAPH-001` | `DONE` | `M5-EVID-001` |
+| `M5-EVID-001-SUB-02` | Add graph persistence, migration and edge provenance tests | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-EVID-001-SUB-01` |
+
 
 | `M5-RETR-001` | Hybrid Lexical-Dense Retrieval Engine | `MOD-GRAPH-001` | `READY` | `M5-EVID-001` |
 | `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |

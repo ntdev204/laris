@@ -1,5 +1,12 @@
 """Layer 5: Research Knowledge & Evidence Graph (MOD-GRAPH-001)."""
 
+from laris.layers.layer5_graph.benchmark import (
+    ConflationBenchmarkResult,
+    GraphBenchmarkReport,
+    GraphProvenanceBenchmark,
+    PersistenceLatencyResult,
+    ProvenancePreservationResult,
+)
 from laris.layers.layer5_graph.interfaces import (
     BaseGraphPersistenceAdapter,
     GraphSchemaMigrationRegistry,
@@ -23,6 +30,7 @@ from laris.layers.layer5_graph.schemas import (
     NodeType,
     ResultNode,
 )
+from laris.layers.layer5_graph.sqlite_adapter import SQLiteGraphPersistenceAdapter
 
 __all__ = [
     "NodeType",
@@ -44,4 +52,10 @@ __all__ = [
     "BaseGraphPersistenceAdapter",
     "GraphSchemaMigrationRegistry",
     "InMemoryGraphPersistenceAdapter",
+    "SQLiteGraphPersistenceAdapter",
+    "GraphProvenanceBenchmark",
+    "GraphBenchmarkReport",
+    "ProvenancePreservationResult",
+    "ConflationBenchmarkResult",
+    "PersistenceLatencyResult",
 ]
