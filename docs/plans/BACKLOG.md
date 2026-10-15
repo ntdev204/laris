@@ -68,8 +68,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M1-DATA-004-SUB-01` | Implement grouped deterministic split assignment | `MOD-CORPUS-001` | `DONE` | `M1-DATA-004` |
 | `M1-DATA-004-SUB-02` | Add split manifest integrity and leakage tests | `MOD-CORPUS-001` | `DONE` | `M1-DATA-004-SUB-01` |
 | `M1-DATA-005` | Ingestion Verification & Synthetic Test Fixtures | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-004` |
-| `M1-DATA-005-SUB-01` | Implement synthetic corpus fixtures & pipeline integration | `MOD-CORPUS-001` | `IN_REVIEW` | `M1-DATA-005` |
-| `M1-DATA-005-SUB-02` | Implement processed directory structure & exit gates | `MOD-CORPUS-001` | `READY` | `M1-DATA-005-SUB-01` |
+| `M1-DATA-005-SUB-01` | Implement synthetic corpus fixtures & pipeline integration | `MOD-CORPUS-001` | `DONE` | `M1-DATA-005` |
+| `M1-DATA-005-SUB-02` | Implement processed directory structure & exit gates | `MOD-CORPUS-001` | `IN_REVIEW` | `M1-DATA-005-SUB-01` |
 
 ---
 
