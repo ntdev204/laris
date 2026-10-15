@@ -50,3 +50,18 @@ class DuplicateCorpusError(LarisError):
 class DataLeakageError(LarisError):
     """Raised when an entity or author overlaps between training and evaluation splits."""
     pass
+
+
+class SequenceLengthExceededError(LarisError):
+    """Raised when an input sequence length exceeds the maximum sequence capacity."""
+    pass
+
+
+class VocabularyMismatchError(LarisError):
+    """Raised when token IDs or vocabulary mappings conflict with vocabulary contracts."""
+    pass
+
+
+class EmbeddingDimensionMismatchError(LarisError):
+    """Raised when an output embedding dimension does not match the configured model dimension."""
+    pass
