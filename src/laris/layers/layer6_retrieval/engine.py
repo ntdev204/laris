@@ -17,6 +17,7 @@ from laris.layers.layer6_retrieval.interfaces import (
     BaseFusionCombiner,
     BaseRetrievalAdapter,
 )
+from laris.layers.layer6_retrieval.provenance import EvidenceCoordinateValidator
 from laris.layers.layer6_retrieval.schemas import (
     RetrievalCandidate,
     RetrievalChannel,
@@ -31,12 +32,15 @@ class HybridRetrievalEngine:
         self,
         adapters: Optional[Dict[RetrievalChannel, BaseRetrievalAdapter]] = None,
         fusion_combiner: Optional[BaseFusionCombiner] = None,
+        coordinate_validator: Optional[EvidenceCoordinateValidator] = None,
     ) -> None:
         self._adapters: Dict[RetrievalChannel, BaseRetrievalAdapter] = {}
         if adapters:
             for ch, adapter in adapters.items():
                 self.register_adapter(adapter)
         self.fusion_combiner: BaseFusionCombiner = fusion_combiner or ReciprocalRankFusion()
+        self.coordinate_validator: Optional[EvidenceCoordinateValidator] = coordinate_validator
+
 
     @property
     def registered_channels(self) -> List[RetrievalChannel]:
@@ -83,12 +87,16 @@ class HybridRetrievalEngine:
         query: RetrievalQuery,
         channels: Optional[List[RetrievalChannel]] = None,
         fallback_on_channel_failure: bool = False,
+        require_coordinates: bool = False,
     ) -> List[RetrievalCandidate]:
         """Executes multi-channel retrieval and combines results via rank fusion.
 
         If fallback_on_channel_failure is True, errors from individual channels
         (such as a missing dense encoder) are gracefully bypassed in favor of
         surviving channels.
+
+        If require_coordinates or query.require_coordinates is True, candidate
+        coordinates are audited and missing/invalid provenance fails closed.
         """
         active_channels = channels or list(self._adapters.keys())
         if not active_channels:
@@ -106,5 +114,16 @@ class HybridRetrievalEngine:
         if not channel_results:
             return []
 
-        return self.fusion_combiner.combine(channel_results, top_k=query.top_k)
+        fused = self.fusion_combiner.combine(channel_results, top_k=query.top_k)
+
+        if require_coordinates or query.require_coordinates:
+            validator = self.coordinate_validator or EvidenceCoordinateValidator()
+            return validator.validate_candidates(
+                fused,
+                require_coordinates=True,
+                fail_closed=True,
+            )
+
+        return fused
+
 
