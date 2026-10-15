@@ -3,6 +3,10 @@
 Adheres to DOC-SPEC-MOD-001 (Boundary G), ADR-001, and ADR-004.
 """
 
+from laris.layers.layer7_reasoning.adversarial_engine import (
+    AdversarialCounterEvidenceEngine,
+    ValidationPlanGenerator,
+)
 from laris.layers.layer7_reasoning.benchmark import (
     ConflictBenchmarkReport,
     ConflictEvaluationBenchmark,
@@ -18,7 +22,9 @@ from laris.layers.layer7_reasoning.gap_evaluation import (
 from laris.layers.layer7_reasoning.gap_scorer import CalibratedGapScoringEngine
 from laris.layers.layer7_reasoning.matrix_engine import ComparativeMatrixEngine
 from laris.layers.layer7_reasoning.schemas import (
+    AdversarialRefutationResult,
     CalibratedGapScores,
+    CandidateGapStatus,
     CaveatSeverity,
     ComparabilityCaveat,
     ComparativeCell,
@@ -26,6 +32,7 @@ from laris.layers.layer7_reasoning.schemas import (
     ConflictRecord,
     ConflictType,
     CorpusScope,
+    CounterEvidenceItem,
     GapClass,
     MetricDirection,
     ResearchGap,
@@ -57,4 +64,9 @@ __all__ = [
     "GapTypologyGoldCase",
     "GapEvaluationReport",
     "GapTypologyEvaluationSuite",
+    "CandidateGapStatus",
+    "CounterEvidenceItem",
+    "AdversarialRefutationResult",
+    "AdversarialCounterEvidenceEngine",
+    "ValidationPlanGenerator",
 ]

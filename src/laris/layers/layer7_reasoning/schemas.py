@@ -310,3 +310,70 @@ class ResearchGap:
                     f"'{self.corpus_scope.scope_id}' is bounded."
                 )
 
+
+class CandidateGapStatus(str, Enum):
+    """Lifecycle verification status of a candidate research gap under adversarial search."""
+
+    CONFIRMED_GAP = "CONFIRMED_GAP"
+    REFUTED = "REFUTED"
+    PREVIOUSLY_ADDRESSED = "PREVIOUSLY_ADDRESSED"
+    UNRESOLVED_DISPUTE = "UNRESOLVED_DISPUTE"
+
+
+@dataclass(frozen=True)
+class CounterEvidenceItem:
+    """Documented counter-evidence record challenging a candidate research gap."""
+
+    coordinate: EvidenceCoordinate
+    refutation_snippet: str
+    refutation_confidence: float
+    refuting_method_or_solution: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if not self.refutation_snippet or not self.refutation_snippet.strip():
+            raise ModuleContractViolationError(
+                "CounterEvidenceItem refutation_snippet must not be empty."
+            )
+        if math.isnan(self.refutation_confidence) or math.isinf(self.refutation_confidence):
+            raise ModuleContractViolationError(
+                "CounterEvidenceItem refutation_confidence must be a finite float."
+            )
+        if not (0.0 <= self.refutation_confidence <= 1.0):
+            raise ModuleContractViolationError(
+                f"CounterEvidenceItem refutation_confidence ({self.refutation_confidence}) "
+                "must be within [0.0, 1.0]."
+            )
+
+
+@dataclass(frozen=True)
+class AdversarialRefutationResult:
+    """Outcome of adversarial counter-evidence query execution and refutation analysis."""
+
+    gap_id: str
+    status: CandidateGapStatus
+    generated_counter_queries: List[str]
+    counter_evidence: List[CounterEvidenceItem] = field(default_factory=list)
+    refutation_rationale: str = ""
+    updated_uncertainty: float = 0.0
+    is_refuted: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.gap_id or not self.gap_id.strip():
+            raise ModuleContractViolationError(
+                "AdversarialRefutationResult gap_id must not be empty."
+            )
+        if not self.refutation_rationale or not self.refutation_rationale.strip():
+            raise ModuleContractViolationError(
+                "AdversarialRefutationResult refutation_rationale must not be empty."
+            )
+        if math.isnan(self.updated_uncertainty) or math.isinf(self.updated_uncertainty):
+            raise ModuleContractViolationError(
+                "AdversarialRefutationResult updated_uncertainty must be a finite float."
+            )
+        if not (0.0 <= self.updated_uncertainty <= 1.0):
+            raise ModuleContractViolationError(
+                f"AdversarialRefutationResult updated_uncertainty ({self.updated_uncertainty}) "
+                "must be within [0.0, 1.0]."
+            )
+
+
