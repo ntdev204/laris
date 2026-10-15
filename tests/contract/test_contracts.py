@@ -1,7 +1,8 @@
 """Contract verification tests for LARIS module boundaries."""
 
 import unittest
-from laris.core.schemas import EpistemicStatus, ScientificClaim, EvidenceCoordinate
+
+from laris.core.schemas import EpistemicStatus, EvidenceCoordinate, ScientificClaim
 
 
 class TestModuleContracts(unittest.TestCase):

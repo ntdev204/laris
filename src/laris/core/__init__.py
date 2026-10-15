@@ -1,22 +1,22 @@
 """Core primitives, schemas, and error hierarchies for LARIS."""
 
-from laris.core.schemas import (
-    EpistemicStatus,
-    EvidenceCoordinate,
-    ScientificClaim,
-    ResearchGapClass,
-    CalibratedScores,
-    ValidationPlan,
-    ResearchGap,
-    TelemetrySnapshot,
-)
 from laris.core.errors import (
-    LarisError,
-    ProvenanceViolationError,
+    CyclicExecutionError,
     EpistemicOverreachError,
     HardwareBudgetExceededError,
+    LarisError,
     ModuleContractViolationError,
-    CyclicExecutionError,
+    ProvenanceViolationError,
+)
+from laris.core.schemas import (
+    CalibratedScores,
+    EpistemicStatus,
+    EvidenceCoordinate,
+    ResearchGap,
+    ResearchGapClass,
+    ScientificClaim,
+    TelemetrySnapshot,
+    ValidationPlan,
 )
 
 __all__ = [

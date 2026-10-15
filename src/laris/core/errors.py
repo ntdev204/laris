@@ -11,7 +11,9 @@ class ProvenanceViolationError(LarisError):
 
 
 class EpistemicOverreachError(LarisError):
-    """Raised when a correlational finding is described as causal, or absence of evidence is claimed as negation."""
+    """Raised when a correlational finding is described as causal,
+    or absence of evidence is claimed as negation.
+    """
     pass
 
 
