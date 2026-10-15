@@ -5,7 +5,7 @@ document_type: "plan"
 status: "DRAFT"
 version: "0.1.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-15"
+updated_at: "2026-10-16"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -15,7 +15,7 @@ related_documents:
 decision_references:
   - "ADR-007"
   - "ADR-008"
-change_summary: "Detailed matrix of milestones M0-M10, artifacts, dependencies, and gating criteria."
+change_summary: "Detailed matrix of milestones M0-M10, artifacts, dependencies, and gating criteria. M6 exit gate satisfied."
 ---
 
 # LARIS Milestone Specifications & Exit Criteria Matrix
