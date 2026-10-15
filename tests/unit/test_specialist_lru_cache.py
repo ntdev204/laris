@@ -409,6 +409,11 @@ class TestSpecialistLRUCache:
         # Offloading already offloaded model is a safe no-op
         assert cache_fixture.offload_specialist("MODEL-A").state == StagingState.WARM_PARKED
 
+        # Offloading a cold SSD model is a safe no-op
+        cold_desc = SpecialistWeightDescriptor("COLD-MODEL", 100_000, 100_000)
+        cache_fixture.register_specialist(cold_desc)
+        assert cache_fixture.offload_specialist("COLD-MODEL").tier == StorageTier.TIER3_COLD_SSD
+
         # Stage again then manual evict
         cache_fixture.request_specialist("MODEL-A")
         evicted = cache_fixture.evict_lru()
