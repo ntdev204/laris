@@ -50,14 +50,16 @@ HEDGE_TERMS = {
 COMPUTATIONAL_PATTERNS = re.compile(
     r"\b(computational cost|computational overhead|memory bottleneck|gpu memory|"
     r"scalability is limited|does not scale to|prohibitive (?:training|inference|latency)|"
-    r"high time complexity|expensive to train|memory footprint|resource constraints)\b",
+    r"high time complexity|expensive to train|memory footprint|resource constraints|"
+    r"scales quadratically|quadratic complexity|latency overhead)\b",
     re.IGNORECASE,
 )
 
 DATA_SPARSITY_PATTERNS = re.compile(
     r"\b(small dataset|data scarcity|limited training data|scarcity of annotations|"
     r"imbalanced (?:sample|classes|dataset)|restricted to english|few-shot limitations|"
-    r"lack of labeled data|unannotated corpora|sample size is small)\b",
+    r"lack of labeled data|unannotated corpora|sample size is small|insufficient data|"
+    r"limited number of samples|small cohort size)\b",
     re.IGNORECASE,
 )
 
@@ -85,7 +87,9 @@ METHODOLOGICAL_PATTERNS = re.compile(
 GENERAL_LIMITATION_MARKERS = re.compile(
     r"\b(a limitation of|our approach is limited|one drawback is|"
     r"main disadvantage|key limitation|fails when|weakness of our|"
-    r"cannot handle|restricted applicability|caveat of our)\b",
+    r"cannot handle|restricted applicability|caveat of our|"
+    r"potential caveat|inherent limitation|remains challenging for our approach|"
+    r"our model struggles with|open limitation|notable limitation)\b",
     re.IGNORECASE,
 )
 
@@ -93,7 +97,8 @@ NEGATIVE_FINDING_PATTERNS = re.compile(
     r"\b(no statistically significant improvement|fails to outperform|"
     r"did not observe any gain|no observable benefit|null hypothesis could not be rejected|"
     r"yielded comparable or inferior results|performance degraded|"
-    r"did not lead to improvements|failed to reproduce|no advantage over)\b",
+    r"did not lead to improvements|failed to reproduce|no advantage over|"
+    r"no significant difference|did not reach statistical significance)\b",
     re.IGNORECASE,
 )
 
@@ -102,6 +107,59 @@ ASSUMPTION_PATTERNS = re.compile(
     r"assuming that|is assumed to be|we make the assumption that|"
     r"supposing that|held constant|under the premise that|"
     r"assumes independent and identically distributed|assuming i\.?i\.?d\.?)\b",
+    re.IGNORECASE,
+)
+
+# False-Positive Filter Patterns
+FALSE_POSITIVE_LIMITATION_PATTERNS = re.compile(
+    r"(?:"
+    # Prior work attribution: "prior work suffers from", "existing methods have limitations", etc.
+    r"\b(?:prior|previous|existing|earlier|past|traditional|conventional)\s+"
+    r"(?:works?|studies|methods?|approaches?|models?|architectures?|literature|baselines?)\s+"
+    r"(?:suffer|suffered|have|had|exhibit|exhibited|are|were|demonstrate|demonstrated|"
+    r"failed|struggled|was|were limited)\b|"
+    r"\bunlike\s+(?:prior|previous|existing|earlier)\s+(?:works?|studies|methods?|approaches?)\b|"
+    # Absolute denials / claims of no limitation: "operates without limitation", "never fails"
+    r"\b(?:operates?|functions?|works?|performs?)\s+without\s+(?:any\s+)?(?:limitations?|drawbacks?|bottlenecks?|weaknesses?)\b|"
+    r"\b(?:has|have|presents?|shows?)\s+no\s+(?:known\s+)?(?:limitations?|drawbacks?|weaknesses?)\b|"
+    r"\bnever\s+fails\b|"
+    r"\bfree\s+of\s+(?:any\s+)?(?:limitations?|drawbacks?|bottlenecks?)\b|"
+    # Corporate suffixes & legal boilerplate
+    r"\b(?:ltd\.?|llc|inc\.?|corp\.?|corporation|gmbh|s\.?a\.?|pty\s+ltd)\b|"
+    r"\b(?:limited\s+liability\s+company|limited\s+partnership)\b|"
+    r"\b(?:assume|assumes|assuming)\s+no\s+(?:responsibility|liability)\b|"
+    r"\bdisclaim(?:s|ed|ing)?\s+all\s+(?:warranties|liability)\b"
+    r")",
+    re.IGNORECASE,
+)
+
+FALSE_POSITIVE_ASSUMPTION_PATTERNS = re.compile(
+    r"(?:"
+    # Non-scientific disclaimers / corporate
+    r"\b(?:assume|assumes|assuming)\s+no\s+(?:responsibility|liability)\b|"
+    r"\bdisclaim(?:s|ed|ing)?\b|"
+    # Denials of assumptions / skepticism
+    r"\b(?:do|does|did)\s+not\s+assume\s+that\b|"
+    r"\bshould\s+not\s+be\s+assumed\s+that\b|"
+    r"\bno\s+reason\s+to\s+assume\s+that\b|"
+    r"\bwe\s+make\s+no\s+assumption\b|"
+    # Prior work assumptions
+    r"\b(?:prior|previous|earlier|traditional)\s+(?:works?|studies|methods?|approaches?|models?)\s+assumed\s+that\b|"
+    # Conversational / didactic reader assumptions
+    r"\b(?:assume|assuming)\s+(?:that\s+)?(?:the\s+)?reader\s+is\s+familiar\b"
+    r")",
+    re.IGNORECASE,
+)
+
+FALSE_POSITIVE_NEGATIVE_FINDING_PATTERNS = re.compile(
+    r"(?:"
+    # Asserting no degradation (positive result)
+    r"\b(?:did\s+not|does\s+not|do\s+not)\s+observe\s+any\s+(?:degradation|drop|deterioration)\b|"
+    # Prior work negative findings
+    r"\b(?:prior|previous|earlier)\s+(?:works?|studies|methods?|approaches?)\s+failed\s+to\s+outperform\b|"
+    # Contrary to claims of no improvement
+    r"\bcontrary\s+to\s+(?:earlier|prior)\s+(?:claims?|findings?)\b"
+    r")",
     re.IGNORECASE,
 )
 
@@ -293,7 +351,9 @@ class HeadingIndependentLimitationDetector:
             uncertainty = compute_uncertainty_score(sent)
 
             # 1. Negative / Null Findings
-            if NEGATIVE_FINDING_PATTERNS.search(sent):
+            if NEGATIVE_FINDING_PATTERNS.search(
+                sent
+            ) and not self.is_false_positive_negative_finding(sent):
                 confidence = 0.88
                 if confidence >= self.confidence_threshold:
                     coord = self._create_coordinate(
@@ -332,7 +392,7 @@ class HeadingIndependentLimitationDetector:
                     )
 
             # 3. Model Assumptions
-            if ASSUMPTION_PATTERNS.search(sent):
+            if ASSUMPTION_PATTERNS.search(sent) and not self.is_false_positive_assumption(sent):
                 confidence = 0.86
                 if confidence >= self.confidence_threshold:
                     coord = self._create_coordinate(
@@ -378,8 +438,22 @@ class HeadingIndependentLimitationDetector:
             category_counts=cat_counts,
         )
 
+    def is_false_positive_limitation(self, sentence: str) -> bool:
+        """Check if candidate sentence matches false-positive limitation distractors."""
+        return bool(FALSE_POSITIVE_LIMITATION_PATTERNS.search(sentence))
+
+    def is_false_positive_assumption(self, sentence: str) -> bool:
+        """Check if candidate sentence matches false-positive assumption distractors."""
+        return bool(FALSE_POSITIVE_ASSUMPTION_PATTERNS.search(sentence))
+
+    def is_false_positive_negative_finding(self, sentence: str) -> bool:
+        """Check if candidate sentence matches false-positive negative finding distractors."""
+        return bool(FALSE_POSITIVE_NEGATIVE_FINDING_PATTERNS.search(sentence))
+
     def _classify_limitation(self, sentence: str) -> LimitationCategory | None:
         """Classify limitation category or return None if sentence is not a limitation."""
+        if self.is_false_positive_limitation(sentence):
+            return None
         if COMPUTATIONAL_PATTERNS.search(sentence):
             return LimitationCategory.COMPUTATIONAL_RESOURCE
         if DATA_SPARSITY_PATTERNS.search(sentence):

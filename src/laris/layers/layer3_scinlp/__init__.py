@@ -5,6 +5,13 @@ extraction (claims, methods, datasets, metrics, results, limitations, assumption
 anchored to immutable physical evidence coordinates.
 """
 
+from laris.layers.layer3_scinlp.benchmark import (
+    StrippedHeadingBenchmark,
+    StrippedHeadingBenchmarkMetrics,
+    StrippedHeadingBenchmarkReport,
+    StrippedHeadingBenchmarkSample,
+    get_default_synthetic_benchmark_corpus,
+)
 from laris.layers.layer3_scinlp.extractor import ScientificDiscourseExtractor
 from laris.layers.layer3_scinlp.limitations import (
     HeadingIndependentLimitationDetector,
@@ -49,6 +56,11 @@ __all__ = [
     "LimitationDetectionResult",
     "compute_uncertainty_score",
     "strip_headings",
+    "StrippedHeadingBenchmark",
+    "StrippedHeadingBenchmarkMetrics",
+    "StrippedHeadingBenchmarkReport",
+    "StrippedHeadingBenchmarkSample",
+    "get_default_synthetic_benchmark_corpus",
     "MIN_EXTRACTION_CONFIDENCE",
     "DEFAULT_CONFIDENCE_THRESHOLD",
 ]
