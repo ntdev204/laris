@@ -174,8 +174,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `DONE` | `M7-ORCH-003-SUB-01` |
 
 
-| `M8-EXEC-001` | Hardware Telemetry & Headroom Budgeting Engine | `MOD-EXEC-001` | `READY` | `M7-ORCH-003` |
-| `M8-EXEC-001-SUB-01` | Implement hardware telemetry and headroom budgeting engine | `MOD-EXEC-001` | `TODO` | `M8-EXEC-001` |
+| `M8-EXEC-001` | Hardware Telemetry & Headroom Budgeting Engine | `MOD-EXEC-001` | `IN_PROGRESS` | `M7-ORCH-003` |
+| `M8-EXEC-001-SUB-01` | Implement hardware telemetry and headroom budgeting engine | `MOD-EXEC-001` | `IN_REVIEW` | `M8-EXEC-001` |
 | `M8-EXEC-001-SUB-02` | Add hardware telemetry integration and allocation tests | `MOD-EXEC-001` | `BLOCKED` | `M8-EXEC-001-SUB-01` |
 
 
