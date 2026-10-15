@@ -19,8 +19,11 @@ from laris.layers.layer0_corpus.partition import (
     PARTITION_ALGORITHM,
     PARTITION_SPEC_VERSION,
     DatasetPartitionEngine,
+    LargeGroupPolicy,
     MissingAuthorPolicy,
+    SplitManifest,
     SplitRatios,
+    compute_split_fingerprint,
     verify_split_leakage,
 )
 from laris.layers.layer0_corpus.schemas import (
@@ -60,6 +63,9 @@ __all__ = [
     "DatasetPartitionEngine",
     "SplitRatios",
     "MissingAuthorPolicy",
+    "LargeGroupPolicy",
+    "SplitManifest",
+    "compute_split_fingerprint",
     "verify_split_leakage",
     "DEFAULT_PARTITION_SEED",
     "PARTITION_ALGORITHM",
