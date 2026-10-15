@@ -169,9 +169,24 @@ This document serves as the single source of truth for active task tracking, exe
 | `M7-ORCH-002-SUB-02` | Add agent schema validation and verifier adversarial tests | `MOD-ORCH-002` | `DONE` | `M7-ORCH-002-SUB-01` |
 
 
-| `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `IN_PROGRESS` | `M7-ORCH-002` |
+| `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `DONE` | `M7-ORCH-002` |
 | `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `DONE` | `M7-ORCH-003` |
-| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `IN_REVIEW` | `M7-ORCH-003-SUB-01` |
+| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `DONE` | `M7-ORCH-003-SUB-01` |
+
+
+| `M8-EXEC-001` | Hardware Telemetry & Headroom Budgeting Engine | `MOD-EXEC-001` | `READY` | `M7-ORCH-003` |
+| `M8-EXEC-001-SUB-01` | Implement hardware telemetry and headroom budgeting engine | `MOD-EXEC-001` | `TODO` | `M8-EXEC-001` |
+| `M8-EXEC-001-SUB-02` | Add hardware telemetry integration and allocation tests | `MOD-EXEC-001` | `BLOCKED` | `M8-EXEC-001-SUB-01` |
+
+
+| `M8-EXEC-002` | Selective Weight Offloading & Activation Swapping | `MOD-EXEC-002` | `BLOCKED` | `M8-EXEC-001` |
+| `M8-EXEC-002-SUB-01` | Implement selective weight offloading and activation swapping | `MOD-EXEC-002` | `BLOCKED` | `M8-EXEC-002` |
+| `M8-EXEC-002-SUB-02` | Add offloading latency and activation swapping benchmarks | `MOD-EXEC-002` | `BLOCKED` | `M8-EXEC-002-SUB-01` |
+
+
+| `M8-EXEC-003` | Adaptive Task Routing & Degradation Fallbacks | `MOD-EXEC-003` | `BLOCKED` | `M8-EXEC-002` |
+| `M8-EXEC-003-SUB-01` | Implement adaptive task routing and degradation fallbacks | `MOD-EXEC-003` | `BLOCKED` | `M8-EXEC-003` |
+| `M8-EXEC-003-SUB-02` | Add route selection accuracy and graceful degradation tests | `MOD-EXEC-003` | `BLOCKED` | `M8-EXEC-003-SUB-01` |
 
 ---
 
@@ -469,6 +484,49 @@ This document serves as the single source of truth for active task tracking, exe
   1. Cycle detector catches repeating agent sequences and terminates execution with `CycleDetectedError`.
   2. Hard recursion ceiling enforces $N \le 10$ steps maximum per sub-goal.
   3. Budget governors track token and step usage, preemptively aborting runaway agent execution.
+
+---
+
+## Detailed Task Specifications for Milestone M8
+
+### Task `M8-EXEC-001`: Hardware Telemetry & Headroom Budgeting Engine
+- **Objective:** Implement real-time GPU/CPU memory and compute headroom monitoring for the RTX 5070 Ti (16 GB total, $\le 14.5$ GB allocation limit).
+- **Module:** `MOD-EXEC-001` (Boundary I / Layer 9).
+- **Dependencies:** Milestone M7 Exit Gate (`M7-ORCH-003`).
+- **Subtasks:**
+  - `M8-EXEC-001-SUB-01`: Implement hardware telemetry and headroom budgeting engine.
+  - `M8-EXEC-001-SUB-02`: Add hardware telemetry integration and allocation tests.
+- **Acceptance Criteria:**
+  1. Telemetry engine samples VRAM and system memory with sub-millisecond overhead.
+  2. Headroom governor raises `HardwareBudgetExceededError` if projected allocation exceeds 14.5 GB VRAM ceiling.
+  3. Memory reservations dynamically adjust based on active batch size and context window length.
+
+---
+
+### Task `M8-EXEC-002`: Selective Weight Offloading & Activation Swapping
+- **Objective:** Implement selective layer/weight offloading between GPU VRAM and host RAM to fit multi-model ensembles within 16 GB hardware budget.
+- **Module:** `MOD-EXEC-002` (Boundary I / Layer 9).
+- **Dependencies:** `M8-EXEC-001`.
+- **Subtasks:**
+  - `M8-EXEC-002-SUB-01`: Implement selective weight offloading and activation swapping.
+  - `M8-EXEC-002-SUB-02`: Add offloading latency and activation swapping benchmarks.
+- **Acceptance Criteria:**
+  1. Inactive model weights offloaded asynchronously to host RAM without blocking active stream.
+  2. Activation checkpointing swaps intermediate activations when VRAM headroom drops below 1.5 GB safety threshold.
+
+---
+
+### Task `M8-EXEC-003`: Adaptive Task Routing & Degradation Fallbacks
+- **Objective:** Implement dynamic model and specialist routing with graceful quality degradation when memory or latency ceilings are reached.
+- **Module:** `MOD-EXEC-003` (Boundary I / Layer 9).
+- **Dependencies:** `M8-EXEC-002`.
+- **Subtasks:**
+  - `M8-EXEC-003-SUB-01`: Implement adaptive task routing and degradation fallbacks.
+  - `M8-EXEC-003-SUB-02`: Add route selection accuracy and graceful degradation tests.
+- **Acceptance Criteria:**
+  1. Router selects optimal model/heuristic based on prompt complexity and telemetry headroom.
+  2. Graceful degradation cascade falls back from dense neural encoders to BM25/lexical matching on memory pressure.
+
 
 
 
