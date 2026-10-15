@@ -10,6 +10,11 @@ from laris.layers.layer7_reasoning.benchmark import (
 )
 from laris.layers.layer7_reasoning.conflict_detector import ConditionAwareConflictDetector
 from laris.layers.layer7_reasoning.gap_classifier import RuleBasedGapClassifier
+from laris.layers.layer7_reasoning.gap_evaluation import (
+    GapEvaluationReport,
+    GapTypologyEvaluationSuite,
+    GapTypologyGoldCase,
+)
 from laris.layers.layer7_reasoning.gap_scorer import CalibratedGapScoringEngine
 from laris.layers.layer7_reasoning.matrix_engine import ComparativeMatrixEngine
 from laris.layers.layer7_reasoning.schemas import (
@@ -49,4 +54,7 @@ __all__ = [
     "ResearchGap",
     "CalibratedGapScoringEngine",
     "RuleBasedGapClassifier",
+    "GapTypologyGoldCase",
+    "GapEvaluationReport",
+    "GapTypologyEvaluationSuite",
 ]

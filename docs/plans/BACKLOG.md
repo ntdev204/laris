@@ -150,8 +150,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-001` |
-| `M6-GAP-002-SUB-01` | Implement 12-class gap taxonomy and scoring schema | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-002` |
-| `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `READY` | `M6-GAP-002-SUB-01` |
+| `M6-GAP-002-SUB-01` | Implement 12-class gap taxonomy and scoring schema | `MOD-GAP-001` | `DONE` | `M6-GAP-002` |
+| `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-002-SUB-01` |
 
 
 | `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `BLOCKED` | `M6-GAP-002` |
