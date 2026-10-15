@@ -51,7 +51,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M1: Corpus Ingestion & Data Governance (Layer 0)
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -67,9 +67,26 @@ This document serves as the single source of truth for active task tracking, exe
 | `M1-DATA-004` | Leakage-Proof Dataset Partition Engine | `MOD-CORPUS-001` | `DONE` | `M1-DATA-003` |
 | `M1-DATA-004-SUB-01` | Implement grouped deterministic split assignment | `MOD-CORPUS-001` | `DONE` | `M1-DATA-004` |
 | `M1-DATA-004-SUB-02` | Add split manifest integrity and leakage tests | `MOD-CORPUS-001` | `DONE` | `M1-DATA-004-SUB-01` |
-| `M1-DATA-005` | Ingestion Verification & Synthetic Test Fixtures | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-004` |
+| `M1-DATA-005` | Ingestion Verification & Synthetic Test Fixtures | `MOD-CORPUS-001` | `DONE` | `M1-DATA-004` |
 | `M1-DATA-005-SUB-01` | Implement synthetic corpus fixtures & pipeline integration | `MOD-CORPUS-001` | `DONE` | `M1-DATA-005` |
-| `M1-DATA-005-SUB-02` | Implement processed directory structure & exit gates | `MOD-CORPUS-001` | `IN_REVIEW` | `M1-DATA-005-SUB-01` |
+| `M1-DATA-005-SUB-02` | Implement processed directory structure & exit gates | `MOD-CORPUS-001` | `DONE` | `M1-DATA-005-SUB-01` |
+
+---
+
+## Milestone M2: Language Foundation & Core Representations (Layer 1)
+**Status:** `READY`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M2-LANG-001` | Scientific Tokenizer & Vocabulary Pipeline | `MOD-LANG-001` | `READY` | `M1-DATA-005` |
+| `M2-LANG-001-SUB-01` | Define tokenizer training data and vocabulary contracts | `MOD-LANG-001` | `READY` | `M2-LANG-001` |
+| `M2-LANG-001-SUB-02` | Implement tokenizer evaluation and STEM fertility report | `MOD-LANG-001` | `BACKLOG` | `M2-LANG-001-SUB-01` |
+| `M2-LANG-002` | Compact Sentence Encoder & Retrieval Benchmark | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-001` |
+| `M2-LANG-002-SUB-01` | Implement sentence encoder interfaces and retrieval baseline | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-002` |
+| `M2-LANG-002-SUB-02` | Add embedding correctness and BM25 comparison tests | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-002-SUB-01` |
+| `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `BACKLOG` | `M2-LANG-002` |
+| `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `BACKLOG` | `M2-LANG-003` |
+| `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `BACKLOG` | `M2-LANG-003-SUB-01` |
 
 ---
 
@@ -132,3 +149,38 @@ This document serves as the single source of truth for active task tracking, exe
 - **Acceptance Criteria:**
   1. Pipeline executes end-to-end on synthetic fixtures without error.
   2. Generates compliant `data/processed/` directory structure with gitkeep protection.
+
+---
+
+## Detailed Task Specifications for Milestone M2
+
+### Task `M2-LANG-001`: Scientific Tokenizer & Vocabulary Pipeline
+- **Objective:** Train and validate a domain-specific BPE/WordPiece tokenizer tailored for scientific text, preserving mathematical tokens, Greek letters, and SI units.
+- **Module:** `MOD-LANG-001` (Boundary B).
+- **Dependencies:** `M1-DATA-005`.
+- **Acceptance Criteria:**
+  1. Preserves LaTeX math symbols and Greek letters as atomic or consistent subwords without breaking into uninterpretable fragments.
+  2. Measures token fertility on scientific text vs standard general-domain vocabularies (e.g. fertility $\le 1.35$ tokens/word on STEM benchmark).
+  3. Generates immutable vocabulary artifacts with canonical hashes.
+
+---
+
+### Task `M2-LANG-002`: Compact Sentence Encoder & Retrieval Benchmark
+- **Objective:** Provide a lightweight, local scientific embedding model fitting comfortably within the $\le 1.0$ GB VRAM memory envelope for semantic retrieval.
+- **Module:** `MOD-LANG-002` (Boundary B).
+- **Dependencies:** `M2-LANG-001`.
+- **Acceptance Criteria:**
+  1. Runs entirely offline with zero external network calls.
+  2. Peak GPU allocation stays strictly $\le 1.0$ GB VRAM.
+  3. Demonstrates superior retrieval accuracy over exact-match lexical BM25 baseline on scientific query benchmarks.
+
+---
+
+### Task `M2-LANG-003`: Language Foundation Training Reproducibility & Artifacts
+- **Objective:** Ensure end-to-end training and serialization reproducibility for Layer 1 language representations.
+- **Module:** `MOD-LANG-003` (Boundary B).
+- **Dependencies:** `M2-LANG-002`.
+- **Acceptance Criteria:**
+  1. Checkpoint integrity and lineage recorded in machine-readable manifests.
+  2. Deterministic execution produces bitwise identical evaluation scores across runs given the same seed.
+  3. Complies with hardware budget safety constraints ($\le 14.5$ GB VRAM global headroom).
