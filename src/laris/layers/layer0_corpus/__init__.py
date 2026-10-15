@@ -26,6 +26,11 @@ from laris.layers.layer0_corpus.partition import (
     compute_split_fingerprint,
     verify_split_leakage,
 )
+from laris.layers.layer0_corpus.pipeline import (
+    Layer0Pipeline,
+    Layer0PipelineOutput,
+    RawDocumentInput,
+)
 from laris.layers.layer0_corpus.schemas import (
     PERMITTED_OPEN_ACCESS_LICENSES,
     CorpusManifest,
@@ -70,4 +75,7 @@ __all__ = [
     "DEFAULT_PARTITION_SEED",
     "PARTITION_ALGORITHM",
     "PARTITION_SPEC_VERSION",
+    "Layer0Pipeline",
+    "RawDocumentInput",
+    "Layer0PipelineOutput",
 ]
