@@ -7,7 +7,7 @@ Adheres to DOC-SPEC-MOD-001 (Boundary I), ADR-001, ADR-005, and Issue #68:
 - Safe fallback evaluations preventing Out-Of-Memory system crashes
 """
 
-from laris.core.errors import HardwareBudgetExceededError
+from laris.core.errors import HardwareBudgetExceededError, WeightStagingError
 from laris.layers.layer9_adaptive_execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
@@ -24,9 +24,19 @@ from laris.layers.layer9_adaptive_execution.telemetry import (
     PyTorchCudaSampler,
     TelemetrySampler,
 )
+from laris.layers.layer9_adaptive_execution.weight_staging import (
+    MockSpecialistWeightLoader,
+    SpecialistLRUCache,
+    SpecialistWeightDescriptor,
+    SpecialistWeightLoader,
+    StagingState,
+    StorageTier,
+    WeightTransferMetrics,
+)
 
 __all__ = [
     "HardwareBudgetExceededError",
+    "WeightStagingError",
     "HardwareTarget",
     "TelemetryStatus",
     "TelemetrySnapshot",
@@ -37,4 +47,11 @@ __all__ = [
     "PyTorchCudaSampler",
     "HardwareTelemetryEngine",
     "HeadroomBudgetGovernor",
+    "StorageTier",
+    "StagingState",
+    "SpecialistWeightDescriptor",
+    "WeightTransferMetrics",
+    "SpecialistWeightLoader",
+    "MockSpecialistWeightLoader",
+    "SpecialistLRUCache",
 ]

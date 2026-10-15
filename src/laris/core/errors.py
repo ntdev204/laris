@@ -140,5 +140,11 @@ class RetrievalDepthExceededError(RetrievalError, ModuleContractViolationError):
     pass
 
 
+class WeightStagingError(LarisError):
+    """Raised when specialist weight staging, offloading, or cache eviction fails."""
+    pass
+
+
+
 
 
