@@ -74,7 +74,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M2: Language Foundation & Core Representations (Layer 1)
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -84,9 +84,26 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-002` | Compact Sentence Encoder & Retrieval Benchmark | `MOD-LANG-002` | `DONE` | `M2-LANG-001` |
 | `M2-LANG-002-SUB-01` | Implement sentence encoder interfaces and retrieval baseline | `MOD-LANG-002` | `DONE` | `M2-LANG-002` |
 | `M2-LANG-002-SUB-02` | Add embedding correctness and BM25 comparison tests | `MOD-LANG-002` | `DONE` | `M2-LANG-002-SUB-01` |
-| `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `IN_PROGRESS` | `M2-LANG-002` |
+| `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-002` |
 | `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-003` |
-| `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `IN_REVIEW` | `M2-LANG-003-SUB-01` |
+| `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `DONE` | `M2-LANG-003-SUB-01` |
+
+---
+
+## Milestone M3: Semantic Relations & NLI (Layer 2)
+**Status:** `IN_PROGRESS`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M3-SEM-001` | Three-Way Scientific NLI | `MOD-SEM-001` | `IN_PROGRESS` | `M2-LANG-003` |
+| `M3-SEM-001-SUB-01` | Define NLI schemas, validation and error semantics | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-001` |
+| `M3-SEM-001-SUB-02` | Implement NLI inference behavior and boundary tests | `MOD-SEM-001` | `READY` | `M3-SEM-001-SUB-01` |
+| `M3-SEM-002` | Semantic Equivalence, Coreference & Discourse Relations | `MOD-SEM-001` | `TODO` | `M3-SEM-001` |
+| `M3-SEM-002-SUB-01` | Define semantic relation output contracts | `MOD-SEM-001` | `TODO` | `M3-SEM-002` |
+| `M3-SEM-002-SUB-02` | Test semantic relation ambiguity and provenance | `MOD-SEM-001` | `TODO` | `M3-SEM-002-SUB-01` |
+| `M3-SEM-003` | NLI Calibration & Contradiction Evaluation | `MOD-SEM-001` | `TODO` | `M3-SEM-002` |
+| `M3-SEM-003-SUB-01` | Build scientific NLI benchmark and calibration report | `MOD-SEM-001` | `TODO` | `M3-SEM-003` |
+| `M3-SEM-003-SUB-02` | Add benchmark split isolation and failure analysis | `MOD-SEM-001` | `TODO` | `M3-SEM-003-SUB-01` |
 
 ---
 
@@ -184,3 +201,37 @@ This document serves as the single source of truth for active task tracking, exe
   1. Checkpoint integrity and lineage recorded in machine-readable manifests.
   2. Deterministic execution produces bitwise identical evaluation scores across runs given the same seed.
   3. Complies with hardware budget safety constraints ($\le 14.5$ GB VRAM global headroom).
+
+---
+
+## Detailed Task Specifications for Milestone M3
+
+### Task `M3-SEM-001`: Three-Way Scientific NLI
+- **Objective:** Implement 3-way Natural Language Inference (Entailment, Contradiction, Neutral) engine tailored for scientific literature.
+- **Module:** `MOD-SEM-001` (Boundary C).
+- **Dependencies:** `M2-LANG-003`.
+- **Acceptance Criteria:**
+  1. Class probabilities sum to $1.0 \pm 10^{-5}$ and uncertainty lies in $[0.0, 1.0]$.
+  2. Invariant preserved: high topical/lexical similarity cannot override logical contradiction.
+  3. Strict input validation rejecting empty or malformed inputs with canonical error semantics.
+
+---
+
+### Task `M3-SEM-002`: Semantic Equivalence, Coreference & Discourse Relations
+- **Objective:** Resolve scientific coreference and parse inter-sentential discourse relations (e.g. causal, contrast, concessive).
+- **Module:** `MOD-SEM-001` (Boundary C).
+- **Dependencies:** `M3-SEM-001`.
+- **Acceptance Criteria:**
+  1. Coreference chains trace entity mentions to source document coordinates.
+  2. Discourse relations parse with verified provenance and uncertainty calibration.
+
+---
+
+### Task `M3-SEM-003`: NLI Calibration & Contradiction Evaluation
+- **Objective:** Construct versioned scientific NLI benchmarks and evaluate probability calibration (ECE) and contradiction detection.
+- **Module:** `MOD-SEM-001` (Boundary C).
+- **Dependencies:** `M3-SEM-002`.
+- **Acceptance Criteria:**
+  1. Strict train/val/test split isolation with zero entity/author leakage.
+  2. Diagnostic failure analysis and calibration metrics reported reproducible across runs.
+
