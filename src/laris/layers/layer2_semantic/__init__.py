@@ -4,6 +4,16 @@ Provides Natural Language Inference (NLI), semantic equivalence, coreference res
 and discourse parsing conforming to Boundary C (MOD-SEM-001).
 """
 
+from laris.layers.layer2_semantic.discourse import (
+    CAUSAL_CUES,
+    CONCESSIVE_CUES,
+    CONTRAST_CUES,
+    ELABORATION_CUES,
+    TEMPORAL_CUES,
+    DiscourseGraph,
+    DiscourseGraphEdge,
+    ScientificDiscourseParser,
+)
 from laris.layers.layer2_semantic.engine import (
     DIRECT_NEGATIONS,
     SCIENTIFIC_OPPOSITES,
@@ -54,4 +64,12 @@ __all__ = [
     "DiscourseRelationType",
     "DiscourseRelationOutput",
     "CORRELATIONAL_CUES",
+    "CAUSAL_CUES",
+    "CONTRAST_CUES",
+    "CONCESSIVE_CUES",
+    "TEMPORAL_CUES",
+    "ELABORATION_CUES",
+    "DiscourseGraphEdge",
+    "DiscourseGraph",
+    "ScientificDiscourseParser",
 ]
