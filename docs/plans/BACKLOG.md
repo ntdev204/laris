@@ -108,7 +108,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M4: Scientific NLP & Discourse Intelligence (Layer 3)
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -118,9 +118,28 @@ This document serves as the single source of truth for active task tracking, exe
 | `M4-SCINLP-002` | Heading-Aware Section Segmenter & Discourse Hierarchy | `MOD-SCINLP-002` | `DONE` | `M4-SCINLP-001` |
 | `M4-SCINLP-002-SUB-01` | Implement section segmentation and discourse tree structures | `MOD-SCINLP-002` | `DONE` | `M4-SCINLP-002` |
 | `M4-SCINLP-002-SUB-02` | Benchmark section parsing accuracy across document layouts | `MOD-SCINLP-002` | `DONE` | `M4-SCINLP-002-SUB-01` |
-| `M4-SCINLP-003` | STEM Unit & Quantitative Relation Normalizer | `MOD-SCINLP-003` | `IN_PROGRESS` | `M4-SCINLP-002` |
+| `M4-SCINLP-003` | STEM Unit & Quantitative Relation Normalizer | `MOD-SCINLP-003` | `DONE` | `M4-SCINLP-002` |
 | `M4-SCINLP-003-SUB-01` | Implement scientific unit conversion and magnitude scaling | `MOD-SCINLP-003` | `DONE` | `M4-SCINLP-003` |
-| `M4-SCINLP-003-SUB-02` | Add boundary tests for numerical ranges and dimensional analysis | `MOD-SCINLP-003` | `IN_REVIEW` | `M4-SCINLP-003-SUB-01` |
+| `M4-SCINLP-003-SUB-02` | Add boundary tests for numerical ranges and dimensional analysis | `MOD-SCINLP-003` | `DONE` | `M4-SCINLP-003-SUB-01` |
+
+---
+
+## Milestone M5: Hybrid RAG & Evidence Graph (Layer 5 & Layer 6)
+**Status:** `IN_PROGRESS`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M5-EVID-001` | Versioned Evidence Graph Construction | `MOD-GRAPH-001` | `IN_PROGRESS` | `M4-SCINLP-003` |
+| `M5-EVID-001-SUB-01` | Define versioned evidence graph nodes, edges and persistence interface | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-EVID-001` |
+| `M5-EVID-001-SUB-02` | Add graph persistence, migration and edge provenance tests | `MOD-GRAPH-001` | `READY` | `M5-EVID-001-SUB-01` |
+
+| `M5-RETR-001` | Hybrid Lexical-Dense Retrieval Engine | `MOD-GRAPH-001` | `READY` | `M5-EVID-001` |
+| `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |
+| `M5-RETR-001-SUB-02` | Benchmark multi-channel retrieval against single-modality baselines | `MOD-GRAPH-001` | `READY` | `M5-RETR-001-SUB-01` |
+| `M5-PROV-001` | Evidence Coordinate Validation & Provenance Tracking | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |
+| `M5-PROV-001-SUB-01` | Implement end-to-end evidence coordinate mapping & validation | `MOD-GRAPH-001` | `READY` | `M5-PROV-001` |
+| `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `READY` | `M5-PROV-001-SUB-01` |
+
 
 
 ---
@@ -285,4 +304,22 @@ This document serves as the single source of truth for active task tracking, exe
 - **Acceptance Criteria:**
   1. Standardizes SI units and compound dimensional units with zero precision loss.
   2. Parses numerical intervals, uncertainties, and quantitative comparisons.
+
+---
+
+## Detailed Task Specifications for Milestone M5
+
+### Task `M5-EVID-001`: Versioned Evidence Graph Construction
+- **Objective:** Define and implement the persistent, heterogeneous evidence knowledge graph linking documents, authors, methods, datasets, metrics, results, claims, and limitations.
+- **Module:** `MOD-GRAPH-001` (Boundary F).
+- **Dependencies:** `M4-SCINLP-003`.
+- **Subtasks:**
+  - `M5-EVID-001-SUB-01`: Define versioned evidence graph nodes, edges and persistence interface.
+  - `M5-EVID-001-SUB-02`: Add graph persistence, migration and edge provenance tests.
+- **Acceptance Criteria:**
+  1. Author-asserted and machine-inferred edges remain strictly distinct via mandatory `is_inferred` flag and provenance anchoring.
+  2. Abstract persistence interface (`BaseGraphPersistenceAdapter`) decoupled from concrete storage engine.
+  3. Schema migration and version contracts supported with deterministic serialization.
+  4. Embedded architecture with zero external database server dependency.
+
 
