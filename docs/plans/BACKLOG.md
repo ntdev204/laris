@@ -79,8 +79,8 @@ This document serves as the single source of truth for active task tracking, exe
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | `M2-LANG-001` | Scientific Tokenizer & Vocabulary Pipeline | `MOD-LANG-001` | `IN_PROGRESS` | `M1-DATA-005` |
-| `M2-LANG-001-SUB-01` | Define tokenizer training data and vocabulary contracts | `MOD-LANG-001` | `IN_REVIEW` | `M2-LANG-001` |
-| `M2-LANG-001-SUB-02` | Implement tokenizer evaluation and STEM fertility report | `MOD-LANG-001` | `READY` | `M2-LANG-001-SUB-01` |
+| `M2-LANG-001-SUB-01` | Define tokenizer training data and vocabulary contracts | `MOD-LANG-001` | `DONE` | `M2-LANG-001` |
+| `M2-LANG-001-SUB-02` | Implement tokenizer evaluation and STEM fertility report | `MOD-LANG-001` | `IN_REVIEW` | `M2-LANG-001-SUB-01` |
 | `M2-LANG-002` | Compact Sentence Encoder & Retrieval Benchmark | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-001` |
 | `M2-LANG-002-SUB-01` | Implement sentence encoder interfaces and retrieval baseline | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-002` |
 | `M2-LANG-002-SUB-02` | Add embedding correctness and BM25 comparison tests | `MOD-LANG-002` | `BACKLOG` | `M2-LANG-002-SUB-01` |
