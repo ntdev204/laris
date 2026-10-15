@@ -36,6 +36,15 @@ from laris.layers.layer3_scinlp.schemas import (
     NegativeFindingRecord,
     ResultRecord,
 )
+from laris.layers.layer3_scinlp.units import (
+    BaseDimension,
+    DimensionalVector,
+    EpistemicAssertion,
+    EpistemicAssertionType,
+    NormalizedQuantity,
+    STEMUnitNormalizer,
+    UnitSpec,
+)
 
 __all__ = [
     "DiscourseEntityType",
@@ -61,6 +70,13 @@ __all__ = [
     "StrippedHeadingBenchmarkReport",
     "StrippedHeadingBenchmarkSample",
     "get_default_synthetic_benchmark_corpus",
+    "BaseDimension",
+    "DimensionalVector",
+    "UnitSpec",
+    "NormalizedQuantity",
+    "EpistemicAssertionType",
+    "EpistemicAssertion",
+    "STEMUnitNormalizer",
     "MIN_EXTRACTION_CONFIDENCE",
     "DEFAULT_CONFIDENCE_THRESHOLD",
 ]

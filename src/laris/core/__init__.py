@@ -20,6 +20,7 @@ from laris.core.errors import (
     ProvenanceViolationError,
     SequenceLengthExceededError,
     UncertaintyCeilingExceededError,
+    UnitConversionError,
     VocabularyMismatchError,
 )
 from laris.core.schemas import (
@@ -62,5 +63,6 @@ __all__ = [
     "ProbabilityValidationError",
     "ExtractionConfidenceBelowThresholdError",
     "MalformedDiscourseSpanError",
+    "UnitConversionError",
 ]
 
