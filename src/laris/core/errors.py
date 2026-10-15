@@ -65,3 +65,9 @@ class VocabularyMismatchError(LarisError):
 class EmbeddingDimensionMismatchError(LarisError):
     """Raised when an output embedding dimension does not match the configured model dimension."""
     pass
+
+
+class DataIntegrityError(LarisError):
+    """Raised when an artifact cryptographic hash or checksum fails verification."""
+    pass
+

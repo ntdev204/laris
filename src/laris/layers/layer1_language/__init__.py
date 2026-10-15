@@ -1,5 +1,10 @@
 """Layer 1: Language Foundation & Core Representations."""
 
+from laris.layers.layer1_language.artifacts import (
+    BUNDLE_MANIFEST_FILENAME,
+    LanguageArtifactBundle,
+    LanguageArtifactManager,
+)
 from laris.layers.layer1_language.bm25 import (
     BM25Document,
     BM25RetrievalBaseline,
@@ -34,6 +39,7 @@ from laris.layers.layer1_language.schemas import (
     UNK_TOKEN,
     EmbeddingBatchOutput,
     EncoderCheckpointMetadata,
+    LanguageTrainingRunManifest,
     NormalizedSentenceInput,
     SentenceEmbeddingOutput,
     SentenceEncoderContract,
@@ -90,4 +96,8 @@ __all__ = [
     "RetrievalBenchmarkItem",
     "RetrievalComparisonReport",
     "evaluate_retrieval_comparison",
+    "BUNDLE_MANIFEST_FILENAME",
+    "LanguageArtifactBundle",
+    "LanguageArtifactManager",
+    "LanguageTrainingRunManifest",
 ]
