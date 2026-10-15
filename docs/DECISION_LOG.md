@@ -22,6 +22,7 @@ decision_references:
   - "ADR-007"
   - "ADR-008"
   - "ADR-009"
+  - "ADR-010"
 change_summary: "Chronological log of all architectural decisions and baseline freeze events."
 ---
 
@@ -44,6 +45,8 @@ This document records the chronological history of all binding architectural dec
 | 2026-10-15 | [ADR-007](file:///home/thientn204/laris/docs/adr/ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control. | ACCEPTED | LARIS Lead Architect |
 | 2026-10-15 | [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims. | ACCEPTED | LARIS Lead Architect |
 | 2026-10-16 | [ADR-009](file:///home/thientn204/laris/docs/adr/ADR-009-embedded-evidence-graph-storage.md) | Embedded Heterogeneous Evidence Graph Storage and Persistence Interface. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-16 | [ADR-010](file:///home/thientn204/laris/docs/adr/ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval and Modular Adapter Architecture. | ACCEPTED | LARIS Lead Architect |
+
 
 
 ---
