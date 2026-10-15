@@ -1,14 +1,12 @@
 """Unit tests for LARIS core data schemas and epistemic invariants."""
 
 import unittest
+
 from laris.core.schemas import (
+    CalibratedScores,
     EpistemicStatus,
     EvidenceCoordinate,
     ScientificClaim,
-    ResearchGapClass,
-    CalibratedScores,
-    ValidationPlan,
-    ResearchGap,
     TelemetrySnapshot,
 )
 

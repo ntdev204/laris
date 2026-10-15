@@ -1,6 +1,7 @@
 """Documentation quality gate test integrated with unittest."""
 
 import unittest
+
 from scripts.validate_docs import validate_all_docs
 
 
