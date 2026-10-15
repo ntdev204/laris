@@ -135,8 +135,9 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M5-RETR-001` | Hybrid Lexical-Dense Retrieval Engine | `MOD-GRAPH-001` | `IN_PROGRESS` | `M5-EVID-001` |
-| `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-RETR-001` |
-| `M5-RETR-001-SUB-02` | Benchmark multi-channel retrieval against single-modality baselines | `MOD-GRAPH-001` | `READY` | `M5-RETR-001-SUB-01` |
+| `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `DONE` | `M5-RETR-001` |
+| `M5-RETR-001-SUB-02` | Benchmark multi-channel retrieval against single-modality baselines | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-RETR-001-SUB-01` |
+
 
 | `M5-PROV-001` | Evidence Coordinate Validation & Provenance Tracking | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |
 | `M5-PROV-001-SUB-01` | Implement end-to-end evidence coordinate mapping & validation | `MOD-GRAPH-001` | `READY` | `M5-PROV-001` |
