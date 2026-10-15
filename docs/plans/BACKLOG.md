@@ -85,8 +85,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-002-SUB-01` | Implement sentence encoder interfaces and retrieval baseline | `MOD-LANG-002` | `DONE` | `M2-LANG-002` |
 | `M2-LANG-002-SUB-02` | Add embedding correctness and BM25 comparison tests | `MOD-LANG-002` | `DONE` | `M2-LANG-002-SUB-01` |
 | `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `IN_PROGRESS` | `M2-LANG-002` |
-| `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `IN_REVIEW` | `M2-LANG-003` |
-| `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `READY` | `M2-LANG-003-SUB-01` |
+| `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-003` |
+| `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `IN_REVIEW` | `M2-LANG-003-SUB-01` |
 
 ---
 
