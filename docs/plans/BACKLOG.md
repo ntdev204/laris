@@ -170,8 +170,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `IN_PROGRESS` | `M7-ORCH-002` |
-| `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `IN_REVIEW` | `M7-ORCH-003` |
-| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `TODO` | `M7-ORCH-003-SUB-01` |
+| `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `DONE` | `M7-ORCH-003` |
+| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `IN_REVIEW` | `M7-ORCH-003-SUB-01` |
 
 ---
 
