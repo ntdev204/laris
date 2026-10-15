@@ -96,8 +96,8 @@ This document serves as the single source of truth for active task tracking, exe
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | `M3-SEM-001` | Three-Way Scientific NLI | `MOD-SEM-001` | `IN_PROGRESS` | `M2-LANG-003` |
-| `M3-SEM-001-SUB-01` | Define NLI schemas, validation and error semantics | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-001` |
-| `M3-SEM-001-SUB-02` | Implement NLI inference behavior and boundary tests | `MOD-SEM-001` | `READY` | `M3-SEM-001-SUB-01` |
+| `M3-SEM-001-SUB-01` | Define NLI schemas, validation and error semantics | `MOD-SEM-001` | `DONE` | `M3-SEM-001` |
+| `M3-SEM-001-SUB-02` | Implement NLI inference behavior and boundary tests | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-001-SUB-01` |
 | `M3-SEM-002` | Semantic Equivalence, Coreference & Discourse Relations | `MOD-SEM-001` | `TODO` | `M3-SEM-001` |
 | `M3-SEM-002-SUB-01` | Define semantic relation output contracts | `MOD-SEM-001` | `TODO` | `M3-SEM-002` |
 | `M3-SEM-002-SUB-02` | Test semantic relation ambiguity and provenance | `MOD-SEM-001` | `TODO` | `M3-SEM-002-SUB-01` |
