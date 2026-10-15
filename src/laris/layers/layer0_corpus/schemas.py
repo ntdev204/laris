@@ -3,12 +3,17 @@
 Adheres to DOC-SPEC-MOD-001 (Boundary A) and DOC-SPEC-SCHEMA-001.
 """
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from laris.core.errors import DuplicateCorpusError, LicenseViolationError
+from laris.core.errors import (
+    DuplicateCorpusError,
+    LicenseViolationError,
+    ModuleContractViolationError,
+)
 
 
 class DatasetSplit(str, Enum):
@@ -157,3 +162,55 @@ class CorpusManifest:
             lic = item.license_provenance.declared_license.value
             dist[lic] = dist.get(lic, 0) + 1
         return dist
+
+
+def verify_item_content_hash(item: ValidatedCorpusItem, raw_bytes: bytes) -> bool:
+    """Verifies that actual document bytes hash to the item's declared SHA-256 digest.
+
+    Distinguishes syntactic presence of a valid hex string from cryptographic verification.
+    """
+    actual_hash = hashlib.sha256(raw_bytes).hexdigest()
+    return actual_hash == item.sha256
+
+
+def verify_item_authorization(item: ValidatedCorpusItem) -> bool:
+    """Verifies that an item possesses affirmative authorization provenance.
+
+    Distinguishes a mere license identifier string from verified redistribution permission.
+    """
+    prov = item.license_provenance
+    if not prov.authorized:
+        return False
+    if prov.declared_license not in PERMITTED_OPEN_ACCESS_LICENSES:
+        return False
+    return True
+
+
+def validate_manifest_consistency(
+    manifest: CorpusManifest,
+    expected_total_items: Optional[int] = None,
+    expected_total_bytes: Optional[int] = None,
+    expected_split_counts: Optional[Dict[str, int]] = None,
+) -> None:
+    """Validates structural consistency and aggregates of a corpus manifest.
+
+    Raises ModuleContractViolationError if aggregate statistics do not match items.
+    """
+    if expected_total_items is not None and manifest.total_items != expected_total_items:
+        raise ModuleContractViolationError(
+            f"Manifest total_items mismatch: declared {expected_total_items}, "
+            f"actual {manifest.total_items}"
+        )
+    if expected_total_bytes is not None and manifest.total_bytes != expected_total_bytes:
+        raise ModuleContractViolationError(
+            f"Manifest total_bytes mismatch: declared {expected_total_bytes}, "
+            f"actual {manifest.total_bytes}"
+        )
+    if expected_split_counts is not None:
+        actual_splits = manifest.split_counts
+        for split_key, expected_count in expected_split_counts.items():
+            if actual_splits.get(split_key, 0) != expected_count:
+                raise ModuleContractViolationError(
+                    f"Manifest split count mismatch for '{split_key}': "
+                    f"expected {expected_count}, actual {actual_splits.get(split_key, 0)}"
+                )
