@@ -82,8 +82,14 @@ class HybridRetrievalEngine:
         self,
         query: RetrievalQuery,
         channels: Optional[List[RetrievalChannel]] = None,
+        fallback_on_channel_failure: bool = False,
     ) -> List[RetrievalCandidate]:
-        """Executes multi-channel retrieval and combines results via rank fusion."""
+        """Executes multi-channel retrieval and combines results via rank fusion.
+
+        If fallback_on_channel_failure is True, errors from individual channels
+        (such as a missing dense encoder) are gracefully bypassed in favor of
+        surviving channels.
+        """
         active_channels = channels or list(self._adapters.keys())
         if not active_channels:
             return []
@@ -91,9 +97,14 @@ class HybridRetrievalEngine:
         channel_results: Dict[RetrievalChannel, List[RetrievalCandidate]] = {}
         for ch in active_channels:
             if ch in self._adapters:
-                channel_results[ch] = self._adapters[ch].retrieve(query)
+                try:
+                    channel_results[ch] = self._adapters[ch].retrieve(query)
+                except Exception:
+                    if not fallback_on_channel_failure:
+                        raise
 
         if not channel_results:
             return []
 
         return self.fusion_combiner.combine(channel_results, top_k=query.top_k)
+

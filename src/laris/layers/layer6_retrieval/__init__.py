@@ -3,6 +3,15 @@
 Adheres to DOC-SPEC-MOD-001 (Boundary F), ADR-001, ADR-004, and ADR-010.
 """
 
+from laris.layers.layer6_retrieval.benchmark import (
+    DepthBoundBenchmarkResult,
+    DeterministicRankingResult,
+    FallbackRobustnessResult,
+    FilterAccuracyResult,
+    RetrievalBenchmarkReport,
+    RetrievalEvaluationBenchmark,
+    RetrievalModalityResult,
+)
 from laris.layers.layer6_retrieval.dense_adapter import (
     DenseVectorAdapter,
     DenseVectorItem,
@@ -43,4 +52,12 @@ __all__ = [
     "GraphRetrievalAdapter",
     "ReciprocalRankFusion",
     "HybridRetrievalEngine",
+    "RetrievalModalityResult",
+    "DeterministicRankingResult",
+    "DepthBoundBenchmarkResult",
+    "FilterAccuracyResult",
+    "FallbackRobustnessResult",
+    "RetrievalBenchmarkReport",
+    "RetrievalEvaluationBenchmark",
 ]
+
