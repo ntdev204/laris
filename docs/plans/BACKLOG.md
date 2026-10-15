@@ -144,8 +144,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `DONE` | `M5-PROV-001-SUB-01` |
 
 
-| `M6-GAP-001` | Cross-Paper Experimental Comparison & Conflict Detection | `MOD-GAP-001` | `READY` | `M5-PROV-001` |
-| `M6-GAP-001-SUB-01` | Implement comparative matrix and condition-aware contradiction engine | `MOD-GAP-001` | `READY` | `M6-GAP-001` |
+| `M6-GAP-001` | Cross-Paper Experimental Comparison & Conflict Detection | `MOD-GAP-001` | `IN_PROGRESS` | `M5-PROV-001` |
+| `M6-GAP-001-SUB-01` | Implement comparative matrix and condition-aware contradiction engine | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-001` |
 | `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `READY` | `M6-GAP-001-SUB-01` |
 
 
