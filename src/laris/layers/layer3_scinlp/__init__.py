@@ -6,6 +6,12 @@ anchored to immutable physical evidence coordinates.
 """
 
 from laris.layers.layer3_scinlp.extractor import ScientificDiscourseExtractor
+from laris.layers.layer3_scinlp.limitations import (
+    HeadingIndependentLimitationDetector,
+    LimitationDetectionResult,
+    compute_uncertainty_score,
+    strip_headings,
+)
 from laris.layers.layer3_scinlp.schemas import (
     DEFAULT_CONFIDENCE_THRESHOLD,
     MIN_EXTRACTION_CONFIDENCE,
@@ -16,9 +22,11 @@ from laris.layers.layer3_scinlp.schemas import (
     DiscourseExtractionSet,
     DiscourseExtractorContract,
     FormulaRecord,
+    LimitationCategory,
     LimitationRecord,
     MethodRecord,
     MetricRecord,
+    NegativeFindingRecord,
     ResultRecord,
 )
 
@@ -29,12 +37,18 @@ __all__ = [
     "DatasetRecord",
     "MetricRecord",
     "ResultRecord",
+    "LimitationCategory",
     "LimitationRecord",
     "AssumptionRecord",
+    "NegativeFindingRecord",
     "FormulaRecord",
     "DiscourseExtractionSet",
     "DiscourseExtractorContract",
     "ScientificDiscourseExtractor",
+    "HeadingIndependentLimitationDetector",
+    "LimitationDetectionResult",
+    "compute_uncertainty_score",
+    "strip_headings",
     "MIN_EXTRACTION_CONFIDENCE",
     "DEFAULT_CONFIDENCE_THRESHOLD",
 ]

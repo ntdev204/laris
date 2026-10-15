@@ -276,6 +276,18 @@ class ResultRecord:
         )
 
 
+class LimitationCategory(str, Enum):
+    """Fine-grained classification of scientific limitations and boundary conditions."""
+
+    COMPUTATIONAL_RESOURCE = "COMPUTATIONAL_RESOURCE"
+    DATA_SPARSITY = "DATA_SPARSITY"
+    GENERALIZATION_BOUND = "GENERALIZATION_BOUND"
+    METHODOLOGICAL = "METHODOLOGICAL"
+    SCOPE_RESTRICTION = "SCOPE_RESTRICTION"
+    NEGATIVE_FINDING = "NEGATIVE_FINDING"
+    GENERAL = "GENERAL"
+
+
 @dataclass(frozen=True)
 class LimitationRecord:
     """Typed representation of an author-disclosed or extracted limitation."""
@@ -286,9 +298,15 @@ class LimitationRecord:
     coordinate: EvidenceCoordinate
     scope: str = "general"
     is_author_disclosed: bool = True
+    category: str = "GENERAL"
+    uncertainty_score: float = 0.0
 
     def __post_init__(self) -> None:
         _validate_coordinate_span(self.coordinate, self.description, self.confidence)
+        if not (0.0 <= self.uncertainty_score <= 1.0):
+            raise ModuleContractViolationError(
+                f"uncertainty_score must be in range [0.0, 1.0], got {self.uncertainty_score}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -298,6 +316,8 @@ class LimitationRecord:
             "coordinate": asdict(self.coordinate),
             "scope": self.scope,
             "is_author_disclosed": self.is_author_disclosed,
+            "category": self.category,
+            "uncertainty_score": round(self.uncertainty_score, 4),
         }
 
     @classmethod
@@ -309,6 +329,8 @@ class LimitationRecord:
             coordinate=EvidenceCoordinate(**data["coordinate"]),
             scope=str(data.get("scope", "general")),
             is_author_disclosed=bool(data.get("is_author_disclosed", True)),
+            category=str(data.get("category", "GENERAL")),
+            uncertainty_score=float(data.get("uncertainty_score", 0.0)),
         )
 
 
@@ -321,9 +343,15 @@ class AssumptionRecord:
     confidence: float
     coordinate: EvidenceCoordinate
     is_explicit: bool = True
+    domain: str = "general"
+    uncertainty_score: float = 0.0
 
     def __post_init__(self) -> None:
         _validate_coordinate_span(self.coordinate, self.statement, self.confidence)
+        if not (0.0 <= self.uncertainty_score <= 1.0):
+            raise ModuleContractViolationError(
+                f"uncertainty_score must be in range [0.0, 1.0], got {self.uncertainty_score}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -332,6 +360,8 @@ class AssumptionRecord:
             "confidence": round(self.confidence, 4),
             "coordinate": asdict(self.coordinate),
             "is_explicit": self.is_explicit,
+            "domain": self.domain,
+            "uncertainty_score": round(self.uncertainty_score, 4),
         }
 
     @classmethod
@@ -342,6 +372,51 @@ class AssumptionRecord:
             confidence=float(data["confidence"]),
             coordinate=EvidenceCoordinate(**data["coordinate"]),
             is_explicit=bool(data.get("is_explicit", True)),
+            domain=str(data.get("domain", "general")),
+            uncertainty_score=float(data.get("uncertainty_score", 0.0)),
+        )
+
+
+@dataclass(frozen=True)
+class NegativeFindingRecord:
+    """Typed representation of a null or negative experimental result."""
+
+    finding_id: str
+    description: str
+    confidence: float
+    coordinate: EvidenceCoordinate
+    baseline_compared: str | None = None
+    is_null_result: bool = True
+    uncertainty_score: float = 0.0
+
+    def __post_init__(self) -> None:
+        _validate_coordinate_span(self.coordinate, self.description, self.confidence)
+        if not (0.0 <= self.uncertainty_score <= 1.0):
+            raise ModuleContractViolationError(
+                f"uncertainty_score must be in range [0.0, 1.0], got {self.uncertainty_score}"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "finding_id": self.finding_id,
+            "description": self.description,
+            "confidence": round(self.confidence, 4),
+            "coordinate": asdict(self.coordinate),
+            "baseline_compared": self.baseline_compared,
+            "is_null_result": self.is_null_result,
+            "uncertainty_score": round(self.uncertainty_score, 4),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> NegativeFindingRecord:
+        return cls(
+            finding_id=str(data["finding_id"]),
+            description=str(data["description"]),
+            confidence=float(data["confidence"]),
+            coordinate=EvidenceCoordinate(**data["coordinate"]),
+            baseline_compared=data.get("baseline_compared"),
+            is_null_result=bool(data.get("is_null_result", True)),
+            uncertainty_score=float(data.get("uncertainty_score", 0.0)),
         )
 
 
