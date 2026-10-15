@@ -47,6 +47,11 @@ class ScientificTokenizer:
         self.do_lower_case = do_lower_case
         self.max_sequence_length = max_sequence_length
 
+    @property
+    def vocab_contract(self) -> VocabularyContract:
+        """Returns the underlying vocabulary contract."""
+        return self.vocab
+
     def pre_tokenize(self, text: str) -> List[str]:
         """Splits raw text into tokens while preserving math blocks and symbols."""
         if not text or not text.strip():
