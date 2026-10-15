@@ -357,14 +357,19 @@ class SpecialistLRUCache:
                 raise ModuleContractViolationError(f"Specialist '{specialist_id}' not found.")
 
             descriptor = self._registry[specialist_id]
-            if descriptor.state != StagingState.ACTIVE_LOADED:
+            if descriptor.tier == target_tier:
+                return descriptor
+
+            # Offloading only moves down the hierarchy: VRAM -> RAM/SSD, or RAM -> SSD
+            if descriptor.tier == StorageTier.TIER3_COLD_SSD:
                 return descriptor
 
             previous_tier = descriptor.tier
             self._registry[specialist_id] = replace(descriptor, state=StagingState.OFFLOADING)
 
             duration_ms = self._loader.offload_weights(descriptor, target_tier)
-            self._governor.release_allocation(specialist_id)
+            if previous_tier == StorageTier.TIER1_GPU_VRAM:
+                self._governor.release_allocation(specialist_id)
 
             new_state = (
                 StagingState.WARM_PARKED
