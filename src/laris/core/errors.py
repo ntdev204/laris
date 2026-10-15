@@ -109,3 +109,20 @@ class UnitConversionError(ModuleContractViolationError):
     pass
 
 
+class GraphIntegrityError(ModuleContractViolationError):
+    """Raised when an evidence graph violates node/edge referential integrity or contracts."""
+    pass
+
+
+class InferredEdgeConflationError(GraphIntegrityError):
+    """Raised when an inferred relation is conflated with or masquerades as author assertion."""
+    pass
+
+
+
+class SchemaMigrationError(LarisError):
+    """Raised when an evidence graph fails schema version migration or compatibility checks."""
+    pass
+
+
+
