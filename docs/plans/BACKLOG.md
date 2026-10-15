@@ -91,7 +91,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M3: Semantic Relations & NLI (Layer 2)
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -101,9 +101,27 @@ This document serves as the single source of truth for active task tracking, exe
 | `M3-SEM-002` | Semantic Equivalence, Coreference & Discourse Relations | `MOD-SEM-001` | `DONE` | `M3-SEM-001` |
 | `M3-SEM-002-SUB-01` | Define semantic relation output contracts | `MOD-SEM-001` | `DONE` | `M3-SEM-002` |
 | `M3-SEM-002-SUB-02` | Test semantic relation ambiguity and provenance | `MOD-SEM-001` | `DONE` | `M3-SEM-002-SUB-01` |
-| `M3-SEM-003` | NLI Calibration & Contradiction Evaluation | `MOD-SEM-001` | `IN_PROGRESS` | `M3-SEM-002` |
+| `M3-SEM-003` | NLI Calibration & Contradiction Evaluation | `MOD-SEM-001` | `DONE` | `M3-SEM-002` |
 | `M3-SEM-003-SUB-01` | Build scientific NLI benchmark and calibration report | `MOD-SEM-001` | `DONE` | `M3-SEM-003` |
-| `M3-SEM-003-SUB-02` | Add benchmark split isolation and failure analysis | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-003-SUB-01` |
+| `M3-SEM-003-SUB-02` | Add benchmark split isolation and failure analysis | `MOD-SEM-001` | `DONE` | `M3-SEM-003-SUB-01` |
+
+---
+
+## Milestone M4: Scientific NLP & Discourse Intelligence (Layer 3)
+**Status:** `READY`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M4-SCINLP-001` | Scientific Entity & Formula Extractor | `MOD-SCINLP-001` | `READY` | `M3-SEM-003` |
+| `M4-SCINLP-001-SUB-01` | Implement entity and formula extractor interfaces | `MOD-SCINLP-001` | `READY` | `M4-SCINLP-001` |
+| `M4-SCINLP-001-SUB-02` | Add entity recognition tests and LaTeX math validation | `MOD-SCINLP-001` | `BACKLOG` | `M4-SCINLP-001-SUB-01` |
+| `M4-SCINLP-002` | Heading-Aware Section Segmenter & Discourse Hierarchy | `MOD-SCINLP-002` | `BACKLOG` | `M4-SCINLP-001` |
+| `M4-SCINLP-002-SUB-01` | Implement section segmentation and discourse tree structures | `MOD-SCINLP-002` | `BACKLOG` | `M4-SCINLP-002` |
+| `M4-SCINLP-002-SUB-02` | Benchmark section parsing accuracy across document layouts | `MOD-SCINLP-002` | `BACKLOG` | `M4-SCINLP-002-SUB-01` |
+| `M4-SCINLP-003` | STEM Unit & Quantitative Relation Normalizer | `MOD-SCINLP-003` | `BACKLOG` | `M4-SCINLP-002` |
+| `M4-SCINLP-003-SUB-01` | Implement scientific unit conversion and magnitude scaling | `MOD-SCINLP-003` | `BACKLOG` | `M4-SCINLP-003` |
+| `M4-SCINLP-003-SUB-02` | Add boundary tests for numerical ranges and dimensional analysis | `MOD-SCINLP-003` | `BACKLOG` | `M4-SCINLP-003-SUB-01` |
+
 
 ---
 
@@ -234,4 +252,37 @@ This document serves as the single source of truth for active task tracking, exe
 - **Acceptance Criteria:**
   1. Strict train/val/test split isolation with zero entity/author leakage.
   2. Diagnostic failure analysis and calibration metrics reported reproducible across runs.
+
+---
+
+## Detailed Task Specifications for Milestone M4
+
+### Task `M4-SCINLP-001`: Scientific Entity & Formula Extractor
+- **Objective:** Extract domain-specific scientific entities and LaTeX mathematical formulas with precise character offsets and document coordinates.
+- **Module:** `MOD-SCINLP-001` (Boundary D).
+- **Dependencies:** `M3-SEM-003`.
+- **Acceptance Criteria:**
+  1. Identifies scientific entities (genes, compounds, materials, metrics, constants).
+  2. Preserves and validates LaTeX formulas without syntax distortion.
+  3. Every extracted entity includes verified character coordinate offsets.
+
+---
+
+### Task `M4-SCINLP-002`: Heading-Aware Section Segmenter & Discourse Hierarchy
+- **Objective:** Parse scientific literature into structured section hierarchies with heading awareness.
+- **Module:** `MOD-SCINLP-002` (Boundary D).
+- **Dependencies:** `M4-SCINLP-001`.
+- **Acceptance Criteria:**
+  1. Reconstructs document outline hierarchy (H1-H4, Abstract, Methods, Results, Discussion).
+  2. Maps inter-section discourse relationships and cross-references.
+
+---
+
+### Task `M4-SCINLP-003`: STEM Unit & Quantitative Relation Normalizer
+- **Objective:** Normalize STEM quantities, dimensional units, and numerical relations into standardized representations.
+- **Module:** `MOD-SCINLP-003` (Boundary D).
+- **Dependencies:** `M4-SCINLP-002`.
+- **Acceptance Criteria:**
+  1. Standardizes SI units and compound dimensional units with zero precision loss.
+  2. Parses numerical intervals, uncertainties, and quantitative comparisons.
 
