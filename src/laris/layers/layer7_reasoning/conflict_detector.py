@@ -67,15 +67,22 @@ class ConditionAwareConflictDetector:
         if not cell.is_comparable or any(
             c.severity == CaveatSeverity.INCOMPARABLE for c in cell.caveats
         ):
-            # Check if there is a divergence that might naively appear contradictory
-            if cell.delta is not None and abs(cell.delta) >= self.discrepancy_threshold:
+            has_divergence = (
+                cell.delta is None or abs(cell.delta) >= self.discrepancy_threshold
+            )
+            if has_divergence:
+                delta_str = (
+                    f"delta={cell.delta:.4f}"
+                    if cell.delta is not None
+                    else "non-identical metrics"
+                )
                 return ConflictRecord(
                     conflict_id=cid,
                     conflict_type=ConflictType.APPARENT_CONFLICT_INCOMPARABLE,
                     finding_a_id=finding_a.finding_id,
                     finding_b_id=finding_b.finding_id,
                     description=(
-                        f"Apparent discrepancy (delta={cell.delta:.4f}) between "
+                        f"Apparent discrepancy ({delta_str}) between "
                         f"'{finding_a.method_name}' and '{finding_b.method_name}' is "
                         "explained by non-identical evaluation conditions or metrics."
                     ),

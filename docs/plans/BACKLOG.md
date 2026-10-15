@@ -125,7 +125,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M5: Hybrid RAG & Evidence Graph (Layer 5 & Layer 6)
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -145,11 +145,11 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M6-GAP-001` | Cross-Paper Experimental Comparison & Conflict Detection | `MOD-GAP-001` | `IN_PROGRESS` | `M5-PROV-001` |
-| `M6-GAP-001-SUB-01` | Implement comparative matrix and condition-aware contradiction engine | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-001` |
-| `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `READY` | `M6-GAP-001-SUB-01` |
+| `M6-GAP-001-SUB-01` | Implement comparative matrix and condition-aware contradiction engine | `MOD-GAP-001` | `DONE` | `M6-GAP-001` |
+| `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-001-SUB-01` |
 
 
-| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `BLOCKED` | `M6-GAP-001` |
+| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `READY` | `M6-GAP-001` |
 
 
 | `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `BLOCKED` | `M6-GAP-002` |

@@ -3,6 +3,11 @@
 Adheres to DOC-SPEC-MOD-001 (Boundary G), ADR-001, and ADR-004.
 """
 
+from laris.layers.layer7_reasoning.benchmark import (
+    ConflictBenchmarkReport,
+    ConflictEvaluationBenchmark,
+    ContradictionBenchmarkCase,
+)
 from laris.layers.layer7_reasoning.conflict_detector import ConditionAwareConflictDetector
 from laris.layers.layer7_reasoning.matrix_engine import ComparativeMatrixEngine
 from laris.layers.layer7_reasoning.schemas import (
@@ -27,4 +32,7 @@ __all__ = [
     "ConflictRecord",
     "ComparativeMatrixEngine",
     "ConditionAwareConflictDetector",
+    "ContradictionBenchmarkCase",
+    "ConflictBenchmarkReport",
+    "ConflictEvaluationBenchmark",
 ]
