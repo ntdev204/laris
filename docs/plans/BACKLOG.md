@@ -140,8 +140,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M5-PROV-001` | Evidence Coordinate Validation & Provenance Tracking | `MOD-GRAPH-001` | `IN_PROGRESS` | `M5-RETR-001` |
-| `M5-PROV-001-SUB-01` | Implement end-to-end evidence coordinate mapping & validation | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-PROV-001` |
-| `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `READY` | `M5-PROV-001-SUB-01` |
+| `M5-PROV-001-SUB-01` | Implement end-to-end evidence coordinate mapping & validation | `MOD-GRAPH-001` | `DONE` | `M5-PROV-001` |
+| `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-PROV-001-SUB-01` |
 
 
 
