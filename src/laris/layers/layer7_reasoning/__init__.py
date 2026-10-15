@@ -9,16 +9,23 @@ from laris.layers.layer7_reasoning.benchmark import (
     ContradictionBenchmarkCase,
 )
 from laris.layers.layer7_reasoning.conflict_detector import ConditionAwareConflictDetector
+from laris.layers.layer7_reasoning.gap_classifier import RuleBasedGapClassifier
+from laris.layers.layer7_reasoning.gap_scorer import CalibratedGapScoringEngine
 from laris.layers.layer7_reasoning.matrix_engine import ComparativeMatrixEngine
 from laris.layers.layer7_reasoning.schemas import (
+    CalibratedGapScores,
     CaveatSeverity,
     ComparabilityCaveat,
     ComparativeCell,
     ComparativeMatrix,
     ConflictRecord,
     ConflictType,
+    CorpusScope,
+    GapClass,
     MetricDirection,
+    ResearchGap,
     StudyFinding,
+    ValidationPlan,
 )
 
 __all__ = [
@@ -35,4 +42,11 @@ __all__ = [
     "ContradictionBenchmarkCase",
     "ConflictBenchmarkReport",
     "ConflictEvaluationBenchmark",
+    "GapClass",
+    "CalibratedGapScores",
+    "ValidationPlan",
+    "CorpusScope",
+    "ResearchGap",
+    "CalibratedGapScoringEngine",
+    "RuleBasedGapClassifier",
 ]

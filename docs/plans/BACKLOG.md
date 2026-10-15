@@ -144,12 +144,14 @@ This document serves as the single source of truth for active task tracking, exe
 | `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `DONE` | `M5-PROV-001-SUB-01` |
 
 
-| `M6-GAP-001` | Cross-Paper Experimental Comparison & Conflict Detection | `MOD-GAP-001` | `IN_PROGRESS` | `M5-PROV-001` |
+| `M6-GAP-001` | Cross-Paper Experimental Comparison & Conflict Detection | `MOD-GAP-001` | `DONE` | `M5-PROV-001` |
 | `M6-GAP-001-SUB-01` | Implement comparative matrix and condition-aware contradiction engine | `MOD-GAP-001` | `DONE` | `M6-GAP-001` |
-| `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-001-SUB-01` |
+| `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `DONE` | `M6-GAP-001-SUB-01` |
 
 
-| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `READY` | `M6-GAP-001` |
+| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-001` |
+| `M6-GAP-002-SUB-01` | Implement 12-class gap taxonomy and scoring schema | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-002` |
+| `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `READY` | `M6-GAP-002-SUB-01` |
 
 
 | `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `BLOCKED` | `M6-GAP-002` |
@@ -379,6 +381,21 @@ This document serves as the single source of truth for active task tracking, exe
   1. Comparative matrix records comparability caveats across dataset, split, baseline, and metric bounds.
   2. Conflict detection citations anchor 100% to verified `EvidenceCoordinate` records.
   3. Synthetic benchmark accurately distinguishes genuine empirical contradictions from incomparable experimental setups.
+
+---
+
+### Task `M6-GAP-002`: Twelve-Class Research Gap Typology Classifier
+- **Objective:** Implement gap categories and multidimensional scoring for novelty, grounding, feasibility, significance, and uncertainty.
+- **Module:** `MOD-GAP-001` (Boundary G / Layer 7).
+- **Dependencies:** `M6-GAP-001`.
+- **Subtasks:**
+  - `M6-GAP-002-SUB-01`: Implement 12-class gap taxonomy and scoring schema.
+  - `M6-GAP-002-SUB-02`: Add gap typology evaluation fixtures and gold set.
+- **Acceptance Criteria:**
+  1. Every score has explicit inputs and [0.0, 1.0] scale.
+  2. Bounded corpus strictly prevents global novelty claims.
+  3. Taxonomy fixtures and calibration evaluation report exist.
+
 
 
 
