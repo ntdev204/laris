@@ -13,7 +13,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from laris.core.errors import ModuleContractViolationError, ProvenanceViolationError
+from laris.core.errors import (
+    EpistemicOverreachError,
+    ModuleContractViolationError,
+    ProvenanceViolationError,
+)
 from laris.core.schemas import EvidenceCoordinate
 
 
@@ -157,3 +161,152 @@ class ConflictRecord:
             raise ProvenanceViolationError(
                 f"ConflictRecord '{self.conflict_id}' lacks verified EvidenceCoordinate records."
             )
+
+
+class GapClass(str, Enum):
+    """Canonical 12-class research gap typology per DATA_SCHEMAS.md and MOD-REASON-001."""
+
+    KNOWLEDGE_GAP = "KNOWLEDGE_GAP"
+    METHODOLOGICAL_GAP = "METHODOLOGICAL_GAP"
+    MEASUREMENT_EVALUATION_GAP = "MEASUREMENT_EVALUATION_GAP"
+    DATASET_DOMAIN_GAP = "DATASET_DOMAIN_GAP"
+    GENERALIZATION_GAP = "GENERALIZATION_GAP"
+    REPRODUCIBILITY_GAP = "REPRODUCIBILITY_GAP"
+    CONFLICTING_EVIDENCE_GAP = "CONFLICTING_EVIDENCE_GAP"
+    ASSUMPTION_BOUNDARY_GAP = "ASSUMPTION_BOUNDARY_GAP"
+    INTEGRATION_INTERDISCIPLINARY_GAP = "INTEGRATION_INTERDISCIPLINARY_GAP"
+    DEPLOYMENT_RESOURCE_GAP = "DEPLOYMENT_RESOURCE_GAP"
+    TEMPORAL_GAP = "TEMPORAL_GAP"
+    UNDEREXPLORED_RESEARCH_QUESTION = "UNDEREXPLORED_RESEARCH_QUESTION"
+
+
+@dataclass(frozen=True)
+class CalibratedGapScores:
+    """Calibrated multi-dimensional scoring model for candidate research gaps.
+
+    In accordance with ADR-001 and Epistemic Principles:
+    - All dimensions are normalized to the closed interval [0.0, 1.0].
+    - Global novelty claims are strictly prohibited when corpus coverage is bounded.
+    """
+
+    novelty: float
+    grounding: float
+    feasibility: float
+    significance: float
+    uncertainty: float
+    composite_score: float
+    corpus_bounded: bool = True
+    is_global_claim: bool = False
+
+    def __post_init__(self) -> None:
+        scores = {
+            "novelty": self.novelty,
+            "grounding": self.grounding,
+            "feasibility": self.feasibility,
+            "significance": self.significance,
+            "uncertainty": self.uncertainty,
+            "composite_score": self.composite_score,
+        }
+        for name, val in scores.items():
+            if math.isnan(val) or math.isinf(val):
+                raise ModuleContractViolationError(
+                    f"CalibratedGapScores {name} must be a finite float."
+                )
+            if not (0.0 <= val <= 1.0):
+                raise ModuleContractViolationError(
+                    f"CalibratedGapScores {name} ({val}) must be within [0.0, 1.0]."
+                )
+
+        if self.corpus_bounded and self.is_global_claim:
+            raise EpistemicOverreachError(
+                "Global novelty claims are strictly prohibited when corpus coverage is bounded. "
+                "Claims must be qualified as corpus-bounded gaps."
+            )
+
+
+@dataclass(frozen=True)
+class ValidationPlan:
+    """Actionable validation protocol design formulated for an identified research gap."""
+
+    proposed_methodology: str
+    required_datasets: List[str]
+    expected_baselines: List[str]
+    evaluation_metrics: List[str]
+
+    def __post_init__(self) -> None:
+        if not self.proposed_methodology or not self.proposed_methodology.strip():
+            raise ModuleContractViolationError(
+                "ValidationPlan proposed_methodology must not be empty."
+            )
+        if not self.required_datasets:
+            raise ModuleContractViolationError(
+                "ValidationPlan required_datasets must contain at least one dataset."
+            )
+        if not self.expected_baselines:
+            raise ModuleContractViolationError(
+                "ValidationPlan expected_baselines must contain at least one baseline."
+            )
+        if not self.evaluation_metrics:
+            raise ModuleContractViolationError(
+                "ValidationPlan evaluation_metrics must contain at least one metric."
+            )
+
+
+@dataclass(frozen=True)
+class CorpusScope:
+    """Corpus boundary definition preventing epistemic overreach in novelty claims."""
+
+    scope_id: str
+    document_count: int
+    is_bounded: bool = True
+    inclusion_criteria: List[str] = field(default_factory=list)
+    exclusion_criteria: List[str] = field(default_factory=list)
+    coverage_notes: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if not self.scope_id or not self.scope_id.strip():
+            raise ModuleContractViolationError("CorpusScope scope_id must not be empty.")
+        if self.document_count < 0:
+            raise ModuleContractViolationError(
+                "CorpusScope document_count must be a non-negative integer."
+            )
+
+
+@dataclass(frozen=True)
+class ResearchGap:
+    """Complete research gap entity with 12-class taxonomy, provenance, and scoring."""
+
+    gap_id: str
+    gap_class: GapClass
+    title: str
+    description: str
+    epistemic_rationale: str
+    supporting_evidence: List[EvidenceCoordinate]
+    calibrated_scores: CalibratedGapScores
+    validation_plan: ValidationPlan
+    counter_evidence_searched: bool = False
+    corpus_scope: Optional[CorpusScope] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.gap_id or not self.gap_id.strip():
+            raise ModuleContractViolationError("ResearchGap gap_id must not be empty.")
+        if not self.title or not self.title.strip():
+            raise ModuleContractViolationError("ResearchGap title must not be empty.")
+        if not self.description or not self.description.strip():
+            raise ModuleContractViolationError("ResearchGap description must not be empty.")
+        if not self.epistemic_rationale or not self.epistemic_rationale.strip():
+            raise ModuleContractViolationError(
+                "ResearchGap epistemic_rationale must not be empty."
+            )
+        if not self.supporting_evidence:
+            raise ProvenanceViolationError(
+                f"ResearchGap '{self.gap_id}' lacks verified EvidenceCoordinate records."
+            )
+        if self.corpus_scope and self.corpus_scope.is_bounded:
+            if self.calibrated_scores.is_global_claim:
+                raise EpistemicOverreachError(
+                    f"ResearchGap '{self.gap_id}' asserts global novelty but corpus scope "
+                    f"'{self.corpus_scope.scope_id}' is bounded."
+                )
+
