@@ -126,6 +126,14 @@ DIM_POWER = DimensionalVector(length=2, mass=1, time=-3)  # W = J/s
 DIM_VOLTAGE = DimensionalVector(length=2, mass=1, time=-3, electric_current=-1)  # V
 DIM_FREQUENCY = DimensionalVector(time=-1)  # Hz = 1/s
 DIM_CONCENTRATION = DimensionalVector(length=-3, amount_of_substance=1)  # mol/m^3
+DIM_ACCELERATION = DimensionalVector(length=1, time=-2)  # m/s^2
+DIM_DENSITY = DimensionalVector(length=-3, mass=1)  # kg/m^3
+DIM_MOLAR_ENERGY = DimensionalVector(
+    length=2, mass=1, time=-2, amount_of_substance=-1
+)  # J/mol
+DIM_RESISTANCE = DimensionalVector(
+    length=2, mass=1, time=-3, electric_current=-2
+)  # Ω = V/A
 
 
 @dataclass(frozen=True)
@@ -243,7 +251,45 @@ UNIT_REGISTRY: dict[str, UnitSpec] = {
     "V": UnitSpec("V", "V", DIM_VOLTAGE, 1.0),
     "volt": UnitSpec("volt", "V", DIM_VOLTAGE, 1.0),
     "mV": UnitSpec("mV", "V", DIM_VOLTAGE, 1e-3),
-    "kV": UnitSpec("kV", "V", DIM_VOLTAGE, 1000.0),
+    # Force (base: N = kg*m/s^2)
+    "N": UnitSpec("N", "N", DIM_FORCE, 1.0),
+    "newton": UnitSpec("newton", "N", DIM_FORCE, 1.0),
+    "kN": UnitSpec("kN", "N", DIM_FORCE, 1000.0),
+    "mN": UnitSpec("mN", "N", DIM_FORCE, 1e-3),
+    # Power (base: W = J/s)
+    "W": UnitSpec("W", "W", DIM_POWER, 1.0),
+    "watt": UnitSpec("watt", "W", DIM_POWER, 1.0),
+    "kW": UnitSpec("kW", "W", DIM_POWER, 1000.0),
+    "mW": UnitSpec("mW", "W", DIM_POWER, 1e-3),
+    "MW": UnitSpec("MW", "W", DIM_POWER, 1e6),
+    # Electrical Resistance (base: Ω = V/A)
+    "Ω": UnitSpec("Ω", "Ω", DIM_RESISTANCE, 1.0),
+    "ohm": UnitSpec("ohm", "Ω", DIM_RESISTANCE, 1.0),
+    "ohms": UnitSpec("ohms", "Ω", DIM_RESISTANCE, 1.0),
+    "kΩ": UnitSpec("kΩ", "Ω", DIM_RESISTANCE, 1000.0),
+    "MΩ": UnitSpec("MΩ", "Ω", DIM_RESISTANCE, 1e6),
+    "µΩ": UnitSpec("µΩ", "Ω", DIM_RESISTANCE, 1e-6),
+    # Volume (base: m^3; 1 L = 1e-3 m^3)
+    "L": UnitSpec("L", "m^3", DIM_VOLUME, 1e-3),
+    "mL": UnitSpec("mL", "m^3", DIM_VOLUME, 1e-6),
+    "µL": UnitSpec("µL", "m^3", DIM_VOLUME, 1e-9),
+    "uL": UnitSpec("uL", "m^3", DIM_VOLUME, 1e-9),
+    "m^3": UnitSpec("m^3", "m^3", DIM_VOLUME, 1.0),
+    "cm^3": UnitSpec("cm^3", "m^3", DIM_VOLUME, 1e-6),
+    # Velocity (base: m/s)
+    "m/s": UnitSpec("m/s", "m/s", DIM_VELOCITY, 1.0),
+    "km/h": UnitSpec("km/h", "m/s", DIM_VELOCITY, 1.0 / 3.6),
+    "cm/s": UnitSpec("cm/s", "m/s", DIM_VELOCITY, 1e-2),
+    # Acceleration (base: m/s^2)
+    "m/s^2": UnitSpec("m/s^2", "m/s^2", DIM_ACCELERATION, 1.0),
+    # Density (base: kg/m^3)
+    "kg/m^3": UnitSpec("kg/m^3", "kg/m^3", DIM_DENSITY, 1.0),
+    "g/cm^3": UnitSpec("g/cm^3", "kg/m^3", DIM_DENSITY, 1000.0),
+    "mg/mL": UnitSpec("mg/mL", "kg/m^3", DIM_DENSITY, 1.0),
+    # Molar Energy (base: J/mol)
+    "J/mol": UnitSpec("J/mol", "J/mol", DIM_MOLAR_ENERGY, 1.0),
+    "kJ/mol": UnitSpec("kJ/mol", "J/mol", DIM_MOLAR_ENERGY, 1000.0),
+    "kcal/mol": UnitSpec("kcal/mol", "J/mol", DIM_MOLAR_ENERGY, 4184.0),
     # Dimensionless
     "%": UnitSpec("%", "dimensionless", DIM_DIMENSIONLESS, 0.01),
     "percent": UnitSpec("percent", "dimensionless", DIM_DIMENSIONLESS, 0.01),
@@ -352,7 +398,7 @@ DIRECTED_CAUSAL_PATTERNS = re.compile(
 
 SPECULATIVE_PATTERNS = re.compile(
     r"\b(we hypothesize that|we postulate that|might indicate|could potentially explain|"
-    r"suggests that|plausibly reflects|it is tempting to speculate|"
+    r"suggests that|suggest that|plausibly reflects|it is tempting to speculate|"
     r"may suggest|hints at|warrants further investigation|tentative hypothesis)\b",
     re.IGNORECASE,
 )
@@ -368,7 +414,7 @@ EMPIRICAL_MEASUREMENT_PATTERNS = re.compile(
 QUANTITY_REGEX = re.compile(
     r"(?P<val>[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
     r"(?:\s*±\s*(?P<unc>\d+(?:\.\d+)?))?"
-    r"\s*(?P<unit>(?:[°µÅ]|[a-zA-Z%])+(?:/(?:[°µÅ]|[a-zA-Z%])+)?(?:\^[0-9]+)?)",
+    r"\s*(?P<unit>(?:[°µÅΩ]|[a-zA-Z%])+(?:/(?:[°µÅΩ]|[a-zA-Z%])+(?:\^[0-9]+)?)?(?:\^[0-9]+)?)",
     re.UNICODE,
 )
 
@@ -585,3 +631,142 @@ class STEMUnitNormalizer:
                 f"Epistemic Overreach Violation: Cannot promote correlational assertion "
                 f"'{assertion.statement}' to CAUSAL without experimental intervention."
             )
+
+    def run_preservation_and_epistemic_regression(self) -> PreservationBenchmarkResult:
+        """Run numerical magnitude preservation and epistemic regression test suite."""
+        test_cases = [
+            ("1.54 Å", 1.54e-10, "m"),
+            ("500 nm", 5.0e-7, "m"),
+            ("4.2 µm", 4.2e-6, "m"),
+            ("12.5 km", 12500.0, "m"),
+            ("250 g", 0.25, "kg"),
+            ("65 kDa", 65 * 1.66053906660e-24, "kg"),
+            ("250 ms", 0.25, "s"),
+            ("2.4 GHz", 2.4e9, "Hz"),
+            ("25 °C", 298.15, "K"),
+            ("100 kPa", 100000.0, "Pa"),
+            ("3.5 eV", 3.5 * 1.602176634e-19, "J"),
+            ("100 m/s", 100.0, "m/s"),
+            ("9.81 m/s^2", 9.81, "m/s^2"),
+            ("1000 kg/m^3", 1000.0, "kg/m^3"),
+            ("42.1 kJ/mol", 42100.0, "J/mol"),
+            ("100 Ω", 100.0, "Ω"),
+            ("5.0 W", 5.0, "W"),
+            ("10.0 N", 10.0, "N"),
+            ("100 mL", 1e-4, "m^3"),
+        ]
+
+        max_rel_err = 0.0
+        passed_roundtrips = 0
+
+        for raw_str, expected_canon, canon_unit in test_cases:
+            q = self.normalize_quantity(raw_str)
+            if q.canonical_unit != canon_unit:
+                continue
+            err = abs(q.canonical_value - expected_canon) / abs(expected_canon)
+            if err > max_rel_err:
+                max_rel_err = err
+            converted_back = q.convert_to(q.raw_unit)
+            roundtrip_err = abs(converted_back - q.numeric_value) / abs(q.numeric_value)
+            if roundtrip_err < 1e-12:
+                passed_roundtrips += 1
+
+        preservation_rate = passed_roundtrips / len(test_cases)
+        roundtrip_passed = (preservation_rate == 1.0) and (max_rel_err < 1e-12)
+
+        epistemic_regression_suite = [
+            (
+                "Elevated levels of CRP are strongly correlated with coronary risk.",
+                EpistemicAssertionType.CORRELATIONAL,
+            ),
+            (
+                "Expression of microRNA-21 was associated with metastatic progression.",
+                EpistemicAssertionType.CORRELATIONAL,
+            ),
+            (
+                "We hypothesize that histone acetylation might potentially remodel chromatin.",
+                EpistemicAssertionType.SPECULATIVE,
+            ),
+            (
+                "These data suggest that kinase phosphorylation could facilitate entry.",
+                EpistemicAssertionType.SPECULATIVE,
+            ),
+            (
+                "Treatment with 50 nM paclitaxel caused spindle checkpoint arrest.",
+                EpistemicAssertionType.CAUSAL,
+            ),
+            (
+                "CRISPR knockout of p53 resulted in genome instability.",
+                EpistemicAssertionType.CAUSAL,
+            ),
+            (
+                "The sample absorbance was measured at 540 nm with optical density of 0.42.",
+                EpistemicAssertionType.EMPIRICAL,
+            ),
+        ]
+
+        assertions_passed = 0
+        overreach_blocked = 0
+
+        for text, expected_type in epistemic_regression_suite:
+            assertion = self.classify_epistemic_assertion(text)
+            if assertion.epistemic_type == expected_type:
+                assertions_passed += 1
+
+            if assertion.epistemic_type == EpistemicAssertionType.CORRELATIONAL:
+                try:
+                    self.verify_no_epistemic_overreach(assertion, EpistemicAssertionType.CAUSAL)
+                except EpistemicOverreachError:
+                    overreach_blocked += 1
+
+        epistemic_passed = (
+            assertions_passed == len(epistemic_regression_suite)
+        ) and (overreach_blocked == 2)
+
+        summary = (
+            f"Preservation benchmark: {passed_roundtrips}/{len(test_cases)} passed roundtrip "
+            f"(max relative error: {max_rel_err:.2e}). "
+            f"Epistemic regression: {assertions_passed}/{len(epistemic_regression_suite)} correct, "
+            f"{overreach_blocked} overreach attempts blocked."
+        )
+
+        return PreservationBenchmarkResult(
+            total_quantities_tested=len(test_cases),
+            max_relative_error=max_rel_err,
+            roundtrip_passed=roundtrip_passed,
+            preservation_rate=round(preservation_rate, 4),
+            epistemic_assertions_tested=len(epistemic_regression_suite),
+            overreach_attempts_blocked=overreach_blocked,
+            epistemic_regression_passed=epistemic_passed,
+            summary=summary,
+        )
+
+
+@dataclass(frozen=True)
+class PreservationBenchmarkResult:
+    """Benchmark results verifying quantity preservation and epistemic regression safety."""
+
+    total_quantities_tested: int
+    max_relative_error: float
+    roundtrip_passed: bool
+    preservation_rate: float
+    epistemic_assertions_tested: int
+    overreach_attempts_blocked: int
+    epistemic_regression_passed: bool
+    summary: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total_quantities_tested": self.total_quantities_tested,
+            "max_relative_error": self.max_relative_error,
+            "roundtrip_passed": self.roundtrip_passed,
+            "preservation_rate": self.preservation_rate,
+            "epistemic_assertions_tested": self.epistemic_assertions_tested,
+            "overreach_attempts_blocked": self.overreach_attempts_blocked,
+            "epistemic_regression_passed": self.epistemic_regression_passed,
+            "summary": self.summary,
+        }
+
+    def to_json(self, indent: int | None = 2) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
+

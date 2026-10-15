@@ -119,8 +119,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M4-SCINLP-002-SUB-01` | Implement section segmentation and discourse tree structures | `MOD-SCINLP-002` | `DONE` | `M4-SCINLP-002` |
 | `M4-SCINLP-002-SUB-02` | Benchmark section parsing accuracy across document layouts | `MOD-SCINLP-002` | `DONE` | `M4-SCINLP-002-SUB-01` |
 | `M4-SCINLP-003` | STEM Unit & Quantitative Relation Normalizer | `MOD-SCINLP-003` | `IN_PROGRESS` | `M4-SCINLP-002` |
-| `M4-SCINLP-003-SUB-01` | Implement scientific unit conversion and magnitude scaling | `MOD-SCINLP-003` | `IN_REVIEW` | `M4-SCINLP-003` |
-| `M4-SCINLP-003-SUB-02` | Add boundary tests for numerical ranges and dimensional analysis | `MOD-SCINLP-003` | `BACKLOG` | `M4-SCINLP-003-SUB-01` |
+| `M4-SCINLP-003-SUB-01` | Implement scientific unit conversion and magnitude scaling | `MOD-SCINLP-003` | `DONE` | `M4-SCINLP-003` |
+| `M4-SCINLP-003-SUB-02` | Add boundary tests for numerical ranges and dimensional analysis | `MOD-SCINLP-003` | `IN_REVIEW` | `M4-SCINLP-003-SUB-01` |
 
 
 ---
