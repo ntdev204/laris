@@ -324,3 +324,176 @@ class TokenizerTrainingInputSpec:
                     f"Document '{doc_id}' belongs to split '{item.split.value}'. "
                     "Tokenizer training input contains non-TRAIN document, causing leakage!"
                 )
+
+
+@dataclass(frozen=True)
+class SentenceEncoderContract:
+    """Formal contract specification for Boundary B sentence encoders."""
+
+    model_id: str
+    embedding_dim: int
+    max_sequence_length: int = DEFAULT_MAX_SEQUENCE_LENGTH
+    pooling_strategy: str = "mean"
+    normalize_embeddings: bool = True
+    vocab_sha256: str = ""
+    parameters_budget_mb: float = 1000.0
+
+    def __post_init__(self) -> None:
+        if not self.model_id or not self.model_id.strip():
+            raise ModuleContractViolationError("model_id must be a non-empty string")
+        if self.embedding_dim not in ALLOWED_EMBEDDING_DIMENSIONS:
+            raise EmbeddingDimensionMismatchError(
+                f"Embedding dimension {self.embedding_dim} is invalid. "
+                f"Allowed dimensions are {sorted(ALLOWED_EMBEDDING_DIMENSIONS)}"
+            )
+        if self.max_sequence_length <= 0:
+            raise ValueError(f"max_sequence_length must be > 0, got {self.max_sequence_length}")
+        if self.pooling_strategy not in {"mean", "cls", "max"}:
+            raise ModuleContractViolationError(
+                f"Invalid pooling_strategy '{self.pooling_strategy}'. Allowed: 'mean', 'cls', 'max'"
+            )
+        if self.parameters_budget_mb > 1024.0:
+            raise ModuleContractViolationError(
+                f"Encoder memory budget {self.parameters_budget_mb} MB "
+                "exceeds Tier 1 limit (1.0 GB)"
+            )
+
+
+@dataclass(frozen=True)
+class EncoderCheckpointMetadata:
+    """Metadata recording checkpoint identity, provenance, and cryptographic integrity."""
+
+    checkpoint_id: str
+    model_id: str
+    embedding_dim: int
+    vocab_sha256: str
+    weights_sha256: str
+    parameter_count: int
+    created_at: str
+    lineage: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.checkpoint_id or not self.checkpoint_id.strip():
+            raise ModuleContractViolationError("checkpoint_id must not be empty")
+        if self.embedding_dim not in ALLOWED_EMBEDDING_DIMENSIONS:
+            allowed = sorted(ALLOWED_EMBEDDING_DIMENSIONS)
+            raise EmbeddingDimensionMismatchError(
+                f"Embedding dimension {self.embedding_dim} is not in {allowed}"
+            )
+        if len(self.vocab_sha256) != 64:
+            raise ValueError(f"vocab_sha256 must be 64-char hex string, got '{self.vocab_sha256}'")
+        if len(self.weights_sha256) != 64:
+            raise ValueError(
+                f"weights_sha256 must be 64-char hex string, got '{self.weights_sha256}'"
+            )
+        if self.parameter_count <= 0:
+            raise ValueError(f"parameter_count must be > 0, got {self.parameter_count}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serializes metadata to dictionary."""
+        return {
+            "checkpoint_id": self.checkpoint_id,
+            "model_id": self.model_id,
+            "embedding_dim": self.embedding_dim,
+            "vocab_sha256": self.vocab_sha256,
+            "weights_sha256": self.weights_sha256,
+            "parameter_count": self.parameter_count,
+            "created_at": self.created_at,
+            "lineage": dict(self.lineage),
+            "metadata": dict(self.metadata),
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        """Serializes metadata to JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "EncoderCheckpointMetadata":
+        """Deserializes metadata from dictionary."""
+        return cls(
+            checkpoint_id=data["checkpoint_id"],
+            model_id=data["model_id"],
+            embedding_dim=data["embedding_dim"],
+            vocab_sha256=data["vocab_sha256"],
+            weights_sha256=data["weights_sha256"],
+            parameter_count=data["parameter_count"],
+            created_at=data["created_at"],
+            lineage=dict(data.get("lineage", {})),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "EncoderCheckpointMetadata":
+        """Deserializes metadata from JSON string."""
+        return cls.from_dict(json.loads(json_str))
+
+    def save_to_file(self, target_path: Union[str, Path]) -> None:
+        """Saves metadata to JSON file."""
+        path = Path(target_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(self.to_json())
+
+    @classmethod
+    def load_from_file(cls, source_path: Union[str, Path]) -> "EncoderCheckpointMetadata":
+        """Loads metadata from JSON file."""
+        with open(source_path, "r", encoding="utf-8") as f:
+            return cls.from_json(f.read())
+
+
+@dataclass(frozen=True)
+class SentenceEmbeddingOutput:
+    """Dense vector embedding representation of a single normalized sentence."""
+
+    text: str
+    embedding: List[float]
+    token_count: int
+    embedding_dim: int
+
+    def __post_init__(self) -> None:
+        if not self.text or not self.text.strip():
+            raise ModuleContractViolationError("SentenceEmbeddingOutput text must not be empty")
+        if self.token_count <= 0:
+            raise ValueError(f"token_count must be > 0, got {self.token_count}")
+        if self.embedding_dim not in ALLOWED_EMBEDDING_DIMENSIONS:
+            allowed = sorted(ALLOWED_EMBEDDING_DIMENSIONS)
+            raise EmbeddingDimensionMismatchError(
+                f"Embedding dimension {self.embedding_dim} must be in {allowed}"
+            )
+        if len(self.embedding) != self.embedding_dim:
+            raise EmbeddingDimensionMismatchError(
+                f"Embedding vector length ({len(self.embedding)}) does not match declared "
+                f"embedding_dim ({self.embedding_dim})"
+            )
+        import math
+
+        for idx, val in enumerate(self.embedding):
+            if not math.isfinite(val):
+                raise ValueError(f"Non-finite value at index {idx}: {val}")
+
+
+@dataclass(frozen=True)
+class EmbeddingBatchOutput:
+    """Batch of sentence embedding representations."""
+
+    embeddings: List[SentenceEmbeddingOutput]
+    model_id: str
+    embedding_dim: int
+    batch_size: int
+
+    def __post_init__(self) -> None:
+        if not self.embeddings:
+            raise ModuleContractViolationError("embeddings list must not be empty")
+        if len(self.embeddings) != self.batch_size:
+            raise ValueError(
+                f"embeddings length ({len(self.embeddings)}) does not match "
+                f"batch_size ({self.batch_size})"
+            )
+        for idx, emb in enumerate(self.embeddings):
+            if emb.embedding_dim != self.embedding_dim:
+                raise EmbeddingDimensionMismatchError(
+                    f"Embedding at index {idx} dimension ({emb.embedding_dim}) does not match "
+                    f"batch embedding_dim ({self.embedding_dim})"
+                )
+

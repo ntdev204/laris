@@ -1,5 +1,14 @@
 """Layer 1: Language Foundation & Core Representations."""
 
+from laris.layers.layer1_language.bm25 import (
+    BM25Document,
+    BM25RetrievalBaseline,
+    BM25SearchResult,
+)
+from laris.layers.layer1_language.encoder import (
+    BaseSentenceEncoder,
+    CompactSentenceEncoder,
+)
 from laris.layers.layer1_language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     CANONICAL_SPECIAL_TOKENS,
@@ -15,7 +24,11 @@ from laris.layers.layer1_language.schemas import (
     SEP_TOKEN,
     UNIT_TOKEN,
     UNK_TOKEN,
+    EmbeddingBatchOutput,
+    EncoderCheckpointMetadata,
     NormalizedSentenceInput,
+    SentenceEmbeddingOutput,
+    SentenceEncoderContract,
     SpecialTokenConfig,
     TokenizedSentenceOutput,
     TokenizerTrainingInputSpec,
@@ -54,4 +67,13 @@ __all__ = [
     "StemFertilityReport",
     "compute_token_fertility",
     "evaluate_stem_fertility",
+    "BaseSentenceEncoder",
+    "CompactSentenceEncoder",
+    "SentenceEncoderContract",
+    "EncoderCheckpointMetadata",
+    "SentenceEmbeddingOutput",
+    "EmbeddingBatchOutput",
+    "BM25Document",
+    "BM25SearchResult",
+    "BM25RetrievalBaseline",
 ]
