@@ -38,7 +38,7 @@ class SpecialistInputPayload:
             raise ModuleContractViolationError(
                 "SpecialistInputPayload goal_statement must not be empty."
             )
-        if math.isnan(timeout_seconds) or timeout_seconds <= 0.0:
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0.0:
             raise ModuleContractViolationError(
                 "SpecialistInputPayload timeout_seconds must be a positive finite float."
             )
@@ -74,7 +74,7 @@ class SpecialistOutputPayload:
             raise ModuleContractViolationError(
                 "SpecialistOutputPayload tokens_used must be non-negative."
             )
-        if math.isnan(duration_ms) or duration_ms < 0.0:
+        if not math.isfinite(duration_ms) or duration_ms < 0.0:
             raise ModuleContractViolationError(
                 "SpecialistOutputPayload duration_ms must be a non-negative finite float."
             )
@@ -107,7 +107,7 @@ class BaseSpecialistAgent(ABC):
             raise ModuleContractViolationError(
                 f"max_retries ({max_retries}) must be bounded within [0, 3]."
             )
-        if math.isnan(timeout_seconds) or timeout_seconds <= 0.0:
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0.0:
             raise ModuleContractViolationError(
                 "timeout_seconds must be a positive finite float."
             )
