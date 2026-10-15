@@ -9,6 +9,17 @@ from laris.layers.layer2_semantic.engine import (
     SCIENTIFIC_OPPOSITES,
     DeterministicScientificNLIEngine,
 )
+from laris.layers.layer2_semantic.relations import (
+    CORRELATIONAL_CUES,
+    CoreferenceCluster,
+    CoreferenceOutput,
+    CoreferenceResolutionStatus,
+    DiscourseRelationOutput,
+    DiscourseRelationType,
+    EquivalenceStatus,
+    MentionSpan,
+    SemanticEquivalenceOutput,
+)
 from laris.layers.layer2_semantic.schemas import (
     LN_3,
     PROBABILITY_SUM_TOLERANCE,
@@ -34,4 +45,13 @@ __all__ = [
     "DIRECT_NEGATIONS",
     "PROBABILITY_SUM_TOLERANCE",
     "LN_3",
+    "EquivalenceStatus",
+    "SemanticEquivalenceOutput",
+    "CoreferenceResolutionStatus",
+    "MentionSpan",
+    "CoreferenceCluster",
+    "CoreferenceOutput",
+    "DiscourseRelationType",
+    "DiscourseRelationOutput",
+    "CORRELATIONAL_CUES",
 ]
