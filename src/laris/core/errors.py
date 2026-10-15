@@ -30,3 +30,23 @@ class ModuleContractViolationError(LarisError):
 class CyclicExecutionError(LarisError):
     """Raised when an agent enters an infinite recursion or dispatches duplicate tool calls."""
     pass
+
+
+class LicenseViolationError(LarisError):
+    """Raised when an ingested document lacks a permitted open-access redistribution license."""
+    pass
+
+
+class EncodingCorruptError(LarisError):
+    """Raised when text encoding cannot be deterministically normalized to valid UTF-8."""
+    pass
+
+
+class DuplicateCorpusError(LarisError):
+    """Raised when an identical or near-duplicate document is detected in the corpus."""
+    pass
+
+
+class DataLeakageError(LarisError):
+    """Raised when an entity or author overlaps between training and evaluation splits."""
+    pass

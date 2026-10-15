@@ -51,11 +51,13 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M1: Corpus Ingestion & Data Governance (Layer 0)
-**Status:** `READY` (Awaiting execution authorization)
+**Status:** `IN_PROGRESS`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
-| `M1-DATA-001` | Corpus Manifest & Data Contract Schema | `MOD-CORPUS-001` | `READY` | `M0-SPEC-001` |
+| `M1-DATA-001` | Corpus Manifest & Data Contract Schema | `MOD-CORPUS-001` | `IN_PROGRESS` | `M0-SPEC-001` |
+| `M1-DATA-001-SUB-01` | Define typed schema fields and invariants | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-001` |
+| `M1-DATA-001-SUB-02` | Validate manifest invariants and authorization | `MOD-CORPUS-001` | `READY` | `M1-DATA-001-SUB-01` |
 | `M1-DATA-002` | Deterministic Text & Math Normalizer | `MOD-CORPUS-001` | `BACKLOG` | `M1-DATA-001` |
 | `M1-DATA-003` | Content Hashing & Deduplication Engine | `MOD-CORPUS-001` | `BACKLOG` | `M1-DATA-002` |
 | `M1-DATA-004` | Leakage-Proof Dataset Partition Engine | `MOD-CORPUS-001` | `BACKLOG` | `M1-DATA-003` |

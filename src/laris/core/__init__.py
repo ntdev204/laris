@@ -2,9 +2,13 @@
 
 from laris.core.errors import (
     CyclicExecutionError,
+    DataLeakageError,
+    DuplicateCorpusError,
+    EncodingCorruptError,
     EpistemicOverreachError,
     HardwareBudgetExceededError,
     LarisError,
+    LicenseViolationError,
     ModuleContractViolationError,
     ProvenanceViolationError,
 )
@@ -34,4 +38,8 @@ __all__ = [
     "HardwareBudgetExceededError",
     "ModuleContractViolationError",
     "CyclicExecutionError",
+    "LicenseViolationError",
+    "EncodingCorruptError",
+    "DuplicateCorpusError",
+    "DataLeakageError",
 ]
