@@ -26,6 +26,9 @@ To ensure that research provenance, documentation integrity, and local hardware 
 
 ## 3. Code Standards & Testing
 
+- All contributors must comply with the canonical engineering standards defined in [docs/development/CODING_STANDARDS.md](file:///home/thientn204/laris/docs/development/CODING_STANDARDS.md).
+- Strict Git Flow branching, review cycles, and merge policies are defined in [docs/development/GIT_FLOW.md](file:///home/thientn204/laris/docs/development/GIT_FLOW.md).
 - Python 3.10+ with strict type annotations (`typing`, `dataclasses`, `pydantic`).
-- Code must reside within `src/laris/` adhering to layer modularity.
+- Code must reside within `src/laris/` adhering to layer modularity defined in [docs/architecture/LAYER_ARCHITECTURE.md](file:///home/thientn204/laris/docs/architecture/LAYER_ARCHITECTURE.md) and [docs/specifications/MODULE_CONTRACTS.md](file:///home/thientn204/laris/docs/specifications/MODULE_CONTRACTS.md).
 - All new features require unit tests in `tests/unit/` or contract tests in `tests/contract/`.
+- Local quality gates must pass prior to opening PRs: `pytest`, `ruff check .`, `mypy src`, and `python3 scripts/validate_docs.py`.
