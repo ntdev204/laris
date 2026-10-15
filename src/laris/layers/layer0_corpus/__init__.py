@@ -14,6 +14,15 @@ from laris.layers.layer0_corpus.dedup import (
     verify_content_digest,
 )
 from laris.layers.layer0_corpus.normalizer import normalize_scientific_text
+from laris.layers.layer0_corpus.partition import (
+    DEFAULT_PARTITION_SEED,
+    PARTITION_ALGORITHM,
+    PARTITION_SPEC_VERSION,
+    DatasetPartitionEngine,
+    MissingAuthorPolicy,
+    SplitRatios,
+    verify_split_leakage,
+)
 from laris.layers.layer0_corpus.schemas import (
     PERMITTED_OPEN_ACCESS_LICENSES,
     CorpusManifest,
@@ -48,4 +57,11 @@ __all__ = [
     "DIGEST_ALGORITHM",
     "DIGEST_ENCODING",
     "DIGEST_SPEC_VERSION",
+    "DatasetPartitionEngine",
+    "SplitRatios",
+    "MissingAuthorPolicy",
+    "verify_split_leakage",
+    "DEFAULT_PARTITION_SEED",
+    "PARTITION_ALGORITHM",
+    "PARTITION_SPEC_VERSION",
 ]
