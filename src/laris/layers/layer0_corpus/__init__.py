@@ -42,6 +42,14 @@ from laris.layers.layer0_corpus.schemas import (
     verify_item_authorization,
     verify_item_content_hash,
 )
+from laris.layers.layer0_corpus.storage import (
+    MANIFEST_FILE_NAME,
+    SPLIT_FILE_NAMES,
+    SPLIT_MANIFEST_FILE_NAME,
+    export_processed_corpus,
+    load_processed_split,
+    verify_processed_directory_layout,
+)
 
 __all__ = [
     "DatasetSplit",
@@ -78,4 +86,10 @@ __all__ = [
     "Layer0Pipeline",
     "RawDocumentInput",
     "Layer0PipelineOutput",
+    "MANIFEST_FILE_NAME",
+    "SPLIT_MANIFEST_FILE_NAME",
+    "SPLIT_FILE_NAMES",
+    "export_processed_corpus",
+    "load_processed_split",
+    "verify_processed_directory_layout",
 ]
