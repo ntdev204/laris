@@ -8,6 +8,7 @@ Adheres to DOC-SPEC-MOD-001 (Boundary H), ADR-006, and Issue #65:
 """
 
 from laris.layers.layer8_orchestration.dag_validator import DAGValidator
+from laris.layers.layer8_orchestration.runtime import DAGScheduler, default_node_executor
 from laris.layers.layer8_orchestration.schemas import (
     AgentRole,
     AgentStep,
@@ -31,4 +32,6 @@ __all__ = [
     "OrchestrationResult",
     "PlanDAG",
     "DAGValidator",
+    "DAGScheduler",
+    "default_node_executor",
 ]
