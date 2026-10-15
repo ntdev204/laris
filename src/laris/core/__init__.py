@@ -2,6 +2,7 @@
 
 from laris.core.errors import (
     CyclicExecutionError,
+    DataIntegrityError,
     DataLeakageError,
     DuplicateCorpusError,
     EmbeddingDimensionMismatchError,
@@ -45,6 +46,7 @@ __all__ = [
     "EncodingCorruptError",
     "DuplicateCorpusError",
     "DataLeakageError",
+    "DataIntegrityError",
     "SequenceLengthExceededError",
     "VocabularyMismatchError",
     "EmbeddingDimensionMismatchError",

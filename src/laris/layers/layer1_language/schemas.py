@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 from laris.core.errors import (
     DataLeakageError,
     EmbeddingDimensionMismatchError,
+    HardwareBudgetExceededError,
     ModuleContractViolationError,
     SequenceLengthExceededError,
     VocabularyMismatchError,
@@ -240,6 +241,9 @@ class VocabularyContract:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return cls.from_dict(data)
+
+    save_to_file = to_file
+    load_from_file = from_file
 
     @classmethod
     def create(
@@ -496,4 +500,106 @@ class EmbeddingBatchOutput:
                     f"Embedding at index {idx} dimension ({emb.embedding_dim}) does not match "
                     f"batch embedding_dim ({self.embedding_dim})"
                 )
+
+
+@dataclass(frozen=True)
+class LanguageTrainingRunManifest:
+    """Immutable audit record documenting language model training and evaluation provenance."""
+
+    run_id: str
+    model_id: str
+    seed: int
+    created_at: str
+    hardware_info: Dict[str, Any]
+    hyperparameters: Dict[str, Any]
+    dataset_provenance: Dict[str, Any]
+    training_metrics: Dict[str, float]
+    evaluation_metrics: Dict[str, Any]
+    checkpoint_metadata: EncoderCheckpointMetadata
+    manifest_sha256: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.run_id or not self.run_id.strip():
+            raise ModuleContractViolationError("run_id must not be empty")
+        if not self.model_id or not self.model_id.strip():
+            raise ModuleContractViolationError("model_id must not be empty")
+        if not self.created_at:
+            raise ValueError("created_at must be provided")
+
+        # Hardware safety envelope check (ADR-001 / ADR-005): RTX 5070 Ti headroom 14.5 GB VRAM
+        vram_allocated_gb = self.hardware_info.get("peak_vram_gb", 0.0)
+        if vram_allocated_gb > 14.5:
+            raise HardwareBudgetExceededError(
+                f"Peak VRAM allocation {vram_allocated_gb:.2f} GB exceeds safe threshold (14.5 GB)"
+            )
+
+        # Dataset provenance leakage check
+        test_overlap_count = self.dataset_provenance.get("test_leakage_overlap_count", 0)
+        if test_overlap_count > 0:
+            raise DataLeakageError(
+                f"Training run detected {test_overlap_count} overlapping documents with TEST split!"
+            )
+
+    def compute_sha256(self) -> str:
+        """Computes the deterministic SHA-256 digest of the manifest contents."""
+        content = {
+            "run_id": self.run_id,
+            "model_id": self.model_id,
+            "seed": self.seed,
+            "created_at": self.created_at,
+            "hardware_info": self.hardware_info,
+            "hyperparameters": self.hyperparameters,
+            "dataset_provenance": self.dataset_provenance,
+            "training_metrics": self.training_metrics,
+            "evaluation_metrics": self.evaluation_metrics,
+            "checkpoint_id": self.checkpoint_metadata.checkpoint_id,
+            "weights_sha256": self.checkpoint_metadata.weights_sha256,
+        }
+        raw_json = json.dumps(content, sort_keys=True)
+        return hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serializes manifest to dictionary."""
+        sha = self.manifest_sha256 or self.compute_sha256()
+        return {
+            "run_id": self.run_id,
+            "model_id": self.model_id,
+            "seed": self.seed,
+            "created_at": self.created_at,
+            "hardware_info": dict(self.hardware_info),
+            "hyperparameters": dict(self.hyperparameters),
+            "dataset_provenance": dict(self.dataset_provenance),
+            "training_metrics": dict(self.training_metrics),
+            "evaluation_metrics": dict(self.evaluation_metrics),
+            "checkpoint_metadata": self.checkpoint_metadata.to_dict(),
+            "manifest_sha256": sha,
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        """Serializes manifest to JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "LanguageTrainingRunManifest":
+        """Deserializes manifest from dictionary."""
+        chk_meta = EncoderCheckpointMetadata.from_dict(data["checkpoint_metadata"])
+        return cls(
+            run_id=data["run_id"],
+            model_id=data["model_id"],
+            seed=data["seed"],
+            created_at=data["created_at"],
+            hardware_info=dict(data.get("hardware_info", {})),
+            hyperparameters=dict(data.get("hyperparameters", {})),
+            dataset_provenance=dict(data.get("dataset_provenance", {})),
+            training_metrics=dict(data.get("training_metrics", {})),
+            evaluation_metrics=dict(data.get("evaluation_metrics", {})),
+            checkpoint_metadata=chk_meta,
+            manifest_sha256=data.get("manifest_sha256", ""),
+        )
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "LanguageTrainingRunManifest":
+        """Deserializes manifest from JSON string."""
+        return cls.from_dict(json.loads(json_str))
+
 
