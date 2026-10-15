@@ -4,6 +4,7 @@ from laris.core.errors import (
     CyclicExecutionError,
     DataLeakageError,
     DuplicateCorpusError,
+    EmbeddingDimensionMismatchError,
     EncodingCorruptError,
     EpistemicOverreachError,
     HardwareBudgetExceededError,
@@ -11,6 +12,8 @@ from laris.core.errors import (
     LicenseViolationError,
     ModuleContractViolationError,
     ProvenanceViolationError,
+    SequenceLengthExceededError,
+    VocabularyMismatchError,
 )
 from laris.core.schemas import (
     CalibratedScores,
@@ -42,4 +45,7 @@ __all__ = [
     "EncodingCorruptError",
     "DuplicateCorpusError",
     "DataLeakageError",
+    "SequenceLengthExceededError",
+    "VocabularyMismatchError",
+    "EmbeddingDimensionMismatchError",
 ]
