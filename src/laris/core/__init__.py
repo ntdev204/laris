@@ -9,10 +9,12 @@ from laris.core.errors import (
     EmbeddingDimensionMismatchError,
     EncodingCorruptError,
     EpistemicOverreachError,
+    ExtractionConfidenceBelowThresholdError,
     HardwareBudgetExceededError,
     InvalidNLIInputError,
     LarisError,
     LicenseViolationError,
+    MalformedDiscourseSpanError,
     ModuleContractViolationError,
     ProbabilityValidationError,
     ProvenanceViolationError,
@@ -58,4 +60,7 @@ __all__ = [
     "DiscourseParseError",
     "InvalidNLIInputError",
     "ProbabilityValidationError",
+    "ExtractionConfidenceBelowThresholdError",
+    "MalformedDiscourseSpanError",
 ]
+

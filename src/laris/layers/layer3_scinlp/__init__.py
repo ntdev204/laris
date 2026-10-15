@@ -1,0 +1,38 @@
+"""Layer 3: Scientific NLP & Discourse Intelligence.
+
+Implements Boundary D (MOD-SCINLP-001) providing heading-agnostic scientific discourse entity
+extraction (claims, methods, datasets, metrics, results, limitations, assumptions, formulas)
+anchored to immutable physical evidence coordinates.
+"""
+
+from laris.layers.layer3_scinlp.schemas import (
+    DEFAULT_CONFIDENCE_THRESHOLD,
+    MIN_EXTRACTION_CONFIDENCE,
+    AssumptionRecord,
+    ClaimRecord,
+    DatasetRecord,
+    DiscourseEntityType,
+    DiscourseExtractionSet,
+    DiscourseExtractorContract,
+    FormulaRecord,
+    LimitationRecord,
+    MethodRecord,
+    MetricRecord,
+    ResultRecord,
+)
+
+__all__ = [
+    "DiscourseEntityType",
+    "ClaimRecord",
+    "MethodRecord",
+    "DatasetRecord",
+    "MetricRecord",
+    "ResultRecord",
+    "LimitationRecord",
+    "AssumptionRecord",
+    "FormulaRecord",
+    "DiscourseExtractionSet",
+    "DiscourseExtractorContract",
+    "MIN_EXTRACTION_CONFIDENCE",
+    "DEFAULT_CONFIDENCE_THRESHOLD",
+]
