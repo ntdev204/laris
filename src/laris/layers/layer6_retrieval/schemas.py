@@ -131,6 +131,8 @@ class RetrievalQuery:
     dense_vector: Optional[List[float]] = None
     target_entities: Optional[List[str]] = None
     max_depth: int = 2
+    require_coordinates: bool = False
+
 
     def __post_init__(self) -> None:
         if not self.text or not self.text.strip():

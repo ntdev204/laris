@@ -27,6 +27,7 @@ from laris.layers.layer6_retrieval.lexical_adapter import (
     LexicalBM25Adapter,
     LexicalDocument,
 )
+from laris.layers.layer6_retrieval.provenance import EvidenceCoordinateValidator
 from laris.layers.layer6_retrieval.schemas import (
     DEFAULT_RRF_K,
     MAX_RETRIEVAL_DEPTH,
@@ -59,5 +60,7 @@ __all__ = [
     "FallbackRobustnessResult",
     "RetrievalBenchmarkReport",
     "RetrievalEvaluationBenchmark",
+    "EvidenceCoordinateValidator",
 ]
+
 
