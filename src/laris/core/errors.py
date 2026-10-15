@@ -71,3 +71,25 @@ class DataIntegrityError(LarisError):
     """Raised when an artifact cryptographic hash or checksum fails verification."""
     pass
 
+
+class UncertaintyCeilingExceededError(ModuleContractViolationError):
+    """Raised when an uncertainty score violates valid bounds [0.0, 1.0]
+    or exceeds operational threshold.
+    """
+    pass
+
+
+class DiscourseParseError(LarisError):
+    """Raised when discourse relation parsing fails or encounters unparseable structure."""
+    pass
+
+
+class InvalidNLIInputError(ModuleContractViolationError):
+    """Raised when an NLI input premise or hypothesis is empty, malformed, or invalid."""
+    pass
+
+
+class ProbabilityValidationError(ModuleContractViolationError):
+    """Raised when class probabilities fail valid range or sum-to-one constraints."""
+    pass
+
