@@ -108,12 +108,12 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M4: Scientific NLP & Discourse Intelligence (Layer 3)
-**Status:** `READY`
+**Status:** `IN_PROGRESS`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
-| `M4-SCINLP-001` | Scientific Entity & Formula Extractor | `MOD-SCINLP-001` | `READY` | `M3-SEM-003` |
-| `M4-SCINLP-001-SUB-01` | Implement entity and formula extractor interfaces | `MOD-SCINLP-001` | `READY` | `M4-SCINLP-001` |
+| `M4-SCINLP-001` | Scientific Entity & Formula Extractor | `MOD-SCINLP-001` | `IN_PROGRESS` | `M3-SEM-003` |
+| `M4-SCINLP-001-SUB-01` | Implement entity and formula extractor interfaces | `MOD-SCINLP-001` | `IN_REVIEW` | `M4-SCINLP-001` |
 | `M4-SCINLP-001-SUB-02` | Add entity recognition tests and LaTeX math validation | `MOD-SCINLP-001` | `BACKLOG` | `M4-SCINLP-001-SUB-01` |
 | `M4-SCINLP-002` | Heading-Aware Section Segmenter & Discourse Hierarchy | `MOD-SCINLP-002` | `BACKLOG` | `M4-SCINLP-001` |
 | `M4-SCINLP-002-SUB-01` | Implement section segmentation and discourse tree structures | `MOD-SCINLP-002` | `BACKLOG` | `M4-SCINLP-002` |

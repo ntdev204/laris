@@ -93,3 +93,14 @@ class ProbabilityValidationError(ModuleContractViolationError):
     """Raised when class probabilities fail valid range or sum-to-one constraints."""
     pass
 
+
+class ExtractionConfidenceBelowThresholdError(ModuleContractViolationError):
+    """Raised when discourse entity extraction confidence falls below minimum threshold."""
+    pass
+
+
+class MalformedDiscourseSpanError(ModuleContractViolationError):
+    """Raised when a discourse entity span has invalid character offsets or malformed content."""
+    pass
+
+
