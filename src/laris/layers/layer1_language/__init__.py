@@ -22,6 +22,12 @@ from laris.layers.layer1_language.schemas import (
     VocabularyContract,
     compute_vocabulary_sha256,
 )
+from laris.layers.layer1_language.tokenizer import (
+    ScientificTokenizer,
+    StemFertilityReport,
+    compute_token_fertility,
+    evaluate_stem_fertility,
+)
 
 __all__ = [
     "PAD_TOKEN",
@@ -44,4 +50,8 @@ __all__ = [
     "VocabularyContract",
     "TokenizerTrainingInputSpec",
     "compute_vocabulary_sha256",
+    "ScientificTokenizer",
+    "StemFertilityReport",
+    "compute_token_fertility",
+    "evaluate_stem_fertility",
 ]
