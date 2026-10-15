@@ -42,6 +42,7 @@ from laris.layers.layer3_scinlp.units import (
     EpistemicAssertion,
     EpistemicAssertionType,
     NormalizedQuantity,
+    PreservationBenchmarkResult,
     STEMUnitNormalizer,
     UnitSpec,
 )
@@ -77,6 +78,7 @@ __all__ = [
     "EpistemicAssertionType",
     "EpistemicAssertion",
     "STEMUnitNormalizer",
+    "PreservationBenchmarkResult",
     "MIN_EXTRACTION_CONFIDENCE",
     "DEFAULT_CONFIDENCE_THRESHOLD",
 ]
