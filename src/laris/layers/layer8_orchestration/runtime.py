@@ -13,6 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
+from laris.layers.layer8_orchestration.budget_governor import BudgetGovernor
+from laris.layers.layer8_orchestration.cycle_detector import CycleDetector
 from laris.layers.layer8_orchestration.dag_validator import DAGValidator
 from laris.layers.layer8_orchestration.schemas import (
     AgentRole,
@@ -46,6 +48,45 @@ def default_node_executor(
     return TaskNodeStatus.COMPLETED, output, None, 150
 
 
+def _cancel_remaining_pending_nodes(
+    node_states: Dict[str, TaskNode],
+    cancelled_nodes: Set[str],
+    trace: List[AgentStep],
+    step_counter: int,
+    error_message: str,
+    summary: str,
+) -> int:
+    """Cancels all currently pending nodes in node_states and records cancellation trace steps."""
+    for remaining_id, remaining_node in node_states.items():
+        if remaining_node.status == TaskNodeStatus.PENDING:
+            cancelled_node = TaskNode(
+                node_id=remaining_node.node_id,
+                agent_role=remaining_node.agent_role,
+                description=remaining_node.description,
+                dependencies=remaining_node.dependencies,
+                parameters=remaining_node.parameters,
+                status=TaskNodeStatus.CANCELLED,
+                error_message=error_message,
+            )
+            node_states[remaining_id] = cancelled_node
+            cancelled_nodes.add(remaining_id)
+            trace.append(
+                AgentStep(
+                    step_index=step_counter,
+                    node_id=remaining_id,
+                    agent_role=remaining_node.agent_role,
+                    started_at_iso=datetime.now(timezone.utc).isoformat(),
+                    completed_at_iso=datetime.now(timezone.utc).isoformat(),
+                    duration_ms=0.0,
+                    status=TaskNodeStatus.CANCELLED,
+                    tokens_used=0,
+                    summary=summary,
+                )
+            )
+            step_counter += 1
+    return step_counter
+
+
 class DAGScheduler:
     """Schedules and executes PlanDAG workflows with failure propagation and tracing."""
 
@@ -53,9 +94,13 @@ class DAGScheduler:
         self,
         validator: Optional[DAGValidator] = None,
         default_executor: Optional[NodeExecutor] = None,
+        cycle_detector: Optional[CycleDetector] = None,
+        budget_governor: Optional[BudgetGovernor] = None,
     ) -> None:
         self.validator = validator or DAGValidator()
         self.default_executor = default_executor or default_node_executor
+        self.cycle_detector = cycle_detector
+        self.budget_governor = budget_governor
 
     def execute_dag(
         self,
@@ -68,6 +113,9 @@ class DAGScheduler:
         effective_budget = budget or BudgetLimits()
         self.validator.validate_budget_limits(effective_budget)
         self.validator.validate_dag(dag)
+
+        detector = self.cycle_detector or CycleDetector()
+        governor = self.budget_governor or BudgetGovernor(effective_budget)
 
         custom_executors = executors or {}
         node_states: Dict[str, TaskNode] = dict(dag.nodes)
@@ -96,67 +144,46 @@ class DAGScheduler:
             for curr_node in ready_nodes:
                 # Check cooperative cancellation target
                 if cancel_before_node is not None and curr_node.node_id == cancel_before_node:
-                    # Cancel this and all remaining pending nodes
-                    for remaining_id, remaining_node in node_states.items():
-                        if remaining_node.status == TaskNodeStatus.PENDING:
-                            cancelled_node = TaskNode(
-                                node_id=remaining_node.node_id,
-                                agent_role=remaining_node.agent_role,
-                                description=remaining_node.description,
-                                dependencies=remaining_node.dependencies,
-                                parameters=remaining_node.parameters,
-                                status=TaskNodeStatus.CANCELLED,
-                                error_message="Execution cancelled by caller.",
-                            )
-                            node_states[remaining_id] = cancelled_node
-                            cancelled_nodes.add(remaining_id)
-                            trace.append(
-                                AgentStep(
-                                    step_index=step_counter,
-                                    node_id=remaining_id,
-                                    agent_role=remaining_node.agent_role,
-                                    started_at_iso=datetime.now(timezone.utc).isoformat(),
-                                    completed_at_iso=datetime.now(timezone.utc).isoformat(),
-                                    duration_ms=0.0,
-                                    status=TaskNodeStatus.CANCELLED,
-                                    tokens_used=0,
-                                    summary="Task cancelled before execution.",
-                                )
-                            )
-                            step_counter += 1
+                    step_counter = _cancel_remaining_pending_nodes(
+                        node_states=node_states,
+                        cancelled_nodes=cancelled_nodes,
+                        trace=trace,
+                        step_counter=step_counter,
+                        error_message="Execution cancelled by caller.",
+                        summary="Task cancelled before execution.",
+                    )
                     break
 
-                # Enforce budget step ceiling
-                if step_counter >= effective_budget.max_steps:
-                    # Ceiling reached: cancel remaining pending nodes
-                    for remaining_id, remaining_node in node_states.items():
-                        if remaining_node.status == TaskNodeStatus.PENDING:
-                            timeout_node = TaskNode(
-                                node_id=remaining_node.node_id,
-                                agent_role=remaining_node.agent_role,
-                                description=remaining_node.description,
-                                dependencies=remaining_node.dependencies,
-                                parameters=remaining_node.parameters,
-                                status=TaskNodeStatus.CANCELLED,
-                                error_message="Budget step limit reached.",
-                            )
-                            node_states[remaining_id] = timeout_node
-                            cancelled_nodes.add(remaining_id)
-                            trace.append(
-                                AgentStep(
-                                    step_index=step_counter,
-                                    node_id=remaining_id,
-                                    agent_role=remaining_node.agent_role,
-                                    started_at_iso=datetime.now(timezone.utc).isoformat(),
-                                    completed_at_iso=datetime.now(timezone.utc).isoformat(),
-                                    duration_ms=0.0,
-                                    status=TaskNodeStatus.CANCELLED,
-                                    tokens_used=0,
-                                    summary="Aborted: hard step limit reached.",
-                                )
-                            )
-                            step_counter += 1
+                # Enforce budget step ceiling and governor exhaustion
+                if step_counter >= effective_budget.max_steps or governor.is_exhausted():
+                    rationale = governor.exhaustion_rationale() or "Budget step limit reached."
+                    cancel_msg = (
+                        "Budget step limit reached."
+                        if step_counter >= effective_budget.max_steps
+                        else rationale
+                    )
+                    summary = (
+                        "Aborted: hard step limit reached."
+                        if step_counter >= effective_budget.max_steps
+                        else f"Aborted: {rationale}"
+                    )
+                    step_counter = _cancel_remaining_pending_nodes(
+                        node_states=node_states,
+                        cancelled_nodes=cancelled_nodes,
+                        trace=trace,
+                        step_counter=step_counter,
+                        error_message=cancel_msg,
+                        summary=summary,
+                    )
                     break
+
+                # Cycle detection on node execution
+                detector.record_action(
+                    role=curr_node.agent_role,
+                    parameters=curr_node.parameters,
+                    task_id=curr_node.node_id,
+                    description=curr_node.description,
+                )
 
                 # Select executor for node's agent role
                 executor = custom_executors.get(curr_node.agent_role, self.default_executor)
@@ -203,6 +230,9 @@ class DAGScheduler:
                 )
                 step_counter += 1
 
+                # Record step in budget governor
+                governor.record_step(tokens_used=tokens, duration_ms=dur_ms)
+
                 if status == TaskNodeStatus.COMPLETED:
                     completed_nodes.add(curr_node.node_id)
                     if output is not None:
@@ -243,6 +273,29 @@ class DAGScheduler:
                                 )
                             )
                             step_counter += 1
+
+                # If budget exhausted after this step, cancel remaining pending nodes
+                if governor.is_exhausted():
+                    rationale = governor.exhaustion_rationale() or "Budget limit reached."
+                    cancel_msg = (
+                        "Budget step limit reached."
+                        if governor.steps_executed >= effective_budget.max_steps
+                        else rationale
+                    )
+                    summary = (
+                        "Aborted: hard step limit reached."
+                        if governor.steps_executed >= effective_budget.max_steps
+                        else f"Aborted: {rationale}"
+                    )
+                    step_counter = _cancel_remaining_pending_nodes(
+                        node_states=node_states,
+                        cancelled_nodes=cancelled_nodes,
+                        trace=trace,
+                        step_counter=step_counter,
+                        error_message=cancel_msg,
+                        summary=summary,
+                    )
+                    break
 
             if cancel_before_node is not None and cancel_before_node in node_states:
                 if node_states[cancel_before_node].status == TaskNodeStatus.CANCELLED:

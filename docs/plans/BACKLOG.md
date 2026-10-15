@@ -164,14 +164,14 @@ This document serves as the single source of truth for active task tracking, exe
 | `M7-ORCH-001-SUB-02` | Add planner DAG scheduling and failure propagation tests | `MOD-ORCH-001` | `DONE` | `M7-ORCH-001-SUB-01` |
 
 
-| `M7-ORCH-002` | Specialist Agent Contracts & Verification Gates | `MOD-ORCH-002` | `IN_PROGRESS` | `M7-ORCH-001` |
+| `M7-ORCH-002` | Specialist Agent Contracts & Verification Gates | `MOD-ORCH-002` | `DONE` | `M7-ORCH-001` |
 | `M7-ORCH-002-SUB-01` | Implement specialist contracts and verifier gate | `MOD-ORCH-002` | `DONE` | `M7-ORCH-002` |
-| `M7-ORCH-002-SUB-02` | Add agent schema validation and verifier adversarial tests | `MOD-ORCH-002` | `IN_REVIEW` | `M7-ORCH-002-SUB-01` |
+| `M7-ORCH-002-SUB-02` | Add agent schema validation and verifier adversarial tests | `MOD-ORCH-002` | `DONE` | `M7-ORCH-002-SUB-01` |
 
 
-| `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-002` |
-| `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-003` |
-| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-003-SUB-01` |
+| `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `IN_PROGRESS` | `M7-ORCH-002` |
+| `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `IN_REVIEW` | `M7-ORCH-003` |
+| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `TODO` | `M7-ORCH-003-SUB-01` |
 
 ---
 

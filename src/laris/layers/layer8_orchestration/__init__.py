@@ -7,6 +7,8 @@ Adheres to DOC-SPEC-MOD-001 (Boundary H), ADR-006, and Issue #65:
 - Deterministic execution traces and cycle detection
 """
 
+from laris.layers.layer8_orchestration.budget_governor import BudgetGovernor
+from laris.layers.layer8_orchestration.cycle_detector import CycleDetector
 from laris.layers.layer8_orchestration.dag_validator import DAGValidator
 from laris.layers.layer8_orchestration.runtime import DAGScheduler, default_node_executor
 from laris.layers.layer8_orchestration.schemas import (
@@ -50,4 +52,6 @@ __all__ = [
     "GenericSpecialistAgent",
     "VerifierGate",
     "VerificationResult",
+    "CycleDetector",
+    "BudgetGovernor",
 ]
