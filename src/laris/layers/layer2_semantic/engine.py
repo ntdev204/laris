@@ -84,8 +84,8 @@ class DeterministicScientificNLIEngine:
     def __init__(
         self,
         encoder: BaseSentenceEncoder | None = None,
-        topical_threshold: float = 0.55,
-        entailment_threshold: float = 0.75,
+        topical_threshold: float = 0.35,
+        entailment_threshold: float = 0.65,
     ) -> None:
         self.encoder = encoder
         self.topical_threshold = topical_threshold

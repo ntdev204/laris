@@ -4,6 +4,15 @@ Provides Natural Language Inference (NLI), semantic equivalence, coreference res
 and discourse parsing conforming to Boundary C (MOD-SEM-001).
 """
 
+from laris.layers.layer2_semantic.calibration import (
+    BENCHMARK_VERSION,
+    EXIT_GATE_MACRO_F1_THRESHOLD,
+    SCIENTIFIC_NLI_BENCHMARK_FIXTURES,
+    BenchmarkNLIPair,
+    NLICalibrationMetrics,
+    NLICalibrationReport,
+    evaluate_nli_calibration,
+)
 from laris.layers.layer2_semantic.discourse import (
     CAUSAL_CUES,
     CONCESSIVE_CUES,
@@ -72,4 +81,11 @@ __all__ = [
     "DiscourseGraphEdge",
     "DiscourseGraph",
     "ScientificDiscourseParser",
+    "BENCHMARK_VERSION",
+    "EXIT_GATE_MACRO_F1_THRESHOLD",
+    "BenchmarkNLIPair",
+    "SCIENTIFIC_NLI_BENCHMARK_FIXTURES",
+    "NLICalibrationMetrics",
+    "NLICalibrationReport",
+    "evaluate_nli_calibration",
 ]
