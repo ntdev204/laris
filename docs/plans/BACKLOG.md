@@ -179,8 +179,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M8-EXEC-001-SUB-02` | Add hardware telemetry integration and allocation tests | `MOD-EXEC-001` | `DONE` | `M8-EXEC-001-SUB-01` |
 
 
-| `M8-EXEC-002` | Selective Weight Offloading & Activation Swapping | `MOD-EXEC-002` | `READY` | `M8-EXEC-001` |
-| `M8-EXEC-002-SUB-01` | Implement selective weight offloading and activation swapping | `MOD-EXEC-002` | `TODO` | `M8-EXEC-002` |
+| `M8-EXEC-002` | Selective Weight Offloading & Activation Swapping | `MOD-EXEC-002` | `IN_PROGRESS` | `M8-EXEC-001` |
+| `M8-EXEC-002-SUB-01` | Implement selective weight offloading and activation swapping | `MOD-EXEC-002` | `IN_REVIEW` | `M8-EXEC-002` |
 | `M8-EXEC-002-SUB-02` | Add offloading latency and activation swapping benchmarks | `MOD-EXEC-002` | `BLOCKED` | `M8-EXEC-002-SUB-01` |
 
 
