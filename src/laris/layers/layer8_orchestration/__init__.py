@@ -20,6 +20,16 @@ from laris.layers.layer8_orchestration.schemas import (
     TaskNode,
     TaskNodeStatus,
 )
+from laris.layers.layer8_orchestration.specialists import (
+    BaseSpecialistAgent,
+    GenericSpecialistAgent,
+    SpecialistInputPayload,
+    SpecialistOutputPayload,
+)
+from laris.layers.layer8_orchestration.verifier_gate import (
+    VerificationResult,
+    VerifierGate,
+)
 
 __all__ = [
     "AgentRole",
@@ -34,4 +44,10 @@ __all__ = [
     "DAGValidator",
     "DAGScheduler",
     "default_node_executor",
+    "SpecialistInputPayload",
+    "SpecialistOutputPayload",
+    "BaseSpecialistAgent",
+    "GenericSpecialistAgent",
+    "VerifierGate",
+    "VerificationResult",
 ]
