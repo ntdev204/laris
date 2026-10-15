@@ -154,9 +154,24 @@ This document serves as the single source of truth for active task tracking, exe
 | `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `DONE` | `M6-GAP-002-SUB-01` |
 
 
-| `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-002` |
+| `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `DONE` | `M6-GAP-002` |
 | `M6-GAP-003-SUB-01` | Implement counter-evidence search and validation-plan contract | `MOD-GAP-001` | `DONE` | `M6-GAP-003` |
-| `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-003-SUB-01` |
+| `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `DONE` | `M6-GAP-003-SUB-01` |
+
+
+| `M7-ORCH-001` | Query Planner, DAG Runtime & Supervisor | `MOD-ORCH-001` | `READY` | `M6-GAP-003` |
+| `M7-ORCH-001-SUB-01` | Implement DAG schema and planner validation | `MOD-ORCH-001` | `READY` | `M7-ORCH-001` |
+| `M7-ORCH-001-SUB-02` | Add planner DAG scheduling and failure propagation tests | `MOD-ORCH-001` | `READY` | `M7-ORCH-001-SUB-01` |
+
+
+| `M7-ORCH-002` | Specialist Agent Contracts & Verification Gates | `MOD-ORCH-002` | `BLOCKED` | `M7-ORCH-001` |
+| `M7-ORCH-002-SUB-01` | Implement specialist contracts and verifier gate | `MOD-ORCH-002` | `BLOCKED` | `M7-ORCH-002` |
+| `M7-ORCH-002-SUB-02` | Add agent schema validation and verifier adversarial tests | `MOD-ORCH-002` | `BLOCKED` | `M7-ORCH-002-SUB-01` |
+
+
+| `M7-ORCH-003` | Cycle Detection, Recursion Ceiling & Budget Governors | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-002` |
+| `M7-ORCH-003-SUB-01` | Enforce cycle detection and recursion/resource ceilings | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-003` |
+| `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `BLOCKED` | `M7-ORCH-003-SUB-01` |
 
 ---
 
@@ -411,6 +426,50 @@ This document serves as the single source of truth for active task tracking, exe
   1. Refuted candidates are rejected from active gap recommendations.
   2. Unresolved counter-evidence elevates epistemic uncertainty.
   3. Formulated validation plans contain measurable variables, datasets, baselines, and falsification criteria.
+
+---
+
+## Detailed Task Specifications for Milestone M7
+
+### Task `M7-ORCH-001`: Query Planner, DAG Runtime & Supervisor
+- **Objective:** Plan research goals into dependency DAGs, supervise execution, and record execution trace/resource telemetry.
+- **Module:** `MOD-ORCH-001` (Boundary H / Layer 8).
+- **Dependencies:** Milestone M6 Exit Gate (`M6-GAP-003`).
+- **Subtasks:**
+  - `M7-ORCH-001-SUB-01`: Implement DAG schema and planner validation.
+  - `M7-ORCH-001-SUB-02`: Add planner DAG scheduling and failure propagation tests.
+- **Acceptance Criteria:**
+  1. DAG schema validates acyclicity, node dependencies, and parameter bindings.
+  2. Planner schedules independent nodes concurrently and propagates node failure and cancellation cleanly.
+  3. Supervisor logs deterministic execution traces with step-level duration and token budget tracking.
+
+---
+
+### Task `M7-ORCH-002`: Specialist Agent Contracts & Verification Gates
+- **Objective:** Define isolated specialist agent execution contracts and verifier validation gates.
+- **Module:** `MOD-ORCH-002` (Boundary H / Layer 8).
+- **Dependencies:** `M7-ORCH-001`.
+- **Subtasks:**
+  - `M7-ORCH-002-SUB-01`: Implement specialist contracts and verifier gate.
+  - `M7-ORCH-002-SUB-02`: Add agent schema validation and verifier adversarial tests.
+- **Acceptance Criteria:**
+  1. Specialist agents adhere to typed input/output schemas with isolated context windows.
+  2. Verification gate validates agent outputs against schema invariants and rejects invalid state transitions.
+
+---
+
+### Task `M7-ORCH-003`: Cycle Detection, Recursion Ceiling & Budget Governors
+- **Objective:** Enforce cyclic loop prevention, hard recursion ceiling ($N \le 10$), and budget governors across multi-agent execution.
+- **Module:** `MOD-ORCH-003` (Boundary H / Layer 8).
+- **Dependencies:** `M7-ORCH-002`.
+- **Subtasks:**
+  - `M7-ORCH-003-SUB-01`: Enforce cycle detection and recursion/resource ceilings.
+  - `M7-ORCH-003-SUB-02`: Add recursion ceiling and resource budget stress tests.
+- **Acceptance Criteria:**
+  1. Cycle detector catches repeating agent sequences and terminates execution with `CycleDetectedError`.
+  2. Hard recursion ceiling enforces $N \le 10$ steps maximum per sub-goal.
+  3. Budget governors track token and step usage, preemptively aborting runaway agent execution.
+
 
 
 
