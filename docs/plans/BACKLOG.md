@@ -155,8 +155,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-002` |
-| `M6-GAP-003-SUB-01` | Implement counter-evidence search and validation-plan contract | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-003` |
-| `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `READY` | `M6-GAP-003-SUB-01` |
+| `M6-GAP-003-SUB-01` | Implement counter-evidence search and validation-plan contract | `MOD-GAP-001` | `DONE` | `M6-GAP-003` |
+| `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-003-SUB-01` |
 
 ---
 

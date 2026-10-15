@@ -7,6 +7,11 @@ from laris.layers.layer7_reasoning.adversarial_engine import (
     AdversarialCounterEvidenceEngine,
     ValidationPlanGenerator,
 )
+from laris.layers.layer7_reasoning.adversarial_evaluation import (
+    AdversarialBenchmarkCase,
+    AdversarialBenchmarkSuite,
+    AdversarialEvaluationReport,
+)
 from laris.layers.layer7_reasoning.benchmark import (
     ConflictBenchmarkReport,
     ConflictEvaluationBenchmark,
@@ -69,4 +74,7 @@ __all__ = [
     "AdversarialRefutationResult",
     "AdversarialCounterEvidenceEngine",
     "ValidationPlanGenerator",
+    "AdversarialBenchmarkCase",
+    "AdversarialEvaluationReport",
+    "AdversarialBenchmarkSuite",
 ]
