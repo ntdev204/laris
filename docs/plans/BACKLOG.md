@@ -149,12 +149,14 @@ This document serves as the single source of truth for active task tracking, exe
 | `M6-GAP-001-SUB-02` | Add comparison matrix fixtures and synthetic contradiction benchmarks | `MOD-GAP-001` | `DONE` | `M6-GAP-001-SUB-01` |
 
 
-| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-001` |
+| `M6-GAP-002` | Twelve-Class Research Gap Typology Classifier | `MOD-GAP-001` | `DONE` | `M6-GAP-001` |
 | `M6-GAP-002-SUB-01` | Implement 12-class gap taxonomy and scoring schema | `MOD-GAP-001` | `DONE` | `M6-GAP-002` |
-| `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-002-SUB-01` |
+| `M6-GAP-002-SUB-02` | Add gap typology evaluation fixtures and gold set | `MOD-GAP-001` | `DONE` | `M6-GAP-002-SUB-01` |
 
 
-| `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `BLOCKED` | `M6-GAP-002` |
+| `M6-GAP-003` | Adversarial Self-Refutation and Counter-Evidence Discovery | `MOD-GAP-001` | `IN_PROGRESS` | `M6-GAP-002` |
+| `M6-GAP-003-SUB-01` | Implement counter-evidence search and validation-plan contract | `MOD-GAP-001` | `IN_REVIEW` | `M6-GAP-003` |
+| `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `READY` | `M6-GAP-003-SUB-01` |
 
 ---
 
@@ -395,6 +397,21 @@ This document serves as the single source of truth for active task tracking, exe
   1. Every score has explicit inputs and [0.0, 1.0] scale.
   2. Bounded corpus strictly prevents global novelty claims.
   3. Taxonomy fixtures and calibration evaluation report exist.
+
+---
+
+### Task `M6-GAP-003`: Adversarial Self-Refutation and Counter-Evidence Discovery
+- **Objective:** Search counter-evidence for candidate gaps and produce testable hypotheses with empirical validation protocols.
+- **Module:** `MOD-GAP-001` (Boundary G / Layer 7).
+- **Dependencies:** `M6-GAP-002`.
+- **Subtasks:**
+  - `M6-GAP-003-SUB-01`: Implement counter-evidence search and validation-plan contract.
+  - `M6-GAP-003-SUB-02`: Add counter-evidence rejection and validation-plan tests.
+- **Acceptance Criteria:**
+  1. Refuted candidates are rejected from active gap recommendations.
+  2. Unresolved counter-evidence elevates epistemic uncertainty.
+  3. Formulated validation plans contain measurable variables, datasets, baselines, and falsification criteria.
+
 
 
 
