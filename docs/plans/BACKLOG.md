@@ -62,8 +62,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M1-DATA-002-SUB-01` | Implement deterministic Unicode and math normalization | `MOD-CORPUS-001` | `DONE` | `M1-DATA-002` |
 | `M1-DATA-002-SUB-02` | Add normalization regression and idempotence tests | `MOD-CORPUS-001` | `DONE` | `M1-DATA-002-SUB-01` |
 | `M1-DATA-003` | Content Hashing & Deduplication Engine | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-002` |
-| `M1-DATA-003-SUB-01` | Implement canonical content digest and exact deduplication | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-003` |
-| `M1-DATA-003-SUB-02` | Add exact and near-duplicate detection policy/tests | `MOD-CORPUS-001` | `READY` | `M1-DATA-003-SUB-01` |
+| `M1-DATA-003-SUB-01` | Implement canonical content digest and exact deduplication | `MOD-CORPUS-001` | `DONE` | `M1-DATA-003` |
+| `M1-DATA-003-SUB-02` | Add exact and near-duplicate detection policy/tests | `MOD-CORPUS-001` | `IN_PROGRESS` | `M1-DATA-003-SUB-01` |
 | `M1-DATA-004` | Leakage-Proof Dataset Partition Engine | `MOD-CORPUS-001` | `BACKLOG` | `M1-DATA-003` |
 | `M1-DATA-005` | Ingestion Verification & Synthetic Test Fixtures | `MOD-CORPUS-001` | `BACKLOG` | `M1-DATA-004` |
 
