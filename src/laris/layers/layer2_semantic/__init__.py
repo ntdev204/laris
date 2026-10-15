@@ -4,6 +4,11 @@ Provides Natural Language Inference (NLI), semantic equivalence, coreference res
 and discourse parsing conforming to Boundary C (MOD-SEM-001).
 """
 
+from laris.layers.layer2_semantic.engine import (
+    DIRECT_NEGATIONS,
+    SCIENTIFIC_OPPOSITES,
+    DeterministicScientificNLIEngine,
+)
 from laris.layers.layer2_semantic.schemas import (
     LN_3,
     PROBABILITY_SUM_TOLERANCE,
@@ -24,6 +29,9 @@ __all__ = [
     "NLIPairBatch",
     "NLIOutputBatch",
     "NLIEngineContract",
+    "DeterministicScientificNLIEngine",
+    "SCIENTIFIC_OPPOSITES",
+    "DIRECT_NEGATIONS",
     "PROBABILITY_SUM_TOLERANCE",
     "LN_3",
 ]
