@@ -125,4 +125,15 @@ class SchemaMigrationError(LarisError):
     pass
 
 
+class RetrievalError(LarisError):
+    """Base exception for Layer 6 multi-channel retrieval failures."""
+    pass
+
+
+class RetrievalDepthExceededError(RetrievalError, ModuleContractViolationError):
+    """Raised when retrieval traversal depth exceeds configured safety ceilings."""
+    pass
+
+
+
 

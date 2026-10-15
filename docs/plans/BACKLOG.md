@@ -129,14 +129,15 @@ This document serves as the single source of truth for active task tracking, exe
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
-| `M5-EVID-001` | Versioned Evidence Graph Construction | `MOD-GRAPH-001` | `IN_PROGRESS` | `M4-SCINLP-003` |
+| `M5-EVID-001` | Versioned Evidence Graph Construction | `MOD-GRAPH-001` | `DONE` | `M4-SCINLP-003` |
 | `M5-EVID-001-SUB-01` | Define versioned evidence graph nodes, edges and persistence interface | `MOD-GRAPH-001` | `DONE` | `M5-EVID-001` |
-| `M5-EVID-001-SUB-02` | Add graph persistence, migration and edge provenance tests | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-EVID-001-SUB-01` |
+| `M5-EVID-001-SUB-02` | Add graph persistence, migration and edge provenance tests | `MOD-GRAPH-001` | `DONE` | `M5-EVID-001-SUB-01` |
 
 
-| `M5-RETR-001` | Hybrid Lexical-Dense Retrieval Engine | `MOD-GRAPH-001` | `READY` | `M5-EVID-001` |
-| `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |
+| `M5-RETR-001` | Hybrid Lexical-Dense Retrieval Engine | `MOD-GRAPH-001` | `IN_PROGRESS` | `M5-EVID-001` |
+| `M5-RETR-001-SUB-01` | Implement reciprocal rank fusion and dense-lexical hybrid pipeline | `MOD-GRAPH-001` | `IN_REVIEW` | `M5-RETR-001` |
 | `M5-RETR-001-SUB-02` | Benchmark multi-channel retrieval against single-modality baselines | `MOD-GRAPH-001` | `READY` | `M5-RETR-001-SUB-01` |
+
 | `M5-PROV-001` | Evidence Coordinate Validation & Provenance Tracking | `MOD-GRAPH-001` | `READY` | `M5-RETR-001` |
 | `M5-PROV-001-SUB-01` | Implement end-to-end evidence coordinate mapping & validation | `MOD-GRAPH-001` | `READY` | `M5-PROV-001` |
 | `M5-PROV-001-SUB-02` | Add coordinate corruption detection and audit trail regression tests | `MOD-GRAPH-001` | `READY` | `M5-PROV-001-SUB-01` |
@@ -322,5 +323,36 @@ This document serves as the single source of truth for active task tracking, exe
   2. Abstract persistence interface (`BaseGraphPersistenceAdapter`) decoupled from concrete storage engine.
   3. Schema migration and version contracts supported with deterministic serialization.
   4. Embedded architecture with zero external database server dependency.
+
+---
+
+### Task `M5-RETR-001`: Hybrid Lexical-Dense Retrieval Engine
+- **Objective:** Implement modular multi-channel retrieval combining lexical BM25, dense vector,
+  and graph traversal adapters with Reciprocal Rank Fusion (RRF).
+- **Module:** `MOD-GRAPH-001` (Boundary F / Layer 6).
+- **Dependencies:** `M5-EVID-001`.
+- **Subtasks:**
+  - `M5-RETR-001-SUB-01`: Implement lexical retrieval and modular dense/graph adapters.
+  - `M5-RETR-001-SUB-02`: Benchmark multi-channel retrieval against single-modality baselines.
+- **Acceptance Criteria:**
+  1. Lexical, dense, and graph adapters adhere to `BaseRetrievalAdapter` and output `RetrievalCandidate`.
+  2. RRF rank combiner produces deterministic unified rankings across differing score scales.
+  3. Depth limits enforced on traversal and query expansion ($N \le 5$).
+  4. 100% of retrieved items retain valid `EvidenceCoordinate` provenance records.
+
+---
+
+### Task `M5-PROV-001`: Evidence Coordinate Validation & Provenance Tracking
+- **Objective:** Verify end-to-end evidence coordinate mapping, audit trail generation, and
+  corruption detection across pipeline transformations.
+- **Module:** `MOD-GRAPH-001` (Boundary F).
+- **Dependencies:** `M5-RETR-001`.
+- **Subtasks:**
+  - `M5-PROV-001-SUB-01`: Implement end-to-end evidence coordinate mapping & validation.
+  - `M5-PROV-001-SUB-02`: Add coordinate corruption detection and audit trail regression tests.
+- **Acceptance Criteria:**
+  1. 100% of retrieved evidence items retain verifiable character offsets down to sentence index.
+  2. Coordinate tampering or corruption triggers `ProvenanceViolationError`.
+
 
 
