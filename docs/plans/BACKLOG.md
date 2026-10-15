@@ -159,8 +159,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M6-GAP-003-SUB-02` | Add counter-evidence rejection and validation-plan tests | `MOD-GAP-001` | `DONE` | `M6-GAP-003-SUB-01` |
 
 
-| `M7-ORCH-001` | Query Planner, DAG Runtime & Supervisor | `MOD-ORCH-001` | `READY` | `M6-GAP-003` |
-| `M7-ORCH-001-SUB-01` | Implement DAG schema and planner validation | `MOD-ORCH-001` | `READY` | `M7-ORCH-001` |
+| `M7-ORCH-001` | Query Planner, DAG Runtime & Supervisor | `MOD-ORCH-001` | `IN_PROGRESS` | `M6-GAP-003` |
+| `M7-ORCH-001-SUB-01` | Implement DAG schema and planner validation | `MOD-ORCH-001` | `IN_REVIEW` | `M7-ORCH-001` |
 | `M7-ORCH-001-SUB-02` | Add planner DAG scheduling and failure propagation tests | `MOD-ORCH-001` | `READY` | `M7-ORCH-001-SUB-01` |
 
 

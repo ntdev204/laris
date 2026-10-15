@@ -32,6 +32,11 @@ class CyclicExecutionError(LarisError):
     pass
 
 
+class CycleDetectedError(CyclicExecutionError, ModuleContractViolationError):
+    """Raised when an orchestration task DAG contains a directed cycle or self-loop."""
+    pass
+
+
 class LicenseViolationError(LarisError):
     """Raised when an ingested document lacks a permitted open-access redistribution license."""
     pass
