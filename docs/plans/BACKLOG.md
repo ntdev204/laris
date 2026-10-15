@@ -102,8 +102,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M3-SEM-002-SUB-01` | Define semantic relation output contracts | `MOD-SEM-001` | `DONE` | `M3-SEM-002` |
 | `M3-SEM-002-SUB-02` | Test semantic relation ambiguity and provenance | `MOD-SEM-001` | `DONE` | `M3-SEM-002-SUB-01` |
 | `M3-SEM-003` | NLI Calibration & Contradiction Evaluation | `MOD-SEM-001` | `IN_PROGRESS` | `M3-SEM-002` |
-| `M3-SEM-003-SUB-01` | Build scientific NLI benchmark and calibration report | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-003` |
-| `M3-SEM-003-SUB-02` | Add benchmark split isolation and failure analysis | `MOD-SEM-001` | `TODO` | `M3-SEM-003-SUB-01` |
+| `M3-SEM-003-SUB-01` | Build scientific NLI benchmark and calibration report | `MOD-SEM-001` | `DONE` | `M3-SEM-003` |
+| `M3-SEM-003-SUB-02` | Add benchmark split isolation and failure analysis | `MOD-SEM-001` | `IN_REVIEW` | `M3-SEM-003-SUB-01` |
 
 ---
 
