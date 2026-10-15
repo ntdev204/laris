@@ -104,3 +104,8 @@ class MalformedDiscourseSpanError(ModuleContractViolationError):
     pass
 
 
+class UnitConversionError(ModuleContractViolationError):
+    """Raised when an unparseable or incompatible unit conversion is requested."""
+    pass
+
+
