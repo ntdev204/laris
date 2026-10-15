@@ -27,17 +27,20 @@ _INVISIBLE_CHARS_REGEX = re.compile(
 
 # Standard SI units for scientific notation spacing
 _SI_UNITS = (
-    "GHz|MHz|kHz|Hz|THz|"
-    "nm|um|µm|mm|cm|m|km|"
-    "ps|ns|us|µs|ms|s|min|h|"
-    "eV|keV|MeV|GeV|TeV|"
-    "fF|pF|nF|uF|µF|mF|F|"
-    "mV|V|kV|uA|µA|mA|A|kA|"
-    "dBm|dB|dBc|"
-    "Ohm|kOhm|MOhm|Ω|kΩ|MΩ|"
-    "Pa|kPa|MPa|GPa|"
-    "K|J|kJ|W|mW|kW|MW|"
-    "mol|mmol|umol"
+    r"THz|GHz|MHz|kHz|Hz|"
+    r"pm|nm|um|[µμ]m|mm|cm|dm|m|km|"
+    r"fs|ps|ns|us|[µμ]s|ms|s|min|h|"
+    r"meV|eV|keV|MeV|GeV|TeV|"
+    r"fF|pF|nF|uF|[µμ]F|mF|F|"
+    r"nV|uV|[µμ]V|mV|V|kV|MV|"
+    r"nA|uA|[µμ]A|mA|A|kA|"
+    r"dBm|dB|dBc|"
+    r"Ohm|kOhm|MOhm|mΩ|Ω|kΩ|MΩ|"
+    r"Pa|hPa|kPa|MPa|GPa|"
+    r"fW|pW|nW|uW|[µμ]W|mW|W|kW|MW|GW|"
+    r"mJ|J|kJ|MJ|"
+    r"K|mK|"
+    r"mol|mmol|umol|[µμ]mol|nmol|pmol"
 )
 
 # Regex to standardize SI unit spacing: e.g., "42GHz" -> "42 GHz"
@@ -47,7 +50,7 @@ _SI_SPACING_REGEX = re.compile(rf"\b(\d+(?:\.\d+)?)\s*({_SI_UNITS})\b")
 # 1) Display math: $$...$$ or \[...\]
 # 2) Inline math: $...$ or \(...\)
 _MATH_BLOCK_REGEX = re.compile(
-    r"(\$\$.*?\$\$|\\\[.*?\\\]|\$(?!\$).*?(?<!\\)\$|\\\(.*?\\\))",
+    r"(\$\$.*?\$\$|\\\[.*?\\\]|(?<!\\)\$(?!\$).*?(?<!\\)\$|\\\(.*?\\\))",
     re.DOTALL,
 )
 
@@ -99,6 +102,8 @@ def normalize_scientific_text(text: str) -> str:
     - Cleans invisible control and zero-width whitespace.
     - Preserves inline and display LaTeX equations.
     """
+    if not isinstance(text, str):
+        raise TypeError(f"Expected str input, got {type(text).__name__}")
     if not text:
         return ""
 
