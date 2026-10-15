@@ -9,6 +9,14 @@ from laris.layers.layer1_language.encoder import (
     BaseSentenceEncoder,
     CompactSentenceEncoder,
 )
+from laris.layers.layer1_language.retrieval_benchmark import (
+    RETRIEVAL_BENCHMARK_VERSION,
+    STEM_RETRIEVAL_CORPUS,
+    STEM_RETRIEVAL_QUERIES,
+    RetrievalBenchmarkItem,
+    RetrievalComparisonReport,
+    evaluate_retrieval_comparison,
+)
 from laris.layers.layer1_language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     CANONICAL_SPECIAL_TOKENS,
@@ -76,4 +84,10 @@ __all__ = [
     "BM25Document",
     "BM25SearchResult",
     "BM25RetrievalBaseline",
+    "RETRIEVAL_BENCHMARK_VERSION",
+    "STEM_RETRIEVAL_CORPUS",
+    "STEM_RETRIEVAL_QUERIES",
+    "RetrievalBenchmarkItem",
+    "RetrievalComparisonReport",
+    "evaluate_retrieval_comparison",
 ]
