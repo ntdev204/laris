@@ -1,22 +1,37 @@
 """Core primitives, schemas, and error hierarchies for LARIS."""
 
+from laris.core.errors import (
+    CyclicExecutionError,
+    DataIntegrityError,
+    DataLeakageError,
+    DiscourseParseError,
+    DuplicateCorpusError,
+    EmbeddingDimensionMismatchError,
+    EncodingCorruptError,
+    EpistemicOverreachError,
+    ExtractionConfidenceBelowThresholdError,
+    HardwareBudgetExceededError,
+    InvalidNLIInputError,
+    LarisError,
+    LicenseViolationError,
+    MalformedDiscourseSpanError,
+    ModuleContractViolationError,
+    ProbabilityValidationError,
+    ProvenanceViolationError,
+    SequenceLengthExceededError,
+    UncertaintyCeilingExceededError,
+    UnitConversionError,
+    VocabularyMismatchError,
+)
 from laris.core.schemas import (
+    CalibratedScores,
     EpistemicStatus,
     EvidenceCoordinate,
-    ScientificClaim,
-    ResearchGapClass,
-    CalibratedScores,
-    ValidationPlan,
     ResearchGap,
+    ResearchGapClass,
+    ScientificClaim,
     TelemetrySnapshot,
-)
-from laris.core.errors import (
-    LarisError,
-    ProvenanceViolationError,
-    EpistemicOverreachError,
-    HardwareBudgetExceededError,
-    ModuleContractViolationError,
-    CyclicExecutionError,
+    ValidationPlan,
 )
 
 __all__ = [
@@ -34,4 +49,20 @@ __all__ = [
     "HardwareBudgetExceededError",
     "ModuleContractViolationError",
     "CyclicExecutionError",
+    "LicenseViolationError",
+    "EncodingCorruptError",
+    "DuplicateCorpusError",
+    "DataLeakageError",
+    "DataIntegrityError",
+    "SequenceLengthExceededError",
+    "VocabularyMismatchError",
+    "EmbeddingDimensionMismatchError",
+    "UncertaintyCeilingExceededError",
+    "DiscourseParseError",
+    "InvalidNLIInputError",
+    "ProbabilityValidationError",
+    "ExtractionConfidenceBelowThresholdError",
+    "MalformedDiscourseSpanError",
+    "UnitConversionError",
 ]
+

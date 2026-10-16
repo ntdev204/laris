@@ -59,6 +59,30 @@ LARIS is **not** a generic PDF chatbot, not a naive semantic search tool, and no
 
 ---
 
+## Developer Quickstart
+
+Create and activate the isolated virtual environment `./laris-env/` using `pyproject.toml`:
+
+```bash
+# Setup virtual environment and install development dependencies
+uv venv ./laris-env --python 3.10
+source ./laris-env/bin/activate
+uv pip install -e ".[dev]"
+
+# Run full local quality gates
+pytest
+ruff check .
+mypy src
+python3 scripts/validate_docs.py
+```
+
+### Engineering Governance & Guidelines
+- [Coding Standards & Engineering Principles (docs/development/CODING_STANDARDS.md)](file:///home/thientn204/laris/docs/development/CODING_STANDARDS.md)
+- [Git Flow & PR Governance (docs/development/GIT_FLOW.md)](file:///home/thientn204/laris/docs/development/GIT_FLOW.md)
+- [Contributing Guidelines (CONTRIBUTING.md)](file:///home/thientn204/laris/CONTRIBUTING.md)
+
+---
+
 ## Documentation Quickstart
 
 To understand the architecture and design of LARIS, read in the following sequence:
