@@ -20,7 +20,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer3_scinlp import (
+from laris.scientific import (
     HeadingIndependentLimitationDetector,
     LimitationCategory,
     LimitationDetectionResult,
@@ -257,7 +257,7 @@ def test_serialization_roundtrip(synthetic_paper_with_headings: str):
 
 def test_schema_uncertainty_score_bounds():
     """Verify uncertainty_score range validation across schema records."""
-    from laris.layers.layer3_scinlp.schemas import (
+    from laris.scientific.schemas import (
         AssumptionRecord,
         LimitationRecord,
         NegativeFindingRecord,

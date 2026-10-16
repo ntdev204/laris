@@ -12,7 +12,7 @@ import pytest
 
 from laris.core.errors import ModuleContractViolationError, ProvenanceViolationError
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer7_reasoning import (
+from laris.reasoning import (
     CaveatSeverity,
     ComparabilityCaveat,
     ComparativeCell,

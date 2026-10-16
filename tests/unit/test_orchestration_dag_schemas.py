@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from laris.core.errors import CycleDetectedError, ModuleContractViolationError
-from laris.layers.layer8_orchestration import (
+from laris.orchestration import (
     AgentRole,
     AgentStep,
     BudgetLimits,

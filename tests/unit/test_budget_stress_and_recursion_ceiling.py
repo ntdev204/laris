@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pytest
 
 from laris.core.errors import CycleDetectedError, ModuleContractViolationError
-from laris.layers.layer8_orchestration import (
+from laris.orchestration import (
     AgentRole,
     BudgetGovernor,
     BudgetLimits,

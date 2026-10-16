@@ -669,6 +669,9 @@ This document serves as the single source of truth for active task tracking, exe
 | `M11-ARCH-001` | Refactor Numbered Layers into Domain-Based Packages | Architecture | `DONE` | `M11-TRAIN-000` |
 | `M11-ARCH-001-SUB-01` | Target domain layout design, migration plan & ADR-011 | Architecture | `DONE` | `M11-ARCH-001` |
 | `M11-ARCH-001-SUB-02` | Package migration, compatibility shims, import updates & test suite pass | Core | `DONE` | `M11-ARCH-001-SUB-01` |
+| `M11-ARCH-002` | Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies | Architecture | `DONE` | `M11-ARCH-001` |
+| `M11-ARCH-002-SUB-01` | Source tree audit and legacy layer deletion (ADR-012) | Architecture | `DONE` | `M11-ARCH-002` |
+| `M11-ARCH-002-SUB-02` | Repository-wide test import migration & regression enforcement | Core | `DONE` | `M11-ARCH-002-SUB-01` |
 
 ---
 
@@ -717,6 +720,23 @@ This document serves as the single source of truth for active task tracking, exe
   3. All 898+ unit and contract tests pass with zero regressions.
   4. Ruff, mypy, and docs validation pass with zero errors.
   5. 12-layer conceptual architecture remains documented and preserved.
+
+---
+
+### Task `M11-ARCH-002`: Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies
+- **Objective:** Permanently eliminate legacy numbered layer hierarchies (`src/laris/layers/`), migrate 100% of test imports to canonical domain packages, establish ADR-012, and enforce structural integrity via automated regression tests.
+- **Module:** Architecture & Package Structure.
+- **Dependencies:** `M11-ARCH-001`.
+- **Subtasks:**
+  - `M11-ARCH-002-SUB-01`: Source tree audit and legacy layer deletion (ADR-012).
+  - `M11-ARCH-002-SUB-02`: Repository-wide test import migration & regression enforcement.
+- **Acceptance Criteria:**
+  1. No numbered layer directories or legacy `layers` directory exist in `src/laris/`.
+  2. All test imports migrate to direct canonical domain packages (`laris.corpus`, `laris.language`, `laris.scientific`, `laris.graph`, `laris.retrieval`, `laris.reasoning`, `laris.orchestration`, `laris.execution`, `laris.evaluation`, `laris.reporting`).
+  3. Contract test `test_no_numbered_layer_directories_exist` enforces absence of numbered directories.
+  4. All unit, integration, and contract tests pass without failure.
+  5. Full CI quality gates pass with zero regressions.
+
 
 
 

@@ -1,6 +1,6 @@
 """Versioned STEM benchmark synthetic text fixtures re-exported for tests."""
 
-from laris.layers.layer1_language.stem_benchmark import (
+from laris.language.stem_benchmark import (
     DOMAIN_CORPUS_VOCABULARY_SEED,
     STEM_BENCHMARK_FIXTURES,
     STEM_BENCHMARK_VERSION,

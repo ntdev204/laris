@@ -10,7 +10,7 @@ from laris.core.errors import (
     SchemaMigrationError,
 )
 from laris.core.schemas import EpistemicStatus, EvidenceCoordinate
-from laris.layers.layer5_graph import (
+from laris.graph import (
     AuthorNode,
     ClaimNode,
     DatasetNode,
@@ -573,17 +573,17 @@ class TestGraphCornerCases(unittest.TestCase):
             GraphQueryRequest(query_type="INVALID_QUERY", target_entities=["m1"])  # type: ignore
 
 
-class TestCompatibilityAlias(unittest.TestCase):
-    """Test suite ensuring layer4_graph re-exports layer5_graph transparently."""
+class TestGraphDomainExports(unittest.TestCase):
+    """Test suite ensuring laris.graph exports graph interfaces and persistence."""
 
-    def test_layer4_graph_imports(self) -> None:
-        import laris.layers.layer4_graph as l4
-        import laris.layers.layer5_graph as l5
+    def test_graph_imports(self) -> None:
+        import laris.graph as g
 
-        self.assertIs(l4.EvidenceGraph, l5.EvidenceGraph)
-        self.assertIs(l4.NodeType, l5.NodeType)
-        self.assertIs(l4.EdgeType, l5.EdgeType)
-        self.assertIs(l4.InMemoryGraphPersistenceAdapter, l5.InMemoryGraphPersistenceAdapter)
+        self.assertIsNotNone(g.EvidenceGraph)
+        self.assertIsNotNone(g.NodeType)
+        self.assertIsNotNone(g.EdgeType)
+        self.assertIsNotNone(g.InMemoryGraphPersistenceAdapter)
+
 
 
 

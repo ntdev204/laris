@@ -21,7 +21,8 @@ decision_references:
   - "ADR-005"
   - "ADR-006"
   - "ADR-011"
-change_summary: "Detailed structural specification of all 12 architectural layers and mapping to domain packages (ADR-011)."
+  - "ADR-012"
+change_summary: "Detailed structural specification of all 12 architectural layers and mapping to canonical domain packages (ADR-011, ADR-012)."
 ---
 
 # LARIS Twelve-Layer Architectural Specification
@@ -193,9 +194,10 @@ This document defines the formal boundaries, responsibilities, inputs, outputs, 
 
 ---
 
-## 2. Conceptual Layers vs Domain Packages Mapping ([ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md))
+## 2. Conceptual Layers vs Canonical Domain Packages ([ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md), [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md))
 
-In accordance with [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md), LARIS decouples its conceptual 12-layer cognitive architecture from the physical Python package layout. The conceptual architecture defines the data flow and system capabilities, while domain packages structure code by responsibility:
+In accordance with [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md) and [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md), LARIS decouples its conceptual 12-layer cognitive architecture from the physical Python package layout. All parallel numbered layer directories (`src/laris/layers/layerX_*`) have been permanently retired. The conceptual architecture defines the data flow and system capabilities, while domain packages provide single, authoritative implementation locations:
+
 
 | Conceptual Layer | Cognitive Role | Physical Domain Package | Primary Module Exports |
 | :--- | :--- | :--- | :--- |

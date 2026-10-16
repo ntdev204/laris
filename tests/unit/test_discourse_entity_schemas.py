@@ -13,7 +13,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
 )
 from laris.core.schemas import EpistemicStatus, EvidenceCoordinate
-from laris.layers.layer3_scinlp import (
+from laris.scientific import (
     AssumptionRecord,
     ClaimRecord,
     DatasetRecord,
@@ -26,7 +26,7 @@ from laris.layers.layer3_scinlp import (
     MetricRecord,
     ResultRecord,
 )
-from laris.layers.layer3_scinlp.schemas import _validate_coordinate_span
+from laris.scientific.schemas import _validate_coordinate_span
 
 
 @pytest.fixture

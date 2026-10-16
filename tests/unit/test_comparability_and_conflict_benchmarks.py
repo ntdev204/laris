@@ -12,15 +12,15 @@ import pytest
 
 from laris.core.errors import ProvenanceViolationError
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer7_reasoning import (
+from laris.reasoning import (
     ConflictBenchmarkReport,
     ConflictEvaluationBenchmark,
     ConflictType,
     ContradictionBenchmarkCase,
     StudyFinding,
 )
-from laris.layers.layer7_reasoning.conflict_detector import ConditionAwareConflictDetector
-from laris.layers.layer7_reasoning.schemas import ComparativeCell, ComparativeMatrix
+from laris.reasoning.conflict_detector import ConditionAwareConflictDetector
+from laris.reasoning.schemas import ComparativeCell, ComparativeMatrix
 
 
 @pytest.fixture

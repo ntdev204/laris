@@ -20,14 +20,14 @@ from laris.core.errors import (
     TaskRoutingError,
     UncertaintyCeilingExceededError,
 )
-from laris.layers.layer9_adaptive_execution.headroom_governor import (
+from laris.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from laris.layers.layer9_adaptive_execution.schemas import (
+from laris.execution.schemas import (
     HardwareTarget,
     TelemetryStatus,
 )
-from laris.layers.layer9_adaptive_execution.task_router import (
+from laris.execution.task_router import (
     ExecutionTier,
     HardwareBenchmarkReport,
     HardwareStressProtocol,
@@ -37,11 +37,11 @@ from laris.layers.layer9_adaptive_execution.task_router import (
     TaskRouter,
     TaskRoutingRequest,
 )
-from laris.layers.layer9_adaptive_execution.telemetry import (
+from laris.execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
 )
-from laris.layers.layer9_adaptive_execution.weight_staging import (
+from laris.execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,

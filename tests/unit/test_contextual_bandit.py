@@ -15,17 +15,17 @@ from laris.core.errors import (
     ModuleContractViolationError,
     PolicyRewardValidationError,
 )
-from laris.layers.layer9_adaptive_execution.task_router import (
-    ExecutionTier,
-    TaskDomain,
-)
-from laris.layers.layer10_evaluation.contextual_bandit import (
+from laris.evaluation.contextual_bandit import (
     DeterministicBaselineRouter,
     OfflineContextualBanditEvaluator,
     PolicyEvaluationResult,
     RoutingContext,
     RoutingReward,
     compute_routing_reward,
+)
+from laris.execution.task_router import (
+    ExecutionTier,
+    TaskDomain,
 )
 
 

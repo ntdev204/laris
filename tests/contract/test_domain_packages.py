@@ -1,6 +1,7 @@
-"""Contract tests for domain-based packages and backwards-compatibility shims (ADR-011)."""
+"""Contract tests for domain-based packages (ADR-011, ADR-012)."""
 
 import importlib
+from pathlib import Path
 
 import pytest
 
@@ -18,36 +19,25 @@ DOMAINS = [
     "reporting",
 ]
 
-LEGACY_LAYERS = [
-    ("layer0_corpus", "corpus"),
-    ("layer1_language", "language"),
-    ("layer2_semantic", "reasoning"),
-    ("layer3_scinlp", "scientific"),
-    ("layer4_graph", "graph"),
-    ("layer5_graph", "graph"),
-    ("layer6_retrieval", "retrieval"),
-    ("layer7_reasoning", "reasoning"),
-    ("layer8_orchestration", "orchestration"),
-    ("layer9_adaptive_execution", "execution"),
-    ("layer10_evaluation", "evaluation"),
-    ("layer11_reporting", "reporting"),
-]
-
 
 @pytest.mark.parametrize("domain", DOMAINS)
-def test_domain_package_importable(domain):
+def test_domain_package_importable(domain: str) -> None:
     """Verifies that every domain package can be directly imported."""
     mod = importlib.import_module(f"laris.{domain}")
     assert mod is not None
 
 
-@pytest.mark.parametrize("layer_name,domain_name", LEGACY_LAYERS)
-def test_legacy_layer_facade_importable(layer_name, domain_name):
-    """Verifies that legacy layer facades exist and re-export domain symbols."""
-    legacy_mod = importlib.import_module(f"laris.layers.{layer_name}")
-    domain_mod = importlib.import_module(f"laris.{domain_name}")
-    assert legacy_mod is not None
-    assert domain_mod is not None
+def test_no_numbered_layer_directories_exist() -> None:
+    """Verifies no legacy 'layers' or numbered packages exist in src/laris (ADR-012)."""
+    src_laris = Path(__file__).resolve().parent.parent.parent / "src" / "laris"
+    numbered_dirs = [
+        p.name
+        for p in src_laris.iterdir()
+        if p.is_dir() and (p.name == "layers" or p.name.startswith("layer"))
+    ]
+    assert numbered_dirs == [], f"Found forbidden numbered layer directories: {numbered_dirs}"
+
+
 
 
 def test_core_domain_exports():

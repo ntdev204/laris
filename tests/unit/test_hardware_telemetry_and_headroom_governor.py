@@ -15,17 +15,17 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from laris.core.errors import HardwareBudgetExceededError, ModuleContractViolationError
-from laris.layers.layer9_adaptive_execution.headroom_governor import (
+from laris.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from laris.layers.layer9_adaptive_execution.schemas import (
+from laris.execution.schemas import (
     HardwareTarget,
     SpecialistExecutionRequest,
     SpecialistExecutionResult,
     TelemetrySnapshot,
     TelemetryStatus,
 )
-from laris.layers.layer9_adaptive_execution.telemetry import (
+from laris.execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
     PyTorchCudaSampler,

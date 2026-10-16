@@ -13,7 +13,7 @@ import pytest
 
 from laris.core.errors import ModuleContractViolationError, ProvenanceViolationError
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer8_orchestration import (
+from laris.orchestration import (
     AgentRole,
     BaseSpecialistAgent,
     GenericSpecialistAgent,

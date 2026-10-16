@@ -4,7 +4,7 @@ import hashlib
 import unittest
 
 from laris.core.errors import DuplicateCorpusError, LicenseViolationError
-from laris.layers.layer0_corpus.schemas import (
+from laris.corpus.schemas import (
     CorpusManifest,
     DatasetSplit,
     LicenseAuthorizationProvenance,

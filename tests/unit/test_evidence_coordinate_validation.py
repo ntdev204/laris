@@ -13,14 +13,14 @@ import pytest
 
 from laris.core.errors import ProvenanceViolationError
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer5_graph.schemas import (
+from laris.graph.schemas import (
     ClaimNode,
     DocumentNode,
     EdgeType,
     EvidenceEdge,
     EvidenceGraph,
 )
-from laris.layers.layer6_retrieval import (
+from laris.retrieval import (
     EvidenceCoordinateValidator,
     GraphRetrievalAdapter,
     HybridRetrievalEngine,

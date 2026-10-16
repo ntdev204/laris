@@ -30,7 +30,7 @@ from laris.core.errors import (
     UnanchoredAssertionError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer11_reporting import (
+from laris.reporting import (
     AcademicManuscript,
     AssertionStatus,
     CorpusManifestEntry,

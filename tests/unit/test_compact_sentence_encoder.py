@@ -9,10 +9,10 @@ from laris.core.errors import (
     ModuleContractViolationError,
     SequenceLengthExceededError,
 )
-from laris.layers.layer1_language.encoder import CompactSentenceEncoder
-from laris.layers.layer1_language.schemas import VocabularyContract
-from laris.layers.layer1_language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.layers.layer1_language.tokenizer import ScientificTokenizer
+from laris.language.encoder import CompactSentenceEncoder
+from laris.language.schemas import VocabularyContract
+from laris.language.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.tokenizer import ScientificTokenizer
 
 
 @pytest.fixture
@@ -156,7 +156,7 @@ def test_compact_sentence_encoder_out_of_bounds_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verifies that an out-of-bounds token ID gracefully falls back to zero vector."""
-    from laris.layers.layer1_language.schemas import TokenizedSentenceOutput
+    from laris.language.schemas import TokenizedSentenceOutput
 
     encoder = CompactSentenceEncoder(stem_tokenizer, embedding_dim=384)
     # Monkeypatch tokenizer.encode to return an out-of-bounds token id

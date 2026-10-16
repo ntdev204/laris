@@ -6,7 +6,7 @@ import unittest
 from laris.core.errors import (
     ModuleContractViolationError,
 )
-from laris.layers.layer0_corpus import (
+from laris.corpus import (
     CorpusManifest,
     DatasetSplit,
     LicenseAuthorizationProvenance,
