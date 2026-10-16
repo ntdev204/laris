@@ -205,8 +205,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M9-EVAL-002-SUB-01` | Implement review feedback and hard-negative provenance | `MOD-EVAL-002` | `DONE` | `M9-EVAL-002` |
 | `M9-EVAL-002-SUB-02` | Add feedback lineage and evaluation contamination tests | `MOD-EVAL-002` | `DONE` | `M9-EVAL-002-SUB-01` |
 | `M9-EVAL-003` | Contextual Bandit Routing Evaluation | `MOD-EVAL-003` | `IN_PROGRESS` | `M9-EVAL-002` |
-| `M9-EVAL-003-SUB-01` | Implement contextual routing policy offline evaluation | `MOD-EVAL-003` | `IN_REVIEW` | `M9-EVAL-003` |
-| `M9-EVAL-003-SUB-02` | Add contextual policy baseline and reward-validity tests | `MOD-EVAL-003` | `BLOCKED` | `M9-EVAL-003-SUB-01` |
+| `M9-EVAL-003-SUB-01` | Implement contextual routing policy offline evaluation | `MOD-EVAL-003` | `DONE` | `M9-EVAL-003` |
+| `M9-EVAL-003-SUB-02` | Add contextual policy baseline and reward-validity tests | `MOD-EVAL-003` | `IN_REVIEW` | `M9-EVAL-003-SUB-01` |
 
 ---
 
