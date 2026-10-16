@@ -1,80 +1,8 @@
-"""Layer 7 Research Reasoning and Gap Discovery Engine.
+"""Compatibility facade for reasoning domain package (ADR-011)."""
 
-Adheres to DOC-SPEC-MOD-001 (Boundary G), ADR-001, and ADR-004.
-"""
+import importlib
 
-from laris.layers.layer7_reasoning.adversarial_engine import (
-    AdversarialCounterEvidenceEngine,
-    ValidationPlanGenerator,
-)
-from laris.layers.layer7_reasoning.adversarial_evaluation import (
-    AdversarialBenchmarkCase,
-    AdversarialBenchmarkSuite,
-    AdversarialEvaluationReport,
-)
-from laris.layers.layer7_reasoning.benchmark import (
-    ConflictBenchmarkReport,
-    ConflictEvaluationBenchmark,
-    ContradictionBenchmarkCase,
-)
-from laris.layers.layer7_reasoning.conflict_detector import ConditionAwareConflictDetector
-from laris.layers.layer7_reasoning.gap_classifier import RuleBasedGapClassifier
-from laris.layers.layer7_reasoning.gap_evaluation import (
-    GapEvaluationReport,
-    GapTypologyEvaluationSuite,
-    GapTypologyGoldCase,
-)
-from laris.layers.layer7_reasoning.gap_scorer import CalibratedGapScoringEngine
-from laris.layers.layer7_reasoning.matrix_engine import ComparativeMatrixEngine
-from laris.layers.layer7_reasoning.schemas import (
-    AdversarialRefutationResult,
-    CalibratedGapScores,
-    CandidateGapStatus,
-    CaveatSeverity,
-    ComparabilityCaveat,
-    ComparativeCell,
-    ComparativeMatrix,
-    ConflictRecord,
-    ConflictType,
-    CorpusScope,
-    CounterEvidenceItem,
-    GapClass,
-    MetricDirection,
-    ResearchGap,
-    StudyFinding,
-    ValidationPlan,
-)
-
-__all__ = [
-    "MetricDirection",
-    "CaveatSeverity",
-    "ConflictType",
-    "StudyFinding",
-    "ComparabilityCaveat",
-    "ComparativeCell",
-    "ComparativeMatrix",
-    "ConflictRecord",
-    "ComparativeMatrixEngine",
-    "ConditionAwareConflictDetector",
-    "ContradictionBenchmarkCase",
-    "ConflictBenchmarkReport",
-    "ConflictEvaluationBenchmark",
-    "GapClass",
-    "CalibratedGapScores",
-    "ValidationPlan",
-    "CorpusScope",
-    "ResearchGap",
-    "CalibratedGapScoringEngine",
-    "RuleBasedGapClassifier",
-    "GapTypologyGoldCase",
-    "GapEvaluationReport",
-    "GapTypologyEvaluationSuite",
-    "CandidateGapStatus",
-    "CounterEvidenceItem",
-    "AdversarialRefutationResult",
-    "AdversarialCounterEvidenceEngine",
-    "ValidationPlanGenerator",
-    "AdversarialBenchmarkCase",
-    "AdversarialEvaluationReport",
-    "AdversarialBenchmarkSuite",
-]
+_target = importlib.import_module('laris.reasoning')
+for _k, _v in _target.__dict__.items():
+    if not _k.startswith('__'):
+        globals()[_k] = _v
