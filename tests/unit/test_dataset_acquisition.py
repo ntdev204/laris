@@ -106,3 +106,35 @@ def test_laris_gold_specification_status(manifest_data):
     gold = gold_entries[0]
     assert gold["acquisition_status"] == "PROPOSED"
     assert gold["actual_sample_count"] == 0  # No fabricated annotations
+
+
+def test_semantic_similarity_coverage_present(manifest_data):
+    """Verifies dedicated semantic similarity coverage via STS-B (Issue #205 item 3)."""
+    stsb_entries = [d for d in manifest_data["datasets"] if d["dataset_id"] == "STSB"]
+    assert len(stsb_entries) == 1
+    stsb = stsb_entries[0]
+    assert stsb["acquisition_status"] == "VERIFIED"
+    assert stsb["actual_sample_count"] == 8628
+    assert "0.0-1.0" in stsb["sample_unit"] or "0.0-1.0" in stsb["notes"]
+
+
+def test_reconciled_doclaynet_count(manifest_data):
+    """Verifies DocLayNet does not claim full 80,863 pages as downloaded (Issue #205 item 1)."""
+    doclaynet = next(d for d in manifest_data["datasets"] if d["dataset_id"] == "DOCLAYNET-BOUNDED")
+    assert doclaynet["actual_sample_count"] == 1  # Verified local artifact count
+    assert doclaynet["actual_sample_count"] != 80863
+
+
+def test_candidate_datasets_coverage(manifest_data):
+    """Verifies all four authorized candidate datasets are verified (Issue #205)."""
+    expected_ids = {"STSB", "QUORA-DUPLICATES", "ALL-NLI", "SQUAD"}
+    found_ids = {
+        d["dataset_id"] for d in manifest_data["datasets"] if d["dataset_id"] in expected_ids
+    }
+    assert found_ids == expected_ids
+    for d in manifest_data["datasets"]:
+        if d["dataset_id"] in expected_ids:
+            assert d["acquisition_status"] == "VERIFIED"
+            assert d["schema_valid"] is True
+            assert d["actual_sample_count"] > 0
+

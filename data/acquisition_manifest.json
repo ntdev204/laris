@@ -2,9 +2,9 @@
   "manifest_version": "1.0.0",
   "created_at": "2026-10-16T23:45:00Z",
   "verified_by": "LARIS Dataset Governance Agent",
-  "total_datasets_tracked": 12,
-  "total_acquired_bytes": 68531916,
-  "total_acquired_samples": 374454,
+  "total_datasets_tracked": 16,
+  "total_acquired_bytes": 193148215,
+  "total_acquired_samples": 1786061,
   "training_freeze_confirmed": true,
   "datasets": [
     {
@@ -99,7 +99,7 @@
       "sha256_checksum": "8dc9ad3e5f30ad9a86b290fe236d528ef23a5751fec9a35d99cbacf68ba277cf",
       "storage_path": "data/raw/paws",
       "schema_valid": true,
-      "notes": "High lexical-overlap sentence pairs with human judgements distinguishing true paraphrases from adversarial swaps.",
+      "notes": "High lexical-overlap sentence pairs with human judgements on paraphrase status.",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -122,6 +122,140 @@
       ]
     },
     {
+      "dataset_id": "STSB",
+      "name": "Semantic Textual Similarity Benchmark (STS-B)",
+      "version": "v1.0 (sentence-transformers/stsb)",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/stsb",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Sentence Pair with Continuous Similarity Score [0.0-1.0]",
+      "expected_sample_count": "8,628 sentence pairs (5,749 train / 1,500 validation / 1,379 test)",
+      "actual_sample_count": 8628,
+      "actual_size_bytes": 720899,
+      "sha256_checksum": "eae324ff1eac2d0ba769851736eb7232eda64f370a16eb20e74a2c5f8f5fafe0",
+      "storage_path": "data/raw/stsb",
+      "schema_valid": true,
+      "notes": "Dedicated semantic similarity benchmark directly addressing Issue #205 item 3.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 470612,
+          "sample_count": 5749,
+          "sha256": "eae324ff1eac2d0ba769851736eb7232eda64f370a16eb20e74a2c5f8f5fafe0"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 142187,
+          "sample_count": 1500,
+          "sha256": "9c6e0e9881f1b398abe3e439a482f4686305c3784568c462f6bba58bdff03b0a"
+        },
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 108100,
+          "sample_count": 1379,
+          "sha256": "8acbc291c50977d8655934952956016c3e049c2fe04f8a6c454c1bf6acc42ca1"
+        }
+      ]
+    },
+    {
+      "dataset_id": "QUORA-DUPLICATES",
+      "name": "Quora Question Pairs Duplicate Detection",
+      "version": "v1.0 (sentence-transformers pair-class)",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/quora-duplicates",
+      "license_name": "Quora Terms of Service (Non-Commercial Research)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Question Pair with Binary Duplicate Label (0/1)",
+      "expected_sample_count": "404,290 question pairs",
+      "actual_sample_count": 404290,
+      "actual_size_bytes": 34965546,
+      "sha256_checksum": "71954cb44e706ad26675731b6138995763c6dc8079c14f1fdf956122ccea587f",
+      "storage_path": "data/raw/quora_duplicates",
+      "schema_valid": true,
+      "notes": "Owner-approved paraphrase equivalence source with binary duplicate labels.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 34965546,
+          "sample_count": 404290,
+          "sha256": "71954cb44e706ad26675731b6138995763c6dc8079c14f1fdf956122ccea587f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ALL-NLI",
+      "name": "All-NLI Consolidated Inference Corpus (SNLI + MultiNLI)",
+      "version": "v1.0 (sentence-transformers pair-class)",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/all-nli",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Sentence Pair with 3-Way NLI Label (entailment/neutral/contradiction)",
+      "expected_sample_count": "981,382 NLI pairs",
+      "actual_sample_count": 981382,
+      "actual_size_bytes": 72651651,
+      "sha256_checksum": "8bbe734fddd8d66fee7ade164e0eaa6118e33a0d80a668a5cca87277407d6eb1",
+      "storage_path": "data/raw/all_nli",
+      "schema_valid": true,
+      "notes": "Consolidated 3-way NLI training corpus uniting Stanford NLI and Multi-Genre NLI.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 69476816,
+          "sample_count": 942069,
+          "sha256": "8bbe734fddd8d66fee7ade164e0eaa6118e33a0d80a668a5cca87277407d6eb1"
+        },
+        {
+          "filename": "dev-00000-of-00001.parquet",
+          "bytes": 1568321,
+          "sample_count": 19657,
+          "sha256": "f8cf16196ed44f16daafae91518e511a2879a83a6e698bd9eda3094a9d0a04bc"
+        },
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 1606514,
+          "sample_count": 19656,
+          "sha256": "720770668e89d445c36a3680a2c44d863166e4c6f1e434d61250829b686ba91f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SQUAD",
+      "name": "Stanford Question Answering Dataset (SQuAD v1.1)",
+      "version": "v1.1 (rajpurkar/squad plain_text)",
+      "official_source_url": "https://huggingface.co/datasets/rajpurkar/squad",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Context-Question-Answer Reading Comprehension Item",
+      "expected_sample_count": "98,169 QA items (87,599 train / 10,570 validation)",
+      "actual_sample_count": 98169,
+      "actual_size_bytes": 16278203,
+      "sha256_checksum": "ea7f52bac024f6b1bdc7aaa2a4ee302cba8c2fdc8d4a235cf18a9a5196b6175b",
+      "storage_path": "data/raw/squad",
+      "schema_valid": true,
+      "notes": "Owner-approved evidence-grounded reading comprehension and QA benchmark.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 14458314,
+          "sample_count": 87599,
+          "sha256": "ea7f52bac024f6b1bdc7aaa2a4ee302cba8c2fdc8d4a235cf18a9a5196b6175b"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 1819889,
+          "sample_count": 10570,
+          "sha256": "8c6646d36bd5a95061e076788cf3161d11f6f3e7d625dac7a83bbed0a49f69f7"
+        }
+      ]
+    },
+    {
       "dataset_id": "ANLI",
       "name": "Adversarial Natural Language Inference",
       "version": "v0.1",
@@ -137,7 +271,7 @@
       "sha256_checksum": "16ac929a7e90ecf9093deaec89cc81fe86a379265a5320a150028efe50c5cde8",
       "storage_path": "data/raw/anli",
       "schema_valid": true,
-      "notes": "Human-in-the-loop adversarial NLI examples designed to probe model reasoning and break lexical heuristics.",
+      "notes": "Human-in-the-loop adversarial NLI examples designed to probe model reasoning.",
       "files": [
         {
           "filename": "anli_v0.1/R1/train.jsonl",
@@ -211,7 +345,7 @@
       "sha256_checksum": "11c621288d41ac144d29b13b0f8503b3820b7d6e8b1f6ff24dff335c196d76be",
       "storage_path": "data/raw/scifact",
       "schema_valid": true,
-      "notes": "Gold scientific claims paired with research abstracts, rationale sentences, and SUPPORT/CONTRADICT labels.",
+      "notes": "Gold scientific claims paired with abstracts and SUPPORT/CONTRADICT labels.",
       "files": [
         {
           "filename": "data/claims_train.jsonl",
@@ -255,7 +389,7 @@
       "sha256_checksum": "28f9e08832c5ecf97225f5d040af1838d38c3f60dc959a7c44eb012432b7d282",
       "storage_path": "data/raw/viquad",
       "schema_valid": true,
-      "notes": "Vietnamese reading comprehension with Wikipedia contexts, extractive answers, and token boundaries.",
+      "notes": "Vietnamese reading comprehension with Wikipedia contexts and answer spans.",
       "files": [
         {
           "filename": "train.json",
@@ -287,7 +421,7 @@
       "sha256_checksum": "c9f19f24541dc23e77a5709eff5b66611faf3f7689308164c60095dff3badc92",
       "storage_path": "data/raw/publaynet",
       "schema_valid": true,
-      "notes": "Scientific document layout annotations: text, title, list, table, figure bounding boxes.",
+      "notes": "Scientific document layout annotations: text, title, list, table, figure boxes.",
       "files": [
         {
           "filename": "mini_publaynet_train.json",
@@ -312,14 +446,14 @@
       "license_status": "APPROVED_FOR_ACQUISITION",
       "acquisition_status": "VERIFIED",
       "language": "English",
-      "sample_unit": "Document Layout Page / Bounding Box",
-      "expected_sample_count": "80,863 pages (full corpus), bounded schema acquired",
-      "actual_sample_count": 80863,
+      "sample_unit": "Document Layout Loading Script (Bounded Sample Artifact)",
+      "expected_sample_count": "80,863 pages (full corpus), bounded loading script acquired",
+      "actual_sample_count": 1,
       "actual_size_bytes": 13359,
       "sha256_checksum": "9e670d918b0ca912231ee2cbcef981d7326c8b46fb9feeee6e43bbee3ee9e62d",
       "storage_path": "data/raw/doclaynet",
       "schema_valid": true,
-      "notes": "Official IBM DocLayNet layout taxonomy (11 classes: Caption, Footnote, Formula, List-item, Page-footer, Page-header, Picture, Section-header, Table, Text, Title). Full corpus 30 GB available under CDLA-Permissive-2.0.",
+      "notes": "Official IBM DocLayNet layout taxonomy (11 classes). The full 80,863 pages (30 GB) are not downloaded to respect local disk ceilings; local verification confirmed the canonical loading artifact (1 sample). Full-corpus page count is not claimed as downloaded samples (reconciling Issue #205 item 1).",
       "files": [
         {
           "filename": "DocLayNet-small.py",
@@ -339,7 +473,7 @@
       "acquisition_status": "SKIPPED_TEMPORARILY",
       "language": "English",
       "sample_unit": "Parsed STEM Paper Record",
-      "expected_sample_count": "Target: 500,000 STEM papers (Cap: <20,000,000 samples, <20 GB payload)",
+      "expected_sample_count": "Target: 500k STEM papers (Cap: <20M samples, <20 GB payload)",
       "actual_sample_count": 0,
       "actual_size_bytes": 0,
       "sha256_checksum": "",
@@ -364,7 +498,7 @@
       "sha256_checksum": "",
       "storage_path": "data/raw/laris_gold",
       "schema_valid": true,
-      "notes": "LARIS-GOLD is the project's internal gold-standard evaluation benchmark. As verified during audit, no pre-existing annotations exist in the repository. In accordance with Section 6.5, synthetic annotations are not fabricated. A formal project specification (DOC-SPEC-DATA-002) governs annotation schema, double-blind verification, and held-out test splits.",
+      "notes": "LARIS-GOLD is the project's internal gold-standard evaluation benchmark. As verified during audit, no pre-existing annotations exist in the repository. In accordance with Section 6.5, synthetic annotations are not fabricated. A formal project specification (DOC-SPEC-DATA-002) governs annotation schema, double-blind verification, and splits.",
       "files": []
     },
     {
@@ -383,7 +517,7 @@
       "sha256_checksum": "",
       "storage_path": "data/raw/wikipedia",
       "schema_valid": true,
-      "notes": "Targeted for general language vocabulary and baseline language model pretraining in Stage 1.",
+      "notes": "Targeted for general language vocabulary and baseline language model pretraining.",
       "files": []
     },
     {
@@ -402,7 +536,7 @@
       "sha256_checksum": "",
       "storage_path": "data/raw/natural_questions",
       "schema_valid": true,
-      "notes": "Full dump is 42 GB. Bounded NQ-open subset planned for reading comprehension in Stage 1.",
+      "notes": "Full dump is 42 GB. Bounded NQ-open subset planned for reading comprehension.",
       "files": []
     }
   ]
