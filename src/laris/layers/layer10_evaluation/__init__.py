@@ -17,6 +17,14 @@ from laris.layers.layer10_evaluation.benchmark_runner import (
 from laris.layers.layer10_evaluation.error_taxonomy import (
     ScientificErrorTaxonomy,
 )
+from laris.layers.layer10_evaluation.feedback_mining import (
+    ExpertFeedbackRecord,
+    FeedbackMiningRepository,
+    FeedbackSource,
+    HardNegativeSample,
+    HardNegativeStrategy,
+    ReviewerDecision,
+)
 from laris.layers.layer10_evaluation.schemas import (
     BenchmarkBaseline,
     BenchmarkItem,
@@ -45,4 +53,10 @@ __all__ = [
     "BenchmarkRunReport",
     "ScientificErrorTaxonomy",
     "BenchmarkRunner",
+    "ReviewerDecision",
+    "FeedbackSource",
+    "HardNegativeStrategy",
+    "ExpertFeedbackRecord",
+    "HardNegativeSample",
+    "FeedbackMiningRepository",
 ]
