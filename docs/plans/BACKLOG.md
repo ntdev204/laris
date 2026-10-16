@@ -666,6 +666,9 @@ This document serves as the single source of truth for active task tracking, exe
 | `M11-DATA-001` | Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan | Corpus / Data | `DONE` | `M11-TRAIN-000` |
 | `M11-DATA-001-SUB-01` | Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec | Corpus | `DONE` | `M11-DATA-001` |
 | `M11-DATA-001-SUB-02` | Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit | Corpus | `DONE` | `M11-DATA-001-SUB-01` |
+| `M11-DATA-002` | Reconcile Manifest, Candidate Acquisition & 5M Target Gap Analysis | Corpus / Data | `DONE` | `M11-DATA-001` |
+| `M11-DATA-002-SUB-01` | Reconcile local artifacts, manifest sample accounting & DocLayNet fix | Corpus | `DONE` | `M11-DATA-002` |
+| `M11-DATA-002-SUB-02` | Acquire authorized candidates (STS-B, Quora, All-NLI, SQuAD) & gap analysis | Corpus | `DONE` | `M11-DATA-002-SUB-01` |
 | `M11-ARCH-001` | Refactor Numbered Layers into Domain-Based Packages | Architecture | `DONE` | `M11-TRAIN-000` |
 | `M11-ARCH-001-SUB-01` | Target domain layout design, migration plan & ADR-011 | Architecture | `DONE` | `M11-ARCH-001` |
 | `M11-ARCH-001-SUB-02` | Package migration, compatibility shims, import updates & test suite pass | Core | `DONE` | `M11-ARCH-001-SUB-01` |
@@ -704,6 +707,23 @@ This document serves as the single source of truth for active task tracking, exe
   3. S2ORC evaluated with strict hard caps ($<20$ GB payload, $<20\text{M}$ samples) or skipped if compliant STEM subset is blocked.
   4. LARIS-GOLD specification established without fabricating annotations.
   5. Zero model training run on acquired data.
+
+---
+
+### Task `M11-DATA-002`: Reconcile Manifest, Candidate Acquisition & 5M Target Gap Analysis
+- **Objective:** Reconcile committed manifest with local artifacts, correct DocLayNet sample accounting, acquire authorized candidate datasets (STS-B, Quora Duplicates, All-NLI, SQuAD), provide dedicated semantic similarity coverage, and establish a transparent gap analysis for the 5M–<20M target.
+- **Module:** `MOD-CORPUS-001` / Data Governance.
+- **Dependencies:** `M11-DATA-001`.
+- **Subtasks:**
+  - `M11-DATA-002-SUB-01`: Reconcile local artifacts, manifest sample accounting & DocLayNet fix.
+  - `M11-DATA-002-SUB-02`: Acquire authorized candidates (STS-B, Quora, All-NLI, SQuAD) & gap analysis.
+- **Acceptance Criteria:**
+  1. DocLayNet page count corrected to verified local artifact count (1 sample), resolving overcounting.
+  2. Four authorized candidate datasets acquired and verified locally with exact SHA-256 digests.
+  3. Dedicated continuous semantic similarity [0.0–1.0] coverage established via STS-B.
+  4. Disaggregated counting units (Task Records vs Documents vs Pages vs Tokens) documented.
+  5. Transparent gap analysis and staged acquisition roadmap defined for the 5M–<20M target.
+  6. Zero model training executed during acquisition or validation.
 
 ---
 

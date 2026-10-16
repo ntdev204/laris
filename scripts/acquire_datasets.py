@@ -115,6 +115,15 @@ def count_viquad_questions(file_path: Path) -> int:
     return count
 
 
+def count_parquet_rows(file_path: Path) -> int:
+    """Counts rows in a Parquet file using pyarrow."""
+    try:
+        import pyarrow.parquet as pq
+        return int(pq.read_metadata(file_path).num_rows)
+    except Exception:
+        return 0
+
+
 def acquire_ud_english() -> DatasetEntry:
     """Acquires Universal Dependencies English-EWT."""
     print("\n--- Acquiring Universal Dependencies (English-EWT) ---")
@@ -431,6 +440,207 @@ def acquire_paws() -> DatasetEntry:
     )
 
 
+def acquire_stsb() -> DatasetEntry:
+    """Acquires STS-B (Semantic Textual Similarity Benchmark) via sentence-transformers mirror."""
+    print("\n--- Acquiring STS-B (Semantic Textual Similarity Benchmark) ---")
+    dest_dir = RAW_DIR / "stsb"
+    base_url = "https://huggingface.co/datasets/sentence-transformers/stsb/resolve/main/data"
+    files = [
+        "train-00000-of-00001.parquet",
+        "validation-00000-of-00001.parquet",
+        "test-00000-of-00001.parquet",
+    ]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
+    return DatasetEntry(
+        dataset_id="STSB",
+        name="Semantic Textual Similarity Benchmark (STS-B)",
+        version="v1.0 (sentence-transformers/stsb)",
+        official_source_url="https://huggingface.co/datasets/sentence-transformers/stsb",
+        license_name="CC-BY-SA-4.0",
+        license_status="APPROVED_FOR_ACQUISITION",
+        acquisition_status="VERIFIED",
+        language="English",
+        sample_unit="Sentence Pair with Continuous Similarity Score [0.0-1.0]",
+        expected_sample_count="8,628 sentence pairs (5,749 train / 1,500 validation / 1,379 test)",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 3 and total_samples == 8628,
+        notes="Dedicated semantic similarity benchmark directly addressing Issue #205 item 3.",
+        files=file_records,
+    )
+
+
+def acquire_quora_duplicates() -> DatasetEntry:
+    """Acquires Quora Question Pairs duplicate detection (pair-class)."""
+    print("\n--- Acquiring Quora Question Pairs (quora-duplicates) ---")
+    dest_dir = RAW_DIR / "quora_duplicates"
+    base_url = (
+        "https://huggingface.co/datasets/sentence-transformers/quora-duplicates/resolve/main/pair-class"
+    )
+    files = [
+        "train-00000-of-00001.parquet",
+    ]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
+    return DatasetEntry(
+        dataset_id="QUORA-DUPLICATES",
+        name="Quora Question Pairs Duplicate Detection",
+        version="v1.0 (sentence-transformers pair-class)",
+        official_source_url="https://huggingface.co/datasets/sentence-transformers/quora-duplicates",
+        license_name="Quora Terms of Service (Non-Commercial Research)",
+        license_status="APPROVED_FOR_ACQUISITION",
+        acquisition_status="VERIFIED",
+        language="English",
+        sample_unit="Question Pair with Binary Duplicate Label (0/1)",
+        expected_sample_count="404,290 question pairs",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 1 and total_samples == 404290,
+        notes="Owner-approved paraphrase equivalence source with binary duplicate labels.",
+        files=file_records,
+    )
+
+
+def acquire_all_nli() -> DatasetEntry:
+    """Acquires All-NLI Consolidated Inference Corpus (pair-class: SNLI + MultiNLI)."""
+    print("\n--- Acquiring All-NLI (SNLI + MultiNLI Consolidated) ---")
+    dest_dir = RAW_DIR / "all_nli"
+    base_url = (
+        "https://huggingface.co/datasets/sentence-transformers/all-nli/resolve/main/pair-class"
+    )
+    files = [
+        "train-00000-of-00001.parquet",
+        "dev-00000-of-00001.parquet",
+        "test-00000-of-00001.parquet",
+    ]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
+    return DatasetEntry(
+        dataset_id="ALL-NLI",
+        name="All-NLI Consolidated Inference Corpus (SNLI + MultiNLI)",
+        version="v1.0 (sentence-transformers pair-class)",
+        official_source_url="https://huggingface.co/datasets/sentence-transformers/all-nli",
+        license_name="CC-BY-SA-4.0",
+        license_status="APPROVED_FOR_ACQUISITION",
+        acquisition_status="VERIFIED",
+        language="English",
+        sample_unit="Sentence Pair with 3-Way NLI Label (entailment/neutral/contradiction)",
+        expected_sample_count="981,382 NLI pairs",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 3 and total_samples == 981382,
+        notes="Consolidated 3-way NLI training corpus uniting Stanford NLI and Multi-Genre NLI.",
+        files=file_records,
+    )
+
+
+def acquire_squad() -> DatasetEntry:
+    """Acquires SQuAD v1.1 (Stanford Question Answering Dataset)."""
+    print("\n--- Acquiring SQuAD v1.1 (Stanford Question Answering Dataset) ---")
+    dest_dir = RAW_DIR / "squad"
+    base_url = "https://huggingface.co/datasets/rajpurkar/squad/resolve/main/plain_text"
+    files = [
+        "train-00000-of-00001.parquet",
+        "validation-00000-of-00001.parquet",
+    ]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
+    return DatasetEntry(
+        dataset_id="SQUAD",
+        name="Stanford Question Answering Dataset (SQuAD v1.1)",
+        version="v1.1 (rajpurkar/squad plain_text)",
+        official_source_url="https://huggingface.co/datasets/rajpurkar/squad",
+        license_name="CC-BY-SA-4.0",
+        license_status="APPROVED_FOR_ACQUISITION",
+        acquisition_status="VERIFIED",
+        language="English",
+        sample_unit="Context-Question-Answer Reading Comprehension Item",
+        expected_sample_count="98,169 QA items (87,599 train / 10,570 validation)",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 2 and total_samples == 98169,
+        notes="Owner-approved evidence-grounded reading comprehension and QA benchmark.",
+        files=file_records,
+    )
+
+
 def acquire_publaynet_sample() -> DatasetEntry:
     """Acquires PubLayNet bounded mini evaluation sample."""
     print("\n--- Acquiring PubLayNet (Bounded Mini Sample) ---")
@@ -513,16 +723,18 @@ def acquire_doclaynet_sample() -> DatasetEntry:
         license_status="APPROVED_FOR_ACQUISITION",
         acquisition_status="VERIFIED",
         language="English",
-        sample_unit="Document Layout Page / Bounding Box",
-        expected_sample_count="80,863 pages (full corpus), bounded schema acquired",
-        actual_sample_count=80863,
+        sample_unit="Document Layout Loading Script (Bounded Sample Artifact)",
+        expected_sample_count="80,863 pages (full corpus), bounded loading script acquired",
+        actual_sample_count=len(file_records),
         actual_size_bytes=total_size,
         sha256_checksum=file_records[0]["sha256"] if file_records else "",
         storage_path=str(dest_dir.relative_to(REPO_ROOT)),
         schema_valid=True,
         notes=(
-            "Official IBM DocLayNet layout taxonomy (11 classes). Full corpus (30 GB) "
-            "available under CDLA-Permissive-2.0."
+            "Official IBM DocLayNet layout taxonomy (11 classes). The full 80,863 pages (30 GB) "
+            "are not downloaded to respect local disk ceilings; local verification confirmed "
+            "the canonical loading artifact (1 sample). Full-corpus page count is not claimed "
+            "as downloaded samples (reconciling Issue #205 item 1)."
         ),
         files=file_records,
     )
@@ -644,6 +856,10 @@ def main():
         acquire_ud_english(),
         acquire_ud_vietnamese(),
         acquire_paws(),
+        acquire_stsb(),
+        acquire_quora_duplicates(),
+        acquire_all_nli(),
+        acquire_squad(),
         acquire_anli(),
         acquire_scifact(),
         acquire_viquad(),
