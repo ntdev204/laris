@@ -174,19 +174,39 @@ This document serves as the single source of truth for active task tracking, exe
 | `M7-ORCH-003-SUB-02` | Add recursion ceiling and resource budget stress tests | `MOD-ORCH-003` | `DONE` | `M7-ORCH-003-SUB-01` |
 
 
+---
+
+## Milestone M8: Adaptive Local Model Execution & Resource Governor (Layer 9 & Boundary I)
+**Status:** `DONE`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
 | `M8-EXEC-001` | Hardware Telemetry & Headroom Budgeting Engine | `MOD-EXEC-001` | `DONE` | `M7-ORCH-003` |
 | `M8-EXEC-001-SUB-01` | Implement hardware telemetry and headroom budgeting engine | `MOD-EXEC-001` | `DONE` | `M8-EXEC-001` |
 | `M8-EXEC-001-SUB-02` | Add hardware telemetry integration and allocation tests | `MOD-EXEC-001` | `DONE` | `M8-EXEC-001-SUB-01` |
-
-
 | `M8-EXEC-002` | Selective Weight Offloading & Activation Swapping | `MOD-EXEC-002` | `DONE` | `M8-EXEC-001` |
 | `M8-EXEC-002-SUB-01` | Implement selective weight offloading and activation swapping | `MOD-EXEC-002` | `DONE` | `M8-EXEC-002` |
 | `M8-EXEC-002-SUB-02` | Add offloading latency and activation swapping benchmarks | `MOD-EXEC-002` | `DONE` | `M8-EXEC-002-SUB-01` |
-
-
 | `M8-EXEC-003` | Adaptive Task Routing & Degradation Fallbacks | `MOD-EXEC-003` | `DONE` | `M8-EXEC-002` |
 | `M8-EXEC-003-SUB-01` | Implement adaptive task routing and degradation fallbacks | `MOD-EXEC-003` | `DONE` | `M8-EXEC-003` |
 | `M8-EXEC-003-SUB-02` | Add route selection accuracy and graceful degradation tests | `MOD-EXEC-003` | `DONE` | `M8-EXEC-003-SUB-01` |
+
+---
+
+## Milestone M9: Feedback, Error Taxonomy & Policy Learning
+**Status:** `READY`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M9-EVAL-001` | Benchmark Runner, Regression Gates & Error Taxonomy | `MOD-EVAL-001` | `READY` | `M8-EXEC-003` |
+| `M9-EVAL-001-SUB-01` | Implement versioned benchmark runner and regression gate | `MOD-EVAL-001` | `TODO` | `M9-EVAL-001` |
+| `M9-EVAL-001-SUB-02` | Add regression thresholds and benchmark report serialization tests | `MOD-EVAL-001` | `BLOCKED` | `M9-EVAL-001-SUB-01` |
+| `M9-EVAL-002` | Expert Feedback & Hard-Negative Mining | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-001` |
+| `M9-EVAL-002-SUB-01` | Implement review feedback and hard-negative provenance | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-002` |
+| `M9-EVAL-002-SUB-02` | Add feedback lineage and evaluation contamination tests | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-002-SUB-01` |
+| `M9-EVAL-003` | Contextual Bandit Routing Evaluation | `MOD-EVAL-003` | `BLOCKED` | `M9-EVAL-002` |
+| `M9-EVAL-003-SUB-01` | Implement contextual routing policy offline evaluation | `MOD-EVAL-003` | `BLOCKED` | `M9-EVAL-003` |
+| `M9-EVAL-003-SUB-02` | Add contextual policy baseline and reward-validity tests | `MOD-EVAL-003` | `BLOCKED` | `M9-EVAL-003-SUB-01` |
 
 ---
 
@@ -526,6 +546,51 @@ This document serves as the single source of truth for active task tracking, exe
 - **Acceptance Criteria:**
   1. Router selects optimal model/heuristic based on prompt complexity and telemetry headroom.
   2. Graceful degradation cascade falls back from dense neural encoders to BM25/lexical matching on memory pressure.
+
+---
+
+## Detailed Task Specifications for Milestone M9
+
+### Task `M9-EVAL-001`: Benchmark Runner, Regression Gates & Error Taxonomy
+- **Objective:** Implement versioned capability benchmark execution, regression comparisons and structured scientific error records.
+- **Module:** `MOD-EVAL-001` (Boundary J / Layer 10).
+- **Dependencies:** Milestone M8 Exit Gate (`M8-EXEC-003`).
+- **Subtasks:**
+  - `M9-EVAL-001-SUB-01`: Implement versioned benchmark runner and regression gate.
+  - `M9-EVAL-001-SUB-02`: Add regression thresholds and benchmark report serialization tests.
+- **Acceptance Criteria:**
+  1. Frozen evaluation sets remain isolated from training data.
+  2. Reproducible pass/fail regression comparison against previous release baselines.
+  3. Structured error records distinguish provenance, epistemic, and extraction failures.
+
+---
+
+### Task `M9-EVAL-002`: Expert Feedback & Hard-Negative Mining
+- **Objective:** Capture reviewed annotations and mine hard negatives without contaminating evaluation/test sets.
+- **Module:** `MOD-EVAL-002` (Boundary J / Layer 10).
+- **Dependencies:** `M9-EVAL-001`.
+- **Subtasks:**
+  - `M9-EVAL-002-SUB-01`: Implement review feedback and hard-negative provenance.
+  - `M9-EVAL-002-SUB-02`: Add feedback lineage and evaluation contamination tests.
+- **Acceptance Criteria:**
+  1. Feedback lineage is recorded with immutable cryptographic provenance.
+  2. Evaluation/test splits are strictly protected against contamination during hard-negative mining.
+  3. Data, weight, and policy update paths remain isolated.
+
+---
+
+### Task `M9-EVAL-003`: Contextual Bandit Routing Evaluation
+- **Objective:** Prototype and evaluate contextual routing policies against heuristic and deterministic baselines.
+- **Module:** `MOD-EVAL-003` (Boundary J / Layer 10).
+- **Dependencies:** `M9-EVAL-002`.
+- **Subtasks:**
+  - `M9-EVAL-003-SUB-01`: Implement contextual routing policy offline evaluation.
+  - `M9-EVAL-003-SUB-02`: Add contextual policy baseline and reward-validity tests.
+- **Acceptance Criteria:**
+  1. Baseline comparisons measure trade-offs between latency and output quality.
+  2. Pure offline simulation; no uncontrolled online self-training.
+  3. Verified reward validity before policy activation.
+
 
 
 
