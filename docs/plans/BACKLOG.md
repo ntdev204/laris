@@ -215,8 +215,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
-| `M10-PROD-001` | Evidence-Anchored Structured Research Report Generator | `MOD-PROD-001` | `READY` | `M9-EVAL-003` |
-| `M10-PROD-001-SUB-01` | Define structured report schema and evidence gate | `MOD-PROD-001` | `READY` | `M10-PROD-001` |
+| `M10-PROD-001` | Evidence-Anchored Structured Research Report Generator | `MOD-PROD-001` | `IN_PROGRESS` | `M9-EVAL-003` |
+| `M10-PROD-001-SUB-01` | Define structured report schema and evidence gate | `MOD-PROD-001` | `IN_REVIEW` | `M10-PROD-001` |
 | `M10-PROD-001-SUB-02` | Add report assertion-to-evidence coverage gate | `MOD-PROD-001` | `BLOCKED` | `M10-PROD-001-SUB-01` |
 | `M10-PROD-002` | Evidence Inspection Interface & Project History | `MOD-PROD-002` | `BLOCKED` | `M10-PROD-001` |
 | `M10-PROD-002-SUB-01` | Implement evidence inspection and version lineage | `MOD-PROD-002` | `BLOCKED` | `M10-PROD-002` |

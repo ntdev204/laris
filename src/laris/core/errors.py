@@ -165,6 +165,17 @@ class PolicyRewardValidationError(LarisError):
     pass
 
 
+class UnanchoredAssertionError(LarisError):
+    """Raised when a factual report assertion cannot be resolved to valid evidence coordinates."""
+    pass
+
+
+class ReportSchemaValidationError(LarisError):
+    """Raised when a research report fails schema, section, or structural constraints."""
+    pass
+
+
+
 
 
 
