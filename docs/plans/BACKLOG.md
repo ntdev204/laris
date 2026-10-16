@@ -660,12 +660,12 @@ This document serves as the single source of truth for active task tracking, exe
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
-| `M11-TRAIN-000` | Staged Model Learning Pipeline Governance | System / Gov | `IN_PROGRESS` | Milestone M10 Exit Gate |
+| `M11-TRAIN-000` | Staged Model Learning Pipeline Governance | System / Gov | `DONE` | Milestone M10 Exit Gate |
 | `M11-TRAIN-000-SUB-01` | Model training vs deterministic baseline audit | Gov | `DONE` | `M11-TRAIN-000` |
 | `M11-TRAIN-000-SUB-02` | Staged learning specification, gates & scalable sample floors | Gov | `DONE` | `M11-TRAIN-000-SUB-01` |
-| `M11-DATA-001` | Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan | Corpus / Data | `READY` | `M11-TRAIN-000` |
-| `M11-DATA-001-SUB-01` | Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec | Corpus | `READY` | `M11-DATA-001` |
-| `M11-DATA-001-SUB-02` | Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit | Corpus | `READY` | `M11-DATA-001-SUB-01` |
+| `M11-DATA-001` | Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan | Corpus / Data | `DONE` | `M11-TRAIN-000` |
+| `M11-DATA-001-SUB-01` | Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec | Corpus | `DONE` | `M11-DATA-001` |
+| `M11-DATA-001-SUB-02` | Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit | Corpus | `DONE` | `M11-DATA-001-SUB-01` |
 | `M11-ARCH-001` | Refactor Numbered Layers into Domain-Based Packages | Architecture | `READY` | `M11-TRAIN-000` |
 | `M11-ARCH-001-SUB-01` | Target domain layout design, migration plan & ADR-011 | Architecture | `READY` | `M11-ARCH-001` |
 | `M11-ARCH-001-SUB-02` | Package migration, compatibility shims, import updates & test suite pass | Core | `READY` | `M11-ARCH-001-SUB-01` |
