@@ -305,6 +305,7 @@ class FeedbackMiningRepository:
         expected_label: str = "CONTRADICTION",
         difficulty_score: float = 0.85,
         category: Optional[ScientificErrorCategory] = None,
+        sample_id: Optional[str] = None,
     ) -> HardNegativeSample:
         """Mine and register an adversarial hard negative sample derived from review feedback."""
         # Derive error category from reviewer decision if not explicitly provided
@@ -319,23 +320,34 @@ class FeedbackMiningRepository:
             else:
                 cat = ScientificErrorCategory.EXTRACTION_FAILURE
 
-        sample_id = f"HN-{feedback.feedback_id}-{strategy.value.lower()}"
-        sample = HardNegativeSample(
-            sample_id=sample_id,
-            source_feedback_id=feedback.feedback_id,
-            hard_negative_category=cat,
-            strategy=strategy,
-            premise=premise,
-            hypothesis=hypothesis,
-            perturbed_condition=perturbed_condition,
-            expected_label=expected_label,
-            difficulty_score=difficulty_score,
-            is_training_eligible=True,
-            split_assignment="train",
-            provenance_coordinate=feedback.provenance_coordinate,
-        )
-
         with self._lock:
+            if sample_id:
+                final_id = sample_id
+            else:
+                base_id = f"HN-{feedback.feedback_id}-{strategy.value.lower()}"
+                if base_id not in self._hard_negatives:
+                    final_id = base_id
+                else:
+                    counter = 1
+                    while f"{base_id}-{counter:03d}" in self._hard_negatives:
+                        counter += 1
+                    final_id = f"{base_id}-{counter:03d}"
+
+            sample = HardNegativeSample(
+                sample_id=final_id,
+                source_feedback_id=feedback.feedback_id,
+                hard_negative_category=cat,
+                strategy=strategy,
+                premise=premise,
+                hypothesis=hypothesis,
+                perturbed_condition=perturbed_condition,
+                expected_label=expected_label,
+                difficulty_score=difficulty_score,
+                is_training_eligible=True,
+                split_assignment="train",
+                provenance_coordinate=feedback.provenance_coordinate,
+            )
+
             self._hard_negatives[sample.sample_id] = sample
             # Ensure feedback is also stored if not already registered
             if feedback.feedback_id not in self._feedback_records:
