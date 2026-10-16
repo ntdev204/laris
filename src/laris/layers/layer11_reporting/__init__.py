@@ -6,6 +6,9 @@ and evidence verification gates adhering to Boundary K and DOC-SPEC-REP-001.
 
 from __future__ import annotations
 
+from laris.layers.layer11_reporting.report_generator import (
+    StructuredReportGenerator,
+)
 from laris.layers.layer11_reporting.report_schema import (
     AssertionStatus,
     CorpusManifestEntry,
@@ -25,5 +28,6 @@ __all__ = [
     "ReportSection",
     "ReportSectionType",
     "ReportVerificationSummary",
+    "StructuredReportGenerator",
     "StructuredResearchReport",
 ]

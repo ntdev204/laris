@@ -16,7 +16,7 @@ from laris.core.errors import (
     UnanchoredAssertionError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer11_reporting.report_schema import (
+from laris.layers.layer11_reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,
@@ -24,6 +24,7 @@ from laris.layers.layer11_reporting.report_schema import (
     ReportSection,
     ReportSectionType,
     ReportVerificationSummary,
+    StructuredReportGenerator,
     StructuredResearchReport,
 )
 
@@ -471,4 +472,63 @@ class TestEvidenceGateVerification:
         remaining = report.sections[ReportSectionType.EXECUTIVE_SUMMARY].assertions
         assert len(remaining) == 1
         assert remaining[0].status == AssertionStatus.FLAGGED_MISSING_EVIDENCE
+
+
+class TestStructuredReportGeneratorUnit:
+    """Unit tests for StructuredReportGenerator edge cases and properties."""
+
+    def test_generator_properties_and_validation(self) -> None:
+        """Verify generator properties and input validation checks."""
+        generator = StructuredReportGenerator()
+        assert isinstance(generator.evidence_gate, EvidenceGate)
+
+        # Empty report_id
+        with pytest.raises(ReportSchemaValidationError, match="report_id cannot be empty"):
+            generator.generate_report(
+                report_id="   ",
+                query_statement="Valid",
+                corpus_manifest=[],
+                sections_content={},
+                assertions=[],
+                citation_index={},
+            )
+
+        # Empty query_statement
+        with pytest.raises(ReportSchemaValidationError, match="query_statement cannot be empty"):
+            generator.generate_report(
+                report_id="REP-VALID",
+                query_statement="",
+                corpus_manifest=[],
+                sections_content={},
+                assertions=[],
+                citation_index={},
+            )
+
+    def test_generator_unknown_section_fallback(self) -> None:
+        """Verify assertions with unmapped sections fall back to executive summary."""
+        generator = StructuredReportGenerator()
+        sections_content = {st: f"Content for {st.value}" for st in ReportSectionType}
+        coord = _sample_coordinate("COORD-1")
+        assertion = ReportAssertion(
+            assertion_id="ASRT-FALLBACK",
+            section=ReportSectionType.EXECUTIVE_SUMMARY,
+            statement="Valid statement.",
+            coordinate_ids=["COORD-1"],
+        )
+        object.__setattr__(assertion, "section", "UNKNOWN_SECTION")
+
+        report, summary = generator.generate_report(
+            report_id="REP-FALLBACK",
+            query_statement="Valid query",
+            corpus_manifest=[],
+            sections_content=sections_content,
+            assertions=[assertion],
+            citation_index={"COORD-1": coord},
+            strict_gate=True,
+        )
+        assert summary.is_valid
+        exec_assertions = report.sections[ReportSectionType.EXECUTIVE_SUMMARY].assertions
+        assert len(exec_assertions) == 1
+        assert exec_assertions[0].assertion_id == "ASRT-FALLBACK"
+
 
