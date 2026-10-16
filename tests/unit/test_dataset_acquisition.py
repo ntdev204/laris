@@ -138,3 +138,53 @@ def test_candidate_datasets_coverage(manifest_data):
             assert d["schema_valid"] is True
             assert d["actual_sample_count"] > 0
 
+
+def test_target_scale_requirements(manifest_data):
+    """Verifies that total verified samples reach at least 5M and < 20M (Issue #209)."""
+    total_samples = manifest_data["total_acquired_samples"]
+    total_bytes = manifest_data["total_acquired_bytes"]
+
+    # Hard requirements: >= 5,000,000 and < 20,000,000
+    assert total_samples >= 5_000_000, f"Expected >= 5M samples, got {total_samples:,}"
+    assert total_samples < 20_000_000, f"Expected < 20M samples, got {total_samples:,}"
+    # Payload ceiling: strictly < 20 GB
+    assert total_bytes < 20 * (1024**3), f"Expected payload < 20 GB, got {total_bytes:,} bytes"
+
+
+def test_wikipedia_verified_coverage(manifest_data):
+    """Verifies English subset and full Vietnamese Wikipedia dumps are verified (Issue #209)."""
+    vi_wiki = next(d for d in manifest_data["datasets"] if d["dataset_id"] == "WIKIPEDIA-VI")
+    en_wiki = next(
+        d for d in manifest_data["datasets"] if d["dataset_id"] == "WIKIPEDIA-EN-BOUNDED"
+    )
+
+    assert vi_wiki["acquisition_status"] == "VERIFIED"
+    assert vi_wiki["schema_valid"] is True
+    assert vi_wiki["actual_sample_count"] == 1_288_680
+    assert vi_wiki["license_name"] == "CC-BY-SA-4.0"
+
+    assert en_wiki["acquisition_status"] == "VERIFIED"
+    assert en_wiki["schema_valid"] is True
+    assert en_wiki["actual_sample_count"] == 2_031_750
+    assert en_wiki["license_name"] == "CC-BY-SA-4.0"
+
+
+def test_language_specific_ledgers(manifest_data):
+    """Verifies separate English and Vietnamese sample counts meet required scale (Issue #209)."""
+    en_samples = sum(
+        d["actual_sample_count"]
+        for d in manifest_data["datasets"]
+        if d["language"] == "English" and d["acquisition_status"] == "VERIFIED"
+    )
+    vi_samples = sum(
+        d["actual_sample_count"]
+        for d in manifest_data["datasets"]
+        if d["language"] == "Vietnamese" and d["acquisition_status"] == "VERIFIED"
+    )
+
+    # English ledger contains task records + Wikipedia clean articles
+    assert en_samples >= 3_700_000, f"Expected >= 3.7M English records, got {en_samples:,}"
+    # Vietnamese ledger contains ViQuAD, VTB, and full Vietnamese Wikipedia
+    assert vi_samples >= 1_300_000, f"Expected >= 1.3M Vietnamese records, got {vi_samples:,}"
+
+

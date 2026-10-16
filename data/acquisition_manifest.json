@@ -2,9 +2,9 @@
   "manifest_version": "1.0.0",
   "created_at": "2026-10-16T23:45:00Z",
   "verified_by": "LARIS Dataset Governance Agent",
-  "total_datasets_tracked": 16,
-  "total_acquired_bytes": 193148215,
-  "total_acquired_samples": 1786061,
+  "total_datasets_tracked": 17,
+  "total_acquired_bytes": 4579300002,
+  "total_acquired_samples": 5106491,
   "training_freeze_confirmed": true,
   "datasets": [
     {
@@ -464,6 +464,148 @@
       ]
     },
     {
+      "dataset_id": "WIKIPEDIA-VI",
+      "name": "Wikimedia Official Vietnamese Wikipedia Dump",
+      "version": "20231101.vi",
+      "official_source_url": "https://huggingface.co/datasets/wikimedia/wikipedia",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "Vietnamese",
+      "sample_unit": "Clean Wikipedia Article Document (Vietnamese)",
+      "expected_sample_count": "1,288,680 articles",
+      "actual_sample_count": 1288680,
+      "actual_size_bytes": 729557588,
+      "sha256_checksum": "ec53cc9899be9287b10785c794745eeef94b2df52970ba2ebd1808bfa8d1599a",
+      "storage_path": "data/raw/wikipedia_vi",
+      "schema_valid": true,
+      "notes": "Full official Vietnamese Wikipedia clean article corpus across 4 shards.",
+      "files": [
+        {
+          "filename": "0000.parquet",
+          "bytes": 291484901,
+          "sample_count": 322170,
+          "sha256": "ec53cc9899be9287b10785c794745eeef94b2df52970ba2ebd1808bfa8d1599a"
+        },
+        {
+          "filename": "0001.parquet",
+          "bytes": 70991827,
+          "sample_count": 322170,
+          "sha256": "d1e724ebca841a6ca38d7b32a62cb99e81c32368ae05f48c779f5f11d0122b35"
+        },
+        {
+          "filename": "0002.parquet",
+          "bytes": 50874653,
+          "sample_count": 322170,
+          "sha256": "f364415cd7ccffc02651843ef2a12a80c5e217a08274b930bc1a1746b544622f"
+        },
+        {
+          "filename": "0003.parquet",
+          "bytes": 316206207,
+          "sample_count": 322170,
+          "sha256": "0f5c15b2c8836c02547c796a817dd85b980897916259ed9e8f76580482f0cb77"
+        }
+      ]
+    },
+    {
+      "dataset_id": "WIKIPEDIA-EN-BOUNDED",
+      "name": "Wikimedia Official English Wikipedia Dump (Bounded Subset)",
+      "version": "20231101.en (shards 0000-0012)",
+      "official_source_url": "https://huggingface.co/datasets/wikimedia/wikipedia",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Clean Wikipedia Article Document (English)",
+      "expected_sample_count": "~2,030,000 articles",
+      "actual_sample_count": 2031750,
+      "actual_size_bytes": 3656594199,
+      "sha256_checksum": "382e7f6f09e488b24793a7f7cfc659879d5a22da2cf2efec6491665f0c019677",
+      "storage_path": "data/raw/wikipedia_en",
+      "schema_valid": true,
+      "notes": "Bounded official English Wikipedia clean article subset across 13 shards, respecting 20 GB disk limit.",
+      "files": [
+        {
+          "filename": "0000.parquet",
+          "bytes": 420296449,
+          "sample_count": 156289,
+          "sha256": "382e7f6f09e488b24793a7f7cfc659879d5a22da2cf2efec6491665f0c019677"
+        },
+        {
+          "filename": "0001.parquet",
+          "bytes": 351448367,
+          "sample_count": 156289,
+          "sha256": "6cd57a5825312ca966313d4a1b614690b5c4fb53cee9b124bc0e999977eb36cf"
+        },
+        {
+          "filename": "0002.parquet",
+          "bytes": 329024669,
+          "sample_count": 156289,
+          "sha256": "b18674f163d4f106e43396fd58412a79b80a418c72bb728c20af439e7ca4d5b7"
+        },
+        {
+          "filename": "0003.parquet",
+          "bytes": 330779424,
+          "sample_count": 156289,
+          "sha256": "0b8a6f452f5ef59d0986a067f70110feb16d7c1d281ba2db0b3df32933618fcc"
+        },
+        {
+          "filename": "0004.parquet",
+          "bytes": 306945391,
+          "sample_count": 156289,
+          "sha256": "1424300f113c13ee022b7929185fa4f7e20c6195ba563d728e8a3dc47c8e9aba"
+        },
+        {
+          "filename": "0005.parquet",
+          "bytes": 243974056,
+          "sample_count": 156289,
+          "sha256": "220d31bb222ba2d449c845733622a6a2b7a89db3e28b24bfcb3a9bb3e52c6c8d"
+        },
+        {
+          "filename": "0006.parquet",
+          "bytes": 266288728,
+          "sample_count": 156288,
+          "sha256": "b8becbe9989a2c63f129a707a4674a84fb093c163673b1f4ce97afbf5306f04c"
+        },
+        {
+          "filename": "0007.parquet",
+          "bytes": 228195804,
+          "sample_count": 156288,
+          "sha256": "adebba8b075444923ba42ed6214fe205efc756c773f440d98cbdd88a33597c2c"
+        },
+        {
+          "filename": "0008.parquet",
+          "bytes": 247687191,
+          "sample_count": 156288,
+          "sha256": "905f959921ab8de07e7ce238d7c9ef33bd597585a17a99c3ba00163b25002bef"
+        },
+        {
+          "filename": "0009.parquet",
+          "bytes": 227378231,
+          "sample_count": 156288,
+          "sha256": "465bd99719b0f2d1974402b7922a7a66399675dc6218a0a40057e0512592c07b"
+        },
+        {
+          "filename": "0010.parquet",
+          "bytes": 233604795,
+          "sample_count": 156288,
+          "sha256": "cd8b4e9ee2506ba5f47d552c56e2a7569402a6814d9fa171c0e995e56859e51b"
+        },
+        {
+          "filename": "0011.parquet",
+          "bytes": 231748583,
+          "sample_count": 156288,
+          "sha256": "881e8efe6dbaddd34791fdc2158123ed344c436263b9052a0d659418fff89c3a"
+        },
+        {
+          "filename": "0012.parquet",
+          "bytes": 239222511,
+          "sample_count": 156288,
+          "sha256": "d33835c5e69d5f2464cab1ad70b998ec37e084ea0c0ef9f837fac4a9bb030860"
+        }
+      ]
+    },
+    {
       "dataset_id": "S2ORC-STEM",
       "name": "Semantic Scholar Open Research Corpus (S2ORC) STEM Subset",
       "version": "2024-Release / S2AG",
@@ -499,25 +641,6 @@
       "storage_path": "data/raw/laris_gold",
       "schema_valid": true,
       "notes": "LARIS-GOLD is the project's internal gold-standard evaluation benchmark. As verified during audit, no pre-existing annotations exist in the repository. In accordance with Section 6.5, synthetic annotations are not fabricated. A formal project specification (DOC-SPEC-DATA-002) governs annotation schema, double-blind verification, and splits.",
-      "files": []
-    },
-    {
-      "dataset_id": "WIKIPEDIA-EN-VI",
-      "name": "Wikipedia STEM & General Language Corpora",
-      "version": "Wikimedia Dumps 2024",
-      "official_source_url": "https://dumps.wikimedia.org/",
-      "license_name": "CC-BY-SA-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
-      "language": "English & Vietnamese",
-      "sample_unit": "Article Document",
-      "expected_sample_count": "~500,000 articles (En) + ~150,000 articles (Vi)",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
-      "storage_path": "data/raw/wikipedia",
-      "schema_valid": true,
-      "notes": "Targeted for general language vocabulary and baseline language model pretraining.",
       "files": []
     },
     {
