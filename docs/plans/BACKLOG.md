@@ -194,7 +194,7 @@ This document serves as the single source of truth for active task tracking, exe
 ---
 
 ## Milestone M9: Feedback, Error Taxonomy & Policy Learning
-**Status:** `READY`
+**Status:** `DONE`
 
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
@@ -207,6 +207,23 @@ This document serves as the single source of truth for active task tracking, exe
 | `M9-EVAL-003` | Contextual Bandit Routing Evaluation | `MOD-EVAL-003` | `DONE` | `M9-EVAL-002` |
 | `M9-EVAL-003-SUB-01` | Implement contextual routing policy offline evaluation | `MOD-EVAL-003` | `DONE` | `M9-EVAL-003` |
 | `M9-EVAL-003-SUB-02` | Add contextual policy baseline and reward-validity tests | `MOD-EVAL-003` | `DONE` | `M9-EVAL-003-SUB-01` |
+
+---
+
+## Milestone M10: Reporting & Productization
+**Status:** `READY`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M10-PROD-001` | Evidence-Anchored Structured Research Report Generator | `MOD-PROD-001` | `READY` | `M9-EVAL-003` |
+| `M10-PROD-001-SUB-01` | Define structured report schema and evidence gate | `MOD-PROD-001` | `READY` | `M10-PROD-001` |
+| `M10-PROD-001-SUB-02` | Add report assertion-to-evidence coverage gate | `MOD-PROD-001` | `BLOCKED` | `M10-PROD-001-SUB-01` |
+| `M10-PROD-002` | Evidence Inspection Interface & Project History | `MOD-PROD-002` | `BLOCKED` | `M10-PROD-001` |
+| `M10-PROD-002-SUB-01` | Implement evidence inspection and version lineage | `MOD-PROD-002` | `BLOCKED` | `M10-PROD-002` |
+| `M10-PROD-002-SUB-02` | Add lineage navigation and user intervention audit tests | `MOD-PROD-002` | `BLOCKED` | `M10-PROD-002-SUB-01` |
+| `M10-PROD-003` | On-Demand Manuscript, Documentation & Release Candidate | `MOD-PROD-003` | `BLOCKED` | `M10-PROD-002` |
+| `M10-PROD-003-SUB-01` | Package release candidate and verify fresh environment install | `MOD-PROD-003` | `BLOCKED` | `M10-PROD-003` |
+| `M10-PROD-003-SUB-02` | Add fresh environment installation and end-to-end release checks | `MOD-PROD-003` | `BLOCKED` | `M10-PROD-003-SUB-01` |
 
 ---
 
@@ -590,6 +607,51 @@ This document serves as the single source of truth for active task tracking, exe
   1. Baseline comparisons measure trade-offs between latency and output quality.
   2. Pure offline simulation; no uncontrolled online self-training.
   3. Verified reward validity before policy activation.
+
+---
+
+## Detailed Task Specifications for Milestone M10
+
+### Task `M10-PROD-001`: Evidence-Anchored Structured Research Report Generator
+- **Objective:** Generate default structured reports with claims, evidence, confidence, limitations, and source coordinates.
+- **Module:** `MOD-PROD-001` (Layer 11 / Productization).
+- **Dependencies:** Milestone M9 exit gate.
+- **Subtasks:**
+  - `M10-PROD-001-SUB-01`: Define structured report schema and evidence gate.
+  - `M10-PROD-001-SUB-02`: Add report assertion-to-evidence coverage gate.
+- **Acceptance Criteria:**
+  1. Every factual assertion is traceable to valid evidence coordinates.
+  2. Missing evidence is explicitly reported with zero hallucination.
+  3. Schema validation and integration tests pass.
+
+---
+
+### Task `M10-PROD-002`: Evidence Inspection Interface & Project History
+- **Objective:** Provide inspection of source spans, evidence lineage, corpus/run/report versions, and user accept/modify/reject controls.
+- **Module:** `MOD-PROD-002` (Layer 11 / Productization).
+- **Dependencies:** `M10-PROD-001`.
+- **Subtasks:**
+  - `M10-PROD-002-SUB-01`: Implement evidence inspection and version lineage.
+  - `M10-PROD-002-SUB-02`: Add lineage navigation and user intervention audit tests.
+- **Acceptance Criteria:**
+  1. Inspection interface/API is local-first.
+  2. Lineage navigation resolves source spans across report versions.
+  3. User interventions are fully versioned and auditable.
+
+---
+
+### Task `M10-PROD-003`: On-Demand Manuscript, Documentation & Release Candidate
+- **Objective:** Add explicitly requested manuscript composition, user docs, packaging, and end-to-end release verification.
+- **Module:** `MOD-PROD-003` (Layer 11 / Packaging).
+- **Dependencies:** `M10-PROD-001`, `M10-PROD-002`.
+- **Subtasks:**
+  - `M10-PROD-003-SUB-01`: Package release candidate and verify fresh environment install.
+  - `M10-PROD-003-SUB-02`: Add fresh environment installation and end-to-end release checks.
+- **Acceptance Criteria:**
+  1. Manuscript composition is strictly opt-in.
+  2. Full integration and regression test suite passes.
+  3. Installation and build instructions work in clean environment.
+  4. Release notes and operational boundaries are documented.
 
 
 
