@@ -7,7 +7,11 @@ Adheres to DOC-SPEC-MOD-001 (Boundary I), ADR-001, ADR-005, and Issue #68:
 - Safe fallback evaluations preventing Out-Of-Memory system crashes
 """
 
-from laris.core.errors import HardwareBudgetExceededError, WeightStagingError
+from laris.core.errors import (
+    HardwareBudgetExceededError,
+    TaskRoutingError,
+    WeightStagingError,
+)
 from laris.layers.layer9_adaptive_execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
@@ -17,6 +21,16 @@ from laris.layers.layer9_adaptive_execution.schemas import (
     SpecialistExecutionResult,
     TelemetrySnapshot,
     TelemetryStatus,
+)
+from laris.layers.layer9_adaptive_execution.task_router import (
+    ExecutionTier,
+    HardwareBenchmarkReport,
+    HardwareStressProtocol,
+    RoutingDecision,
+    RoutingPolicy,
+    TaskDomain,
+    TaskRouter,
+    TaskRoutingRequest,
 )
 from laris.layers.layer9_adaptive_execution.telemetry import (
     HardwareTelemetryEngine,
@@ -36,6 +50,7 @@ from laris.layers.layer9_adaptive_execution.weight_staging import (
 
 __all__ = [
     "HardwareBudgetExceededError",
+    "TaskRoutingError",
     "WeightStagingError",
     "HardwareTarget",
     "TelemetryStatus",
@@ -54,4 +69,13 @@ __all__ = [
     "SpecialistWeightLoader",
     "MockSpecialistWeightLoader",
     "SpecialistLRUCache",
+    "ExecutionTier",
+    "TaskDomain",
+    "RoutingPolicy",
+    "TaskRoutingRequest",
+    "RoutingDecision",
+    "TaskRouter",
+    "HardwareBenchmarkReport",
+    "HardwareStressProtocol",
 ]
+
