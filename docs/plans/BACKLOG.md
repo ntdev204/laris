@@ -222,8 +222,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M10-PROD-002-SUB-01` | Implement evidence inspection and version lineage | `MOD-PROD-002` | `DONE` | `M10-PROD-002` |
 | `M10-PROD-002-SUB-02` | Add lineage navigation and user intervention audit tests | `MOD-PROD-002` | `DONE` | `M10-PROD-002-SUB-01` |
 | `M10-PROD-003` | On-Demand Manuscript, Documentation & Release Candidate | `MOD-PROD-003` | `IN_PROGRESS` | `M10-PROD-002` |
-| `M10-PROD-003-SUB-01` | Package release candidate and verify fresh environment install | `MOD-PROD-003` | `IN_REVIEW` | `M10-PROD-003` |
-| `M10-PROD-003-SUB-02` | Add fresh environment installation and end-to-end release checks | `MOD-PROD-003` | `BLOCKED` | `M10-PROD-003-SUB-01` |
+| `M10-PROD-003-SUB-01` | Package release candidate and verify fresh environment install | `MOD-PROD-003` | `DONE` | `M10-PROD-003` |
+| `M10-PROD-003-SUB-02` | Add fresh environment installation and end-to-end release checks | `MOD-PROD-003` | `IN_REVIEW` | `M10-PROD-003-SUB-01` |
 
 ---
 
