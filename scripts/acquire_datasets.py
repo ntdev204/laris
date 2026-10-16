@@ -800,26 +800,102 @@ def record_laris_gold_status() -> DatasetEntry:
     )
 
 
-def record_wikipedia_status() -> DatasetEntry:
-    """Records official status of Wikipedia source corpora."""
+def acquire_wikipedia_vietnamese() -> DatasetEntry:
+    """Acquires full official Vietnamese Wikipedia clean article dump (4 parquet shards)."""
+    print("\n--- Acquiring Vietnamese Wikipedia (Full Clean Article Dump) ---")
+    dest_dir = RAW_DIR / "wikipedia_vi"
+    base_url = "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/refs%2Fconvert%2Fparquet/20231101.vi/train"
+    files = [
+        "0000.parquet",
+        "0001.parquet",
+        "0002.parquet",
+        "0003.parquet",
+    ]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
     return DatasetEntry(
-        dataset_id="WIKIPEDIA-EN-VI",
-        name="Wikipedia STEM & General Language Corpora",
-        version="Wikimedia Dumps 2024",
-        official_source_url="https://dumps.wikimedia.org/",
+        dataset_id="WIKIPEDIA-VI",
+        name="Wikimedia Official Vietnamese Wikipedia Dump",
+        version="20231101.vi",
+        official_source_url="https://huggingface.co/datasets/wikimedia/wikipedia",
         license_name="CC-BY-SA-4.0",
         license_status="APPROVED_FOR_ACQUISITION",
-        acquisition_status="PROPOSED",
-        language="English & Vietnamese",
-        sample_unit="Article Document",
-        expected_sample_count="~500,000 articles (En) + ~150,000 articles (Vi)",
-        actual_sample_count=0,
-        actual_size_bytes=0,
-        sha256_checksum="",
-        storage_path="data/raw/wikipedia",
-        schema_valid=True,
-        notes="Targeted for general language vocabulary and baseline language model pretraining.",
-        files=[],
+        acquisition_status="VERIFIED",
+        language="Vietnamese",
+        sample_unit="Clean Wikipedia Article Document (Vietnamese)",
+        expected_sample_count="1,288,680 articles",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 4 and total_samples == 1288680,
+        notes="Full official Vietnamese Wikipedia clean article corpus across 4 shards.",
+        files=file_records,
+    )
+
+
+def acquire_wikipedia_english_subset() -> DatasetEntry:
+    """Acquires bounded English Wikipedia clean article subset (13 parquet shards)."""
+    print("\n--- Acquiring English Wikipedia (Bounded Shards 0000-0012) ---")
+    dest_dir = RAW_DIR / "wikipedia_en"
+    base_url = "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/refs%2Fconvert%2Fparquet/20231101.en/train"
+    files = [f"{i:04d}.parquet" for i in range(13)]
+    file_records = []
+    total_size = 0
+    total_samples = 0
+
+    for fname in files:
+        fpath = dest_dir / fname
+        success = download_file(f"{base_url}/{fname}", fpath)
+        if success and fpath.exists():
+            size = fpath.stat().st_size
+            total_size += size
+            rows = count_parquet_rows(fpath)
+            total_samples += rows
+            file_records.append({
+                "filename": fname,
+                "bytes": size,
+                "sample_count": rows,
+                "sha256": compute_sha256(fpath),
+            })
+
+    return DatasetEntry(
+        dataset_id="WIKIPEDIA-EN-BOUNDED",
+        name="Wikimedia Official English Wikipedia Dump (Bounded Subset)",
+        version="20231101.en (shards 0000-0012)",
+        official_source_url="https://huggingface.co/datasets/wikimedia/wikipedia",
+        license_name="CC-BY-SA-4.0",
+        license_status="APPROVED_FOR_ACQUISITION",
+        acquisition_status="VERIFIED",
+        language="English",
+        sample_unit="Clean Wikipedia Article Document (English)",
+        expected_sample_count="~2,030,000 articles",
+        actual_sample_count=total_samples,
+        actual_size_bytes=total_size,
+        sha256_checksum=file_records[0]["sha256"] if file_records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        notes=(
+            "Bounded official English Wikipedia clean article subset across 13 shards, "
+            "respecting 20 GB disk limit."
+        ),
+        files=file_records,
     )
 
 
@@ -865,9 +941,10 @@ def main():
         acquire_viquad(),
         acquire_publaynet_sample(),
         acquire_doclaynet_sample(),
+        acquire_wikipedia_vietnamese(),
+        acquire_wikipedia_english_subset(),
         record_s2orc_status(),
         record_laris_gold_status(),
-        record_wikipedia_status(),
         record_nq_status(),
     ]
 

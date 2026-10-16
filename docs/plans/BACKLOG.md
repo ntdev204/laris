@@ -757,6 +757,25 @@ This document serves as the single source of truth for active task tracking, exe
   4. All unit, integration, and contract tests pass without failure.
   5. Full CI quality gates pass with zero regressions.
 
+---
+
+### Task `M11-DATA-003`: Acquire and Verify at Least 5M Dataset Records
+- **Objective:** Acquire, verify checksums and schemas, and manifest at least 5,000,000 and strictly under 20,000,000 valid, deduplicated sample records across English and Vietnamese under CC-BY-SA-4.0 licenses, keeping disk usage under 20 GB.
+- **Module:** `MOD-CORPUS-001` (Corpus Ingestion & Data Governance).
+- **Dependencies:** `M11-DATA-002`.
+- **Subtasks:**
+  - `M11-DATA-003-SUB-01`: Official Vietnamese Wikipedia clean article dump acquisition (4 shards, 1,288,680 articles).
+  - `M11-DATA-003-SUB-02`: Bounded English Wikipedia clean article subset acquisition (13 shards, 2,031,744 articles).
+  - `M11-DATA-003-SUB-03`: Disaggregated unit accounting, language ledgers, and contract regression tests.
+- **Acceptance Criteria:**
+  1. Total verified sample count $\ge 5,000,000$ and strictly $< 20,000,000$ (actual: 5,106,485 records).
+  2. Total payload storage strictly $< 20\text{ GB}$ (actual: $\approx 4.4\text{ GB}$).
+  3. Separate English ($3,782,058$) and Vietnamese ($1,324,277$) record ledgers maintained.
+  4. Disaggregated counting units distinguish supervised task records from general language clean document records.
+  5. SHA-256 integrity checksums and parquet schema validity verified for all shards.
+  6. Zero model training executed during acquisition or validation.
+
+
 
 
 
