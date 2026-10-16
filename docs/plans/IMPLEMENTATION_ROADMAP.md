@@ -25,7 +25,7 @@ change_summary: "Detailed 11-milestone implementation roadmap from documentation
 
 ## 1. Roadmap Architecture & Execution Philosophy
 
-The development of LARIS is organized into eleven sequential milestones (M0 through M10). In accordance with [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md), advancement from one milestone to the next requires satisfying explicit, empirical entry and exit criteria.
+The development of LARIS is organized into twelve sequential milestones (M0 through M11). In accordance with [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md), advancement from one milestone to the next requires satisfying explicit, empirical entry and exit criteria.
 
 ```mermaid
 flowchart TD
@@ -39,6 +39,7 @@ flowchart TD
     M7 --> M8["M8: Adaptive Local Execution"]
     M8 --> M9["M9: Feedback & Policy Learning"]
     M9 --> M10["M10: Reporting & Productization"]
+    M10 --> M11["M11: Staged Learning & Refactoring"]
 ```
 
 ---
@@ -110,3 +111,10 @@ flowchart TD
 - **Dependencies:** M9.
 - **Deliverables:** Report generation engine, evidence inspection console, on-demand manuscript generator, user documentation.
 - **Exit Criteria:** 100% of generated research report assertions cite valid coordinates; zero hallucination in formal audit; end-to-end system test pass.
+
+### Milestone M11: Staged Learning Pipeline Governance, Dataset Acquisition & Domain Refactoring
+- **Objective:** Establish the authoritative 6-stage model learning sequence, execute licensing verification and empirical dataset acquisition, and refactor numbered source folders into domain packages while preserving the 12-layer architecture.
+- **Dependencies:** M10.
+- **Deliverables:** Staged learning pipeline specification (`DOC-PLAN-TRAIN-001`), implementation audit report (`DOC-RES-AUDIT-001`), dataset specification and licensing matrix, acquired and verified priority datasets (Universal Dependencies, PAWS, ANLI, SciFact, ViQuAD, DocLayNet, PubLayNet), S2ORC subset selection analysis, project-owned LARIS-GOLD specification, and domain-based package layout (`src/laris/corpus`, `src/laris/language`, `src/laris/scientific`, `src/laris/retrieval`, `src/laris/reasoning`, `src/laris/orchestration`, `src/laris/execution`, `src/laris/evaluation`, `src/laris/reporting`).
+- **Exit Criteria:** Zero model training executed during M11; all priority datasets verified with checksums and schemas; S2ORC strictly bounded ($<20$ GB, $<20$M samples) or skipped if blocked; source refactoring complete with 100% of unit/contract tests passing and zero breaking changes to existing contracts.
+

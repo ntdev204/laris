@@ -653,6 +653,72 @@ This document serves as the single source of truth for active task tracking, exe
   3. Installation and build instructions work in clean environment.
   4. Release notes and operational boundaries are documented.
 
+---
+
+## Milestone M11: Staged Learning Pipeline Governance, Dataset Acquisition & Domain Refactoring
+**Status:** `IN_PROGRESS`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M11-TRAIN-000` | Staged Model Learning Pipeline Governance | System / Gov | `IN_PROGRESS` | Milestone M10 Exit Gate |
+| `M11-TRAIN-000-SUB-01` | Model training vs deterministic baseline audit | Gov | `DONE` | `M11-TRAIN-000` |
+| `M11-TRAIN-000-SUB-02` | Staged learning specification, gates & scalable sample floors | Gov | `DONE` | `M11-TRAIN-000-SUB-01` |
+| `M11-DATA-001` | Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan | Corpus / Data | `READY` | `M11-TRAIN-000` |
+| `M11-DATA-001-SUB-01` | Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec | Corpus | `READY` | `M11-DATA-001` |
+| `M11-DATA-001-SUB-02` | Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit | Corpus | `READY` | `M11-DATA-001-SUB-01` |
+| `M11-ARCH-001` | Refactor Numbered Layers into Domain-Based Packages | Architecture | `READY` | `M11-TRAIN-000` |
+| `M11-ARCH-001-SUB-01` | Target domain layout design, migration plan & ADR-011 | Architecture | `READY` | `M11-ARCH-001` |
+| `M11-ARCH-001-SUB-02` | Package migration, compatibility shims, import updates & test suite pass | Core | `READY` | `M11-ARCH-001-SUB-01` |
+
+---
+
+### Task `M11-TRAIN-000`: Staged Model Learning Pipeline Governance
+- **Objective:** Establish the authoritative 6-stage model learning sequence, stage boundaries, English/Vietnamese separate tracks, model responsibilities (Model 1, Model 2, Model 3), scalable sample floors ($\ge 1\text{M}$ each), and strict non-training governance.
+- **Module:** Governance & System Planning.
+- **Dependencies:** Milestone M10 Exit Gate (`M10-PROD-003`).
+- **Subtasks:**
+  - `M11-TRAIN-000-SUB-01`: Model training vs deterministic baseline audit and reality check (`DOC-RES-AUDIT-001`).
+  - `M11-TRAIN-000-SUB-02`: Staged learning pipeline specification, model separation, and scalable sample floors (`DOC-PLAN-TRAIN-001`).
+- **Acceptance Criteria:**
+  1. Implementation audit explicitly demonstrates that zero neural training has been run and distinguishes deterministic baselines from trained models.
+  2. Learning sequence strictly enforces: Natural Language $\rightarrow$ Scientific Language $\rightarrow$ Scientific OCR $\rightarrow$ OCR-Coupled Manuscript $\rightarrow$ LARIS Integration.
+  3. Minimum floor of 1,000,000 samples for Model 1 and Model 2 defined by granular units (not caps or adequacy guarantees).
+  4. English and Vietnamese tracked as independent curricula and evaluation benchmarks.
+  5. Zero model training executed during this milestone.
+
+---
+
+### Task `M11-DATA-001`: Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan
+- **Objective:** Inventory priority datasets, verify licensing and redistribution terms, acquire eligible sources, verify checksums and schemas, perform S2ORC bounded STEM subset audit ($<20$ GB, $<20\text{M}$ samples), and define LARIS-GOLD specification.
+- **Module:** `MOD-CORPUS-001` / Data Governance.
+- **Dependencies:** `M11-TRAIN-000`.
+- **Subtasks:**
+  - `M11-DATA-001-SUB-01`: Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec.
+  - `M11-DATA-001-SUB-02`: Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit.
+- **Acceptance Criteria:**
+  1. Inventory covers all priority candidates with canonical sources, versions, and verified licenses.
+  2. Eligible datasets acquired responsibly and verified for integrity, checksums, and schema.
+  3. S2ORC evaluated with strict hard caps ($<20$ GB payload, $<20\text{M}$ samples) or skipped if compliant STEM subset is blocked.
+  4. LARIS-GOLD specification established without fabricating annotations.
+  5. Zero model training run on acquired data.
+
+---
+
+### Task `M11-ARCH-001`: Refactor Numbered Layers into Domain-Based Packages
+- **Objective:** Reorganize `src/laris/layers/layerX_*` into clean domain packages (`corpus`, `language`, `scientific`, `retrieval`, `reasoning`, `orchestration`, `execution`, `evaluation`, `reporting`) while preserving the conceptual 12-layer architecture in documentation.
+- **Module:** Architecture & Package Structure.
+- **Dependencies:** `M11-TRAIN-000`.
+- **Subtasks:**
+  - `M11-ARCH-001-SUB-01`: Target domain layout design, migration plan & ADR-011.
+  - `M11-ARCH-001-SUB-02`: Package migration, compatibility shims, import updates & test suite pass.
+- **Acceptance Criteria:**
+  1. Numbered layer folders replaced by domain packages as primary source organization.
+  2. Transparent compatibility shims provided in `src/laris/layers/`.
+  3. All 898+ unit and contract tests pass with zero regressions.
+  4. Ruff, mypy, and docs validation pass with zero errors.
+  5. 12-layer conceptual architecture remains documented and preserved.
+
+
 
 
 
