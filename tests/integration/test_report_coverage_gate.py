@@ -19,10 +19,10 @@ from laris.core.errors import (
     UnanchoredAssertionError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer11_reporting.report_generator import (
+from laris.reporting.report_generator import (
     StructuredReportGenerator,
 )
-from laris.layers.layer11_reporting.report_schema import (
+from laris.reporting.report_schema import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,

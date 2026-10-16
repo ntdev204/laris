@@ -23,7 +23,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
     UnitConversionError,
 )
-from laris.layers.layer3_scinlp import (
+from laris.scientific import (
     DimensionalVector,
     EpistemicAssertionType,
     STEMUnitNormalizer,

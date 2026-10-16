@@ -11,7 +11,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
     UncertaintyCeilingExceededError,
 )
-from laris.layers.layer2_semantic import (
+from laris.reasoning import (
     CoreferenceCluster,
     DiscourseRelationOutput,
     DiscourseRelationType,
@@ -130,7 +130,7 @@ def test_epistemic_overreach_all_correlational_cues() -> None:
 
 
 def test_semantic_equivalence_invalid_status_type() -> None:
-    from laris.layers.layer2_semantic import SemanticEquivalenceOutput
+    from laris.reasoning import SemanticEquivalenceOutput
 
     with pytest.raises(ModuleContractViolationError, match="status must be an EquivalenceStatus"):
         SemanticEquivalenceOutput(
@@ -143,7 +143,7 @@ def test_semantic_equivalence_invalid_status_type() -> None:
 
 
 def test_coreference_output_json_and_cluster_status_invalid() -> None:
-    from laris.layers.layer2_semantic import CoreferenceOutput
+    from laris.reasoning import CoreferenceOutput
 
     cluster = CoreferenceCluster(
         cluster_id="C-JSON",

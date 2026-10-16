@@ -7,7 +7,7 @@ from laris.core.errors import (
     HardwareBudgetExceededError,
     ModuleContractViolationError,
 )
-from laris.layers.layer1_language.schemas import (
+from laris.language.schemas import (
     EncoderCheckpointMetadata,
     LanguageTrainingRunManifest,
 )

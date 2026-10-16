@@ -19,8 +19,8 @@ from laris.core.errors import (
     BenchmarkContaminationError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer10_evaluation.benchmark_runner import BenchmarkRunner
-from laris.layers.layer10_evaluation.feedback_mining import (
+from laris.evaluation.benchmark_runner import BenchmarkRunner
+from laris.evaluation.feedback_mining import (
     ExpertFeedbackRecord,
     FeedbackMiningRepository,
     FeedbackSource,
@@ -28,7 +28,7 @@ from laris.layers.layer10_evaluation.feedback_mining import (
     HardNegativeStrategy,
     ReviewerDecision,
 )
-from laris.layers.layer10_evaluation.schemas import (
+from laris.evaluation.schemas import (
     BenchmarkSuiteType,
     FrozenBenchmarkManifest,
     ScientificErrorCategory,

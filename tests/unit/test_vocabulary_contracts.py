@@ -12,9 +12,9 @@ from pathlib import Path
 import pytest
 
 from laris.core.errors import DataLeakageError, ModuleContractViolationError
-from laris.layers.layer0_corpus.pipeline import Layer0Pipeline
-from laris.layers.layer0_corpus.schemas import DatasetSplit
-from laris.layers.layer1_language.schemas import (
+from laris.corpus.pipeline import Layer0Pipeline
+from laris.corpus.schemas import DatasetSplit
+from laris.language.schemas import (
     TokenizerTrainingInputSpec,
     VocabularyContract,
 )

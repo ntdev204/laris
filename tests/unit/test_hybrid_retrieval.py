@@ -8,12 +8,8 @@ from laris.core.errors import (
     RetrievalDepthExceededError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer1_language.encoder import CompactSentenceEncoder
-from laris.layers.layer1_language.schemas import VocabularyContract
-from laris.layers.layer1_language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.layers.layer1_language.tokenizer import ScientificTokenizer
-from laris.layers.layer5_graph.interfaces import InMemoryGraphPersistenceAdapter
-from laris.layers.layer5_graph.schemas import (
+from laris.graph.interfaces import InMemoryGraphPersistenceAdapter
+from laris.graph.schemas import (
     ClaimNode,
     DocumentNode,
     EdgeType,
@@ -21,7 +17,11 @@ from laris.layers.layer5_graph.schemas import (
     EvidenceGraph,
     MethodNode,
 )
-from laris.layers.layer6_retrieval import (
+from laris.language.encoder import CompactSentenceEncoder
+from laris.language.schemas import VocabularyContract
+from laris.language.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.tokenizer import ScientificTokenizer
+from laris.retrieval import (
     DEFAULT_RRF_K,
     MAX_RETRIEVAL_DEPTH,
     DenseVectorAdapter,

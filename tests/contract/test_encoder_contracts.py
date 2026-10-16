@@ -8,7 +8,7 @@ from laris.core.errors import (
     EmbeddingDimensionMismatchError,
     ModuleContractViolationError,
 )
-from laris.layers.layer1_language.schemas import (
+from laris.language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     EmbeddingBatchOutput,
     EncoderCheckpointMetadata,

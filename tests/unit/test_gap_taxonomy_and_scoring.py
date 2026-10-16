@@ -20,7 +20,7 @@ from laris.core.errors import (
     ProvenanceViolationError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer7_reasoning import (
+from laris.reasoning import (
     CalibratedGapScores,
     CalibratedGapScoringEngine,
     CaveatSeverity,

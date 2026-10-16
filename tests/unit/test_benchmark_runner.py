@@ -30,13 +30,13 @@ from laris.core.errors import (
     WeightStagingError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer10_evaluation.benchmark_runner import (
+from laris.evaluation.benchmark_runner import (
     BenchmarkRunner,
 )
-from laris.layers.layer10_evaluation.error_taxonomy import (
+from laris.evaluation.error_taxonomy import (
     ScientificErrorTaxonomy,
 )
-from laris.layers.layer10_evaluation.schemas import (
+from laris.evaluation.schemas import (
     BenchmarkBaseline,
     BenchmarkItem,
     BenchmarkRunReport,

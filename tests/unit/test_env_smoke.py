@@ -24,30 +24,29 @@ class TestEnvironmentSmoke(unittest.TestCase):
         self.assertIsNotNone(laris.core.schemas.ScientificClaim)
         self.assertIsNotNone(laris.core.errors.LarisError)
 
-    def test_all_architectural_layers_importable(self):
-        """Verifies every architectural layer from Layer 0 through Layer 11 is importable."""
-        layers = [
-            "laris.layers.layer0_corpus",
-            "laris.layers.layer1_language",
-            "laris.layers.layer2_semantic",
-            "laris.layers.layer3_scinlp",
-            "laris.layers.layer4_graph",
-            "laris.layers.layer5_graph",
-            "laris.layers.layer6_retrieval",
-            "laris.layers.layer7_reasoning",
-            "laris.layers.layer8_orchestration",
-            "laris.layers.layer9_adaptive_execution",
-            "laris.layers.layer10_evaluation",
-            "laris.layers.layer11_reporting",
+    def test_all_canonical_domain_packages_importable(self):
+        """Verifies every canonical domain package is importable."""
+        domain_packages = [
+            "laris.corpus",
+            "laris.language",
+            "laris.reasoning",
+            "laris.scientific",
+            "laris.graph",
+            "laris.retrieval",
+            "laris.orchestration",
+            "laris.execution",
+            "laris.evaluation",
+            "laris.reporting",
         ]
-        for layer_module in layers:
-            with self.subTest(layer=layer_module):
-                mod = importlib.import_module(layer_module)
+        for pkg in domain_packages:
+            with self.subTest(package=pkg):
+                mod = importlib.import_module(pkg)
                 self.assertIsNotNone(mod)
+
 
     def test_reporting_layer_key_classes_functional(self):
         """Verifies key Layer 11 reporting classes can be imported and instantiated."""
-        from laris.layers.layer11_reporting import (
+        from laris.reporting import (
             AcademicManuscript,
             EvidenceGate,
             EvidenceInspector,

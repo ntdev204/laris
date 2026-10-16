@@ -6,7 +6,7 @@ Governed by: ADR-002, ADR-004, and ADR-008.
 """
 
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer2_semantic import (
+from laris.reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,

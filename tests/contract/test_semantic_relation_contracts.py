@@ -13,7 +13,7 @@ from laris.core.errors import (
     UncertaintyCeilingExceededError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer2_semantic import (
+from laris.reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,
