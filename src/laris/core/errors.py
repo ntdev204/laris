@@ -175,9 +175,41 @@ class ReportSchemaValidationError(LarisError):
     pass
 
 
+class EvidenceInspectionError(LarisError):
+    """Base exception for evidence inspection and coordinate resolution failures."""
+    pass
 
 
+class CoordinateResolutionError(EvidenceInspectionError):
+    """Raised when an evidence coordinate ID cannot be resolved to its source."""
+    pass
 
 
+class LineageError(LarisError):
+    """Base exception for version lineage registry and DAG navigation failures."""
+    pass
 
 
+class LineageNotFoundError(LineageError):
+    """Raised when a requested corpus, run, or report version is not found in lineage."""
+    pass
+
+
+class LineageCycleError(LineageError):
+    """Raised when adding a parent or version edge creates a cycle in lineage DAG."""
+    pass
+
+
+class InterventionAuditError(LarisError):
+    """Base exception for user intervention recording and audit trail failures."""
+    pass
+
+
+class AuditIntegrityError(InterventionAuditError):
+    """Raised when an immutable intervention audit log fails cryptographic verification."""
+    pass
+
+
+class InvalidInterventionError(InterventionAuditError):
+    """Raised when a user intervention action, target, or modification payload is invalid."""
+    pass
