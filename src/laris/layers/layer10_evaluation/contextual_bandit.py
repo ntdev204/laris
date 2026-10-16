@@ -246,6 +246,11 @@ class OfflineContextualBanditEvaluator:
         self._is_fitted = False
         self._lock = threading.Lock()
 
+    @property
+    def is_fitted(self) -> bool:
+        """Return whether policy has been fitted on offline traces."""
+        return self._is_fitted
+
     def fit_offline(
         self,
         logged_trials: List[Tuple[RoutingContext, ExecutionTier, RoutingReward]],
