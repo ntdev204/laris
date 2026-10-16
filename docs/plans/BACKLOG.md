@@ -185,8 +185,8 @@ This document serves as the single source of truth for active task tracking, exe
 
 
 | `M8-EXEC-003` | Adaptive Task Routing & Degradation Fallbacks | `MOD-EXEC-003` | `IN_PROGRESS` | `M8-EXEC-002` |
-| `M8-EXEC-003-SUB-01` | Implement adaptive task routing and degradation fallbacks | `MOD-EXEC-003` | `IN_REVIEW` | `M8-EXEC-003` |
-| `M8-EXEC-003-SUB-02` | Add route selection accuracy and graceful degradation tests | `MOD-EXEC-003` | `BLOCKED` | `M8-EXEC-003-SUB-01` |
+| `M8-EXEC-003-SUB-01` | Implement adaptive task routing and degradation fallbacks | `MOD-EXEC-003` | `DONE` | `M8-EXEC-003` |
+| `M8-EXEC-003-SUB-02` | Add route selection accuracy and graceful degradation tests | `MOD-EXEC-003` | `IN_REVIEW` | `M8-EXEC-003-SUB-01` |
 
 ---
 
