@@ -160,6 +160,12 @@ class BenchmarkContaminationError(LarisError):
     pass
 
 
+class PolicyRewardValidationError(LarisError):
+    """Raised when policy evaluation reward signals are unverified, unnormalized, or corrupted."""
+    pass
+
+
+
 
 
 

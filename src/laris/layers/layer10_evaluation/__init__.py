@@ -10,9 +10,18 @@ Adheres to DOC-SPEC-MOD-001 (Boundary J), ADR-001, ADR-007, ADR-008, and Issue #
 from laris.core.errors import (
     BenchmarkContaminationError,
     BenchmarkRegressionError,
+    PolicyRewardValidationError,
 )
 from laris.layers.layer10_evaluation.benchmark_runner import (
     BenchmarkRunner,
+)
+from laris.layers.layer10_evaluation.contextual_bandit import (
+    DeterministicBaselineRouter,
+    OfflineContextualBanditEvaluator,
+    PolicyEvaluationResult,
+    RoutingContext,
+    RoutingReward,
+    compute_routing_reward,
 )
 from laris.layers.layer10_evaluation.error_taxonomy import (
     ScientificErrorTaxonomy,
@@ -41,6 +50,7 @@ from laris.layers.layer10_evaluation.schemas import (
 __all__ = [
     "BenchmarkContaminationError",
     "BenchmarkRegressionError",
+    "PolicyRewardValidationError",
     "ScientificErrorCategory",
     "ErrorSeverity",
     "BenchmarkSuiteType",
@@ -59,4 +69,10 @@ __all__ = [
     "ExpertFeedbackRecord",
     "HardNegativeSample",
     "FeedbackMiningRepository",
+    "RoutingContext",
+    "RoutingReward",
+    "PolicyEvaluationResult",
+    "compute_routing_reward",
+    "DeterministicBaselineRouter",
+    "OfflineContextualBanditEvaluator",
 ]
