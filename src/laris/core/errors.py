@@ -145,6 +145,11 @@ class WeightStagingError(LarisError):
     pass
 
 
+class TaskRoutingError(LarisError):
+    """Raised when adaptive task routing, policy validation, or fallback fails."""
+    pass
+
+
 
 
 
