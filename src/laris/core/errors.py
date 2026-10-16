@@ -150,6 +150,17 @@ class TaskRoutingError(LarisError):
     pass
 
 
+class BenchmarkRegressionError(LarisError):
+    """Raised when an evaluation metric violates regression gate thresholds."""
+    pass
+
+
+class BenchmarkContaminationError(LarisError):
+    """Raised when benchmark evaluation data is contaminated by training data."""
+    pass
+
+
+
 
 
 
