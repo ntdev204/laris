@@ -78,6 +78,55 @@ class ScientificErrorRecord:
         if not self.timestamp_iso or not self.timestamp_iso.strip():
             raise ModuleContractViolationError("timestamp_iso cannot be empty.")
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert error record to a JSON-serializable dictionary."""
+        data: Dict[str, Any] = {
+            "error_id": self.error_id,
+            "category": self.category.value,
+            "severity": self.severity.value,
+            "source_layer": self.source_layer,
+            "description": self.description,
+            "timestamp_iso": self.timestamp_iso,
+            "remediation_suggestion": self.remediation_suggestion,
+            "context_metadata": dict(self.context_metadata),
+        }
+        if self.provenance_coordinate:
+            coord = self.provenance_coordinate
+            data["provenance_coordinate"] = {
+                "coordinate_id": coord.coordinate_id,
+                "document_id": coord.document_id,
+                "document_sha256": coord.document_sha256,
+                "page_number": coord.page_number,
+                "section_identifier": coord.section_identifier,
+                "paragraph_index": coord.paragraph_index,
+                "sentence_index": coord.sentence_index,
+                "char_start": coord.char_start,
+                "char_end": coord.char_end,
+                "verbatim_snippet": coord.verbatim_snippet,
+                "extraction_confidence": coord.extraction_confidence,
+            }
+        else:
+            data["provenance_coordinate"] = None
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> ScientificErrorRecord:
+        """Construct error record from dictionary."""
+        coord_data = data.get("provenance_coordinate")
+        coord = EvidenceCoordinate(**coord_data) if coord_data else None
+        return cls(
+            error_id=data["error_id"],
+            category=ScientificErrorCategory(data["category"]),
+            severity=ErrorSeverity(data["severity"]),
+            source_layer=data["source_layer"],
+            description=data["description"],
+            timestamp_iso=data["timestamp_iso"],
+            provenance_coordinate=coord,
+            remediation_suggestion=data.get("remediation_suggestion"),
+            context_metadata=dict(data.get("context_metadata", {})),
+        )
+
+
 
 @dataclass(frozen=True)
 class BenchmarkItem:
@@ -123,6 +172,33 @@ class BenchmarkItem:
             ensure_ascii=True,
         )
         return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert benchmark item to a JSON-serializable dictionary."""
+        return {
+            "item_id": self.item_id,
+            "suite_type": self.suite_type.value,
+            "input_payload": dict(self.input_payload),
+            "expected_output": dict(self.expected_output),
+            "evaluation_criteria": dict(self.evaluation_criteria),
+            "is_frozen": self.is_frozen,
+            "checksum_sha256": self.checksum_sha256,
+            "is_training_sample": self.is_training_sample,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> BenchmarkItem:
+        """Construct benchmark item from dictionary."""
+        return cls(
+            item_id=data["item_id"],
+            suite_type=BenchmarkSuiteType(data["suite_type"]),
+            input_payload=dict(data["input_payload"]),
+            expected_output=dict(data["expected_output"]),
+            evaluation_criteria=dict(data.get("evaluation_criteria", {})),
+            is_frozen=data.get("is_frozen", True),
+            checksum_sha256=data.get("checksum_sha256", ""),
+            is_training_sample=data.get("is_training_sample", False),
+        )
 
 
 @dataclass(frozen=True)
@@ -171,6 +247,32 @@ class FrozenBenchmarkManifest:
             hasher.update(item.checksum_sha256.encode("utf-8"))
         return hasher.hexdigest()
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert manifest to a JSON-serializable dictionary."""
+        return {
+            "manifest_id": self.manifest_id,
+            "suite_type": self.suite_type.value,
+            "version": self.version,
+            "created_at_iso": self.created_at_iso,
+            "items": [item.to_dict() for item in self.items],
+            "manifest_checksum_sha256": self.manifest_checksum_sha256,
+            "is_immutable": self.is_immutable,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> FrozenBenchmarkManifest:
+        """Construct manifest from dictionary."""
+        items = [BenchmarkItem.from_dict(it) for it in data["items"]]
+        return cls(
+            manifest_id=data["manifest_id"],
+            suite_type=BenchmarkSuiteType(data["suite_type"]),
+            version=data["version"],
+            created_at_iso=data["created_at_iso"],
+            items=items,
+            manifest_checksum_sha256=data.get("manifest_checksum_sha256", ""),
+            is_immutable=data.get("is_immutable", True),
+        )
+
 
 @dataclass(frozen=True)
 class RegressionThreshold:
@@ -187,6 +289,25 @@ class RegressionThreshold:
             raise ModuleContractViolationError("metric_name cannot be empty.")
         if self.maximum_allowable_drop < 0.0:
             raise ModuleContractViolationError("maximum_allowable_drop cannot be negative.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert regression threshold to a dictionary."""
+        return {
+            "metric_name": self.metric_name,
+            "minimum_acceptable_value": self.minimum_acceptable_value,
+            "maximum_allowable_drop": self.maximum_allowable_drop,
+            "is_hard_gate": self.is_hard_gate,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> RegressionThreshold:
+        """Construct regression threshold from dictionary."""
+        return cls(
+            metric_name=data["metric_name"],
+            minimum_acceptable_value=float(data["minimum_acceptable_value"]),
+            maximum_allowable_drop=float(data.get("maximum_allowable_drop", 0.02)),
+            is_hard_gate=bool(data.get("is_hard_gate", True)),
+        )
 
 
 @dataclass(frozen=True)
@@ -207,6 +328,25 @@ class BenchmarkBaseline:
         if not self.timestamp_iso or not self.timestamp_iso.strip():
             raise ModuleContractViolationError("timestamp_iso cannot be empty.")
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert benchmark baseline to a dictionary."""
+        return {
+            "baseline_id": self.baseline_id,
+            "checkpoint_id": self.checkpoint_id,
+            "metrics": dict(self.metrics),
+            "timestamp_iso": self.timestamp_iso,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> BenchmarkBaseline:
+        """Construct benchmark baseline from dictionary."""
+        return cls(
+            baseline_id=data["baseline_id"],
+            checkpoint_id=data["checkpoint_id"],
+            metrics=dict(data["metrics"]),
+            timestamp_iso=data["timestamp_iso"],
+        )
+
 
 @dataclass(frozen=True)
 class EvaluationRunRequest:
@@ -226,6 +366,27 @@ class EvaluationRunRequest:
             raise ModuleContractViolationError("benchmark_suite_id cannot be empty.")
         if not self.target_checkpoint_id or not self.target_checkpoint_id.strip():
             raise ModuleContractViolationError("target_checkpoint_id cannot be empty.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert evaluation run request to a dictionary."""
+        return {
+            "run_id": self.run_id,
+            "benchmark_suite_id": self.benchmark_suite_id,
+            "target_checkpoint_id": self.target_checkpoint_id,
+            "baseline_checkpoint_id": self.baseline_checkpoint_id,
+            "dry_run": self.dry_run,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> EvaluationRunRequest:
+        """Construct evaluation run request from dictionary."""
+        return cls(
+            run_id=data["run_id"],
+            benchmark_suite_id=data["benchmark_suite_id"],
+            target_checkpoint_id=data["target_checkpoint_id"],
+            baseline_checkpoint_id=data.get("baseline_checkpoint_id"),
+            dry_run=data.get("dry_run", False),
+        )
 
 
 @dataclass(frozen=True)
@@ -253,3 +414,48 @@ class BenchmarkRunReport:
             raise ModuleContractViolationError("target_checkpoint_id cannot be empty.")
         if not self.timestamp_iso or not self.timestamp_iso.strip():
             raise ModuleContractViolationError("timestamp_iso cannot be empty.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert benchmark run report to a JSON-serializable dictionary."""
+        return {
+            "run_id": self.run_id,
+            "benchmark_suite_id": self.benchmark_suite_id,
+            "target_checkpoint_id": self.target_checkpoint_id,
+            "timestamp_iso": self.timestamp_iso,
+            "metrics_table": dict(self.metrics_table),
+            "regressions_detected": list(self.regressions_detected),
+            "errors_cataloged": [err.to_dict() for err in self.errors_cataloged],
+            "pass_fail_status": self.pass_fail_status,
+            "baseline_checkpoint_id": self.baseline_checkpoint_id,
+            "is_verified_offline": self.is_verified_offline,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> BenchmarkRunReport:
+        """Construct benchmark run report from dictionary."""
+        errors = [
+            ScientificErrorRecord.from_dict(err)
+            for err in data.get("errors_cataloged", [])
+        ]
+        return cls(
+            run_id=data["run_id"],
+            benchmark_suite_id=data["benchmark_suite_id"],
+            target_checkpoint_id=data["target_checkpoint_id"],
+            timestamp_iso=data["timestamp_iso"],
+            metrics_table=dict(data.get("metrics_table", {})),
+            regressions_detected=list(data.get("regressions_detected", [])),
+            errors_cataloged=errors,
+            pass_fail_status=data["pass_fail_status"],
+            baseline_checkpoint_id=data.get("baseline_checkpoint_id"),
+            is_verified_offline=data.get("is_verified_offline", True),
+        )
+
+    def to_json(self, indent: Optional[int] = 2) -> str:
+        """Serialize benchmark report to deterministic JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> BenchmarkRunReport:
+        """Deserialize benchmark report from JSON string."""
+        return cls.from_dict(json.loads(json_str))
+

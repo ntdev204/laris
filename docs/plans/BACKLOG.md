@@ -199,8 +199,8 @@ This document serves as the single source of truth for active task tracking, exe
 | Task ID | Task Name | Module | Status | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | `M9-EVAL-001` | Benchmark Runner, Regression Gates & Error Taxonomy | `MOD-EVAL-001` | `IN_PROGRESS` | `M8-EXEC-003` |
-| `M9-EVAL-001-SUB-01` | Implement versioned benchmark runner and regression gate | `MOD-EVAL-001` | `IN_REVIEW` | `M9-EVAL-001` |
-| `M9-EVAL-001-SUB-02` | Add regression thresholds and benchmark report serialization tests | `MOD-EVAL-001` | `BLOCKED` | `M9-EVAL-001-SUB-01` |
+| `M9-EVAL-001-SUB-01` | Implement versioned benchmark runner and regression gate | `MOD-EVAL-001` | `DONE` | `M9-EVAL-001` |
+| `M9-EVAL-001-SUB-02` | Add regression thresholds and benchmark report serialization tests | `MOD-EVAL-001` | `IN_REVIEW` | `M9-EVAL-001-SUB-01` |
 | `M9-EVAL-002` | Expert Feedback & Hard-Negative Mining | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-001` |
 | `M9-EVAL-002-SUB-01` | Implement review feedback and hard-negative provenance | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-002` |
 | `M9-EVAL-002-SUB-02` | Add feedback lineage and evaluation contamination tests | `MOD-EVAL-002` | `BLOCKED` | `M9-EVAL-002-SUB-01` |

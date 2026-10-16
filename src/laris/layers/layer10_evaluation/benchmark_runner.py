@@ -111,6 +111,10 @@ class BenchmarkRunner:
                 )
             return self._manifests[suite_id]
 
+    def get_taxonomy(self) -> ScientificErrorTaxonomy:
+        """Return the scientific error taxonomy manager."""
+        return self._taxonomy
+
     def register_threshold(self, threshold: RegressionThreshold) -> None:
         """Register or update a metric regression threshold gate."""
         with self._lock:
@@ -292,3 +296,15 @@ class BenchmarkRunner:
             is_immutable=True,
         )
         return manifest
+
+    def save_report_json(self, report: BenchmarkRunReport, filepath: str) -> None:
+        """Persist a benchmark run report to disk as formatted JSON."""
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(report.to_json(indent=2))
+
+    def load_report_json(self, filepath: str) -> BenchmarkRunReport:
+        """Load and deserialize a benchmark run report from JSON file."""
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        return BenchmarkRunReport.from_json(content)
+

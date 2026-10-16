@@ -126,6 +126,7 @@ class ScientificErrorTaxonomy:
         source_layer: str,
         severity: ErrorSeverity = ErrorSeverity.HIGH,
         provenance_coordinate: Optional[EvidenceCoordinate] = None,
+        remediation_suggestion: Optional[str] = None,
         context_metadata: Optional[Dict[str, Any]] = None,
     ) -> ScientificErrorRecord:
         """Automatically classify an exception and catalog its diagnostic record."""
@@ -137,6 +138,7 @@ class ScientificErrorTaxonomy:
             source_layer=source_layer,
             description=str(exc),
             provenance_coordinate=provenance_coordinate,
+            remediation_suggestion=remediation_suggestion,
             context_metadata=context_metadata,
         )
         self.record_error(record)
