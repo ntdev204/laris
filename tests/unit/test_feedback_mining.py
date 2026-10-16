@@ -406,7 +406,7 @@ class TestFeedbackMiningRepository:
         )
         assert hn4.hard_negative_category == ScientificErrorCategory.EXTRACTION_FAILURE
 
-        # Explicit category override
+        # Explicit category override and custom sample_id
         hn5 = repository.mine_hard_negative(
             feedback=fb4,
             strategy=HardNegativeStrategy.NUMERICAL_PERTURBATION,
@@ -414,7 +414,9 @@ class TestFeedbackMiningRepository:
             hypothesis="Measurement was 52.0 mM.",
             perturbed_condition="Shifted decimal point.",
             category=ScientificErrorCategory.SYSTEM_FAILURE,
+            sample_id="HN-EXPLICIT-ID-001",
         )
+        assert hn5.sample_id == "HN-EXPLICIT-ID-001"
         assert hn5.hard_negative_category == ScientificErrorCategory.SYSTEM_FAILURE
 
     def test_record_and_get_hard_negative(self, repository: FeedbackMiningRepository) -> None:
