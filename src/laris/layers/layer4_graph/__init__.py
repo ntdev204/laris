@@ -1,4 +1,8 @@
-"""Compatibility alias for Evidence Graph module (MOD-GRAPH-001)."""
+"""Compatibility facade for graph domain package (ADR-011)."""
 
-from laris.layers.layer5_graph import *  # noqa: F401, F403
-from laris.layers.layer5_graph import __all__  # noqa: F401
+import importlib
+
+_target = importlib.import_module('laris.graph')
+for _k, _v in _target.__dict__.items():
+    if not _k.startswith('__'):
+        globals()[_k] = _v
