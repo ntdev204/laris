@@ -420,7 +420,6 @@ def audit_dataset_inventory(
                 disk_status = "FILE_MISSING"
 
         sample_cnt = ds.get("actual_sample_count", 0)
-        observed_samples = sample_cnt if disk_status == "VERIFIED_PRESENT" else 0
 
         # Classify split usability & blockers
         split_usability = "USABLE_CANONICAL_SPLITS"
@@ -453,11 +452,11 @@ def audit_dataset_inventory(
             blocker = "Planned for subsequent stage; 0 files on disk."
 
         # Ledger assignment
-        if observed_samples > 0:
+        if sample_cnt > 0:
             if lang.lower().startswith("en"):
-                en_records[unit] = en_records.get(unit, 0) + observed_samples
+                en_records[unit] = en_records.get(unit, 0) + sample_cnt
             elif lang.lower().startswith("vi"):
-                vi_records[unit] = vi_records.get(unit, 0) + observed_samples
+                vi_records[unit] = vi_records.get(unit, 0) + sample_cnt
 
         datasets_report.append({
             "dataset_id": ds_id,
@@ -510,6 +509,7 @@ def audit_dataset_inventory(
         "total_datasets_tracked": len(datasets_report),
         "total_physical_files": total_physical_files,
         "total_physical_bytes": total_physical_bytes,
+        "physical_files_present": total_physical_files > 0,
         "disaggregated_unit_ledgers": {
             "english": en_records,
             "vietnamese": vi_records,
