@@ -891,6 +891,7 @@ def acquire_wikipedia_english_subset() -> DatasetEntry:
         actual_size_bytes=total_size,
         sha256_checksum=file_records[0]["sha256"] if file_records else "",
         storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=len(file_records) == 13 and total_samples == 2031750,
         notes=(
             "Bounded official English Wikipedia clean article subset across 13 shards, "
             "respecting 20 GB disk limit."
