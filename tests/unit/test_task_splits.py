@@ -9,7 +9,10 @@ Validates:
 - Schema and data quality validation
 """
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from laris.core.errors import ModuleContractViolationError
 from laris.corpus.schemas import DatasetSplit
@@ -18,6 +21,8 @@ from laris.corpus.task_splits import (
     QADatasetPartitioner,
     QuestionPairGraphPartitioner,
     WikipediaArticlePartitioner,
+    audit_dataset_inventory,
+    generate_leakage_safe_manifest,
     validate_record_quality,
     validate_split_isolation,
 )
@@ -185,3 +190,81 @@ class TestValidationHelpers(unittest.TestCase):
 
         with self.assertRaises(ModuleContractViolationError):
             validate_record_quality({"label": 1}, ["text"])
+
+
+class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
+    """Test suite for dataset inventory audit and leakage-safe manifest generation."""
+
+    def test_audit_dataset_inventory_from_manifest(self) -> None:
+        """Inventory audit must accurately reflect disk holdings and explicit EN/VI gaps."""
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        manifest_path = repo_root / "data" / "acquisition_manifest.json"
+
+        report = audit_dataset_inventory(manifest_path=manifest_path, base_dir=repo_root)
+        self.assertEqual(report["status"], "VERIFIED_AUDIT")
+        self.assertEqual(report["total_datasets_tracked"], 17)
+        if report["physical_files_present"]:
+            self.assertGreater(report["total_physical_files"], 40)
+            self.assertGreater(report["total_physical_bytes"], 1_000_000_000)
+
+        # Check disaggregated unit ledgers
+        ledgers = report["disaggregated_unit_ledgers"]
+        self.assertIn("Clean Wikipedia Article Document (English)", ledgers["english"])
+        self.assertIn("Clean Wikipedia Article Document (Vietnamese)", ledgers["vietnamese"])
+        self.assertIn(
+            "Sentence Pair with 3-Way NLI Label (entailment/neutral/contradiction)",
+            ledgers["english"],
+        )
+        self.assertNotIn(
+            "Sentence Pair with 3-Way NLI Label (entailment/neutral/contradiction)",
+            ledgers["vietnamese"],
+        )
+
+        # Check explicit coverage mapping
+        cov = report["coverage_mapping"]
+        self.assertEqual(cov["natural_language_inference"]["english"]["status"], "COVERED")
+        self.assertEqual(
+            cov["natural_language_inference"]["vietnamese"]["status"], "GAP_IDENTIFIED"
+        )
+        self.assertEqual(cov["paraphrase_and_duplicate"]["vietnamese"]["status"], "GAP_IDENTIFIED")
+        self.assertEqual(
+            cov["continuous_semantic_similarity"]["vietnamese"]["status"], "GAP_IDENTIFIED"
+        )
+        self.assertEqual(cov["ocr_image_transcription"]["english"]["status"], "GAP_IDENTIFIED")
+
+        # Check dataset specific blockers
+        datasets_by_id = {d["dataset_id"]: d for d in report["datasets"]}
+        self.assertEqual(
+            datasets_by_id["QUORA-DUPLICATES"]["split_usability"],
+            "TRAIN_ONLY_NEEDS_GRAPH_PARTITION",
+        )
+        self.assertEqual(
+            datasets_by_id["WIKIPEDIA-EN-BOUNDED"]["split_usability"],
+            "UNPARTITIONED_RAW_DUMP",
+        )
+        self.assertEqual(
+            datasets_by_id["SQUAD"]["split_usability"],
+            "TEST_SET_PRIVATE_HELD_OUT",
+        )
+
+    def test_generate_leakage_safe_manifest_nondestructive(self) -> None:
+        """Manifest generation must write valid JSON to target path without touching raw data."""
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        manifest_path = repo_root / "data" / "acquisition_manifest.json"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_file = Path(tmp_dir) / "output_manifest.json"
+            result_path = generate_leakage_safe_manifest(
+                output_path=out_file,
+                manifest_path=manifest_path,
+                base_dir=repo_root,
+            )
+            self.assertTrue(result_path.exists())
+            with open(result_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            self.assertEqual(data["manifest_version"], "1.0.0")
+            self.assertTrue(data["zero_training_verified"])
+            self.assertTrue(data["raw_data_untouched"])
+            self.assertEqual(data["audit"]["status"], "VERIFIED_AUDIT")
+            self.assertGreater(len(data["recommended_remediations"]), 0)
