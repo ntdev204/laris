@@ -46,11 +46,11 @@ All environment telemetry was collected directly from the active Ubuntu host sys
 | Telemetry Dimension | Active Ubuntu Host (Measured) | Target Production Workstation (Budget) | Gap / Conformance Status |
 | :--- | :--- | :--- | :--- |
 | **Operating System** | Ubuntu 22.04.5 LTS (Jammy Jellyfish, Linux 5.15.167.4-microsoft-standard-WSL2) | Ubuntu 22.04 / 24.04 LTS | **CONFORMANT** |
-| **CPU Architecture** | Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz (4 cores / 8 threads) | Intel(R) Core(TM) i5-14600KF (14 cores / 20 threads) | Host is developer workstation; target is deployment workstation. |
-| **Host System RAM** | 3.7 GiB allocated (host virtualization envelope; 689 MiB used, 2.9 GiB available, 1.0 GiB swap) | 32 GiB DDR5 RAM | **CONSTRAINED ON HOST** (Data loaders must use memory mapping and streaming). |
-| **GPU Accelerator** | NVIDIA GeForce GTX 1650 (4096 MiB VRAM / 4.0 GB) | NVIDIA GeForce RTX 5070 Ti (16384 MiB VRAM / 16.0 GB) | Host has 4 GB VRAM; target has 16 GB VRAM. Training requires RTX 5070 Ti. |
-| **NVIDIA Driver / CUDA** | Driver 555.97, CUDA 12.5 (reported by `nvidia-smi`) | Driver $\ge 535.00$, CUDA $\ge 12.1$ | **CONFORMANT** |
-| **Available Storage** | 915 GB available on root filesystem (`/dev/sdd` mounted at `/`) | $\ge 200$ GB NVMe SSD storage | **CONFORMANT** (Plenty of headroom for corpus and checkpoints). |
+| **CPU Architecture** | Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz (4 cores / 8 threads) | Intel(R) Core(TM) i5-14600KF (14 cores / 20 threads) | Host is developer workstation; target is deployment workstation. Target: **NOT VERIFIED**. |
+| **Host System RAM** | 3.7 GiB allocated (host virtualization envelope; 689 MiB used, 2.9 GiB available, 1.0 GiB swap) | 32 GiB DDR5 RAM | **CONSTRAINED ON HOST** (Data loaders must use memory mapping and streaming). Target: **NOT VERIFIED**. |
+| **GPU Accelerator** | NVIDIA GeForce GTX 1650 (4096 MiB VRAM / 4.0 GB) | NVIDIA GeForce RTX 5070 Ti (16384 MiB VRAM / 16.0 GB) | Host has 4 GB VRAM; target has 16 GB VRAM. Training requires RTX 5070 Ti. Target: **NOT VERIFIED**. |
+| **NVIDIA Driver / CUDA** | Driver 555.97, CUDA 12.5 (reported by `nvidia-smi`) | Driver $\ge 535.00$, CUDA $\ge 12.1$ | **CONFORMANT** on host; Target: **NOT VERIFIED**. |
+| **Available Storage** | 915 GB available on root filesystem (`/dev/sdd` mounted at `/`) | $\ge 200$ GB NVMe SSD storage | **CONFORMANT** (Plenty of headroom for corpus and checkpoints). Target: **NOT VERIFIED**. |
 
 ### 2.2. Software Runtime & Python Virtual Environment
 
@@ -217,39 +217,35 @@ In accordance with Issue #214 Section F, eleven explicit gates were evaluated:
 | **3** | Manifest reconciled against actual disk artifacts with license evidence | **PASS** | 14 acquired datasets verified on disk; byte counts, schemas, and SHA-256 checksums match manifest; all licenses verified (`CC-BY-SA-4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA`). |
 | **4** | English/Vietnamese and task families counted separately without inflation | **PASS** | Disaggregated ledgers established: EN (3,782,210 records) and VI (1,324,281 records) across 7 distinct granular task units. |
 | **5** | Leakage-safe splits and evaluation isolation evidenced | **BLOCKED** | Wikipedia EN/VI and Quora lack canonical train/val/test splits; SQuAD/ViQuAD need independent held-out test splits. Partitioning required before training. |
-| **6** | #17 Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **PASS** | `STEMSubwordTokenizer` and `StemFertilityReport` tested and merged in PR #129; vocabulary training pipeline specified in `DOC-SPEC-TRAIN-001`. |
-| **7** | #18 Encoder interfaces & BM25 comparison complete and reviewed | **PASS** | `CompactSentenceEncoder`, `OkapiBM25`, and retrieval benchmark tested and merged in PR #130. |
-| **8** | #19 Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. |
+| **6** | #17 Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **BLOCKED** | PR #129 implemented `STEMSubwordTokenizer` and `StemFertilityReport` as an algorithmic baseline / interface with greedy dictionary matching. From-scratch BPE tokenizer training has NOT been executed (training prohibited); gate is BLOCKED for trained tokenizer artifact. |
+| **7** | #18 Encoder interfaces & BM25 comparison complete and reviewed | **BLOCKED** | PR #130 implemented `CompactSentenceEncoder` (deterministic hash-based projection baseline), Okapi BM25, and retrieval benchmark harness. No learned neural encoder weights exist; gate is BLOCKED for trained neural model artifact. |
+| **8** | #19 Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. Complete for schema and lifecycle management; zero trained weights exist. |
 | **9** | Architecture, curriculum, objectives, metrics, and budget specified | **PASS** | Detailed in companion specification `DOC-SPEC-TRAIN-001` (`NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md`). |
-| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 934 pytest unit/contract tests pass; `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors. |
+| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 938 pytest unit/contract tests pass (plus 35 subtests); `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors. |
 | **11** | Owner explicitly approves a separate training-execution issue | **BLOCKED** | Issue #214 is strictly audit and specification. Model training execution requires explicit owner review and approval in a follow-up issue. |
 
 ---
 
 ## 7. Ordered Blocker Resolution Plan
 
-To transition from the current audit stage to authorized training execution, the following issues must be scheduled in strict dependency order:
+To transition from the current audit stage to authorized training execution, work must proceed in strict dependency order:
 
 ```mermaid
 flowchart LR
-    I214["Issue #214 (Current)<br/>Readiness Audit & Spec<br/>(STATUS: COMPLETE)"] --> I215["Issue #215 (Proposed)<br/>Dataset Partitioning &<br/>Leakage-Safe Split Pipeline"]
-    I215 --> I216["Issue #216 (Proposed)<br/>From-Scratch Bilingual<br/>Tokenizer Training (32k)"]
-    I216 --> I217["Issue #217 (Proposed)<br/>PyTorch Foundation<br/>Architecture & Trainer Harness"]
-    I217 --> I218["Issue #218 (Owner Approval)<br/>Stage 1 Foundation Training<br/>Execution & Benchmarking"]
+    I214["Issue #214 (Current)<br/>Readiness Audit & Spec<br/>(STATUS: COMPLETE)"] --> I217["Issue #217 (M2-LANG-005)<br/>Resolve Readiness Blockers<br/>(Data Splits, Tokenizer & Model Path)"]
+    I217 --> I215["Issue #215 (M11-CONFIG-001)<br/>Centralized Configuration<br/>& Parameter Audit"]
+    I215 --> I_EXEC["Separate Training Issue<br/>(Owner Approval Required)<br/>Model 1 Training Execution"]
 ```
 
-1. **Issue #215 (`M2-LANG-005`): Dataset Partitioning & Leakage-Safe Split Pipeline**  
-   - *Objective:* Execute deterministic hash partitioning on Wikipedia EN, Wikipedia VI, and Quora Question Pairs. Sub-split SQuAD and ViQuAD dev sets to produce isolated, untouched held-out test sets.
-   - *Dependencies:* Issue #214.
-2. **Issue #216 (`M2-LANG-006`): From-Scratch Bilingual Tokenizer Training (SentencePiece BPE 32k)**  
-   - *Objective:* Train a custom 32,000-token SentencePiece BPE tokenizer solely on the verified `TRAIN` splits of Wikipedia EN and Wikipedia VI, ensuring canonical special tokens and mathematical symbol preservation.
-   - *Dependencies:* Issue #215.
-3. **Issue #217 (`M2-LANG-007`): PyTorch Foundation Architecture & Bounded Profiling Harness**  
-   - *Objective:* Implement the 110M-parameter bidirectional Transformer encoder in PyTorch, setup mixed-precision (BF16/FP16) training loops with gradient accumulation, and perform zero-weight-update tensor shape profiling.
-   - *Dependencies:* Issue #216.
-4. **Issue #218 (`M2-LANG-008`): Natural Language Foundation Stage 1 Training Execution (Owner Approval Required)**  
+1. **Issue #217 (`[M2-LANG-005] Resolve Training Readiness Blockers Before First Training Run`):**  
+   - *Objective:* Correct #214 specification/evidence; implement deterministic, leakage-resistant split generation for Wikipedia EN/VI and Quora; implement reproducible from-scratch tokenizer training pipeline as code without executing training; implement randomly initialized neural model path; add CPU-capable tests and bounded non-training profiling; prepare handoff to #215.
+   - *Dependencies:* Issue #214 / PR #216.
+2. **Issue #215 (`[M11-CONFIG-001] Centralized Configuration System & Hardcoded-Parameter Audit`):**  
+   - *Objective:* Establish a single typed, validated configuration entry point, minimal valid YAML default configuration files for implemented components, deterministic precedence, hardcoded parameter audit, and run metadata integration.
+   - *Dependencies:* Issue #217.
+3. **Follow-Up Training Execution Issue (Owner Authorization Required):**  
    - *Objective:* Execute Masked Language Modeling pretraining and multi-task representation learning on the target RTX 5070 Ti workstation, evaluate exit gates, and produce serialized `LanguageArtifactBundle`.
-   - *Dependencies:* Issue #217 and explicit owner authorization.
+   - *Dependencies:* Merged #217, merged #215, and explicit owner authorization. (NO TRAINING MAY OCCUR BEFORE THIS GATE).
 
 ---
 

@@ -57,10 +57,10 @@ flowchart TD
     subgraph Encoder["Model 1: 110M Bidirectional Transformer Encoder"]
         Emb["Token + RoPE Position Embeddings (d_model = 768)"] --> L1["Transformer Layer 1 (12 Heads, Pre-RMSNorm)"]
         L1 --> Ldots["... (Layers 2 to 11) ..."]
-        Ldots --> L12["Transformer Layer 12 (SwiGLU FFN = 3072)"]
+        Ldots --> L12["Transformer Layer 12 (GELU FFN = 3072)"]
     end
     subgraph Heads["Multi-Task Capability Heads"]
-        L12 --> H_MLM["MLM Head (Vocab 32,000)"]
+        L12 --> H_MLM["MLM Head (Vocab 32,000, Tied Weights)"]
         L12 --> H_NLI["3-Way NLI Head (CLS -> 3 Classes)"]
         L12 --> H_PARA["Paraphrase Head (BCE Logit)"]
         L12 --> H_SIM["STS-B Head (Cosine Sim / MSE)"]
@@ -75,46 +75,49 @@ flowchart TD
 | **Model Type** | Bidirectional Transformer Encoder | Bidirectional context is optimal for sentence encoding, classification, and retrieval. |
 | **Number of Layers ($L$)** | 12 | Standard depth providing expressive representation capacity while fitting in memory budget. |
 | **Hidden Dimension ($d_{\text{model}}$)** | 768 | Complies with `ALLOWED_EMBEDDING_DIMENSIONS = {384, 768}` in `schemas.py`. |
-| **Attention Heads ($H$)** | 12 | Head dimension $d_k = 768 / 12 = 64$; standard multi-head dot-product attention. |
-| **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 3,072 | Standard $4 \times d_{\text{model}}$ projection with SwiGLU / GeLU activation. |
-| **Positional Encoding** | Rotary Position Embeddings (RoPE) | Superior length extrapolation and relative position handling without learned absolute embeddings. |
-| **Layer Normalization** | Pre-LayerNorm (RMSNorm) | Enhances gradient stability and eliminates warmup sensitivity during from-scratch training. |
+| **Attention Heads ($H$)** | 12 | Head dimension $d_k = 768 / 12 = 64$; standard multi-head dot-product attention ($W_q, W_k, W_v, W_o \in \mathbb{R}^{d \times d}$). |
+| **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 3,072 | Standard $4 \times d_{\text{model}}$ 2-matrix feed-forward network with GELU activation ($W_1 \in \mathbb{R}^{d \times d_{\text{ff}}}, W_2 \in \mathbb{R}^{d_{\text{ff}} \times d}$; no projection bias). |
+| **Positional Encoding** | Rotary Position Embeddings (RoPE) | Applied directly to query and key states; zero learned absolute positional parameters. |
+| **Layer Normalization** | Pre-LayerNorm (RMSNorm) | Scale parameter $\gamma \in \mathbb{R}^d$ without bias $\beta$ on attention and FFN inputs ($2 \times d$ per layer), plus final RMSNorm ($d$). |
 | **Vocabulary Size ($V$)** | 32,000 | Balanced bilingual subwords: ~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens. |
+| **Embedding Tying** | Tied MLM Output Projection | The MLM prediction head output projection shares the $V \times d$ weight matrix with the input embedding, adding only a $V$-dim output bias ($32,000$ params). |
 | **Maximum Sequence Length** | 512 tokens | Conforms to `DEFAULT_MAX_SEQUENCE_LENGTH = 512` in `schemas.py`. |
-| **Total Parameters** | $\approx 110.5\text{M}$ | $V \times d + L \times (4 d^2 + 2 d \cdot d_{\text{ff}}) \approx 24.5\text{M} + 86.0\text{M} = 110.5\text{M}$. |
+| **Total Parameters** | **109,561,856** ($\approx 109.56\text{M}$) | Exact equation: $V \cdot d + L \cdot (4 d^2 + 2 d \cdot d_{\text{ff}} + 2 d) + d + V = 24,576,000 + 12 \times 7,079,424 + 768 + 32,000 = 109,561,856$. (If untied MLM head: $134,137,856 \approx 134.14\text{M}$). |
 
 ---
 
 ## 3. Hardware Resource Budget & Feasibility Analysis
 
-Training feasibility is evaluated against the target workstation specifications defined in repository governance.
+> [!NOTE]
+> All target workstation feasibility values below are **analytical estimates** derived from standard mixed-precision memory formulas. Physical execution on the target workstation (RTX 5070 Ti) has not been performed by the agent and is marked **NOT VERIFIED**. Bounded non-training profiling on target hardware must precede any future training run.
 
 ### 3.1. Target Hardware Specifications
-- **Operating System:** Ubuntu 22.04 / 24.04 LTS
-- **GPU Accelerator:** NVIDIA GeForce RTX 5070 Ti with 16,384 MiB (16.0 GB) VRAM
-- **Host CPU:** Intel Core i5-14600KF (14 cores, 20 threads)
-- **Host RAM:** 32 GB DDR5
+- **Operating System:** Ubuntu 22.04 / 24.04 LTS (**NOT VERIFIED**)
+- **GPU Accelerator:** NVIDIA GeForce RTX 5070 Ti with 16,384 MiB (16.0 GB) VRAM (**NOT VERIFIED**)
+- **Host CPU:** Intel Core i5-14600KF (14 cores, 20 threads) (**NOT VERIFIED**)
+- **Host RAM:** 32 GB DDR5 (**NOT VERIFIED**)
 
-### 3.2. Detailed VRAM Memory Allocation Breakdown (110M Model)
+### 3.2. Detailed VRAM Memory Allocation Breakdown (109.56M Model)
 
 $$\text{Total VRAM} = M_{\text{params}} + M_{\text{grads}} + M_{\text{opt}} + M_{\text{activations}} + M_{\text{workspace}}$$
 
-| Memory Component | Precision / Representation | Formula / Derivation | Memory Allocation |
+| Memory Component | Precision / Representation | Formula / Derivation | Memory Allocation (Analytical Estimate) |
 | :--- | :--- | :--- | :--- |
-| **Model Parameters** | 16-bit (BF16 / FP16) | $110.5 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (221 MB) |
-| **Gradients** | 16-bit (BF16 / FP16) | $110.5 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (221 MB) |
-| **Optimizer States (AdamW)** | FP32 master weights + 2 FP32 moments | $110.5 \times 10^6 \times (4 + 4 + 4)\text{ bytes}$ | **1.33 GB** (1,326 MB) |
-| **Activations (Forward Pass)** | Batch Size $B=32$, $S=512$, with FlashAttention & checkpointing | $L \times B \times S \times d \times \text{overhead}$ | **1.85 GB** |
+| **Model Parameters** | 16-bit (BF16 / FP16) | $109.56 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (219.1 MB) |
+| **Gradients** | 16-bit (BF16 / FP16) | $109.56 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (219.1 MB) |
+| **Optimizer States (AdamW)** | FP32 master weights + 2 FP32 moments | $109.56 \times 10^6 \times (4 + 4 + 4)\text{ bytes}$ | **1.31 GB** (1,314.7 MB) |
+| **Activations (Forward Pass)** | Batch Size $B=32$, $S=512$, with FlashAttention & checkpointing | Analytical upper bound ($L \times B \times S \times d \times \text{overhead}$) | **1.85 GB** (Analytical Estimate) |
 | **CUDA Workspace & Buffers** | Internal cuDNN / PyTorch tensors | Empirical runtime buffer | **0.80 GB** |
-| **Peak Training VRAM** | - | **Sum of all components** | **$\approx 4.42\text{ GB}$** |
+| **Peak Training VRAM** | - | **Sum of all components** | **$\approx 4.40\text{ GB}$** (Analytical Estimate; **NOT VERIFIED**) |
 
 ### 3.3. Feasibility Conclusion & Safety Headroom
-- **Target RTX 5070 Ti (16 GB VRAM):** Peak allocation of $4.42\text{ GB}$ occupies only **27.6% of available VRAM**, leaving **$\ge 11.5\text{ GB}$ headroom**. This safely complies with the $14.5\text{ GB}$ safety governor ceiling enforced in `src/laris/language/schemas.py`.
-- **Developer Host Workstation (GTX 1650 with 4 GB VRAM):** By reducing micro-batch size to $B_{\text{micro}} = 4$ and accumulating gradients over 8 steps (effective batch size 32), activation memory drops to $\approx 0.35\text{ GB}$, yielding peak VRAM of $\approx 2.92\text{ GB}$. Bounded tests and profiling can execute on 4 GB cards without out-of-memory errors.
+- **Target RTX 5070 Ti (16 GB VRAM):** Peak allocation of $4.40\text{ GB}$ occupies only **27.5% of available VRAM**, leaving **$\ge 11.5\text{ GB}$ headroom**. This safely complies with the $14.5\text{ GB}$ safety governor ceiling enforced in `src/laris/language/schemas.py`. Status: **NOT VERIFIED ON PHYSICAL TARGET HARDWARE**.
+- **Developer Host Workstation (GTX 1650 with 4 GB VRAM):** By reducing micro-batch size to $B_{\text{micro}} = 4$ and accumulating gradients over 8 steps (effective batch size 32), activation memory drops to $\approx 0.35\text{ GB}$, yielding peak VRAM of $\approx 2.90\text{ GB}$. Bounded tests and non-training profiling can execute on 4 GB cards without out-of-memory errors.
+- **CPU Fallback:** All unit and contract tests in LARIS are explicitly designed to run on CPU without requiring GPU hardware or CUDA drivers.
 
 ### 3.4. Storage & Runtime Estimates
-- **Checkpoint Storage:** Each FP16 checkpoint occupies $\approx 221\text{ MB}$; full optimizer state bundle occupies $\approx 1.55\text{ GB}$. A retention policy of 3 best checkpoints requires $< 5.0\text{ GB}$ disk space.
-- **Pretraining Throughput:** On RTX 5070 Ti with FlashAttention, estimated throughput is $\approx 18,000 - 24,000\text{ tokens/sec}$. Pretraining on 3.3M documents ($\approx 1.5\times 10^9$ tokens) for 2 epochs requires $\approx 35 - 45$ wall-clock hours.
+- **Checkpoint Storage:** Each FP16 checkpoint occupies $\approx 219\text{ MB}$; full optimizer state bundle occupies $\approx 1.53\text{ GB}$. A retention policy of 3 best checkpoints requires $< 5.0\text{ GB}$ disk space.
+- **Pretraining Throughput:** On RTX 5070 Ti with FlashAttention, estimated throughput is $\approx 18,000 - 24,000\text{ tokens/sec}$. Pretraining on 3.3M documents ($\approx 1.5\times 10^9$ tokens) for 2 epochs requires $\approx 35 - 45$ wall-clock hours. Status: **NOT VERIFIED** (analytical projection; no training run).
 
 ---
 

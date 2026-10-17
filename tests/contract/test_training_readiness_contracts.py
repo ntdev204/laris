@@ -48,8 +48,10 @@ def test_manifest_and_disaggregated_accounting_invariants() -> None:
 
 
 def test_training_readiness_hardware_budget_formula() -> None:
-    """Verifies memory calculation for 110M Transformer encoder respects RTX 5070 Ti envelope."""
-    param_count = 110_500_000
+    """Verifies analytical memory calculation for 109.56M Transformer encoder respects
+    RTX 5070 Ti envelope.
+    """
+    param_count = 109_561_856
     d_model = 768
     num_layers = 12
     batch_size = 32
