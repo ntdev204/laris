@@ -38,6 +38,9 @@ dev = [
 gpu = [
     "torch>=2.1.0",
 ]
+tokenizer = [
+    "sentencepiece>=0.1.99",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
