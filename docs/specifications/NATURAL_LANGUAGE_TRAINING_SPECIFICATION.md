@@ -1,0 +1,221 @@
+---
+document_id: "DOC-SPEC-TRAIN-001"
+title: "LARIS Natural Language Foundation Architecture & Curriculum Specification"
+document_type: "specification"
+status: "APPROVED"
+version: "1.0.0"
+created_at: "2026-10-17"
+updated_at: "2026-10-17"
+owner: "LARIS Architecture Team"
+reviewers: []
+source_of_truth: true
+related_documents:
+  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
+  - "docs/plans/BACKLOG.md"
+  - "docs/research/TRAINING_READINESS_AUDIT.md"
+  - "docs/specifications/DATASET_SPECIFICATION.md"
+  - "docs/specifications/MODULE_CONTRACTS.md"
+decision_references:
+  - "ADR-001"
+  - "ADR-002"
+  - "ADR-003"
+  - "ADR-005"
+  - "ADR-008"
+change_summary: "Authoritative architectural specification for Model 1 from-scratch Transformer encoder, bilingual curriculum, multi-task loss formulation, hardware budget, and #19 artifact lifecycle."
+---
+
+# LARIS Natural Language Foundation Architecture & Curriculum Specification
+
+## 1. Scope & Foundational Governance
+
+This specification defines the neural architecture, learning objectives, multi-task curriculum, loss formulations, hardware memory budget, and artifact lifecycle for **Model 1: Natural Language Foundation** in the Local Autonomous Research & Intelligence System (LARIS).
+
+### 1.1. Inviolable Architectural Principles
+In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md), [ADR-003](file:///home/thientn204/laris/docs/adr/ADR-003-language-first-not-pdf-first.md), and [DOC-PLAN-TRAIN-001](file:///home/thientn204/laris/docs/plans/STAGED_LEARNING_PIPELINE.md):
+
+1. **Strict Staged Learning Sequence:**
+   $$\text{General Natural Language} \longrightarrow \text{Scientific Language} \longrightarrow \text{Scientific OCR} \longrightarrow \text{OCR-Coupled Manuscript} \longrightarrow \text{12-Layer System Integration}$$
+   Natural language competence across English and Vietnamese must be established and rigorously verified before domain adaptation to scientific literature, and long before document vision or OCR processing.
+2. **From-Scratch Representation Learning:**
+   LARIS strictly prohibits downloading or silently depending on pretrained foundation models (e.g., BERT, RoBERTa, LLaMA) or pretrained tokenizer weights for Tier-1 models. Every weight parameter and vocabulary token is initialized and optimized from raw corpora under local control.
+3. **No Inference Quantization Confusion:**
+   GGUF or 4-bit INT quantization files are inference-only formats and are **not** training checkpoints. Model training occurs in native 16-bit mixed precision (BF16 or FP16) with FP32 master weights.
+4. **Mandatory Stop Condition:**
+   **NO MODEL TRAINING WAS RUN DURING THIS SPECIFICATION PHASE.**
+
+---
+
+## 2. Model 1 Foundation Architecture
+
+Model 1 serves as the foundational text encoder powering syntax analysis, semantic representation, 3-way NLI, paraphrase detection, and dense retrieval across the 12 architectural layers.
+
+```mermaid
+flowchart TD
+    subgraph Inputs["Bilingual Input Tokens"]
+        T["Input Tokens: English & Vietnamese (seq_len <= 512)"]
+    end
+    subgraph Encoder["Model 1: 110M Bidirectional Transformer Encoder"]
+        Emb["Token + RoPE Position Embeddings (d_model = 768)"] --> L1["Transformer Layer 1 (12 Heads, Pre-RMSNorm)"]
+        L1 --> Ldots["... (Layers 2 to 11) ..."]
+        Ldots --> L12["Transformer Layer 12 (SwiGLU FFN = 3072)"]
+    end
+    subgraph Heads["Multi-Task Capability Heads"]
+        L12 --> H_MLM["MLM Head (Vocab 32,000)"]
+        L12 --> H_NLI["3-Way NLI Head (CLS -> 3 Classes)"]
+        L12 --> H_PARA["Paraphrase Head (BCE Logit)"]
+        L12 --> H_SIM["STS-B Head (Cosine Sim / MSE)"]
+        L12 --> H_QA["Span QA Head (Start / End Logits)"]
+    end
+```
+
+### 2.1. Structural Hyperparameters
+
+| Hyperparameter | Value | Architectural Justification |
+| :--- | :--- | :--- |
+| **Model Type** | Bidirectional Transformer Encoder | Bidirectional context is optimal for sentence encoding, classification, and retrieval. |
+| **Number of Layers ($L$)** | 12 | Standard depth providing expressive representation capacity while fitting in memory budget. |
+| **Hidden Dimension ($d_{\text{model}}$)** | 768 | Complies with `ALLOWED_EMBEDDING_DIMENSIONS = {384, 768}` in `schemas.py`. |
+| **Attention Heads ($H$)** | 12 | Head dimension $d_k = 768 / 12 = 64$; standard multi-head dot-product attention. |
+| **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 3,072 | Standard $4 \times d_{\text{model}}$ projection with SwiGLU / GeLU activation. |
+| **Positional Encoding** | Rotary Position Embeddings (RoPE) | Superior length extrapolation and relative position handling without learned absolute embeddings. |
+| **Layer Normalization** | Pre-LayerNorm (RMSNorm) | Enhances gradient stability and eliminates warmup sensitivity during from-scratch training. |
+| **Vocabulary Size ($V$)** | 32,000 | Balanced bilingual subwords: ~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens. |
+| **Maximum Sequence Length** | 512 tokens | Conforms to `DEFAULT_MAX_SEQUENCE_LENGTH = 512` in `schemas.py`. |
+| **Total Parameters** | $\approx 110.5\text{M}$ | $V \times d + L \times (4 d^2 + 2 d \cdot d_{\text{ff}}) \approx 24.5\text{M} + 86.0\text{M} = 110.5\text{M}$. |
+
+---
+
+## 3. Hardware Resource Budget & Feasibility Analysis
+
+Training feasibility is evaluated against the target workstation specifications defined in repository governance.
+
+### 3.1. Target Hardware Specifications
+- **Operating System:** Ubuntu 22.04 / 24.04 LTS
+- **GPU Accelerator:** NVIDIA GeForce RTX 5070 Ti with 16,384 MiB (16.0 GB) VRAM
+- **Host CPU:** Intel Core i5-14600KF (14 cores, 20 threads)
+- **Host RAM:** 32 GB DDR5
+
+### 3.2. Detailed VRAM Memory Allocation Breakdown (110M Model)
+
+$$\text{Total VRAM} = M_{\text{params}} + M_{\text{grads}} + M_{\text{opt}} + M_{\text{activations}} + M_{\text{workspace}}$$
+
+| Memory Component | Precision / Representation | Formula / Derivation | Memory Allocation |
+| :--- | :--- | :--- | :--- |
+| **Model Parameters** | 16-bit (BF16 / FP16) | $110.5 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (221 MB) |
+| **Gradients** | 16-bit (BF16 / FP16) | $110.5 \times 10^6 \times 2\text{ bytes}$ | **0.22 GB** (221 MB) |
+| **Optimizer States (AdamW)** | FP32 master weights + 2 FP32 moments | $110.5 \times 10^6 \times (4 + 4 + 4)\text{ bytes}$ | **1.33 GB** (1,326 MB) |
+| **Activations (Forward Pass)** | Batch Size $B=32$, $S=512$, with FlashAttention & checkpointing | $L \times B \times S \times d \times \text{overhead}$ | **1.85 GB** |
+| **CUDA Workspace & Buffers** | Internal cuDNN / PyTorch tensors | Empirical runtime buffer | **0.80 GB** |
+| **Peak Training VRAM** | - | **Sum of all components** | **$\approx 4.42\text{ GB}$** |
+
+### 3.3. Feasibility Conclusion & Safety Headroom
+- **Target RTX 5070 Ti (16 GB VRAM):** Peak allocation of $4.42\text{ GB}$ occupies only **27.6% of available VRAM**, leaving **$\ge 11.5\text{ GB}$ headroom**. This safely complies with the $14.5\text{ GB}$ safety governor ceiling enforced in `src/laris/language/schemas.py`.
+- **Developer Host Workstation (GTX 1650 with 4 GB VRAM):** By reducing micro-batch size to $B_{\text{micro}} = 4$ and accumulating gradients over 8 steps (effective batch size 32), activation memory drops to $\approx 0.35\text{ GB}$, yielding peak VRAM of $\approx 2.92\text{ GB}$. Bounded tests and profiling can execute on 4 GB cards without out-of-memory errors.
+
+### 3.4. Storage & Runtime Estimates
+- **Checkpoint Storage:** Each FP16 checkpoint occupies $\approx 221\text{ MB}$; full optimizer state bundle occupies $\approx 1.55\text{ GB}$. A retention policy of 3 best checkpoints requires $< 5.0\text{ GB}$ disk space.
+- **Pretraining Throughput:** On RTX 5070 Ti with FlashAttention, estimated throughput is $\approx 18,000 - 24,000\text{ tokens/sec}$. Pretraining on 3.3M documents ($\approx 1.5\times 10^9$ tokens) for 2 epochs requires $\approx 35 - 45$ wall-clock hours.
+
+---
+
+## 4. Multi-Task Training Curriculum & Loss Formulation
+
+The Stage 1 curriculum blends unsupervised language modeling with supervised task representation learning.
+
+### 4.1. Staged Execution Progression
+
+```mermaid
+flowchart LR
+    P1["Phase 1A: Vocabulary Training<br/>(SentencePiece BPE 32k)"] --> P2["Phase 1B: Masked LM Pretraining<br/>(Wikipedia EN + VI)"]
+    P2 --> P3["Phase 1C: Multi-Task Learning<br/>(MLM + NLI + Paraphrase + QA)"]
+    P3 --> P4["Phase 1D: Benchmark Verification<br/>(Exit Gate Evaluation)"]
+```
+
+#### Phase 1A: From-Scratch Bilingual Tokenizer Training
+- **Algorithm:** SentencePiece Unigram / BPE.
+- **Training Data:** Strictly sampled from the `TRAIN` splits of Wikipedia EN (800,000 articles) and Wikipedia VI (800,000 articles).
+- **Special Tokens Registry:** Pre-allocated IDs 0–7 as defined in `SpecialTokenConfig`:
+  - `0: [PAD]`, `1: [UNK]`, `2: [CLS]`, `3: [SEP]`, `4: [MASK]`, `5: [MATH]`, `6: [GREEK]`, `7: [UNIT]`.
+- **Invariants:** Subword fertility on validation text $\le 1.35$ tokens/word; zero character loss on Vietnamese diacritics.
+
+#### Phase 1B: Self-Supervised Masked Language Modeling (MLM)
+- **Objective:** Masked Language Modeling on clean encyclopedia text (Wikipedia EN + VI).
+- **Masking Strategy:** Dynamic masking at 15% rate: 80% `[MASK]`, 10% random token, 10% unchanged.
+- **Loss:** Standard cross-entropy loss over masked token positions:
+  $$\mathcal{L}_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid \tilde{X})$$
+
+#### Phase 1C: Multi-Task Representation Fine-Tuning
+To endow Model 1 with robust inference, paraphrase, and retrieval capabilities, the model is trained with a composite multi-task objective:
+
+$$\mathcal{L}_{\text{total}} = \lambda_1 \mathcal{L}_{\text{MLM}} + \lambda_2 \mathcal{L}_{\text{NLI}} + \lambda_3 \mathcal{L}_{\text{PARA}} + \lambda_4 \mathcal{L}_{\text{SIM}} + \lambda_5 \mathcal{L}_{\text{QA}}$$
+
+| Task Component | Loss Function | Head Architecture | Dataset Source | Mixture Weight ($\lambda_i$) |
+| :--- | :--- | :--- | :--- | :---: |
+| **Masked LM** | Cross-Entropy ($\mathcal{L}_{\text{MLM}}$) | Linear ($768 \rightarrow 32,000$) | Wikipedia EN + VI | **0.35** |
+| **3-Way NLI** | Categorical Cross-Entropy ($\mathcal{L}_{\text{NLI}}$) | MLP ($768 \rightarrow 256 \rightarrow 3$) on `[CLS]` | All-NLI + ANLI | **0.25** |
+| **Paraphrase Equivalence** | Binary Cross-Entropy ($\mathcal{L}_{\text{PARA}}$) | Linear ($768 \rightarrow 1$) with Sigmoid | PAWS + Quora | **0.15** |
+| **Semantic Similarity** | Mean Squared Error ($\mathcal{L}_{\text{SIM}}$) | Cosine similarity scaled to $[0, 1]$ | STS-B | **0.10** |
+| **Reading Comprehension** | Start/End Cross-Entropy ($\mathcal{L}_{\text{QA}}$) | 2 Linear projections ($768 \rightarrow 1$) | SQuAD + ViQuAD | **0.15** |
+
+### 4.2. Temperature-Scaled Dynamic Sampling
+To balance datasets spanning orders of magnitude (e.g., 942k All-NLI pairs vs 5.7k STS-B pairs), batches are sampled using temperature-scaled multinomial distribution:
+
+$$p_k = \frac{N_k^{\alpha}}{\sum_{j=1}^K N_j^{\alpha}} \quad \text{with } \alpha = 0.7$$
+
+This ensures high-quality smaller datasets (STS-B, PAWS, ViQuAD) receive adequate gradient signal without being drowned out by Wikipedia or All-NLI.
+
+---
+
+## 5. Empirical Exit Gates & Acceptance Criteria
+
+Advancement from Stage 1 (Natural Language Foundation) to Stage 2 (Scientific Specialization) requires passing all quantitative gates on isolated, held-out evaluation benchmarks:
+
+| Capability Gate | Benchmark Split | Evaluation Metric | Minimum Passing Threshold |
+| :--- | :--- | :--- | :---: |
+| **English 3-Way NLI** | ANLI R1/R2/R3 Held-Out Test Sets | Macro F1 | **$\ge 0.85$** |
+| **Vietnamese NLI / Reasoning** | ViQuAD Dev / Translated NLI Test | Macro F1 | **$\ge 0.78$** |
+| **Paraphrase Detection** | PAWS-WIKI Held-Out Test Set | Accuracy & Macro F1 | **$\ge 0.88$** |
+| **Semantic Similarity** | STS-B Held-Out Test Set | Spearman Rank Correlation ($\rho$) | **$\ge 0.82$** |
+| **English Reading Comprehension**| SQuAD v1.1 Held-Out Split | Exact Match / F1 | **$\ge 72.0 / 83.0$** |
+| **Vietnamese Reading Comprehension**| UIT-ViQuAD Held-Out Split | Exact Match / F1 | **$\ge 65.0 / 78.0$** |
+| **Subword Vocabulary Fertility** | Unseen English & Vietnamese Text | Tokens per Word Ratio | **$\le 1.35$** |
+| **Retrieval Benchmarking** | Synthetic STEM Retrieval Test Split | MRR / NDCG@10 vs BM25 Baseline | **MRR $\ge 0.82$** |
+
+---
+
+## 6. Training Run Metadata & Artifact Contract (#19 Alignment)
+
+In strict adherence to [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and Issue #19 / `src/laris/language/artifacts.py`:
+
+### 6.1. Immutable Serialization Requirements
+Every training run must emit a cryptographically sealed `LanguageArtifactBundle` containing:
+1. `VocabularyContract`: JSON mapping of 32,000 subwords, bijective ID translation, canonical special tokens, and SHA-256 digest.
+2. `EncoderCheckpointMetadata`: Parameter count, embedding dimension (768), weights SHA-256, and creation timestamp.
+3. `LanguageTrainingRunManifest`: Complete audit record including:
+   - Immutable Git commit SHA and configuration hash.
+   - Exact hardware telemetry (host GPU, peak VRAM allocation $\le 14.5\text{ GB}$).
+   - Dataset profile versions, source URLs, and cryptographic split hashes.
+   - Random seed (default: 42) and determinism settings.
+   - Split isolation verification proof (zero train-test document overlap).
+   - Training loss curves and evaluation benchmark metrics.
+4. Serialized PyTorch Model Weights (`model.pt`) with matching SHA-256.
+
+### 6.2. Storage Governance
+- Datasets, model weights, and checkpoints **MUST NEVER** be committed to Git.
+- All artifacts reside in machine-local paths (e.g., `artifacts/checkpoints/<run_id>/`).
+
+---
+
+## 7. Bounded Profiling Specification
+
+Before launching full pretraining, a bounded profiling run must verify execution sanity:
+- **Scope Limit:** Single forward pass on synthetic input tensor `(batch_size=2, seq_len=32)`.
+- **Invariants:** Zero optimizer steps, zero weight updates, zero checkpoint generation.
+- **Verification Target:** Verify tensor shapes, CUDA device allocation, and memory allocation hooks.
+
+---
+
+## 8. Final Compliance Confirmation
+
+In accordance with repository governance:  
+**NO MODEL TRAINING WAS RUN.**

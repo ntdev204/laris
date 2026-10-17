@@ -87,6 +87,13 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-002` |
 | `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-003` |
 | `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `DONE` | `M2-LANG-003-SUB-01` |
+| `M2-LANG-004` | Natural Language Foundation Training Readiness Audit & Curriculum Specification | `MOD-LANG-004` | `DONE` | `M2-LANG-003` |
+| `M2-LANG-004-SUB-01` | Ubuntu environment verification and 17-dataset inventory reconciliation | `MOD-LANG-004` | `DONE` | `M2-LANG-004` |
+| `M2-LANG-004-SUB-02` | Staged curriculum, from-scratch Transformer spec and #19 artifact lifecycle | `MOD-LANG-004` | `DONE` | `M2-LANG-004-SUB-01` |
+| `M2-LANG-005` | Dataset Partitioning & Leakage-Safe Split Generation | `MOD-CORPUS-001` | `PROPOSED` | `M2-LANG-004` |
+| `M2-LANG-006` | From-Scratch Bilingual Tokenizer Training (SentencePiece BPE 32k) | `MOD-LANG-001` | `PROPOSED` | `M2-LANG-005` |
+| `M2-LANG-007` | PyTorch Foundation Architecture Implementation & Bounded Profiling | `MOD-LANG-002` | `PROPOSED` | `M2-LANG-006` |
+| `M2-LANG-008` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-007` |
 
 ---
 
@@ -321,6 +328,24 @@ This document serves as the single source of truth for active task tracking, exe
   1. Checkpoint integrity and lineage recorded in machine-readable manifests.
   2. Deterministic execution produces bitwise identical evaluation scores across runs given the same seed.
   3. Complies with hardware budget safety constraints ($\le 14.5$ GB VRAM global headroom).
+
+---
+
+### Task `M2-LANG-004`: Natural Language Foundation Training Readiness Audit & Curriculum Specification
+- **Objective:** Perform exhaustive empirical audit of physical Ubuntu environment, reconcile 17 tracked datasets, disaggregate task/language units, and author from-scratch curriculum and architecture specifications for Model 1 (closes Issue #214).
+- **Module:** `MOD-LANG-004` (Layer 1 Language Foundation Governance).
+- **Dependencies:** `M2-LANG-003`.
+- **Subtasks:**
+  - `M2-LANG-004-SUB-01`: Ubuntu environment audit, GPU/RAM telemetry, 17-dataset reconciliation, and disaggregated unit accounting (`DOC-RES-AUDIT-002`).
+  - `M2-LANG-004-SUB-02`: Model 1 from-scratch 110M Transformer architecture, multi-task curriculum, VRAM memory budget, and #19 artifact lifecycle specification (`DOC-SPEC-TRAIN-001`).
+- **Acceptance Criteria:**
+  1. Measured hardware telemetry reported (Intel i5-10300H, 3.7 GB RAM host, GTX 1650 4 GB VRAM) vs target workstation budget (i5-14600KF, 32 GB RAM, RTX 5070 Ti 16 GB VRAM).
+  2. All 5,106,491 records across 14 acquired datasets verified on disk; English (3,782,210) and Vietnamese (1,324,281) disaggregated by granular unit without inflated totals.
+  3. Pre-training data leakage risks (unpartitioned Wikipedia, train-only Quora, dev-only QA) identified with ordered remediation plan.
+  4. 110M parameter bidirectional Transformer encoder specified with 32,000 bilingual vocab, rotary embeddings, pre-RMSNorm, and multi-task loss ($\lambda_i$).
+  5. Peak VRAM calculated at $4.42\text{ GB}$, comfortably inside RTX 5070 Ti 16 GB envelope (27.6% utilization, $\ge 11.5\text{ GB}$ headroom).
+  6. 11 readiness gates evaluated with evidence-backed status; blocker resolution order established (`M2-LANG-005` through `M2-LANG-008`).
+  7. Strict adherence to mandatory stop condition: **NO MODEL TRAINING WAS RUN.**
 
 ---
 
