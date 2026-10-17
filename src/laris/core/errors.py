@@ -213,3 +213,8 @@ class AuditIntegrityError(InterventionAuditError):
 class InvalidInterventionError(InterventionAuditError):
     """Raised when a user intervention action, target, or modification payload is invalid."""
     pass
+
+
+class TrainingExecutionProhibitedError(LarisError):
+    """Raised when prohibited model training, tokenizer training, or weight updates are run."""
+    pass

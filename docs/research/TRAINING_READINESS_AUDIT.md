@@ -221,7 +221,7 @@ In accordance with Issue #214 Section F, eleven explicit gates were evaluated:
 | **7** | #18 Encoder interfaces & BM25 comparison complete and reviewed | **BLOCKED** | PR #130 implemented `CompactSentenceEncoder` (deterministic hash-based projection baseline), Okapi BM25, and retrieval benchmark harness. No learned neural encoder weights exist; gate is BLOCKED for trained neural model artifact. |
 | **8** | #19 Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. Complete for schema and lifecycle management; zero trained weights exist. |
 | **9** | Architecture, curriculum, objectives, metrics, and budget specified | **PASS** | Detailed in companion specification `DOC-SPEC-TRAIN-001` (`NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md`). |
-| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 938 pytest unit/contract tests pass (plus 35 subtests); `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors. |
+| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 972 pytest unit/contract tests pass (plus 35 subtests); `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors. |
 | **11** | Owner explicitly approves a separate training-execution issue | **BLOCKED** | Issue #214 is strictly audit and specification. Model training execution requires explicit owner review and approval in a follow-up issue. |
 
 ---
