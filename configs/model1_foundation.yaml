@@ -1,0 +1,37 @@
+# Model 1 Natural Language Foundation Architecture Configuration
+# Adheres to DOC-SPEC-TRAIN-001, ADR-001, ADR-002, ADR-005, and Issue #215
+
+config_version: "1.0.0"
+environment: "foundation-pretraining"
+
+model:
+  vocab_size: 32000
+  max_sequence_length: 512
+  d_model: 768
+  num_layers: 12
+  num_heads: 12
+  d_ff: 3072
+  dropout: 0.1
+  norm_type: "rmsnorm"
+  pos_encoding: "rope"
+  activation: "gelu"
+  tie_embeddings: true
+  precision: "bf16"
+  seed: 42
+
+training:
+  batch_size: 32
+  micro_batch_size: 4
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0001
+  warmup_steps: 2000
+  max_steps: 100000
+  loss_lambda_mlm: 0.35
+  loss_lambda_nli: 0.25
+  loss_lambda_para: 0.15
+  loss_lambda_sim: 0.10
+  loss_lambda_qa: 0.15
+
+hardware:
+  max_vram_gb: 14.5
+  target_device: "cuda"

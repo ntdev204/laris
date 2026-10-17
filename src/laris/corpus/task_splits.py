@@ -53,6 +53,18 @@ class WikipediaArticlePartitioner:
             raise ValueError("Partition seed must not be empty")
         self.seed = seed
 
+    @classmethod
+    def from_config(cls, config: Any) -> "WikipediaArticlePartitioner":
+        """Instantiates WikipediaArticlePartitioner from centralized DataConfig or LarisConfig."""
+        data_cfg = getattr(config, "data", config)
+        ratios = PartitionRatios(
+            train=getattr(data_cfg, "train_ratio", 0.80),
+            val=getattr(data_cfg, "val_ratio", 0.10),
+            test=getattr(data_cfg, "test_ratio", 0.10),
+        )
+        seed = getattr(data_cfg, "partition_seed", "laris-wikipedia-partition-seed-v1")
+        return cls(ratios=ratios, seed=seed)
+
     def assign_split(self, article_id: str) -> DatasetSplit:
         """Deterministically maps an article ID to a DatasetSplit via hash bucketing."""
         if not article_id or not article_id.strip():
