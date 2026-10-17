@@ -724,6 +724,10 @@ This document serves as the single source of truth for active task tracking, exe
 | `M11-ARCH-002` | Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies | Architecture | `DONE` | `M11-ARCH-001` |
 | `M11-ARCH-002-SUB-01` | Source tree audit and legacy layer deletion (ADR-012) | Architecture | `DONE` | `M11-ARCH-002` |
 | `M11-ARCH-002-SUB-02` | Repository-wide test import migration & regression enforcement | Core | `DONE` | `M11-ARCH-002-SUB-01` |
+| `M11-CONFIG-001` | Centralized Configuration System & Hardcoded-Parameter Audit | Core / Config | `DONE` | `M2-LANG-005` |
+| `M11-CONFIG-001-SUB-01` | Hardcoded parameter audit & taxonomy classification (DOC-RES-AUDIT-003) | Architecture | `DONE` | `M11-CONFIG-001` |
+| `M11-CONFIG-001-SUB-02` | Canonical Pydantic schemas, 4-tier precedence loader & tests | Core | `DONE` | `M11-CONFIG-001-SUB-01` |
+
 
 ---
 
@@ -823,6 +827,24 @@ This document serves as the single source of truth for active task tracking, exe
   4. Disaggregated counting units distinguish supervised task records from general language clean document records.
   5. SHA-256 integrity checksums and parquet schema validity verified for all shards.
   6. Zero model training executed during acquisition or validation.
+
+---
+
+### Task `M11-CONFIG-001`: Centralized Configuration System & Hardcoded-Parameter Audit
+- **Objective:** Establish a canonical typed configuration system (Pydantic V2) with 4-tier precedence resolution, deterministic SHA-256 config hashing, hardware safety envelope protection (14.5 GB max VRAM), and complete hardcoded parameter taxonomy audit across all modules.
+- **Module:** `laris.config` (Core / Configuration Engine).
+- **Dependencies:** `M2-LANG-005` (Issue #217).
+- **Subtasks:**
+  - `M11-CONFIG-001-SUB-01`: Hardcoded parameter audit across repository, taxonomy classification, and governance design (`DOC-RES-AUDIT-003`).
+  - `M11-CONFIG-001-SUB-02`: Canonical Pydantic schemas (`ModelConfig`, `TrainingConfig`, `DataConfig`, `HardwareConfig`, `LarisConfig`), loader with 4-tier precedence (CLI > Env > File > Defaults), deterministic SHA-256 hashing, secret redaction, default YAML templates, unit and contract tests (`DOC-SPEC-CONF-001`).
+- **Acceptance Criteria:**
+  1. Complete parameter inventory categorizes all parameters into Tunable, Invariant, Safe Default, and Test Fixtures.
+  2. Canonical configuration loader implements strict 4-tier precedence order.
+  3. Structural invariants (Pre-RMSNorm, RoPE, GELU, tied MLM projection) enforced against override.
+  4. Hardware safety governor strictly rejects `max_vram_gb > 14.5` (raising `HardwareBudgetExceededError`).
+  5. Cryptographic SHA-256 config hashing is deterministic and immune to masked secrets.
+  6. Consumer modules (`TransformerEncoderConfig`, `WikipediaArticlePartitioner`, `TokenizerTrainerConfig`) ingest configuration and change behavior accordingly.
+  7. Full test suite and documentation quality gates pass with zero training execution.
 
 
 

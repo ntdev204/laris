@@ -51,6 +51,22 @@ class TokenizerTrainerConfig:
     add_dummy_prefix: bool = True
     split_digits: bool = True
 
+    @classmethod
+    def from_config(cls, config: Any, **overrides: Any) -> "TokenizerTrainerConfig":
+        """Instantiates TokenizerTrainerConfig from centralized LarisConfig or sub-configs."""
+        model_cfg = getattr(config, "model", config)
+        data_cfg = getattr(config, "data", config)
+
+        vocab_size = getattr(model_cfg, "vocab_size", DEFAULT_TARGET_VOCAB_SIZE)
+        character_coverage = getattr(data_cfg, "character_coverage", 0.9995)
+
+        params: Dict[str, Any] = {
+            "vocab_size": vocab_size,
+            "character_coverage": character_coverage,
+        }
+        params.update(overrides)
+        return cls(**params)
+
     def __post_init__(self) -> None:
         if not (MIN_VOCAB_SIZE <= self.vocab_size <= MAX_VOCAB_SIZE):
             raise ValueError(

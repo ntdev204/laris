@@ -84,6 +84,28 @@ class TransformerEncoderConfig:
         if self.activation != "gelu":
             raise ValueError(f"Only 'gelu' is approved, got '{self.activation}'")
 
+    @classmethod
+    def from_config(cls, config: Any) -> "TransformerEncoderConfig":
+        """Instantiates TransformerEncoderConfig from centralized ModelConfig or LarisConfig."""
+        model_cfg = getattr(config, "model", config)
+        return cls(
+            vocab_size=getattr(model_cfg, "vocab_size", DEFAULT_TARGET_VOCAB_SIZE),
+            max_sequence_length=getattr(
+                model_cfg, "max_sequence_length", DEFAULT_MAX_SEQUENCE_LENGTH
+            ),
+            d_model=getattr(model_cfg, "d_model", 768),
+            num_layers=getattr(model_cfg, "num_layers", 12),
+            num_heads=getattr(model_cfg, "num_heads", 12),
+            d_ff=getattr(model_cfg, "d_ff", 3072),
+            dropout=getattr(model_cfg, "dropout", 0.1),
+            norm_type=getattr(model_cfg, "norm_type", "rmsnorm"),
+            pos_encoding=getattr(model_cfg, "pos_encoding", "rope"),
+            activation=getattr(model_cfg, "activation", "gelu"),
+            tie_embeddings=getattr(model_cfg, "tie_embeddings", True),
+            precision=getattr(model_cfg, "precision", "bf16"),
+            seed=getattr(model_cfg, "seed", 42),
+        )
+
     def calculate_parameter_count(self) -> int:
         """Calculates exact parameter count according to the architectural equations.
 
