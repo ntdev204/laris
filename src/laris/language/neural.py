@@ -106,37 +106,97 @@ class TransformerEncoderConfig:
             seed=getattr(model_cfg, "seed", 42),
         )
 
-    def calculate_parameter_count(self) -> int:
-        """Calculates exact parameter count according to the architectural equations.
+    def calculate_backbone_parameter_count(self) -> int:
+        """Calculates exact parameter count of the Transformer encoder backbone.
 
-        Equation:
-          V * d + L * (4 * d^2 + 2 * d * d_ff + 2 * d) + d + V (tied MLM bias)
+        Backbone Equation:
+          V * d + L * (4 * d^2 + 2 * d * d_ff + 2 * d) + d + (V if tie_embeddings else V * d + V)
+        For canonical configuration: 32000*768 + 12*(4*768^2 + 2*768*3072 + 2*768) + 768 + 32000
+          = 24,576,000 + 12*(2,359,296 + 4,718,592 + 1,536) + 768 + 32,000
+          = 24,576,000 + 12*(7,079,424) + 768 + 32,000
+          = 24,576,000 + 84,953,088 + 768 + 32,000
+          = 109,561,856 parameters.
         """
-        # Token embeddings (V * d)
         emb_params = self.vocab_size * self.d_model
-
-        # Multi-head attention (W_q, W_k, W_v, W_o: 4 * d * d; no bias)
         attn_params = 4 * self.d_model * self.d_model
-
-        # Feed-forward network (W1: d * d_ff, W2: d_ff * d; no bias)
         ffn_params = 2 * self.d_model * self.d_ff
-
-        # Pre-RMSNorm on attention and FFN inputs (2 * d scale parameters; no bias)
         layer_norm_params = 2 * self.d_model
-
         per_layer_params = attn_params + ffn_params + layer_norm_params
         total_layers = self.num_layers * per_layer_params
-
-        # Final RMSNorm scale parameter (d)
         final_norm_params = self.d_model
 
-        # Tied MLM projection shares embedding table (V * d), adds only output bias (V)
         if self.tie_embeddings:
             head_bias_params = self.vocab_size
         else:
             head_bias_params = self.vocab_size * self.d_model + self.vocab_size
 
         return emb_params + total_layers + final_norm_params + head_bias_params
+
+    def calculate_head_parameter_count(self) -> int:
+        """Calculates parameters across all capability task heads (NLI, Paraphrase, Similarity, QA).
+
+        Head Equations:
+          - 3-Way NLI head: (d -> 256 -> 3): d*256 + 256 + 256*3 + 3 = 197,635 params (d=768)
+          - Paraphrase head: (d -> 1): d*1 + 1 = 769 params (d=768)
+          - Semantic similarity head: (d -> 1): d*1 + 1 = 769 params (d=768)
+          - Span QA head: (d -> 2): d*2 + 2 = 1,538 params (d=768)
+          Total capability head params = 200,711 params (d=768)
+        """
+        d = self.d_model
+        nli_params = (d * 256 + 256) + (256 * 3 + 3)
+        para_params = d * 1 + 1
+        sim_params = d * 1 + 1
+        qa_params = d * 2 + 2
+        return nli_params + para_params + sim_params + qa_params
+
+    def calculate_parameter_count(self, include_heads: bool = False) -> int:
+        """Calculates parameter count according to architectural equations.
+
+        Args:
+            include_heads: If False (default), returns the exact backbone parameter count
+                (109,561,856 for canonical 110M model). If True, includes all instantiated
+                multi-task capability heads (109,762,567 for canonical 110M model).
+        """
+        backbone = self.calculate_backbone_parameter_count()
+        if include_heads:
+            return backbone + self.calculate_head_parameter_count()
+        return backbone
+
+    def estimate_memory_consumption(
+        self,
+        batch_size: int = 2,
+        seq_len: int = 32,
+    ) -> Dict[str, Any]:
+        """Provides analytical memory estimates separated from physical measurements.
+
+        Analytical model:
+          - Weights memory: total_parameters * bytes_per_param
+          - Forward activations per layer: attention scores + hidden states + FFN expansion
+        """
+        bytes_per_param = 2 if self.precision in ("bf16", "fp16") else 4
+        backbone_params = self.calculate_backbone_parameter_count()
+        total_params = self.calculate_parameter_count(include_heads=True)
+
+        weights_mb = (total_params * bytes_per_param) / (1024 * 1024)
+        per_layer_acts_bytes = (
+            batch_size * self.num_heads * seq_len * seq_len * 4
+            + batch_size * seq_len * self.d_model * bytes_per_param * 2
+            + batch_size * seq_len * self.d_ff * bytes_per_param
+        )
+        activations_mb = (self.num_layers * per_layer_acts_bytes) / (1024 * 1024)
+        estimated_peak_mb = weights_mb + activations_mb
+
+        return {
+            "status": "ANALYTICAL_ESTIMATE",
+            "precision": self.precision,
+            "bytes_per_param": bytes_per_param,
+            "backbone_parameters": backbone_params,
+            "total_parameters": total_params,
+            "weights_memory_mb": round(weights_mb, 2),
+            "estimated_activations_mb": round(activations_mb, 2),
+            "estimated_peak_memory_mb": round(estimated_peak_mb, 2),
+            "note": "Analytical estimate; distinct from measured OS RSS or CUDA VRAM.",
+        }
 
 
 def _gelu(x: np.ndarray) -> np.ndarray:
@@ -155,7 +215,15 @@ def _rmsnorm(x: np.ndarray, weight: np.ndarray, eps: float = 1e-6) -> np.ndarray
 def _apply_rope(
     q: np.ndarray, k: np.ndarray, seq_len: int, head_dim: int
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Applies Rotary Position Embeddings (RoPE) to query and key states."""
+    """Applies Rotary Position Embeddings (RoPE) to query and key states.
+
+    Uses canonical split-half formulation:
+      rotate_half(x) = [-x[..., d//2:], x[..., :d//2]]
+      freqs = 1.0 / (10000.0 ** (2i / d)) for i in [0, d//2)
+      cos_full = concat([cos, cos], axis=-1)
+      sin_full = concat([sin, sin], axis=-1)
+    ensuring each half is rotated with its matching frequency component.
+    """
     pos = np.arange(seq_len)[:, None]
     dim_indices = np.arange(0, head_dim, 2)[None, :]
     freqs = 1.0 / (10000.0 ** (dim_indices / head_dim))
@@ -169,8 +237,9 @@ def _apply_rope(
         x2 = x[..., head_dim // 2:]
         return np.concatenate((-x2, x1), axis=-1)
 
-    cos_full = np.repeat(cos, 2, axis=-1)[None, :, None, :]  # (1, seq_len, 1, head_dim)
-    sin_full = np.repeat(sin, 2, axis=-1)[None, :, None, :]
+    # Both halves share frequency component i in split-half rotation
+    cos_full = np.concatenate([cos, cos], axis=-1)[None, :, None, :]  # (1, seq_len, 1, head_dim)
+    sin_full = np.concatenate([sin, sin], axis=-1)[None, :, None, :]
 
     q_rot = (q * cos_full) + (rotate_half(q) * sin_full)
     k_rot = (k * cos_full) + (rotate_half(k) * sin_full)
@@ -181,17 +250,21 @@ class RandomlyInitializedTransformerEncoder:
     """Real, randomly initialized 110M parameter bidirectional Transformer encoder.
 
     Implements:
-    - Pure CPU-capable NumPy forward pass for validation and profiling
+    - Pure CPU-capable NumPy forward pass for validation, smoke tests, and profiling
     - Reproducible initialization from random seed
-    - Shape and parameter verification
-    - Multi-task output heads (MLM, NLI, Paraphrase, STS-B, Span QA)
+    - Shape, parameter count, and finite output verification
+    - Multi-task output heads (MLM, NLI, Paraphrase, Semantic Similarity, Span QA)
+    - Attention mask support ensuring padded tokens cannot corrupt representations
     - Strict prohibition on model weight updates
     """
 
     def __init__(self, config: Optional[TransformerEncoderConfig] = None) -> None:
         self.config = config or TransformerEncoderConfig()
         self.readiness_state = ModelReadinessState.RANDOMLY_INITIALIZED
-        self.parameter_count = self.config.calculate_parameter_count()
+        self.backbone_parameter_count = self.config.calculate_backbone_parameter_count()
+        self.total_parameter_count = self.config.calculate_parameter_count(include_heads=True)
+        # Default parameter_count preserves existing contract (backbone parameter count 109.56M)
+        self.parameter_count = self.backbone_parameter_count
 
         # Seeded PRNG for reproducible random initialization
         self.rng = np.random.default_rng(self.config.seed)
@@ -242,9 +315,13 @@ class RandomlyInitializedTransformerEncoder:
         weights["nli_w2"] = self.rng.normal(0.0, 1.0 / math.sqrt(256), (256, 3)).astype(np.float32)
         weights["nli_b2"] = np.zeros(3, dtype=np.float32)
 
-        # Paraphrase head (d -> 1)
+        # Paraphrase head (d -> 1: binary logit)
         weights["para_w"] = self.rng.normal(0.0, std, (d, 1)).astype(np.float32)
         weights["para_b"] = np.zeros(1, dtype=np.float32)
+
+        # Distinct Semantic Similarity head (d -> 1: continuous similarity score)
+        weights["sim_w"] = self.rng.normal(0.0, std, (d, 1)).astype(np.float32)
+        weights["sim_b"] = np.zeros(1, dtype=np.float32)
 
         # QA span head (d -> 2: start logit, end logit)
         weights["qa_w"] = self.rng.normal(0.0, std, (d, 2)).astype(np.float32)
@@ -263,8 +340,15 @@ class RandomlyInitializedTransformerEncoder:
     def forward(
         self,
         token_ids: Union[List[List[int]], np.ndarray],
+        attention_mask: Optional[Union[List[List[int]], np.ndarray]] = None,
     ) -> Dict[str, np.ndarray]:
-        """Executes a bounded, CPU-capable forward pass producing finite representations."""
+        """Executes a bounded, CPU-capable forward pass producing finite representations.
+
+        Args:
+            token_ids: Array of shape (batch_size, seq_len) with integer token IDs.
+            attention_mask: Optional binary array of shape (batch_size, seq_len),
+                where 1 indicates a valid token and 0 indicates a padded token.
+        """
         arr = np.asarray(token_ids, dtype=np.int64)
         if arr.ndim == 1:
             arr = arr[None, :]
@@ -274,6 +358,20 @@ class RandomlyInitializedTransformerEncoder:
             raise SequenceLengthExceededError(
                 f"Sequence length {seq_len} exceeds max capacity {self.config.max_sequence_length}"
             )
+
+        # Validate and prepare additive attention mask: 0.0 for valid, -1e4 for pad
+        mask_additive: Optional[np.ndarray] = None
+        if attention_mask is not None:
+            mask_arr = np.asarray(attention_mask, dtype=np.float32)
+            if mask_arr.ndim == 1:
+                mask_arr = mask_arr[None, :]
+            if mask_arr.shape != (batch_size, seq_len):
+                exp_shape = (batch_size, seq_len)
+                raise ValueError(
+                    f"attention_mask shape {mask_arr.shape} must match input shape {exp_shape}"
+                )
+            # (batch_size, 1, 1, seq_len) broadcasts across num_heads and queries
+            mask_additive = (1.0 - mask_arr[:, None, None, :]) * -1e4
 
         d = self.config.d_model
         num_heads = self.config.num_heads
@@ -309,7 +407,10 @@ class RandomlyInitializedTransformerEncoder:
 
             # Scaled dot-product attention
             scores = np.matmul(q_t, np.transpose(k_t, (0, 1, 3, 2))) / math.sqrt(head_dim)
-            # Softmax along last axis
+            if mask_additive is not None:
+                scores = scores + mask_additive
+
+            # Softmax along last axis with numerical stability
             exp_scores = np.exp(scores - np.max(scores, axis=-1, keepdims=True))
             attn_probs = exp_scores / (np.sum(exp_scores, axis=-1, keepdims=True) + 1e-9)
 
@@ -341,9 +442,13 @@ class RandomlyInitializedTransformerEncoder:
         nli_h = np.maximum(0.0, np.dot(cls_rep, self.weights["nli_w1"]) + self.weights["nli_b1"])
         nli_logits = np.dot(nli_h, self.weights["nli_w2"]) + self.weights["nli_b2"]  # (B, 3)
 
-        # Paraphrase Head (probability in [0, 1])
+        # Paraphrase Head (binary probability in [0, 1])
         para_logit = np.dot(cls_rep, self.weights["para_w"]) + self.weights["para_b"]
         para_prob = 1.0 / (1.0 + np.exp(-para_logit))  # (B, 1)
+
+        # Distinct Semantic Similarity Head (continuous similarity score in [0, 1])
+        sim_logit = np.dot(cls_rep, self.weights["sim_w"]) + self.weights["sim_b"]
+        similarity_score = 1.0 / (1.0 + np.exp(-sim_logit))  # (B, 1)
 
         # QA Span Head (start and end logits per token)
         qa_logits = np.dot(hidden_states, self.weights["qa_w"]) + self.weights["qa_b"]  # (B, S, 2)
@@ -355,6 +460,7 @@ class RandomlyInitializedTransformerEncoder:
             ("mlm_logits", mlm_logits),
             ("nli_logits", nli_logits),
             ("para_prob", para_prob),
+            ("similarity_score", similarity_score),
             ("qa_logits", qa_logits),
         ]:
             if not np.all(np.isfinite(tensor)):
@@ -366,6 +472,7 @@ class RandomlyInitializedTransformerEncoder:
             "mlm_logits": mlm_logits,
             "nli_logits": nli_logits,
             "paraphrase_prob": para_prob,
+            "similarity_score": similarity_score,
             "qa_logits": qa_logits,
         }
 
@@ -385,6 +492,8 @@ class RandomlyInitializedTransformerEncoder:
             "readiness_state": self.readiness_state.value,
             "model_id": "laris-model1-transformer-110m-untrained",
             "parameter_count": self.parameter_count,
+            "backbone_parameter_count": self.backbone_parameter_count,
+            "total_parameter_count": self.total_parameter_count,
             "weights_sha256": self.weights_sha256,
             "config": {
                 "vocab_size": self.config.vocab_size,
@@ -400,3 +509,166 @@ class RandomlyInitializedTransformerEncoder:
             json.dump(meta, f, indent=2)
 
         return dest
+
+
+# ---------------------------------------------------------------------------
+# PyTorch Real Neural Model Backend (when torch is available)
+# ---------------------------------------------------------------------------
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+
+    TORCH_AVAILABLE = True
+
+    class PyTorchTransformerEncoder(nn.Module):  # type: ignore[misc]
+        """Real PyTorch Transformer encoder with autograd and GPU capability.
+
+        Instantiated strictly from random initialization (no pretrained weights).
+        Contains strict prohibition barrier on training steps.
+        """
+
+        def __init__(self, config: Optional[TransformerEncoderConfig] = None) -> None:
+            super().__init__()
+            self.config = config or TransformerEncoderConfig()
+            self.readiness_state = ModelReadinessState.RANDOMLY_INITIALIZED
+
+            d = self.config.d_model
+            d_ff = self.config.d_ff
+            v = self.config.vocab_size
+
+            # 1. Embeddings
+            self.token_embeddings = nn.Embedding(v, d)
+
+            # 2. Layers
+            self.layers = nn.ModuleList([
+                _PyTorchTransformerLayer(d, self.config.num_heads, d_ff)
+                for _ in range(self.config.num_layers)
+            ])
+
+            # 3. Final RMSNorm
+            self.final_norm = _PyTorchRMSNorm(d)
+
+            # 4. MLM bias (tied embeddings)
+            self.mlm_bias = nn.Parameter(torch.zeros(v))
+
+            # 5. Multi-task heads
+            self.nli_head = nn.Sequential(
+                nn.Linear(d, 256),
+                nn.ReLU(),
+                nn.Linear(256, 3),
+            )
+            self.para_head = nn.Linear(d, 1)
+            self.sim_head = nn.Linear(d, 1)
+            self.qa_head = nn.Linear(d, 2)
+
+            # Seeded initialization
+            torch.manual_seed(self.config.seed)
+            self.eval()
+
+        def forward(
+            self,
+            token_ids: torch.Tensor,
+            attention_mask: Optional[torch.Tensor] = None,
+        ) -> Dict[str, torch.Tensor]:
+            """Bounded forward pass for shape and finite representation verification."""
+            with torch.no_grad():
+                batch_size, seq_len = token_ids.shape
+                x = self.token_embeddings(token_ids)
+
+                for layer in self.layers:
+                    x = layer(x, attention_mask=attention_mask)
+
+                hidden_states = self.final_norm(x)
+                cls_rep = hidden_states[:, 0, :]
+
+                # Heads
+                mlm_logits = F.linear(hidden_states, self.token_embeddings.weight, self.mlm_bias)
+                nli_logits = self.nli_head(cls_rep)
+                para_prob = torch.sigmoid(self.para_head(cls_rep))
+                similarity_score = torch.sigmoid(self.sim_head(cls_rep))
+                qa_logits = self.qa_head(hidden_states)
+
+                return {
+                    "hidden_states": hidden_states,
+                    "cls_embedding": cls_rep,
+                    "mlm_logits": mlm_logits,
+                    "nli_logits": nli_logits,
+                    "paraphrase_prob": para_prob,
+                    "similarity_score": similarity_score,
+                    "qa_logits": qa_logits,
+                }
+
+        def train_step(self, *args: Any, **kwargs: Any) -> None:
+            """Mandatory prohibition barrier preventing any model training or weight updates."""
+            raise TrainingExecutionProhibitedError(
+                "ABSOLUTE TRAINING PROHIBITION: The agent has no authority to execute training, "
+                "perform backpropagation, or update model weights."
+            )
+
+    class _PyTorchRMSNorm(nn.Module):  # type: ignore[misc]
+        def __init__(self, dim: int, eps: float = 1e-6) -> None:
+            super().__init__()
+            self.eps = eps
+            self.weight = nn.Parameter(torch.ones(dim))
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            var = x.pow(2).mean(dim=-1, keepdim=True)
+            return x * torch.rsqrt(var + self.eps) * self.weight
+
+    class _PyTorchTransformerLayer(nn.Module):  # type: ignore[misc]
+        def __init__(self, d_model: int, num_heads: int, d_ff: int) -> None:
+            super().__init__()
+            self.d_model = d_model
+            self.num_heads = num_heads
+            self.head_dim = d_model // num_heads
+
+            self.attn_norm = _PyTorchRMSNorm(d_model)
+            self.q_proj = nn.Linear(d_model, d_model, bias=False)
+            self.k_proj = nn.Linear(d_model, d_model, bias=False)
+            self.v_proj = nn.Linear(d_model, d_model, bias=False)
+            self.o_proj = nn.Linear(d_model, d_model, bias=False)
+
+            self.ffn_norm = _PyTorchRMSNorm(d_model)
+            self.ffn_w1 = nn.Linear(d_model, d_ff, bias=False)
+            self.ffn_w2 = nn.Linear(d_ff, d_model, bias=False)
+
+        def forward(
+            self,
+            x: torch.Tensor,
+            attention_mask: Optional[torch.Tensor] = None,
+        ) -> torch.Tensor:
+            b, s, _ = x.shape
+            # Pre-RMSNorm
+            norm_x = self.attn_norm(x)
+            q = self.q_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
+            k = self.k_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
+            v = self.v_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
+
+            scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            if attention_mask is not None:
+                # (b, 1, 1, s)
+                mask = (1.0 - attention_mask[:, None, None, :].float()) * -1e4
+                scores = scores + mask
+            attn = F.softmax(scores, dim=-1)
+            attn_out = torch.matmul(attn, v).transpose(1, 2).contiguous().view(b, s, self.d_model)
+            x = x + self.o_proj(attn_out)
+
+            # Pre-RMSNorm FFN
+            norm_ffn = self.ffn_norm(x)
+            ffn_out = self.ffn_w2(F.gelu(self.ffn_w1(norm_ffn)))
+            x = x + ffn_out
+            return x
+
+except ImportError:
+    TORCH_AVAILABLE = False
+
+    class PyTorchTransformerEncoder:  # type: ignore[no-redef]
+        """PyTorch neural model path for autograd/GPU execution."""
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            raise ImportError(
+                "PyTorch is not installed in the current environment. "
+                "Install PyTorch with GPU support to use PyTorchTransformerEncoder."
+            )
+
