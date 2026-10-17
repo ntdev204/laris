@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer7_reasoning import (
+from laris.reasoning import (
     AdversarialBenchmarkCase,
     AdversarialBenchmarkSuite,
     CandidateGapStatus,

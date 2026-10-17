@@ -17,7 +17,7 @@ import json
 import pytest
 
 from laris.core.errors import ModuleContractViolationError
-from laris.layers.layer3_scinlp import (
+from laris.scientific import (
     HeadingIndependentLimitationDetector,
     LimitationCategory,
     StrippedHeadingBenchmark,

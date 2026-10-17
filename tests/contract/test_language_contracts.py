@@ -17,8 +17,8 @@ from laris.core.errors import (
     SequenceLengthExceededError,
     VocabularyMismatchError,
 )
-from laris.layers.layer0_corpus.schemas import DatasetSplit
-from laris.layers.layer1_language.schemas import (
+from laris.corpus.schemas import DatasetSplit
+from laris.language.schemas import (
     CANONICAL_SPECIAL_TOKENS,
     CLS_TOKEN,
     GREEK_TOKEN,

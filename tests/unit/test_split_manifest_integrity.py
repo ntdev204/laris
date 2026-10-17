@@ -11,7 +11,7 @@ Validates:
 import unittest
 
 from laris.core.errors import DataLeakageError
-from laris.layers.layer0_corpus.partition import (
+from laris.corpus.partition import (
     DEFAULT_PARTITION_SEED,
     DatasetPartitionEngine,
     LargeGroupPolicy,
@@ -20,7 +20,7 @@ from laris.layers.layer0_corpus.partition import (
     compute_split_fingerprint,
     verify_split_leakage,
 )
-from laris.layers.layer0_corpus.schemas import (
+from laris.corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
     LicenseType,

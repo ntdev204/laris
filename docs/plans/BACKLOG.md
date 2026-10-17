@@ -653,6 +653,131 @@ This document serves as the single source of truth for active task tracking, exe
   3. Installation and build instructions work in clean environment.
   4. Release notes and operational boundaries are documented.
 
+---
+
+## Milestone M11: Staged Learning Pipeline Governance, Dataset Acquisition & Domain Refactoring
+**Status:** `IN_PROGRESS`
+
+| Task ID | Task Name | Module | Status | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| `M11-TRAIN-000` | Staged Model Learning Pipeline Governance | System / Gov | `DONE` | Milestone M10 Exit Gate |
+| `M11-TRAIN-000-SUB-01` | Model training vs deterministic baseline audit | Gov | `DONE` | `M11-TRAIN-000` |
+| `M11-TRAIN-000-SUB-02` | Staged learning specification, gates & scalable sample floors | Gov | `DONE` | `M11-TRAIN-000-SUB-01` |
+| `M11-DATA-001` | Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan | Corpus / Data | `DONE` | `M11-TRAIN-000` |
+| `M11-DATA-001-SUB-01` | Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec | Corpus | `DONE` | `M11-DATA-001` |
+| `M11-DATA-001-SUB-02` | Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit | Corpus | `DONE` | `M11-DATA-001-SUB-01` |
+| `M11-DATA-002` | Reconcile Manifest, Candidate Acquisition & 5M Target Gap Analysis | Corpus / Data | `DONE` | `M11-DATA-001` |
+| `M11-DATA-002-SUB-01` | Reconcile local artifacts, manifest sample accounting & DocLayNet fix | Corpus | `DONE` | `M11-DATA-002` |
+| `M11-DATA-002-SUB-02` | Acquire authorized candidates (STS-B, Quora, All-NLI, SQuAD) & gap analysis | Corpus | `DONE` | `M11-DATA-002-SUB-01` |
+| `M11-ARCH-001` | Refactor Numbered Layers into Domain-Based Packages | Architecture | `DONE` | `M11-TRAIN-000` |
+| `M11-ARCH-001-SUB-01` | Target domain layout design, migration plan & ADR-011 | Architecture | `DONE` | `M11-ARCH-001` |
+| `M11-ARCH-001-SUB-02` | Package migration, compatibility shims, import updates & test suite pass | Core | `DONE` | `M11-ARCH-001-SUB-01` |
+| `M11-ARCH-002` | Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies | Architecture | `DONE` | `M11-ARCH-001` |
+| `M11-ARCH-002-SUB-01` | Source tree audit and legacy layer deletion (ADR-012) | Architecture | `DONE` | `M11-ARCH-002` |
+| `M11-ARCH-002-SUB-02` | Repository-wide test import migration & regression enforcement | Core | `DONE` | `M11-ARCH-002-SUB-01` |
+
+---
+
+### Task `M11-TRAIN-000`: Staged Model Learning Pipeline Governance
+- **Objective:** Establish the authoritative 6-stage model learning sequence, stage boundaries, English/Vietnamese separate tracks, model responsibilities (Model 1, Model 2, Model 3), scalable sample floors ($\ge 1\text{M}$ each), and strict non-training governance.
+- **Module:** Governance & System Planning.
+- **Dependencies:** Milestone M10 Exit Gate (`M10-PROD-003`).
+- **Subtasks:**
+  - `M11-TRAIN-000-SUB-01`: Model training vs deterministic baseline audit and reality check (`DOC-RES-AUDIT-001`).
+  - `M11-TRAIN-000-SUB-02`: Staged learning pipeline specification, model separation, and scalable sample floors (`DOC-PLAN-TRAIN-001`).
+- **Acceptance Criteria:**
+  1. Implementation audit explicitly demonstrates that zero neural training has been run and distinguishes deterministic baselines from trained models.
+  2. Learning sequence strictly enforces: Natural Language $\rightarrow$ Scientific Language $\rightarrow$ Scientific OCR $\rightarrow$ OCR-Coupled Manuscript $\rightarrow$ LARIS Integration.
+  3. Minimum floor of 1,000,000 samples for Model 1 and Model 2 defined by granular units (not caps or adequacy guarantees).
+  4. English and Vietnamese tracked as independent curricula and evaluation benchmarks.
+  5. Zero model training executed during this milestone.
+
+---
+
+### Task `M11-DATA-001`: Dataset Inventory, Licensing, Eligible Acquisition & S2ORC Plan
+- **Objective:** Inventory priority datasets, verify licensing and redistribution terms, acquire eligible sources, verify checksums and schemas, perform S2ORC bounded STEM subset audit ($<20$ GB, $<20\text{M}$ samples), and define LARIS-GOLD specification.
+- **Module:** `MOD-CORPUS-001` / Data Governance.
+- **Dependencies:** `M11-TRAIN-000`.
+- **Subtasks:**
+  - `M11-DATA-001-SUB-01`: Dataset inventory, license matrix, En/Vi separation & LARIS-GOLD spec.
+  - `M11-DATA-001-SUB-02`: Eligible dataset acquisition, checksum/schema verification & S2ORC bounded audit.
+- **Acceptance Criteria:**
+  1. Inventory covers all priority candidates with canonical sources, versions, and verified licenses.
+  2. Eligible datasets acquired responsibly and verified for integrity, checksums, and schema.
+  3. S2ORC evaluated with strict hard caps ($<20$ GB payload, $<20\text{M}$ samples) or skipped if compliant STEM subset is blocked.
+  4. LARIS-GOLD specification established without fabricating annotations.
+  5. Zero model training run on acquired data.
+
+---
+
+### Task `M11-DATA-002`: Reconcile Manifest, Candidate Acquisition & 5M Target Gap Analysis
+- **Objective:** Reconcile committed manifest with local artifacts, correct DocLayNet sample accounting, acquire authorized candidate datasets (STS-B, Quora Duplicates, All-NLI, SQuAD), provide dedicated semantic similarity coverage, and establish a transparent gap analysis for the 5M–<20M target.
+- **Module:** `MOD-CORPUS-001` / Data Governance.
+- **Dependencies:** `M11-DATA-001`.
+- **Subtasks:**
+  - `M11-DATA-002-SUB-01`: Reconcile local artifacts, manifest sample accounting & DocLayNet fix.
+  - `M11-DATA-002-SUB-02`: Acquire authorized candidates (STS-B, Quora, All-NLI, SQuAD) & gap analysis.
+- **Acceptance Criteria:**
+  1. DocLayNet page count corrected to verified local artifact count (1 sample), resolving overcounting.
+  2. Four authorized candidate datasets acquired and verified locally with exact SHA-256 digests.
+  3. Dedicated continuous semantic similarity [0.0–1.0] coverage established via STS-B.
+  4. Disaggregated counting units (Task Records vs Documents vs Pages vs Tokens) documented.
+  5. Transparent gap analysis and staged acquisition roadmap defined for the 5M–<20M target.
+  6. Zero model training executed during acquisition or validation.
+
+---
+
+### Task `M11-ARCH-001`: Refactor Numbered Layers into Domain-Based Packages
+- **Objective:** Reorganize `src/laris/layers/layerX_*` into clean domain packages (`corpus`, `language`, `scientific`, `retrieval`, `reasoning`, `orchestration`, `execution`, `evaluation`, `reporting`) while preserving the conceptual 12-layer architecture in documentation.
+- **Module:** Architecture & Package Structure.
+- **Dependencies:** `M11-TRAIN-000`.
+- **Subtasks:**
+  - `M11-ARCH-001-SUB-01`: Target domain layout design, migration plan & ADR-011.
+  - `M11-ARCH-001-SUB-02`: Package migration, compatibility shims, import updates & test suite pass.
+- **Acceptance Criteria:**
+  1. Numbered layer folders replaced by domain packages as primary source organization.
+  2. Transparent compatibility shims provided in `src/laris/layers/`.
+  3. All 898+ unit and contract tests pass with zero regressions.
+  4. Ruff, mypy, and docs validation pass with zero errors.
+  5. 12-layer conceptual architecture remains documented and preserved.
+
+---
+
+### Task `M11-ARCH-002`: Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies
+- **Objective:** Permanently eliminate legacy numbered layer hierarchies (`src/laris/layers/`), migrate 100% of test imports to canonical domain packages, establish ADR-012, and enforce structural integrity via automated regression tests.
+- **Module:** Architecture & Package Structure.
+- **Dependencies:** `M11-ARCH-001`.
+- **Subtasks:**
+  - `M11-ARCH-002-SUB-01`: Source tree audit and legacy layer deletion (ADR-012).
+  - `M11-ARCH-002-SUB-02`: Repository-wide test import migration & regression enforcement.
+- **Acceptance Criteria:**
+  1. No numbered layer directories or legacy `layers` directory exist in `src/laris/`.
+  2. All test imports migrate to direct canonical domain packages (`laris.corpus`, `laris.language`, `laris.scientific`, `laris.graph`, `laris.retrieval`, `laris.reasoning`, `laris.orchestration`, `laris.execution`, `laris.evaluation`, `laris.reporting`).
+  3. Contract test `test_no_numbered_layer_directories_exist` enforces absence of numbered directories.
+  4. All unit, integration, and contract tests pass without failure.
+  5. Full CI quality gates pass with zero regressions.
+
+---
+
+### Task `M11-DATA-003`: Acquire and Verify at Least 5M Dataset Records
+- **Objective:** Acquire, verify checksums and schemas, and manifest at least 5,000,000 and strictly under 20,000,000 valid, deduplicated sample records across English and Vietnamese under CC-BY-SA-4.0 licenses, keeping disk usage under 20 GB.
+- **Module:** `MOD-CORPUS-001` (Corpus Ingestion & Data Governance).
+- **Dependencies:** `M11-DATA-002`.
+- **Subtasks:**
+  - `M11-DATA-003-SUB-01`: Official Vietnamese Wikipedia clean article dump acquisition (4 shards, 1,288,680 articles).
+  - `M11-DATA-003-SUB-02`: Bounded English Wikipedia clean article subset acquisition (13 shards, 2,031,744 articles).
+  - `M11-DATA-003-SUB-03`: Disaggregated unit accounting, language ledgers, and contract regression tests.
+- **Acceptance Criteria:**
+  1. Total verified sample count $\ge 5,000,000$ and strictly $< 20,000,000$ (actual: 5,106,485 records).
+  2. Total payload storage strictly $< 20\text{ GB}$ (actual: $\approx 4.4\text{ GB}$).
+  3. Separate English ($3,782,058$) and Vietnamese ($1,324,277$) record ledgers maintained.
+  4. Disaggregated counting units distinguish supervised task records from general language clean document records.
+  5. SHA-256 integrity checksums and parquet schema validity verified for all shards.
+  6. Zero model training executed during acquisition or validation.
+
+
+
+
 
 
 

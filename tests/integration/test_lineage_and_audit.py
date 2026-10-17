@@ -21,7 +21,7 @@ from laris.core.errors import (
     CoordinateResolutionError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer11_reporting import (
+from laris.reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     CorpusVersionRecord,

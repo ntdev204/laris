@@ -14,23 +14,23 @@ from pathlib import Path
 
 import pytest
 
-from laris.layers.layer1_language.artifacts import (
+from laris.language.artifacts import (
     LanguageArtifactBundle,
     LanguageArtifactManager,
 )
-from laris.layers.layer1_language.encoder import CompactSentenceEncoder
-from laris.layers.layer1_language.retrieval_benchmark import (
+from laris.language.encoder import CompactSentenceEncoder
+from laris.language.retrieval_benchmark import (
     evaluate_retrieval_comparison,
 )
-from laris.layers.layer1_language.schemas import (
+from laris.language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.layers.layer1_language.stem_benchmark import (
+from laris.language.stem_benchmark import (
     get_stem_vocabulary_tokens,
 )
-from laris.layers.layer1_language.tokenizer import (
+from laris.language.tokenizer import (
     ScientificTokenizer,
     evaluate_stem_fertility,
 )

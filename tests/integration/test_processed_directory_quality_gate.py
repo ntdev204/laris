@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 
 from laris.core.errors import ModuleContractViolationError
-from laris.layers.layer0_corpus.pipeline import Layer0Pipeline
-from laris.layers.layer0_corpus.schemas import DatasetSplit
-from laris.layers.layer0_corpus.storage import (
+from laris.corpus.pipeline import Layer0Pipeline
+from laris.corpus.schemas import DatasetSplit
+from laris.corpus.storage import (
     MANIFEST_FILE_NAME,
     SPLIT_MANIFEST_FILE_NAME,
     export_processed_corpus,

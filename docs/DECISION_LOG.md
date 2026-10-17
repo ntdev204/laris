@@ -23,6 +23,8 @@ decision_references:
   - "ADR-008"
   - "ADR-009"
   - "ADR-010"
+  - "ADR-011"
+  - "ADR-012"
 change_summary: "Chronological log of all architectural decisions and baseline freeze events."
 ---
 
@@ -46,6 +48,9 @@ This document records the chronological history of all binding architectural dec
 | 2026-10-15 | [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims. | ACCEPTED | LARIS Lead Architect |
 | 2026-10-16 | [ADR-009](file:///home/thientn204/laris/docs/adr/ADR-009-embedded-evidence-graph-storage.md) | Embedded Heterogeneous Evidence Graph Storage and Persistence Interface. | ACCEPTED | LARIS Lead Architect |
 | 2026-10-16 | [ADR-010](file:///home/thientn204/laris/docs/adr/ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval and Modular Adapter Architecture. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-16 | [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Organization and Conceptual Layer Decoupling. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-17 | [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies and Source-Tree Consolidation. | ACCEPTED | LARIS Lead Architect |
+
 
 
 

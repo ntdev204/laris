@@ -11,8 +11,8 @@ Provides deterministic, synthetic scientific documents with varied characteristi
 
 from typing import Dict, List
 
-from laris.layers.layer0_corpus.pipeline import RawDocumentInput
-from laris.layers.layer0_corpus.schemas import LicenseType
+from laris.corpus.pipeline import RawDocumentInput
+from laris.corpus.schemas import LicenseType
 
 
 def get_standard_synthetic_corpus() -> List[RawDocumentInput]:

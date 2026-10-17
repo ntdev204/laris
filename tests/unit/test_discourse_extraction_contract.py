@@ -22,7 +22,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.layers.layer3_scinlp import (
+from laris.scientific import (
     DiscourseExtractionSet,
     DiscourseExtractorContract,
     ScientificDiscourseExtractor,
@@ -366,7 +366,7 @@ def test_serialization_roundtrip_integrity(synthetic_scientific_paper: str):
 
 def test_latex_syntax_delimiter_mismatches():
     """Verify delimiter mismatch detection in LaTeX formulas."""
-    from laris.layers.layer3_scinlp.extractor import _validate_latex_syntax
+    from laris.scientific.extractor import _validate_latex_syntax
 
     # Negative brace, bracket, paren depth
     assert not _validate_latex_syntax("}")

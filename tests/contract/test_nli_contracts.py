@@ -13,7 +13,7 @@ from laris.core.errors import (
     ProbabilityValidationError,
     UncertaintyCeilingExceededError,
 )
-from laris.layers.layer2_semantic import (
+from laris.reasoning import (
     NLIEngineContract,
     NLILabel,
     NLIOutput,

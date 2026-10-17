@@ -20,7 +20,9 @@ decision_references:
   - "ADR-004"
   - "ADR-005"
   - "ADR-006"
-change_summary: "Detailed structural specification of all 12 architectural layers from corpus governance to user reporting."
+  - "ADR-011"
+  - "ADR-012"
+change_summary: "Detailed structural specification of all 12 architectural layers and mapping to canonical domain packages (ADR-011, ADR-012)."
 ---
 
 # LARIS Twelve-Layer Architectural Specification
@@ -189,3 +191,26 @@ This document defines the formal boundaries, responsibilities, inputs, outputs, 
 - **Inputs:** Synthesized findings from Layer 7 and orchestrated report from Layer 8.
 - **Outputs:** Human-facing research reports, interactive visualizations, and feedback signals to Layer 10.
 - **Invariants:** Every conclusion displayed must provide a clickable link to its verified evidence coordinates.
+
+---
+
+## 2. Conceptual Layers vs Canonical Domain Packages ([ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md), [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md))
+
+In accordance with [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md) and [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md), LARIS decouples its conceptual 12-layer cognitive architecture from the physical Python package layout. All parallel numbered layer directories (`src/laris/layers/layerX_*`) have been permanently retired. The conceptual architecture defines the data flow and system capabilities, while domain packages provide single, authoritative implementation locations:
+
+
+| Conceptual Layer | Cognitive Role | Physical Domain Package | Primary Module Exports |
+| :--- | :--- | :--- | :--- |
+| **Layer 0** | Corpus & Data Governance | `laris.corpus` | `Layer0Pipeline`, `normalize_scientific_text`, `DeduplicationEngine`, `DatasetPartitionEngine` |
+| **Layer 1** | Language Foundation | `laris.language` | `STEMSubwordTokenizer`, `CompactSentenceEncoder`, `LexicalBM25Baseline` |
+| **Layer 2** | Semantic Relations & Calibration | `laris.reasoning` | `ScientificNLIEngine`, `ConfidenceCalibrator`, `SemanticRelationClassifier` |
+| **Layer 3** | Scientific NLP & Discourse | `laris.scientific` | `DiscourseExtractor`, `LimitationExtractor`, `STEMUnitNormalizer` |
+| **Layer 4 / 5** | Heterogeneous Evidence Graph | `laris.graph` | `SQLiteEvidenceGraphAdapter`, `EvidenceNode`, `EvidenceEdge` |
+| **Layer 6** | Hybrid Hierarchical Retrieval | `laris.retrieval` | `HybridRetrievalEngine`, `ReciprocalRankFusion`, `DenseRetrievalAdapter` |
+| **Layer 7** | Research Gap Discovery Engine | `laris.reasoning` | `MatrixSynthesisEngine`, `GapClassifier`, `ConflictDetector`, `AdversarialEngine` |
+| **Layer 8** | Multi-Agent Orchestration | `laris.orchestration`| `OrchestrationRuntime`, `SpecialistSupervisor`, `TokenBudgetGovernor` |
+| **Layer 9** | Adaptive Local Execution | `laris.execution` | `TaskRouter`, `HardwareTelemetryMonitor`, `HeadroomGovernor`, `WeightStaging` |
+| **Layer 10** | Feedback & Policy Learning | `laris.evaluation` | `BenchmarkRunner`, `ScientificErrorTaxonomy`, `FeedbackMiner` |
+| **Layer 11** | Epistemic Reporting & Packaging | `laris.reporting` | `StructuredReportGenerator`, `EvidenceInspector`, `ManuscriptComposer` |
+| **Shared** | Universal Schemas & Errors | `laris.core` | `EvidenceCoordinate`, `LarisError`, `ModuleContractViolationError` |
+

@@ -17,10 +17,10 @@ from laris.core.errors import (
     ModuleContractViolationError,
     WeightStagingError,
 )
-from laris.layers.layer9_adaptive_execution.headroom_governor import (
+from laris.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from laris.layers.layer9_adaptive_execution.weight_staging import (
+from laris.execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,
