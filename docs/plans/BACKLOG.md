@@ -87,6 +87,16 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-003` | Language Foundation Training Reproducibility & Artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-002` |
 | `M2-LANG-003-SUB-01` | Implement reproducible language training artifacts | `MOD-LANG-003` | `DONE` | `M2-LANG-003` |
 | `M2-LANG-003-SUB-02` | Add checkpoint integrity, lineage and reproducibility tests | `MOD-LANG-003` | `DONE` | `M2-LANG-003-SUB-01` |
+| `M2-LANG-004` | Natural Language Foundation Training Readiness Audit & Curriculum Specification | `MOD-LANG-004` | `DONE` | `M2-LANG-003` |
+| `M2-LANG-004-SUB-01` | Ubuntu environment verification and 17-dataset inventory reconciliation | `MOD-LANG-004` | `DONE` | `M2-LANG-004` |
+| `M2-LANG-004-SUB-02` | Staged curriculum, from-scratch Transformer spec and #19 artifact lifecycle | `MOD-LANG-004` | `DONE` | `M2-LANG-004-SUB-01` |
+| `M2-LANG-005` | Resolve Training Readiness Blockers Before First Training Run | `MOD-LANG-005` | `DONE` | `M2-LANG-004` |
+| `M2-LANG-005-SUB-01` | Task-specific dataset partitioners & zero-leakage validation | `MOD-CORPUS-001` | `DONE` | `M2-LANG-005` |
+| `M2-LANG-005-SUB-02` | From-scratch bilingual tokenizer pipeline as code | `MOD-LANG-001` | `DONE` | `M2-LANG-005-SUB-01` |
+| `M2-LANG-005-SUB-03` | Real randomly initialized neural model & multi-task heads | `MOD-LANG-002` | `DONE` | `M2-LANG-005-SUB-02` |
+| `M2-LANG-005-SUB-04` | Bounded profiling, hardware telemetry & #215 config handoff | `MOD-LANG-005` | `DONE` | `M2-LANG-005-SUB-03` |
+| `M2-LANG-006` | Centralized Configuration System & Hardcoded-Parameter Audit | `MOD-CONFIG-001` | `PROPOSED` | `M2-LANG-005` |
+| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-006` |
 
 ---
 
@@ -321,6 +331,45 @@ This document serves as the single source of truth for active task tracking, exe
   1. Checkpoint integrity and lineage recorded in machine-readable manifests.
   2. Deterministic execution produces bitwise identical evaluation scores across runs given the same seed.
   3. Complies with hardware budget safety constraints ($\le 14.5$ GB VRAM global headroom).
+
+---
+
+### Task `M2-LANG-004`: Natural Language Foundation Training Readiness Audit & Curriculum Specification
+- **Objective:** Perform exhaustive empirical audit of physical Ubuntu environment, reconcile 17 tracked datasets, disaggregate task/language units, and author from-scratch curriculum and architecture specifications for Model 1 (closes Issue #214).
+- **Module:** `MOD-LANG-004` (Layer 1 Language Foundation Governance).
+- **Dependencies:** `M2-LANG-003`.
+- **Subtasks:**
+  - `M2-LANG-004-SUB-01`: Ubuntu environment audit, GPU/RAM telemetry, 17-dataset reconciliation, and disaggregated unit accounting (`DOC-RES-AUDIT-002`).
+  - `M2-LANG-004-SUB-02`: Model 1 from-scratch 110M Transformer architecture, multi-task curriculum, VRAM memory budget, and #19 artifact lifecycle specification (`DOC-SPEC-TRAIN-001`).
+- **Acceptance Criteria:**
+  1. Measured hardware telemetry reported (Intel i5-10300H, 3.7 GB RAM host, GTX 1650 4 GB VRAM) vs target workstation budget (i5-14600KF, 32 GB RAM, RTX 5070 Ti 16 GB VRAM).
+  2. All 5,106,491 records across 14 acquired datasets verified on disk; English (3,782,210) and Vietnamese (1,324,281) disaggregated by granular unit without inflated totals.
+  3. Pre-training data leakage risks (unpartitioned Wikipedia, train-only Quora, dev-only QA) identified with ordered remediation plan.
+  4. 110M parameter bidirectional Transformer encoder specified with 32,000 bilingual vocab, rotary embeddings, pre-RMSNorm, and multi-task loss ($\lambda_i$).
+  5. Peak VRAM calculated at $4.42\text{ GB}$, comfortably inside RTX 5070 Ti 16 GB envelope (27.6% utilization, $\ge 11.5\text{ GB}$ headroom).
+  6. 11 readiness gates evaluated with evidence-backed status; blocker resolution order established (`M2-LANG-005` through `M2-LANG-008`).
+  7. Strict adherence to mandatory stop condition: **NO MODEL TRAINING WAS RUN.**
+
+---
+
+### Task `M2-LANG-005`: Resolve Training Readiness Blockers Before First Training Run
+- **Objective:** Resolve concrete training readiness blockers by implementing task-specific leakage-proof partitioning, from-scratch tokenizer pipeline as code, real randomly initialized neural Transformer architecture, bounded profiling, and configuration handoff for Issue #215 (closes Issue #217).
+- **Module:** `MOD-LANG-005` (Language Readiness Engineering).
+- **Dependencies:** `M2-LANG-004`.
+- **Subtasks:**
+  - `M2-LANG-005-SUB-01`: Deterministic task-specific partitioning (`WikipediaArticlePartitioner`, `QuestionPairGraphPartitioner`, `QADatasetPartitioner`) enforcing zero-leakage cross-split isolation.
+  - `M2-LANG-005-SUB-02`: Reproducible bilingual tokenizer training pipeline as code (`TokenizerTrainingPipeline`) with diacritic preservation and strict training execution ban.
+  - `M2-LANG-005-SUB-03`: Real randomly initialized 110M Transformer encoder (`RandomlyInitializedTransformerEncoder`) with RoPE, pre-RMSNorm, GELU FFN, tied MLM head, and multi-task capability heads.
+  - `M2-LANG-005-SUB-04`: Bounded forward profiling (`BoundedResourceProfiler`), hardware distinction (measured dev host vs NOT VERIFIED target server), and #215 parameter handoff catalog.
+- **Acceptance Criteria:**
+  1. Parameter count formula matches exact 109,561,856 parameters across spec, contracts, and code.
+  2. Task-specific partitioners guarantee zero cross-split item or question leakage across Wikipedia, Quora, and QA datasets non-destructively.
+  3. From-scratch tokenizer pipeline implemented as code and tested; `execute_training()` raises `TrainingExecutionProhibitedError`.
+  4. Real neural model path implemented and marked `ModelReadinessState.RANDOMLY_INITIALIZED`; `train_step()` raises `TrainingExecutionProhibitedError`.
+  5. Bounded profiling executes single forward pass without optimizer steps, verifying finite outputs and $< 14.5\text{ GB}$ safety governor.
+  6. Development host and target workstation are strictly distinguished; target telemetry is labeled `NOT VERIFIED` with executable inspection script provided.
+  7. Configuration handoff catalog (`TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG`) classifies tunable parameters vs immutable invariants for Issue #215.
+  8. Strict adherence to mandatory stop condition: **NO MODEL TRAINING OF ANY KIND WAS RUN.**
 
 ---
 
@@ -675,6 +724,10 @@ This document serves as the single source of truth for active task tracking, exe
 | `M11-ARCH-002` | Complete Source-Tree Migration & Eliminate Parallel Layer Hierarchies | Architecture | `DONE` | `M11-ARCH-001` |
 | `M11-ARCH-002-SUB-01` | Source tree audit and legacy layer deletion (ADR-012) | Architecture | `DONE` | `M11-ARCH-002` |
 | `M11-ARCH-002-SUB-02` | Repository-wide test import migration & regression enforcement | Core | `DONE` | `M11-ARCH-002-SUB-01` |
+| `M11-CONFIG-001` | Centralized Configuration System & Hardcoded-Parameter Audit | Core / Config | `DONE` | `M2-LANG-005` |
+| `M11-CONFIG-001-SUB-01` | Hardcoded parameter audit & taxonomy classification (DOC-RES-AUDIT-003) | Architecture | `DONE` | `M11-CONFIG-001` |
+| `M11-CONFIG-001-SUB-02` | Canonical Pydantic schemas, 4-tier precedence loader & tests | Core | `DONE` | `M11-CONFIG-001-SUB-01` |
+
 
 ---
 
@@ -774,6 +827,24 @@ This document serves as the single source of truth for active task tracking, exe
   4. Disaggregated counting units distinguish supervised task records from general language clean document records.
   5. SHA-256 integrity checksums and parquet schema validity verified for all shards.
   6. Zero model training executed during acquisition or validation.
+
+---
+
+### Task `M11-CONFIG-001`: Centralized Configuration System & Hardcoded-Parameter Audit
+- **Objective:** Establish a canonical typed configuration system (Pydantic V2) with 4-tier precedence resolution, deterministic SHA-256 config hashing, hardware safety envelope protection (14.5 GB max VRAM), and complete hardcoded parameter taxonomy audit across all modules.
+- **Module:** `laris.config` (Core / Configuration Engine).
+- **Dependencies:** `M2-LANG-005` (Issue #217).
+- **Subtasks:**
+  - `M11-CONFIG-001-SUB-01`: Hardcoded parameter audit across repository, taxonomy classification, and governance design (`DOC-RES-AUDIT-003`).
+  - `M11-CONFIG-001-SUB-02`: Canonical Pydantic schemas (`ModelConfig`, `TrainingConfig`, `DataConfig`, `HardwareConfig`, `LarisConfig`), loader with 4-tier precedence (CLI > Env > File > Defaults), deterministic SHA-256 hashing, secret redaction, default YAML templates, unit and contract tests (`DOC-SPEC-CONF-001`).
+- **Acceptance Criteria:**
+  1. Complete parameter inventory categorizes all parameters into Tunable, Invariant, Safe Default, and Test Fixtures.
+  2. Canonical configuration loader implements strict 4-tier precedence order.
+  3. Structural invariants (Pre-RMSNorm, RoPE, GELU, tied MLM projection) enforced against override.
+  4. Hardware safety governor strictly rejects `max_vram_gb > 14.5` (raising `HardwareBudgetExceededError`).
+  5. Cryptographic SHA-256 config hashing is deterministic and immune to masked secrets.
+  6. Consumer modules (`TransformerEncoderConfig`, `WikipediaArticlePartitioner`, `TokenizerTrainerConfig`) ingest configuration and change behavior accordingly.
+  7. Full test suite and documentation quality gates pass with zero training execution.
 
 
 

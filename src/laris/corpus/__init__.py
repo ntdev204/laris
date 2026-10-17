@@ -50,8 +50,26 @@ from laris.corpus.storage import (
     load_processed_split,
     verify_processed_directory_layout,
 )
+from laris.corpus.task_splits import (
+    PartitionRatios,
+    QADatasetPartitioner,
+    QuestionPairGraphPartitioner,
+    WikipediaArticlePartitioner,
+    audit_dataset_inventory,
+    generate_leakage_safe_manifest,
+    validate_record_quality,
+    validate_split_isolation,
+)
 
 __all__ = [
+    "PartitionRatios",
+    "WikipediaArticlePartitioner",
+    "QuestionPairGraphPartitioner",
+    "QADatasetPartitioner",
+    "audit_dataset_inventory",
+    "generate_leakage_safe_manifest",
+    "validate_split_isolation",
+    "validate_record_quality",
     "DatasetSplit",
     "LicenseType",
     "PERMITTED_OPEN_ACCESS_LICENSES",

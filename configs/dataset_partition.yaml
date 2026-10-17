@@ -1,0 +1,12 @@
+# Dataset Partitioning, Leakage Prevention, and Coverage Configuration
+# Adheres to DOC-SPEC-TRAIN-001 and Issue #215
+
+config_version: "1.0.0"
+environment: "dataset-partitioning"
+
+data:
+  train_ratio: 0.80
+  val_ratio: 0.10
+  test_ratio: 0.10
+  partition_seed: "laris-partition-seed-v1"
+  character_coverage: 0.9995

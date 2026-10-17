@@ -36,7 +36,10 @@ dev = [
     "types-PyYAML>=6.0.12",
 ]
 gpu = [
-    "torch>=2.1.0",
+    "torch>=2.6.0",
+]
+tokenizer = [
+    "sentencepiece>=0.1.99",
 ]
 
 [tool.setuptools.packages.find]
