@@ -74,6 +74,7 @@ from laris.language.tokenizer import (
 )
 from laris.language.tokenizer_trainer import (
     VIETNAMESE_DIACRITIC_FIXTURES,
+    TokenizerReadinessState,
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
 )
@@ -82,6 +83,7 @@ __all__ = [
     "ModelReadinessState",
     "TransformerEncoderConfig",
     "RandomlyInitializedTransformerEncoder",
+    "TokenizerReadinessState",
     "TokenizerTrainerConfig",
     "TokenizerTrainingPipeline",
     "VIETNAMESE_DIACRITIC_FIXTURES",
