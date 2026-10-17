@@ -90,10 +90,13 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-004` | Natural Language Foundation Training Readiness Audit & Curriculum Specification | `MOD-LANG-004` | `DONE` | `M2-LANG-003` |
 | `M2-LANG-004-SUB-01` | Ubuntu environment verification and 17-dataset inventory reconciliation | `MOD-LANG-004` | `DONE` | `M2-LANG-004` |
 | `M2-LANG-004-SUB-02` | Staged curriculum, from-scratch Transformer spec and #19 artifact lifecycle | `MOD-LANG-004` | `DONE` | `M2-LANG-004-SUB-01` |
-| `M2-LANG-005` | Dataset Partitioning & Leakage-Safe Split Generation | `MOD-CORPUS-001` | `PROPOSED` | `M2-LANG-004` |
-| `M2-LANG-006` | From-Scratch Bilingual Tokenizer Training (SentencePiece BPE 32k) | `MOD-LANG-001` | `PROPOSED` | `M2-LANG-005` |
-| `M2-LANG-007` | PyTorch Foundation Architecture Implementation & Bounded Profiling | `MOD-LANG-002` | `PROPOSED` | `M2-LANG-006` |
-| `M2-LANG-008` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-007` |
+| `M2-LANG-005` | Resolve Training Readiness Blockers Before First Training Run | `MOD-LANG-005` | `DONE` | `M2-LANG-004` |
+| `M2-LANG-005-SUB-01` | Task-specific dataset partitioners & zero-leakage validation | `MOD-CORPUS-001` | `DONE` | `M2-LANG-005` |
+| `M2-LANG-005-SUB-02` | From-scratch bilingual tokenizer pipeline as code | `MOD-LANG-001` | `DONE` | `M2-LANG-005-SUB-01` |
+| `M2-LANG-005-SUB-03` | Real randomly initialized neural model & multi-task heads | `MOD-LANG-002` | `DONE` | `M2-LANG-005-SUB-02` |
+| `M2-LANG-005-SUB-04` | Bounded profiling, hardware telemetry & #215 config handoff | `MOD-LANG-005` | `DONE` | `M2-LANG-005-SUB-03` |
+| `M2-LANG-006` | Centralized Configuration System & Hardcoded-Parameter Audit | `MOD-CONFIG-001` | `PROPOSED` | `M2-LANG-005` |
+| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-006` |
 
 ---
 
@@ -346,6 +349,27 @@ This document serves as the single source of truth for active task tracking, exe
   5. Peak VRAM calculated at $4.42\text{ GB}$, comfortably inside RTX 5070 Ti 16 GB envelope (27.6% utilization, $\ge 11.5\text{ GB}$ headroom).
   6. 11 readiness gates evaluated with evidence-backed status; blocker resolution order established (`M2-LANG-005` through `M2-LANG-008`).
   7. Strict adherence to mandatory stop condition: **NO MODEL TRAINING WAS RUN.**
+
+---
+
+### Task `M2-LANG-005`: Resolve Training Readiness Blockers Before First Training Run
+- **Objective:** Resolve concrete training readiness blockers by implementing task-specific leakage-proof partitioning, from-scratch tokenizer pipeline as code, real randomly initialized neural Transformer architecture, bounded profiling, and configuration handoff for Issue #215 (closes Issue #217).
+- **Module:** `MOD-LANG-005` (Language Readiness Engineering).
+- **Dependencies:** `M2-LANG-004`.
+- **Subtasks:**
+  - `M2-LANG-005-SUB-01`: Deterministic task-specific partitioning (`WikipediaArticlePartitioner`, `QuestionPairGraphPartitioner`, `QADatasetPartitioner`) enforcing zero-leakage cross-split isolation.
+  - `M2-LANG-005-SUB-02`: Reproducible bilingual tokenizer training pipeline as code (`TokenizerTrainingPipeline`) with diacritic preservation and strict training execution ban.
+  - `M2-LANG-005-SUB-03`: Real randomly initialized 110M Transformer encoder (`RandomlyInitializedTransformerEncoder`) with RoPE, pre-RMSNorm, GELU FFN, tied MLM head, and multi-task capability heads.
+  - `M2-LANG-005-SUB-04`: Bounded forward profiling (`BoundedResourceProfiler`), hardware distinction (measured dev host vs NOT VERIFIED target server), and #215 parameter handoff catalog.
+- **Acceptance Criteria:**
+  1. Parameter count formula matches exact 109,561,856 parameters across spec, contracts, and code.
+  2. Task-specific partitioners guarantee zero cross-split item or question leakage across Wikipedia, Quora, and QA datasets non-destructively.
+  3. From-scratch tokenizer pipeline implemented as code and tested; `execute_training()` raises `TrainingExecutionProhibitedError`.
+  4. Real neural model path implemented and marked `ModelReadinessState.RANDOMLY_INITIALIZED`; `train_step()` raises `TrainingExecutionProhibitedError`.
+  5. Bounded profiling executes single forward pass without optimizer steps, verifying finite outputs and $< 14.5\text{ GB}$ safety governor.
+  6. Development host and target workstation are strictly distinguished; target telemetry is labeled `NOT VERIFIED` with executable inspection script provided.
+  7. Configuration handoff catalog (`TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG`) classifies tunable parameters vs immutable invariants for Issue #215.
+  8. Strict adherence to mandatory stop condition: **NO MODEL TRAINING OF ANY KIND WAS RUN.**
 
 ---
 

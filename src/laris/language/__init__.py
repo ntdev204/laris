@@ -10,9 +10,25 @@ from laris.language.bm25 import (
     BM25RetrievalBaseline,
     BM25SearchResult,
 )
+from laris.language.config_handoff import (
+    TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG,
+    ParameterClassification,
+    get_immutable_invariants,
+    get_tunable_parameters,
+)
 from laris.language.encoder import (
     BaseSentenceEncoder,
     CompactSentenceEncoder,
+)
+from laris.language.neural import (
+    ModelReadinessState,
+    RandomlyInitializedTransformerEncoder,
+    TransformerEncoderConfig,
+)
+from laris.language.profiling import (
+    BoundedProfilingResult,
+    BoundedResourceProfiler,
+    HardwareEnvironmentProfile,
 )
 from laris.language.retrieval_benchmark import (
     RETRIEVAL_BENCHMARK_VERSION,
@@ -56,8 +72,26 @@ from laris.language.tokenizer import (
     compute_token_fertility,
     evaluate_stem_fertility,
 )
+from laris.language.tokenizer_trainer import (
+    VIETNAMESE_DIACRITIC_FIXTURES,
+    TokenizerTrainerConfig,
+    TokenizerTrainingPipeline,
+)
 
 __all__ = [
+    "ModelReadinessState",
+    "TransformerEncoderConfig",
+    "RandomlyInitializedTransformerEncoder",
+    "TokenizerTrainerConfig",
+    "TokenizerTrainingPipeline",
+    "VIETNAMESE_DIACRITIC_FIXTURES",
+    "BoundedProfilingResult",
+    "BoundedResourceProfiler",
+    "HardwareEnvironmentProfile",
+    "ParameterClassification",
+    "TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG",
+    "get_tunable_parameters",
+    "get_immutable_invariants",
 
     "PAD_TOKEN",
     "UNK_TOKEN",
