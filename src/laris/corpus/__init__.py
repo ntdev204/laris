@@ -52,22 +52,32 @@ from laris.corpus.storage import (
 )
 from laris.corpus.task_splits import (
     PartitionRatios,
+    PhysicalSplitResult,
     QADatasetPartitioner,
     QuestionPairGraphPartitioner,
     WikipediaArticlePartitioner,
     audit_dataset_inventory,
+    execute_physical_partitioning,
     generate_leakage_safe_manifest,
+    partition_qa_dataset_physical,
+    partition_quora_dataset_physical,
+    partition_wikipedia_shards_physical,
     validate_record_quality,
     validate_split_isolation,
 )
 
 __all__ = [
     "PartitionRatios",
+    "PhysicalSplitResult",
     "WikipediaArticlePartitioner",
     "QuestionPairGraphPartitioner",
     "QADatasetPartitioner",
     "audit_dataset_inventory",
     "generate_leakage_safe_manifest",
+    "partition_wikipedia_shards_physical",
+    "partition_quora_dataset_physical",
+    "partition_qa_dataset_physical",
+    "execute_physical_partitioning",
     "validate_split_isolation",
     "validate_record_quality",
     "DatasetSplit",
