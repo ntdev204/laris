@@ -44,7 +44,6 @@ Welcome to the technical documentation repository for the **Local Agentic Resear
 - [MODEL_ROUTING.md](file:///home/thientn204/laris/docs/architecture/MODEL_ROUTING.md): Multi-tier model execution, dispatch policies, and early-exit mechanisms.
 - [SELECTIVE_COMPUTATION.md](file:///home/thientn204/laris/docs/architecture/SELECTIVE_COMPUTATION.md): Deep-dive into selective loading, selective computation, and selective information access.
 - [EVIDENCE_AND_PROVENANCE.md](file:///home/thientn204/laris/docs/architecture/EVIDENCE_AND_PROVENANCE.md): Seven-class epistemic taxonomy, coordinate anchoring, and anti-hallucination gates.
-- [REPOSITORY_AUDIT.md](file:///home/thientn204/laris/docs/architecture/REPOSITORY_AUDIT.md): Initial clean-slate audit of workspace environment and assumptions.
 
 ---
 

@@ -26,7 +26,7 @@ change_summary: "Comprehensive checklist of acceptance criteria for Milestone M0
 Milestone M0 is successfully achieved ONLY when all criteria below are satisfied and verified:
 
 ### 1.1. Discovery & Auditing
-- [x] Initial repository discovery completed and documented in [docs/architecture/REPOSITORY_AUDIT.md](file:///home/thientn204/laris/docs/architecture/REPOSITORY_AUDIT.md).
+- [x] Initial repository discovery completed and baseline established.
 - [x] Clean-slate status confirmed; zero conflicting third-party dependencies or legacy code.
 
 ### 1.2. Foundational Vision & Architectural Tenets
