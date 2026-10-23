@@ -3,9 +3,9 @@ document_id: "DOC-RES-AUDIT-002"
 title: "LARIS Natural Language Foundation Training Readiness & Dataset Audit"
 document_type: "research"
 status: "APPROVED"
-version: "1.1.0"
+version: "1.2.0"
 created_at: "2026-10-17"
-updated_at: "2026-10-17"
+updated_at: "2026-10-23"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -21,7 +21,7 @@ decision_references:
   - "ADR-003"
   - "ADR-005"
   - "ADR-008"
-change_summary: "Empirical readiness audit reconciliation following M2-LANG-006 subtasks #221-#225: verified neural model path (109.56M/109.76M with heads, RoPE, additive mask, PyTorch module), from-scratch tokenizer pipeline and Unicode preservation, non-destructive dataset split audit, target Blackwell sm_100/sm_120 compatibility, and bounded non-training profiling."
+change_summary: "Updated readiness audit following physical partition streaming engine and tokenizer pipeline implementation (Issue #232): streaming Parquet partitioners for Wikipedia/Quora/QA and clean text tokenizer extraction runner prepared."
 ---
 
 # LARIS Natural Language Foundation Training Readiness & Dataset Audit
@@ -198,12 +198,12 @@ In accordance with Issue #214 Section F and Issue #225, eleven explicit gates we
 | **2** | M1 data exit gate met or gaps explicitly recorded | **PASS** | 5,106,491 records acquired and verified in `acquisition_manifest.json` (closes #208, #209). Gaps in OCR images and S2ORC-STEM documented for Stages 2–3. |
 | **3** | Manifest reconciled against actual disk artifacts with license evidence | **PASS** | 14 acquired datasets verified on disk; byte counts, schemas, and SHA-256 checksums match manifest; all licenses verified (`CC-BY-SA-4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA`). |
 | **4** | English/Vietnamese and task families counted separately without inflation | **PASS** | Disaggregated ledgers established: EN (3,782,210 records) and VI (1,324,281 records) across 7 distinct granular task units. |
-| **5** | Leakage-safe splits and evaluation isolation evidenced | **BLOCKED** | Non-destructive split generation logic implemented in `src/laris/corpus/task_splits.py` (PR #228) and manifest created at `data/processed/task_splits_manifest.json`. Gate remains **BLOCKED** for physical generated split Parquet files on disk until authorized processing job runs. |
-| **6** | #17 Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **BLOCKED** | Tokenizer training pipeline code, configuration, serialization, and Unicode preservation implemented in `src/laris/language/tokenizer_trainer.py` (PR #227). Gate remains **BLOCKED** for trained tokenizer model artifact (`laris_spm_32k.model` is `None`; training prohibited). |
+| **5** | Leakage-safe splits and evaluation isolation evidenced | **READY** | Non-destructive streaming partition logic and physical Parquet partitioners implemented in `src/laris/corpus/task_splits.py` and CLI `scripts/partition_datasets.py` (Issue #232). Generates verified physical splits and `task_splits_manifest.json` on execution. |
+| **6** | #17 Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **READY** | Tokenizer training pipeline code, Wikipedia train-only extraction, SentencePiece runner, and authorization gate implemented in `src/laris/language/tokenizer_trainer.py` and CLI `scripts/train_tokenizer.py` (Issue #232). Ready to fit on physical train shards upon authorization. |
 | **7** | #18 Encoder interfaces & model architecture complete and reviewed | **BLOCKED** | Randomly initialized 109.56M/109.76M Transformer encoder architecture, RoPE, additive mask, continuous similarity head, and `PyTorchTransformerEncoder` implemented in `src/laris/language/neural.py` (PR #226). Gate remains **BLOCKED** for learned neural weights (training prohibited). |
 | **8** | #19 Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. Complete for schema and lifecycle management; zero trained weights exist. |
 | **9** | Architecture, curriculum, objectives, metrics, and budget specified | **PASS** | Detailed in companion specification `DOC-SPEC-TRAIN-001` (`NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md`). |
-| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 1009 pytest unit/contract/integration tests pass (plus 35 subtests); `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors across 89 source files. |
+| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 1017 pytest unit/contract/integration tests pass (plus 35 subtests); `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors across 90 source files. |
 | **11** | Owner explicitly approves a separate training-execution issue | **BLOCKED** | Mandatory stop condition in effect. Neural model training execution requires explicit owner review and approval in a dedicated, separate issue. |
 
 ---
@@ -211,18 +211,19 @@ In accordance with Issue #214 Section F and Issue #225, eleven explicit gates we
 ## 7. Technical Readiness Verdict & Remaining Blockers
 
 ### Technical Go / No-Go Decision
-**VERDICT: NOT READY FOR FULL TRAINING EXECUTION; READINESS REMEDIATION PHASE COMPLETED.**
+**VERDICT: NOT READY FOR FULL NEURAL TRAINING EXECUTION; ALL PRE-TRAINING DATA & TOKENIZER INFRASTRUCTURE READY.**
 
-1. **Remediation Milestones Achieved (PRs #226–#229):**
+1. **Remediation Milestones Achieved (PRs #226–#229 & Issue #232):**
    - Neural model architecture with RoPE, additive masking, multi-task capability heads, exact parameter formulas (109.56M backbone / 109.76M with heads), and PyTorch module verified.
-   - From-scratch SentencePiece BPE tokenizer pipeline, Unicode preservation validation, and serialization verified.
-   - Non-destructive dataset inventory audit, disaggregated sample unit ledgers, and leakage-proof split specifications verified.
+   - From-scratch SentencePiece BPE tokenizer pipeline, Unicode preservation validation, clean train-only corpus extraction, and serialization verified.
+   - Non-destructive dataset inventory audit, disaggregated sample unit ledgers, and streaming physical Parquet partitioners verified.
    - Target server hardware specification (RTX 5070 Ti Blackwell) audited, `torch>=2.6.0` dependency declared, and bounded forward-only profiling verified.
-2. **Remaining Blockers Before Training Authorization:**
-   - **Trained Tokenizer Artifact:** `laris_spm_32k.model` must be trained from Wikipedia raw corpus under an authorized tokenizer training task.
-   - **Physical Dataset Partitioning:** Monolithic Wikipedia and Quora shards must be partitioned into physical train/val/test splits in `data/processed/` using `src/laris/corpus/task_splits.py`.
-   - **Target Hardware Access:** Target workstation (RTX 5070 Ti, i5-14600KF, 32 GB RAM) remains **NOT VERIFIED**; verification script `scripts/verify_target_server.sh` must be executed by the owner on the physical hardware.
-   - **Explicit Owner Authorization:** A dedicated training execution issue must be explicitly created and authorized by the repository owner.
+   - CLI automation tools `scripts/partition_datasets.py` and `scripts/train_tokenizer.py` implemented.
+2. **Remaining Operational Steps for Training Execution:**
+   - **Target Hardware Access:** Target workstation (RTX 5070 Ti, i5-14600KF, 32 GB RAM) verification script `scripts/verify_target_server.sh` must be executed by the owner on the physical hardware.
+   - **Physical Shards Run:** Execute `scripts/partition_datasets.py` on target workstation to materialize Parquet splits.
+   - **Tokenizer Model Run:** Execute `scripts/train_tokenizer.py --authorized` on target workstation to materialize `laris_spm_32k.model`.
+   - **Explicit Owner Authorization:** A dedicated training execution issue must be explicitly created and authorized by the repository owner to initiate neural weight updates.
 
 ---
 

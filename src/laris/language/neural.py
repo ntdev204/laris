@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from laris.core.authorization import assert_training_authorized
 from laris.core.errors import (
     EmbeddingDimensionMismatchError,
     SequenceLengthExceededError,
@@ -478,6 +479,7 @@ class RandomlyInitializedTransformerEncoder:
 
     def train_step(self, *args: Any, **kwargs: Any) -> None:
         """Mandatory prohibition barrier preventing any model training or weight updates."""
+        assert_training_authorized("neural model backpropagation and weight updates")
         raise TrainingExecutionProhibitedError(
             "ABSOLUTE TRAINING PROHIBITION: The agent has no authority to execute training, "
             "perform backpropagation, or update model weights."
@@ -601,6 +603,7 @@ try:
 
         def train_step(self, *args: Any, **kwargs: Any) -> None:
             """Mandatory prohibition barrier preventing any model training or weight updates."""
+            assert_training_authorized("PyTorch neural model backpropagation and weight updates")
             raise TrainingExecutionProhibitedError(
                 "ABSOLUTE TRAINING PROHIBITION: The agent has no authority to execute training, "
                 "perform backpropagation, or update model weights."

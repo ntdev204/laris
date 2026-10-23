@@ -1,5 +1,12 @@
 """Core primitives, schemas, and error hierarchies for LARIS."""
 
+from laris.core.authorization import (
+    assert_tokenizer_training_authorized,
+    assert_training_authorized,
+    is_tokenizer_training_authorized,
+    is_training_authorized,
+    temporary_training_authorization,
+)
 from laris.core.errors import (
     CyclicExecutionError,
     DataIntegrityError,
@@ -19,6 +26,7 @@ from laris.core.errors import (
     ProbabilityValidationError,
     ProvenanceViolationError,
     SequenceLengthExceededError,
+    TrainingExecutionProhibitedError,
     UncertaintyCeilingExceededError,
     UnitConversionError,
     VocabularyMismatchError,
@@ -64,5 +72,11 @@ __all__ = [
     "ExtractionConfidenceBelowThresholdError",
     "MalformedDiscourseSpanError",
     "UnitConversionError",
+    "TrainingExecutionProhibitedError",
+    "is_training_authorized",
+    "is_tokenizer_training_authorized",
+    "assert_training_authorized",
+    "assert_tokenizer_training_authorized",
+    "temporary_training_authorization",
 ]
 

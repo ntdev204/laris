@@ -77,6 +77,7 @@ from laris.language.tokenizer_trainer import (
     TokenizerReadinessState,
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
+    extract_clean_wikipedia_corpus,
 )
 
 __all__ = [
@@ -86,6 +87,7 @@ __all__ = [
     "TokenizerReadinessState",
     "TokenizerTrainerConfig",
     "TokenizerTrainingPipeline",
+    "extract_clean_wikipedia_corpus",
     "VIETNAMESE_DIACRITIC_FIXTURES",
     "BoundedProfilingResult",
     "BoundedResourceProfiler",
