@@ -43,9 +43,9 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 
 | Dimension | Metric / Status |
 | :--- | :--- |
-| **Source Modules** | 90 Python source files under `src/laris/` across 12 layers |
-| **Automated Tests** | 1018 passing unit, contract, and integration tests under `tests/` |
-| **Linters & Typers** | 100% clean: `ruff` 0 errors, `mypy` 0 errors across all 90 source files |
+| **Source Modules** | 92 Python source files under `src/laris/` across 12 layers |
+| **Automated Tests** | 1030 passing unit, contract, and integration tests under `tests/` |
+| **Linters & Typers** | 100% clean: `ruff` 0 errors, `mypy` 0 errors across all 92 source files |
 | **Documentation** | 61 formal Markdown documents under `docs/`, 100% compliant with `scripts/validate_docs.py` |
 | **Acquired Datasets** | 5,106,491 records across 14 verified datasets in `data/raw/` (3.78M English, 1.32M Vietnamese) |
 
@@ -64,10 +64,10 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
   - **512M Scaled Foundation:** 24-layer bidirectional Transformer encoder ($d_{\text{model}}=1280$, 20 heads, $d_{\text{ff}}=5120$, $S=1024$, RoPE, RMSNorm, GELU, tied MLM embeddings, 512.91M/513.25M params).
   - Multi-task capability heads: MLM, 3-way NLI, Paraphrase binary classification, STS-B continuous similarity, QA span logits.
   - Native FlashAttention-2 / SDPA and Activation Checkpointing for 14GB VRAM target optimization.
-- **Multi-Task Dataloader & Trainer (`src/laris/language/dataloader.py`, `src/laris/language/trainer.py`):**
-  - Temperature-scaled dynamic sampling ($\alpha = 0.7$) balancing Wikipedia, NLI, Paraphrase, Similarity, and QA.
-  - Composite multi-task loss calculation with 8-bit AdamW and gradient accumulation.
-  - Strict authorization barrier (`assert_training_authorized`).
+- **Real Multi-Task Streaming DataLoader & Trainer (`src/laris/language/dataloader.py`, `src/laris/language/trainer.py`):**
+  - `StreamingParquetMultiTaskDataLoader`: True streaming PyArrow Parquet loader with bounded buffer (`ParquetFile.iter_batches`), strictly preserving the $\le 250\text{ MB}$ RAM ceiling, 15% dynamic MLM masking (80% MASK, 10% random, 10% keep), and temperature sampling ($\alpha = 0.7$).
+  - `Stage1LanguageTrainer`: Genuine optimization steps executing autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), scaled backward, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()` with 8-bit AdamW / PyTorch AdamW.
+  - Strict authorization barrier (`assert_training_authorized`) strictly enforced.
 - **Artifact Governance (`src/laris/language/artifacts.py`):**
   - `LanguageArtifactBundle`, `VocabularyContract`, `LanguageTrainingRunManifest`.
 

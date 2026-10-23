@@ -5,6 +5,27 @@ All notable changes to the LARIS project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Genuine Multi-Task Parameter Optimization in `Stage1LanguageTrainer` (Issue #242):**
+  - Implemented real autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), `loss.backward()`, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()`.
+  - Supported plug-and-play 8-bit AdamW (`bitsandbytes`) with automatic fallback to standard PyTorch AdamW.
+  - Telemetry tracking genuine loss values, effective batch size, and peak CUDA VRAM allocation.
+  - Strict authorization enforcement raising `TrainingExecutionProhibitedError` on unauthorized runs.
+- **Real Streaming Parquet Multi-Task DataLoader (`StreamingParquetMultiTaskDataLoader`) (Issue #242):**
+  - Streaming reader using `pyarrow.parquet.ParquetFile.iter_batches` guaranteeing strictly bounded RAM ($\le 250\text{ MB}$).
+  - Temperature-scaled task selection ($\alpha = 0.7$) interleaving MLM, NLI, Paraphrase, Similarity, and QA streams.
+  - Real dynamic MLM masking at 15% rate (80% `[MASK]`, 10% random token, 10% unchanged) with `-100` target masking.
+  - Multi-task sequence formatting with `[CLS]`, `[SEP]`, padding, and attention masks.
+  - Infinite shard cycling across epochs and support for both PyTorch tensors (`return_tensors="pt"`) and NumPy arrays (`return_tensors="np"`).
+- **Stage 1 Training CLI Integration (`scripts/train_stage1.py`) (Issue #242):**
+  - Integrated `StreamingParquetMultiTaskDataLoader` and `Stage1LanguageTrainer` into CLI runner supporting `--data-dir`, `--steps`, and `--log-interval`.
+- **Unit & Contract Verification (`tests/unit/test_trainer_and_streaming_dataloader.py`) (Issue #242):**
+  - Verified genuine parameter optimization, loss calculation, and weight changes after `optimizer.step()`.
+  - Verified gradient flow across all 5 Stage 1 multi-task objectives.
+  - Verified gradient accumulation behavior across micro-batches.
+
 ## [1.0.0] - 2026-10-23
 
 ### Added

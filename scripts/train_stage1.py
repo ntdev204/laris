@@ -21,8 +21,13 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from laris.core.authorization import (
     assert_training_authorized,
 )
-from laris.language.dataloader import SyntheticMultiTaskDataLoader
+from laris.language.dataloader import (
+    StreamingParquetMultiTaskDataLoader,
+    SyntheticMultiTaskDataLoader,
+)
 from laris.language.neural import (
+    TORCH_AVAILABLE,
+    PyTorchTransformerEncoder,
     TransformerEncoder500MConfig,
     TransformerEncoderConfig,
 )
@@ -30,6 +35,7 @@ from laris.language.profiling import (
     compute_analytical_training_memory_gb,
 )
 from laris.language.trainer import (
+    Stage1LanguageTrainer,
     Stage1LossCalculator,
 )
 
@@ -84,6 +90,24 @@ def parse_args() -> argparse.Namespace:
         "--authorized",
         action="store_true",
         help="Assert explicit operator authorization to run training steps",
+    )
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default="data/processed",
+        help="Directory containing processed Parquet datasets (default: data/processed)",
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=1000,
+        help="Total training optimization steps to execute (default: 1000)",
+    )
+    parser.add_argument(
+        "--log-interval",
+        type=int,
+        default=10,
+        help="Step logging interval (default: 10)",
     )
     parser.add_argument(
         "--output-dir",
@@ -172,7 +196,54 @@ def main() -> int:
 
     assert_training_authorized("Stage 1 neural model pretraining")
     print("\n[TRAINING AUTHORIZED] Initializing Stage 1 training engine...")
-    # Training execution loop executes on target server
+
+    # Initialize Streaming Parquet DataLoader
+    loader = StreamingParquetMultiTaskDataLoader(
+        data_dir=args.data_dir,
+        vocab_size=config.vocab_size,
+        seq_len=args.max_seq_len,
+        batch_size=args.micro_batch_size,
+        return_tensors="pt" if TORCH_AVAILABLE else "np",
+    )
+
+    # Initialize Model
+    if TORCH_AVAILABLE:
+        import torch
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Target Compute Device:     {device.upper()}")
+        model = PyTorchTransformerEncoder(config).to(device)
+    else:
+        from laris.language.neural import RandomlyInitializedTransformerEncoder
+
+        device = "cpu"
+        print("Target Compute Device:     CPU (NumPy Reference Model)")
+        model = RandomlyInitializedTransformerEncoder(config)
+
+    trainer = Stage1LanguageTrainer(
+        model=model,
+        config=config,
+        dataloader=loader,
+        use_8bit_adam=use_8bit_adam,
+        grad_accum_steps=args.grad_accum_steps,
+        device=device,
+    )
+
+    print(f"Starting Stage 1 training loop for {args.steps} steps...")
+    for step_idx in range(1, args.steps + 1):
+        batch = loader.generate_batch()
+        metrics = trainer.execute_training_step(batch)
+        if step_idx % args.log_interval == 0 or step_idx == 1:
+            vram_str = f"{metrics.peak_vram_gb:.2f} GB" if metrics.peak_vram_gb else "N/A"
+            print(
+                f"[Step {metrics.step:05d}/{args.steps}] "
+                f"Task: {metrics.task_type:<10} | "
+                f"Loss: {metrics.loss_value:.4f} | "
+                f"EffBatch: {metrics.effective_batch_size} | "
+                f"Peak VRAM: {vram_str}"
+            )
+
+    print(f"\n[SUCCESS] Completed {args.steps} training steps successfully.")
     return 0
 
 
