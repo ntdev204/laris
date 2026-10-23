@@ -22,7 +22,11 @@ from laris.core.authorization import (
     is_training_authorized,
     temporary_training_authorization,
 )
-from laris.core.errors import DataLeakageError, TrainingExecutionProhibitedError
+from laris.core.errors import (
+    DataLeakageError,
+    ModuleContractViolationError,
+    TrainingExecutionProhibitedError,
+)
 from laris.language.tokenizer_trainer import (
     TokenizerReadinessState,
     TokenizerTrainerConfig,
@@ -124,6 +128,15 @@ class TestTokenizerExtractionAndRunner(unittest.TestCase):
         # Unauthorized attempt raises error
         with self.assertRaises(TrainingExecutionProhibitedError):
             pipeline.execute_training(force_authorized=False)
+
+        import importlib.util
+
+        has_spm = importlib.util.find_spec("sentencepiece") is not None
+
+        if not has_spm:
+            with self.assertRaises(ModuleContractViolationError):
+                pipeline.execute_training(force_authorized=True)
+            return
 
         # Authorized run creates model and contract
         model_file = pipeline.execute_training(force_authorized=True, model_prefix="test_spm")
