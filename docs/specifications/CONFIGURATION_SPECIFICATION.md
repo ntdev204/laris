@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/research/CONFIG_AUDIT_REPORT.md"
   - "docs/specifications/NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
   - "docs/plans/BACKLOG.md"
 decision_references:

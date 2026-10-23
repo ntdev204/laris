@@ -13,7 +13,7 @@ related_documents:
   - "docs/plans/IMPLEMENTATION_ROADMAP.md"
   - "docs/plans/BACKLOG.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
-  - "docs/research/MODEL_TRAINING_AUDIT.md"
+  - "docs/specifications/NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
   - "ADR-001"
