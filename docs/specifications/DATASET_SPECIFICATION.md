@@ -11,7 +11,7 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/plans/STAGED_LEARNING_PIPELINE.md"
-  - "docs/research/MODEL_TRAINING_AUDIT.md"
+  - "docs/specifications/NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
   - "docs/research/S2ORC_SUBSET_SELECTION.md"
   - "docs/specifications/LARIS_GOLD_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"

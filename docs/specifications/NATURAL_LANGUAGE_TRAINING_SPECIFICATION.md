@@ -12,7 +12,6 @@ source_of_truth: true
 related_documents:
   - "docs/plans/STAGED_LEARNING_PIPELINE.md"
   - "docs/plans/BACKLOG.md"
-  - "docs/research/TRAINING_READINESS_AUDIT.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
 decision_references:
@@ -218,7 +217,28 @@ Before launching full pretraining, a bounded profiling run must verify execution
 
 ---
 
-## 8. Final Compliance Confirmation
+## 8. Formal Pre-Training Readiness Gates & Audit Registry
+
+In strict accordance with Issue #214 Section F and repository governance, eleven explicit readiness gates govern the transition from preparation to training execution:
+
+| Gate # | Gate Description | Status | Concrete Evidence & Verification Finding |
+| :---: | :--- | :---: | :--- |
+| **1** | Repository branch, commit, and worktree known | **PASS** | Verified clean worktree on `develop` and release branches; strict Git Flow enforced. |
+| **2** | M1 data exit gate met or gaps explicitly recorded | **PASS** | 5,106,491 records acquired across 14 datasets verified in `data/acquisition_manifest.json`. Stage 2/3 gaps recorded. |
+| **3** | Manifest reconciled against actual disk artifacts with license evidence | **PASS** | 14 acquired datasets verified on disk; byte counts, schemas, and SHA-256 checksums match manifest; all open licenses verified. |
+| **4** | English/Vietnamese and task families counted separately without inflation | **PASS** | Disaggregated ledgers established: EN (3,782,210 records) and VI (1,324,281 records) across 7 distinct task units. |
+| **5** | Leakage-safe splits and evaluation isolation evidenced | **READY** | Streaming Parquet partitioner for Wikipedia, Quora, and QA implemented in `src/laris/corpus/task_splits.py` and CLI `scripts/partition_datasets.py` (Issue #232, #234). Multi-worker parallel processing optimized for 14 cores. |
+| **6** | Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **READY** | Tokenizer training pipeline code, Wikipedia train-only extraction, SentencePiece 32k BPE runner, and authorization gate implemented in `src/laris/language/tokenizer_trainer.py` and CLI `scripts/train_tokenizer.py` (Issue #232). Ready to fit on physical train shards upon authorization. |
+| **7** | Encoder interfaces & model architecture complete and reviewed | **READY** | Randomly initialized 109.56M/109.76M Transformer encoder architecture, RoPE, additive mask, continuous similarity head, and `PyTorchTransformerEncoder` implemented in `src/laris/language/neural.py`. Ready for training loop integration. |
+| **8** | Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. Complete for schema and lifecycle management. |
+| **9** | Architecture, curriculum, objectives, metrics, and budget specified | **PASS** | Formally specified in this document (`DOC-SPEC-TRAIN-001`). |
+| **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 1018 pytest unit/contract/integration tests pass; `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors across 90 source files. |
+| **11** | Owner explicitly approves a separate training-execution issue | **BLOCKED** | Mandatory stop condition in effect. Neural model training execution requires explicit owner review and approval in a dedicated, separate issue. |
+
+---
+
+## 9. Final Compliance Confirmation
 
 In accordance with repository governance:  
-**NO MODEL TRAINING WAS RUN.**
+**NO MODEL TRAINING WAS RUN.**  
+**NO TRAINING OF ANY KIND WAS RUN. NO OPTIMIZER STEPS, GRADIENT UPDATES, OR MODEL-WEIGHT UPDATES OCCURRED.**

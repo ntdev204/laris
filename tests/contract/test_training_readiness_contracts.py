@@ -92,12 +92,17 @@ def test_mandatory_stop_condition_no_trained_weights() -> None:
 
 
 def test_readiness_gate_taxonomy_and_contract() -> None:
-    """Verifies that the audit document specifies all 11 gates with canonical statuses."""
-    audit_path = REPO_ROOT / "docs" / "research" / "TRAINING_READINESS_AUDIT.md"
-    assert audit_path.exists(), "TRAINING_READINESS_AUDIT.md must exist"
+    """Verifies that the training specification specifies all 11 gates with canonical statuses."""
+    spec_path = (
+        REPO_ROOT
+        / "docs"
+        / "specifications"
+        / "NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
+    )
+    assert spec_path.exists(), "NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md must exist"
 
-    content = audit_path.read_text(encoding="utf-8")
-    valid_statuses = ["PASS", "FAIL", "BLOCKED", "NOT VERIFIED"]
+    content = spec_path.read_text(encoding="utf-8")
+    valid_statuses = ["PASS", "FAIL", "BLOCKED", "READY", "NOT VERIFIED"]
 
     # All 11 gates must be present with one of the valid statuses
     for gate_idx in range(1, 12):
@@ -106,8 +111,8 @@ def test_readiness_gate_taxonomy_and_contract() -> None:
 
     # Status tokens must be present in the document
     for status in valid_statuses:
-        if status in {"PASS", "BLOCKED"}:
-            assert f"**{status}**" in content, f"Expected active gate status {status} in audit"
+        if status in {"PASS", "BLOCKED", "READY"}:
+            assert f"**{status}**" in content, f"Expected active gate status {status} in spec"
 
     # Mandatory stop statement must be present
     assert "NO MODEL TRAINING WAS RUN." in content

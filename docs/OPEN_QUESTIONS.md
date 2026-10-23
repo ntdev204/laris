@@ -25,28 +25,16 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 ## Active Open Questions Registry
 
 ### OQ-001: Neural Architecture for Layer 1 Sentence Encoder
-- **Status:** OPEN / RESEARCH
-- **Context:** Layer 1 requires a 50M–125M parameter encoder. Options include a standard bidirectional transformer encoder with RoPE embeddings, an ALiBi-based encoder for extended context, or an optimized ModernBERT-style architecture (unpadded FlashAttention).
-- **Candidate Options:**
-  1. *Option A:* Custom 6-layer RoPE Transformer with FlashAttention-2.
-  2. *Option B:* ALiBi-based encoder for linear length extrapolation.
-- **Evaluation Criteria:** Paraphrase retrieval MRR vs. VRAM footprint and training throughput on RTX 5070 Ti.
+- **Status:** DECIDED / RESOLVED (ADR-002, DOC-SPEC-TRAIN-001)
+- **Resolution:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE positional encoding, RMSNorm pre-norm, GELU, tied MLM embeddings, 109.56M backbone params, 109.76M with multi-task heads). Implemented in `src/laris/language/neural.py`.
 
 ### OQ-002: Graph Storage Engine for Layer 5 Evidence Graph
-- **Status:** OPEN / PROPOSED
-- **Context:** Layer 5 requires a lightweight, embedded graph store capable of handling $\sim 100\text{k} - 1\text{M}$ nodes and typed edges on local disk without requiring an external database server daemon.
-- **Candidate Options:**
-  1. *Option A:* Embedded KùzuDB (graph-native, zero server, optimized for Cypher and disk-backed property graphs).
-  2. *Option B:* Relational SQLite / DuckDB with graph adjacency tables.
-- **Evaluation Criteria:** Path traversal query latency, disk footprint, and Python binding stability.
+- **Status:** DECIDED / RESOLVED (ADR-009)
+- **Resolution:** Embedded SQLite with indexed node/edge schema (`src/laris/graph/evidence_graph.py`). Provides deterministic relational transactions, zero daemon overhead, and complete graph integrity.
 
 ### OQ-003: Vector Indexing Backend for Layer 6 Hybrid Retrieval
-- **Status:** OPEN / PROPOSED
-- **Context:** Dense retrieval requires sub-50ms approximate nearest neighbor search over $\sim 500\text{k}$ sentence vectors in host RAM.
-- **Candidate Options:**
-  1. *Option A:* `hnswlib` (compact, C++ core, minimal memory overhead).
-  2. *Option B:* `faiss-cpu` / `faiss-gpu` (feature-rich, higher dependency footprint).
-- **Evaluation Criteria:** Memory consumption in host RAM, build index time, recall@10.
+- **Status:** DECIDED / RESOLVED (ADR-010)
+- **Resolution:** Reciprocal Rank Fusion (RRF) combining lexical BM25 and dense cosine projections with numpy vectorization (`src/laris/retrieval/hybrid.py`). Multi-channel fusion operates within host RAM budget.
 
 ### OQ-004: Ingestion Strategy for Multi-Modal Tables & Figures in Layer 4
 - **Status:** OPEN / RESEARCH
@@ -54,9 +42,5 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 - **Evaluation Criteria:** Coordinate precision, parsing speed, and absence of external heavy models.
 
 ### OQ-005: Corpus Ingestion Sourcing for Milestone M1
-- **Status:** OPEN / PENDING APPROVAL
-- **Context:** Need to select initial public open-access subsets for Layer 0 corpus foundation.
-- **Candidate Sources:**
-  - arXiv Open Access subset (cs.AI, cs.RO, eess.SP).
-  - PubMed Central Open Access subset (selected STEM & biomedical domains).
-- **Decision Required:** Formal stakeholder approval of corpus scope and licensing terms.
+- **Status:** DECIDED / RESOLVED (DOC-SPEC-DATA-001, Issue #205)
+- **Resolution:** Acquired 14 verified open-access datasets (5,106,491 records) across Wikipedia EN/VI, Universal Dependencies, All-NLI, ANLI, Quora, PAWS, STS-B, SQuAD, ViQuAD, SciFact, PubLayNet.
