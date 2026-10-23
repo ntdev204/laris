@@ -108,6 +108,45 @@ class TestPhysicalPartitioning(unittest.TestCase):
         # Raw file must remain completely untouched
         self.assertTrue(raw_shard.is_file())
 
+    def test_partition_wikipedia_shards_physical_multi_worker(self) -> None:
+        """Multi-worker parallel partitioner must process multiple shards and consolidate."""
+        raw_shards = [
+            self.root / "raw_wiki_multi" / "shard1.parquet",
+            self.root / "raw_wiki_multi" / "shard2.parquet",
+            self.root / "raw_wiki_multi" / "shard3.parquet",
+        ]
+        for idx, shard in enumerate(raw_shards):
+            self._create_dummy_wikipedia_shard(shard, num_articles=50)
+
+        out_dir = self.root / "processed_wiki_multi"
+        part = WikipediaArticlePartitioner(
+            ratios=PartitionRatios(train=0.80, val=0.10, test=0.10),
+            seed="multi-worker-seed-v1",
+        )
+
+        res = partition_wikipedia_shards_physical(
+            shard_paths=raw_shards,
+            output_dir=out_dir,
+            dataset_id="TEST-WIKI-MULTI",
+            partitioner=part,
+            batch_size=20,
+            num_workers=2,
+        )
+
+        self.assertEqual(res.dataset_id, "TEST-WIKI-MULTI")
+        self.assertTrue(res.leakage_verified)
+        self.assertTrue((out_dir / "train.parquet").is_file())
+        self.assertTrue((out_dir / "val.parquet").is_file())
+        self.assertTrue((out_dir / "test.parquet").is_file())
+
+        total = sum(res.counts.values())
+        self.assertEqual(total, 150)
+        self.assertGreater(res.counts["train"], 0)
+
+        # Confirm all temporary worker parts were properly cleaned up
+        temp_parts = list(out_dir.glob("_part_*"))
+        self.assertEqual(len(temp_parts), 0)
+
     def test_partition_quora_dataset_physical(self) -> None:
         """Quora partitioner must build DSU graph and write physical splits."""
         raw_file = self.root / "raw_quora" / "train.parquet"

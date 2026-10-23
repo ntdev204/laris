@@ -3,7 +3,7 @@ document_id: "DOC-PLAN-BACKLOG-001"
 title: "LARIS Engineering Task Backlog & Execution Registry"
 document_type: "plan"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.2.1"
 created_at: "2026-10-15"
 updated_at: "2026-10-23"
 owner: "LARIS Architecture Team"
@@ -16,7 +16,7 @@ related_documents:
 decision_references:
   - "ADR-007"
   - "ADR-008"
-change_summary: "Registered M2-LANG-007-PREP (Physical Dataset Partitioning and Tokenizer Training Readiness) as DONE."
+change_summary: "Registered M2-PERF-001 (Optimize Physical Dataset Partitioning for Server Hardware) as DONE."
 ---
 
 # LARIS Engineering Task Backlog & Execution Registry
@@ -97,7 +97,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-005-SUB-04` | Bounded profiling, hardware telemetry & #215 config handoff | `MOD-LANG-005` | `DONE` | `M2-LANG-005-SUB-03` |
 | `M2-LANG-006` | Centralized Configuration System & Hardcoded-Parameter Audit | `MOD-CONFIG-001` | `DONE` | `M2-LANG-005` |
 | `M2-LANG-007-PREP` | Physical Dataset Partitioning and Tokenizer Training Readiness | `MOD-LANG-004` | `DONE` | `M2-LANG-006` |
-| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-007-PREP` |
+| `M2-PERF-001` | Optimize Physical Dataset Partitioning for Server Hardware | `MOD-CORPUS-001` | `DONE` | `M2-LANG-007-PREP` |
+| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-PERF-001` |
 
 ---
 
@@ -861,6 +862,22 @@ This document serves as the single source of truth for active task tracking, exe
   4. SentencePiece tokenizer fitting runner integrates governance authorization gate (`assert_tokenizer_training_authorized`).
   5. CLI utilities `scripts/partition_datasets.py` and `scripts/train_tokenizer.py` implemented.
   6. Zero neural model training run on development host.
+
+---
+
+### Task `M2-PERF-001`: Optimize Physical Dataset Partitioning for Server Hardware
+- **Objective:** Optimize physical dataset partitioning for multi-core high-RAM target server (Intel Core i5-14600KF 14 cores / 20 threads, 32GB RAM DDR5, NVMe SSD).
+- **Module:** `MOD-CORPUS-001` (Corpus Ingestion & Data Governance).
+- **Dependencies:** `M2-LANG-007-PREP` (Issue #232).
+- **Status:** `DONE` (Issue #234).
+- **Acceptance Criteria:**
+  1. Multi-worker parallel processing across shards via `ProcessPoolExecutor` when `num_workers > 1`.
+  2. Default streaming batch size raised to 100,000 for maximized PyArrow vectorized throughput.
+  3. Single-worker fallback preserved when `num_workers=1` for backward compatibility.
+  4. Intermediate worker part files cleanly consolidated and deleted automatically.
+  5. CLI `scripts/partition_datasets.py` accepts `--batch-size` and `--num-workers`.
+  6. Full test suite and documentation quality gates pass with zero neural training.
+
 
 
 

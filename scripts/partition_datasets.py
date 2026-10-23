@@ -46,16 +46,30 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional ceiling on processed records per dataset (for smoke tests / debugging)",
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=100000,
+        help="Streaming PyArrow batch size (default: 100,000 optimized for 32GB RAM)",
+    )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=None,
+        help="Number of parallel worker processes (default: CPU cores count, up to 14/20)",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     print("=" * 60)
-    print("LARIS PHYSICAL DATASET PARTITIONING ENGINE")
+    print("LARIS PHYSICAL DATASET PARTITIONING ENGINE (SERVER OPTIMIZED)")
     print(f"Raw Source Directory:       {args.raw_dir}")
     print(f"Processed Output Directory: {args.output_dir}")
     print(f"Selected Datasets:          {args.datasets or 'ALL'}")
+    print(f"Streaming Batch Size:       {args.batch_size}")
+    print(f"Parallel Worker Limit:      {args.num_workers or 'AUTO (ALL AVAILABLE CORES)'}")
     if args.max_records:
         print(f"Record Bounded Limit:       {args.max_records}")
     print("=" * 60)
@@ -67,6 +81,8 @@ def main() -> int:
             manifest_output_path=args.manifest_path,
             datasets=args.datasets,
             max_records=args.max_records,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
         )
         print("\n[SUCCESS] Physical partitioning completed successfully.")
         print(f"Total Datasets Partitioned: {report['total_datasets_partitioned']}")
