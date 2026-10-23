@@ -17,6 +17,7 @@ from laris.language.config_handoff import (
     get_tunable_parameters,
 )
 from laris.language.dataloader import (
+    StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
     TaskBatch,
     TemperatureSamplingScheduler,
@@ -100,6 +101,7 @@ __all__ = [
     "TransformerEncoder500MConfig",
     "RandomlyInitializedTransformerEncoder",
     "SyntheticMultiTaskDataLoader",
+    "StreamingParquetMultiTaskDataLoader",
     "TaskBatch",
     "TemperatureSamplingScheduler",
     "create_multi_task_sampler",
