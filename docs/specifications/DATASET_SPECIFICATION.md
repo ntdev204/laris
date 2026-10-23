@@ -62,6 +62,13 @@ In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self
 | **S2ORC-STEM** | Semantic Scholar Open Research Corpus (STEM Subset) | [Semantic Scholar API](https://api.semanticscholar.org/datasets/v1/release/latest/dataset/s2orc) | `ODC-BY-1.0` | Open Data Commons with attribution | Stage 2 & 4: STEM Pretraining & Structure | `SKIPPED_TEMPORARILY` |
 | **NATURAL-QUESTIONS** | Google Natural Questions (NQ) | [Google Research NQ](https://ai.google.com/research/NaturalQuestions) | `CC-BY-4.0` | Open redistribution with attribution | Stage 1: General Reading Comprehension | `PROPOSED` |
 | **LARIS-GOLD** | LARIS Epistemic Scientific Research Benchmark | Internal Repository Project Spec | `CC-BY-4.0` | Open project benchmark | Stage 5 & 6: End-to-End Epistemic Evaluation | `PROPOSED` |
+| **VINLI** | Vietnamese Natural Language Inference (ViNLI) | [VNLP ViNLI](https://github.com/vnlp/vinli) | `CC-BY-NC-4.0` | Academic non-commercial research | Stage 1: Vietnamese 3-Way NLI & Reasoning | `PROPOSED` |
+| **VISTS** | Vietnamese Semantic Textual Similarity (ViSTS) | [VNLP ViSTS](https://github.com/vnlp/vists) | `CC-BY-4.0` | Open redistribution with attribution | Stage 1: Vietnamese Continuous Similarity | `PROPOSED` |
+| **VI-PAWS** | Vietnamese Paraphrase Adversaries (Vi-PAWS) | [Google Research PAWS](https://github.com/google-research-datasets/paws) | `CC-BY-4.0` | Open redistribution with attribution | Stage 1: Vietnamese Adversarial Paraphrase | `PROPOSED` |
+| **CC100-VI-CLEAN** | Cleaned CC-100 Vietnamese Web Corpus | [CC-100](https://data.statmt.org/cc-100/) | `CC-BY-SA-4.0` | Open redistribution with ShareAlike | Stage 1: Clean General Vietnamese Documents | `PROPOSED` |
+| **HOTPOTQA** | HotpotQA Multi-Hop Reading Comprehension | [HotpotQA](https://hotpotqa.github.io/) | `CC-BY-SA-4.0` | Open redistribution with attribution | Stage 1 & 2: Multi-Hop Evidence Reasoning | `PROPOSED` |
+| **FEVER** | Fact Extraction and VERification (FEVER) | [FEVER Project](https://fever.ai/) | `MIT` | Permissive open research | Stage 1 & 2: Fact-Checking & Claim Verification | `PROPOSED` |
+| **UIT-VIQUAD-V2** | UIT-ViQuAD v2.0 (Unanswerable QA) | [UIT-ViQuAD](https://github.com/TrungDS10/UIT-ViQuAD) | `CC-BY-NC-4.0` | Academic non-commercial research | Stage 1: Vietnamese Unanswerable QA | `PROPOSED` |
 
 ---
 

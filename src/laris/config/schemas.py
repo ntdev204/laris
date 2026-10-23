@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from laris.core.errors import HardwareBudgetExceededError
 
-ALLOWED_EMBEDDING_DIMENSIONS: Set[int] = {384, 768}
+ALLOWED_EMBEDDING_DIMENSIONS: Set[int] = {384, 768, 1024, 1280}
 
 
 class ModelConfig(BaseModel):

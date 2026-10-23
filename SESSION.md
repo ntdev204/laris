@@ -60,9 +60,14 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
   - Train-only Wikipedia text extraction strictly rejecting validation/test splits (`DataLeakageError`).
   - SentencePiece 32k BPE training runner gated by `assert_tokenizer_training_authorized()`.
 - **Neural Model Architecture (`src/laris/language/neural.py`):**
-  - 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE, RMSNorm, GELU, tied MLM embeddings).
-  - Exact parameter formula: 109,561,856 backbone params + 200,711 head params = 109,762,567 total.
+  - **110M Baseline:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE, RMSNorm, GELU, tied MLM embeddings, 109.56M/109.76M params).
+  - **512M Scaled Foundation:** 24-layer bidirectional Transformer encoder ($d_{\text{model}}=1280$, 20 heads, $d_{\text{ff}}=5120$, $S=1024$, RoPE, RMSNorm, GELU, tied MLM embeddings, 512.91M/513.25M params).
   - Multi-task capability heads: MLM, 3-way NLI, Paraphrase binary classification, STS-B continuous similarity, QA span logits.
+  - Native FlashAttention-2 / SDPA and Activation Checkpointing for 14GB VRAM target optimization.
+- **Multi-Task Dataloader & Trainer (`src/laris/language/dataloader.py`, `src/laris/language/trainer.py`):**
+  - Temperature-scaled dynamic sampling ($\alpha = 0.7$) balancing Wikipedia, NLI, Paraphrase, Similarity, and QA.
+  - Composite multi-task loss calculation with 8-bit AdamW and gradient accumulation.
+  - Strict authorization barrier (`assert_training_authorized`).
 - **Artifact Governance (`src/laris/language/artifacts.py`):**
   - `LanguageArtifactBundle`, `VocabularyContract`, `LanguageTrainingRunManifest`.
 
@@ -80,7 +85,14 @@ python3 scripts/partition_datasets.py --num-workers 14 --batch-size 100000
 # 3. Fit 32k SentencePiece Tokenizer from Clean Train Split (Run on Server)
 python3 scripts/train_tokenizer.py --authorized
 
-# 4. Run Documentation Quality Gate (Local / CI)
+# 4. Profile 500M Model VRAM Feasibility (Zero Training, Local or Server)
+python3 scripts/train_stage1.py --model-tier 500m --profile-only
+
+# 5. Execute Stage 1 Training on Target Server (Requires Authorization)
+export LARIS_TRAINING_AUTHORIZED=1
+python3 scripts/train_stage1.py --model-tier 500m --authorized
+
+# 6. Run Documentation Quality Gate (Local / CI)
 python3 scripts/validate_docs.py
 
 # 5. Run All Quality Gates (Local WSL2)
