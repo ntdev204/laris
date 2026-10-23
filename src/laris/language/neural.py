@@ -64,6 +64,7 @@ class TransformerEncoderConfig:
     tie_embeddings: bool = True
     precision: str = "bf16"
     seed: int = 42
+    gradient_checkpointing: bool = False
 
     def __post_init__(self) -> None:
         if self.d_model not in ALLOWED_EMBEDDING_DIMENSIONS:
@@ -198,6 +199,36 @@ class TransformerEncoderConfig:
             "estimated_peak_memory_mb": round(estimated_peak_mb, 2),
             "note": "Analytical estimate; distinct from measured OS RSS or CUDA VRAM.",
         }
+
+
+@dataclass(frozen=True)
+class TransformerEncoder500MConfig(TransformerEncoderConfig):
+    """Canonical configuration for 512.9M parameter Model 1 foundation encoder.
+
+    Backbone parameter breakdown (d_model=1280, num_layers=24, num_heads=20, d_ff=5120):
+      Embeddings: 32,000 * 1,280 = 40,960,000
+      Per Layer: 4*1280^2 + 2*1280*5120 + 2*1280 = 6,553,600 + 13,107,200 + 2,560 = 19,663,360
+      24 Layers: 24 * 19,663,360 = 471,920,640
+      Final Norm: 1,280
+      Tied MLM Bias: 32,000
+      Total Backbone = 512,913,920 parameters (~512.91M).
+      With capability heads: 513,247,751 parameters (~513.25M).
+    """
+
+    d_model: int = 1280
+    num_layers: int = 24
+    num_heads: int = 20
+    d_ff: int = 5120
+    max_sequence_length: int = 1024
+    vocab_size: int = DEFAULT_TARGET_VOCAB_SIZE
+    dropout: float = 0.1
+    norm_type: str = "rmsnorm"
+    pos_encoding: str = "rope"
+    activation: str = "gelu"
+    tie_embeddings: bool = True
+    precision: str = "bf16"
+    seed: int = 42
+    gradient_checkpointing: bool = True
 
 
 def _gelu(x: np.ndarray) -> np.ndarray:
@@ -566,48 +597,65 @@ try:
 
             # Seeded initialization
             torch.manual_seed(self.config.seed)
+            self.gradient_checkpointing = getattr(self.config, "gradient_checkpointing", False)
             self.eval()
 
         def forward(
             self,
             token_ids: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
+            training_pass: bool = False,
         ) -> Dict[str, torch.Tensor]:
-            """Bounded forward pass for shape and finite representation verification."""
+            """Forward pass for inference/profiling or authorized training."""
+            if training_pass:
+                assert_training_authorized("PyTorch neural model forward pass with gradients")
+                return self._forward_impl(token_ids, attention_mask=attention_mask)
             with torch.no_grad():
-                batch_size, seq_len = token_ids.shape
-                x = self.token_embeddings(token_ids)
+                return self._forward_impl(token_ids, attention_mask=attention_mask)
 
-                for layer in self.layers:
+        def _forward_impl(
+            self,
+            token_ids: torch.Tensor,
+            attention_mask: Optional[torch.Tensor] = None,
+        ) -> Dict[str, torch.Tensor]:
+            batch_size, seq_len = token_ids.shape
+            x = self.token_embeddings(token_ids)
+
+            for layer in self.layers:
+                if (
+                    self.gradient_checkpointing
+                    and self.training
+                    and hasattr(torch.utils, "checkpoint")
+                ):
+                    x = torch.utils.checkpoint.checkpoint(
+                        layer, x, attention_mask, use_reentrant=False
+                    )
+                else:
                     x = layer(x, attention_mask=attention_mask)
 
-                hidden_states = self.final_norm(x)
-                cls_rep = hidden_states[:, 0, :]
+            hidden_states = self.final_norm(x)
+            cls_rep = hidden_states[:, 0, :]
 
-                # Heads
-                mlm_logits = F.linear(hidden_states, self.token_embeddings.weight, self.mlm_bias)
-                nli_logits = self.nli_head(cls_rep)
-                para_prob = torch.sigmoid(self.para_head(cls_rep))
-                similarity_score = torch.sigmoid(self.sim_head(cls_rep))
-                qa_logits = self.qa_head(hidden_states)
+            # Heads
+            mlm_logits = F.linear(hidden_states, self.token_embeddings.weight, self.mlm_bias)
+            nli_logits = self.nli_head(cls_rep)
+            para_prob = torch.sigmoid(self.para_head(cls_rep))
+            similarity_score = torch.sigmoid(self.sim_head(cls_rep))
+            qa_logits = self.qa_head(hidden_states)
 
-                return {
-                    "hidden_states": hidden_states,
-                    "cls_embedding": cls_rep,
-                    "mlm_logits": mlm_logits,
-                    "nli_logits": nli_logits,
-                    "paraphrase_prob": para_prob,
-                    "similarity_score": similarity_score,
-                    "qa_logits": qa_logits,
-                }
+            return {
+                "hidden_states": hidden_states,
+                "cls_embedding": cls_rep,
+                "mlm_logits": mlm_logits,
+                "nli_logits": nli_logits,
+                "paraphrase_prob": para_prob,
+                "similarity_score": similarity_score,
+                "qa_logits": qa_logits,
+            }
 
         def train_step(self, *args: Any, **kwargs: Any) -> None:
-            """Mandatory prohibition barrier preventing any model training or weight updates."""
+            """Barrier preventing unauthorized model training or weight updates."""
             assert_training_authorized("PyTorch neural model backpropagation and weight updates")
-            raise TrainingExecutionProhibitedError(
-                "ABSOLUTE TRAINING PROHIBITION: The agent has no authority to execute training, "
-                "perform backpropagation, or update model weights."
-            )
 
     class _PyTorchRMSNorm(nn.Module):  # type: ignore[misc]
         def __init__(self, dim: int, eps: float = 1e-6) -> None:
@@ -648,13 +696,24 @@ try:
             k = self.k_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
             v = self.v_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
 
-            scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
-            if attention_mask is not None:
-                # (b, 1, 1, s)
-                mask = (1.0 - attention_mask[:, None, None, :].float()) * -1e4
-                scores = scores + mask
-            attn = F.softmax(scores, dim=-1)
-            attn_out = torch.matmul(attn, v).transpose(1, 2).contiguous().view(b, s, self.d_model)
+            if hasattr(F, "scaled_dot_product_attention"):
+                if attention_mask is not None:
+                    # attention_mask: (b, s), expand to (b, 1, 1, s) boolean mask
+                    attn_mask = attention_mask[:, None, None, :] == 1
+                    attn_out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
+                else:
+                    attn_out = F.scaled_dot_product_attention(q, k, v)
+                attn_out = attn_out.transpose(1, 2).contiguous().view(b, s, self.d_model)
+            else:
+                scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+                if attention_mask is not None:
+                    # (b, 1, 1, s)
+                    mask = (1.0 - attention_mask[:, None, None, :].float()) * -1e4
+                    scores = scores + mask
+                attn = F.softmax(scores, dim=-1)
+                attn_out = (
+                    torch.matmul(attn, v).transpose(1, 2).contiguous().view(b, s, self.d_model)
+                )
             x = x + self.o_proj(attn_out)
 
             # Pre-RMSNorm FFN

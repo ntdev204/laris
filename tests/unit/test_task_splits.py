@@ -202,7 +202,7 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
 
         report = audit_dataset_inventory(manifest_path=manifest_path, base_dir=repo_root)
         self.assertEqual(report["status"], "VERIFIED_AUDIT")
-        self.assertEqual(report["total_datasets_tracked"], 17)
+        self.assertEqual(report["total_datasets_tracked"], 24)
         if report["physical_files_present"]:
             self.assertGreater(report["total_physical_files"], 40)
             self.assertGreater(report["total_physical_bytes"], 1_000_000_000)

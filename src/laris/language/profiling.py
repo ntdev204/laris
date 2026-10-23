@@ -79,6 +79,56 @@ def estimate_forward_vram_mb(
     return float(round(param_mb + act_mb + workspace_mb, 2))
 
 
+def compute_analytical_training_memory_gb(
+    config: Any,
+    batch_size: int = 16,
+    seq_len: int = 1024,
+    use_8bit_adam: bool = True,
+    use_activation_checkpointing: bool = True,
+    workspace_gb: float = 1.5,
+) -> float:
+    """Computes analytical full-training VRAM memory breakdown in GB.
+
+    Components:
+    1. Model weights (BF16 = 2 bytes / param)
+    2. Gradients (BF16 = 2 bytes / param)
+    3. Optimizer states:
+       - 8-bit AdamW: 6 bytes / param (FP32 master weight 4B + 1st moment 1B + 2nd moment 1B)
+       - FP32 AdamW: 12 bytes / param (FP32 master 4B + FP32 1st 4B + FP32 2nd 4B)
+    4. Activations (with FlashAttention SDPA and Activation Checkpointing)
+    5. CUDA workspace buffer
+    """
+    if hasattr(config, "calculate_parameter_count"):
+        param_count = config.calculate_parameter_count(include_heads=True)
+    else:
+        param_count = 109_762_567
+
+    # Precision is 2 bytes (BF16)
+    weight_bytes = param_count * 2
+    grad_bytes = param_count * 2
+
+    # Optimizer state bytes
+    opt_bytes_per_param = 6 if use_8bit_adam else 12
+    optimizer_bytes = param_count * opt_bytes_per_param
+
+    # Activation memory
+    num_layers = getattr(config, "num_layers", 12)
+    d_model = getattr(config, "d_model", 768)
+
+    if use_activation_checkpointing:
+        act_factor = 2.0
+    else:
+        act_factor = 5.0
+
+    act_bytes = act_factor * num_layers * batch_size * seq_len * d_model * 2
+    workspace_bytes = workspace_gb * (1024.0**3)
+
+    total_bytes = weight_bytes + grad_bytes + optimizer_bytes + act_bytes + workspace_bytes
+    total_gb = total_bytes / (1024.0**3)
+
+    return float(round(total_gb, 2))
+
+
 class BoundedResourceProfiler:
     """Executes single forward-pass profiling without weight updates or training loops."""
 

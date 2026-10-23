@@ -16,6 +16,12 @@ from laris.language.config_handoff import (
     get_immutable_invariants,
     get_tunable_parameters,
 )
+from laris.language.dataloader import (
+    SyntheticMultiTaskDataLoader,
+    TaskBatch,
+    TemperatureSamplingScheduler,
+    create_multi_task_sampler,
+)
 from laris.language.encoder import (
     BaseSentenceEncoder,
     CompactSentenceEncoder,
@@ -23,12 +29,14 @@ from laris.language.encoder import (
 from laris.language.neural import (
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
+    TransformerEncoder500MConfig,
     TransformerEncoderConfig,
 )
 from laris.language.profiling import (
     BoundedProfilingResult,
     BoundedResourceProfiler,
     HardwareEnvironmentProfile,
+    compute_analytical_training_memory_gb,
 )
 from laris.language.retrieval_benchmark import (
     RETRIEVAL_BENCHMARK_VERSION,
@@ -79,11 +87,26 @@ from laris.language.tokenizer_trainer import (
     TokenizerTrainingPipeline,
     extract_clean_wikipedia_corpus,
 )
+from laris.language.trainer import (
+    MultiTaskLossWeights,
+    Stage1LanguageTrainer,
+    Stage1LossCalculator,
+    TrainingMetricsSnapshot,
+)
 
 __all__ = [
     "ModelReadinessState",
     "TransformerEncoderConfig",
+    "TransformerEncoder500MConfig",
     "RandomlyInitializedTransformerEncoder",
+    "SyntheticMultiTaskDataLoader",
+    "TaskBatch",
+    "TemperatureSamplingScheduler",
+    "create_multi_task_sampler",
+    "MultiTaskLossWeights",
+    "Stage1LanguageTrainer",
+    "Stage1LossCalculator",
+    "TrainingMetricsSnapshot",
     "TokenizerReadinessState",
     "TokenizerTrainerConfig",
     "TokenizerTrainingPipeline",
@@ -91,6 +114,7 @@ __all__ = [
     "VIETNAMESE_DIACRITIC_FIXTURES",
     "BoundedProfilingResult",
     "BoundedResourceProfiler",
+    "compute_analytical_training_memory_gb",
     "HardwareEnvironmentProfile",
     "ParameterClassification",
     "TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG",

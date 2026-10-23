@@ -25,7 +25,7 @@ def test_manifest_and_disaggregated_accounting_invariants() -> None:
     assert total_samples == 5106491, f"Expected 5,106,491 samples, got {total_samples}"
 
     datasets = manifest.get("datasets", [])
-    assert len(datasets) == 17, f"Expected 17 tracked datasets, got {len(datasets)}"
+    assert len(datasets) == 24, f"Expected 24 tracked datasets, got {len(datasets)}"
 
     english_samples = 0
     vietnamese_samples = 0

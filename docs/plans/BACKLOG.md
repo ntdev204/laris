@@ -98,7 +98,8 @@ This document serves as the single source of truth for active task tracking, exe
 | `M2-LANG-006` | Centralized Configuration System & Hardcoded-Parameter Audit | `MOD-CONFIG-001` | `DONE` | `M2-LANG-005` |
 | `M2-LANG-007-PREP` | Physical Dataset Partitioning and Tokenizer Training Readiness | `MOD-LANG-004` | `DONE` | `M2-LANG-006` |
 | `M2-PERF-001` | Optimize Physical Dataset Partitioning for Server Hardware | `MOD-CORPUS-001` | `DONE` | `M2-LANG-007-PREP` |
-| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-PERF-001` |
+| `M2-LANG-008` | 512M Architecture Scaling, 14GB VRAM Optimization & Bilingual Dataset Expansion | `MOD-LANG-004` | `DONE` | `M2-PERF-001` |
+| `M2-LANG-007` | Natural Language Foundation Training Execution & Benchmark Evaluation | `MOD-LANG-004` | `BLOCKED_ON_APPROVAL` | `M2-LANG-008` |
 
 ---
 
@@ -877,6 +878,23 @@ This document serves as the single source of truth for active task tracking, exe
   4. Intermediate worker part files cleanly consolidated and deleted automatically.
   5. CLI `scripts/partition_datasets.py` accepts `--batch-size` and `--num-workers`.
   6. Full test suite and documentation quality gates pass with zero neural training.
+
+---
+
+### Task `M2-LANG-008`: 512M Architecture Scaling, 14GB VRAM Optimization & Bilingual Dataset Expansion
+- **Objective:** Scale Model 1 to 512.9M parameters, optimize for 14GB VRAM utilization on RTX 5070 Ti (16GB), expand bilingual dataset tracking to 16.5M records, and implement streaming multi-task dataloader with Stage 1 training CLI.
+- **Module:** `MOD-LANG-004` (Language Foundation Training Architecture).
+- **Dependencies:** `M2-PERF-001` (Issue #234).
+- **Status:** `DONE` (Issue #240).
+- **Acceptance Criteria:**
+  1. `TransformerEncoder500MConfig` implemented with exact 512,913,920 backbone parameters ($L=24, d=1280, H=20, d_{\text{ff}}=5120, S=1024$).
+  2. `ALLOWED_EMBEDDING_DIMENSIONS` expanded to `{384, 768, 1024, 1280}` in both language and central config schemas.
+  3. Native FlashAttention SDPA and activation checkpointing integrated into PyTorch transformer layer.
+  4. Analytical training VRAM model accounts for 8-bit AdamW, FlashAttention, and activation checkpointing (~13.84 GB target).
+  5. Dataset inventory manifest tracks 24 datasets (~16.5M target records), addressing Vietnamese NLI, paraphrase, and unanswerable QA.
+  6. Streaming multi-task dataloader with temperature-scaled dynamic sampling ($\alpha = 0.7$) and Stage 1 trainer runner CLI `scripts/train_stage1.py`.
+  7. Strict authorization barrier and zero-training compliance enforced on development host.
+
 
 
 
