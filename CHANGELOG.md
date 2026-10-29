@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-10-30
+
+### Fixed
+- **Flaky evaluation exit-code test (Issue #298):** the fixture feeds identical inputs to the similarity head, so Spearman is decided by float noise and could fall below the test's `min_absolute` of 0.0; the test now relaxes that floor and still asserts the exit code from `min_margin`.
+- **Token order and weight decay (Issue #295):** the PyTorch backbone never applied rotary position embeddings, although the config fixes `pos_encoding="rope"` and the NumPy reference does; reversing the tokens left every hidden state unchanged (max difference 2e-6), so the model could not learn word order for MLM or QA. Q and K now get split-half RoPE (same formula as the reference, tested against it). AdamW weight decay no longer touches RMSNorm gains, biases and the tied embedding, the QA span softmax ignores padded positions, and an MLM batch with no masked token yields a zero loss instead of NaN. Runs started before this fix train an order-blind model and must be restarted.
+- **Encoder initialisation (Issue #293):** the PyTorch encoder kept the `nn.Embedding` default N(0, 1) for the tied token embedding, so a fresh model produced logits with a standard deviation of 27.8 and a raw MLM cross-entropy of 542.7 instead of about ln(32000) = 10.4 (a real run logged loss 197.66 and gradient norm 259 at step 1, clipped to 1.0 every step). The model now uses GPT-2 style initialisation (normal std 0.02, zero biases, residual projections scaled by 1/sqrt(2L)) and seeds itself before creating parameters, which it did too late before. Measured on real validation data with the fitted tokenizer, the initial raw MLM loss is now 10.20. Runs started before this fix begin from the bad initialisation and should be restarted.
+- **Compact sequence length (Issue #288):** `--model-size compact` clamped the model config to 512 tokens even when `--max-seq-len` was larger, while the dataloader used the requested length. Evaluation and inference read the length from the saved config, so a compact model trained at 1024 tokens would have been evaluated and used at 512. `--max-seq-len` now defaults to 1024 for large and 512 for compact and is honored as given.
+
+### Added
+- **Live training display (Issue #291):** `laris train language-encoder` now shows a progress bar with elapsed time, ETA and rate, and a metrics line with the running loss of each task (exponentially smoothed, so single-task micro-batches no longer make it jump), learning rate, gradient norm, GPU memory and the accumulation position. Validation prints as a table with the best step and the early-stopping counter. When output is not a terminal (`nohup`, redirected logs) or `tqdm` is missing it falls back to one plain line per `--log-interval` steps with the ETA. `tqdm` joins the `training` extra.
+
 ## [1.1.4] - 2026-10-30
 
 Re-release of 1.1.3 under a new version: the first `v1.1.3` tag pointed at an older commit and was withdrawn. The changes are the 1.1.3 entries below.

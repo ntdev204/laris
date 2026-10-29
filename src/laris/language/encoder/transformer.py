@@ -11,6 +11,7 @@ Provides:
 - STRICT PROHIBITION: Any training step or gradient update raises TrainingExecutionProhibitedError
 """
 
+import functools
 import hashlib
 import json
 import math
@@ -242,6 +243,9 @@ def _rmsnorm(x: np.ndarray, weight: np.ndarray, eps: float = 1e-6) -> np.ndarray
     variance = np.mean(np.square(x), axis=-1, keepdims=True)
     res = x / np.sqrt(variance + eps) * weight
     return np.asarray(res, dtype=np.float32)
+
+
+INIT_STD = 0.02  # GPT-2 / BERT initialisation scale
 
 
 def _apply_rope(
@@ -570,6 +574,8 @@ try:
             d_ff = self.config.d_ff
             v = self.config.vocab_size
 
+            torch.manual_seed(self.config.seed)  # before any parameter exists
+
             # 1. Embeddings
             self.token_embeddings = nn.Embedding(v, d)
 
@@ -595,10 +601,26 @@ try:
             self.sim_head = nn.Linear(d, 1)
             self.qa_head = nn.Linear(d, 2)
 
-            # Seeded initialization
-            torch.manual_seed(self.config.seed)
+            self._init_parameters()
             self.gradient_checkpointing = getattr(self.config, "gradient_checkpointing", False)
             self.eval()
+
+        def _init_parameters(self) -> None:
+            """GPT-2 style init: N(0, 0.02), zero biases, residual projections scaled.
+
+            The embedding is also the tied MLM output matrix, so the PyTorch default N(0, 1)
+            would give logits with a standard deviation near 28 and an initial loss of ~540
+            instead of about ln(vocab_size).
+            """
+            std = INIT_STD
+            residual_std = std / math.sqrt(2 * self.config.num_layers)
+            nn.init.normal_(self.token_embeddings.weight, mean=0.0, std=std)
+            for name, module in self.named_modules():
+                if isinstance(module, nn.Linear):
+                    residual = name.endswith(("o_proj", "ffn_w2"))
+                    nn.init.normal_(module.weight, mean=0.0, std=residual_std if residual else std)
+                    if module.bias is not None:
+                        nn.init.zeros_(module.bias)
 
         def forward(
             self,
@@ -657,6 +679,26 @@ try:
             """Barrier preventing unauthorized model training or weight updates."""
             assert_training_authorized("PyTorch neural model backpropagation and weight updates")
 
+    @functools.lru_cache(maxsize=16)
+    def _rope_tables(seq_len: int, head_dim: int, device: str) -> Tuple[Any, Any]:
+        """cos/sin tables (1, 1, S, head_dim) matching the split-half layout of `_apply_rope`."""
+        freqs = 1.0 / (10000.0 ** (torch.arange(0, head_dim, 2, device=device).float() / head_dim))
+        angles = torch.arange(seq_len, device=device).float()[:, None] * freqs[None, :]
+        cos = torch.cat([angles.cos(), angles.cos()], dim=-1)[None, None]
+        sin = torch.cat([angles.sin(), angles.sin()], dim=-1)[None, None]
+        return cos, sin
+
+    def _rotate_half(x: torch.Tensor) -> torch.Tensor:
+        half = x.shape[-1] // 2
+        return torch.cat((-x[..., half:], x[..., :half]), dim=-1)
+
+    def _apply_rope_torch(x: torch.Tensor) -> torch.Tensor:
+        """Rotary position embedding on a (B, H, S, head_dim) tensor, computed in fp32."""
+        cos, sin = _rope_tables(x.shape[-2], x.shape[-1], str(x.device))
+        xf = x.float()
+        rotated: torch.Tensor = (xf * cos + _rotate_half(xf) * sin).to(x.dtype)
+        return rotated
+
     class _PyTorchRMSNorm(nn.Module):  # type: ignore[misc]
         def __init__(self, dim: int, eps: float = 1e-6) -> None:
             super().__init__()
@@ -695,6 +737,7 @@ try:
             q = self.q_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
             k = self.k_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
             v = self.v_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
+            q, k = _apply_rope_torch(q), _apply_rope_torch(k)
 
             if hasattr(F, "scaled_dot_product_attention"):
                 if attention_mask is not None:
