@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dataset order, validation and allocator (Issue #305):** found in a real 60k-step run that early-stopped at step 5800. The loader read a task's datasets one file after another (SQuAD, then ViQuAD, then HotpotQA; 2.0M English Wikipedia rows before any Vietnamese), so a run would meet Vietnamese MLM only at the very end; it now samples across a task's datasets in proportion to their rows. Validation kept streaming, so each evaluation scored a different slice: after about 3,286 rows the QA validation moved from SQuAD to ViQuAD (qa 0.55 to 0.92) and early stopping fired at 10% of the schedule; the validation loader is now rewound before every evaluation so it scores the same records, and `--eval-batches` defaults to 16. Variable batch shapes fragmented the CUDA caching allocator (OOM retries at 16 GB with 9 GB allocated); `laris` now sets `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` unless already set.
+
 ## [1.1.6] - 2026-10-30
 
 ### Changed

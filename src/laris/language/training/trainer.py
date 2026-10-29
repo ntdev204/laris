@@ -334,6 +334,8 @@ class LanguageEncoderTrainer:
         """
         if not (TORCH_AVAILABLE and isinstance(self.model, nn.Module)):
             raise RuntimeError("evaluate requires a PyTorch model")
+        if hasattr(eval_loader, "reset"):
+            eval_loader.reset()  # every evaluation scores the same records
         was_training = self.model.training
         self.model.eval()
         task_names = tasks or sorted(eval_loader.task_paths)
