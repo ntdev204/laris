@@ -15,6 +15,7 @@ DATA_DIR = REPO_ROOT / "data"
 
 
 RAW_DIR = DATA_DIR / "raw"
+CACHE_DIR = DATA_DIR / "cache"
 
 
 MANIFEST_PATH = DATA_DIR / "acquisition_manifest.json"

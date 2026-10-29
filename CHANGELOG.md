@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **FEVER evidence and threshold calibration (Issue #262):**
+  - `laris data acquire --only FEVER` now resolves evidence references against the official FEVER Wikipedia snapshot (`wiki-pages.zip`) into `evidence_sentences.parquet` (the Hugging Face parquet copy is truncated and is not used). `laris data partition` turns SUPPORTS/REFUTES claims into entailment/contradiction premise-hypothesis pairs; NOT ENOUGH INFO has no evidence and is dropped. The language encoder's NLI task now loads `fever`.
+  - `laris evaluate calibrate` ratchets `configs/evaluation/language_encoder.yaml` up from passing `val` reports (never lowers; refuses `test` reports). The shipped thresholds remain baseline-relative floors until a trained checkpoint is measured.
+
 ### Changed
 - **Documentation slimmed and standardized (Issue #260):**
   - Removed redundant or historical files: `docs/archive/`, `docs/RELEASE_NOTES.md` (this changelog is the release history), `docs/DECISION_LOG.md` (the ADR index is the register), `docs/plans/BACKLOG.md` (work is tracked in GitHub issues), `SESSION.md` and `implement_plan.md`.

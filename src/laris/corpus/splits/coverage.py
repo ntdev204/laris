@@ -168,8 +168,9 @@ def audit_dataset_inventory(
         elif ds_id == "FEVER":
             split_usability = "TEST_SET_PRIVATE_HELD_OUT"
             blocker = (
-                "Labelled test split is unreleased; labelled_dev is sub-split by claim id. Records "
-                "carry evidence references only (no evidence text), so they are not NLI-trainable."
+                "Labelled test split is unreleased; labelled_dev is sub-split by claim id. "
+                "Claims are joined to Wikipedia evidence text and trained as "
+                "entailment/contradiction NLI pairs (NOT ENOUGH INFO has no evidence: dropped)."
             )
         elif ds_id == "UIT-VIQUAD-V2":
             split_usability = "TEST_SET_PRIVATE_HELD_OUT"
