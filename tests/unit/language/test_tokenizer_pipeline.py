@@ -179,7 +179,7 @@ class TestTokenizerTrainingPipeline(unittest.TestCase):
     def test_pyproject_toml_declares_sentencepiece(self) -> None:
         """SentencePiece must be declared as an approved optional dependency in pyproject.toml."""
         from pathlib import Path
-        pyproject_path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+        pyproject_path = Path(__file__).resolve().parents[3] / "pyproject.toml"
         self.assertTrue(pyproject_path.exists())
         content = pyproject_path.read_text(encoding="utf-8")
         self.assertIn("sentencepiece", content)

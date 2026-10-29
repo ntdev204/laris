@@ -24,7 +24,7 @@ class ParameterClassification:
 
 # Authoritative inventory for Issue #215 Centralized Configuration System
 TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG: List[ParameterClassification] = [
-    # Model 1 Architecture Tunables
+    # Language encoder architecture tunables
     ParameterClassification(
         "vocab_size", "TUNABLE", 32000, "tokens", "Balanced bilingual vocabulary capacity"
     ),

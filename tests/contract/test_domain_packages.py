@@ -51,13 +51,13 @@ def test_core_domain_exports():
 def test_corpus_domain_exports():
     """Verifies laris.corpus contracts."""
     from laris.corpus import (
+        CorpusIngestionPipeline,
         CorpusManifest,
         DatasetPartitionEngine,
         DeduplicationEngine,
-        Layer0Pipeline,
         normalize_scientific_text,
     )
-    assert Layer0Pipeline is not None
+    assert CorpusIngestionPipeline is not None
     assert normalize_scientific_text is not None
     assert DeduplicationEngine is not None
     assert DatasetPartitionEngine is not None

@@ -172,7 +172,7 @@ def test_m2_complete_artifact_bundle_lifecycle(
 
     # 3. Save and load bundle
     manager = LanguageArtifactManager()
-    bundle_dir = tmp_path / "m2_bundle"
+    bundle_dir = tmp_path / "language_bundle"
     manager.save_bundle(bundle, bundle_dir)
 
     loaded = manager.load_bundle(bundle_dir, verify_integrity=True)

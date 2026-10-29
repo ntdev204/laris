@@ -1,8 +1,8 @@
-"""Unit tests for 512M Model 1 architecture scaling, VRAM calculations, and Stage 1 training engine.
+"""Unit tests for large language encoder scaling, VRAM calculations, and training engine.
 
 Verifies:
 - LargeLanguageEncoderConfig parameter formulas (512.91M backbone, 513.25M with heads)
-- Analytical VRAM budget for 500M model respects 14.5 GB RTX 5070 Ti safety envelope
+- Analytical VRAM budget for the large model respects 14.5 GB RTX 5070 Ti safety envelope
 - TemperatureSamplingScheduler mathematical distribution (alpha=0.7)
 - SyntheticMultiTaskDataLoader batch generation across MLM, NLI, Paraphrase, Similarity, QA
 - MultiTaskLossCalculator composite loss and individual task formulation
@@ -36,7 +36,7 @@ from laris.language.training.trainer import (
 )
 
 
-class Test500MScalingAndTraining(unittest.TestCase):
+class TestLargeEncoderScalingAndTraining(unittest.TestCase):
     def test_allowed_embedding_dimensions_expanded(self) -> None:
         """Verifies ALLOWED_EMBEDDING_DIMENSIONS contains 384, 768, 1024, 1280."""
         self.assertIn(384, ALLOWED_EMBEDDING_DIMENSIONS)
@@ -44,7 +44,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
         self.assertIn(1024, ALLOWED_EMBEDDING_DIMENSIONS)
         self.assertIn(1280, ALLOWED_EMBEDDING_DIMENSIONS)
 
-    def test_transformer_500m_parameter_formula_exact(self) -> None:
+    def test_large_encoder_parameter_formula_exact(self) -> None:
         """Verifies exact parameter calculations for 512.9M model."""
         cfg = LargeLanguageEncoderConfig()
         self.assertEqual(cfg.d_model, 1280)
@@ -62,7 +62,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
         self.assertEqual(total_count, 513_247_751)
 
     def test_analytical_training_vram_under_safety_envelope(self) -> None:
-        """Verifies analytical VRAM calculation for 500M model respects 14.5 GB limit."""
+        """Verifies analytical VRAM calculation for the large model respects 14.5 GB limit."""
         cfg = LargeLanguageEncoderConfig()
 
         # Config 1: 8-bit AdamW with batch_size=16, seq_len=1024
@@ -105,7 +105,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
         self.assertGreater(smooth_sim_ratio, raw_sim_ratio)
 
     def test_synthetic_dataloader_all_tasks(self) -> None:
-        """Verifies synthetic dataloader produces valid batches for all Stage 1 tasks."""
+        """Verifies synthetic dataloader produces valid batches for all language encoder tasks."""
         loader = SyntheticMultiTaskDataLoader(
             vocab_size=32000,
             seq_len=64,
@@ -119,7 +119,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
             self.assertEqual(batch.attention_mask.shape, (4, 64))
             self.assertIn("labels", dir(batch))
 
-    def test_stage1_loss_calculator_numpy(self) -> None:
+    def test_loss_calculator_numpy(self) -> None:
         """Verifies multi-task loss calculator across all 5 tasks."""
         calc = MultiTaskLossCalculator()
         b, s, v = 2, 16, 100
@@ -157,7 +157,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
         qa_loss = calc.compute_loss_numpy("qa", qa_preds, qa_labels)
         self.assertGreater(qa_loss, 0.0)
 
-    def test_stage1_trainer_authorization_barrier(self) -> None:
+    def test_trainer_authorization_barrier(self) -> None:
         """Verifies trainer strictly raises TrainingExecutionProhibitedError when unauthorized."""
         cfg = LargeLanguageEncoderConfig()
         loader = SyntheticMultiTaskDataLoader(seq_len=32, batch_size=2)

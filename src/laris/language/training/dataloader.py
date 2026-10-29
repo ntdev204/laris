@@ -70,7 +70,7 @@ class TemperatureSamplingScheduler:
 class SyntheticMultiTaskDataLoader:
     """Mock/Synthetic multi-task data loader for contract testing and CPU verification.
 
-    Generates properly shaped batches for all Stage 1 tasks without requiring raw disk datasets.
+    Generates properly shaped batches for all language encoder tasks without raw disk datasets.
     """
 
     def __init__(
@@ -87,7 +87,7 @@ class SyntheticMultiTaskDataLoader:
         self.rng = random.Random(seed)
         self.np_rng = np.random.default_rng(seed)
 
-        # Baseline sample counts matching Stage 1 specifications
+        # Baseline sample counts matching the language encoder training specification
         self.task_counts = {
             "mlm": 3320430,  # Wikipedia EN + VI
             "nli": 1150647,  # All-NLI + ANLI

@@ -26,7 +26,7 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 
 ### OQ-001: Neural Architecture for Layer 1 Sentence Encoder
 - **Status:** DECIDED / RESOLVED (ADR-002, DOC-SPEC-TRAIN-001)
-- **Resolution:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE positional encoding, RMSNorm pre-norm, GELU, tied MLM embeddings, 109.56M backbone params, 109.76M with multi-task heads). Implemented in `src/laris/language/neural.py`.
+- **Resolution:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE positional encoding, RMSNorm pre-norm, GELU, tied MLM embeddings, 109.56M backbone params, 109.76M with multi-task heads). Implemented in `src/laris/language/encoder/transformer.py`.
 
 ### OQ-002: Graph Storage Engine for Layer 5 Evidence Graph
 - **Status:** DECIDED / RESOLVED (ADR-009)

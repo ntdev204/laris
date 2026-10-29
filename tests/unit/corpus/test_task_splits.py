@@ -197,7 +197,7 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
 
     def test_audit_dataset_inventory_from_manifest(self) -> None:
         """Inventory audit must accurately reflect disk holdings and explicit EN/VI gaps."""
-        repo_root = Path(__file__).resolve().parent.parent.parent
+        repo_root = Path(__file__).resolve().parents[3]
         manifest_path = repo_root / "data" / "acquisition_manifest.json"
 
         report = audit_dataset_inventory(manifest_path=manifest_path, base_dir=repo_root)
@@ -249,7 +249,7 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
 
     def test_generate_leakage_safe_manifest_nondestructive(self) -> None:
         """Manifest generation must write valid JSON to target path without touching raw data."""
-        repo_root = Path(__file__).resolve().parent.parent.parent
+        repo_root = Path(__file__).resolve().parents[3]
         manifest_path = repo_root / "data" / "acquisition_manifest.json"
 
         with tempfile.TemporaryDirectory() as tmp_dir:

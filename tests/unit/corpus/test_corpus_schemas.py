@@ -13,7 +13,7 @@ from laris.corpus.schemas import (
 )
 
 
-class TestLayer0CorpusSchemas(unittest.TestCase):
+class TestCorpusSchemas(unittest.TestCase):
     """Test suite validating typed fields, invariants, and collision detection."""
 
     def setUp(self) -> None:

@@ -1,22 +1,11 @@
-#!/usr/bin/env python3
-# ruff: noqa: E402
-"""Stage 1 Language Foundation Training Runner CLI.
+"""`laris train language-encoder`: multi-task language encoder training and bounded profiling.
 
-Supports:
-- Model tiers: 110M (baseline) and 512M (scaled foundation)
-- VRAM optimization: 8-bit AdamW, FlashAttention SDPA, and Activation Checkpointing
-- Target hardware profile: RTX 5070 Ti (16GB VRAM, Blackwell sm_100/sm_120)
-- Bounded profiling mode (--profile-only) without weight updates
-- Mandatory stop condition: Strict authorization gate (assert_training_authorized)
-"""
+Supports compact and large model sizes, 8-bit AdamW, FlashAttention SDPA, activation
+checkpointing, a --profile-only mode without weight updates, and the strict authorization gate."""
 
 import argparse
-import sys
 from pathlib import Path
-
-# Add src to path
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "src"))
+from typing import Any
 
 from laris.core.authorization import (
     assert_training_authorized,
@@ -40,16 +29,13 @@ from laris.language.training.trainer import (
 )
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="LARIS Stage 1 Language Foundation Training & Profiling Runner"
-    )
+def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--model-tier",
+        "--model-size",
         type=str,
-        choices=["110m", "500m"],
-        default="500m",
-        help="Model scale tier (110m baseline or 500m scaled foundation)",
+        choices=["compact", "large"],
+        default="large",
+        help="Language encoder size preset (compact ~110M or large ~513M parameters)",
     )
     parser.add_argument(
         "--micro-batch-size",
@@ -118,17 +104,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="artifacts/checkpoints/stage1",
+        default="artifacts/checkpoints/language_encoder",
         help="Directory to save model checkpoints and training manifests",
     )
-    return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
+def run(args: argparse.Namespace) -> int:
 
     # 1. Instantiate Configuration
-    if args.model_tier == "500m":
+    config: LanguageEncoderConfig
+    if args.model_size == "large":
         config = LargeLanguageEncoderConfig(
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
@@ -154,9 +139,9 @@ def main() -> int:
     )
 
     print("=" * 65)
-    print("LARIS Stage 1 Language Foundation Runner")
+    print("LARIS Language Encoder Training Runner")
     print("=" * 65)
-    print(f"Model Tier:                {args.model_tier.upper()}")
+    print(f"Model Size:                {args.model_size.upper()}")
     print(f"Total Parameters:          {param_count:,} (~{param_count / 1e6:.2f}M)")
     print(f"Hidden Dimension (d):      {config.d_model}")
     print(f"Layers (L) / Heads (H):    {config.num_layers} / {config.num_heads}")
@@ -200,13 +185,13 @@ def main() -> int:
         print("Run with '--profile-only' to inspect memory feasibility without training.")
         return 1
 
-    assert_training_authorized("Stage 1 neural model pretraining")
-    print("\n[TRAINING AUTHORIZED] Initializing Stage 1 training engine...")
+    assert_training_authorized("language encoder pretraining")
+    print("\n[TRAINING AUTHORIZED] Initializing language encoder training engine...")
 
     if not args.tokenizer_model or not Path(args.tokenizer_model).is_file():
         print(
             "[ERROR] --tokenizer-model must point to a fitted SentencePiece .model file. "
-            "Fit one with scripts/train_tokenizer.py first."
+            "Fit one with `laris train tokenizer` first."
         )
         return 1
     try:
@@ -237,6 +222,7 @@ def main() -> int:
         print(f"Data shards [{loader.split}] {task_name:<11}: {len(shard_paths)}")
 
     # Initialize Model
+    model: Any
     if TORCH_AVAILABLE:
         import torch
 
@@ -259,7 +245,7 @@ def main() -> int:
         device=device,
     )
 
-    print(f"Starting Stage 1 training loop for {args.steps} steps...")
+    print(f"Starting language encoder training loop for {args.steps} steps...")
     for step_idx in range(1, args.steps + 1):
         batch = loader.generate_batch()
         metrics = trainer.execute_training_step(batch)
@@ -276,6 +262,3 @@ def main() -> int:
     print(f"\n[SUCCESS] Completed {args.steps} training steps successfully.")
     return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())

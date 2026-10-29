@@ -49,7 +49,7 @@ class ModelReadinessState(str, Enum):
 
 @dataclass(frozen=True)
 class LanguageEncoderConfig:
-    """Hyperparameter specification for Model 1 Natural Language Foundation encoder."""
+    """Hyperparameter specification for the language encoder."""
 
     vocab_size: int = DEFAULT_TARGET_VOCAB_SIZE  # 32,000
     max_sequence_length: int = DEFAULT_MAX_SEQUENCE_LENGTH  # 512
@@ -203,7 +203,7 @@ class LanguageEncoderConfig:
 
 @dataclass(frozen=True)
 class LargeLanguageEncoderConfig(LanguageEncoderConfig):
-    """Canonical configuration for 512.9M parameter Model 1 foundation encoder.
+    """Canonical configuration for large (512.9M parameter) language encoder.
 
     Backbone parameter breakdown (d_model=1280, num_layers=24, num_heads=20, d_ff=5120):
       Embeddings: 32,000 * 1,280 = 40,960,000
@@ -523,7 +523,7 @@ class RandomlyInitializedTransformerEncoder:
 
         meta = {
             "readiness_state": self.readiness_state.value,
-            "model_id": "laris-model1-transformer-110m-untrained",
+            "model_id": "laris-language-encoder-compact-untrained",
             "parameter_count": self.parameter_count,
             "backbone_parameter_count": self.backbone_parameter_count,
             "total_parameter_count": self.total_parameter_count,

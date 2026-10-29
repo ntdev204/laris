@@ -17,7 +17,7 @@ from laris.corpus.partition import (
     SplitRatios,
     verify_split_leakage,
 )
-from laris.corpus.pipeline import Layer0Pipeline
+from laris.corpus.pipeline import CorpusIngestionPipeline
 from laris.corpus.schemas import validate_manifest_consistency
 from tests.fixtures.synthetic_corpus import (
     get_standard_synthetic_corpus,
@@ -25,12 +25,12 @@ from tests.fixtures.synthetic_corpus import (
 )
 
 
-def test_layer0_pipeline_end_to_end_execution() -> None:
+def test_corpus_ingestion_pipeline_end_to_end_execution() -> None:
     """Tests the full Layer 0 ingestion pipeline with the synthetic corpus."""
     corpus = get_standard_synthetic_corpus()
     author_map = get_synthetic_author_map(corpus)
 
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus, manifest_id="manifest-e2e-001")
 
     # 1. Verify Quarantine Behavior
@@ -80,22 +80,22 @@ def test_layer0_pipeline_end_to_end_execution() -> None:
     assert sum(output.split_manifest.split_counts.values()) == len(output.unique_items)
 
 
-def test_layer0_pipeline_strict_quarantine_mode() -> None:
+def test_corpus_ingestion_pipeline_strict_quarantine_mode() -> None:
     """Verifies that quarantine_unauthorized=False raises immediately on invalid items."""
     corpus = get_standard_synthetic_corpus()
-    strict_pipeline = Layer0Pipeline(quarantine_unauthorized=False)
+    strict_pipeline = CorpusIngestionPipeline(quarantine_unauthorized=False)
 
     with pytest.raises(LicenseViolationError, match="not authorized"):
         strict_pipeline.execute(corpus)
 
 
-def test_layer0_pipeline_reproducibility() -> None:
+def test_corpus_ingestion_pipeline_reproducibility() -> None:
     """Verifies that two pipeline executions with identical input produce identical output."""
     corpus1 = get_standard_synthetic_corpus()
     corpus2 = get_standard_synthetic_corpus()
 
-    pipeline1 = Layer0Pipeline()
-    pipeline2 = Layer0Pipeline()
+    pipeline1 = CorpusIngestionPipeline()
+    pipeline2 = CorpusIngestionPipeline()
 
     output1 = pipeline1.execute(corpus1, manifest_id="run-1", created_at="2026-10-15T12:00:00Z")
     output2 = pipeline2.execute(corpus2, manifest_id="run-1", created_at="2026-10-15T12:00:00Z")
@@ -115,13 +115,13 @@ def test_layer0_pipeline_reproducibility() -> None:
     )
 
 
-def test_layer0_pipeline_near_dedup_threshold_override() -> None:
+def test_corpus_ingestion_pipeline_near_dedup_threshold_override() -> None:
     """Verifies configurable near-deduplication threshold in the pipeline."""
     corpus = get_standard_synthetic_corpus()
 
     # Setting threshold to 0.99 ensures synth-002-near is NOT flagged as near-duplicate
     strict_dedup_policy = DeduplicationPolicy(near_duplicate_threshold=0.99)
-    pipeline = Layer0Pipeline(dedup_policy=strict_dedup_policy)
+    pipeline = CorpusIngestionPipeline(dedup_policy=strict_dedup_policy)
 
     output = pipeline.execute(corpus)
     unique_ids = {item.corpus_id for item in output.unique_items}
@@ -131,13 +131,13 @@ def test_layer0_pipeline_near_dedup_threshold_override() -> None:
     assert "synth-001-dup" not in unique_ids  # Exact duplicate is still eliminated
 
 
-def test_layer0_pipeline_custom_ratios_and_seed() -> None:
+def test_corpus_ingestion_pipeline_custom_ratios_and_seed() -> None:
     """Verifies pipeline execution with custom partition ratios and seed."""
     corpus = get_standard_synthetic_corpus()
     author_map = get_synthetic_author_map(corpus)
 
     custom_ratios = SplitRatios(train=0.70, val=0.15, test=0.15)
-    pipeline = Layer0Pipeline(split_ratios=custom_ratios, partition_seed="custom-seed-42")
+    pipeline = CorpusIngestionPipeline(split_ratios=custom_ratios, partition_seed="custom-seed-42")
 
     output = pipeline.execute(corpus)
 

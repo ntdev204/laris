@@ -1,4 +1,4 @@
-# Model 1 Natural Language Foundation Architecture Configuration
+# Language encoder (compact, ~110M parameters) architecture and training configuration
 # Adheres to DOC-SPEC-TRAIN-001, ADR-001, ADR-002, ADR-005, and Issue #215
 
 config_version: "1.0.0"

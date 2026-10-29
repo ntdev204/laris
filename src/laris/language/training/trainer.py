@@ -1,4 +1,4 @@
-"""Stage 1 Multi-Task Trainer and composite loss formulation.
+"""Multi-task language encoder trainer and composite loss formulation.
 
 Adheres to:
 - DOC-SPEC-TRAIN-001 Section 4.1 & 4.2
@@ -30,7 +30,7 @@ except ImportError:
 
 @dataclass(frozen=True)
 class MultiTaskLossWeights:
-    """Canonical mixture weights for Stage 1 multi-task learning curriculum."""
+    """Canonical mixture weights for multi-task learning curriculum."""
 
     lambda_mlm: float = 0.35
     lambda_nli: float = 0.25
@@ -140,7 +140,7 @@ class MultiTaskLossCalculator:
 
 
 class LanguageEncoderTrainer:
-    """Stage 1 Language Foundation Trainer with 14GB VRAM optimization and authorization barrier."""
+    """Language encoder trainer with 14GB VRAM optimization and authorization barrier."""
 
     def __init__(
         self,
@@ -308,7 +308,7 @@ class LanguageEncoderTrainer:
         - Gradient norm clipping and optimizer.step()
         - Metrics recording and peak VRAM tracking
         """
-        assert_training_authorized("Stage 1 neural backpropagation and parameter update")
+        assert_training_authorized("Language encoder neural backpropagation and parameter update")
 
         task_type = getattr(batch, "task_type", "mlm")
         effective_batch_size = getattr(batch, "batch_size", 16) * self.grad_accum_steps

@@ -37,7 +37,7 @@ class TestConfigSchemas:
     """Tests Pydantic V2 configuration schema validation and structural invariants."""
 
     def test_default_schema_instantiation(self) -> None:
-        """Verifies default values match canonical Model 1 specification."""
+        """Verifies default values match canonical language encoder specification."""
         cfg = LarisConfig()
         assert cfg.config_version == "1.0.0"
         assert cfg.environment == "development"

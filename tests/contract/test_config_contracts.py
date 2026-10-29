@@ -39,8 +39,8 @@ class TestConfigContracts:
 
     def test_all_canonical_configs_validate(self) -> None:
         """Verifies all YAML files in configs/ parse cleanly against LarisConfig."""
-        yaml_files = list(CONFIGS_DIR.glob("*.yaml"))
-        assert len(yaml_files) >= 3, "Expected at least 3 canonical YAML configs"
+        yaml_files = list(CONFIGS_DIR.rglob("*.yaml"))
+        assert len(yaml_files) >= 4, "Expected at least 4 canonical YAML configs"
 
         for yaml_path in yaml_files:
             cfg = load_config(yaml_path)

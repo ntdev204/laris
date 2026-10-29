@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from dataclasses import asdict
 from typing import Optional, Sequence
 
@@ -29,10 +30,7 @@ from laris.corpus.acquisition.sources.core_corpora import (
 )
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="LARIS dataset acquisition and verification runner"
-    )
+def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--only",
         nargs="+",
@@ -46,10 +44,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default=CC100_DEFAULT_MAX_DOCS,
         help="Maximum cleaned CC-100 Vietnamese documents to stream",
     )
-    args = parser.parse_args(argv)
+
+
+def run(args: argparse.Namespace) -> int:
     unknown = [d for d in (args.only or []) if d not in EXPANSION_ACQUIRERS]
     if unknown:
-        parser.error(f"unknown dataset id(s): {', '.join(unknown)}")
+        print(f"[ERROR] unknown dataset id(s): {', '.join(unknown)}", file=sys.stderr)
+        return 2
 
     def run_expansion(dataset_id: str) -> DatasetEntry:
         if dataset_id == "CC100-VI-CLEAN":
@@ -116,3 +117,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("NO MODEL TRAINING WAS RUN.")
     print("============================================================")
     return 0
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="LARIS dataset acquisition runner")
+    add_arguments(parser)
+    return run(parser.parse_args(argv))

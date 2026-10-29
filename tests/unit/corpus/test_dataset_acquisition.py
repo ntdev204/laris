@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = REPO_ROOT / "data"
 MANIFEST_PATH = DATA_DIR / "acquisition_manifest.json"
 

@@ -27,8 +27,8 @@ from laris.corpus.partition import (
     verify_split_leakage,
 )
 from laris.corpus.pipeline import (
-    Layer0Pipeline,
-    Layer0PipelineOutput,
+    CorpusIngestionOutput,
+    CorpusIngestionPipeline,
     RawDocumentInput,
 )
 from laris.corpus.schemas import (
@@ -111,9 +111,9 @@ __all__ = [
     "DEFAULT_PARTITION_SEED",
     "PARTITION_ALGORITHM",
     "PARTITION_SPEC_VERSION",
-    "Layer0Pipeline",
+    "CorpusIngestionPipeline",
     "RawDocumentInput",
-    "Layer0PipelineOutput",
+    "CorpusIngestionOutput",
     "MANIFEST_FILE_NAME",
     "SPLIT_MANIFEST_FILE_NAME",
     "SPLIT_FILE_NAMES",

@@ -1,4 +1,4 @@
-"""Unit and contract tests for real Stage 1 optimization loop and streaming Parquet DataLoader.
+"""Unit and contract tests for real optimization loop and streaming Parquet DataLoader.
 
 Verifies:
 - LanguageEncoderTrainer genuine forward, autograd backward, and optimizer.step() weight updates
@@ -201,7 +201,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
         self.assertIsInstance(batch.labels["mlm_labels"], torch.Tensor)
 
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
-    def test_stage1_trainer_genuine_pytorch_optimization(self) -> None:
+    def test_trainer_genuine_pytorch_optimization(self) -> None:
         """Verifies trainer executes forward, backward, autograd, and optimizer update."""
         cfg = LanguageEncoderConfig(
             d_model=384,
@@ -258,8 +258,8 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
             )
 
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
-    def test_stage1_trainer_all_tasks_gradient_flow(self) -> None:
-        """Verifies gradient calculation across all 5 Stage 1 multi-task objectives."""
+    def test_trainer_all_tasks_gradient_flow(self) -> None:
+        """Verifies gradient calculation across all 5 multi-task objectives."""
         cfg = LanguageEncoderConfig(
             d_model=384,
             num_layers=2,
@@ -294,7 +294,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
                 self.assertEqual(snapshot.task_type, task)
 
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
-    def test_stage1_trainer_gradient_accumulation(self) -> None:
+    def test_trainer_gradient_accumulation(self) -> None:
         """Verifies optimizer steps only after grad_accum_steps batches."""
         cfg = LanguageEncoderConfig(
             d_model=384,

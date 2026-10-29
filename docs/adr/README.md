@@ -39,3 +39,4 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 | [ADR-006](file:///home/thientn204/laris/docs/adr/ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing | ACCEPTED | 2026-10-15 | Layer 8, Layer 9 |
 | [ADR-007](file:///home/thientn204/laris/docs/adr/ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
 | [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
+| [ADR-013](docs/adr/ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI | ACCEPTED | 2026-10-29 | System-Wide |

@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from laris.core.errors import DataLeakageError, ModuleContractViolationError
-from laris.corpus.pipeline import Layer0Pipeline
+from laris.corpus.pipeline import CorpusIngestionPipeline
 from laris.corpus.schemas import DatasetSplit
 from laris.language.schemas import (
     TokenizerTrainingInputSpec,
@@ -49,7 +49,7 @@ def test_vocabulary_contract_from_file_missing_raises(tmp_path: Path) -> None:
 def test_tokenizer_training_spec_manifest_validation_success() -> None:
     """Verifies valid TRAIN document IDs pass manifest validation."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
 
     train_doc_ids = [
@@ -69,7 +69,7 @@ def test_tokenizer_training_spec_manifest_validation_success() -> None:
 def test_tokenizer_training_spec_manifest_validation_catches_leakage() -> None:
     """Verifies that including a VAL or TEST document ID raises DataLeakageError."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
 
     val_doc_ids = [
@@ -95,7 +95,7 @@ def test_tokenizer_training_spec_manifest_validation_catches_leakage() -> None:
 def test_tokenizer_training_spec_manifest_validation_unknown_doc_id() -> None:
     """Verifies that a document ID not present in manifest raises ModuleContractViolationError."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
 
     spec = TokenizerTrainingInputSpec(

@@ -36,7 +36,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def test_contract_109m_parameter_count_formula() -> None:
-    """Contract: Model 1 encoder parameters must equal 109,561,856 under canonical config."""
+    """Contract: Language encoder parameters must equal 109,561,856 under canonical config."""
     config = LanguageEncoderConfig(
         vocab_size=32000,
         d_model=768,

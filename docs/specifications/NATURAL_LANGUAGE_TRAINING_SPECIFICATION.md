@@ -219,7 +219,7 @@ Advancement from Stage 1 (Natural Language Foundation) to Stage 2 (Scientific Sp
 
 ## 6. Training Run Metadata & Artifact Contract (#19 Alignment)
 
-In strict adherence to [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and Issue #19 / `src/laris/language/artifacts.py`:
+In strict adherence to [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and Issue #19 / `src/laris/language/training/artifacts.py`:
 
 ### 6.1. Immutable Serialization Requirements
 Every training run must emit a cryptographically sealed `LanguageArtifactBundle` containing:
@@ -259,9 +259,9 @@ In strict accordance with Issue #214 Section F and repository governance, eleven
 | **2** | M1 data exit gate met or gaps explicitly recorded | **PASS** | 5,106,491 records acquired across 14 datasets verified in `data/acquisition_manifest.json`. Stage 2/3 gaps recorded. |
 | **3** | Manifest reconciled against actual disk artifacts with license evidence | **PASS** | 14 acquired datasets verified on disk; byte counts, schemas, and SHA-256 checksums match manifest; all open licenses verified. |
 | **4** | English/Vietnamese and task families counted separately without inflation | **PASS** | Disaggregated ledgers established: EN (3,782,210 records) and VI (1,324,281 records) across 7 distinct task units. |
-| **5** | Leakage-safe splits and evaluation isolation evidenced | **READY** | Streaming Parquet partitioner for Wikipedia, Quora, and QA implemented in `src/laris/corpus/splits/` and CLI `scripts/partition_datasets.py` (Issue #232, #234). Multi-worker parallel processing optimized for 14 cores. |
-| **6** | Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **READY** | Tokenizer training pipeline code, Wikipedia train-only extraction, SentencePiece 32k BPE runner, and authorization gate implemented in `src/laris/language/tokenizer_trainer.py` and CLI `scripts/train_tokenizer.py` (Issue #232). Ready to fit on physical train shards upon authorization. |
-| **7** | Encoder interfaces & model architecture complete and reviewed | **READY** | Randomly initialized 109.56M/109.76M Transformer encoder architecture, RoPE, additive mask, continuous similarity head, and `PyTorchTransformerEncoder` implemented in `src/laris/language/neural.py`. Ready for training loop integration. |
+| **5** | Leakage-safe splits and evaluation isolation evidenced | **READY** | Streaming Parquet partitioner for Wikipedia, Quora, and QA implemented in `src/laris/corpus/splits/` and CLI `laris data partition` (Issue #232, #234). Multi-worker parallel processing optimized for 14 cores. |
+| **6** | Tokenizer/vocabulary pipeline & benchmarks complete and reviewed | **READY** | Tokenizer training pipeline code, Wikipedia train-only extraction, SentencePiece 32k BPE runner, and authorization gate implemented in `src/laris/language/tokenization/trainer.py` and CLI `laris train tokenizer` (Issue #232). Ready to fit on physical train shards upon authorization. |
+| **7** | Encoder interfaces & model architecture complete and reviewed | **READY** | Randomly initialized 109.56M/109.76M Transformer encoder architecture, RoPE, additive mask, continuous similarity head, and `PyTorchTransformerEncoder` implemented in `src/laris/language/encoder/transformer.py`. Ready for training loop integration. |
 | **8** | Reproducibility / artifact lifecycle complete and reviewed | **PASS** | `LanguageArtifactBundle`, `LanguageArtifactManager`, and `LanguageTrainingRunManifest` tested and merged in PR #132, #133. Complete for schema and lifecycle management. |
 | **9** | Architecture, curriculum, objectives, metrics, and budget specified | **PASS** | Formally specified in this document (`DOC-SPEC-TRAIN-001`). |
 | **10** | Relevant dependencies, test suite, and CI checks pass | **PASS** | 1018 pytest unit/contract/integration tests pass; `scripts/validate_docs.py` passes; `ruff` and `mypy` pass with 0 errors across 90 source files. |

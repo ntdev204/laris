@@ -54,7 +54,7 @@ class RawDocumentInput:
 
 
 @dataclass(frozen=True)
-class Layer0PipelineOutput:
+class CorpusIngestionOutput:
     """Immutable result payload of the executed Layer 0 ingestion pipeline."""
 
     unique_items: List[ValidatedCorpusItem]
@@ -65,7 +65,7 @@ class Layer0PipelineOutput:
     split_manifest: SplitManifest
 
 
-class Layer0Pipeline:
+class CorpusIngestionPipeline:
     """Configurable, deterministic end-to-end ingestion pipeline for Layer 0."""
 
     def __init__(
@@ -91,7 +91,7 @@ class Layer0Pipeline:
         raw_documents: List[RawDocumentInput],
         manifest_id: str = "manifest-m1-e2e",
         created_at: str = "2026-10-15T00:00:00Z",
-    ) -> Layer0PipelineOutput:
+    ) -> CorpusIngestionOutput:
         """Executes the full Layer 0 ingestion, normalization, dedup, and partition flow."""
         validated_raw_items: List[Tuple[RawDocumentInput, ValidatedCorpusItem]] = []
         quarantined: List[Tuple[RawDocumentInput, str]] = []
@@ -167,7 +167,7 @@ class Layer0Pipeline:
             created_at=created_at,
         )
 
-        return Layer0PipelineOutput(
+        return CorpusIngestionOutput(
             unique_items=final_unique_items,
             partitioned_items=partitioned,
             duplicates=duplicates,

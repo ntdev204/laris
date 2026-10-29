@@ -14,7 +14,7 @@ from laris.language.schemas import SpecialTokenConfig
 from laris.language.tokenization.trainer import TokenizerTrainerConfig, TokenizerTrainingPipeline
 from laris.language.training.dataloader import StreamingParquetMultiTaskDataLoader
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_split(task_dir: Path, name: str, table: pa.Table) -> None:
