@@ -11,6 +11,7 @@ Provides:
 - STRICT PROHIBITION: Any training step or gradient update raises TrainingExecutionProhibitedError
 """
 
+import functools
 import hashlib
 import json
 import math
@@ -678,6 +679,26 @@ try:
             """Barrier preventing unauthorized model training or weight updates."""
             assert_training_authorized("PyTorch neural model backpropagation and weight updates")
 
+    @functools.lru_cache(maxsize=16)
+    def _rope_tables(seq_len: int, head_dim: int, device: str) -> Tuple[Any, Any]:
+        """cos/sin tables (1, 1, S, head_dim) matching the split-half layout of `_apply_rope`."""
+        freqs = 1.0 / (10000.0 ** (torch.arange(0, head_dim, 2, device=device).float() / head_dim))
+        angles = torch.arange(seq_len, device=device).float()[:, None] * freqs[None, :]
+        cos = torch.cat([angles.cos(), angles.cos()], dim=-1)[None, None]
+        sin = torch.cat([angles.sin(), angles.sin()], dim=-1)[None, None]
+        return cos, sin
+
+    def _rotate_half(x: torch.Tensor) -> torch.Tensor:
+        half = x.shape[-1] // 2
+        return torch.cat((-x[..., half:], x[..., :half]), dim=-1)
+
+    def _apply_rope_torch(x: torch.Tensor) -> torch.Tensor:
+        """Rotary position embedding on a (B, H, S, head_dim) tensor, computed in fp32."""
+        cos, sin = _rope_tables(x.shape[-2], x.shape[-1], str(x.device))
+        xf = x.float()
+        rotated: torch.Tensor = (xf * cos + _rotate_half(xf) * sin).to(x.dtype)
+        return rotated
+
     class _PyTorchRMSNorm(nn.Module):  # type: ignore[misc]
         def __init__(self, dim: int, eps: float = 1e-6) -> None:
             super().__init__()
@@ -716,6 +737,7 @@ try:
             q = self.q_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
             k = self.k_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
             v = self.v_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
+            q, k = _apply_rope_torch(q), _apply_rope_torch(k)
 
             if hasattr(F, "scaled_dot_product_attention"):
                 if attention_mask is not None:

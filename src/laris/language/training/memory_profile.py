@@ -80,7 +80,7 @@ def profile_training_memory(
             outputs = model(
                 token_ids, attention_mask=attention_mask, training_pass=with_training_step
             )
-            loss = trainer._compute_torch_loss(task, outputs, batch.labels)
+            loss = trainer._compute_torch_loss(task, outputs, batch.labels, attention_mask)
         if with_training_step:
             scaled = loss / trainer.grad_accum_steps
             if trainer.scaler is not None:  # fp16: the optimizer step unscales these gradients

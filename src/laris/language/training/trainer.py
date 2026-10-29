@@ -202,7 +202,7 @@ class LanguageEncoderTrainer:
                     import bitsandbytes as bnb  # type: ignore[import-not-found]
 
                     self.optimizer = bnb.optim.AdamW8bit(
-                        self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
+                        self._parameter_groups(), lr=learning_rate, weight_decay=weight_decay
                     )
                 except Exception as exc:
                     warnings.warn(
@@ -212,11 +212,11 @@ class LanguageEncoderTrainer:
                         stacklevel=2,
                     )
                     self.optimizer = torch.optim.AdamW(
-                        self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
+                        self._parameter_groups(), lr=learning_rate, weight_decay=weight_decay
                     )
             else:
                 self.optimizer = torch.optim.AdamW(
-                    self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
+                    self._parameter_groups(), lr=learning_rate, weight_decay=weight_decay
                 )
         else:
             self.optimizer = None
@@ -243,6 +243,20 @@ class LanguageEncoderTrainer:
                     "Injected optimizer is not bound to the model's parameters; construct it "
                     "after the model has been moved to its target device."
                 )
+
+    def _parameter_groups(self) -> List[Dict[str, Any]]:
+        """Weight decay on weight matrices only; norm gains, biases and embeddings stay free."""
+        decay: List[Any] = []
+        no_decay: List[Any] = []
+        for name, prm in self.model.named_parameters():
+            if not prm.requires_grad:
+                continue
+            exempt = prm.ndim < 2 or name.startswith("token_embeddings")
+            (no_decay if exempt else decay).append(prm)
+        groups = [{"params": decay, "weight_decay": self.weight_decay}]
+        if no_decay:
+            groups.append({"params": no_decay, "weight_decay": 0.0})
+        return groups
 
     def _autocast(self) -> Any:
         """Autocast context for the configured precision (no-op for fp32)."""
@@ -311,7 +325,9 @@ class LanguageEncoderTrainer:
                         token_ids, attention_mask = self._to_device(batch)
                         with self._autocast():
                             outputs = self.model(token_ids, attention_mask=attention_mask)
-                            loss = self._compute_torch_loss(task, outputs, batch.labels)
+                            loss = self._compute_torch_loss(
+                                task, outputs, batch.labels, attention_mask
+                            )
                         losses.append(float(loss.float().item()))
                     results[task] = float(np.mean(losses))
         finally:
@@ -324,8 +340,12 @@ class LanguageEncoderTrainer:
         task_type: str,
         outputs: Dict[str, Any],
         labels: Dict[str, Any],
+        attention_mask: Optional[Any] = None,
     ) -> Any:
-        """Computes loss tensor using PyTorch autograd loss functions."""
+        """Computes loss tensor using PyTorch autograd loss functions.
+
+        `attention_mask` keeps padded positions out of the QA span softmax.
+        """
         weights = self.loss_calculator.weights
         if task_type == "mlm":
             logits = outputs["mlm_logits"]
@@ -335,6 +355,8 @@ class LanguageEncoderTrainer:
             else:
                 targets = targets.to(self.device)
             vocab_size = logits.size(-1)
+            if not bool((targets != -100).any()):
+                return logits.sum() * 0.0  # nothing masked: zero loss, not a NaN mean over nothing
             ce = F.cross_entropy(logits.view(-1, vocab_size), targets.view(-1), ignore_index=-100)
             return ce * weights.lambda_mlm
 
@@ -373,8 +395,12 @@ class LanguageEncoderTrainer:
 
         elif task_type == "qa":
             qa_logits = outputs["qa_logits"]
-            start_logits = qa_logits[:, :, 0]
-            end_logits = qa_logits[:, :, 1]
+            start_logits = qa_logits[:, :, 0].float()
+            end_logits = qa_logits[:, :, 1].float()
+            if attention_mask is not None:
+                keep = attention_mask.to(qa_logits.device) == 1
+                start_logits = start_logits.masked_fill(~keep, -1e4)
+                end_logits = end_logits.masked_fill(~keep, -1e4)
             start_targets = labels["qa_start_positions"]
             end_targets = labels["qa_end_positions"]
             if not isinstance(start_targets, torch.Tensor):
@@ -454,7 +480,9 @@ class LanguageEncoderTrainer:
 
             with self._autocast():
                 outputs = self.model(token_ids, attention_mask=attention_mask, training_pass=True)
-                loss = self._compute_torch_loss(task_type, outputs, batch.labels)
+                loss = self._compute_torch_loss(
+                    task_type, outputs, batch.labels, attention_mask
+                )
             loss_value = float(loss.detach().float().item())
 
             # Scaled backward pass; gradients accumulate across micro-batches (and tasks)
