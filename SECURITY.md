@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a security problem. Report it privately to the repository owner through GitHub's "Report a vulnerability" (Security tab) or by email to the maintainer listed in the repository profile. Include the affected commit, a description and reproduction steps. Expect an acknowledgement within 7 days.
+Do not open a public issue for a security problem. Use GitHub private vulnerability reporting: open the repository's **Security** tab and choose **Report a vulnerability**. Include the affected commit, a description and reproduction steps. Expect an acknowledgement within 7 days.
 
 ## Scope
 
