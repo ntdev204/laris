@@ -54,6 +54,7 @@ def test_dataset_entries_valid(manifest_data):
             assert k in d, f"Dataset {d.get('dataset_id')} missing key '{k}'"
         assert d["license_status"] in [
             "APPROVED_FOR_ACQUISITION",
+            "APPROVED_BY_OWNER",
             "NEEDS_LICENSE_REVIEW",
             "BLOCKED",
             "REJECTED",
