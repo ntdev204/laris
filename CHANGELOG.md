@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-30
+
 ### Changed
 - **Training no longer computes on padding or unused heads (Issue #301):** on the real train data the mean sequence is 28% of 1024 tokens for MLM, 50% for QA and 3-6% for NLI/paraphrase/similarity, yet every batch was padded to 1024 and every micro-batch computed the full (batch, 1024, 32000) MLM logits even for other tasks (a compact run took 1.12 s per optimizer step, 31 h for 100k steps, GPU at 99%). The model now computes only the head of the task being trained, and for MLM only at the masked positions; training and validation batches are trimmed to their longest real sequence (multiple of 8) and similar lengths are grouped inside a pool of 8 batches. The loss is unchanged (tests compare padded vs trimmed and full vs masked-only heads). Profiling keeps full-length batches so it still reports the worst case. Measured forward-only on the GPU with real data and an identical task sequence: 198 ms to 40 ms per micro-batch; the backward pass was not measured.
 
