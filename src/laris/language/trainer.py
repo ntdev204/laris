@@ -8,6 +8,7 @@ Adheres to:
 - Mandatory stop condition: Strict authorization gate (assert_training_authorized)
 """
 
+import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -177,6 +178,9 @@ class Stage1LanguageTrainer:
         else:
             self.device = "cpu"
 
+        if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
+            self.model.to(self.device)
+
         # Optimizer initialization
         if optimizer is not None:
             self.optimizer = optimizer
@@ -188,7 +192,13 @@ class Stage1LanguageTrainer:
                     self.optimizer = bnb.optim.AdamW8bit(
                         self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
                     )
-                except Exception:
+                except Exception as exc:
+                    warnings.warn(
+                        f"8-bit AdamW unavailable ({exc}); falling back to torch AdamW. "
+                        "Optimizer memory is ~4x higher than the 8-bit estimate.",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     self.optimizer = torch.optim.AdamW(
                         self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
                     )
@@ -200,6 +210,17 @@ class Stage1LanguageTrainer:
             self.optimizer = None
 
         self.scheduler = scheduler
+
+        if optimizer is not None and TORCH_AVAILABLE and isinstance(self.model, nn.Module):
+            model_param_ids = {id(prm) for prm in self.model.parameters()}
+            optimizer_param_ids = {
+                id(prm) for group in optimizer.param_groups for prm in group["params"]
+            }
+            if not optimizer_param_ids <= model_param_ids:
+                raise ValueError(
+                    "Injected optimizer is not bound to the model's parameters; construct it "
+                    "after the model has been moved to its target device."
+                )
 
     def _compute_torch_loss(
         self,

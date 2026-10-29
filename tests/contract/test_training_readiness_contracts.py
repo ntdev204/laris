@@ -8,6 +8,7 @@ Enforces:
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -84,16 +85,17 @@ def test_training_readiness_hardware_budget_formula() -> None:
 
 
 def test_mandatory_stop_condition_no_trained_weights() -> None:
-    """Enforces repository invariant: NO neural weights or trained checkpoints exist in repo."""
-    prohibited_extensions = {".pt", ".bin", ".safetensors", ".gguf", ".ckpt", ".h5"}
+    """Enforces repository invariant: NO neural weights or checkpoints are tracked in git.
 
-    for ext in prohibited_extensions:
-        found_files = list(REPO_ROOT.glob(f"**/*{ext}"))
-        model_weights = [
-            f for f in found_files
-            if "laris-env" not in f.parts and ".git" not in f.parts
-        ]
-        assert len(model_weights) == 0, f"Found unauthorized model weight file: {model_weights}"
+    Only version-controlled files are inspected: virtualenvs (e.g. torch ships `.pt` test
+    files) and git-ignored run outputs under `artifacts/` are outside the repository content.
+    """
+    prohibited_extensions = {".pt", ".pth", ".bin", ".safetensors", ".gguf", ".ckpt", ".h5"}
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    model_weights = [f for f in tracked if Path(f).suffix in prohibited_extensions]
+    assert model_weights == [], f"Found unauthorized model weight file: {model_weights}"
 
 
 def test_readiness_gate_taxonomy_and_contract() -> None:

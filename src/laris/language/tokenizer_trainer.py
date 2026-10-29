@@ -324,6 +324,7 @@ class TokenizerTrainingPipeline:
         special = self.config.special_tokens
 
         user_defined_symbols = [
+            special.mask_token,
             special.math_token,
             special.greek_token,
             special.unit_token,

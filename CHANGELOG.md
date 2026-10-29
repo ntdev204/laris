@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Training data integrity (Issue #246):**
+  - `StreamingParquetMultiTaskDataLoader` reads only the configured split (`split="train"` by default); val/test shards are never mixed into training.
+  - Extractive QA labels now come from the real gold answer offsets (unanswerable or truncated answers point to `[CLS]`) instead of a fixed position.
+  - Fallback tokenizer uses CRC32 so token ids are stable across processes; `scripts/train_stage1.py` now requires `--tokenizer-model` and a vocab match.
+  - No silent synthetic-data fallback (`fallback_to_synthetic=False` by default); unreadable shards are logged and dropped and cannot hang the stream.
+  - Trainer moves the model to its device; falling back from 8-bit AdamW emits a `RuntimeWarning`.
+  - SentencePiece args reserve `[MASK]` as id 4, matching the special-token contract (previously id 4 was `[MATH]`).
+  - CI installs CPU PyTorch so neural tests run instead of being skipped.
+
 ### Added
 - **Bilingual expansion dataset acquisition (Issue #244):**
   - Automated, resumable acquisition for `VINLI`, `VISTS`, `HOTPOTQA`, `FEVER`, `UIT-VIQUAD-V2` and streamed `CC100-VI-CLEAN` (2.7M documents), plus `VI-PAWS` recorded as `BLOCKED` (no Vietnamese PAWS-X exists). `scripts/acquire_datasets.py --only DATASET_ID` merges into the existing manifest.

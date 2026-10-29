@@ -214,7 +214,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
         model = PyTorchTransformerEncoder(cfg)
 
         # Snapshot initial weight of first layer query projection
-        initial_weight = model.layers[0].q_proj.weight.clone().detach()
+        initial_weight = model.layers[0].q_proj.weight.clone().detach().cpu()
 
         loader = StreamingParquetMultiTaskDataLoader(
             data_dir=self.data_dir,
@@ -249,7 +249,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
             self.assertEqual(snapshot.task_type, "mlm")
 
             # Check that weights were actually updated by optimizer.step()
-            current_weight = model.layers[0].q_proj.weight.detach()
+            current_weight = model.layers[0].q_proj.weight.detach().cpu()
             weight_diff = torch.norm(current_weight - initial_weight).item()
             self.assertGreater(
                 weight_diff,
@@ -305,7 +305,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
             vocab_size=500,
         )
         model = PyTorchTransformerEncoder(cfg)
-        initial_weight = model.layers[0].q_proj.weight.clone().detach()
+        initial_weight = model.layers[0].q_proj.weight.clone().detach().cpu()
 
         loader = SyntheticMultiTaskDataLoader(vocab_size=500, seq_len=32, batch_size=2)
         batch1 = loader.generate_batch(task_type="mlm")
@@ -323,12 +323,12 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
         with temporary_training_authorization(True):
             # Step 1: accumulated, weights should NOT have updated yet
             trainer.execute_training_step(batch1)
-            weight_after_step1 = model.layers[0].q_proj.weight.clone().detach()
+            weight_after_step1 = model.layers[0].q_proj.weight.clone().detach().cpu()
             self.assertTrue(torch.allclose(initial_weight, weight_after_step1))
 
             # Step 2: accumulation limit reached, optimizer steps, weights MUST update
             trainer.execute_training_step(batch2)
-            weight_after_step2 = model.layers[0].q_proj.weight.detach()
+            weight_after_step2 = model.layers[0].q_proj.weight.detach().cpu()
             self.assertFalse(torch.allclose(initial_weight, weight_after_step2))
 
 

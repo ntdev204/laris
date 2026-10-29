@@ -98,6 +98,12 @@ def parse_args() -> argparse.Namespace:
         help="Directory containing processed Parquet datasets (default: data/processed)",
     )
     parser.add_argument(
+        "--tokenizer-model",
+        type=str,
+        default=None,
+        help="Path to the fitted SentencePiece .model file (required for training)",
+    )
+    parser.add_argument(
         "--steps",
         type=int,
         default=1000,
@@ -197,14 +203,38 @@ def main() -> int:
     assert_training_authorized("Stage 1 neural model pretraining")
     print("\n[TRAINING AUTHORIZED] Initializing Stage 1 training engine...")
 
-    # Initialize Streaming Parquet DataLoader
+    if not args.tokenizer_model or not Path(args.tokenizer_model).is_file():
+        print(
+            "[ERROR] --tokenizer-model must point to a fitted SentencePiece .model file. "
+            "Fit one with scripts/train_tokenizer.py first."
+        )
+        return 1
+    try:
+        import sentencepiece as spm
+    except ImportError:
+        print("[ERROR] sentencepiece is required: pip install -e '.[training]'")
+        return 1
+    tokenizer = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    if tokenizer.get_piece_size() != config.vocab_size:
+        print(
+            f"[ERROR] Tokenizer vocab {tokenizer.get_piece_size()} != "
+            f"model vocab {config.vocab_size}"
+        )
+        return 1
+
+    # Initialize Streaming Parquet DataLoader (train split only, no synthetic fallback)
     loader = StreamingParquetMultiTaskDataLoader(
         data_dir=args.data_dir,
+        tokenizer=tokenizer,
+        fallback_to_synthetic=False,
         vocab_size=config.vocab_size,
         seq_len=args.max_seq_len,
         batch_size=args.micro_batch_size,
         return_tensors="pt" if TORCH_AVAILABLE else "np",
     )
+
+    for task_name, shard_paths in sorted(loader.task_paths.items()):
+        print(f"Data shards [{loader.split}] {task_name:<11}: {len(shard_paths)}")
 
     # Initialize Model
     if TORCH_AVAILABLE:
