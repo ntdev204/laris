@@ -135,7 +135,11 @@ def execute_physical_partitioning(
         ("STSB", "stsb", partition_stsb_physical),
     ):
         if wanted(dataset_id, raw_name):
-            results.append(partition(raw_path / raw_name, proc_path / raw_name).to_dict())
+            results.append(
+                partition(
+                    raw_path / raw_name, proc_path / raw_name, max_records=max_records
+                ).to_dict()
+            )
     if wanted("VINLI", "vinli"):
         results.append(
             partition_vinli_physical(raw_path / "vinli", proc_path / "vinli").to_dict()

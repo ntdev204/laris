@@ -111,3 +111,26 @@ def test_partial_run_merges_into_existing_manifest(tmp_path: Path) -> None:
 
     rerun = execute_physical_partitioning(raw, out, datasets=["STSB"])
     assert sorted(d["dataset_id"] for d in rerun["partitioned_datasets"]) == ["ALL-NLI", "STSB"]
+
+
+def test_max_records_caps_every_new_partitioner(tmp_path: Path) -> None:
+    raw, out = tmp_path / "raw", tmp_path / "processed"
+    _write(
+        raw / "all_nli" / "train-00000-of-00001.parquet",
+        {
+            "premise": [f"p{i}" for i in range(10)],
+            "hypothesis": ["h"] * 10,
+            "label": [0] * 10,
+        },
+    )
+    for name in ("dev", "test"):
+        _write(
+            raw / "all_nli" / f"{name}-00000-of-00001.parquet",
+            {
+                "premise": [f"{name}{i}" for i in range(10)],
+                "hypothesis": ["h"] * 10,
+                "label": [1] * 10,
+            },
+        )
+    summary = execute_physical_partitioning(raw, out, datasets=["ALL-NLI"], max_records=3)
+    assert summary["partitioned_datasets"][0]["counts"] == {"train": 3, "val": 3, "test": 3}

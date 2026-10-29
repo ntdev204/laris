@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Callable, Dict, List, Sequence, Set, Union
+from typing import Callable, Dict, List, Optional, Sequence, Set, Union
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -52,13 +52,17 @@ def _assemble(
     rows_by_split: Dict[DatasetSplit, List[Row]],
     schema: pa.Schema,
     key: KeyFn,
+    max_records: Optional[int] = None,
 ) -> PhysicalSplitResult:
-    """Keeps official splits; drops train rows whose key also occurs in val/test."""
+    """Keeps official splits; drops train rows whose key also occurs in val/test.
+
+    `max_records` caps the rows kept per split (smoke tests and debugging).
+    """
     held_out: Set[bytes] = set()
     tables: Dict[DatasetSplit, pa.Table] = {}
     for split in (DatasetSplit.TEST, DatasetSplit.VAL, DatasetSplit.TRAIN):
         kept: List[Row] = []
-        for row in rows_by_split[split]:
+        for row in rows_by_split[split][:max_records]:
             digests = key(row)
             if split == DatasetSplit.TRAIN and any(d in held_out for d in digests):
                 continue
@@ -83,7 +87,9 @@ def _nli_rows(raw: List[Row]) -> List[Row]:
 
 
 def partition_all_nli_physical(
-    raw_dir: Union[str, Path], output_dir: Union[str, Path], dataset_id: str = "ALL-NLI"
+    raw_dir: Union[str, Path], output_dir: Union[str, Path],
+    dataset_id: str = "ALL-NLI",
+    max_records: Optional[int] = None,
 ) -> PhysicalSplitResult:
     """SNLI + MultiNLI with integer labels mapped to names; unlabeled (-1) rows dropped."""
     raw = Path(raw_dir)
@@ -93,11 +99,14 @@ def partition_all_nli_physical(
         DatasetSplit.TEST: "test-00000-of-00001.parquet",
     }
     rows = {split: _nli_rows(_read(raw / name)) for split, name in files.items()}
-    return _assemble(dataset_id, output_dir, rows, NLI_SCHEMA, _pair_key("premise", "hypothesis"))
+    key = _pair_key("premise", "hypothesis")
+    return _assemble(dataset_id, output_dir, rows, NLI_SCHEMA, key, max_records)
 
 
 def partition_anli_physical(
-    raw_dir: Union[str, Path], output_dir: Union[str, Path], dataset_id: str = "ANLI"
+    raw_dir: Union[str, Path], output_dir: Union[str, Path],
+    dataset_id: str = "ANLI",
+    max_records: Optional[int] = None,
 ) -> PhysicalSplitResult:
     """Adversarial NLI rounds R1-R3 merged under the official train/dev/test names."""
     root = Path(raw_dir) / "anli_v0.1"
@@ -118,11 +127,14 @@ def partition_anli_physical(
                             }
                         )
         rows[split] = collected
-    return _assemble(dataset_id, output_dir, rows, NLI_SCHEMA, _pair_key("premise", "hypothesis"))
+    key = _pair_key("premise", "hypothesis")
+    return _assemble(dataset_id, output_dir, rows, NLI_SCHEMA, key, max_records)
 
 
 def partition_paws_physical(
-    raw_dir: Union[str, Path], output_dir: Union[str, Path], dataset_id: str = "PAWS-WIKI"
+    raw_dir: Union[str, Path], output_dir: Union[str, Path],
+    dataset_id: str = "PAWS-WIKI",
+    max_records: Optional[int] = None,
 ) -> PhysicalSplitResult:
     """PAWS-Wiki; a train pair sharing either sentence with val/test is removed."""
     raw = Path(raw_dir)
@@ -132,13 +144,14 @@ def partition_paws_physical(
         DatasetSplit.TEST: "test-00000-of-00001.parquet",
     }
     rows = {split: _read(raw / name) for split, name in files.items()}
-    return _assemble(
-        dataset_id, output_dir, rows, PAWS_SCHEMA, _sentence_keys("sentence1", "sentence2")
-    )
+    key = _sentence_keys("sentence1", "sentence2")
+    return _assemble(dataset_id, output_dir, rows, PAWS_SCHEMA, key, max_records)
 
 
 def partition_stsb_physical(
-    raw_dir: Union[str, Path], output_dir: Union[str, Path], dataset_id: str = "STSB"
+    raw_dir: Union[str, Path], output_dir: Union[str, Path],
+    dataset_id: str = "STSB",
+    max_records: Optional[int] = None,
 ) -> PhysicalSplitResult:
     """STS-B with scores already in [0, 1]; a train pair also in val/test is removed."""
     raw = Path(raw_dir)
@@ -148,6 +161,5 @@ def partition_stsb_physical(
         DatasetSplit.TEST: "test-00000-of-00001.parquet",
     }
     rows = {split: _read(raw / name) for split, name in files.items()}
-    return _assemble(
-        dataset_id, output_dir, rows, STSB_SCHEMA, _pair_key("sentence1", "sentence2")
-    )
+    key = _pair_key("sentence1", "sentence2")
+    return _assemble(dataset_id, output_dir, rows, STSB_SCHEMA, key, max_records)
