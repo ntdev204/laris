@@ -11,7 +11,6 @@ from laris.corpus.acquisition.common import (
     RAW_DIR,
     DatasetEntry,
     _acquire_remote_files,
-    _blocked_entry,
     _finalize_entry,
     _record_files,
     count_jsonl_lines,
@@ -228,23 +227,3 @@ def acquire_viquad_v2() -> DatasetEntry:
         ),
     )
 
-
-def record_vi_paws_status() -> DatasetEntry:
-    """Vi-PAWS does not exist; PAWS-X covers de/en/es/fr/ja/ko/zh only."""
-    print("\n--- Recording Vi-PAWS status (no public source) ---")
-    return _blocked_entry(
-        dataset_id="VI-PAWS",
-        name="Vietnamese Paraphrase Adversaries (Vi-PAWS)",
-        version="N/A",
-        source_url="https://huggingface.co/datasets/google-research-datasets/paws-x",
-        license_name="N/A (PAWS-X: license 'other')",
-        language="Vietnamese",
-        sample_unit="Adversarial Sentence Pair",
-        expected="~600,000 pairs (unsupported by any public release)",
-        storage="data/raw/vi_paws",
-        notes=(
-            "PAWS-X ships de/en/es/fr/ja/ko/zh only; no public Vietnamese PAWS found on "
-            "Hugging Face. Machine-translating PAWS-Wiki would be a new derived dataset "
-            "and requires owner approval."
-        ),
-    )

@@ -133,26 +133,15 @@ def audit_dataset_inventory(
         elif ds_id in ("WIKIPEDIA-EN", "WIKIPEDIA-EN-BOUNDED", "WIKIPEDIA-VI"):
             split_usability = "UNPARTITIONED_RAW_DUMP"
             blocker = "Monolithic Parquet shards require deterministic article hash partitioning."
-        elif ds_id in ("SQUAD", "UIT-VIQUAD"):
+        elif ds_id == "SQUAD":
             split_usability = "TEST_SET_PRIVATE_HELD_OUT"
             blocker = (
                 "Test split is private/unreleased; dev set requires title/context-grouped "
                 "sub-split."
             )
-        elif ds_id == "PUBLAYNET-MINI":
-            split_usability = "LAYOUT_ANNOTATION_ONLY_NO_IMAGES"
-            blocker = (
-                "Bounding boxes only; no raw page bitmaps or OCR transcription pairs present."
-            )
-        elif ds_id == "DOCLAYNET-BOUNDED":
-            split_usability = "LOADER_SCRIPT_ONLY"
-            blocker = "Contains Python loader script only (zero data rows)."
         elif ds_id in ("S2ORC-STEM", "LARIS-GOLD", "NATURAL-QUESTIONS"):
             split_usability = "PENDING_ACQUISITION"
             blocker = "Planned for subsequent stage; 0 files on disk."
-        elif ds_id == "VI-PAWS":
-            split_usability = "PENDING_ACQUISITION"
-            blocker = "No public Vietnamese PAWS release exists (PAWS-X excludes Vietnamese)."
         elif ds_id == "CC100-VI-CLEAN":
             split_usability = "UNPARTITIONED_RAW_DUMP"
             blocker = (

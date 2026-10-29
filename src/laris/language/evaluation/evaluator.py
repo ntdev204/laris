@@ -27,7 +27,7 @@ DATASET_LANGUAGE = {
     "wikipedia_en": "en", "all_nli": "en", "anli": "en", "quora": "en", "paws": "en",
     "quora_duplicates": "en", "stsb": "en", "squad": "en", "hotpotqa": "en", "fever": "en",
     "wikipedia_vi": "vi", "cc100_vi_clean": "vi", "vinli": "vi", "vists": "vi",
-    "viquad": "vi", "viquad_v2": "vi",
+    "viquad_v2": "vi",
 }  # fmt: skip
 PRIMARY_METRIC = {
     "mlm": "masked_accuracy", "nli": "macro_f1", "paraphrase": "auc",

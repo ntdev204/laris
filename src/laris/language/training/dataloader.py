@@ -31,7 +31,7 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
     "nli": ["all_nli", "anli", "vinli", "fever", "nli"],
     "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
     "similarity": ["stsb", "vists", "similarity"],
-    "qa": ["squad", "viquad", "viquad_v2", "hotpotqa", "qa"],
+    "qa": ["squad", "viquad_v2", "hotpotqa", "qa"],
 }
 
 

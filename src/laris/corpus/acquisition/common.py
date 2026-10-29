@@ -1,7 +1,6 @@
 """Shared dataclasses, hashing, download and manifest-entry helpers for dataset acquisition."""
 
 import hashlib
-import json
 import shutil
 import urllib.request
 from dataclasses import dataclass, field
@@ -95,15 +94,6 @@ def count_jsonl_lines(file_path: Path) -> int:
     return count
 
 
-def count_viquad_questions(file_path: Path) -> int:
-    """Counts questions in a SQuAD/ViQuAD format JSON file."""
-    count = 0
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        for article in data.get("data", []):
-            for paragraph in article.get("paragraphs", []):
-                count += len(paragraph.get("qas", []))
-    return count
 
 
 def count_parquet_rows(file_path: Path) -> int:
