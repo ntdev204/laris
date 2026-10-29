@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Live training display (Issue #291):** `laris train language-encoder` now shows a progress bar with elapsed time, ETA and rate, and a metrics line with the running loss of each task (exponentially smoothed, so single-task micro-batches no longer make it jump), learning rate, gradient norm, GPU memory and the accumulation position. Validation prints as a table with the best step and the early-stopping counter. When output is not a terminal (`nohup`, redirected logs) or `tqdm` is missing it falls back to one plain line per `--log-interval` steps with the ETA. `tqdm` joins the `training` extra.
+
 ### Fixed
 - **Compact sequence length (Issue #288):** `--model-size compact` clamped the model config to 512 tokens even when `--max-seq-len` was larger, while the dataloader used the requested length. Evaluation and inference read the length from the saved config, so a compact model trained at 1024 tokens would have been evaluated and used at 512. `--max-seq-len` now defaults to 1024 for large and 512 for compact and is honored as given.
 
