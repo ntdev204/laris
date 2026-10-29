@@ -151,7 +151,7 @@ def test_evaluator_refuses_training_split(data_dir: Path, checkpoint: Path) -> N
 def _thresholds(tmp_path: Path, margin: float) -> Path:
     config = {
         "tasks": {
-            t: {"metric": m, "baseline": b, "min_margin": margin, "min_absolute": 0.0}
+            t: {"metric": m, "baseline": b, "min_margin": margin, "min_absolute": -1.0}
             for t, m, b in [
                 ("mlm", "masked_accuracy", "unigram_top1"),
                 ("nli", "macro_f1", "majority_class"),
