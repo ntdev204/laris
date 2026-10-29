@@ -10,9 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
-  - "docs/DOCUMENT_LIFECYCLE.md"
-  - "docs/DOCUMENTATION_STANDARD.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
+  - "docs/development/DOCUMENTATION.md"
 decision_references:
   - "ADR-007"
 change_summary: "Formalized document lifecycle management, baseline freeze workflows, and change request procedures."

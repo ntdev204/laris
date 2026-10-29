@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from laris.core.errors import ModuleContractViolationError
-from laris.corpus.pipeline import Layer0Pipeline
+from laris.corpus.pipeline import CorpusIngestionPipeline
 from laris.corpus.schemas import DatasetSplit
 from laris.corpus.storage import (
     MANIFEST_FILE_NAME,
@@ -27,9 +27,9 @@ from tests.fixtures.synthetic_corpus import get_standard_synthetic_corpus
 
 
 def test_processed_directory_export_and_layout(tmp_path: Path) -> None:
-    """Verifies exporting Layer0Pipeline output creates a compliant directory structure."""
+    """Verifies exporting CorpusIngestionPipeline output creates a compliant directory structure."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus, manifest_id="manifest-gate-001")
 
     export_paths = export_processed_corpus(output, tmp_path)
@@ -56,7 +56,7 @@ def test_processed_directory_export_and_layout(tmp_path: Path) -> None:
 def test_processed_directory_tamper_detection(tmp_path: Path) -> None:
     """Verifies that corrupted files or mismatched counts trigger ModuleContractViolationError."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
     export_paths = export_processed_corpus(output, tmp_path)
 
@@ -88,7 +88,7 @@ def test_processed_directory_tamper_detection(tmp_path: Path) -> None:
 def test_processed_directory_split_count_mismatch(tmp_path: Path) -> None:
     """Verifies that split file with count differing from split_manifest raises."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
     export_paths = export_processed_corpus(output, tmp_path)
 
@@ -148,7 +148,7 @@ def test_gitignore_data_directory_rules() -> None:
 def test_m1_exit_gate_comprehensive_verification(tmp_path: Path) -> None:
     """Consolidated end-to-end M1 exit gate verification against all Layer 0 specifications."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus, manifest_id="m1-final-exit-gate")
 
     # M1-Exit-1: License Verification & Quarantine
@@ -216,7 +216,7 @@ def test_storage_edge_cases_and_error_handling(tmp_path: Path) -> None:
 
     # 3. Unauthorized item in split file
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
     export_paths = export_processed_corpus(output, tmp_path)
 
@@ -241,7 +241,7 @@ def test_storage_edge_cases_and_error_handling(tmp_path: Path) -> None:
 def test_storage_split_file_missing_and_mismatches(tmp_path: Path) -> None:
     """Tests missing split file and manifest item count mismatch."""
     corpus = get_standard_synthetic_corpus()
-    pipeline = Layer0Pipeline()
+    pipeline = CorpusIngestionPipeline()
     output = pipeline.execute(corpus)
     export_paths = export_processed_corpus(output, tmp_path)
 

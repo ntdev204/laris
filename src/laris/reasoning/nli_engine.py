@@ -12,7 +12,7 @@ import time
 from typing import Any
 
 from laris.core.errors import InvalidNLIInputError
-from laris.language.encoder import BaseSentenceEncoder
+from laris.language.encoder.sentence_encoder import BaseSentenceEncoder
 from laris.reasoning.nli_schemas import (
     NLILabel,
     NLIOutput,

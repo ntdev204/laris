@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
 decision_references:
@@ -32,7 +32,7 @@ change_summary: "Adopted embedded graph persistence architecture and typed node/
 ## 1. Context and Problem Statement
 Scientific literature analysis in LARIS requires modeling complex, heterogeneous relationships across papers: citations, author networks, experimental methods, evaluated datasets, quantitative results, extracted claims, and acknowledged limitations.
 
-To satisfy the local-first system boundary ([ADR-001](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md)) and epistemic provenance guarantees ([ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)), the graph storage solution must:
+To satisfy the local-first system boundary ([ADR-001](ADR-001-local-first-system-boundary.md)) and epistemic provenance guarantees ([ADR-004](ADR-004-evidence-provenance-first-class.md)), the graph storage solution must:
 1. Require zero external background database server daemons (e.g. no Neo4j, Dgraph, or Memgraph server processes running as separate services).
 2. Maintain strict separation between author-asserted facts and machine-inferred relationships to prevent epistemic conflation.
 3. Support low-latency in-memory subgraph traversal and neighborhood queries while providing durable, ACID-compliant on-disk persistence and version migration.
@@ -80,8 +80,8 @@ To satisfy the local-first system boundary ([ADR-001](file:///home/thientn204/la
 - [x] No external database daemon or service required for execution.
 
 ## 7. Related Documents
-- [IDEA.md](file:///home/thientn204/laris/docs/IDEA.md)
-- [MODULE_CONTRACTS.md](file:///home/thientn204/laris/docs/specifications/MODULE_CONTRACTS.md)
-- [LAYER_ARCHITECTURE.md](file:///home/thientn204/laris/docs/architecture/LAYER_ARCHITECTURE.md)
-- [ADR-001: Local-First System Boundary](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md)
-- [ADR-004: Evidence Provenance First-Class](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)
+- [SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md)
+- [MODULE_CONTRACTS.md](../specifications/MODULE_CONTRACTS.md)
+- [LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md)
+- [ADR-001: Local-First System Boundary](ADR-001-local-first-system-boundary.md)
+- [ADR-004: Evidence Provenance First-Class](ADR-004-evidence-provenance-first-class.md)

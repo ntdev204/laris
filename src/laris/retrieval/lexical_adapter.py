@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from laris.core.errors import ModuleContractViolationError
 from laris.core.schemas import EvidenceCoordinate
-from laris.language.tokenizer import ScientificTokenizer
+from laris.language.tokenization.tokenizer import ScientificTokenizer
 from laris.retrieval.interfaces import BaseRetrievalAdapter
 from laris.retrieval.schemas import (
     RetrievalCandidate,

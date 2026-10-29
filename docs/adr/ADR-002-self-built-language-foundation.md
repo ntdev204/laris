@@ -10,9 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
-  - "docs/research/LANGUAGE_FOUNDATION.md"
-  - "docs/research/LOCAL_MODEL_STRATEGY.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
+  - "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md"
 decision_references:
   - "ADR-002"
 change_summary: "Enforced self-built model foundation principle and prohibited mandatory pretrained LLM dependencies."

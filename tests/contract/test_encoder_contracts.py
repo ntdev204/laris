@@ -18,7 +18,7 @@ from laris.language.schemas import (
 
 
 def test_sentence_encoder_contract_allowed_dimensions() -> None:
-    """Verifies that allowed embedding dimensions (384, 768) are accepted."""
+    """Verifies that allowed embedding dimensions (384, 768, 1024, 1280) are accepted."""
     for dim in ALLOWED_EMBEDDING_DIMENSIONS:
         contract = SentenceEncoderContract(
             model_id="laris-encoder-test",
@@ -32,7 +32,7 @@ def test_sentence_encoder_contract_allowed_dimensions() -> None:
 
 def test_sentence_encoder_contract_invalid_dimension() -> None:
     """Verifies that unapproved dimensions raise EmbeddingDimensionMismatchError."""
-    for invalid_dim in [64, 128, 256, 512, 1024]:
+    for invalid_dim in [64, 128, 256, 512, 2048]:
         with pytest.raises(EmbeddingDimensionMismatchError):
             SentenceEncoderContract(
                 model_id="laris-encoder-test",

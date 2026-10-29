@@ -3,15 +3,14 @@ document_id: "DOC-SPEC-DATA-001"
 title: "LARIS Dataset Inventory, Licensing Matrix & Scalable Sampling Specification"
 document_type: "specification"
 status: "APPROVED"
-version: "1.1.0"
+version: "1.2.1"
 created_at: "2026-10-16"
-updated_at: "2026-10-17"
+updated_at: "2026-10-29"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
-  - "docs/specifications/NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
+  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/research/S2ORC_SUBSET_SELECTION.md"
   - "docs/specifications/LARIS_GOLD_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
@@ -22,7 +21,7 @@ decision_references:
   - "ADR-004"
   - "ADR-007"
   - "ADR-008"
-change_summary: "Reconciled manifest totals, added STS-B / Quora / All-NLI / SQuAD inventory, corrected DocLayNet sample accounting, and established transparent 5M-<20M target gap analysis (Issue #205)."
+change_summary: "Documented which of the 24 datasets are partitioned and why (Issue #264). Added acquisition logic and real sources/licenses for 7 bilingual expansion datasets (ViNLI, ViSTS, Vi-PAWS blocked, CC-100 VI, HotpotQA, FEVER, UIT-ViQuAD2.0); reconciled totals to 8,347,135 records and documented the gap versus the earlier ~16.5M projection (Issue #244)."
 ---
 
 # LARIS Dataset Inventory, Licensing Matrix & Scalable Sampling Specification
@@ -31,7 +30,7 @@ change_summary: "Reconciled manifest totals, added STS-B / Quora / All-NLI / SQu
 
 This specification establishes the authoritative dataset inventory, licensing governance, and sampling framework for the LARIS staged learning pipeline (Milestones M11, Issues #200 and #205 / [M11-DATA-001](https://github.com/ntdev204/laris/issues/200), [M11-DATA-002](https://github.com/ntdev204/laris/issues/205)).
 
-In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and [ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md):
+In accordance with [ADR-002](../adr/ADR-002-self-built-language-foundation.md) and [ADR-004](../adr/ADR-004-evidence-provenance-first-class.md):
 - **Local-first provenance:** All data sources must have verifiable origins, immutable cryptographic digests (SHA-256), and explicit licenses.
 - **English-first with Vietnamese separate:** Vietnamese datasets are budgeted and tracked as an independent curriculum.
 - **OCR scope:** Printed scientific documents only. Handwriting datasets are strictly excluded.
@@ -62,6 +61,13 @@ In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self
 | **S2ORC-STEM** | Semantic Scholar Open Research Corpus (STEM Subset) | [Semantic Scholar API](https://api.semanticscholar.org/datasets/v1/release/latest/dataset/s2orc) | `ODC-BY-1.0` | Open Data Commons with attribution | Stage 2 & 4: STEM Pretraining & Structure | `SKIPPED_TEMPORARILY` |
 | **NATURAL-QUESTIONS** | Google Natural Questions (NQ) | [Google Research NQ](https://ai.google.com/research/NaturalQuestions) | `CC-BY-4.0` | Open redistribution with attribution | Stage 1: General Reading Comprehension | `PROPOSED` |
 | **LARIS-GOLD** | LARIS Epistemic Scientific Research Benchmark | Internal Repository Project Spec | `CC-BY-4.0` | Open project benchmark | Stage 5 & 6: End-to-End Epistemic Evaluation | `PROPOSED` |
+| **VINLI** | Vietnamese Natural Language Inference (ViNLI) | [HF presencesw/vinli_4_label](https://huggingface.co/datasets/presencesw/vinli_4_label) | Not declared by uploader | Research use only; `NEEDS_LICENSE_REVIEW` before any redistribution (upstream `vnlp/vinli` returns 404) | Stage 1: Vietnamese 3-Way NLI & Reasoning | `VERIFIED` (owner-approved) |
+| **VISTS** | Vietnamese Semantic Textual Similarity (ViSTS) | [HF anti-ai/ViSTS](https://huggingface.co/datasets/anti-ai/ViSTS) | `MIT` | Open redistribution with attribution (test suites only; upstream `vnlp/vists` returns 404) | Stage 1: Vietnamese Continuous Similarity | `VERIFIED` |
+| **VI-PAWS** | Vietnamese Paraphrase Adversaries (Vi-PAWS) | [PAWS-X](https://huggingface.co/datasets/google-research-datasets/paws-x) | N/A | No public Vietnamese release: PAWS-X covers de/en/es/fr/ja/ko/zh only | Stage 1: Vietnamese Adversarial Paraphrase | `BLOCKED` |
+| **CC100-VI-CLEAN** | Cleaned CC-100 Vietnamese Web Corpus (bounded stream) | [CC-100](https://data.statmt.org/cc-100/) | Common Crawl Terms of Use (no dataset license) | `NEEDS_LICENSE_REVIEW`; bounded prefix of a 29.5 GB xz stream, NFC-normalized and exact-deduplicated | Stage 1: Clean General Vietnamese Documents | `VERIFIED` (owner-approved) |
+| **HOTPOTQA** | HotpotQA Multi-Hop Reading Comprehension (distractor) | [HF hotpotqa/hotpot_qa](https://huggingface.co/datasets/hotpotqa/hotpot_qa) | `CC-BY-SA-4.0` | Open redistribution with ShareAlike | Stage 1 & 2: Multi-Hop Evidence Reasoning | `VERIFIED` |
+| **FEVER** | Fact Extraction and VERification (FEVER) v1.0 | [FEVER Project](https://fever.ai/dataset/fever.html) | `CC-BY-SA-3.0` | Open redistribution with ShareAlike (Wikipedia-derived; not MIT) | Stage 1 & 2: Fact-Checking & Claim Verification | `VERIFIED` |
+| **UIT-VIQUAD-V2** | UIT-ViQuAD 2.0 (Unanswerable QA) | [HF taidng/UIT-ViQuAD2.0](https://huggingface.co/datasets/taidng/UIT-ViQuAD2.0) | Academic research use (no SPDX license declared) | Non-commercial academic research; `NEEDS_LICENSE_REVIEW` | Stage 1: Vietnamese Unanswerable QA | `VERIFIED` (owner-approved) |
 
 ---
 
@@ -73,36 +79,42 @@ In strict accordance with Issue #205 and Issue #209, LARIS distinguishes between
 3. **Sentences / Text Segments:** CoNLL-U annotated sentences or extracted clean paragraphs.
 4. **Layout Regions / Pages:** Bounding-box annotations or layout-segmented document pages.
 
-### Current Verified Local Summary (Manifest Reconciled & 5M+ Target Satisfied)
-- **Total Local Files Tracked:** 41 verified files across 14 active local directories.
-- **Total Verified Storage:** 4,579,300,002 bytes (~4.58 GB, strictly $< 20\text{ GB}$).
-- **Total Verified Sample Records:** **5,106,491 records** ($\ge 5,000,000$ and strictly $< 20,000,000$).
-  - **Supervised Task Records:** 1,786,061 records
-  - **General Language Clean Documents:** 3,320,430 records
+### Current Local Summary (Manifest Reconciled)
+- **Tracked Datasets:** 24 (VERIFIED 20, BLOCKED 1, SKIPPED_TEMPORARILY 1, PROPOSED 2). Totals count `VERIFIED` + `DOWNLOADED` only.
+- **Total Acquired Storage:** 12,092,268,300 bytes (~12.09 GB, strictly $< 20\text{ GB}$).
+- **Total Acquired Sample Records:** **8,347,135 records** (English 4,229,059; Vietnamese 4,118,076).
+- **License caveat:** `VINLI`, `UIT-VIQUAD-V2` and `CC100-VI-CLEAN` declare no dataset license. Their use was approved by the project owner on 2026-10-29 (`license_status = APPROVED_BY_OWNER`). This is an owner governance decision, not a legal clearance, and is recorded in each manifest entry's notes.
 
 #### Detailed Dataset Breakdown
 - `WIKIPEDIA-EN-BOUNDED`: 2,031,750 clean article documents
+- `CC100-VI-CLEAN`: 2,700,000 clean web documents (streamed, deduplicated, $\ge 200$ chars; bounded subset of the 29.5 GB CC-100 Vietnamese dump)
 - `WIKIPEDIA-VI`: 1,288,680 clean article documents
 - `ALL-NLI`: 981,382 NLI pairs
 - `QUORA-DUPLICATES`: 404,290 paraphrase pairs
+- `FEVER`: 348,997 claims (311,431 train + 37,566 labelled_dev; labelled test is unreleased). Evidence references are resolved to Wikipedia sentences (`evidence_sentences.parquet`, 27,949 of 28,163 referenced sentences found); SUPPORTS/REFUTES claims become entailment/contradiction NLI pairs (train 77,139 / val 4,249 / test 4,120), NOT ENOUGH INFO is dropped
 - `ANLI`: 169,265 adversarial NLI pairs
 - `SQUAD`: 98,169 reading comprehension items
+- `HOTPOTQA`: 97,852 multi-hop QA items (distractor train + validation)
 - `PAWS-WIKI`: 65,401 adversarial paraphrase pairs
+- `UIT-VIQUAD-V2`: 39,569 Vietnamese QA items incl. unanswerable (test answers not public)
 - `UIT-VIQUAD`: 32,278 Vietnamese QA pairs
+- `VINLI`: 30,376 Vietnamese 4-label NLI pairs
+- `VISTS`: 23,850 Vietnamese STS pairs (translated STS12-16, test-only)
 - `UD-EWT-EN`: 16,622 syntax sentences
 - `STSB`: 8,628 semantic similarity pairs
 - `SCIFACT`: 6,592 claim-evidence records
 - `UD-VTB-VI`: 3,323 Vietnamese syntax sentences
 - `PUBLAYNET-MINI`: 110 layout region annotations
-- `DOCLAYNET-BOUNDED`: 1 bounded loader script (reconciled; full 80,863 pages not claimed as downloaded)
+- `DOCLAYNET-BOUNDED`: 1 bounded loader script (full 80,863 pages not claimed as downloaded)
+- `VI-PAWS`: `BLOCKED`, 0 records (PAWS-X has no Vietnamese; no fabricated data)
 
 ### 3.1 Disaggregated Language Ledgers
-- **English Track:** **3,782,064 records**
-  - Supervised Task Records: 1,750,314 records (`ALL-NLI`, `QUORA-DUPLICATES`, `ANLI`, `SQUAD`, `PAWS-WIKI`, `UD-EWT-EN`, `STSB`, `SCIFACT`)
+- **English Track:** **4,229,059 records**
+  - Supervised Task Records: 2,197,198 (`ALL-NLI`, `QUORA-DUPLICATES`, `FEVER`, `ANLI`, `SQUAD`, `HOTPOTQA`, `PAWS-WIKI`, `UD-EWT-EN`, `STSB`, `SCIFACT`); plus 111 layout records
   - Clean General Documents: 2,031,750 articles (`WIKIPEDIA-EN-BOUNDED`)
-- **Vietnamese Track:** **1,324,281 records**
-  - Supervised Task Records: 35,601 records (`UIT-VIQUAD`, `UD-VTB-VI`)
-  - Clean General Documents: 1,288,680 articles (`WIKIPEDIA-VI`)
+- **Vietnamese Track:** **4,118,076 records**
+  - Supervised Task Records: 129,396 (`UIT-VIQUAD`, `UIT-VIQUAD-V2`, `VINLI`, `VISTS`, `UD-VTB-VI`)
+  - Clean General Documents: 3,988,680 (`WIKIPEDIA-VI` 1,288,680 + `CC100-VI-CLEAN` 2,700,000)
 - **Multimodal Document Layout Track:** **111 layout records** (`PUBLAYNET-MINI`, `DOCLAYNET-BOUNDED`)
 - **LARIS Gold Benchmark Track:** **0 records** (formal specification `DOC-SPEC-DATA-002`; zero fabricated annotations)
 
@@ -117,15 +129,30 @@ Semantic similarity is explicitly represented and acquired via the **STS-B (Sema
 
 ---
 
+## 4.1 Partition Coverage (`laris data partition`)
+
+Of the 24 tracked datasets, 14 feed the five language-encoder tasks and are partitioned into leakage-safe train/val/test splits: WIKIPEDIA-VI, WIKIPEDIA-EN-BOUNDED, CC100-VI-CLEAN (mlm); ALL-NLI, ANLI, VINLI, FEVER (nli); QUORA-DUPLICATES, PAWS-WIKI (paraphrase); STSB, VISTS (similarity); SQUAD, UIT-VIQUAD-V2, HOTPOTQA (qa). The other ten are intentionally not partitioned:
+
+| Dataset | Reason |
+| :--- | :--- |
+| S2ORC-STEM | Not downloaded: the official API requires a key (HTTP 401). |
+| LARIS-GOLD | Not built: no pre-existing benchmark; status `PROPOSED`. |
+| NATURAL-QUESTIONS | Not downloaded: the full dump is 42 GB; status `PROPOSED`. |
+| VI-PAWS | `BLOCKED`: no public Vietnamese PAWS release. |
+| UIT-VIQUAD | Superseded: UIT-VIQUAD-V2 is a superset over the same contexts. |
+| PUBLAYNET-MINI, DOCLAYNET-BOUNDED | Layout data (110 records and one loader script), outside the language-encoder tasks. |
+| UD-EWT-EN, UD-VTB-VI, SCIFACT | Data present, but no current task reads syntax treebanks or claim verification; partition when a consumer exists. |
+
+---
+
 ## 5. Target Scale Compliance & Storage Bounds (Issue #209)
 
-### 5.1 Hard Requirements Verification
-- **Target Scale:** $\ge 5,000,000$ and strictly $< 20,000,000$ verified records.
-- **Achieved Total:** **5,106,491 records** ($\Delta = +106,491$ above 5M threshold).
-- **Disk Storage Bound:** Strictly $< 20\text{ GB}$.
-- **Achieved Storage:** **4,579,300,002 bytes (~4.58 GB)**.
-- **License Compliance:** 100% of acquired datasets have verified open licenses (`CC-BY-SA-4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA-Permissive-1.0/2.0`).
-- **Integrity Verification:** Every shard validated with SHA-256 checksums and parquet footer row counts.
+### 5.1 Requirements Verification
+- **Target Scale:** $\ge 5,000,000$ and strictly $< 20,000,000$ records: **met** (8,347,135).
+- **Earlier ~16.5M projection:** **not reachable with real public sources.** Published sizes of the sources are far below the projected figures (ViNLI ~30k not 1M; UIT-ViQuAD2.0 ~39.6k not 600k; FEVER 349k not 1.5M; HotpotQA 98k not 700k). No synthetic or fabricated records are added to close the gap.
+- **Disk Storage Bound:** Strictly $< 20\text{ GB}$; achieved **12.09 GB**.
+- **License Compliance:** `VERIFIED` datasets have approved licenses (open licenses, or owner-approved as noted above) (`CC-BY-SA-3.0/4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA-Permissive-1.0/2.0`, `MIT`). `DOWNLOADED` datasets await license review (see above).
+- **Integrity Verification:** Every file recorded with SHA-256; CC-100 shards are written atomically and resumable.
 
 ---
 

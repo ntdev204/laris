@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/architecture/DATA_FLOW.md"
   - "docs/architecture/MODEL_ROUTING.md"
@@ -31,9 +31,9 @@ change_summary: "Comprehensive architectural topology, component boundaries, and
 The **Local Agentic Research Intelligence System (LARIS)** is a modular, local-first artificial intelligence platform designed to ingest scientific literature, comprehend complex domain-specific discourse, maintain an auditable evidence graph, synthesize findings across multiple papers, and identify verifiable research gaps.
 
 Unlike standard RAG pipelines or conversational wrappers around monolithic foundation LLMs, LARIS is constructed on three non-negotiable architectural tenets:
-1. **Self-Built Language & Specialist Foundations:** Core language representations, NLI, discourse parsers, and claim extractors are trained in-house without mandatory dependencies on external pretrained foundation models ([ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md)).
-2. **Three-Tier Selective Execution:** Memory and computation are conserved through strict separation of *Selective Loading*, *Selective Computation*, and *Selective Information Access* ([ADR-005](file:///home/thientn204/laris/docs/adr/ADR-005-selective-loading-computation-access.md)).
-3. **Evidence-First Epistemic Provenance:** Every claim, conclusion, and research gap is anchored to immutable source coordinates down to page and sentence spans ([ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)).
+1. **Self-Built Language & Specialist Foundations:** Core language representations, NLI, discourse parsers, and claim extractors are trained in-house without mandatory dependencies on external pretrained foundation models ([ADR-002](../adr/ADR-002-self-built-language-foundation.md)).
+2. **Three-Tier Selective Execution:** Memory and computation are conserved through strict separation of *Selective Loading*, *Selective Computation*, and *Selective Information Access* ([ADR-005](../adr/ADR-005-selective-loading-computation-access.md)).
+3. **Evidence-First Epistemic Provenance:** Every claim, conclusion, and research gap is anchored to immutable source coordinates down to page and sentence spans ([ADR-004](../adr/ADR-004-evidence-provenance-first-class.md)).
 
 ---
 

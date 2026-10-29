@@ -82,7 +82,9 @@ def validate_all_docs():
     doc_ids = {}
     validated_count = 0
 
-    md_files = sorted(DOCS_DIR.rglob("*.md"))
+    md_files = sorted(
+        f for f in DOCS_DIR.rglob("*.md") if "archive" not in f.relative_to(DOCS_DIR).parts
+    )
     if not md_files:
         errors.append("No markdown documentation files found in docs/")
         return errors, warnings, 0
@@ -130,13 +132,13 @@ def validate_all_docs():
                 f"Allowed: {sorted(ALLOWED_STATUSES)}"
             )
 
-        # Check that no document is prematurely marked FROZEN without formal log
+        # Check that no document is prematurely marked FROZEN without freeze register
         if status == "FROZEN":
-            decision_log = (DOCS_DIR / "DECISION_LOG.md").read_text(encoding="utf-8")
+            decision_log = (DOCS_DIR / "adr" / "README.md").read_text(encoding="utf-8")
             if doc_id not in decision_log:
                 errors.append(
                     f"[{rel_path}] Document marked FROZEN but lacks "
-                    f"corresponding entry in docs/DECISION_LOG.md"
+                    f"corresponding entry in docs/adr/README.md"
                 )
 
         # Check related_documents existence

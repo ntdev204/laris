@@ -272,7 +272,7 @@ class TestLineageNavigationAndAuditIntegration:
 
         # Register Initial Run
         run_v1 = RunVersionRecord(
-            run_id="RUN-STAGE1",
+            run_id="RUN-TRAINING-1",
             corpus_version_id="CORP-V1",
             query_statement="Translational assessment of K-724",
             config_hash=hashlib.sha256("config-default".encode("utf-8")).hexdigest(),
@@ -284,7 +284,7 @@ class TestLineageNavigationAndAuditIntegration:
         rep_rec_v1 = ReportVersionRecord(
             version_id="REP-001-V1",
             report_id=report_v1.report_id,
-            run_id="RUN-STAGE1",
+            run_id="RUN-TRAINING-1",
             parent_version_id=None,
             content_sha256=hashlib.sha256(report_v1.render_markdown().encode("utf-8")).hexdigest(),
             created_at_iso="2026-10-16T08:00:00Z",
@@ -351,7 +351,7 @@ class TestLineageNavigationAndAuditIntegration:
         # Full provenance trace from leaf back to corpus and run
         trace = reg.trace_full_lineage("REP-001-V3-BRANCH-A")
         assert trace["report_version"]["version_id"] == "REP-001-V3-BRANCH-A"
-        assert trace["execution_run"]["run_id"] == "RUN-STAGE1"
+        assert trace["execution_run"]["run_id"] == "RUN-TRAINING-1"
         assert trace["corpus_version"]["corpus_version_id"] == "CORP-V1"
         assert trace["ancestor_version_count"] == 2
         assert trace["ancestor_chain"] == [

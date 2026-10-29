@@ -10,8 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/DOCUMENTATION_STANDARD.md"
-  - "docs/DOCUMENT_LIFECYCLE.md"
+  - "docs/development/DOCUMENTATION.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
   - "docs/testing/TEST_STRATEGY.md"

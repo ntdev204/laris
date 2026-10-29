@@ -18,7 +18,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
 )
 from laris.core.schemas import EvidenceCoordinate
-from laris.language.encoder import BaseSentenceEncoder
+from laris.language.encoder.sentence_encoder import BaseSentenceEncoder
 from laris.retrieval.interfaces import BaseRetrievalAdapter
 from laris.retrieval.schemas import (
     RetrievalCandidate,

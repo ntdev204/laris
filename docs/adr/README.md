@@ -10,8 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
-  - "docs/DECISION_LOG.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
+  - "docs/adr/README.md"
 decision_references: []
 change_summary: "Index of all Architecture Decision Records (ADRs) in LARIS."
 ---
@@ -31,11 +31,20 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 
 | ADR ID | Title | Status | Date Accepted | Primary Layer Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| [ADR-001](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md) | Local-First System Boundary & Zero Mandatory Cloud Inference | ACCEPTED | 2026-10-15 | System-Wide, Layer 9 |
-| [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) | Self-Built Language Foundation & Exclusion of Mandatory Pretrained LLMs | ACCEPTED | 2026-10-15 | Layer 0, Layer 1 |
-| [ADR-003](file:///home/thientn204/laris/docs/adr/ADR-003-language-first-not-pdf-first.md) | Language-First and Document-Agnostic Processing over PDF-First Design | ACCEPTED | 2026-10-15 | Layer 1, Layer 2, Layer 4 |
-| [ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens | ACCEPTED | 2026-10-15 | Layer 3, Layer 5, Layer 7 |
-| [ADR-005](file:///home/thientn204/laris/docs/adr/ADR-005-selective-loading-computation-access.md) | Strict Separation of Selective Loading, Computation, and Information Access | ACCEPTED | 2026-10-15 | Layer 6, Layer 9 |
-| [ADR-006](file:///home/thientn204/laris/docs/adr/ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing | ACCEPTED | 2026-10-15 | Layer 8, Layer 9 |
-| [ADR-007](file:///home/thientn204/laris/docs/adr/ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
-| [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
+| [ADR-001](ADR-001-local-first-system-boundary.md) | Local-First System Boundary & Zero Mandatory Cloud Inference | ACCEPTED | 2026-10-15 | System-Wide, Layer 9 |
+| [ADR-002](ADR-002-self-built-language-foundation.md) | Self-Built Language Foundation & Exclusion of Mandatory Pretrained LLMs | ACCEPTED | 2026-10-15 | Layer 0, Layer 1 |
+| [ADR-003](ADR-003-language-first-not-pdf-first.md) | Language-First and Document-Agnostic Processing over PDF-First Design | ACCEPTED | 2026-10-15 | Layer 1, Layer 2, Layer 4 |
+| [ADR-004](ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens | ACCEPTED | 2026-10-15 | Layer 3, Layer 5, Layer 7 |
+| [ADR-005](ADR-005-selective-loading-computation-access.md) | Strict Separation of Selective Loading, Computation, and Information Access | ACCEPTED | 2026-10-15 | Layer 6, Layer 9 |
+| [ADR-006](ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing | ACCEPTED | 2026-10-15 | Layer 8, Layer 9 |
+| [ADR-007](ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
+| [ADR-008](ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
+| [ADR-009](ADR-009-embedded-evidence-graph-storage.md) | Embedded Evidence Graph Storage | ACCEPTED | see file | Layer 5 |
+| [ADR-010](ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval with RRF | ACCEPTED | see file | Layer 6 |
+| [ADR-011](ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Refactoring | ACCEPTED | see file | System-Wide |
+| [ADR-012](ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies | ACCEPTED | see file | System-Wide |
+| [ADR-013](ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI | ACCEPTED | 2026-10-29 | System-Wide |
+
+## Freeze Register
+
+Documents with `status: FROZEN` MUST be listed here by `document_id` with the freeze date and release tag (enforced by `scripts/validate_docs.py`). No document is frozen at present.

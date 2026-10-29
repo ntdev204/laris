@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/testing/TEST_STRATEGY.md"
   - "docs/testing/BENCHMARK_PROTOCOL.md"
 decision_references:
@@ -69,5 +69,5 @@ LARIS requires an uncompromising policy where capability claims must be supporte
 | Scarcity of labeled scientific NLI and gap data | High | Curate clean synthetic and semi-automated datasets using strict programmatic rules and expert validation in Layer 0. |
 
 ## 6. Validation and Acceptance Criteria
-- [ ] Milestone exit criteria in `docs/plans/MILESTONES.md` include explicit quantitative benchmark score gates.
+- [ ] Milestone exit criteria in `docs/plans/ROADMAP.md` include explicit quantitative benchmark score gates.
 - [ ] Capability assertions in documentation reference explicit experiment reports in `artifacts/benchmark_reports/`.

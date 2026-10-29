@@ -14,11 +14,11 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from laris.core.errors import HardwareBudgetExceededError
 
-ALLOWED_EMBEDDING_DIMENSIONS: Set[int] = {384, 768}
+ALLOWED_EMBEDDING_DIMENSIONS: Set[int] = {384, 768, 1024, 1280}
 
 
 class ModelConfig(BaseModel):
-    """Configuration for Model 1 Natural Language Foundation Transformer encoder."""
+    """Configuration for the language Transformer encoder."""
 
     vocab_size: int = Field(default=32000, ge=100, le=128000)
     max_sequence_length: int = Field(default=512, ge=16, le=4096)

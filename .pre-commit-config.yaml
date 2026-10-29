@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: laris-env/bin/python -m ruff check
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy
+        entry: laris-env/bin/python -m mypy src
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: validate-docs
+        name: validate docs
+        entry: laris-env/bin/python scripts/validate_docs.py
+        language: system
+        pass_filenames: false
+        files: ^docs/

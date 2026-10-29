@@ -1,0 +1,4 @@
+# Default owner for everything; narrow by path as maintainers are added.
+*                 @ntdev204
+/docs/adr/        @ntdev204
+/src/laris/core/authorization.py  @ntdev204

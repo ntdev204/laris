@@ -1,42 +1,20 @@
 """Layer 1: Language Foundation & Core Representations."""
 
-from laris.language.artifacts import (
-    BUNDLE_MANIFEST_FILENAME,
-    LanguageArtifactBundle,
-    LanguageArtifactManager,
-)
-from laris.language.bm25 import (
-    BM25Document,
-    BM25RetrievalBaseline,
-    BM25SearchResult,
-)
-from laris.language.config_handoff import (
+from laris.language.encoder.config_handoff import (
     TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG,
     ParameterClassification,
     get_immutable_invariants,
     get_tunable_parameters,
 )
-from laris.language.encoder import (
+from laris.language.encoder.sentence_encoder import (
     BaseSentenceEncoder,
     CompactSentenceEncoder,
 )
-from laris.language.neural import (
+from laris.language.encoder.transformer import (
+    LanguageEncoderConfig,
+    LargeLanguageEncoderConfig,
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
-    TransformerEncoderConfig,
-)
-from laris.language.profiling import (
-    BoundedProfilingResult,
-    BoundedResourceProfiler,
-    HardwareEnvironmentProfile,
-)
-from laris.language.retrieval_benchmark import (
-    RETRIEVAL_BENCHMARK_VERSION,
-    STEM_RETRIEVAL_CORPUS,
-    STEM_RETRIEVAL_QUERIES,
-    RetrievalBenchmarkItem,
-    RetrievalComparisonReport,
-    evaluate_retrieval_comparison,
 )
 from laris.language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
@@ -65,25 +43,59 @@ from laris.language.schemas import (
     VocabularyContract,
     compute_vocabulary_sha256,
 )
-from laris.language.tokenizer import (
+from laris.language.tokenization.tokenizer import (
     ScientificTokenizer,
     StemFertilityReport,
     STEMSubwordTokenizer,
     compute_token_fertility,
     evaluate_stem_fertility,
 )
-from laris.language.tokenizer_trainer import (
+from laris.language.tokenization.trainer import (
     VIETNAMESE_DIACRITIC_FIXTURES,
     TokenizerReadinessState,
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
     extract_clean_wikipedia_corpus,
 )
+from laris.language.training.artifacts import (
+    BUNDLE_MANIFEST_FILENAME,
+    LanguageArtifactBundle,
+    LanguageArtifactManager,
+)
+from laris.language.training.dataloader import (
+    StreamingParquetMultiTaskDataLoader,
+    SyntheticMultiTaskDataLoader,
+    TaskBatch,
+    TemperatureSamplingScheduler,
+    create_multi_task_sampler,
+)
+from laris.language.training.profiling import (
+    BoundedProfilingResult,
+    BoundedResourceProfiler,
+    HardwareEnvironmentProfile,
+    compute_analytical_training_memory_gb,
+)
+from laris.language.training.trainer import (
+    LanguageEncoderTrainer,
+    MultiTaskLossCalculator,
+    MultiTaskLossWeights,
+    TrainingMetricsSnapshot,
+)
 
 __all__ = [
     "ModelReadinessState",
-    "TransformerEncoderConfig",
+    "LanguageEncoderConfig",
+    "LargeLanguageEncoderConfig",
     "RandomlyInitializedTransformerEncoder",
+    "SyntheticMultiTaskDataLoader",
+    "StreamingParquetMultiTaskDataLoader",
+    "TaskBatch",
+    "TemperatureSamplingScheduler",
+    "create_multi_task_sampler",
+    "MultiTaskLossWeights",
+    "LanguageEncoderTrainer",
+    "MultiTaskLossCalculator",
+    "TrainingMetricsSnapshot",
     "TokenizerReadinessState",
     "TokenizerTrainerConfig",
     "TokenizerTrainingPipeline",
@@ -91,6 +103,7 @@ __all__ = [
     "VIETNAMESE_DIACRITIC_FIXTURES",
     "BoundedProfilingResult",
     "BoundedResourceProfiler",
+    "compute_analytical_training_memory_gb",
     "HardwareEnvironmentProfile",
     "ParameterClassification",
     "TUNABLE_PARAMETER_INVENTORY_FOR_CONFIG",
@@ -128,15 +141,6 @@ __all__ = [
     "EncoderCheckpointMetadata",
     "SentenceEmbeddingOutput",
     "EmbeddingBatchOutput",
-    "BM25Document",
-    "BM25SearchResult",
-    "BM25RetrievalBaseline",
-    "RETRIEVAL_BENCHMARK_VERSION",
-    "STEM_RETRIEVAL_CORPUS",
-    "STEM_RETRIEVAL_QUERIES",
-    "RetrievalBenchmarkItem",
-    "RetrievalComparisonReport",
-    "evaluate_retrieval_comparison",
     "BUNDLE_MANIFEST_FILENAME",
     "LanguageArtifactBundle",
     "LanguageArtifactManager",

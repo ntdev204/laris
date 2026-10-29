@@ -10,8 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/DOCUMENTATION_STANDARD.md"
-  - "docs/IDEA.md"
+  - "docs/development/DOCUMENTATION.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
 decision_references: []
 change_summary: "Canonical definitions of architectural, epistemic, and machine learning terms."
 ---

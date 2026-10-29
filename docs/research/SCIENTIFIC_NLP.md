@@ -10,8 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
-  - "docs/research/SEMANTIC_INTELLIGENCE.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
+  - "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md"
   - "docs/architecture/EVIDENCE_AND_PROVENANCE.md"
 decision_references:
   - "ADR-003"
@@ -23,7 +23,7 @@ change_summary: "Research strategy for fine-grained discourse unit extraction an
 
 ## 1. Discourse Unit Extraction Beyond Section Headings
 
-Scientific text relies on rhetorical moves rather than section titles to communicate findings. In accordance with [ADR-003](file:///home/thientn204/laris/docs/adr/ADR-003-language-first-not-pdf-first.md), LARIS models scientific discourse using semantic sentence classification:
+Scientific text relies on rhetorical moves rather than section titles to communicate findings. In accordance with [ADR-003](../adr/ADR-003-language-first-not-pdf-first.md), LARIS models scientific discourse using semantic sentence classification:
 
 - **Background / Problem Formulation:** Context and existing paradigms.
 - **Methodology & Protocol:** Concrete experimental setup, hardware, parameters, and algorithms.

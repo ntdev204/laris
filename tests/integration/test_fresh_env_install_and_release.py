@@ -216,7 +216,7 @@ class TestFreshEnvironmentInstallAndRelease:
 
             project = pyproject_data.get("project", {})
             assert project.get("name") == "laris"
-            assert project.get("version") == "1.0.0"
+            assert project.get("version") == "1.1.0"
             assert project.get("license") == "MIT"
             assert project.get("requires-python") == ">=3.10"
             assert laris.__version__ == project.get("version")
@@ -232,19 +232,6 @@ class TestFreshEnvironmentInstallAndRelease:
             build_system = pyproject_data.get("build-system", {})
             assert "setuptools" in build_system.get("requires", [""])[0]
             assert build_system.get("build-backend") == "setuptools.build_meta"
-
-    def test_release_notes_and_operational_boundaries(self) -> None:
-        """Verifies docs/RELEASE_NOTES.md metadata and mandatory operational boundaries."""
-        release_notes_path = pathlib.Path(__file__).resolve().parents[2] / "docs/RELEASE_NOTES.md"
-        assert release_notes_path.exists(), "docs/RELEASE_NOTES.md must exist"
-
-        content = release_notes_path.read_text(encoding="utf-8")
-        assert "DOC-REL-001" in content
-        assert "v0.1.0-rc1" in content
-        assert "Pure Local-First Execution" in content
-        assert "14.5" in content
-        assert "On-Demand Academic Manuscript Composer" in content
-        assert "Opt-In Manuscript Drafting" in content
 
     def test_end_to_end_report_verification_and_evidence_gate(self) -> None:
         """Verifies end-to-end report generation passing evidence coverage gate with 100%."""
