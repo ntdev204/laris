@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-10-30
+
 ### Fixed
 - **Compact sequence length (Issue #288):** `--model-size compact` clamped the model config to 512 tokens even when `--max-seq-len` was larger, while the dataloader used the requested length. Evaluation and inference read the length from the saved config, so a compact model trained at 1024 tokens would have been evaluated and used at 512. `--max-seq-len` now defaults to 1024 for large and 512 for compact and is honored as given.
 
