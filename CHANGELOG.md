@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-29
+
+### Fixed
+- **Measured GPU profile and paraphrase loss crash (Issue #278):** `laris train language-encoder --profile-only` no longer prints a formula result as "feasible". It builds the real model on the GPU and measures peak memory per task (forward only; with `LARIS_TRAINING_AUTHORIZED=1` also backward, still no optimizer step or weight update), exits non-zero without CUDA, and states that training memory is not certified until backward is measured. The analytical figure is labelled as a formula. The measurement exposed that the paraphrase loss (`binary_cross_entropy`) raised under CUDA bf16 autocast, which would have crashed training at the first paraphrase batch; it now runs in fp32 outside autocast. `scripts/verify_target_server.sh` no longer hard-codes another user's virtualenv path, and the runbook lists the profile as step 5/5b.
+
 ## [1.1.1] - 2026-10-29
 
 ### Removed

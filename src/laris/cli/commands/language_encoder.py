@@ -14,6 +14,7 @@ from laris.config.loader import load_config
 from laris.config.schemas import TrainingConfig
 from laris.core.authorization import (
     assert_training_authorized,
+    is_training_authorized,
 )
 from laris.core.errors import TrainingExecutionProhibitedError
 from laris.language.encoder.transformer import (
@@ -26,9 +27,9 @@ from laris.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
 from laris.language.training.checkpoint import current_git_commit, file_sha256
 from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
-    SyntheticMultiTaskDataLoader,
 )
 from laris.language.training.loop import TrainingRunConfig, run_training
+from laris.language.training.memory_profile import profile_training_memory
 from laris.language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
@@ -37,6 +38,8 @@ from laris.language.training.trainer import (
     MultiTaskLossCalculator,
     MultiTaskLossWeights,
 )
+
+MAX_VRAM_GB = 14.5
 
 
 def seed_everything(seed: int) -> None:
@@ -187,6 +190,79 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
     return TrainingConfig(**merged)
 
 
+def _run_memory_profile(
+    args: argparse.Namespace,
+    config: LanguageEncoderConfig,
+    param_count: int,
+    use_8bit_adam: bool,
+    hyper: TrainingConfig,
+) -> int:
+    """Measures real GPU memory of forward+backward on the target device (no weight update)."""
+    with_backward = is_training_authorized()
+    stage = "forward+backward" if with_backward else "forward only"
+    print(f"\n[PROFILING MODE] Measuring {stage} on the target device "
+          "(no optimizer step, no weight update)...")
+    if not TORCH_AVAILABLE:
+        print("[ERROR] PyTorch is required: pip install -e '.[training]'")
+        return 1
+    import torch
+
+    if not torch.cuda.is_available():
+        print("[ERROR] No CUDA device: GPU memory cannot be measured, so feasibility is unknown.")
+        return 1
+    seed_everything(args.seed)
+    model = PyTorchTransformerEncoder(config).to("cuda")
+    trainer = LanguageEncoderTrainer(
+        model=model,
+        config=config,
+        dataloader=None,
+        use_8bit_adam=use_8bit_adam,
+        learning_rate=hyper.learning_rate,
+        grad_accum_steps=hyper.gradient_accumulation_steps,
+        device="cuda",
+        precision=args.precision,
+    )
+    profile = profile_training_memory(
+        trainer,
+        param_count=param_count,
+        batch_size=args.micro_batch_size,
+        seq_len=args.max_seq_len,
+        vocab_size=config.vocab_size,
+        use_8bit_adam=use_8bit_adam,
+        limit_gb=MAX_VRAM_GB,
+        with_backward=with_backward,
+    )
+    print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
+    for t in profile.tasks:
+        print(
+            f"  after {t.task_type:<11} peak {t.peak_allocated_gb:6.2f} GB, "
+            f"loss {'finite' if t.loss_finite else 'NOT FINITE'}"
+        )
+    if profile.error:
+        print(f"[FAIL] {profile.error}")
+        print("Lower --micro-batch-size or --max-seq-len, then profile again.")
+        return 1
+    print(f"Measured peak ({stage}): {profile.measured_peak_gb:.2f} GB")
+    per_step = profile.seconds_per_micro_batch * hyper.gradient_accumulation_steps
+    print(
+        f"Latency:                   {profile.seconds_per_micro_batch:.2f} s/micro-batch, "
+        f"~{per_step:.1f} s/optimizer step (compute only, excludes data loading)"
+    )
+    if not with_backward:
+        print("[PARTIAL] Training memory is NOT certified: backward and optimizer state were not")
+        print("measured. Gradient computation counts as training; to measure it (still no")
+        print("weight update) the owner must authorize: export LARIS_TRAINING_AUTHORIZED=1")
+        return 0 if profile.fits else 1
+    print(f"+ optimizer state (est.):  {profile.optimizer_state_gb:.2f} GB")
+    print(f"Projected training peak:   {profile.projected_peak_gb:.2f} GB (limit {MAX_VRAM_GB} GB)")
+    if not profile.certified:
+        print("[FAIL] Projected peak exceeds the limit or a loss was not finite.")
+        print("Lower --micro-batch-size (raise --grad-accum-steps to keep the effective batch).")
+        return 1
+    print("[SUCCESS] Measured on this GPU; the configuration fits.")
+    return 0
+
+
 def run(args: argparse.Namespace) -> int:
     hyper = _resolve_hyperparameters(args)
     args.micro_batch_size = hyper.micro_batch_size
@@ -232,30 +308,16 @@ def run(args: argparse.Namespace) -> int:
     print(f"8-bit AdamW Optimizer:     {'ENABLED' if use_8bit_adam else 'DISABLED'}")
     ckpt_enabled = 'ENABLED' if config.gradient_checkpointing else 'DISABLED'
     print(f"Activation Checkpointing:  {ckpt_enabled}")
-    print(f"Analytical Training VRAM:  ~{estimated_vram_gb:.2f} GB (Safety Limit: 14.5 GB)")
+    print(f"Analytical VRAM estimate:  ~{estimated_vram_gb:.2f} GB (formula only; limit 14.5 GB)")
     print("=" * 65)
 
-    if estimated_vram_gb > 14.5:
+    if not args.profile_only and estimated_vram_gb > 14.5:
         print(f"[ERROR] Estimated VRAM {estimated_vram_gb:.2f} GB exceeds safety envelope 14.5 GB!")
         return 1
 
     # 3. Handle Profiling Mode
     if args.profile_only:
-        print("\n[PROFILING MODE] Running bounded forward-pass profiling (Zero Training)...")
-        synthetic_loader = SyntheticMultiTaskDataLoader(
-            vocab_size=config.vocab_size,
-            seq_len=min(args.max_seq_len, 64),
-            batch_size=2,
-        )
-        sample_batch = synthetic_loader.generate_batch()
-        print(
-            f"Generated synthetic batch: task={sample_batch.task_type}, "
-            f"shape={sample_batch.token_ids.shape}"
-        )
-        _ = MultiTaskLossCalculator()
-        print("Loss calculation and tensor contracts verified.")
-        print("[SUCCESS] Bounded profiling complete. Hardware budget is feasible.")
-        return 0
+        return _run_memory_profile(args, config, param_count, use_8bit_adam, hyper)
 
     # 4. Handle Training Mode
     if not args.authorized:
