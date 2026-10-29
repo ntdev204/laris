@@ -23,6 +23,42 @@ logger = logging.getLogger(__name__)
 VALID_SPLITS = {"train", "val", "test"}
 
 
+CLS_ID, SEP_ID, MASK_ID, PAD_ID = 2, 3, 4, 0
+
+# Processed-data directories (under data/processed) that feed each task.
+TASK_DATASET_DIRS: Dict[str, List[str]] = {
+    "mlm": ["wikipedia_en", "wikipedia_vi", "cc100_vi_clean", "mlm"],
+    "nli": ["all_nli", "anli", "vinli", "nli"],
+    "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
+    "similarity": ["stsb", "vists", "similarity"],
+    "qa": ["squad", "viquad", "viquad_v2", "hotpotqa", "qa"],
+}
+
+
+def build_sequence(
+    tok_ids: List[int],
+    second_tok_ids: Optional[List[int]],
+    seq_len: int,
+) -> Tuple[List[int], List[int]]:
+    """[CLS] a [SEP] (b [SEP]) padded to `seq_len`, with its attention mask.
+
+    Shared by training batches and inference so both format inputs identically.
+    """
+    if second_tok_ids is None:
+        trimmed = tok_ids[: max(0, seq_len - 2)]
+        full_seq = [CLS_ID] + trimmed + [SEP_ID]
+    else:
+        max_inner = max(0, seq_len - 3)
+        trimmed1 = tok_ids[: max_inner // 2]
+        trimmed2 = second_tok_ids[: (max_inner - len(trimmed1))]
+        full_seq = [CLS_ID] + trimmed1 + [SEP_ID] + trimmed2 + [SEP_ID]
+    actual_len = len(full_seq)
+    pad_len = max(0, seq_len - actual_len)
+    padded_seq = full_seq[:seq_len] + [PAD_ID] * pad_len
+    attention_mask = [1] * min(actual_len, seq_len) + [0] * pad_len
+    return padded_seq, attention_mask
+
+
 @dataclass(frozen=True)
 class TaskBatch:
     """Canonical batch container for multi-task training and forward verification."""
@@ -264,13 +300,7 @@ class StreamingParquetMultiTaskDataLoader:
         if not self.data_dir.is_dir():
             return
 
-        task_dir_map = {
-            "mlm": ["wikipedia_en", "wikipedia_vi", "cc100_vi_clean", "mlm"],
-            "nli": ["all_nli", "anli", "vinli", "nli"],
-            "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
-            "similarity": ["stsb", "vists", "similarity"],
-            "qa": ["squad", "viquad", "viquad_v2", "hotpotqa", "qa"],
-        }
+        task_dir_map = TASK_DATASET_DIRS
 
         for task, subdirs in task_dir_map.items():
             found: List[Path] = []
@@ -337,27 +367,7 @@ class StreamingParquetMultiTaskDataLoader:
         second_tok_ids: Optional[List[int]] = None,
     ) -> Tuple[List[int], List[int]]:
         """Formats 1 or 2 token sequences with [CLS], [SEP], padding, and attention mask."""
-        cls_id, sep_id, pad_id = 2, 3, 0
-        s = self.seq_len
-
-        if second_tok_ids is None:
-            # Single sequence: [CLS] + toks + [SEP]
-            max_inner = max(0, s - 2)
-            trimmed = tok_ids[:max_inner]
-            full_seq = [cls_id] + trimmed + [sep_id]
-        else:
-            # Pair sequence: [CLS] + toks1 + [SEP] + toks2 + [SEP]
-            max_inner = max(0, s - 3)
-            half = max_inner // 2
-            trimmed1 = tok_ids[:half]
-            trimmed2 = second_tok_ids[: (max_inner - len(trimmed1))]
-            full_seq = [cls_id] + trimmed1 + [sep_id] + trimmed2 + [sep_id]
-
-        actual_len = len(full_seq)
-        pad_len = max(0, s - actual_len)
-        padded_seq = full_seq[:s] + [pad_id] * pad_len
-        attention_mask = [1] * min(actual_len, s) + [0] * pad_len
-        return padded_seq, attention_mask
+        return build_sequence(tok_ids, second_tok_ids, self.seq_len)
 
     def _format_mlm_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
         """Formats records for Masked Language Modeling with 15% dynamic masking."""

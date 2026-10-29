@@ -3,9 +3,9 @@ document_id: "DOC-SPEC-TRAIN-001"
 title: "LARIS Natural Language Foundation Architecture & Curriculum Specification"
 document_type: "specification"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-10-17"
-updated_at: "2026-10-17"
+updated_at: "2026-10-29"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -20,7 +20,7 @@ decision_references:
   - "ADR-003"
   - "ADR-005"
   - "ADR-008"
-change_summary: "Authoritative architectural specification for Model 1 from-scratch Transformer encoder, bilingual curriculum, multi-task loss formulation, hardware budget, and #19 artifact lifecycle."
+change_summary: "Adds the CLI evaluation and inference contract (Section 10). Authoritative architectural specification for Model 1 from-scratch Transformer encoder, bilingual curriculum, multi-task loss formulation, hardware budget, and #19 artifact lifecycle."
 ---
 
 # LARIS Natural Language Foundation Architecture & Curriculum Specification
@@ -274,3 +274,33 @@ In strict accordance with Issue #214 Section F and repository governance, eleven
 In accordance with repository governance:  
 **NO MODEL TRAINING WAS RUN.**  
 **NO TRAINING OF ANY KIND WAS RUN. NO OPTIMIZER STEPS, GRADIENT UPDATES, OR MODEL-WEIGHT UPDATES OCCURRED.**
+
+---
+
+## 10. Post-Training Evaluation and Inference (CLI)
+
+Training is followed immediately by evaluation of the best checkpoint on the held-out **test** split
+(`laris train language-encoder --evaluate-after`, on by default). The same check runs standalone:
+
+```bash
+laris evaluate language-encoder --checkpoint <run>/best --tokenizer-model <spm.model> --split test
+```
+
+| Task | Primary metric | Baseline it must beat | Per-dataset extras |
+| :--- | :--- | :--- | :--- |
+| Masked LM | masked top-1 accuracy | train-split unigram top-1 | perplexity vs unigram perplexity |
+| NLI (3-way) | macro-F1 | majority class from the train split | accuracy |
+| Paraphrase | AUC | random (0.5) | F1, accuracy |
+| Similarity | Spearman | token-set Jaccard overlap | Pearson |
+| Extractive QA | token span F1 | always-"no answer" | exact match |
+
+- Scores are reported per dataset and aggregated per task **and language** (sample-weighted); each
+  task/language group must reach `baseline + min_margin` from `configs/evaluation/language_encoder.yaml`.
+- The command exits `0` when every group passes, `1` when any group is below threshold, `2` on usage
+  or integrity errors. Capability claims require a passing report (ADR-008).
+- Integrity guards: the `train` split is never scored; `data/processed/task_splits_manifest.json` must
+  exist with `leakage_verified` for every dataset; the checkpoint weights digest and the tokenizer
+  digest recorded at training time must match.
+- Evaluation is bounded (`--max-samples` per dataset, default 2000) and deterministic for a seed.
+- Single-example checks: `laris infer fill-mask|nli|paraphrase|similarity|qa|embed` (no training
+  authorization needed; inference only).

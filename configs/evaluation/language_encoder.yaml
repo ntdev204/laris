@@ -1,0 +1,11 @@
+# Acceptance thresholds for `laris evaluate language-encoder` (ADR-008).
+# A task/language group passes when  primary metric >= baseline + min_margin  and
+# primary metric >= min_absolute. Initial margins are deliberately modest; tighten them
+# through a PR that cites measured results.
+version: "1.0.0"
+tasks:
+  mlm:        {metric: masked_accuracy, baseline: unigram_top1,       min_margin: 0.02, min_absolute: 0.0}
+  nli:        {metric: macro_f1,        baseline: majority_class,     min_margin: 0.05, min_absolute: 0.0}
+  paraphrase: {metric: auc,             baseline: random,             min_margin: 0.05, min_absolute: 0.0}
+  similarity: {metric: spearman,        baseline: token_jaccard,      min_margin: 0.0,  min_absolute: 0.0}
+  qa:         {metric: f1,              baseline: no_answer_or_first, min_margin: 0.05, min_absolute: 0.0}
