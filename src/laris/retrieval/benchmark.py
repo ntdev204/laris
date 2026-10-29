@@ -24,10 +24,10 @@ from laris.graph.schemas import (
     EvidenceGraph,
     MethodNode,
 )
-from laris.language.encoder import CompactSentenceEncoder
+from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
 from laris.language.schemas import VocabularyContract
-from laris.language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.tokenizer import ScientificTokenizer
+from laris.language.tokenization.tokenizer import ScientificTokenizer
 from laris.retrieval.dense_adapter import (
     DenseVectorAdapter,
     DenseVectorItem,

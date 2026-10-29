@@ -21,19 +21,19 @@ from laris.core.errors import (
     SequenceLengthExceededError,
     TrainingExecutionProhibitedError,
 )
-from laris.language.neural import (
+from laris.language.encoder.transformer import (
+    LanguageEncoderConfig,
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
-    TransformerEncoderConfig,
 )
 
 
 class TestTransformerEncoderConfig(unittest.TestCase):
-    """Test suite for TransformerEncoderConfig hyperparameter verification."""
+    """Test suite for LanguageEncoderConfig hyperparameter verification."""
 
     def test_parameter_count_formula_exact_109m(self) -> None:
         """Config parameter count must match 109,561,856 according to specification equations."""
-        config = TransformerEncoderConfig(
+        config = LanguageEncoderConfig(
             vocab_size=32000,
             d_model=768,
             num_layers=12,
@@ -46,7 +46,7 @@ class TestTransformerEncoderConfig(unittest.TestCase):
 
     def test_untied_parameter_count(self) -> None:
         """Untied MLM output head adds V * d = 24.58M additional parameters."""
-        config = TransformerEncoderConfig(
+        config = LanguageEncoderConfig(
             vocab_size=32000,
             d_model=768,
             num_layers=12,
@@ -60,21 +60,21 @@ class TestTransformerEncoderConfig(unittest.TestCase):
     def test_invalid_dimension_rejected(self) -> None:
         """Dimensions outside {384, 768} must be rejected."""
         with self.assertRaises(EmbeddingDimensionMismatchError):
-            TransformerEncoderConfig(d_model=512)
+            LanguageEncoderConfig(d_model=512)
 
     def test_invalid_norm_or_activation_rejected(self) -> None:
         """Non-approved normalization or activation types must be rejected."""
         with self.assertRaises(ValueError):
-            TransformerEncoderConfig(norm_type="layernorm")
+            LanguageEncoderConfig(norm_type="layernorm")
         with self.assertRaises(ValueError):
-            TransformerEncoderConfig(activation="relu")
+            LanguageEncoderConfig(activation="relu")
         with self.assertRaises(ValueError):
-            TransformerEncoderConfig(pos_encoding="learned")
+            LanguageEncoderConfig(pos_encoding="learned")
 
 
     def test_parameter_count_breakdown_including_heads(self) -> None:
         """Config must provide exact parameter breakdown for backbone and capability heads."""
-        config = TransformerEncoderConfig(
+        config = LanguageEncoderConfig(
             vocab_size=32000,
             d_model=768,
             num_layers=12,
@@ -98,7 +98,7 @@ class TestTransformerEncoderConfig(unittest.TestCase):
 
     def test_analytical_memory_estimation(self) -> None:
         """Analytical memory estimation must distinguish analytical models from measured RAM."""
-        config = TransformerEncoderConfig(
+        config = LanguageEncoderConfig(
             vocab_size=32000,
             d_model=768,
             num_layers=12,
@@ -120,7 +120,7 @@ class TestRandomlyInitializedTransformerEncoder(unittest.TestCase):
 
     def setUp(self) -> None:
         # Use a compact config for fast unit testing of forward pass mechanics
-        self.config = TransformerEncoderConfig(
+        self.config = LanguageEncoderConfig(
             vocab_size=1000,
             max_sequence_length=64,
             d_model=384,
@@ -232,7 +232,7 @@ class TestRoPEMathematics(unittest.TestCase):
 
     def test_rope_norm_preservation(self) -> None:
         """Rotary rotation is orthogonal and must strictly preserve Euclidean vector norms."""
-        from laris.language.neural import _apply_rope
+        from laris.language.encoder.transformer import _apply_rope
 
         seq_len = 8
         head_dim = 64
@@ -253,7 +253,7 @@ class TestRoPEMathematics(unittest.TestCase):
 
     def test_rope_position_zero_is_identity(self) -> None:
         """At position 0, angles are 0, so rotation must equal identity (q_rot[0] == q[0])."""
-        from laris.language.neural import _apply_rope
+        from laris.language.encoder.transformer import _apply_rope
 
         seq_len = 4
         head_dim = 32

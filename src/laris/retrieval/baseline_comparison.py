@@ -14,11 +14,11 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from laris.core.errors import ModuleContractViolationError
-from laris.language.bm25 import (
+from laris.language.encoder.sentence_encoder import BaseSentenceEncoder
+from laris.retrieval.bm25 import (
     BM25Document,
     BM25RetrievalBaseline,
 )
-from laris.language.encoder import BaseSentenceEncoder
 
 RETRIEVAL_BENCHMARK_VERSION = "1.0.0"
 

@@ -81,7 +81,7 @@ digest = compute_config_hash(cfg)
 ## 6. Consumer Module Integration
 
 Downstream modules ingest configuration via standardized factory methods:
-- `TransformerEncoderConfig.from_config(laris_config)`: Configures the 109.56M parameter neural architecture.
+- `LanguageEncoderConfig.from_config(laris_config)`: Configures the 109.56M parameter neural architecture.
 - `WikipediaArticlePartitioner.from_config(laris_config)`: Ingests data split ratios and partition seeds.
 - `TokenizerTrainerConfig.from_config(laris_config)`: Ingests target vocabulary size and character coverage requirements.
 

@@ -17,13 +17,13 @@ from laris.core.errors import (
     DataLeakageError,
     ModuleContractViolationError,
 )
-from laris.language.retrieval_benchmark import RetrievalComparisonReport
 from laris.language.schemas import (
     EncoderCheckpointMetadata,
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.language.tokenizer import StemFertilityReport
+from laris.language.tokenization.tokenizer import StemFertilityReport
+from laris.retrieval.baseline_comparison import RetrievalComparisonReport
 
 BUNDLE_MANIFEST_FILENAME = "bundle_manifest.json"
 

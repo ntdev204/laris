@@ -25,7 +25,7 @@ from laris.language.schemas import (
     SentenceEmbeddingOutput,
     SentenceEncoderContract,
 )
-from laris.language.tokenizer import ScientificTokenizer
+from laris.language.tokenization.tokenizer import ScientificTokenizer
 
 
 class BaseSentenceEncoder(ABC):

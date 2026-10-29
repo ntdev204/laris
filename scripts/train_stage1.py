@@ -21,22 +21,22 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from laris.core.authorization import (
     assert_training_authorized,
 )
-from laris.language.dataloader import (
+from laris.language.encoder.transformer import (
+    TORCH_AVAILABLE,
+    LanguageEncoderConfig,
+    LargeLanguageEncoderConfig,
+    PyTorchTransformerEncoder,
+)
+from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
 )
-from laris.language.neural import (
-    TORCH_AVAILABLE,
-    PyTorchTransformerEncoder,
-    TransformerEncoder500MConfig,
-    TransformerEncoderConfig,
-)
-from laris.language.profiling import (
+from laris.language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
-from laris.language.trainer import (
-    Stage1LanguageTrainer,
-    Stage1LossCalculator,
+from laris.language.training.trainer import (
+    LanguageEncoderTrainer,
+    MultiTaskLossCalculator,
 )
 
 
@@ -129,13 +129,13 @@ def main() -> int:
 
     # 1. Instantiate Configuration
     if args.model_tier == "500m":
-        config = TransformerEncoder500MConfig(
+        config = LargeLanguageEncoderConfig(
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=True,
         )
     else:
-        config = TransformerEncoderConfig(
+        config = LanguageEncoderConfig(
             max_sequence_length=min(args.max_seq_len, 512),
             precision=args.precision,
             gradient_checkpointing=False,
@@ -186,7 +186,7 @@ def main() -> int:
             f"Generated synthetic batch: task={sample_batch.task_type}, "
             f"shape={sample_batch.token_ids.shape}"
         )
-        _ = Stage1LossCalculator()
+        _ = MultiTaskLossCalculator()
         print("Loss calculation and tensor contracts verified.")
         print("[SUCCESS] Bounded profiling complete. Hardware budget is feasible.")
         return 0
@@ -244,13 +244,13 @@ def main() -> int:
         print(f"Target Compute Device:     {device.upper()}")
         model = PyTorchTransformerEncoder(config).to(device)
     else:
-        from laris.language.neural import RandomlyInitializedTransformerEncoder
+        from laris.language.encoder.transformer import RandomlyInitializedTransformerEncoder
 
         device = "cpu"
         print("Target Compute Device:     CPU (NumPy Reference Model)")
         model = RandomlyInitializedTransformerEncoder(config)
 
-    trainer = Stage1LanguageTrainer(
+    trainer = LanguageEncoderTrainer(
         model=model,
         config=config,
         dataloader=loader,

@@ -60,10 +60,10 @@ echo "=== 5. BOUNDED FORWARD-ONLY SMOKE TEST (NO TRAINING) ==="
 "$PYTHON_BIN" -c '
 import os, sys
 sys.path.insert(0, os.path.abspath("src"))
-from laris.language.neural import TransformerEncoderConfig, RandomlyInitializedTransformerEncoder
-from laris.language.profiling import BoundedResourceProfiler
+from laris.language.encoder.transformer import LanguageEncoderConfig, RandomlyInitializedTransformerEncoder
+from laris.language.training.profiling import BoundedResourceProfiler
 
-cfg = TransformerEncoderConfig(vocab_size=500, max_sequence_length=64, d_model=384, num_layers=2, num_heads=6, d_ff=1536, seed=42)
+cfg = LanguageEncoderConfig(vocab_size=500, max_sequence_length=64, d_model=384, num_layers=2, num_heads=6, d_ff=1536, seed=42)
 model = RandomlyInitializedTransformerEncoder(cfg)
 res = BoundedResourceProfiler.profile_forward_pass(model, batch_size=2, seq_len=32)
 print(f"Forward pass latency: {res.forward_latency_ms:.2f} ms")

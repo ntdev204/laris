@@ -18,7 +18,7 @@ from laris.core.errors import (
     TrainingExecutionProhibitedError,
 )
 from laris.corpus.schemas import DatasetSplit
-from laris.language.tokenizer_trainer import (
+from laris.language.tokenization.trainer import (
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
 )
@@ -105,7 +105,7 @@ class TestTokenizerTrainingPipeline(unittest.TestCase):
 
     def test_tokenizer_readiness_state_and_report(self) -> None:
         """Pipeline must explicitly report PIPELINE_IMPLEMENTED and zero training."""
-        from laris.language.tokenizer_trainer import TokenizerReadinessState
+        from laris.language.tokenization.trainer import TokenizerReadinessState
 
         self.assertEqual(
             self.pipeline.readiness_state, TokenizerReadinessState.PIPELINE_IMPLEMENTED

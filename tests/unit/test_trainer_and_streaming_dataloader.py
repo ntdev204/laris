@@ -1,9 +1,9 @@
 """Unit and contract tests for real Stage 1 optimization loop and streaming Parquet DataLoader.
 
 Verifies:
-- Stage1LanguageTrainer genuine forward, autograd backward, and optimizer.step() weight updates
-- Stage1LanguageTrainer multi-task loss computation across MLM, NLI, Paraphrase, Similarity, QA
-- Stage1LanguageTrainer gradient accumulation steps and clipping
+- LanguageEncoderTrainer genuine forward, autograd backward, and optimizer.step() weight updates
+- LanguageEncoderTrainer multi-task loss computation across MLM, NLI, Paraphrase, Similarity, QA
+- LanguageEncoderTrainer gradient accumulation steps and clipping
 - StreamingParquetMultiTaskDataLoader streaming Parquet reading via PyArrow (RAM <= 250MB)
 - StreamingParquetMultiTaskDataLoader dynamic MLM masking and label construction
 - StreamingParquetMultiTaskDataLoader PyTorch and NumPy tensor output modes
@@ -24,17 +24,17 @@ from laris.core.authorization import (
 from laris.core.errors import (
     TrainingExecutionProhibitedError,
 )
-from laris.language.dataloader import (
+from laris.language.encoder.transformer import (
+    TORCH_AVAILABLE,
+    LanguageEncoderConfig,
+    PyTorchTransformerEncoder,
+)
+from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
 )
-from laris.language.neural import (
-    TORCH_AVAILABLE,
-    PyTorchTransformerEncoder,
-    TransformerEncoderConfig,
-)
-from laris.language.trainer import (
-    Stage1LanguageTrainer,
+from laris.language.training.trainer import (
+    LanguageEncoderTrainer,
 )
 
 if TORCH_AVAILABLE:
@@ -203,7 +203,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
     def test_stage1_trainer_genuine_pytorch_optimization(self) -> None:
         """Verifies trainer executes forward, backward, autograd, and optimizer update."""
-        cfg = TransformerEncoderConfig(
+        cfg = LanguageEncoderConfig(
             d_model=384,
             num_layers=2,
             num_heads=6,
@@ -226,7 +226,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
         batch = loader.generate_batch(task_type="mlm")
 
         # Initialize trainer with grad_accum_steps=1 to force immediate optimizer.step()
-        trainer = Stage1LanguageTrainer(
+        trainer = LanguageEncoderTrainer(
             model=model,
             config=cfg,
             dataloader=loader,
@@ -260,7 +260,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
     def test_stage1_trainer_all_tasks_gradient_flow(self) -> None:
         """Verifies gradient calculation across all 5 Stage 1 multi-task objectives."""
-        cfg = TransformerEncoderConfig(
+        cfg = LanguageEncoderConfig(
             d_model=384,
             num_layers=2,
             num_heads=6,
@@ -278,7 +278,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
             return_tensors="pt",
         )
 
-        trainer = Stage1LanguageTrainer(
+        trainer = LanguageEncoderTrainer(
             model=model,
             config=cfg,
             dataloader=loader,
@@ -296,7 +296,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch required for neural optimization tests")
     def test_stage1_trainer_gradient_accumulation(self) -> None:
         """Verifies optimizer steps only after grad_accum_steps batches."""
-        cfg = TransformerEncoderConfig(
+        cfg = LanguageEncoderConfig(
             d_model=384,
             num_layers=2,
             num_heads=6,
@@ -311,7 +311,7 @@ class TestTrainerAndStreamingDataLoader(unittest.TestCase):
         batch1 = loader.generate_batch(task_type="mlm")
         batch2 = loader.generate_batch(task_type="mlm")
 
-        trainer = Stage1LanguageTrainer(
+        trainer = LanguageEncoderTrainer(
             model=model,
             config=cfg,
             dataloader=loader,

@@ -66,7 +66,7 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
   - Native FlashAttention-2 / SDPA and Activation Checkpointing for 14GB VRAM target optimization.
 - **Real Multi-Task Streaming DataLoader & Trainer (`src/laris/language/dataloader.py`, `src/laris/language/trainer.py`):**
   - `StreamingParquetMultiTaskDataLoader`: True streaming PyArrow Parquet loader with bounded buffer (`ParquetFile.iter_batches`), strictly preserving the $\le 250\text{ MB}$ RAM ceiling, 15% dynamic MLM masking (80% MASK, 10% random, 10% keep), and temperature sampling ($\alpha = 0.7$).
-  - `Stage1LanguageTrainer`: Genuine optimization steps executing autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), scaled backward, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()` with 8-bit AdamW / PyTorch AdamW.
+  - `LanguageEncoderTrainer`: Genuine optimization steps executing autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), scaled backward, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()` with 8-bit AdamW / PyTorch AdamW.
   - Strict authorization barrier (`assert_training_authorized`) strictly enforced.
 - **Artifact Governance (`src/laris/language/artifacts.py`):**
   - `LanguageArtifactBundle`, `VocabularyContract`, `LanguageTrainingRunManifest`.

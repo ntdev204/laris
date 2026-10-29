@@ -3,13 +3,13 @@
 import pytest
 
 from laris.core.errors import ModuleContractViolationError
-from laris.language.bm25 import (
+from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.schemas import VocabularyContract
+from laris.language.tokenization.tokenizer import ScientificTokenizer
+from laris.retrieval.bm25 import (
     BM25Document,
     BM25RetrievalBaseline,
 )
-from laris.language.schemas import VocabularyContract
-from laris.language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.tokenizer import ScientificTokenizer
 
 
 @pytest.fixture

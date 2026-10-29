@@ -29,8 +29,8 @@ from laris.config.schemas import (
 )
 from laris.core.errors import HardwareBudgetExceededError
 from laris.corpus.task_splits import WikipediaArticlePartitioner
-from laris.language.neural import TransformerEncoderConfig
-from laris.language.tokenizer_trainer import TokenizerTrainerConfig
+from laris.language.encoder.transformer import LanguageEncoderConfig
+from laris.language.tokenization.trainer import TokenizerTrainerConfig
 
 
 class TestConfigSchemas:
@@ -207,12 +207,12 @@ class TestConsumerBehaviorWithConfig:
     def test_changing_model_config_changes_parameter_count(self) -> None:
         """Proves changing d_model from 768 to 384 alters parameter calculation."""
         cfg_default = LarisConfig()
-        enc_default = TransformerEncoderConfig.from_config(cfg_default)
+        enc_default = LanguageEncoderConfig.from_config(cfg_default)
         assert enc_default.d_model == 768
         assert enc_default.calculate_parameter_count() == 109561856
 
         cfg_narrow = LarisConfig(model=ModelConfig(d_model=384, num_heads=12, d_ff=1536))
-        enc_narrow = TransformerEncoderConfig.from_config(cfg_narrow)
+        enc_narrow = LanguageEncoderConfig.from_config(cfg_narrow)
         assert enc_narrow.d_model == 384
         assert enc_narrow.calculate_parameter_count() == 33563264
         assert enc_narrow.calculate_parameter_count() < enc_default.calculate_parameter_count()

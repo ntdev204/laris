@@ -16,7 +16,7 @@ from laris.core.authorization import (
     is_tokenizer_training_authorized,
 )
 from laris.language.schemas import DEFAULT_TARGET_VOCAB_SIZE
-from laris.language.tokenizer_trainer import (
+from laris.language.tokenization.trainer import (
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
     extract_clean_wikipedia_corpus,

@@ -17,7 +17,7 @@ from laris.language.schemas import (
     UNK_TOKEN,
     VocabularyContract,
 )
-from laris.language.tokenizer import (
+from laris.language.tokenization.tokenizer import (
     ScientificTokenizer,
     compute_token_fertility,
     evaluate_stem_fertility,

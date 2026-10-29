@@ -5,18 +5,18 @@ import json
 import pytest
 
 from laris.core.errors import ModuleContractViolationError
-from laris.language.bm25 import BM25Document, BM25RetrievalBaseline
-from laris.language.encoder import CompactSentenceEncoder
-from laris.language.retrieval_benchmark import (
+from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
+from laris.language.schemas import VocabularyContract
+from laris.language.tokenization.tokenizer import ScientificTokenizer
+from laris.retrieval.baseline_comparison import (
     RETRIEVAL_BENCHMARK_VERSION,
     STEM_RETRIEVAL_CORPUS,
     STEM_RETRIEVAL_QUERIES,
     RetrievalBenchmarkItem,
     evaluate_retrieval_comparison,
 )
-from laris.language.schemas import VocabularyContract
-from laris.language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.tokenizer import ScientificTokenizer
+from laris.retrieval.bm25 import BM25Document, BM25RetrievalBaseline
 
 
 @pytest.fixture

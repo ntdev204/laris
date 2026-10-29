@@ -16,12 +16,12 @@ import importlib.util
 import unittest
 
 from laris.core.errors import TrainingExecutionProhibitedError
-from laris.language.neural import (
+from laris.language.encoder.transformer import (
+    LanguageEncoderConfig,
     PyTorchTransformerEncoder,
     RandomlyInitializedTransformerEncoder,
-    TransformerEncoderConfig,
 )
-from laris.language.profiling import (
+from laris.language.training.profiling import (
     BoundedProfilingResult,
     BoundedResourceProfiler,
     HardwareEnvironmentProfile,
@@ -33,7 +33,7 @@ class TestBoundedProfilingAndHardwareTelemetry(unittest.TestCase):
     """Test suite for bounded profiling and hardware telemetry."""
 
     def setUp(self) -> None:
-        self.config = TransformerEncoderConfig(
+        self.config = LanguageEncoderConfig(
             vocab_size=500,
             max_sequence_length=64,
             d_model=384,

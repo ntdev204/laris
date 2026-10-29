@@ -9,19 +9,19 @@ from laris.core.errors import (
     DataLeakageError,
     ModuleContractViolationError,
 )
-from laris.language.artifacts import (
-    BUNDLE_MANIFEST_FILENAME,
-    LanguageArtifactBundle,
-    LanguageArtifactManager,
-)
-from laris.language.retrieval_benchmark import RetrievalComparisonReport
+from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
 from laris.language.schemas import (
     EncoderCheckpointMetadata,
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.tokenizer import StemFertilityReport
+from laris.language.tokenization.tokenizer import StemFertilityReport
+from laris.language.training.artifacts import (
+    BUNDLE_MANIFEST_FILENAME,
+    LanguageArtifactBundle,
+    LanguageArtifactManager,
+)
+from laris.retrieval.baseline_comparison import RetrievalComparisonReport
 
 
 @pytest.fixture

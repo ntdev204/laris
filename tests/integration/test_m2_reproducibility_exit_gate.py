@@ -14,25 +14,25 @@ from pathlib import Path
 
 import pytest
 
-from laris.language.artifacts import (
-    LanguageArtifactBundle,
-    LanguageArtifactManager,
+from laris.language.benchmarks.stem_benchmark import (
+    get_stem_vocabulary_tokens,
 )
-from laris.language.encoder import CompactSentenceEncoder
-from laris.language.retrieval_benchmark import (
-    evaluate_retrieval_comparison,
-)
+from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
 from laris.language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.language.stem_benchmark import (
-    get_stem_vocabulary_tokens,
-)
-from laris.language.tokenizer import (
+from laris.language.tokenization.tokenizer import (
     ScientificTokenizer,
     evaluate_stem_fertility,
+)
+from laris.language.training.artifacts import (
+    LanguageArtifactBundle,
+    LanguageArtifactManager,
+)
+from laris.retrieval.baseline_comparison import (
+    evaluate_retrieval_comparison,
 )
 
 

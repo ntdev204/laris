@@ -67,13 +67,46 @@ def test_corpus_domain_exports():
 def test_language_domain_exports():
     """Verifies laris.language contracts."""
     from laris.language import (
-        BM25RetrievalBaseline,
         CompactSentenceEncoder,
         STEMSubwordTokenizer,
     )
+    from laris.retrieval.bm25 import BM25RetrievalBaseline
+
     assert STEMSubwordTokenizer is not None
     assert CompactSentenceEncoder is not None
     assert BM25RetrievalBaseline is not None
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "laris.language.tokenization.tokenizer",
+        "laris.language.tokenization.trainer",
+        "laris.language.encoder.transformer",
+        "laris.language.encoder.sentence_encoder",
+        "laris.language.encoder.config_handoff",
+        "laris.language.training.dataloader",
+        "laris.language.training.trainer",
+        "laris.language.training.profiling",
+        "laris.language.training.artifacts",
+        "laris.language.benchmarks.stem_benchmark",
+        "laris.retrieval.bm25",
+        "laris.retrieval.baseline_comparison",
+    ],
+)
+def test_language_functional_subpackages_importable(module: str) -> None:
+    """Functional sub-packages (ADR-013) expose their modules at the new paths."""
+    assert importlib.import_module(module) is not None
+
+
+@pytest.mark.parametrize(
+    "legacy",
+    ["tokenizer", "tokenizer_trainer", "neural", "encoder", "dataloader", "trainer", "bm25"],
+)
+def test_legacy_flat_language_modules_are_gone(legacy: str) -> None:
+    """Flat modules moved into sub-packages must not linger beside them."""
+    language_dir = Path(__file__).resolve().parents[2] / "src" / "laris" / "language"
+    assert not (language_dir / f"{legacy}.py").exists()
 
 
 def test_scientific_domain_exports():

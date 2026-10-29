@@ -61,7 +61,7 @@ class TrainingMetricsSnapshot:
     peak_vram_gb: Optional[float] = None
 
 
-class Stage1LossCalculator:
+class MultiTaskLossCalculator:
     """Calculates individual task losses and weighted multi-task composite loss."""
 
     def __init__(self, weights: Optional[MultiTaskLossWeights] = None) -> None:
@@ -139,7 +139,7 @@ class Stage1LossCalculator:
             raise ValueError(f"Unknown task_type: {task_type}")
 
 
-class Stage1LanguageTrainer:
+class LanguageEncoderTrainer:
     """Stage 1 Language Foundation Trainer with 14GB VRAM optimization and authorization barrier."""
 
     def __init__(
@@ -166,7 +166,7 @@ class Stage1LanguageTrainer:
         self.grad_accum_steps = max(1, grad_accum_steps)
         self.max_grad_norm = max_grad_norm
         self.max_vram_ceiling_gb = max_vram_ceiling_gb
-        self.loss_calculator = Stage1LossCalculator()
+        self.loss_calculator = MultiTaskLossCalculator()
         self.step_history: List[TrainingMetricsSnapshot] = []
         self._accum_counter: int = 0
 

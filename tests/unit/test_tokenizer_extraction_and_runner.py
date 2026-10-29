@@ -27,7 +27,7 @@ from laris.core.errors import (
     ModuleContractViolationError,
     TrainingExecutionProhibitedError,
 )
-from laris.language.tokenizer_trainer import (
+from laris.language.tokenization.trainer import (
     TokenizerReadinessState,
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,

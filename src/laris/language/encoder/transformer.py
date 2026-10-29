@@ -48,7 +48,7 @@ class ModelReadinessState(str, Enum):
 
 
 @dataclass(frozen=True)
-class TransformerEncoderConfig:
+class LanguageEncoderConfig:
     """Hyperparameter specification for Model 1 Natural Language Foundation encoder."""
 
     vocab_size: int = DEFAULT_TARGET_VOCAB_SIZE  # 32,000
@@ -87,8 +87,8 @@ class TransformerEncoderConfig:
             raise ValueError(f"Only 'gelu' is approved, got '{self.activation}'")
 
     @classmethod
-    def from_config(cls, config: Any) -> "TransformerEncoderConfig":
-        """Instantiates TransformerEncoderConfig from centralized ModelConfig or LarisConfig."""
+    def from_config(cls, config: Any) -> "LanguageEncoderConfig":
+        """Instantiates LanguageEncoderConfig from centralized ModelConfig or LarisConfig."""
         model_cfg = getattr(config, "model", config)
         return cls(
             vocab_size=getattr(model_cfg, "vocab_size", DEFAULT_TARGET_VOCAB_SIZE),
@@ -202,7 +202,7 @@ class TransformerEncoderConfig:
 
 
 @dataclass(frozen=True)
-class TransformerEncoder500MConfig(TransformerEncoderConfig):
+class LargeLanguageEncoderConfig(LanguageEncoderConfig):
     """Canonical configuration for 512.9M parameter Model 1 foundation encoder.
 
     Backbone parameter breakdown (d_model=1280, num_layers=24, num_heads=20, d_ff=5120):
@@ -290,8 +290,8 @@ class RandomlyInitializedTransformerEncoder:
     - Strict prohibition on model weight updates
     """
 
-    def __init__(self, config: Optional[TransformerEncoderConfig] = None) -> None:
-        self.config = config or TransformerEncoderConfig()
+    def __init__(self, config: Optional[LanguageEncoderConfig] = None) -> None:
+        self.config = config or LanguageEncoderConfig()
         self.readiness_state = ModelReadinessState.RANDOMLY_INITIALIZED
         self.backbone_parameter_count = self.config.calculate_backbone_parameter_count()
         self.total_parameter_count = self.config.calculate_parameter_count(include_heads=True)
@@ -561,9 +561,9 @@ try:
         Contains strict prohibition barrier on training steps.
         """
 
-        def __init__(self, config: Optional[TransformerEncoderConfig] = None) -> None:
+        def __init__(self, config: Optional[LanguageEncoderConfig] = None) -> None:
             super().__init__()
-            self.config = config or TransformerEncoderConfig()
+            self.config = config or LanguageEncoderConfig()
             self.readiness_state = ModelReadinessState.RANDOMLY_INITIALIZED
 
             d = self.config.d_model

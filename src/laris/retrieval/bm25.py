@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from laris.core.errors import ModuleContractViolationError
-from laris.language.tokenizer import ScientificTokenizer
+from laris.language.tokenization.tokenizer import ScientificTokenizer
 
 
 @dataclass(frozen=True)

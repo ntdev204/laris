@@ -846,7 +846,7 @@ This document serves as the single source of truth for active task tracking, exe
   3. Structural invariants (Pre-RMSNorm, RoPE, GELU, tied MLM projection) enforced against override.
   4. Hardware safety governor strictly rejects `max_vram_gb > 14.5` (raising `HardwareBudgetExceededError`).
   5. Cryptographic SHA-256 config hashing is deterministic and immune to masked secrets.
-  6. Consumer modules (`TransformerEncoderConfig`, `WikipediaArticlePartitioner`, `TokenizerTrainerConfig`) ingest configuration and change behavior accordingly.
+  6. Consumer modules (`LanguageEncoderConfig`, `WikipediaArticlePartitioner`, `TokenizerTrainerConfig`) ingest configuration and change behavior accordingly.
   7. Full test suite and documentation quality gates pass with zero training execution.
 
 ---
@@ -887,7 +887,7 @@ This document serves as the single source of truth for active task tracking, exe
 - **Dependencies:** `M2-PERF-001` (Issue #234).
 - **Status:** `DONE` (Issue #240).
 - **Acceptance Criteria:**
-  1. `TransformerEncoder500MConfig` implemented with exact 512,913,920 backbone parameters ($L=24, d=1280, H=20, d_{\text{ff}}=5120, S=1024$).
+  1. `LargeLanguageEncoderConfig` implemented with exact 512,913,920 backbone parameters ($L=24, d=1280, H=20, d_{\text{ff}}=5120, S=1024$).
   2. `ALLOWED_EMBEDDING_DIMENSIONS` expanded to `{384, 768, 1024, 1280}` in both language and central config schemas.
   3. Native FlashAttention SDPA and activation checkpointing integrated into PyTorch transformer layer.
   4. Analytical training VRAM model accounts for 8-bit AdamW, FlashAttention, and activation checkpointing (~13.84 GB target).

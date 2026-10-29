@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 
 from laris.core.errors import DataIntegrityError
-from laris.language.artifacts import (
-    LanguageArtifactBundle,
-    LanguageArtifactManager,
-)
-from laris.language.encoder import CompactSentenceEncoder
+from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
 from laris.language.schemas import (
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.language.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.tokenizer import ScientificTokenizer
+from laris.language.tokenization.tokenizer import ScientificTokenizer
+from laris.language.training.artifacts import (
+    LanguageArtifactBundle,
+    LanguageArtifactManager,
+)
 
 
 @pytest.fixture

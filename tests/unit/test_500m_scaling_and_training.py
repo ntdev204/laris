@@ -1,12 +1,12 @@
 """Unit tests for 512M Model 1 architecture scaling, VRAM calculations, and Stage 1 training engine.
 
 Verifies:
-- TransformerEncoder500MConfig parameter formulas (512.91M backbone, 513.25M with heads)
+- LargeLanguageEncoderConfig parameter formulas (512.91M backbone, 513.25M with heads)
 - Analytical VRAM budget for 500M model respects 14.5 GB RTX 5070 Ti safety envelope
 - TemperatureSamplingScheduler mathematical distribution (alpha=0.7)
 - SyntheticMultiTaskDataLoader batch generation across MLM, NLI, Paraphrase, Similarity, QA
-- Stage1LossCalculator composite loss and individual task formulation
-- Stage1LanguageTrainer strict authorization barrier
+- MultiTaskLossCalculator composite loss and individual task formulation
+- LanguageEncoderTrainer strict authorization barrier
 """
 
 import unittest
@@ -19,20 +19,20 @@ from laris.core.authorization import (
 from laris.core.errors import (
     TrainingExecutionProhibitedError,
 )
-from laris.language.dataloader import (
+from laris.language.encoder.transformer import (
+    LargeLanguageEncoderConfig,
+)
+from laris.language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
+from laris.language.training.dataloader import (
     SyntheticMultiTaskDataLoader,
     TemperatureSamplingScheduler,
 )
-from laris.language.neural import (
-    TransformerEncoder500MConfig,
-)
-from laris.language.profiling import (
+from laris.language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
-from laris.language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
-from laris.language.trainer import (
-    Stage1LanguageTrainer,
-    Stage1LossCalculator,
+from laris.language.training.trainer import (
+    LanguageEncoderTrainer,
+    MultiTaskLossCalculator,
 )
 
 
@@ -46,7 +46,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
 
     def test_transformer_500m_parameter_formula_exact(self) -> None:
         """Verifies exact parameter calculations for 512.9M model."""
-        cfg = TransformerEncoder500MConfig()
+        cfg = LargeLanguageEncoderConfig()
         self.assertEqual(cfg.d_model, 1280)
         self.assertEqual(cfg.num_layers, 24)
         self.assertEqual(cfg.num_heads, 20)
@@ -63,7 +63,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
 
     def test_analytical_training_vram_under_safety_envelope(self) -> None:
         """Verifies analytical VRAM calculation for 500M model respects 14.5 GB limit."""
-        cfg = TransformerEncoder500MConfig()
+        cfg = LargeLanguageEncoderConfig()
 
         # Config 1: 8-bit AdamW with batch_size=16, seq_len=1024
         vram_8bit = compute_analytical_training_memory_gb(
@@ -121,7 +121,7 @@ class Test500MScalingAndTraining(unittest.TestCase):
 
     def test_stage1_loss_calculator_numpy(self) -> None:
         """Verifies multi-task loss calculator across all 5 tasks."""
-        calc = Stage1LossCalculator()
+        calc = MultiTaskLossCalculator()
         b, s, v = 2, 16, 100
 
         # MLM Loss
@@ -159,10 +159,10 @@ class Test500MScalingAndTraining(unittest.TestCase):
 
     def test_stage1_trainer_authorization_barrier(self) -> None:
         """Verifies trainer strictly raises TrainingExecutionProhibitedError when unauthorized."""
-        cfg = TransformerEncoder500MConfig()
+        cfg = LargeLanguageEncoderConfig()
         loader = SyntheticMultiTaskDataLoader(seq_len=32, batch_size=2)
         batch = loader.generate_batch()
-        trainer = Stage1LanguageTrainer(model=None, config=cfg, dataloader=loader)
+        trainer = LanguageEncoderTrainer(model=None, config=cfg, dataloader=loader)
 
         # When unauthorized, must raise TrainingExecutionProhibitedError
         with self.assertRaises(TrainingExecutionProhibitedError):

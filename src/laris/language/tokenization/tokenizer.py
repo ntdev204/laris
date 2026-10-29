@@ -14,6 +14,11 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from laris.core.errors import ModuleContractViolationError
+from laris.language.benchmarks.stem_benchmark import (
+    STEM_BENCHMARK_FIXTURES,
+    STEM_BENCHMARK_VERSION,
+    StemBenchmarkSample,
+)
 from laris.language.schemas import (
     CLS_TOKEN,
     DEFAULT_MAX_SEQUENCE_LENGTH,
@@ -21,11 +26,6 @@ from laris.language.schemas import (
     UNK_TOKEN,
     TokenizedSentenceOutput,
     VocabularyContract,
-)
-from laris.language.stem_benchmark import (
-    STEM_BENCHMARK_FIXTURES,
-    STEM_BENCHMARK_VERSION,
-    StemBenchmarkSample,
 )
 
 # Regex pattern splitting text while preserving LaTeX inline math and punctuation

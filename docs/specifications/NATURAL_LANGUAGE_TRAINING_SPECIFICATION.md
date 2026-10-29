@@ -85,7 +85,7 @@ flowchart TD
 
 ### 2.2. Scaled Foundation Model (512.9M Tier Architecture)
 
-To maximize compute capacity on the target RTX 5070 Ti, LARIS provides the 512.9M scaled encoder profile (`TransformerEncoder500MConfig`):
+To maximize compute capacity on the target RTX 5070 Ti, LARIS provides the 512.9M scaled encoder profile (`LargeLanguageEncoderConfig`):
 
 | Hyperparameter | Scaled Value | Architectural Justification |
 | :--- | :--- | :--- |
