@@ -95,3 +95,27 @@ def test_length_pool_groups_similar_lengths(tmp_path: Path) -> None:
     assert max(spread(plain._next_records("mlm")) for _ in range(4)) > 0
     widths = [spread(pooled._next_records("mlm")) for _ in range(8)]
     assert sum(1 for w in widths if w == 0) >= 6
+
+
+def test_datasets_of_a_task_are_interleaved_not_read_one_after_another(tmp_path: Path) -> None:
+    paths = []
+    for name, n in (("a", 400), ("b", 200)):
+        path = tmp_path / name / "train.parquet"
+        path.parent.mkdir()
+        pq.write_table(pa.Table.from_pylist([{"text": name}] * n), path)
+        paths.append(path)
+    loader = StreamingParquetMultiTaskDataLoader(
+        task_paths={"mlm": paths}, tokenizer=_Tok(), vocab_size=200, seq_len=64, batch_size=4,
+        seed=1,
+    )  # fmt: skip
+    first = [next(loader._task_iterators["mlm"])["text"] for _ in range(90)]
+    assert 45 <= first.count("a") <= 75 and first.count("b") >= 15  # roughly 2:1, both present
+
+
+def test_reset_makes_every_pass_the_same_records(tmp_path: Path) -> None:
+    rows = [{"text": "w" * (n % 9 + 1)} for n in range(200)]
+    loader = _loader(tmp_path, rows)
+    first = loader.generate_batch("mlm").token_ids.tolist()
+    loader.generate_batch("mlm")
+    loader.reset()
+    assert loader.generate_batch("mlm").token_ids.tolist() == first

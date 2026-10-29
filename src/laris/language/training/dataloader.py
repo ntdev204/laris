@@ -125,6 +125,7 @@ class SyntheticMultiTaskDataLoader:
         self.vocab_size = vocab_size
         self.seq_len = seq_len
         self.batch_size = batch_size
+        self._seed = seed
         self.rng = random.Random(seed)
         self.np_rng = np.random.default_rng(seed)
 
@@ -251,6 +252,7 @@ class StreamingParquetMultiTaskDataLoader:
         self.alpha = alpha
         self.buffer_size = buffer_size
         self.mlm_mask_prob = mlm_mask_prob
+        self._seed = seed
         self.rng = random.Random(seed)
         self.np_rng = np.random.default_rng(seed)
         self.return_tensors = return_tensors
@@ -297,13 +299,26 @@ class StreamingParquetMultiTaskDataLoader:
         else:
             self.scheduler = TemperatureSamplingScheduler(active_counts, alpha=self.alpha)
 
-        # Initialize streaming generators for active tasks
+        self._build_streams()
+
+    def _build_streams(self) -> None:
+        """(Re)creates one stream per task; a task's datasets are sampled in proportion to size."""
         self._task_iterators: Dict[str, Iterator[Dict[str, Any]]] = {}
         for task_name, path_list in self.task_paths.items():
             if path_list:
-                self._task_iterators[task_name] = self._create_task_stream(
-                    path_list, self.buffer_size
+                self._task_iterators[task_name] = self._interleaved_stream(
+                    path_list, self.buffer_size, random.Random(f"{self._seed}:{task_name}")
                 )
+
+    def reset(self) -> None:
+        """Rewinds streams and random state so the next batches repeat from the start.
+
+        Validation calls this before every evaluation, so each one scores the same records.
+        """
+        self.rng = random.Random(self._seed)
+        self.np_rng = np.random.default_rng(self._seed)
+        self._pending.clear()
+        self._build_streams()
 
     def _count_rows(self) -> Dict[str, int]:
         """Row counts per task from Parquet footers (no data is read)."""
@@ -334,6 +349,36 @@ class StreamingParquetMultiTaskDataLoader:
                     found.extend(sorted(candidate_dir.glob(f"{self.split}*.parquet")))
             if found:
                 self.task_paths[task] = found
+
+    @classmethod
+    def _interleaved_stream(
+        cls, paths: List[Path], buffer_size: int, rng: random.Random
+    ) -> Iterator[Dict[str, Any]]:
+        """Draws each record from one of the files with probability proportional to its rows.
+
+        Reading the files one after another would show a bilingual task its first dataset for
+        most of a run (all English, then all Vietnamese).
+        """
+        if len(paths) == 1:
+            return cls._create_task_stream(paths, buffer_size)
+        weights = []
+        for p in paths:
+            try:
+                weights.append(max(1, pq.ParquetFile(p).metadata.num_rows))
+            except Exception:
+                weights.append(1)  # the stream itself reports an unreadable shard
+        streams = [cls._create_task_stream([p], buffer_size) for p in paths]
+
+        def draw() -> Iterator[Dict[str, Any]]:
+            while streams:
+                i = rng.choices(range(len(streams)), weights=weights)[0]
+                try:
+                    yield next(streams[i])
+                except RuntimeError:  # unreadable shard, already logged: keep using the others
+                    del streams[i], weights[i]
+            raise RuntimeError(f"No readable Parquet shards among {[str(p) for p in paths]}")
+
+        return draw()
 
     @staticmethod
     def _create_task_stream(
