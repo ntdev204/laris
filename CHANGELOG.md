@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-10-30
+
+Re-release of 1.1.3 under a new version: the first `v1.1.3` tag pointed at an older commit and was withdrawn. The changes are the 1.1.3 entries below.
+
 ## [1.1.3] - 2026-10-30
 
 ### Fixed
