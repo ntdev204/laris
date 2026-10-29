@@ -74,8 +74,8 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--max-seq-len",
         type=int,
-        default=1024,
-        help="Maximum sequence length tokens (default: 1024)",
+        default=None,
+        help="Maximum sequence length in tokens (default: 1024 for large, 512 for compact)",
     )
     parser.add_argument(
         "--precision",
@@ -289,6 +289,9 @@ def run(args: argparse.Namespace) -> int:
     args.micro_batch_size = hyper.micro_batch_size
     args.grad_accum_steps = hyper.gradient_accumulation_steps
 
+    if args.max_seq_len is None:
+        args.max_seq_len = 1024 if args.model_size == "large" else 512
+
     # 1. Instantiate Configuration
     config: LanguageEncoderConfig
     if args.model_size == "large":
@@ -299,7 +302,7 @@ def run(args: argparse.Namespace) -> int:
         )
     else:
         config = LanguageEncoderConfig(
-            max_sequence_length=min(args.max_seq_len, 512),
+            max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=False,
         )

@@ -147,3 +147,22 @@ def test_infer_reports_error_for_missing_checkpoint(tmp_path: Path) -> None:
          "--tokenizer-model", str(tmp_path / "t.model"), "--premise", "a", "--hypothesis", "b"]
     )  # fmt: skip
     assert code == 2
+
+
+@pytest.mark.parametrize(
+    ("size", "extra", "expected"),
+    [("compact", [], 512), ("compact", ["--max-seq-len", "1024"], 1024), ("large", [], 1024)],
+)
+def test_sequence_length_default_per_size_and_honored_for_compact(
+    size: str,
+    extra: list,
+    expected: int,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """The header shows the length the model and the dataloader will really use."""
+    monkeypatch.delenv("LARIS_TRAINING_AUTHORIZED", raising=False)
+    main(["train", "language-encoder", "--model-size", size, "--profile-only",
+          "--tokenizer-model", str(tmp_path / "missing.model"), *extra])
+    assert f"Sequence Length:           {expected}" in capsys.readouterr().out
