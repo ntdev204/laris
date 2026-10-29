@@ -129,7 +129,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--warmup-steps", type=int, default=None, help="LR warmup optimizer steps")
     parser.add_argument("--eval-interval", type=int, default=200, help="Validate every N steps")
     parser.add_argument(
-        "--eval-batches", type=int, default=8, help="Validation batches per task (default: 8)"
+        "--eval-batches", type=int, default=16, help="Validation batches per task (default: 16)"
     )
     parser.add_argument("--save-interval", type=int, default=500, help="Checkpoint every N steps")
     parser.add_argument(
