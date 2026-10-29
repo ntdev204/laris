@@ -27,7 +27,7 @@ The `laris` entry point (`src/laris/cli/main.py`) exposes one module per command
 | Command | Purpose | Authorization |
 | :--- | :--- | :--- |
 | `laris data acquire [--only IDS] [--cc100-max-docs N]` | Download and verify datasets; `--only` merges into the existing manifest. Resumable. | none |
-| `laris data partition [--datasets ...] [--num-workers N] [--include-unreviewed-licenses]` | Leakage-safe train/val/test partitioning. Datasets with `NEEDS_LICENSE_REVIEW` are skipped by default. | none |
+| `laris data partition [--datasets ...] [--num-workers N] [--include-unreviewed-licenses]` | Leakage-safe train/val/test partitioning. Datasets with `NEEDS_LICENSE_REVIEW` are skipped by default. A subset run merges into the existing manifest by `dataset_id`. | none |
 | `laris train tokenizer [--extract-only] [--authorized]` | Extract train-only text and fit the SentencePiece 32k BPE tokenizer. | `--authorized` |
 | `laris train language-encoder --model-size {compact,large} [--profile-only]` | Profile VRAM, or train, validate, checkpoint and evaluate the encoder. | `--authorized` and `LARIS_TRAINING_AUTHORIZED=1` |
 | `laris evaluate language-encoder --checkpoint DIR --tokenizer-model FILE [--split val\|test]` | Score a checkpoint against baselines and thresholds. Exit codes: 0 passed, 1 below threshold, 2 usage or integrity error. | none |
