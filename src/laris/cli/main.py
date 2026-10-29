@@ -4,6 +4,7 @@ Command tree (each leaf maps to a module in `laris.cli.commands`):
 
     laris data acquire             download and verify datasets, update the manifest
     laris data partition           physically split raw datasets into train/val/test
+    laris data check               verify processed splits, manifest and sentencepiece
     laris train tokenizer          fit the SentencePiece tokenizer
     laris train language-encoder   train (or profile) the multi-task language encoder
     laris evaluate language-encoder   score a checkpoint on the val/test split vs baselines
@@ -15,7 +16,15 @@ import argparse
 import sys
 from typing import Callable, Optional, Sequence
 
-from laris.cli.commands import calibrate, evaluate, infer, language_encoder, partition, tokenizer
+from laris.cli.commands import (
+    calibrate,
+    check,
+    evaluate,
+    infer,
+    language_encoder,
+    partition,
+    tokenizer,
+)
 from laris.corpus.acquisition import runner as acquisition
 
 Handler = Callable[[argparse.Namespace], int]
@@ -24,6 +33,7 @@ COMMANDS = {
     "data": {
         "acquire": ("Download and verify datasets", acquisition),
         "partition": ("Physically partition raw datasets (zero training)", partition),
+        "check": ("Verify processed data and tooling before training", check),
     },
     "train": {
         "tokenizer": ("Fit the SentencePiece tokenizer", tokenizer),
