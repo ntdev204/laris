@@ -175,7 +175,9 @@ def partition_quora_dataset_physical(
             for idx, (q1_raw, q2_raw) in enumerate(zip(q1_batch, q2_batch)):
                 q1 = str(q1_raw).strip().lower()
                 q2 = str(q2_raw).strip().lower()
-                root = dsu.find(q1) if q1 else (dsu.find(q2) if q2 else "empty")
+                if not q1 or not q2:
+                    continue  # a pair with an empty question is not a real example
+                root = dsu.find(q1)
                 assigned_split = root_to_split.get(root, DatasetSplit.TRAIN)
 
                 for q in (q1, q2):

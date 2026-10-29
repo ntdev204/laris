@@ -1,17 +1,16 @@
-"""Measured GPU memory and latency profile of the real model (no optimizer step).
+"""Measured GPU memory and latency profile of the real model on real batches.
 
-Always runs the forward pass of every task on the target device at the real micro-batch and
-sequence length without gradients, which needs no authorization. When the owner has
-authorized training it also runs backward, with gradients kept across tasks as under
-gradient accumulation. The optimizer is never stepped, so no weight is updated; its state
-size is added analytically.
+Batches come from the real train split through the real tokenizer, so shapes, padding and
+labels are exactly what training sees. Without authorization only the forward pass of every
+task is measured, without gradients. When the owner has authorized training, two full
+accumulation windows are run: window one ends in a real optimizer step so the optimizer state
+is allocated, window two is measured with that state resident (the steady-state peak). The
+model is randomly initialised and discarded; nothing is saved.
 """
 
 import time
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
-
-from laris.language.training.dataloader import SyntheticMultiTaskDataLoader
 
 TASKS = ("mlm", "nli", "paraphrase", "similarity", "qa")
 _GIB = 1024.0**3
@@ -26,91 +25,69 @@ class TaskMeasurement:
 
 @dataclass
 class TrainingMemoryProfile:
-    device: str
     gpu_name: str
     total_vram_gb: float
-    param_count: int
     limit_gb: float
+    steady_state: bool
     tasks: List[TaskMeasurement] = field(default_factory=list)
-    measured_peak_gb: float = 0.0
-    optimizer_state_gb: float = 0.0
+    peak_gb: float = 0.0
     seconds_per_micro_batch: float = 0.0
-    backward_measured: bool = False
+    seconds_per_optimizer_update: Optional[float] = None
+    optimizer_steps: int = 0
     error: Optional[str] = None
 
     @property
-    def projected_peak_gb(self) -> float:
-        return self.measured_peak_gb + self.optimizer_state_gb
-
-    @property
     def fits(self) -> bool:
-        """True when everything measured is finite and within the limit."""
-        peak = self.projected_peak_gb if self.backward_measured else self.measured_peak_gb
         return (
             self.error is None
             and bool(self.tasks)
             and all(t.loss_finite for t in self.tasks)
-            and peak <= self.limit_gb
+            and self.peak_gb <= self.limit_gb
         )
 
     @property
     def certified(self) -> bool:
-        """Training memory is only certified once backward has been measured."""
-        return self.fits and self.backward_measured
-
-
-def optimizer_state_gb(param_count: int, use_8bit_adam: bool) -> float:
-    """bitsandbytes AdamW8bit keeps two 1-byte states per parameter; AdamW two fp32 states."""
-    return param_count * (2 if use_8bit_adam else 8) / _GIB
+        """Training memory is certified only by a measured steady-state window."""
+        return self.fits and self.steady_state
 
 
 def profile_training_memory(
     trainer: Any,
-    param_count: int,
-    batch_size: int,
-    seq_len: int,
-    vocab_size: int,
-    use_8bit_adam: bool,
+    loader: Any,
     limit_gb: float,
-    seed: int = 42,
-    with_backward: bool = False,
+    with_training_step: bool = False,
 ) -> TrainingMemoryProfile:
-    """Measures peak CUDA memory per task, forward and optionally backward; no optimizer step."""
+    """Measures peak CUDA memory per task on real batches; see the module docstring."""
     import torch
 
     props = torch.cuda.get_device_properties(0)
     profile = TrainingMemoryProfile(
-        device="cuda",
         gpu_name=props.name,
         total_vram_gb=props.total_memory / _GIB,
-        param_count=param_count,
         limit_gb=limit_gb,
-        optimizer_state_gb=optimizer_state_gb(param_count, use_8bit_adam),
-        backward_measured=with_backward,
-    )
-    loader = SyntheticMultiTaskDataLoader(
-        vocab_size=vocab_size, seq_len=seq_len, batch_size=batch_size, seed=seed
+        steady_state=with_training_step,
     )
     model = trainer.model
-    model.train(with_backward)
-    torch.cuda.empty_cache()
-    torch.cuda.reset_peak_memory_stats()
+    model.train(with_training_step)
 
     def step(task: str) -> Any:
         batch = loader.generate_batch(task)
+        if batch.task_type != task:
+            raise RuntimeError(f"Requested task '{task}' but received '{batch.task_type}'")
         token_ids, attention_mask = trainer._to_device(batch)
-        grad = torch.enable_grad() if with_backward else torch.no_grad()
+        grad = torch.enable_grad() if with_training_step else torch.no_grad()
         with grad, trainer._autocast():
             outputs = model(
-                token_ids, attention_mask=attention_mask, training_pass=with_backward
+                token_ids, attention_mask=attention_mask, training_pass=with_training_step
             )
             loss = trainer._compute_torch_loss(task, outputs, batch.labels)
-        if with_backward:
-            loss.backward()
+        if with_training_step:
+            (loss / trainer.grad_accum_steps).backward()
         torch.cuda.synchronize()
         return loss.detach()
 
-    try:
+    def window() -> float:
+        started = time.perf_counter()
         for task in TASKS:
             loss = step(task)
             profile.tasks.append(
@@ -120,13 +97,29 @@ def profile_training_memory(
                     loss_finite=bool(torch.isfinite(loss.float()).item()),
                 )
             )
-        profile.measured_peak_gb = torch.cuda.max_memory_allocated() / _GIB
+        return (time.perf_counter() - started) / len(TASKS)
 
-        start = time.perf_counter()  # timed pass, kernels already warm
-        step("mlm")
-        profile.seconds_per_micro_batch = time.perf_counter() - start
+    try:
+        if with_training_step:
+            window()  # warm-up window: allocates gradients, then the optimizer state
+            trainer._optimizer_update()
+            profile.optimizer_steps = trainer.optimizer_steps
+            if profile.optimizer_steps == 0:
+                profile.error = "Optimizer step skipped (non-finite gradients); state not allocated"
+                return profile
+            profile.tasks.clear()
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+        profile.seconds_per_micro_batch = window()
+        profile.peak_gb = torch.cuda.max_memory_allocated() / _GIB
+        if with_training_step:
+            started = time.perf_counter()
+            trainer._optimizer_update()
+            torch.cuda.synchronize()
+            profile.seconds_per_optimizer_update = time.perf_counter() - started
+            profile.peak_gb = max(profile.peak_gb, torch.cuda.max_memory_allocated() / _GIB)
     except torch.cuda.OutOfMemoryError as exc:
-        profile.error = f"CUDA out of memory at batch {batch_size} x seq {seq_len}: {exc}"
+        profile.error = f"CUDA out of memory: {exc}"
     finally:
         model.zero_grad(set_to_none=True)
         torch.cuda.empty_cache()
