@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-29
+
 ### Added
 - **Pairwise dataset partitioning (Issue #264):**
   - `laris data partition` now partitions All-NLI, ANLI (R1-R3), PAWS-Wiki and STSB, keeping the upstream train/dev/test splits and removing train rows that collide with held-out val/test (pair level for NLI and STSB, either-sentence level for PAWS). The NLI, paraphrase and similarity tasks read them from `data/processed`.
