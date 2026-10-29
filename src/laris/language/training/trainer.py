@@ -270,6 +270,28 @@ class LanguageEncoderTrainer:
         dtype = torch.bfloat16 if self.precision == "bf16" else torch.float16
         return torch.autocast(device_type=device_type, dtype=dtype)
 
+    def _forward(
+        self,
+        task_type: str,
+        token_ids: Any,
+        attention_mask: Any,
+        labels: Dict[str, Any],
+        training_pass: bool = False,
+    ) -> Dict[str, Any]:
+        """Runs the model computing only the head `task_type` needs (MLM: masked positions)."""
+        import inspect
+
+        kwargs: Dict[str, Any] = {"attention_mask": attention_mask}
+        if training_pass:
+            kwargs["training_pass"] = True
+        if "task" in inspect.signature(self.model.forward).parameters:
+            kwargs["task"] = task_type
+            if task_type == "mlm":
+                targets = torch.as_tensor(labels["mlm_labels"]).to(self.device)
+                kwargs["mlm_positions"] = targets != -100
+        outputs: Dict[str, Any] = self.model(token_ids, **kwargs)
+        return outputs
+
     def _to_device(self, batch: Any) -> Any:
         token_ids = batch.token_ids
         if not isinstance(token_ids, torch.Tensor):
@@ -324,7 +346,7 @@ class LanguageEncoderTrainer:
                         batch = eval_loader.generate_batch(task_type=task)
                         token_ids, attention_mask = self._to_device(batch)
                         with self._autocast():
-                            outputs = self.model(token_ids, attention_mask=attention_mask)
+                            outputs = self._forward(task, token_ids, attention_mask, batch.labels)
                             loss = self._compute_torch_loss(
                                 task, outputs, batch.labels, attention_mask
                             )
@@ -357,7 +379,12 @@ class LanguageEncoderTrainer:
             vocab_size = logits.size(-1)
             if not bool((targets != -100).any()):
                 return logits.sum() * 0.0  # nothing masked: zero loss, not a NaN mean over nothing
-            ce = F.cross_entropy(logits.view(-1, vocab_size), targets.view(-1), ignore_index=-100)
+            if logits.dim() == 2:  # logits already restricted to the masked positions
+                ce = F.cross_entropy(logits, targets[targets != -100])
+            else:
+                ce = F.cross_entropy(
+                    logits.view(-1, vocab_size), targets.view(-1), ignore_index=-100
+                )
             return ce * weights.lambda_mlm
 
         elif task_type == "nli":
@@ -479,7 +506,9 @@ class LanguageEncoderTrainer:
             token_ids, attention_mask = self._to_device(batch)
 
             with self._autocast():
-                outputs = self.model(token_ids, attention_mask=attention_mask, training_pass=True)
+                outputs = self._forward(
+                    task_type, token_ids, attention_mask, batch.labels, training_pass=True
+                )
                 loss = self._compute_torch_loss(
                     task_type, outputs, batch.labels, attention_mask
                 )

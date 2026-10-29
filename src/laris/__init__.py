@@ -5,5 +5,5 @@ A modular, local-first artificial intelligence platform for scientific literatur
 comprehension, evidence-first reasoning, and research gap discovery.
 """
 
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 __author__ = "LARIS Architecture Team"
