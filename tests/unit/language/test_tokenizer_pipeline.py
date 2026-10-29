@@ -28,7 +28,14 @@ class TestTokenizerTrainingPipeline(unittest.TestCase):
     """Test suite for tokenizer training pipeline contracts and guards."""
 
     def setUp(self) -> None:
+        import tempfile
+        from pathlib import Path
+
+        # an isolated output dir: the repo's artifacts/tokenizer may hold a really fitted model
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
         self.config = TokenizerTrainerConfig(
+            output_dir=Path(tmp.name),
             vocab_size=32000,
             model_type="bpe",
             character_coverage=0.9995,
