@@ -40,10 +40,21 @@ def test_unknown_command_exits_with_usage_error() -> None:
     assert exc.value.code == 2
 
 
-def test_profile_only_runs_without_authorization(capsys: pytest.CaptureFixture[str]) -> None:
-    code = main(["train", "language-encoder", "--model-size", "compact", "--profile-only"])
-    assert code == 0
-    assert "Bounded profiling complete" in capsys.readouterr().out
+def test_profile_only_measures_on_gpu_or_refuses_without_cuda(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import torch
+
+    monkeypatch.delenv("LARIS_TRAINING_AUTHORIZED", raising=False)
+    code = main(["train", "language-encoder", "--model-size", "compact", "--profile-only",
+                 "--micro-batch-size", "2", "--max-seq-len", "64"])
+    out = capsys.readouterr().out
+    if torch.cuda.is_available():
+        assert code == 0
+        assert "forward only" in out and "[PARTIAL]" in out and "NOT certified" in out
+    else:
+        assert code == 1
+        assert "No CUDA device" in out
 
 
 def test_training_refuses_without_authorization_flag(capsys: pytest.CaptureFixture[str]) -> None:
