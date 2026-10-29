@@ -244,3 +244,32 @@ def test_early_stopping_after_patience(data_dir: Path, tmp_path: Path, monkeypat
         )
     assert result.stopped_early and result.best_step == 1
     assert result.optimizer_steps == 3
+
+
+def test_run_training_renders_progress_and_validation_table(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    import io
+
+    from laris.language.training.progress import TrainingProgress
+
+    out = io.StringIO()
+    loader = _loader(data_dir)
+    trainer = _trainer(loader, grad_accum_steps=2, total_optimizer_steps=4, warmup_steps=1)
+    progress = TrainingProgress(
+        4, grad_accum_steps=2, log_interval=1, mode="lines", stream=out
+    )
+    config = TrainingRunConfig(
+        total_optimizer_steps=4, eval_interval=2, eval_batches_per_task=1, save_interval=2,
+        log_interval=1,
+    )
+    with temporary_training_authorization(True):
+        result = run_training(
+            trainer, loader, config, tmp_path / "run",
+            eval_loader=_loader(data_dir, "val"), progress=progress,
+        )
+    text = out.getvalue()
+    assert result.optimizer_steps == 4
+    assert text.count("[Step ") == 4 and "eta " in text and "gn=" in text and "lr=" in text
+    assert text.count("Validation (val split)") == 1  # one header, then a row per evaluation
+    assert "* step 2" in text

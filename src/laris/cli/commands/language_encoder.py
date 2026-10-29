@@ -31,6 +31,7 @@ from laris.language.training.dataloader import (
 )
 from laris.language.training.loop import TrainingRunConfig, run_training
 from laris.language.training.memory_profile import profile_training_memory
+from laris.language.training.progress import TrainingProgress
 from laris.language.training.trainer import (
     LanguageEncoderTrainer,
     MultiTaskLossCalculator,
@@ -455,6 +456,11 @@ def run(args: argparse.Namespace) -> int:
         eval_loader=eval_loader,
         provenance=provenance,
         resume_from=Path(args.resume) if args.resume else None,
+        progress=TrainingProgress(
+            hyper.max_steps,
+            grad_accum_steps=hyper.gradient_accumulation_steps,
+            log_interval=args.log_interval,
+        ),
     )
     status = "stopped early" if result.stopped_early else "completed"
     print(f"\n[SUCCESS] Training {status} at optimizer step {result.optimizer_steps}.")

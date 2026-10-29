@@ -92,4 +92,6 @@ Notes:
 - Add `--tokenizer-model` and `--data-dir` to `infer` and `evaluate` calls when the defaults differ.
 - Resume an interrupted run with `--resume <run-dir>/last`; keep the same `--run-id`.
 
+Training shows a live progress bar with running per-task losses, learning rate, gradient norm, GPU memory and ETA when run in a terminal; when output is redirected (`nohup ... > train.log`) it prints one plain line every `--log-interval` steps instead.
+
 Checkpoints are written atomically to `artifacts/checkpoints/language_encoder/<run-id>/{best,last}` with a provenance manifest and SHA-256. Resume with `--resume <run-id>/last`.

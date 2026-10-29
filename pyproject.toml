@@ -44,6 +44,7 @@ tokenizer = [
 training = [
     "torch>=2.6.0",
     "sentencepiece>=0.1.99",
+    "tqdm>=4.66.0",
     "bitsandbytes>=0.43.0; sys_platform == 'linux'",
 ]
 
