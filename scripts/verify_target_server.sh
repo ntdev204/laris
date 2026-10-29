@@ -3,12 +3,10 @@
 # ZERO TRAINING PERMITTED - EXECUTES BOUNDED FORWARD-ONLY PASS ONLY
 set -euo pipefail
 
-# Resolve preferred Python interpreter (virtualenv or explicit override)
+# Resolve the Python interpreter: explicit override, active virtualenv, then python3
 PYTHON_BIN="${PYTHON_EXEC:-python3}"
-if [ -n "${VIRTUAL_ENV:-}" ] && [ -x "${VIRTUAL_ENV}/bin/python" ]; then
+if [ -z "${PYTHON_EXEC:-}" ] && [ -n "${VIRTUAL_ENV:-}" ] && [ -x "${VIRTUAL_ENV}/bin/python" ]; then
     PYTHON_BIN="${VIRTUAL_ENV}/bin/python"
-elif [ -x "/home/thientn204/ai-env/bin/python" ]; then
-    PYTHON_BIN="/home/thientn204/ai-env/bin/python"
 fi
 
 echo "=================================================="

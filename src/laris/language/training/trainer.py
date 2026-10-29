@@ -355,8 +355,10 @@ class LanguageEncoderTrainer:
                 targets = torch.as_tensor(targets, dtype=torch.float32, device=self.device)
             else:
                 targets = targets.to(self.device).float()
-            probs = torch.clamp(probs, 1e-7, 1.0 - 1e-7)
-            bce = F.binary_cross_entropy(probs, targets)
+            # binary_cross_entropy raises under CUDA autocast; compute it in fp32 outside it
+            with torch.autocast(device_type=probs.device.type, enabled=False):
+                probs = torch.clamp(probs.float(), 1e-7, 1.0 - 1e-7)
+                bce = F.binary_cross_entropy(probs, targets)
             return bce * weights.lambda_para
 
         elif task_type == "similarity":
