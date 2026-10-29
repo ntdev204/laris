@@ -77,8 +77,8 @@ def profile_training_memory(
         token_ids, attention_mask = trainer._to_device(batch)
         grad = torch.enable_grad() if with_training_step else torch.no_grad()
         with grad, trainer._autocast():
-            outputs = model(
-                token_ids, attention_mask=attention_mask, training_pass=with_training_step
+            outputs = trainer._forward(
+                task, token_ids, attention_mask, batch.labels, training_pass=with_training_step
             )
             loss = trainer._compute_torch_loss(task, outputs, batch.labels, attention_mask)
         if with_training_step:

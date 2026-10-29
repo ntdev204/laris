@@ -35,6 +35,11 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
 }
 
 
+def _text_length(record: Dict[str, Any]) -> int:
+    """Characters of text in a record: a cheap proxy for its token length."""
+    return sum(len(v) for v in record.values() if isinstance(v, str))
+
+
 def build_sequence(
     tok_ids: List[int],
     second_tok_ids: Optional[List[int]],
@@ -225,7 +230,11 @@ class StreamingParquetMultiTaskDataLoader:
         fallback_to_synthetic: bool = False,
         split: str = "train",
         require_real_data: bool = False,
+        trim_padding: bool = False,
+        length_pool_batches: int = 1,
     ) -> None:
+        if length_pool_batches < 1:
+            raise ValueError("length_pool_batches must be >= 1")
         if require_real_data and (tokenizer is None or fallback_to_synthetic):
             raise ValueError(
                 "require_real_data needs a fitted tokenizer and forbids the synthetic fallback"
@@ -246,6 +255,9 @@ class StreamingParquetMultiTaskDataLoader:
         self.np_rng = np.random.default_rng(seed)
         self.return_tensors = return_tensors
         self.fallback_to_synthetic = fallback_to_synthetic
+        self.trim_padding = trim_padding
+        self.length_pool_batches = length_pool_batches
+        self._pending: Dict[str, List[List[Dict[str, Any]]]] = {}
 
         # Discover or assign task file paths
         self.task_paths: Dict[str, List[Path]] = {}
@@ -608,7 +620,23 @@ class StreamingParquetMultiTaskDataLoader:
         attention_mask: np.ndarray,
         labels: Dict[str, np.ndarray],
     ) -> TaskBatch:
-        """Constructs TaskBatch, converting to PyTorch tensors if return_tensors='pt'."""
+        """Constructs TaskBatch, converting to PyTorch tensors if return_tensors='pt'.
+
+        With `trim_padding` the columns past the longest real sequence (rounded up to a
+        multiple of 8) are dropped: they are masked out, so the result is unchanged.
+        """
+        seq_len = self.seq_len
+        if self.trim_padding:
+            longest = int(attention_mask.sum(axis=1).max()) if len(attention_mask) else 1
+            seq_len = min(self.seq_len, max(8, -(-longest // 8) * 8))
+            token_ids = np.ascontiguousarray(token_ids[:, :seq_len])
+            attention_mask = np.ascontiguousarray(attention_mask[:, :seq_len])
+            labels = {
+                k: np.ascontiguousarray(v[:, :seq_len])
+                if v.ndim == 2 and v.shape[1] == self.seq_len
+                else v
+                for k, v in labels.items()
+            }
         if self.return_tensors == "pt":
             try:
                 import torch
@@ -622,7 +650,7 @@ class StreamingParquetMultiTaskDataLoader:
                     attention_mask=pt_attention_mask,
                     labels=pt_labels,
                     batch_size=len(token_ids),
-                    seq_len=self.seq_len,
+                    seq_len=seq_len,
                 )
             except ImportError:
                 pass
@@ -633,8 +661,27 @@ class StreamingParquetMultiTaskDataLoader:
             attention_mask=attention_mask,
             labels=labels,
             batch_size=len(token_ids),
-            seq_len=self.seq_len,
+            seq_len=seq_len,
         )
+
+    def _next_records(self, task: str) -> List[Dict[str, Any]]:
+        """Next micro-batch of raw records; with a length pool, similar lengths share a batch."""
+        pending = self._pending.setdefault(task, [])
+        if not pending:
+            it = self._task_iterators[task]
+            pool: List[Dict[str, Any]] = []
+            for _ in range(self.batch_size * self.length_pool_batches):
+                try:
+                    pool.append(next(it))
+                except StopIteration:
+                    break
+            if self.length_pool_batches > 1:
+                pool.sort(key=_text_length)
+            size = self.batch_size
+            batches = [pool[i : i + size] for i in range(0, len(pool), size)]
+            self.rng.shuffle(batches)
+            pending.extend(batches)
+        return pending.pop() if pending else []
 
     def generate_batch(self, task_type: Optional[str] = None) -> TaskBatch:
         """Generates a batch by streaming records from physical Parquet files."""
@@ -648,13 +695,7 @@ class StreamingParquetMultiTaskDataLoader:
                 f"{sorted(self._task_iterators)}"
             )
 
-        it = self._task_iterators[selected_task]
-        records: List[Dict[str, Any]] = []
-        for _ in range(self.batch_size):
-            try:
-                records.append(next(it))
-            except StopIteration:
-                break
+        records = self._next_records(selected_task)
 
         if not records:
             if self._synthetic_fallback is not None:
