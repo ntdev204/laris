@@ -54,6 +54,11 @@ def _record_to_qa(rec: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _has_span(row: dict) -> bool:
+    """Extractive QA needs a located span; yes/no and unlocatable answers have none."""
+    return bool(row["answers"]["text"])
+
+
 def partition_hotpotqa_physical(
     raw_dir: Union[str, Path],
     output_dir: Union[str, Path],
@@ -61,17 +66,27 @@ def partition_hotpotqa_physical(
     seed: str = "laris-hotpotqa-partition-seed-v1",
 ) -> PhysicalSplitResult:
     """Train comes from the official train files; the official validation set is sub-split
-    into val/test grouped by the first supporting article so no article spans both."""
+    into val/test grouped by the first supporting article so no article spans both.
+
+    Questions without a located answer span (yes/no, unlocatable) are dropped: labelling them
+    "no answer" would teach the span head a false target.
+    """
     in_dir = Path(raw_dir)
     train_rows: List[dict] = []
     for path in sorted(glob.glob(str(in_dir / "distractor__train-*.parquet"))):
-        train_rows.extend(_record_to_qa(r) for r in pq.read_table(path).to_pylist())
+        train_rows.extend(
+            qa
+            for qa in map(_record_to_qa, pq.read_table(path).to_pylist())
+            if _has_span(qa)
+        )
 
     dev_rows: Dict[DatasetSplit, List[dict]] = {DatasetSplit.VAL: [], DatasetSplit.TEST: []}
     dev_titles = set()
     for path in sorted(glob.glob(str(in_dir / "distractor__validation-*.parquet"))):
         for raw in pq.read_table(path).to_pylist():
             qa = _record_to_qa(raw)
+            if not _has_span(qa):
+                continue
             dev_rows[bucket_dev_split(qa["title"], seed)].append(qa)
             dev_titles.add(qa["title"])
 

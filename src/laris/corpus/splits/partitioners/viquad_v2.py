@@ -38,6 +38,17 @@ def _answers_or_empty(answers: Optional[dict]) -> dict:
     return answers if answers and answers.get("text") else {"text": [], "answer_start": []}
 
 
+def _offsets_match(context: str, answers: dict) -> bool:
+    """Only a row with no answer text is unanswerable (a real label). An answer whose offset is
+    missing or points at other text is a data defect and is dropped, not relabelled."""
+    texts, starts = answers.get("text") or [], answers.get("answer_start") or []
+    if not texts or not texts[0]:
+        return True
+    if not starts:
+        return False
+    return bool(context[int(starts[0]) : int(starts[0]) + len(texts[0])] == texts[0])
+
+
 def partition_viquad_v2_physical(
     raw_dir: Union[str, Path],
     output_dir: Union[str, Path],
@@ -46,6 +57,8 @@ def partition_viquad_v2_physical(
     seed: str = "laris-viquad2-partition-seed-v1",
 ) -> PhysicalSplitResult:
     """The official test split has no public answers and is not used.
+
+    Rows whose answer offset does not point at the answer text are dropped.
 
     If `viquad_v1_dir` is given, contexts shared with UIT-ViQuAD 1.1 are dropped.
     """
@@ -59,6 +72,8 @@ def partition_viquad_v2_physical(
                 continue
             row = {k: rec[k] for k in QA_COLUMNS}
             row["answers"] = _answers_or_empty(rec["answers"])
+            if not _offsets_match(row["context"], row["answers"]):
+                continue
             rows.append(row)
         return rows
 

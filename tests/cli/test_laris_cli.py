@@ -40,21 +40,19 @@ def test_unknown_command_exits_with_usage_error() -> None:
     assert exc.value.code == 2
 
 
-def test_profile_only_measures_on_gpu_or_refuses_without_cuda(
-    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+def test_profile_only_refuses_without_a_real_tokenizer(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    """Profiling runs on real tokenized batches, never on random ids."""
     import torch
 
     monkeypatch.delenv("LARIS_TRAINING_AUTHORIZED", raising=False)
-    code = main(["train", "language-encoder", "--model-size", "compact", "--profile-only",
-                 "--micro-batch-size", "2", "--max-seq-len", "64"])
+    args = ["train", "language-encoder", "--model-size", "compact", "--profile-only"]
+    code = main(args + ["--tokenizer-model", str(tmp_path / "missing.model")])
     out = capsys.readouterr().out
-    if torch.cuda.is_available():
-        assert code == 0
-        assert "forward only" in out and "[PARTIAL]" in out and "NOT certified" in out
-    else:
-        assert code == 1
-        assert "No CUDA device" in out
+    assert code == 1
+    expected = "--tokenizer-model" if torch.cuda.is_available() else "No CUDA device"
+    assert expected in out
 
 
 def test_training_refuses_without_authorization_flag(capsys: pytest.CaptureFixture[str]) -> None:
