@@ -15,7 +15,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from laris.corpus.task_splits import (
+from laris.corpus.splits import (
     PartitionRatios,
     WikipediaArticlePartitioner,
     execute_physical_partitioning,

@@ -42,15 +42,7 @@ from laris.corpus.schemas import (
     verify_item_authorization,
     verify_item_content_hash,
 )
-from laris.corpus.storage import (
-    MANIFEST_FILE_NAME,
-    SPLIT_FILE_NAMES,
-    SPLIT_MANIFEST_FILE_NAME,
-    export_processed_corpus,
-    load_processed_split,
-    verify_processed_directory_layout,
-)
-from laris.corpus.task_splits import (
+from laris.corpus.splits import (
     PartitionRatios,
     PhysicalSplitResult,
     QADatasetPartitioner,
@@ -64,6 +56,14 @@ from laris.corpus.task_splits import (
     partition_wikipedia_shards_physical,
     validate_record_quality,
     validate_split_isolation,
+)
+from laris.corpus.storage import (
+    MANIFEST_FILE_NAME,
+    SPLIT_FILE_NAMES,
+    SPLIT_MANIFEST_FILE_NAME,
+    export_processed_corpus,
+    load_processed_split,
+    verify_processed_directory_layout,
 )
 
 __all__ = [

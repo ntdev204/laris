@@ -16,7 +16,7 @@ from pathlib import Path
 
 from laris.core.errors import ModuleContractViolationError
 from laris.corpus.schemas import DatasetSplit
-from laris.corpus.task_splits import (
+from laris.corpus.splits import (
     PartitionRatios,
     QADatasetPartitioner,
     QuestionPairGraphPartitioner,

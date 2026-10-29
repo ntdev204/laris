@@ -28,7 +28,7 @@ from laris.config.schemas import (
     TrainingConfig,
 )
 from laris.core.errors import HardwareBudgetExceededError
-from laris.corpus.task_splits import WikipediaArticlePartitioner
+from laris.corpus.splits import WikipediaArticlePartitioner
 from laris.language.encoder.transformer import LanguageEncoderConfig
 from laris.language.tokenization.trainer import TokenizerTrainerConfig
 

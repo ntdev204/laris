@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from laris.corpus.task_splits import execute_physical_partitioning
+from laris.corpus.splits import execute_physical_partitioning
 
 
 def parse_args() -> argparse.Namespace:

@@ -51,7 +51,7 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 
 ### Key Modules Implemented
 - **Centralized Configuration (`src/laris/config/`):** 4-tier configuration system (CLI, YAML, Defaults, Invariants) with cryptographic SHA-256 state tracking and safety ceilings.
-- **Physical Dataset Partitioning (`src/laris/corpus/task_splits.py`):**
+- **Physical Dataset Partitioning (`src/laris/corpus/splits/`):**
   - Streaming Parquet partitioner using `pyarrow.parquet.ParquetFile.iter_batches`.
   - Multi-worker parallel processing via `concurrent.futures.ProcessPoolExecutor` utilizing 14 CPU cores.
   - Streaming merge and automatic temporary cleanup on NVMe SSD.

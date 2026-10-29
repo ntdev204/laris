@@ -12,7 +12,7 @@ Enforces:
 from pathlib import Path
 
 from laris.core.errors import TrainingExecutionProhibitedError
-from laris.corpus.task_splits import (
+from laris.corpus.splits import (
     PartitionRatios,
     QuestionPairGraphPartitioner,
     WikipediaArticlePartitioner,

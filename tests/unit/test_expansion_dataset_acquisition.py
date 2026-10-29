@@ -1,9 +1,7 @@
 """Tests for bilingual expansion dataset acquisition logic (no network access)."""
 
-import importlib.util
 import io
 import lzma
-import sys
 from pathlib import Path
 
 import pytest
@@ -11,16 +9,26 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
+class _Acq:
+    """Facade exposing the acquisition package modules as one namespace for the tests."""
+
+    from laris.corpus.acquisition import common as _common
+    from laris.corpus.acquisition import registry as _registry
+    from laris.corpus.acquisition.sources import cc100 as _cc100
+    from laris.corpus.acquisition.sources import expansion as _expansion
+
+    REPO_ROOT = _common.REPO_ROOT
+    urllib = _common.urllib
+    _finalize_entry = staticmethod(_common._finalize_entry)
+    EXPANSION_ACQUIRERS = _registry.EXPANSION_ACQUIRERS
+    record_vi_paws_status = staticmethod(_expansion.record_vi_paws_status)
+    _iter_cc100_documents = staticmethod(_cc100._iter_cc100_documents)
+    _resume_cc100_state = staticmethod(_cc100._resume_cc100_state)
+
+
 @pytest.fixture(scope="module")
 def acq():
-    spec = importlib.util.spec_from_file_location(
-        "acquire_datasets_under_test", REPO_ROOT / "scripts" / "acquire_datasets.py"
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return _Acq
 
 
 def _finalize(acq, tmp_path, **overrides):
