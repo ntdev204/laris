@@ -244,6 +244,9 @@ def _rmsnorm(x: np.ndarray, weight: np.ndarray, eps: float = 1e-6) -> np.ndarray
     return np.asarray(res, dtype=np.float32)
 
 
+INIT_STD = 0.02  # GPT-2 / BERT initialisation scale
+
+
 def _apply_rope(
     q: np.ndarray, k: np.ndarray, seq_len: int, head_dim: int
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -570,6 +573,8 @@ try:
             d_ff = self.config.d_ff
             v = self.config.vocab_size
 
+            torch.manual_seed(self.config.seed)  # before any parameter exists
+
             # 1. Embeddings
             self.token_embeddings = nn.Embedding(v, d)
 
@@ -595,10 +600,26 @@ try:
             self.sim_head = nn.Linear(d, 1)
             self.qa_head = nn.Linear(d, 2)
 
-            # Seeded initialization
-            torch.manual_seed(self.config.seed)
+            self._init_parameters()
             self.gradient_checkpointing = getattr(self.config, "gradient_checkpointing", False)
             self.eval()
+
+        def _init_parameters(self) -> None:
+            """GPT-2 style init: N(0, 0.02), zero biases, residual projections scaled.
+
+            The embedding is also the tied MLM output matrix, so the PyTorch default N(0, 1)
+            would give logits with a standard deviation near 28 and an initial loss of ~540
+            instead of about ln(vocab_size).
+            """
+            std = INIT_STD
+            residual_std = std / math.sqrt(2 * self.config.num_layers)
+            nn.init.normal_(self.token_embeddings.weight, mean=0.0, std=std)
+            for name, module in self.named_modules():
+                if isinstance(module, nn.Linear):
+                    residual = name.endswith(("o_proj", "ffn_w2"))
+                    nn.init.normal_(module.weight, mean=0.0, std=residual_std if residual else std)
+                    if module.bias is not None:
+                        nn.init.zeros_(module.bias)
 
         def forward(
             self,

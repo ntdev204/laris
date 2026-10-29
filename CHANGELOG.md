@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Encoder initialisation (Issue #293):** the PyTorch encoder kept the `nn.Embedding` default N(0, 1) for the tied token embedding, so a fresh model produced logits with a standard deviation of 27.8 and a raw MLM cross-entropy of 542.7 instead of about ln(32000) = 10.4 (a real run logged loss 197.66 and gradient norm 259 at step 1, clipped to 1.0 every step). The model now uses GPT-2 style initialisation (normal std 0.02, zero biases, residual projections scaled by 1/sqrt(2L)) and seeds itself before creating parameters, which it did too late before. Measured on real validation data with the fitted tokenizer, the initial raw MLM loss is now 10.20. Runs started before this fix begin from the bad initialisation and should be restarted.
+
 ### Added
 - **Live training display (Issue #291):** `laris train language-encoder` now shows a progress bar with elapsed time, ETA and rate, and a metrics line with the running loss of each task (exponentially smoothed, so single-task micro-batches no longer make it jump), learning rate, gradient norm, GPU memory and the accumulation position. Validation prints as a table with the best step and the early-stopping counter. When output is not a terminal (`nohup`, redirected logs) or `tqdm` is missing it falls back to one plain line per `--log-interval` steps with the ETA. `tqdm` joins the `training` extra.
 
