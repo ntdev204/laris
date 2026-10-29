@@ -72,7 +72,7 @@ class TestTokenizerTrainingPipeline(unittest.TestCase):
         self.assertIn("--eos_piece=[SEP]", arg_str)
         self.assertIn("--pad_piece=[PAD]", arg_str)
         self.assertIn("--unk_piece=[UNK]", arg_str)
-        self.assertIn("--user_defined_symbols=[MATH],[GREEK],[UNIT]", arg_str)
+        self.assertIn("--user_defined_symbols=[MASK],[MATH],[GREEK],[UNIT]", arg_str)
 
     def test_execute_training_raises_prohibition_error(self) -> None:
         """Mandatory stop: calling execute_training() MUST raise prohibited error."""

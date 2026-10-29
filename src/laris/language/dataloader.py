@@ -7,14 +7,20 @@ Adheres to DOC-SPEC-TRAIN-001 Section 4.2:
 - Pure Python and PyTorch-compatible batch generation
 """
 
+import logging
 import math
 import random
+import zlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pyarrow.parquet as pq
+
+logger = logging.getLogger(__name__)
+
+VALID_SPLITS = {"train", "val", "test"}
 
 
 @dataclass(frozen=True)
@@ -180,8 +186,12 @@ class StreamingParquetMultiTaskDataLoader:
         mlm_mask_prob: float = 0.15,
         seed: int = 42,
         return_tensors: str = "np",
-        fallback_to_synthetic: bool = True,
+        fallback_to_synthetic: bool = False,
+        split: str = "train",
     ) -> None:
+        if split not in VALID_SPLITS:
+            raise ValueError(f"split must be one of {sorted(VALID_SPLITS)}, got '{split}'")
+        self.split = split
         self.data_dir = Path(data_dir) if data_dir else Path("data/processed")
         self.tokenizer = tokenizer
         self.vocab_size = vocab_size
@@ -236,7 +246,7 @@ class StreamingParquetMultiTaskDataLoader:
                 )
 
     def _discover_task_paths(self) -> None:
-        """Discovers Parquet shards within data_dir based on standard naming conventions."""
+        """Discovers Parquet shards of the configured split within data_dir."""
         if not self.data_dir.is_dir():
             return
 
@@ -253,7 +263,7 @@ class StreamingParquetMultiTaskDataLoader:
             for subdir in subdirs:
                 candidate_dir = self.data_dir / subdir
                 if candidate_dir.is_dir():
-                    found.extend(sorted(candidate_dir.glob("*.parquet")))
+                    found.extend(sorted(candidate_dir.glob(f"{self.split}*.parquet")))
             if found:
                 self.task_paths[task] = found
 
@@ -262,18 +272,27 @@ class StreamingParquetMultiTaskDataLoader:
         paths: List[Path],
         buffer_size: int,
     ) -> Iterator[Dict[str, Any]]:
-        """Creates an infinite streaming generator yielding records with bounded RAM."""
-        while True:
-            for p in paths:
-                if not p.is_file():
-                    continue
+        """Creates an infinite streaming generator yielding records with bounded RAM.
+
+        Unreadable shards are logged once and dropped; when no readable shard remains the
+        generator raises instead of spinning.
+        """
+        usable = list(paths)
+        while usable:
+            yielded = False
+            for p in list(usable):
                 try:
                     pq_file = pq.ParquetFile(p)
                     for batch in pq_file.iter_batches(batch_size=buffer_size):
                         for row in batch.to_pylist():
+                            yielded = True
                             yield row
-                except Exception:
-                    continue
+                except Exception as exc:
+                    logger.warning("Dropping unreadable shard %s: %s", p, exc)
+                    usable.remove(p)
+            if not yielded and usable:
+                raise RuntimeError(f"Shards contain no records: {[str(p) for p in usable]}")
+        raise RuntimeError(f"No readable Parquet shards among {[str(p) for p in paths]}")
 
     def _tokenize(self, text: str) -> List[int]:
         """Encodes text to a list of integer token IDs."""
@@ -293,9 +312,10 @@ class StreamingParquetMultiTaskDataLoader:
                 if isinstance(res, (list, tuple)):
                     return list(res)
 
-        # Built-in deterministic subword/hash tokenizer fallback
-        tokens = text.split()
-        return [((hash(tok) & 0x7FFFFFFF) % (self.vocab_size - 10)) + 10 for tok in tokens]
+        # Deterministic whitespace/CRC32 fallback (stable across processes; tests only)
+        return [
+            (zlib.crc32(tok.encode("utf-8")) % (self.vocab_size - 10)) + 10 for tok in text.split()
+        ]
 
     def _prepare_sequence(
         self,
@@ -463,6 +483,38 @@ class StreamingParquetMultiTaskDataLoader:
 
         return self._to_task_batch("similarity", tok_arr, att_arr, {"sim_labels": lbl_arr})
 
+    def _locate_answer_span(
+        self, rec: Dict[str, Any], context: str, q_toks: List[int]
+    ) -> Tuple[int, int]:
+        """Maps the first gold answer (char offset) to token positions in the pair sequence.
+
+        Returns (0, 0) -- the [CLS] position -- when there is no answer or it was truncated.
+        """
+        answers = rec.get("answers")
+        if not isinstance(answers, dict):
+            return 0, 0
+        texts = answers.get("text") or []
+        starts = answers.get("answer_start") or []
+        if len(texts) == 0 or len(starts) == 0 or not texts[0]:
+            return 0, 0
+        char_start = int(starts[0])
+        if char_start < 0 or context[char_start : char_start + len(texts[0])] != texts[0]:
+            return 0, 0
+
+        max_inner = max(0, self.seq_len - 3)
+        question_len = min(len(q_toks), max_inner // 2)
+        context_offset = 1 + question_len + 1  # [CLS] question [SEP]
+        context_limit = min(self.seq_len - 1, context_offset + (max_inner - question_len))
+        prefix_len = len(self._tokenize(context[:char_start]))
+        answer_len = len(self._tokenize(texts[0]))
+        if answer_len == 0:
+            return 0, 0
+        start_pos = context_offset + prefix_len
+        end_pos = start_pos + answer_len - 1
+        if end_pos >= context_limit:
+            return 0, 0
+        return start_pos, end_pos
+
     def _format_qa_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
         """Formats question/context records for extractive QA span prediction."""
         token_ids_list: List[List[int]] = []
@@ -480,9 +532,7 @@ class StreamingParquetMultiTaskDataLoader:
             token_ids_list.append(padded_seq)
             attention_mask_list.append(att_mask)
 
-            # Heuristic span identification within context segment
-            start_pos = min(len(q_toks) + 2, self.seq_len - 2)
-            end_pos = min(start_pos + 4, self.seq_len - 1)
+            start_pos, end_pos = self._locate_answer_span(rec, c, q_toks)
             starts.append(start_pos)
             ends.append(end_pos)
 
