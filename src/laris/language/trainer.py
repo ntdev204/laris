@@ -211,6 +211,17 @@ class Stage1LanguageTrainer:
 
         self.scheduler = scheduler
 
+        if optimizer is not None and TORCH_AVAILABLE and isinstance(self.model, nn.Module):
+            model_param_ids = {id(prm) for prm in self.model.parameters()}
+            optimizer_param_ids = {
+                id(prm) for group in optimizer.param_groups for prm in group["params"]
+            }
+            if not optimizer_param_ids <= model_param_ids:
+                raise ValueError(
+                    "Injected optimizer is not bound to the model's parameters; construct it "
+                    "after the model has been moved to its target device."
+                )
+
     def _compute_torch_loss(
         self,
         task_type: str,

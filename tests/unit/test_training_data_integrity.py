@@ -143,3 +143,16 @@ def test_sentencepiece_args_reserve_mask_before_other_symbols(tmp_path: Path) ->
     ]
 
 
+
+
+def test_injected_optimizer_must_be_bound_to_model_parameters() -> None:
+    torch = pytest.importorskip("torch")
+    from laris.language.trainer import Stage1LanguageTrainer
+
+    model = torch.nn.Linear(2, 2)
+    other = torch.nn.Linear(2, 2)
+    stale = torch.optim.SGD(other.parameters(), lr=0.1)
+    with pytest.raises(ValueError):
+        Stage1LanguageTrainer(model=model, config=None, dataloader=None, optimizer=stale)
+    good = torch.optim.SGD(model.parameters(), lr=0.1)
+    Stage1LanguageTrainer(model=model, config=None, dataloader=None, optimizer=good, device="cpu")
