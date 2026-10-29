@@ -16,6 +16,12 @@ To ensure that research provenance, documentation integrity, and local hardware 
 
 ---
 
+## 1a. Workflow
+
+Every change starts as a GitHub issue (templates in `.github/ISSUE_TEMPLATE/`), then a `feature/<issue-id>-<description>` branch from `develop`, then a PR into `develop` that is squash-merged and its branch deleted. Closing the issue is part of done. Update `CHANGELOG.md` for user-visible changes. Details: [GIT_FLOW](docs/development/GIT_FLOW.md). Security reports: [SECURITY.md](SECURITY.md).
+
+---
+
 ## 2. Documentation Governance
 
 - All documentation files MUST adhere to [docs/development/DOCUMENTATION.md](docs/development/DOCUMENTATION.md) and include valid YAML front matter.

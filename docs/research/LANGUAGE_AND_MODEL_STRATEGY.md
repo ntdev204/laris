@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/SELECTIVE_COMPUTATION.md"
   - "docs/research/SCIENTIFIC_NLP.md"
 decision_references:

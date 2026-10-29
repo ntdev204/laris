@@ -1,6 +1,6 @@
 # Local Agentic Research Intelligence System (LARIS)
 
-[![Status: Greenfield Baseline (Milestone M0)](https://img.shields.io/badge/status-Milestone%20M0-blue.svg)](docs/plans/ROADMAP.md)
+[![Status: Pre-training baseline](https://img.shields.io/badge/status-pre--training-blue.svg)](docs/plans/ROADMAP.md)
 [![Hardware Target: RTX 5070 Ti 16GB](https://img.shields.io/badge/hardware-RTX%205070%20Ti%2016GB-green.svg)](docs/architecture/SYSTEM_OVERVIEW.md)
 [![License: Internal / Work-in-Progress](https://img.shields.io/badge/license-Proprietary%20%2F%20Internal-lightgrey.svg)](docs/development/DOCUMENTATION.md)
 
@@ -24,37 +24,14 @@ LARIS is **not** a generic PDF chatbot, not a naive semantic search tool, and no
 
 ```
 /
-├── README.md                           # Project entry point and overview
-├── CHANGELOG.md                        # Versioned change history
-├── CONTRIBUTING.md                     # Contributor guidelines and workflow
-├── .gitignore                          # Git ignore rules
-├── docs/                               # Canonical technical documentation
-│   ├── IDEA.md                         # Official System Vision and Principles
-│   ├── DOCUMENTATION.md       # Metadata schema and authoring rules
-│   ├── DOCUMENTATION.md           # Lifecycle states, freeze protocol, and CRs
-│   ├── DECISION_LOG.md                 # Chronological log of accepted decisions
-│   ├── OPEN_QUESTIONS.md               # Active research questions and trade-offs
-│   ├── GLOSSARY.md                     # Canonical definitions of system terms
-│   ├── architecture/                   # System topology, layers, and data flows
-│   ├── specifications/                 # Formal module contracts and data schemas
-│   ├── research/                       # Research strategies across capability areas
-│   ├── adr/                            # Architecture Decision Records (ADR-001 - 008)
-│   ├── plans/                          # Milestones (M0 - M10) and implementation roadmap
-│   ├── testing/                        # Testing strategy, benchmark protocols, acceptance
-│   └── templates/                      # Document, specification, ADR, and report templates
-├── src/                                # Source package
-│   └── laris/                          # Core python package skeleton
-│       ├── core/                       # Shared schemas, errors, and base interfaces
-│       └── layers/                     # Layer boundary implementations (L0 - L11)
-├── tests/                              # Test suites
-│   ├── unit/                           # Algorithmic and deterministic tests
-│   ├── contract/                       # Module interface schema validation
-│   ├── integration/                    # Multi-agent workflow integration tests
-│   └── documentation/                  # Documentation and governance tests
-├── configs/                            # Configuration files and hyperparameter specs
-├── scripts/                            # Validation scripts and build tooling
-├── data/                               # Local corpus placeholders (gitignored)
-└── artifacts/                          # Checkpoints, benchmark reports, and logs (gitignored)
+├── README.md, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md
+├── docs/            # Architecture, specifications, ADRs, research, plans, testing (index: docs/README.md)
+├── src/laris/       # Domain packages: language, corpus, retrieval, cli, core, config, ...
+├── tests/           # unit/<domain>, contract, integration, cli
+├── configs/         # YAML configuration by function (language_encoder, data, evaluation)
+├── scripts/         # validate_docs.py and thin wrappers over the laris CLI
+├── data/            # Local corpora (gitignored except manifests)
+└── artifacts/       # Checkpoints, tokenizer, reports (gitignored)
 ```
 
 ---
@@ -73,8 +50,10 @@ uv pip install -e ".[dev]"
 pytest
 ruff check .
 mypy src
-python3 scripts/validate_docs.py
+python3 scripts/validate_docs.py   # or: make check
 ```
+
+Language-encoder workflow (see [CLI reference](docs/development/CLI.md)): `laris data acquire`, `laris data partition`, `laris train tokenizer`, `laris train language-encoder`, `laris evaluate language-encoder`. Training requires explicit owner authorization.
 
 ### Engineering Governance & Guidelines
 - [Coding Standards & Engineering Principles (docs/development/CODING_STANDARDS.md)](docs/development/CODING_STANDARDS.md)
@@ -89,7 +68,7 @@ python3 scripts/validate_docs.py
 
 To understand the architecture and design of LARIS, read in the following sequence:
 
-1. [Official System Vision (docs/archive/IDEA.md)](docs/archive/IDEA.md)
+1. [System Vision and Topology (docs/architecture/SYSTEM_OVERVIEW.md)](docs/architecture/SYSTEM_OVERVIEW.md)
 2. [Twelve-Layer Architecture (docs/architecture/LAYER_ARCHITECTURE.md)](docs/architecture/LAYER_ARCHITECTURE.md)
 3. [Evidence Provenance Architecture (docs/architecture/EVIDENCE_AND_PROVENANCE.md)](docs/architecture/EVIDENCE_AND_PROVENANCE.md)
 4. [Accepted ADRs (docs/adr/README.md)](docs/adr/README.md)

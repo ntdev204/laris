@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/testing/BENCHMARK_PROTOCOL.md"
   - "docs/testing/TEST_STRATEGY.md"
 decision_references:

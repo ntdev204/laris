@@ -54,5 +54,5 @@ change_summary: "Standard template for Architecture Decision Records in template
 - [ ] [Quantifiable criterion to verify that the decision is correctly implemented and adheres to constraints.]
 
 ## 7. Related Documents
-- [Link to IDEA.md](../archive/IDEA.md)
+- [Link to SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md)
 - [Link to Relevant Spec](../specifications/MODULE_CONTRACTS.md)

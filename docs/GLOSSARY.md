@@ -11,7 +11,7 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/development/DOCUMENTATION.md"
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
 decision_references: []
 change_summary: "Canonical definitions of architectural, epistemic, and machine learning terms."
 ---

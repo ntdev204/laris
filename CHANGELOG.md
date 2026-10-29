@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Documentation slimmed and standardized (Issue #260):**
+  - Removed redundant or historical files: `docs/archive/`, `docs/RELEASE_NOTES.md` (this changelog is the release history), `docs/DECISION_LOG.md` (the ADR index is the register), `docs/plans/BACKLOG.md` (work is tracked in GitHub issues), `SESSION.md` and `implement_plan.md`.
+  - Condensed `DOCUMENTATION.md` (262 to ~110 lines) and the language encoder training specification (494 to ~330); stage 2-6 detail now lives in a gate table and the roadmap.
+  - ADR index lists ADR-001 to ADR-013 and holds the FROZEN-document register used by `validate_docs.py`.
+  - Added `SECURITY.md`, `.github/CODEOWNERS` and issue templates (bug, task, documentation); README and CONTRIBUTING describe the issue-to-PR workflow.
+
+### Changed
 - **Documentation consolidation (Issue #251):**
   - Merged overlapping documents: agent/skill/tool/workflow specs into `ORCHESTRATION_SPECIFICATION`; documentation standard and lifecycle into `development/DOCUMENTATION`; roadmap and milestones into `plans/ROADMAP`; training specification and staged pipeline into `LANGUAGE_ENCODER_TRAINING_SPECIFICATION`; language foundation, local model and semantic strategies into `research/LANGUAGE_AND_MODEL_STRATEGY`.
   - Moved `IDEA.md` and the delivered M1-M10 backlog task specifications to `docs/archive/` (excluded from the documentation gate); removed the duplicate ADR template.
