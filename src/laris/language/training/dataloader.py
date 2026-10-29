@@ -224,7 +224,13 @@ class StreamingParquetMultiTaskDataLoader:
         return_tensors: str = "np",
         fallback_to_synthetic: bool = False,
         split: str = "train",
+        require_real_data: bool = False,
     ) -> None:
+        if require_real_data and (tokenizer is None or fallback_to_synthetic):
+            raise ValueError(
+                "require_real_data needs a fitted tokenizer and forbids the synthetic fallback"
+            )
+        self.stats = {"qa_total": 0, "qa_unanswerable": 0, "qa_answer_outside_window": 0}
         if split not in VALID_SPLITS:
             raise ValueError(f"split must be one of {sorted(VALID_SPLITS)}, got '{split}'")
         self.split = split
@@ -251,7 +257,13 @@ class StreamingParquetMultiTaskDataLoader:
 
         # Build task counts for active tasks
         active_counts: Dict[str, int] = {}
-        counts_src = task_counts or self._count_rows() or self.DEFAULT_TASK_COUNTS
+        if require_real_data:
+            counts_src = task_counts or self._count_rows()
+            unknown = sorted(t for t in self.task_paths if not counts_src.get(t))
+            if unknown:
+                raise ValueError(f"Cannot count real rows for tasks {unknown} in {self.data_dir}")
+        else:
+            counts_src = task_counts or self._count_rows() or self.DEFAULT_TASK_COUNTS
         for task in self.task_paths:
             active_counts[task] = counts_src.get(task, 100000)
 
@@ -426,14 +438,15 @@ class StreamingParquetMultiTaskDataLoader:
             "contradiction": 2,
             "2": 2,
             2: 2,
-            "-": 1,
         }
 
         for rec in records:
             p = rec.get("premise") or rec.get("sentence1") or ""
             h = rec.get("hypothesis") or rec.get("sentence2") or ""
-            raw_lbl = rec.get("label") if "label" in rec else rec.get("gold_label", 1)
-            lbl = label_map.get(raw_lbl, 1)
+            raw_lbl = rec.get("label") if "label" in rec else rec.get("gold_label")
+            if raw_lbl not in label_map:
+                raise ValueError(f"Unknown NLI label {raw_lbl!r}; refusing to guess a class")
+            lbl = label_map[raw_lbl]
 
             p_toks = self._tokenize(p)
             h_toks = self._tokenize(h)
@@ -458,8 +471,13 @@ class StreamingParquetMultiTaskDataLoader:
         for rec in records:
             q1 = rec.get("question1") or rec.get("sentence1") or ""
             q2 = rec.get("question2") or rec.get("sentence2") or ""
-            raw_lbl = rec.get("is_duplicate") if "is_duplicate" in rec else rec.get("label", 0)
-            lbl = 1.0 if raw_lbl in (1, True, "1", "duplicate") else 0.0
+            raw_lbl = rec.get("is_duplicate") if "is_duplicate" in rec else rec.get("label")
+            if raw_lbl in (1, True, "1", "duplicate"):
+                lbl = 1.0
+            elif raw_lbl in (0, False, "0", "not_duplicate"):
+                lbl = 0.0
+            else:
+                raise ValueError(f"Unknown paraphrase label {raw_lbl!r}; refusing to guess")
 
             q1_toks = self._tokenize(q1)
             q2_toks = self._tokenize(q2)
@@ -484,14 +502,16 @@ class StreamingParquetMultiTaskDataLoader:
         for rec in records:
             s1 = rec.get("sentence1") or ""
             s2 = rec.get("sentence2") or ""
-            raw_val = (
-                rec.get("score") if "score" in rec else rec.get("similarity_score", 0.0)
-            )
-            raw_score = float(raw_val if raw_val is not None else 0.0)
-            # Normalize STS 0-5 scores to [0.0, 1.0]
+            raw_val = rec.get("score") if "score" in rec else rec.get("similarity_score")
+            if raw_val is None:
+                raise ValueError("Similarity record without a score; refusing to use 0.0")
+            raw_score = float(raw_val)
+            # Raw STS scores on the 0-5 scale are normalised to [0.0, 1.0]
             if raw_score > 1.0:
                 raw_score = raw_score / 5.0
-            score = max(0.0, min(1.0, raw_score))
+            if not 0.0 <= raw_score <= 1.0:
+                raise ValueError(f"Similarity score {raw_val!r} is outside the 0-5 STS scale")
+            score = raw_score
 
             s1_toks = self._tokenize(s1)
             s2_toks = self._tokenize(s2)
@@ -512,18 +532,22 @@ class StreamingParquetMultiTaskDataLoader:
     ) -> Tuple[int, int]:
         """Maps the first gold answer (char offset) to token positions in the pair sequence.
 
-        Returns (0, 0) -- the [CLS] position -- when there is no answer or it was truncated.
+        Returns (0, 0) -- the [CLS] position -- when there is no answer or it lies outside the
+        sequence window (counted separately in `self.stats`).
         """
+        self.stats["qa_total"] += 1
         answers = rec.get("answers")
-        if not isinstance(answers, dict):
-            return 0, 0
-        texts = answers.get("text") or []
-        starts = answers.get("answer_start") or []
-        if len(texts) == 0 or len(starts) == 0 or not texts[0]:
+        texts = answers.get("text") if isinstance(answers, dict) else None
+        starts = answers.get("answer_start") if isinstance(answers, dict) else None
+        if not texts or not starts or not texts[0]:
+            self.stats["qa_unanswerable"] += 1  # a real "no answer" label (SQuAD 2.0 style)
             return 0, 0
         char_start = int(starts[0])
         if char_start < 0 or context[char_start : char_start + len(texts[0])] != texts[0]:
-            return 0, 0
+            raise ValueError(
+                f"Answer offset {char_start} does not point at {texts[0]!r}; "
+                "refusing to relabel it 'no answer'"
+            )
 
         max_inner = max(0, self.seq_len - 3)
         question_len = min(len(q_toks), max_inner // 2)
@@ -536,6 +560,7 @@ class StreamingParquetMultiTaskDataLoader:
         start_pos = context_offset + prefix_len
         end_pos = start_pos + answer_len - 1
         if end_pos >= context_limit:
+            self.stats["qa_answer_outside_window"] += 1  # span cut off by the sequence window
             return 0, 0
         return start_pos, end_pos
 
@@ -614,7 +639,10 @@ class StreamingParquetMultiTaskDataLoader:
 
         selected_task = task_type or self.scheduler.sample_task(self.rng)
         if selected_task not in self._task_iterators:
-            selected_task = next(iter(self._task_iterators.keys()))
+            raise KeyError(
+                f"Task '{selected_task}' has no data shards; available: "
+                f"{sorted(self._task_iterators)}"
+            )
 
         it = self._task_iterators[selected_task]
         records: List[Dict[str, Any]] = []

@@ -2,45 +2,33 @@
 
 import pytest
 
-from laris.language.training.memory_profile import (
-    TaskMeasurement,
-    TrainingMemoryProfile,
-    optimizer_state_gb,
-)
+from laris.language.training.memory_profile import TaskMeasurement, TrainingMemoryProfile
 
 
 def _profile(**overrides) -> TrainingMemoryProfile:
     base = dict(
-        device="cuda",
         gpu_name="test",
         total_vram_gb=16.0,
-        param_count=1,
         limit_gb=14.5,
+        steady_state=True,
         tasks=[TaskMeasurement("mlm", 7.0, True)],
-        measured_peak_gb=7.0,
-        optimizer_state_gb=1.0,
+        peak_gb=7.0,
     )
     base.update(overrides)
     return TrainingMemoryProfile(**base)
 
 
-def test_optimizer_state_sizes() -> None:
-    assert optimizer_state_gb(1024**3, use_8bit_adam=True) == pytest.approx(2.0)
-    assert optimizer_state_gb(1024**3, use_8bit_adam=False) == pytest.approx(8.0)
-
-
 def test_forward_only_fits_but_is_never_certified() -> None:
-    profile = _profile(backward_measured=False)
+    profile = _profile(steady_state=False)
     assert profile.fits and not profile.certified
 
 
-def test_certified_requires_backward_and_projected_peak_within_limit() -> None:
-    assert _profile(backward_measured=True).certified
-    assert not _profile(backward_measured=True, measured_peak_gb=14.0).certified
-    assert not _profile(backward_measured=True, error="CUDA out of memory").certified
-    assert not _profile(
-        backward_measured=True, tasks=[TaskMeasurement("mlm", 7.0, False)]
-    ).certified
+def test_certified_requires_steady_state_within_limit_and_finite_losses() -> None:
+    assert _profile().certified
+    assert not _profile(peak_gb=14.6).certified
+    assert not _profile(error="CUDA out of memory").certified
+    assert not _profile(tasks=[TaskMeasurement("mlm", 7.0, False)]).certified
+    assert not _profile(tasks=[]).certified
 
 
 torch = pytest.importorskip("torch")

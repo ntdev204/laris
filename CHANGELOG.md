@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Real data only (Issue #282):** an audit against the partitioned data showed rows that were silently given fabricated labels. 4,892 HotpotQA train questions without an answer span and 154 UIT-ViQuAD2.0 rows with a wrong `answer_start` were labelled "no answer"; 2 Quora pairs had an empty question. They are now dropped at partition time and `HOTPOTQA`, `UIT-VIQUAD-V2` and `QUORA-DUPLICATES` were re-partitioned (a scan of all 7,999,454 rows now finds 0 defects). The training loader raises on unknown NLI or paraphrase labels, a missing similarity score and a mismatched answer offset instead of mapping them to neutral, 0 or 0.0; with `require_real_data` (used by training, evaluation and profiling) it also refuses a missing tokenizer, default row counts and the synthetic fallback, and asking for a task without shards no longer silently returns another task.
+- **Profile on real data:** `--profile-only` now needs the fitted tokenizer and measures real tokenized train batches (random token ids are gone). With `LARIS_TRAINING_AUTHORIZED=1` it runs a real optimizer step on a discarded randomly initialised model and measures the steady-state peak, so optimizer state and the bitsandbytes kernels are measured, not estimated. The analytic VRAM figure is removed from the CLI and `verify_target_server.sh` no longer runs a toy model on synthetic input.
+
 ## [1.1.2] - 2026-10-29
 
 ### Fixed

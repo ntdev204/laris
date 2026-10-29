@@ -3,7 +3,7 @@ document_id: "DOC-SPEC-DATA-001"
 title: "LARIS Dataset Inventory, Licensing Matrix & Scalable Sampling Specification"
 document_type: "specification"
 status: "APPROVED"
-version: "1.3.0"
+version: "1.3.1"
 created_at: "2026-10-16"
 updated_at: "2026-10-29"
 owner: "LARIS Architecture Team"
@@ -124,6 +124,8 @@ The registry tracks 17 datasets (owner decision, Issue #274). Fourteen feed the 
 | NATURAL-QUESTIONS | `PROPOSED`: the full dump is 42 GB; a bounded subset is planned. |
 
 Removed from the registry because no current stage consumes them: VI-PAWS (no public Vietnamese release), UIT-VIQUAD v1.1 (superseded by UIT-VIQUAD-V2 over the same contexts), PUBLAYNET-MINI and DOCLAYNET-BOUNDED (layout), UD-EWT-EN and UD-VTB-VI (treebanks) and SCIFACT. Re-adding one requires a new acquirer, a manifest entry and a consumer.
+
+Rows that cannot carry a real label are dropped at partition time rather than relabelled: HotpotQA questions without a located answer span (yes/no or unlocatable), UIT-ViQuAD2.0 rows whose `answer_start` does not point at the answer text (154 in train), and Quora pairs with an empty question (2). Unanswerable UIT-ViQuAD2.0 questions are kept because "no answer" is their real label. The training loader raises on any unknown label, missing score or mismatched answer offset, and a scan of all 7,999,454 partitioned rows found none.
 
 ---
 

@@ -117,6 +117,7 @@ class LanguageEncoderEvaluator:
             return_tensors="pt",
             seed=self.seed,
             fallback_to_synthetic=False,
+            require_real_data=True,
         )
 
     @staticmethod

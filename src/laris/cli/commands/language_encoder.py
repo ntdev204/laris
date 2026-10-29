@@ -26,13 +26,11 @@ from laris.language.encoder.transformer import (
 from laris.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
 from laris.language.training.checkpoint import current_git_commit, file_sha256
 from laris.language.training.dataloader import (
+    TASK_DATASET_DIRS,
     StreamingParquetMultiTaskDataLoader,
 )
 from laris.language.training.loop import TrainingRunConfig, run_training
 from laris.language.training.memory_profile import profile_training_memory
-from laris.language.training.profiling import (
-    compute_analytical_training_memory_gb,
-)
 from laris.language.training.trainer import (
     LanguageEncoderTrainer,
     MultiTaskLossCalculator,
@@ -193,15 +191,10 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
 def _run_memory_profile(
     args: argparse.Namespace,
     config: LanguageEncoderConfig,
-    param_count: int,
     use_8bit_adam: bool,
     hyper: TrainingConfig,
 ) -> int:
-    """Measures real GPU memory of forward+backward on the target device (no weight update)."""
-    with_backward = is_training_authorized()
-    stage = "forward+backward" if with_backward else "forward only"
-    print(f"\n[PROFILING MODE] Measuring {stage} on the target device "
-          "(no optimizer step, no weight update)...")
+    """Measures real GPU memory on real tokenized train batches (see memory_profile)."""
     if not TORCH_AVAILABLE:
         print("[ERROR] PyTorch is required: pip install -e '.[training]'")
         return 1
@@ -210,56 +203,84 @@ def _run_memory_profile(
     if not torch.cuda.is_available():
         print("[ERROR] No CUDA device: GPU memory cannot be measured, so feasibility is unknown.")
         return 1
+    if not args.tokenizer_model or not Path(args.tokenizer_model).is_file():
+        print("[ERROR] --tokenizer-model must point to the fitted SentencePiece .model file:")
+        print("profiling runs on real tokenized batches. Fit it with `laris train tokenizer`.")
+        return 1
+    try:
+        import sentencepiece as spm
+    except ImportError:
+        print("[ERROR] sentencepiece is required: pip install -e '.[training]'")
+        return 1
+    tokenizer = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    if tokenizer.get_piece_size() != config.vocab_size:
+        print(f"[ERROR] Tokenizer vocab {tokenizer.get_piece_size()} != model {config.vocab_size}")
+        return 1
+    with_step = is_training_authorized()
     seed_everything(args.seed)
+    loader = StreamingParquetMultiTaskDataLoader(
+        data_dir=args.data_dir,
+        tokenizer=tokenizer,
+        vocab_size=config.vocab_size,
+        seq_len=args.max_seq_len,
+        batch_size=args.micro_batch_size,
+        return_tensors="pt",
+        seed=args.seed,
+        split="train",
+        require_real_data=True,
+    )
+    missing = sorted(set(TASK_DATASET_DIRS) - set(loader.task_paths))
+    if missing:
+        print(f"[ERROR] No real train data for tasks {missing}. Run `laris data partition`.")
+        return 1
+    stage = "forward+backward with a real optimizer step" if with_step else "forward only"
+    print(f"\n[PROFILING MODE] Real model, real train batches, {stage}.")
+    print("The model is randomly initialised and discarded; nothing is saved.")
     model = PyTorchTransformerEncoder(config).to("cuda")
     trainer = LanguageEncoderTrainer(
         model=model,
         config=config,
-        dataloader=None,
+        dataloader=loader,
         use_8bit_adam=use_8bit_adam,
         learning_rate=hyper.learning_rate,
         grad_accum_steps=hyper.gradient_accumulation_steps,
         device="cuda",
         precision=args.precision,
     )
-    profile = profile_training_memory(
-        trainer,
-        param_count=param_count,
-        batch_size=args.micro_batch_size,
-        seq_len=args.max_seq_len,
-        vocab_size=config.vocab_size,
-        use_8bit_adam=use_8bit_adam,
-        limit_gb=MAX_VRAM_GB,
-        with_backward=with_backward,
-    )
+    profile = profile_training_memory(trainer, loader, MAX_VRAM_GB, with_training_step=with_step)
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
     for t in profile.tasks:
         print(
-            f"  after {t.task_type:<11} peak {t.peak_allocated_gb:6.2f} GB, "
+            f"  {t.task_type:<11} peak {t.peak_allocated_gb:6.2f} GB, "
             f"loss {'finite' if t.loss_finite else 'NOT FINITE'}"
         )
     if profile.error:
         print(f"[FAIL] {profile.error}")
-        print("Lower --micro-batch-size or --max-seq-len, then profile again.")
-        return 1
-    print(f"Measured peak ({stage}): {profile.measured_peak_gb:.2f} GB")
-    per_step = profile.seconds_per_micro_batch * hyper.gradient_accumulation_steps
-    print(
-        f"Latency:                   {profile.seconds_per_micro_batch:.2f} s/micro-batch, "
-        f"~{per_step:.1f} s/optimizer step (compute only, excludes data loading)"
-    )
-    if not with_backward:
-        print("[PARTIAL] Training memory is NOT certified: backward and optimizer state were not")
-        print("measured. Gradient computation counts as training; to measure it (still no")
-        print("weight update) the owner must authorize: export LARIS_TRAINING_AUTHORIZED=1")
-        return 0 if profile.fits else 1
-    print(f"+ optimizer state (est.):  {profile.optimizer_state_gb:.2f} GB")
-    print(f"Projected training peak:   {profile.projected_peak_gb:.2f} GB (limit {MAX_VRAM_GB} GB)")
-    if not profile.certified:
-        print("[FAIL] Projected peak exceeds the limit or a loss was not finite.")
         print("Lower --micro-batch-size (raise --grad-accum-steps to keep the effective batch).")
         return 1
-    print("[SUCCESS] Measured on this GPU; the configuration fits.")
+    print(f"Measured peak:             {profile.peak_gb:.2f} GB (limit {MAX_VRAM_GB} GB)")
+    per_update = profile.seconds_per_micro_batch * hyper.gradient_accumulation_steps
+    print(
+        f"Latency:                   {profile.seconds_per_micro_batch:.2f} s/micro-batch incl. "
+        f"real data loading, ~{per_update:.1f} s/optimizer step"
+    )
+    qa = loader.stats
+    if qa["qa_total"]:
+        print(
+            f"QA labels in this sample:  {qa['qa_total']} rows, "
+            f"{qa['qa_unanswerable']} unanswerable, "
+            f"{qa['qa_answer_outside_window']} answer outside the {args.max_seq_len}-token window"
+        )
+    if not with_step:
+        print("[PARTIAL] Forward only: training memory is NOT certified. Gradients, activations")
+        print("for backward and optimizer state were not measured. Gradient computation counts as")
+        print("training; the owner must set LARIS_TRAINING_AUTHORIZED=1 to measure them.")
+        return 0 if profile.fits else 1
+    if not profile.certified:
+        print("[FAIL] Peak exceeds the limit or a loss was not finite.")
+        print("Lower --micro-batch-size (raise --grad-accum-steps to keep the effective batch).")
+        return 1
+    print("[SUCCESS] Measured steady-state training peak on this GPU; the configuration fits.")
     return 0
 
 
@@ -286,15 +307,6 @@ def run(args: argparse.Namespace) -> int:
     param_count = config.calculate_parameter_count(include_heads=True)
     use_8bit_adam = not args.no_8bit_adam
 
-    # 2. Compute Analytical Training VRAM
-    estimated_vram_gb = compute_analytical_training_memory_gb(
-        config=config,
-        batch_size=args.micro_batch_size,
-        seq_len=args.max_seq_len,
-        use_8bit_adam=use_8bit_adam,
-        use_activation_checkpointing=config.gradient_checkpointing,
-    )
-
     print("=" * 65)
     print("LARIS Language Encoder Training Runner")
     print("=" * 65)
@@ -308,16 +320,11 @@ def run(args: argparse.Namespace) -> int:
     print(f"8-bit AdamW Optimizer:     {'ENABLED' if use_8bit_adam else 'DISABLED'}")
     ckpt_enabled = 'ENABLED' if config.gradient_checkpointing else 'DISABLED'
     print(f"Activation Checkpointing:  {ckpt_enabled}")
-    print(f"Analytical VRAM estimate:  ~{estimated_vram_gb:.2f} GB (formula only; limit 14.5 GB)")
     print("=" * 65)
-
-    if not args.profile_only and estimated_vram_gb > 14.5:
-        print(f"[ERROR] Estimated VRAM {estimated_vram_gb:.2f} GB exceeds safety envelope 14.5 GB!")
-        return 1
 
     # 3. Handle Profiling Mode
     if args.profile_only:
-        return _run_memory_profile(args, config, param_count, use_8bit_adam, hyper)
+        return _run_memory_profile(args, config, use_8bit_adam, hyper)
 
     # 4. Handle Training Mode
     if not args.authorized:
@@ -359,6 +366,7 @@ def run(args: argparse.Namespace) -> int:
         data_dir=args.data_dir,
         tokenizer=tokenizer,
         fallback_to_synthetic=False,
+        require_real_data=True,
         vocab_size=config.vocab_size,
         seq_len=args.max_seq_len,
         batch_size=args.micro_batch_size,

@@ -80,7 +80,7 @@ def test_hotpotqa_puts_supporting_paragraph_first_and_locates_answer(tmp_path: P
     raw = tmp_path / "raw"
     raw.mkdir()
     train = [_hotpot_rec(i, f"T{i}", f"ans{i}") for i in range(30)]
-    dev = [_hotpot_rec(100 + i, f"D{i}", "yes") for i in range(30)]
+    dev = [_hotpot_rec(100 + i, f"D{i}", "yes" if i % 2 else f"dans{i}") for i in range(30)]
     pq.write_table(pa.Table.from_pylist(train), raw / "distractor__train-00000-of-00002.parquet")
     pq.write_table(pa.Table.from_pylist(dev), raw / "distractor__validation-00000-of-00001.parquet")
     result = partition_hotpotqa_physical(raw, tmp_path / "out")
@@ -93,8 +93,9 @@ def test_hotpotqa_puts_supporting_paragraph_first_and_locates_answer(tmp_path: P
     val_titles = {r["title"] for r in _rows(result.files["val"])}
     test_titles = {r["title"] for r in _rows(result.files["test"])}
     assert not val_titles & test_titles
-    yes_no = _rows(result.files["val"])[0]
-    assert yes_no["answers"]["text"] == []
+    held_out = _rows(result.files["val"]) + _rows(result.files["test"])
+    assert held_out and all(r["answers"]["text"] for r in held_out)  # yes/no rows are dropped
+    assert len(held_out) <= 15
 
 
 def _fever_raw(tmp_path: Path) -> Path:
@@ -175,7 +176,7 @@ def test_viquad_v2_drops_contexts_shared_with_v1(tmp_path: Path) -> None:
     )
 
     def table(prefix):
-        contexts = ["shared context"] + [f"{prefix} ctx {i}" for i in range(30)]
+        contexts = ["shared context"] + [f"a {prefix} ctx {i}" for i in range(30)]
         return pa.table(
             {
                 "id": [f"{prefix}{i}" for i in range(31)],
@@ -242,3 +243,46 @@ def test_runner_skips_unreviewed_license_datasets_by_default(tmp_path: Path) -> 
     )
     report = execute_physical_partitioning(data / "raw", data / "processed")
     assert report["total_datasets_partitioned"] == 1 and not report["skipped_datasets"]
+
+
+def test_viquad_v2_drops_rows_whose_answer_offset_is_wrong_but_keeps_unanswerable(
+    tmp_path: Path,
+) -> None:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    n = 40
+    answers = []
+    for i in range(n):
+        if i % 4 == 0:
+            answers.append(None)  # unanswerable: a real label
+        elif i % 4 == 1:
+            answers.append({"text": ["bad"], "answer_start": [1]})  # off by one
+        else:
+            answers.append({"text": ["good"], "answer_start": [0]})
+
+    def table(prefix):
+        return pa.table(
+            {
+                "id": [f"{prefix}{i}" for i in range(n)],
+                "uit_id": [f"u{i}" for i in range(n)],
+                "title": [f"{prefix}T{i}" for i in range(n)],
+                "context": ["bad good filler" if a and a["text"] == ["bad"] else "good filler"
+                            for a in answers],
+                "question": ["q?"] * n,
+                "answers": answers,
+                "is_impossible": [a is None for a in answers],
+                "plausible_answers": [None] * n,
+            }
+        )
+
+    pq.write_table(table("t"), raw / "train-00000-of-00001.parquet")
+    pq.write_table(table("v"), raw / "validation-00000-of-00001.parquet")
+    result = partition_viquad_v2_physical(raw, tmp_path / "out")
+    rows = [r for s in result.files for r in _rows(result.files[s])]
+    assert rows
+    for r in rows:
+        a = r["answers"]
+        if a["text"]:
+            start, text = a["answer_start"][0], a["text"][0]
+            assert r["context"][start : start + len(text)] == text
+    assert any(not r["answers"]["text"] for r in rows)  # unanswerable rows are kept
