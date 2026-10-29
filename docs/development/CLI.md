@@ -31,6 +31,7 @@ The `laris` entry point (`src/laris/cli/main.py`) exposes one module per command
 | `laris train tokenizer [--extract-only] [--authorized]` | Extract train-only text and fit the SentencePiece 32k BPE tokenizer. | `--authorized` |
 | `laris train language-encoder --model-size {compact,large} [--profile-only]` | Profile VRAM, or train, validate, checkpoint and evaluate the encoder. | `--authorized` and `LARIS_TRAINING_AUTHORIZED=1` |
 | `laris evaluate language-encoder --checkpoint DIR --tokenizer-model FILE [--split val\|test]` | Score a checkpoint against baselines and thresholds. Exit codes: 0 passed, 1 below threshold, 2 usage or integrity error. | none |
+| `laris evaluate calibrate --reports VAL_REPORT...` | Ratchet `configs/evaluation/language_encoder.yaml` up from passing `val` reports; never lowers, refuses `test` reports. | none |
 | `laris infer {nli,...} --checkpoint DIR --tokenizer-model FILE` | Run a single prediction from a checkpoint. | none |
 
 ## Typical Sequence

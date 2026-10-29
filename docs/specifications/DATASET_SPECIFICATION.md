@@ -91,7 +91,7 @@ In strict accordance with Issue #205 and Issue #209, LARIS distinguishes between
 - `WIKIPEDIA-VI`: 1,288,680 clean article documents
 - `ALL-NLI`: 981,382 NLI pairs
 - `QUORA-DUPLICATES`: 404,290 paraphrase pairs
-- `FEVER`: 348,997 claims (311,431 train + 37,566 labelled_dev; labelled test is unreleased)
+- `FEVER`: 348,997 claims (311,431 train + 37,566 labelled_dev; labelled test is unreleased). Evidence references are resolved to Wikipedia sentences (`evidence_sentences.parquet`, 27,949 of 28,163 referenced sentences found); SUPPORTS/REFUTES claims become entailment/contradiction NLI pairs (train 77,139 / val 4,249 / test 4,120), NOT ENOUGH INFO is dropped
 - `ANLI`: 169,265 adversarial NLI pairs
 - `SQUAD`: 98,169 reading comprehension items
 - `HOTPOTQA`: 97,852 multi-hop QA items (distractor train + validation)

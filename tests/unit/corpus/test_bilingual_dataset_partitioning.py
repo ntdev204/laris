@@ -97,23 +97,71 @@ def test_hotpotqa_puts_supporting_paragraph_first_and_locates_answer(tmp_path: P
     assert yes_no["answers"]["text"] == []
 
 
-def test_fever_dev_claims_do_not_appear_in_train(tmp_path: Path) -> None:
+def _fever_raw(tmp_path: Path) -> Path:
     raw = tmp_path / "raw"
     raw.mkdir()
 
-    def table(ids):
-        return pa.table({"id": [str(i) for i in ids], "label": ["SUPPORTS"] * len(ids),
-                         "claim": [f"c{i}" for i in ids]})
+    def table(ids, labels=None):
+        labels = labels or ["SUPPORTS"] * len(ids)
+        return pa.table({
+            "id": [str(i) for i in ids],
+            "label": labels,
+            "claim": [f"claim {i}" for i in ids],
+            "evidence_id": [1000 + i for i in ids],
+            "evidence_wiki_url": [f"Page_{i}" for i in ids],
+            "evidence_sentence_id": [0] * len(ids),
+        })
 
     pq.write_table(table(range(0, 50)), raw / "v1.0__train__0000.parquet")
     pq.write_table(table(range(40, 80)), raw / "v1.0__labelled_dev__0000.parquet")
-    result = partition_fever_physical(raw, tmp_path / "out")
-    train_ids = {r["id"] for r in _rows(result.files["train"])}
-    held_ids = {r["id"] for s in ("val", "test") for r in _rows(result.files[s])}
-    assert not train_ids & held_ids
-    assert not {r["id"] for r in _rows(result.files["val"])} & {
-        r["id"] for r in _rows(result.files["test"])
+    pq.write_table(
+        pa.table({
+            "page": [f"Page_{i}" for i in range(80)],
+            "sentence_id": pa.array([0] * 80, type=pa.int32()),
+            "text": [f"evidence {i}" for i in range(80)],
+        }),
+        raw / "evidence_sentences.parquet",
+    )
+    return raw
+
+
+def test_fever_dev_claims_do_not_appear_in_train(tmp_path: Path) -> None:
+    result = partition_fever_physical(_fever_raw(tmp_path), tmp_path / "out")
+    train = {r["hypothesis"] for r in _rows(result.files["train"])}
+    held = {r["hypothesis"] for s in ("val", "test") for r in _rows(result.files[s])}
+    assert train and held
+    assert not train & held
+    assert not {r["hypothesis"] for r in _rows(result.files["val"])} & {
+        r["hypothesis"] for r in _rows(result.files["test"])
     }
+
+
+def test_fever_pairs_join_evidence_and_drop_unresolvable_claims(tmp_path: Path) -> None:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    claims = pa.table({
+        "id": ["1", "2", "3", "4"],
+        "label": ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO", "SUPPORTS"],
+        "claim": ["a", "b", "c", "d"],
+        "evidence_id": [10, 11, 12, 13],
+        "evidence_wiki_url": ["P", "P", None, "Missing"],
+        "evidence_sentence_id": [0, 1, -1, 0],
+    })
+    pq.write_table(claims, raw / "v1.0__train__0000.parquet")
+    pq.write_table(claims.slice(0, 0), raw / "v1.0__labelled_dev__0000.parquet")
+    pq.write_table(
+        pa.table({
+            "page": ["P", "P"],
+            "sentence_id": pa.array([0, 1], type=pa.int32()),
+            "text": ["first", "second"],
+        }),
+        raw / "evidence_sentences.parquet",
+    )
+    result = partition_fever_physical(raw, tmp_path / "out")
+    rows = {r["hypothesis"]: r for r in _rows(result.files["train"])}
+    assert set(rows) == {"a", "b"}
+    assert rows["a"] == {"premise": "first", "hypothesis": "a", "label": "entailment"}
+    assert rows["b"]["label"] == "contradiction"
 
 
 def test_viquad_v2_drops_contexts_shared_with_v1(tmp_path: Path) -> None:

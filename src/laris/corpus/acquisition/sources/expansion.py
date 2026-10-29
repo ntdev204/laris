@@ -1,6 +1,11 @@
 """Acquirers for the bilingual expansion datasets (ViNLI, ViSTS, HotpotQA, FEVER, ...)."""
 
+import shutil
+from pathlib import Path
+from typing import List
+
 from laris.corpus.acquisition.common import (
+    CACHE_DIR,
     HF_PARQUET_REV,
     HF_RESOLVE,
     RAW_DIR,
@@ -8,9 +13,12 @@ from laris.corpus.acquisition.common import (
     _acquire_remote_files,
     _blocked_entry,
     _finalize_entry,
+    _record_files,
     count_jsonl_lines,
     count_parquet_rows,
+    download_file,
 )
+from laris.corpus.acquisition.fever_evidence import EVIDENCE_FILENAME, build_evidence_table
 
 
 def acquire_vinli() -> DatasetEntry:
@@ -127,6 +135,23 @@ def acquire_hotpotqa() -> DatasetEntry:
     )
 
 
+FEVER_WIKI_PAGES_URL = "https://fever.ai/download/fever/wiki-pages.zip"
+
+
+def _resolve_fever_evidence(dest_dir: Path, claim_files: List[Path]) -> bool:
+    """Builds evidence_sentences.parquet from the FEVER Wikipedia snapshot (cache is removed)."""
+    if (dest_dir / EVIDENCE_FILENAME).exists():
+        return True
+    cache = CACHE_DIR / "fever_wiki_pages"
+    archive = cache / "wiki-pages.zip"
+    if not download_file(FEVER_WIKI_PAGES_URL, archive):
+        return False
+    count = build_evidence_table(claim_files, archive, dest_dir / EVIDENCE_FILENAME)
+    print(f"  [DONE] {EVIDENCE_FILENAME}: {count} evidence sentences")
+    shutil.rmtree(cache, ignore_errors=True)
+    return count > 0
+
+
 def acquire_fever() -> DatasetEntry:
     """Acquires FEVER v1.0 labelled claims via the Hugging Face parquet conversion branch."""
     print("\n--- Acquiring FEVER v1.0 (labelled claims) ---")
@@ -138,6 +163,12 @@ def acquire_fever() -> DatasetEntry:
         for n in names
     ]
     records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_parquet_rows)
+    if ok:
+        ok = _resolve_fever_evidence(dest_dir, [dest_dir / n for _, n in files])
+    evidence_records, evidence_size, _ = _record_files(
+        dest_dir, [EVIDENCE_FILENAME], count_parquet_rows
+    )
+    records, size = records + evidence_records, size + evidence_size
     return _finalize_entry(
         dataset_id="FEVER",
         name="Fact Extraction and VERification (FEVER) v1.0",
@@ -157,8 +188,8 @@ def acquire_fever() -> DatasetEntry:
         notes=(
             "License is CC-BY-SA-3.0 (Wikipedia-derived), not MIT as in earlier spec. "
             "paper_dev/paper_test are subsets of labelled_dev and unlabelled_* carry no labels, "
-            "so both are excluded. wiki_pages (281 MB) is not fetched: evidence resolution "
-            "is deferred."
+            "so both are excluded. Evidence references are resolved against the FEVER Wikipedia "
+            "snapshot into evidence_sentences.parquet (page, sentence_id, text)."
         ),
     )
 

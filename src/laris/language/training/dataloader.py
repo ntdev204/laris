@@ -28,7 +28,7 @@ CLS_ID, SEP_ID, MASK_ID, PAD_ID = 2, 3, 4, 0
 # Processed-data directories (under data/processed) that feed each task.
 TASK_DATASET_DIRS: Dict[str, List[str]] = {
     "mlm": ["wikipedia_en", "wikipedia_vi", "cc100_vi_clean", "mlm"],
-    "nli": ["all_nli", "anli", "vinli", "nli"],
+    "nli": ["all_nli", "anli", "vinli", "fever", "nli"],
     "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
     "similarity": ["stsb", "vists", "similarity"],
     "qa": ["squad", "viquad", "viquad_v2", "hotpotqa", "qa"],
