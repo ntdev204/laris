@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/architecture/SELECTIVE_COMPUTATION.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
 decision_references:
@@ -23,7 +23,7 @@ change_summary: "Specification of multi-tier model execution, router decision po
 
 ## 1. Principles of Model Routing in LARIS
 
-In accordance with [ADR-006](file:///home/thientn204/laris/docs/adr/ADR-006-modular-specialist-architecture-routing.md), LARIS rejects monolithic model architectures. Instead, system intelligence is partitioned across specialized tiers of varying computational weights.
+In accordance with [ADR-006](../adr/ADR-006-modular-specialist-architecture-routing.md), LARIS rejects monolithic model architectures. Instead, system intelligence is partitioned across specialized tiers of varying computational weights.
 
 The Model Router (situated in Layer 9) acts as the computational dispatcher: it evaluates task complexity, epistemic uncertainty, and real-time hardware telemetry to dynamically construct minimal execution graphs.
 

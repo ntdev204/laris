@@ -105,9 +105,9 @@ def test_readiness_gate_taxonomy_and_contract() -> None:
         REPO_ROOT
         / "docs"
         / "specifications"
-        / "NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
+        / "LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
     )
-    assert spec_path.exists(), "NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md must exist"
+    assert spec_path.exists(), "LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md must exist"
 
     content = spec_path.read_text(encoding="utf-8")
     valid_statuses = ["PASS", "FAIL", "BLOCKED", "READY", "NOT VERIFIED"]

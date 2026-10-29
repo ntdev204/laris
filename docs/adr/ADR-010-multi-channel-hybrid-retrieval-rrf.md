@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/research/HYBRID_RAG.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
@@ -42,13 +42,13 @@ exact scientific keywords, while pure lexical BM25 misses semantic paraphrases a
 relationships. Furthermore, unbounded graph traversal can trigger exponential context window
 expansion and resource exhaustion under local execution limits.
 
-To satisfy the local-first system boundary ([ADR-001](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md))
-and selective computation guidelines ([ADR-005](file:///home/thientn204/laris/docs/adr/ADR-005-selective-loading-computation-access.md)),
+To satisfy the local-first system boundary ([ADR-001](ADR-001-local-first-system-boundary.md))
+and selective computation guidelines ([ADR-005](ADR-005-selective-loading-computation-access.md)),
 Layer 6 retrieval must:
 - Decouple retrieval channels behind a unified abstract interface (`BaseRetrievalAdapter`).
 - Combine multi-channel ranked candidate lists deterministically without score scale discrepancies.
 - Enforce strict depth boundaries ($N \le 5$) on graph exploration and query expansion.
-- Retain complete provenance coordinates ([ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)).
+- Retain complete provenance coordinates ([ADR-004](ADR-004-evidence-provenance-first-class.md)).
 
 ## 2. Decision
 1. **Modular Adapter Pattern:** All retrieval channels (Lexical BM25, Dense Vector, Graph Traversal)
@@ -86,9 +86,9 @@ Layer 6 retrieval must:
 - RRF ignores absolute score margins between consecutive ranks in a single channel.
 
 ## 5. Related Documents
-- [HYBRID_RAG.md](file:///home/thientn204/laris/docs/research/HYBRID_RAG.md)
-- [LAYER_ARCHITECTURE.md](file:///home/thientn204/laris/docs/architecture/LAYER_ARCHITECTURE.md)
-- [ADR-001: Local-First System Boundary](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md)
-- [ADR-004: Evidence Provenance First-Class](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)
-- [ADR-005: Selective Loading & Computation](file:///home/thientn204/laris/docs/adr/ADR-005-selective-loading-computation-access.md)
-- [ADR-009: Embedded Evidence Graph Storage](file:///home/thientn204/laris/docs/adr/ADR-009-embedded-evidence-graph-storage.md)
+- [HYBRID_RAG.md](../research/HYBRID_RAG.md)
+- [LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md)
+- [ADR-001: Local-First System Boundary](ADR-001-local-first-system-boundary.md)
+- [ADR-004: Evidence Provenance First-Class](ADR-004-evidence-provenance-first-class.md)
+- [ADR-005: Selective Loading & Computation](ADR-005-selective-loading-computation-access.md)
+- [ADR-009: Embedded Evidence Graph Storage](ADR-009-embedded-evidence-graph-storage.md)

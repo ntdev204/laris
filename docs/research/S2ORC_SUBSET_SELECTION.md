@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
+  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
 decision_references:
   - "ADR-001"

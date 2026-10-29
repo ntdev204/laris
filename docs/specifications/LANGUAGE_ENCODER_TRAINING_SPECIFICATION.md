@@ -1,36 +1,43 @@
 ---
 document_id: "DOC-SPEC-TRAIN-001"
-title: "LARIS Natural Language Foundation Architecture & Curriculum Specification"
+title: "LARIS Language Encoder Training Specification: Architecture, Curriculum and Execution Gates"
 document_type: "specification"
 status: "APPROVED"
-version: "1.1.0"
-created_at: "2026-10-17"
+version: "2.0.0"
+created_at: "2026-10-16"
 updated_at: "2026-10-29"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
   - "docs/plans/BACKLOG.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
+  - "docs/plans/ROADMAP.md"
+  - "docs/architecture/LAYER_ARCHITECTURE.md"
+  - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
   - "ADR-001"
   - "ADR-002"
   - "ADR-003"
   - "ADR-005"
   - "ADR-008"
-change_summary: "Adds the CLI evaluation and inference contract (Section 10). Authoritative architectural specification for Model 1 from-scratch Transformer encoder, bilingual curriculum, multi-task loss formulation, hardware budget, and #19 artifact lifecycle."
+  - "ADR-004"
+change_summary: "Consolidates the natural-language training specification and the staged learning pipeline; includes the CLI evaluation contract."
 ---
 
-# LARIS Natural Language Foundation Architecture & Curriculum Specification
+# LARIS Language Encoder Training Specification: Architecture, Curriculum and Execution Gates
 
-## 1. Scope & Foundational Governance
+Architecture, curriculum, loss formulation, evaluation and CLI contract for training the language encoder, followed by the staged learning pipeline and its gates.
+
+## 1. Architecture, Curriculum and Evaluation
+
+### 1. Scope & Foundational Governance
 
 This specification defines the neural architecture, learning objectives, multi-task curriculum, loss formulations, hardware memory budget, and artifact lifecycle for **Model 1: Natural Language Foundation** in the Local Autonomous Research & Intelligence System (LARIS).
 
-### 1.1. Inviolable Architectural Principles
-In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md), [ADR-003](file:///home/thientn204/laris/docs/adr/ADR-003-language-first-not-pdf-first.md), and [DOC-PLAN-TRAIN-001](file:///home/thientn204/laris/docs/plans/STAGED_LEARNING_PIPELINE.md):
+#### 1.1. Inviolable Architectural Principles
+In accordance with [ADR-002](../adr/ADR-002-self-built-language-foundation.md), [ADR-003](../adr/ADR-003-language-first-not-pdf-first.md), and [DOC-SPEC-TRAIN-001](LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md):
 
 1. **Strict Staged Learning Sequence:**
    $$\text{General Natural Language} \longrightarrow \text{Scientific Language} \longrightarrow \text{Scientific OCR} \longrightarrow \text{OCR-Coupled Manuscript} \longrightarrow \text{12-Layer System Integration}$$
@@ -44,7 +51,7 @@ In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self
 
 ---
 
-## 2. Model 1 Foundation Architecture
+### 2. Model 1 Foundation Architecture
 
 Model 1 serves as the foundational text encoder powering syntax analysis, semantic representation, 3-way NLI, paraphrase detection, and dense retrieval across the 12 architectural layers.
 
@@ -67,7 +74,7 @@ flowchart TD
     end
 ```
 
-### 2.1. Structural Hyperparameters
+#### 2.1. Structural Hyperparameters
 
 | Hyperparameter | Value | Architectural Justification |
 | :--- | :--- | :--- |
@@ -83,7 +90,7 @@ flowchart TD
 | **Maximum Sequence Length** | 512 tokens | Conforms to `DEFAULT_MAX_SEQUENCE_LENGTH = 512` in `schemas.py`. |
 | **Total Parameters** | **109,561,856** ($\approx 109.56\text{M}$) | Exact equation: $V \cdot d + L \cdot (4 d^2 + 2 d \cdot d_{\text{ff}} + 2 d) + d + V = 24,576,000 + 12 \times 7,079,424 + 768 + 32,000 = 109,561,856$. (If untied MLM head: $134,137,856 \approx 134.14\text{M}$). |
 
-### 2.2. Scaled Foundation Model (512.9M Tier Architecture)
+#### 2.2. Scaled Foundation Model (512.9M Tier Architecture)
 
 To maximize compute capacity on the target RTX 5070 Ti, LARIS provides the 512.9M scaled encoder profile (`LargeLanguageEncoderConfig`):
 
@@ -101,18 +108,18 @@ To maximize compute capacity on the target RTX 5070 Ti, LARIS provides the 512.9
 
 ---
 
-## 3. Hardware Resource Budget & Feasibility Analysis
+### 3. Hardware Resource Budget & Feasibility Analysis
 
 > [!NOTE]
 > All target workstation feasibility values below are **analytical estimates** derived from standard mixed-precision memory formulas. Physical execution on the target workstation (RTX 5070 Ti) has not been performed by the agent and is marked **NOT VERIFIED**. Bounded non-training profiling on target hardware must precede any future training run.
 
-### 3.1. Target Hardware Specifications
+#### 3.1. Target Hardware Specifications
 - **Operating System:** Ubuntu 22.04 / 24.04 LTS (**NOT VERIFIED**)
 - **GPU Accelerator:** NVIDIA GeForce RTX 5070 Ti with 16,384 MiB (16.0 GB) VRAM (**NOT VERIFIED**)
 - **Host CPU:** Intel Core i5-14600KF (14 cores, 20 threads) (**NOT VERIFIED**)
 - **Host RAM:** 32 GB DDR5 (**NOT VERIFIED**)
 
-### 3.2. Detailed VRAM Memory Allocation Breakdown (109.56M Model)
+#### 3.2. Detailed VRAM Memory Allocation Breakdown (109.56M Model)
 
 $$\text{Total VRAM} = M_{\text{params}} + M_{\text{grads}} + M_{\text{opt}} + M_{\text{activations}} + M_{\text{workspace}}$$
 
@@ -125,7 +132,7 @@ $$\text{Total VRAM} = M_{\text{params}} + M_{\text{grads}} + M_{\text{opt}} + M_
 | **CUDA Workspace & Buffers** | Internal cuDNN / PyTorch tensors | Empirical runtime buffer | **0.80 GB** |
 | **Peak Training VRAM** | - | **Sum of all components** | **$\approx 4.40\text{ GB}$** (Analytical Estimate; **NOT VERIFIED**) |
 
-### 3.3. Target 14GB VRAM Hardware Optimization Profile (512.9M Model)
+#### 3.3. Target 14GB VRAM Hardware Optimization Profile (512.9M Model)
 
 To eliminate GPU starvation and saturate Blackwell Tensor Cores within the $14.5\text{ GB}$ ceiling:
 
@@ -141,22 +148,22 @@ To eliminate GPU starvation and saturate Blackwell Tensor Cores within the $14.5
 > [!TIP]
 > Peak VRAM allocation of **$13.84\text{ GB}$** operates at **86.5%** of physical 16 GB capacity, strictly respecting the $14.5\text{ GB}$ hardware safety governor ceiling while maximizing Tensor Core throughput.
 
-### 3.4. Feasibility Conclusion & Safety Headroom
+#### 3.4. Feasibility Conclusion & Safety Headroom
 - **Target RTX 5070 Ti (16 GB VRAM):** Peak allocation of $4.40\text{ GB}$ occupies only **27.5% of available VRAM**, leaving **$\ge 11.5\text{ GB}$ headroom**. This safely complies with the $14.5\text{ GB}$ safety governor ceiling enforced in `src/laris/language/schemas.py`. Status: **NOT VERIFIED ON PHYSICAL TARGET HARDWARE**.
 - **Developer Host Workstation (GTX 1650 with 4 GB VRAM):** By reducing micro-batch size to $B_{\text{micro}} = 4$ and accumulating gradients over 8 steps (effective batch size 32), activation memory drops to $\approx 0.35\text{ GB}$, yielding peak VRAM of $\approx 2.90\text{ GB}$. Bounded tests and non-training profiling can execute on 4 GB cards without out-of-memory errors.
 - **CPU Fallback:** All unit and contract tests in LARIS are explicitly designed to run on CPU without requiring GPU hardware or CUDA drivers.
 
-### 3.4. Storage & Runtime Estimates
+#### 3.4. Storage & Runtime Estimates
 - **Checkpoint Storage:** Each FP16 checkpoint occupies $\approx 219\text{ MB}$; full optimizer state bundle occupies $\approx 1.53\text{ GB}$. A retention policy of 3 best checkpoints requires $< 5.0\text{ GB}$ disk space.
 - **Pretraining Throughput:** On RTX 5070 Ti with FlashAttention, estimated throughput is $\approx 18,000 - 24,000\text{ tokens/sec}$. Pretraining on 3.3M documents ($\approx 1.5\times 10^9$ tokens) for 2 epochs requires $\approx 35 - 45$ wall-clock hours. Status: **NOT VERIFIED** (analytical projection; no training run).
 
 ---
 
-## 4. Multi-Task Training Curriculum & Loss Formulation
+### 4. Multi-Task Training Curriculum & Loss Formulation
 
 The Stage 1 curriculum blends unsupervised language modeling with supervised task representation learning.
 
-### 4.1. Staged Execution Progression
+#### 4.1. Staged Execution Progression
 
 ```mermaid
 flowchart LR
@@ -165,20 +172,20 @@ flowchart LR
     P3 --> P4["Phase 1D: Benchmark Verification<br/>(Exit Gate Evaluation)"]
 ```
 
-#### Phase 1A: From-Scratch Bilingual Tokenizer Training
+##### Phase 1A: From-Scratch Bilingual Tokenizer Training
 - **Algorithm:** SentencePiece Unigram / BPE.
 - **Training Data:** Strictly sampled from the `TRAIN` splits of Wikipedia EN (800,000 articles) and Wikipedia VI (800,000 articles).
 - **Special Tokens Registry:** Pre-allocated IDs 0–7 as defined in `SpecialTokenConfig`:
   - `0: [PAD]`, `1: [UNK]`, `2: [CLS]`, `3: [SEP]`, `4: [MASK]`, `5: [MATH]`, `6: [GREEK]`, `7: [UNIT]`.
 - **Invariants:** Subword fertility on validation text $\le 1.35$ tokens/word; zero character loss on Vietnamese diacritics.
 
-#### Phase 1B: Self-Supervised Masked Language Modeling (MLM)
+##### Phase 1B: Self-Supervised Masked Language Modeling (MLM)
 - **Objective:** Masked Language Modeling on clean encyclopedia text (Wikipedia EN + VI).
 - **Masking Strategy:** Dynamic masking at 15% rate: 80% `[MASK]`, 10% random token, 10% unchanged.
 - **Loss:** Standard cross-entropy loss over masked token positions:
   $$\mathcal{L}_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid \tilde{X})$$
 
-#### Phase 1C: Multi-Task Representation Fine-Tuning
+##### Phase 1C: Multi-Task Representation Fine-Tuning
 To endow Model 1 with robust inference, paraphrase, and retrieval capabilities, the model is trained with a composite multi-task objective:
 
 $$\mathcal{L}_{\text{total}} = \lambda_1 \mathcal{L}_{\text{MLM}} + \lambda_2 \mathcal{L}_{\text{NLI}} + \lambda_3 \mathcal{L}_{\text{PARA}} + \lambda_4 \mathcal{L}_{\text{SIM}} + \lambda_5 \mathcal{L}_{\text{QA}}$$
@@ -191,7 +198,7 @@ $$\mathcal{L}_{\text{total}} = \lambda_1 \mathcal{L}_{\text{MLM}} + \lambda_2 \m
 | **Semantic Similarity** | Mean Squared Error ($\mathcal{L}_{\text{SIM}}$) | Cosine similarity scaled to $[0, 1]$ | STS-B | **0.10** |
 | **Reading Comprehension** | Start/End Cross-Entropy ($\mathcal{L}_{\text{QA}}$) | 2 Linear projections ($768 \rightarrow 1$) | SQuAD + ViQuAD | **0.15** |
 
-### 4.2. Temperature-Scaled Dynamic Sampling
+#### 4.2. Temperature-Scaled Dynamic Sampling
 To balance datasets spanning orders of magnitude (e.g., 942k All-NLI pairs vs 5.7k STS-B pairs), batches are sampled using temperature-scaled multinomial distribution:
 
 $$p_k = \frac{N_k^{\alpha}}{\sum_{j=1}^K N_j^{\alpha}} \quad \text{with } \alpha = 0.7$$
@@ -200,7 +207,7 @@ This ensures high-quality smaller datasets (STS-B, PAWS, ViQuAD) receive adequat
 
 ---
 
-## 5. Empirical Exit Gates & Acceptance Criteria
+### 5. Empirical Exit Gates & Acceptance Criteria
 
 Advancement from Stage 1 (Natural Language Foundation) to Stage 2 (Scientific Specialization) requires passing all quantitative gates on isolated, held-out evaluation benchmarks:
 
@@ -217,11 +224,11 @@ Advancement from Stage 1 (Natural Language Foundation) to Stage 2 (Scientific Sp
 
 ---
 
-## 6. Training Run Metadata & Artifact Contract (#19 Alignment)
+### 6. Training Run Metadata & Artifact Contract (#19 Alignment)
 
-In strict adherence to [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and Issue #19 / `src/laris/language/training/artifacts.py`:
+In strict adherence to [ADR-002](../adr/ADR-002-self-built-language-foundation.md) and Issue #19 / `src/laris/language/training/artifacts.py`:
 
-### 6.1. Immutable Serialization Requirements
+#### 6.1. Immutable Serialization Requirements
 Every training run must emit a cryptographically sealed `LanguageArtifactBundle` containing:
 1. `VocabularyContract`: JSON mapping of 32,000 subwords, bijective ID translation, canonical special tokens, and SHA-256 digest.
 2. `EncoderCheckpointMetadata`: Parameter count, embedding dimension (768), weights SHA-256, and creation timestamp.
@@ -234,13 +241,13 @@ Every training run must emit a cryptographically sealed `LanguageArtifactBundle`
    - Training loss curves and evaluation benchmark metrics.
 4. Serialized PyTorch Model Weights (`model.pt`) with matching SHA-256.
 
-### 6.2. Storage Governance
+#### 6.2. Storage Governance
 - Datasets, model weights, and checkpoints **MUST NEVER** be committed to Git.
 - All artifacts reside in machine-local paths (e.g., `artifacts/checkpoints/<run_id>/`).
 
 ---
 
-## 7. Bounded Profiling Specification
+### 7. Bounded Profiling Specification
 
 Before launching full pretraining, a bounded profiling run must verify execution sanity:
 - **Scope Limit:** Single forward pass on synthetic input tensor `(batch_size=2, seq_len=32)`.
@@ -249,7 +256,7 @@ Before launching full pretraining, a bounded profiling run must verify execution
 
 ---
 
-## 8. Formal Pre-Training Readiness Gates & Audit Registry
+### 8. Formal Pre-Training Readiness Gates & Audit Registry
 
 In strict accordance with Issue #214 Section F and repository governance, eleven explicit readiness gates govern the transition from preparation to training execution:
 
@@ -269,7 +276,7 @@ In strict accordance with Issue #214 Section F and repository governance, eleven
 
 ---
 
-## 9. Final Compliance Confirmation
+### 9. Final Compliance Confirmation
 
 In accordance with repository governance:  
 **NO MODEL TRAINING WAS RUN.**  
@@ -277,7 +284,7 @@ In accordance with repository governance:
 
 ---
 
-## 10. Post-Training Evaluation and Inference (CLI)
+### 10. Post-Training Evaluation and Inference (CLI)
 
 Training is followed immediately by evaluation of the best checkpoint on the held-out **test** split
 (`laris train language-encoder --evaluate-after`, on by default). The same check runs standalone:
@@ -304,3 +311,184 @@ laris evaluate language-encoder --checkpoint <run>/best --tokenizer-model <spm.m
 - Evaluation is bounded (`--max-samples` per dataset, default 2000) and deterministic for a seed.
 - Single-example checks: `laris infer fill-mask|nli|paraphrase|similarity|qa|embed` (no training
   authorization needed; inference only).
+
+---
+
+## 2. Staged Learning Pipeline and Execution Gates
+
+### 1. Governance & Operational Principles
+
+This document establishes the binding learning pipeline architecture for the Local Autonomous Research & Intelligence System (LARIS). In accordance with [ADR-002](../adr/ADR-002-self-built-language-foundation.md), [ADR-003](../adr/ADR-003-language-first-not-pdf-first.md), and [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), LARIS develops its language foundation from scratch without mandatory cloud inference APIs or proprietary black-box weights.
+
+#### Non-Negotiable Operational Constraints:
+1. **Strict Stage Order:** The learning sequence is strictly unidirectional:
+   $$\text{General Natural Language} \longrightarrow \text{Scientific Language} \longrightarrow \text{Scientific OCR} \longrightarrow \text{OCR-Coupled Manuscript} \longrightarrow \text{Architectural Integration}$$
+   Skipping stages or attempting scientific manuscript comprehension prior to establishing general and scientific language competency is strictly prohibited.
+2. **Distinct Model Responsibilities:**
+   - **Model 1 (Language & Scientific Understanding):** Pretrained on general language corpora, fine-tuned on linguistic capabilities, and adapted to scientific terminology, discourse, and syntax.
+   - **RAG & Multi-Agent Layer:** Manages search planning, hybrid indexing, coordinate verification, tool invocation, and dynamic retrieval.
+   - **Model 2 (Reasoning & Verification):** Specializes in multi-hop inference, claim verification, 3-way NLI, contradiction detection, evidence sufficiency assessment, and research-gap discovery.
+   - **Model 3 (Evidence-Grounded Generation):** Specializes in structured report synthesis, citation attribution, and on-demand manuscript drafting.
+3. **Hardware Budget & Sequential Staging:**
+   All execution must honor the hardware limits of a single workstation (Intel i5-14600KF, 32 GB host RAM, NVIDIA RTX 5070 Ti with 16 GB VRAM). Models must never be assumed to reside concurrently in VRAM. Active GPU allocations must remain $\le 15.0$ GB, enforced via sequential loading and LRU offloading ([ADR-005](../adr/ADR-005-selective-loading-computation-access.md)).
+4. **Scalable Data Floors (Not Caps):**
+   The previously established target of **1,000,000 samples for Model 1** and **1,000,000 samples for Model 2** is a **minimum planning floor**, not an upper bound and not proof of training adequacy. Sample counts must be tracked by granular unit (source documents, sentence pairs, NLI triples, QA items, bounding boxes, tokens).
+5. **English & Vietnamese Dual Tracks:**
+   English and Vietnamese capabilities must be tracked, budgeted, and evaluated separately. Vietnamese counts cannot be blended into English totals to claim coverage.
+6. **Strict Training Freeze in Milestone M11:**
+   **NO MODEL TRAINING IS RUN DURING THIS PHASE.** All activities in Milestone M11 are restricted to governance, data inventory, authorized dataset acquisition, verification, and domain refactoring.
+
+---
+
+### 2. Mandatory Staged Learning Sequence
+
+```mermaid
+flowchart TD
+    S1["Stage 1: Natural Language Learning<br/>(General Foundation: En + Vi)"] --> S2["Stage 2: Scientific Language Learning<br/>(STEM Adaptation & Claim-Evidence)"]
+    S2 --> S3["Stage 3: Scientific OCR<br/>(Printed Documents: Segmentation + CTC)"]
+    S3 --> S4["Stage 4: OCR-Coupled Manuscript Learning<br/>(Structure, Discourse & Uncertainty)"]
+    S4 --> S5["Stage 5: Architecture Integration<br/>(12-Layer LARIS Integration)"]
+    S5 --> S6["Stage 6: Model 2 & Model 3 Deployment<br/>(Verification & Generation Specialization)"]
+```
+
+#### Stage 1: Natural Language Learning (General Foundation)
+- **Objective:** Establish core human language understanding before encountering specialized scientific literature.
+- **Capabilities Acquired:**
+  - Raw text preservation and task-specific reversible normalization (no blind lowercasing or symbol stripping).
+  - Subword vocabulary and numerical representations.
+  - Language modeling objectives (masked and autoregressive).
+  - Syntax, morphology, part-of-speech (POS), and dependency parsing.
+  - Semantic similarity and paraphrase equivalence detection.
+  - 3-Way Natural Language Inference (`ENTAILMENT`, `CONTRADICTION`, `NEUTRAL`).
+  - Reading comprehension and extractive/abstractive question answering.
+  - Information extraction, named entity recognition, and coreference resolution.
+  - Negation detection, epistemic modality, temporal order, and conditional statements.
+  - Cross-sentence discourse structure.
+- **Languages:** English and Vietnamese evaluated on isolated test splits.
+- **Input Artifacts:** Raw Wikipedia dumps, Universal Dependencies (UD), PAWS, ANLI, Natural Questions (NQ), ViQuAD.
+- **Output Artifacts:** General subword tokenizer, general language foundation checkpoint, linguistic capability benchmarks.
+
+#### Stage 2: Scientific Language Learning (STEM Specialization)
+- **Objective:** Adapt the general language foundation to the lexicon, stylistic conventions, and epistemic structures of scientific research.
+- **Prerequisites:** Stage 1 exit criteria fully satisfied.
+- **Capabilities Acquired:**
+  - Scientific terminology, nomenclature, and mathematical notation.
+  - Scientific paraphrase detection and semantic equivalence across phrasing variants.
+  - Scientific claim, hypothesis, and research question identification.
+  - Experimental methodology, dataset descriptions, and metric extraction.
+  - Result summarization, quantitative finding preservation, and limitation extraction.
+  - Epistemic uncertainty, hedging (`suggests`, `indicates`), and evidential strength.
+  - Cross-paper contradiction detection and methodological difference analysis.
+- **Input Artifacts:** Verified STEM corpus (filtered subsets from S2ORC, arXiv open access, SciFact, PubMed Central Open Access).
+- **Output Artifacts:** STEM-adapted vocabulary, scientific sentence encoder, scientific discourse classifier.
+
+#### Stage 3: Scientific OCR (Printed Document Image-to-Text)
+- **Objective:** Develop high-fidelity transcription and layout analysis for printed scientific manuscripts.
+- **Scope Limit:** **Printed scientific documents only. Handwriting is strictly out of scope.**
+- **Prerequisites:** Stages 1 and 2 language and scientific representations ready for post-correction.
+- **Capabilities Acquired:**
+  - Image preprocessing: adaptive binarization, deskewing, dewarping, and artifact denoising.
+  - Page layout detection: columns, headers, footers, margins, and reading order DAG.
+  - Region segmentation: text blocks, tables, figures, captions, and formulas.
+  - Line-level text recognition: CRNN / Vision-Transformer with CTC alignment.
+  - Table structure extraction and formula transcription (LaTeX representation).
+  - Epistemic preservation in post-correction: zero alteration of negation markers, numbers, units, chemical formulas, or citation markers.
+- **Input Artifacts:** DocLayNet, PubLayNet, scientific PDF page image renders paired with verified ground-truth text.
+- **Output Artifacts:** Document layout segmentation model, line OCR engine, coordinate-preserving text extractor.
+
+#### Stage 4: OCR-Coupled Manuscript Learning
+- **Objective:** Learn end-to-end scientific manuscript structure and semantics directly on OCR-processed inputs, carrying bounding-box coordinates and transcription uncertainty forward.
+- **Prerequisites:** Stage 3 OCR pipeline operational.
+- **Capabilities Acquired:**
+  - Document section boundary detection (Abstract, Intro, Methods, Results, Discussion, Conclusion).
+  - Paragraph-level discourse roles (background, objective, method, result, limitation, future work).
+  - Table and figure caption association with referenced body paragraphs.
+  - Bibliographic reference parsing and citation coordinate mapping.
+  - Cross-section claim-evidence alignment.
+- **Input Artifacts:** Paired OCR outputs with human-annotated or gold-extracted scientific paper structures.
+- **Output Artifacts:** Manuscript semantic parser, coordinate-anchored discourse graph.
+
+#### Stage 5: Resume & Integrate Existing LARIS Research Architecture
+- **Objective:** Integrate the learned neural representations and models into the established 12-layer LARIS system.
+- **Invariants:** Preserve existing module contracts (`src/laris/core`, `MODULE_CONTRACTS.md`), evidence graph schemas, and the 16 GB VRAM budget.
+- **Integration Points:**
+  - Layer 1: Replace hash-based encoder with trained STEM sentence encoder.
+  - Layer 2: Replace heuristic NLI with calibrated neural NLI engine.
+  - Layer 3: Replace regex discourse extraction with trained sequence labeler.
+  - Layer 5 & 6: Ingest coordinate-grounded nodes into SQLite Evidence Graph and hybrid retrieval.
+  - Layer 7: Power comparative matrix engine and gap discovery with neural contradiction scoring.
+
+#### Stage 6: Model 2 and Model 3 Roles & Sequential Runtime
+- **Model 2 (Reasoning & Verification):**
+  - Multi-hop claim verification across multiple papers.
+  - Adversarial counter-evidence retrieval and sufficiency evaluation.
+  - 12-class research gap classification and empirical contradiction scoring.
+- **Model 3 (Evidence-Grounded Generation):**
+  - Assertion-level evidence coordinate binding ($100\%$ citation coverage).
+  - Zero hallucination guarantee on missing evidence.
+  - On-demand structured manuscript drafting with uncertainty disclosures.
+- **Runtime Lifecycle:**
+  Sequential loading manager stages Model 1, Model 2, and Model 3 dynamically, ensuring active VRAM $\le 15.0$ GB at all times.
+
+---
+
+### 3. Data Requirements & Sizing Framework
+
+#### 3.1 Minimum Planning Floors vs Scalable Targets
+The 1,000,000-sample figure for Model 1 and Model 2 represents a **minimum baseline floor**, not an adequacy cap. Sizing must be planned by granular capability:
+
+| Stage / Model | Capability Group | Sample Unit | Minimum Floor | Target Range | Held-Out Eval Split |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Model 1 (Stage 1)** | General Language LM | Clean Documents | 250,000 | 500,000 – 1,000,000 | 25,000 |
+| **Model 1 (Stage 1)** | Syntax & POS | Annotated Sentences | 100,000 | 200,000 – 400,000 | 10,000 |
+| **Model 1 (Stage 1)** | Paraphrase & Similarity | Sentence Pairs | 150,000 | 300,000 – 600,000 | 15,000 |
+| **Model 1 (Stage 1)** | General NLI (3-way) | Hypothesis-Premise Pairs | 250,000 | 500,000 – 1,000,000 | 25,000 |
+| **Model 1 (Stage 1)** | Reading Comprehension / QA | Context-Question-Answer Triples | 150,000 | 250,000 – 500,000 | 15,000 |
+| **Model 1 (Stage 1)** | Coreference & Discourse | Document / Paragraphs | 100,000 | 150,000 – 300,000 | 10,000 |
+| **Model 1 (Stage 2)** | Scientific Domain LM | Open Access STEM Papers | 200,000 | 400,000 – 800,000 | 20,000 |
+| **Model 1 (Stage 2)** | Scientific Claims & Evidence | Claim-Evidence Pairs | 100,000 | 200,000 – 400,000 | 15,000 |
+| **Model 1 Total** | *All Capabilities Combined* | *Aggregated Units* | **$\ge$ 1,300,000** | **2,500,000 – 5,000,000** | **$\ge$ 120,000** |
+| **Model 2 (Stage 6)** | Evidence-Grounded QA | Grounded QA Pairs | 250,000 | 400,000 – 800,000 | 25,000 |
+| **Model 2 (Stage 6)** | Multi-Hop Scientific NLI | Multi-Premise Triples | 300,000 | 500,000 – 1,000,000 | 30,000 |
+| **Model 2 (Stage 6)** | Contradiction & Refutation | Opposing Claim Pairs | 150,000 | 250,000 – 500,000 | 20,000 |
+| **Model 2 (Stage 6)** | Sufficiency & Abstention | Unanswerable / Insufficient Sets | 150,000 | 250,000 – 400,000 | 20,000 |
+| **Model 2 (Stage 6)** | 12-Class Gap Identification | Annotated Gap Instances | 150,000 | 250,000 – 500,000 | 15,000 |
+| **Model 2 Total** | *All Reasoning Tasks* | *Aggregated Units* | **$\ge$ 1,000,000** | **1,650,000 – 3,200,000** | **$\ge$ 110,000** |
+| **OCR (Stage 3)** | Layout & Line Transcription | Document Pages / Bounding Boxes | 100,000 pages | 250,000 – 500,000 pages | 15,000 pages |
+
+#### 3.2 English vs Vietnamese Separation
+- **English Track:** Primary initial focus for all general and STEM capabilities.
+- **Vietnamese Track:** Maintained as an independent dataset and evaluation pipeline:
+  - Universal Dependencies Vietnamese (VTB).
+  - ViQuAD (Vietnamese Question Answering Dataset) for reading comprehension.
+  - Vietnamese Wikipedia for vocabulary and baseline language modeling.
+  - Vietnamese scientific abstracts from open Vietnamese research repositories where available.
+- All evaluation reports must produce disaggregated metrics: $M_{\text{EN}}$ and $M_{\text{VI}}$.
+
+---
+
+### 4. Empirical Evaluation Gates & Acceptance Criteria
+
+Advancement between stages requires passing explicit quantitative exit gates on held-out benchmarks:
+
+| Stage Transition | Target Gate | Metric / Benchmark | Minimum Passing Threshold |
+| :--- | :--- | :--- | :--- |
+| **Stage 1 $\rightarrow$ Stage 2** | General NLI Gate | Macro F1 on ANLI / SNLI test sets | $\ge 0.85$ (EN), $\ge 0.78$ (VI) |
+| **Stage 1 $\rightarrow$ Stage 2** | Paraphrase Detection | Accuracy & F1 on PAWS test set | $\ge 0.88$ (EN) |
+| **Stage 1 $\rightarrow$ Stage 2** | Reading Comprehension | Exact Match / F1 on NQ / ViQuAD | $\ge 70.0 / 82.0$ (EN), $\ge 65.0 / 78.0$ (VI) |
+| **Stage 1 $\rightarrow$ Stage 2** | Fertility Gate | Subword fertility on general test text | $\le 1.35$ tokens/word |
+| **Stage 2 $\rightarrow$ Stage 3** | Scientific NLI Gate | Macro F1 on SciFact contradiction/entailment | $\ge 0.82$ |
+| **Stage 2 $\rightarrow$ Stage 3** | Claim-Evidence Alignment | Precision / Recall on evidence verification | $\ge 0.80 / 0.80$ |
+| **Stage 3 $\rightarrow$ Stage 4** | OCR Character Error Rate | Character Error Rate (CER) on test pages | $\le 1.5\%$ on clean, $\le 3.0\%$ on degraded |
+| **Stage 3 $\rightarrow$ Stage 4** | Layout IoU Gate | Mean IoU on DocLayNet/PubLayNet regions | $\ge 0.88$ across 11 layout classes |
+| **Stage 4 $\rightarrow$ Stage 5** | Discourse Role F1 | Macro F1 on 6 scientific discourse roles | $\ge 0.82$ on OCR-transcribed manuscripts |
+| **Stage 5 $\rightarrow$ Stage 6** | System VRAM Headroom | Peak allocation under full multi-agent load | $\le 15.0$ GB on RTX 5070 Ti |
+
+---
+
+### 5. Milestone M11 Training Freeze Statement
+
+In strict adherence to repository governance and the execution mandate:
+**NO MODEL TRAINING WAS RUN.**
+
+No pretraining, fine-tuning, optimizer steps, checkpoint generation, or adapter updates were performed during Milestone M11. This specification serves as the formal architectural and governance contract required before future authorized training phases.

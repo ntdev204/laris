@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/specifications/DATA_SCHEMAS.md"
   - "docs/architecture/SYSTEM_OVERVIEW.md"
 decision_references:
@@ -24,7 +24,7 @@ change_summary: "Detailed specification of epistemic classification, evidence co
 
 Scientific truth is empirical, provisional, and contextual. In LARIS, natural language fluency is strictly separated from factual validity. A claim is never accepted as true merely because it is syntactically coherent or expressed with rhetorical authority.
 
-Every factual assertion within LARIS MUST be backed by an immutable chain of custody leading back to primary empirical data or explicit author statements ([ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md)).
+Every factual assertion within LARIS MUST be backed by an immutable chain of custody leading back to primary empirical data or explicit author statements ([ADR-004](../adr/ADR-004-evidence-provenance-first-class.md)).
 
 ---
 

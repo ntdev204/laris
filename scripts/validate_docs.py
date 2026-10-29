@@ -82,7 +82,9 @@ def validate_all_docs():
     doc_ids = {}
     validated_count = 0
 
-    md_files = sorted(DOCS_DIR.rglob("*.md"))
+    md_files = sorted(
+        f for f in DOCS_DIR.rglob("*.md") if "archive" not in f.relative_to(DOCS_DIR).parts
+    )
     if not md_files:
         errors.append("No markdown documentation files found in docs/")
         return errors, warnings, 0

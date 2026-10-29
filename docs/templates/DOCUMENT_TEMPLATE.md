@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/DOCUMENTATION_STANDARD.md"
+  - "docs/development/DOCUMENTATION.md"
 decision_references: []
 change_summary: "Generic document template conforming to LARIS documentation standards."
 ---

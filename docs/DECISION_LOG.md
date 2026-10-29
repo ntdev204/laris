@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/adr/README.md"
 decision_references:
   - "ADR-001"
@@ -39,18 +39,18 @@ This document records the chronological history of all binding architectural dec
 
 | Date | Reference | Decision Summary | Status | Approver |
 | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-15 | [ADR-001](file:///home/thientn204/laris/docs/adr/ADR-001-local-first-system-boundary.md) | Local-First System Boundary & Zero Mandatory Cloud Inference. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) | Self-Built Language Foundation; No Mandatory Pretrained Models. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-003](file:///home/thientn204/laris/docs/adr/ADR-003-language-first-not-pdf-first.md) | Language-First and Document-Agnostic Processing over PDF-First Design. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-005](file:///home/thientn204/laris/docs/adr/ADR-005-selective-loading-computation-access.md) | Separation of Selective Loading, Computation, and Information Access. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-006](file:///home/thientn204/laris/docs/adr/ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-007](file:///home/thientn204/laris/docs/adr/ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-15 | [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-16 | [ADR-009](file:///home/thientn204/laris/docs/adr/ADR-009-embedded-evidence-graph-storage.md) | Embedded Heterogeneous Evidence Graph Storage and Persistence Interface. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-16 | [ADR-010](file:///home/thientn204/laris/docs/adr/ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval and Modular Adapter Architecture. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-16 | [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Organization and Conceptual Layer Decoupling. | ACCEPTED | LARIS Lead Architect |
-| 2026-10-17 | [ADR-012](file:///home/thientn204/laris/docs/adr/ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies and Source-Tree Consolidation. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-001](adr/ADR-001-local-first-system-boundary.md) | Local-First System Boundary & Zero Mandatory Cloud Inference. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-002](adr/ADR-002-self-built-language-foundation.md) | Self-Built Language Foundation; No Mandatory Pretrained Models. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-003](adr/ADR-003-language-first-not-pdf-first.md) | Language-First and Document-Agnostic Processing over PDF-First Design. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-004](adr/ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-005](adr/ADR-005-selective-loading-computation-access.md) | Separation of Selective Loading, Computation, and Information Access. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-006](adr/ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-007](adr/ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-15 | [ADR-008](adr/ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-16 | [ADR-009](adr/ADR-009-embedded-evidence-graph-storage.md) | Embedded Heterogeneous Evidence Graph Storage and Persistence Interface. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-16 | [ADR-010](adr/ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval and Modular Adapter Architecture. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-16 | [ADR-011](adr/ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Organization and Conceptual Layer Decoupling. | ACCEPTED | LARIS Lead Architect |
+| 2026-10-17 | [ADR-012](adr/ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies and Source-Tree Consolidation. | ACCEPTED | LARIS Lead Architect |
 | 2026-10-29 | [ADR-013](docs/adr/ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI. | ACCEPTED | LARIS Lead Architect |
 
 

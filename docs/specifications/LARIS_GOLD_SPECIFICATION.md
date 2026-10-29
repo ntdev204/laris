@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
+  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
@@ -24,7 +24,7 @@ change_summary: "Formal specification for project-owned gold-standard benchmark 
 
 ## 1. Scope & Purpose
 
-In accordance with [ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md), [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md), and Section 6.5 of the master execution mandate:
+In accordance with [ADR-004](../adr/ADR-004-evidence-provenance-first-class.md), [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), and Section 6.5 of the master execution mandate:
 - **Reality Audit:** As confirmed during initial inspection, **LARIS-GOLD does not yet exist as an acquired dataset**.
 - **Prohibition on Fabrication:** Fabricating synthetic labels or mock annotations and presenting them as expert-validated gold labels is strictly prohibited.
 - **Objective:** This specification establishes the binding schema, curation protocol, quality criteria, and held-out evaluation splits for constructing the official LARIS-GOLD benchmark during future authorized data curation phases.

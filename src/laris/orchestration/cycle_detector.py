@@ -1,6 +1,6 @@
 """Dynamic cycle detector preventing repeating agent sequences in Layer 8.
 
-Adheres to DOC-SPEC-MOD-001 (Boundary H), DOC-SPEC-AGENT-001, ADR-006, and Issue #67:
+Adheres to DOC-SPEC-MOD-001 (Boundary H), DOC-SPEC-ORCH-001, ADR-006, and Issue #67:
 - Detects duplicate agent tool/task dispatches with identical parameters
 - Detects periodic repeating agent sequence cycles (e.g. A -> B -> A -> B)
 - Halts execution immediately by raising CycleDetectedError

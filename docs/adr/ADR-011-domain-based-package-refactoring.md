@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
@@ -66,7 +66,7 @@ In accordance with GitHub Issue #201 ([M11-ARCH-001](https://github.com/ntdev204
    - `src/laris/reporting/`: Structured evidence reports, citation coordinates, and on-demand manuscript drafting.
 
 2. **Decoupling of Conceptual Architecture:**
-   The conceptual 12-layer architecture described in [LAYER_ARCHITECTURE.md](file:///home/thientn204/laris/docs/architecture/LAYER_ARCHITECTURE.md) and [IDEA.md](file:///home/thientn204/laris/docs/IDEA.md) remains fully authoritative and unchanged. Documentation SHALL map each conceptual layer (Layer 0 through Layer 11) to its corresponding domain package.
+   The conceptual 12-layer architecture described in [LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md) and [IDEA.md](../archive/IDEA.md) remains fully authoritative and unchanged. Documentation SHALL map each conceptual layer (Layer 0 through Layer 11) to its corresponding domain package.
 
 3. **Transparent Backward Compatibility:**
    To prevent breaking existing scripts, test fixtures, or external consumers, `src/laris/layers/` SHALL be retained as a transparent facade. Each `src/laris/layers/layerX_*` module SHALL re-export its public interfaces directly from the new domain packages.

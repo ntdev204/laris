@@ -10,8 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/plans/STAGED_LEARNING_PIPELINE.md"
-  - "docs/specifications/NATURAL_LANGUAGE_TRAINING_SPECIFICATION.md"
+  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/research/S2ORC_SUBSET_SELECTION.md"
   - "docs/specifications/LARIS_GOLD_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
@@ -31,7 +30,7 @@ change_summary: "Added acquisition logic and real sources/licenses for 7 bilingu
 
 This specification establishes the authoritative dataset inventory, licensing governance, and sampling framework for the LARIS staged learning pipeline (Milestones M11, Issues #200 and #205 / [M11-DATA-001](https://github.com/ntdev204/laris/issues/200), [M11-DATA-002](https://github.com/ntdev204/laris/issues/205)).
 
-In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self-built-language-foundation.md) and [ADR-004](file:///home/thientn204/laris/docs/adr/ADR-004-evidence-provenance-first-class.md):
+In accordance with [ADR-002](../adr/ADR-002-self-built-language-foundation.md) and [ADR-004](../adr/ADR-004-evidence-provenance-first-class.md):
 - **Local-first provenance:** All data sources must have verifiable origins, immutable cryptographic digests (SHA-256), and explicit licenses.
 - **English-first with Vietnamese separate:** Vietnamese datasets are budgeted and tracked as an independent curriculum.
 - **OCR scope:** Printed scientific documents only. Handwriting datasets are strictly excluded.

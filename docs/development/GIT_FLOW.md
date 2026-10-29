@@ -11,8 +11,8 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/development/CODING_STANDARDS.md"
-  - "docs/DOCUMENTATION_STANDARD.md"
-  - "docs/plans/IMPLEMENTATION_ROADMAP.md"
+  - "docs/development/DOCUMENTATION.md"
+  - "docs/plans/ROADMAP.md"
   - "docs/plans/BACKLOG.md"
 decision_references:
   - "ADR-007"

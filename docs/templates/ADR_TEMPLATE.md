@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/DOCUMENTATION_STANDARD.md"
+  - "docs/development/DOCUMENTATION.md"
 decision_references: []
 change_summary: "Standard template for Architecture Decision Records in templates directory."
 ---
@@ -54,5 +54,5 @@ change_summary: "Standard template for Architecture Decision Records in template
 - [ ] [Quantifiable criterion to verify that the decision is correctly implemented and adheres to constraints.]
 
 ## 7. Related Documents
-- [Link to IDEA.md](file:///home/thientn204/laris/docs/IDEA.md)
-- [Link to Relevant Spec](file:///home/thientn204/laris/docs/specifications/MODULE_CONTRACTS.md)
+- [Link to IDEA.md](../archive/IDEA.md)
+- [Link to Relevant Spec](../specifications/MODULE_CONTRACTS.md)

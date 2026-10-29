@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/adr/ADR-011-domain-based-package-refactoring.md"
@@ -34,7 +34,7 @@ change_summary: "Complete retirement and elimination of parallel numbered layer 
 
 ## 1. Context and Problem Statement
 
-Following the completion of Issue #201 ([M11-ARCH-001](https://github.com/ntdev204/laris/issues/201)) and the ratification of [ADR-011](file:///home/thientn204/laris/docs/adr/ADR-011-domain-based-package-refactoring.md), ten domain packages were introduced in `src/laris/`: `corpus`, `language`, `scientific`, `graph`, `retrieval`, `reasoning`, `orchestration`, `execution`, `evaluation`, and `reporting`.
+Following the completion of Issue #201 ([M11-ARCH-001](https://github.com/ntdev204/laris/issues/201)) and the ratification of [ADR-011](ADR-011-domain-based-package-refactoring.md), ten domain packages were introduced in `src/laris/`: `corpus`, `language`, `scientific`, `graph`, `retrieval`, `reasoning`, `orchestration`, `execution`, `evaluation`, and `reporting`.
 
 However, as audited in GitHub Issue #206 ([M11-ARCH-002](https://github.com/ntdev204/laris/issues/206)):
 1. **Parallel Source Hierarchies:** The temporary compatibility shims in `src/laris/layers/layerX_*` constituted a second, parallel package hierarchy coexisting with the domain packages.
@@ -58,7 +58,7 @@ However, as audited in GitHub Issue #206 ([M11-ARCH-002](https://github.com/ntde
    - Any attempt to reintroduce numbered layer directories will immediately fail the CI quality gate.
 
 4. **Conceptual Architecture Continuity:**
-   - The conceptual 12-layer architecture remains fully documented and preserved in [docs/architecture/LAYER_ARCHITECTURE.md](file:///home/thientn204/laris/docs/architecture/LAYER_ARCHITECTURE.md) and [docs/architecture/SYSTEM_OVERVIEW.md](file:///home/thientn204/laris/docs/architecture/SYSTEM_OVERVIEW.md).
+   - The conceptual 12-layer architecture remains fully documented and preserved in [docs/architecture/LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md) and [docs/architecture/SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md).
    - System documentation explicitly distinguishes between cognitive/functional architecture layers and physical Python package organization.
 
 ---
