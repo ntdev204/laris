@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Flaky evaluation exit-code test (Issue #298):** the fixture feeds identical inputs to the similarity head, so Spearman is decided by float noise and could fall below the test's `min_absolute` of 0.0; the test now relaxes that floor and still asserts the exit code from `min_margin`.
+
+### Fixed
 - **Token order and weight decay (Issue #295):** the PyTorch backbone never applied rotary position embeddings, although the config fixes `pos_encoding="rope"` and the NumPy reference does; reversing the tokens left every hidden state unchanged (max difference 2e-6), so the model could not learn word order for MLM or QA. Q and K now get split-half RoPE (same formula as the reference, tested against it). AdamW weight decay no longer touches RMSNorm gains, biases and the tied embedding, the QA span softmax ignores padded positions, and an MLM batch with no masked token yields a zero loss instead of NaN. Runs started before this fix train an order-blind model and must be restarted.
 - **Encoder initialisation (Issue #293):** the PyTorch encoder kept the `nn.Embedding` default N(0, 1) for the tied token embedding, so a fresh model produced logits with a standard deviation of 27.8 and a raw MLM cross-entropy of 542.7 instead of about ln(32000) = 10.4 (a real run logged loss 197.66 and gradient norm 259 at step 1, clipped to 1.0 every step). The model now uses GPT-2 style initialisation (normal std 0.02, zero biases, residual projections scaled by 1/sqrt(2L)) and seeds itself before creating parameters, which it did too late before. Measured on real validation data with the fitted tokenizer, the initial raw MLM loss is now 10.20. Runs started before this fix begin from the bad initialisation and should be restarted.
 
