@@ -155,20 +155,28 @@ def audit_dataset_inventory(
             blocker = "No public Vietnamese PAWS release exists (PAWS-X excludes Vietnamese)."
         elif ds_id == "CC100-VI-CLEAN":
             split_usability = "UNPARTITIONED_RAW_DUMP"
-            blocker = "Monolithic Parquet shards require deterministic document hash partitioning."
+            blocker = (
+                "Raw shards; `laris data partition` applies a document hash split and removes "
+                "exact duplicates of Wikipedia-VI."
+            )
         elif ds_id == "VISTS":
             split_usability = "TEST_ONLY_NEEDS_SUBSPLIT"
             blocker = (
-                "Only test suites are released; train/validation require a pair-grouped sub-split."
+                "Only test suites are released; `laris data partition` creates a "
+                "sentence-component grouped train/val/test split."
             )
         elif ds_id == "FEVER":
             split_usability = "TEST_SET_PRIVATE_HELD_OUT"
             blocker = (
-                "Labelled test split is unreleased; labelled_dev needs a claim-grouped sub-split."
+                "Labelled test split is unreleased; labelled_dev is sub-split by claim id. Records "
+                "carry evidence references only (no evidence text), so they are not NLI-trainable."
             )
         elif ds_id == "UIT-VIQUAD-V2":
             split_usability = "TEST_SET_PRIVATE_HELD_OUT"
-            blocker = "Test split has no public answers; overlaps UIT-VIQUAD v1.1 contexts."
+            blocker = (
+                "Test split has no public answers; validation is sub-split by article. "
+                "Supersedes UIT-VIQUAD v1.1 (same contexts): use only one as a QA source."
+            )
 
         # Ledger assignment
         if sample_cnt > 0:

@@ -4,9 +4,30 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from laris.corpus.acquisition.common import APPROVED_LICENSE_STATUSES
+from laris.corpus.splits.partitioners.cc100 import partition_cc100_physical, wikipedia_digests
+from laris.corpus.splits.partitioners.fever import partition_fever_physical
+from laris.corpus.splits.partitioners.hotpotqa import partition_hotpotqa_physical
 from laris.corpus.splits.partitioners.quora import partition_quora_dataset_physical
 from laris.corpus.splits.partitioners.squad import partition_qa_dataset_physical
+from laris.corpus.splits.partitioners.vinli import partition_vinli_physical
+from laris.corpus.splits.partitioners.viquad_v2 import partition_viquad_v2_physical
+from laris.corpus.splits.partitioners.vists import partition_vists_physical
 from laris.corpus.splits.partitioners.wikipedia import partition_wikipedia_shards_physical
+
+
+def _license_blocked_datasets(raw_path: Path) -> Dict[str, str]:
+    """Dataset ids whose acquisition manifest entry is not license-approved."""
+    manifest_path = raw_path.parent / "acquisition_manifest.json"
+    if not manifest_path.is_file():
+        return {}
+    with open(manifest_path, "r", encoding="utf-8") as handle:
+        entries = json.load(handle).get("datasets", [])
+    return {
+        e["dataset_id"].upper(): e.get("license_status", "UNKNOWN")
+        for e in entries
+        if e.get("license_status") not in APPROVED_LICENSE_STATUSES
+    }
 
 
 def execute_physical_partitioning(
@@ -17,6 +38,7 @@ def execute_physical_partitioning(
     max_records: Optional[int] = None,
     batch_size: int = 100000,
     num_workers: Optional[int] = None,
+    include_unreviewed_licenses: bool = False,
 ) -> Dict[str, Any]:
     """Executes physical partitioning on raw datasets and outputs task_splits_manifest.json."""
     raw_path = Path(raw_root)
@@ -31,6 +53,19 @@ def execute_physical_partitioning(
 
     selected = [d.upper() for d in datasets] if datasets else None
     results: List[Dict[str, Any]] = []
+    skipped: List[Dict[str, str]] = []
+    license_blocked = {} if include_unreviewed_licenses else _license_blocked_datasets(raw_path)
+
+    def wanted(dataset_id: str, raw_name: str) -> bool:
+        """True when requested, present on disk and license-cleared (skips are recorded)."""
+        if selected is not None and dataset_id not in selected:
+            return False
+        if not (raw_path / raw_name).is_dir():
+            return False
+        if dataset_id in license_blocked:
+            skipped.append({"dataset_id": dataset_id, "reason": license_blocked[dataset_id]})
+            return False
+        return True
 
     # 1. Wikipedia Vietnamese
     if selected is None or "WIKIPEDIA-VI" in selected or "WIKIPEDIA_VI" in selected:
@@ -86,6 +121,43 @@ def execute_physical_partitioning(
             )
             results.append(res_squad.to_dict())
 
+    # 5. Bilingual expansion datasets
+    if wanted("VINLI", "vinli"):
+        results.append(
+            partition_vinli_physical(raw_path / "vinli", proc_path / "vinli").to_dict()
+        )
+    if wanted("VISTS", "vists"):
+        results.append(
+            partition_vists_physical(raw_path / "vists", proc_path / "vists").to_dict()
+        )
+    if wanted("HOTPOTQA", "hotpotqa"):
+        results.append(
+            partition_hotpotqa_physical(raw_path / "hotpotqa", proc_path / "hotpotqa").to_dict()
+        )
+    if wanted("FEVER", "fever"):
+        results.append(partition_fever_physical(raw_path / "fever", proc_path / "fever").to_dict())
+    if wanted("UIT-VIQUAD-V2", "viquad_v2"):
+        # ViQuAD 2.0 is a superset of 1.1 over the same contexts; 1.1 is never used as a QA
+        # source, so no cross-corpus filtering is applied (it would remove every row).
+        results.append(
+            partition_viquad_v2_physical(raw_path / "viquad_v2", proc_path / "viquad_v2").to_dict()
+        )
+    if wanted("CC100-VI-CLEAN", "cc100_vi_clean"):
+        wiki_dir = raw_path / "wikipedia_vi"
+        results.append(
+            partition_cc100_physical(
+                sorted((raw_path / "cc100_vi_clean").glob("*.parquet")),
+                proc_path / "cc100_vi_clean",
+                exclude_digests=(
+                    wikipedia_digests(sorted(wiki_dir.glob("*.parquet")))
+                    if wiki_dir.is_dir()
+                    else None
+                ),
+                max_records=max_records,
+                batch_size=min(batch_size, 20000),
+            ).to_dict()
+        )
+
     summary = {
         "manifest_version": "1.1.0",
         "description": "Authoritative physical task-split manifest with non-leakage partitions.",
@@ -93,6 +165,7 @@ def execute_physical_partitioning(
         "raw_data_untouched": True,
         "total_datasets_partitioned": len(results),
         "partitioned_datasets": results,
+        "skipped_datasets": skipped,
     }
 
     with open(target_manifest, "w", encoding="utf-8") as f:

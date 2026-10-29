@@ -191,6 +191,18 @@ def _blocked_entry(
     )
 
 
+# Datasets whose publisher declares no usable license but whose use the project owner approved.
+# This is an owner decision recorded for governance, not a legal clearance.
+OWNER_APPROVED_DATASETS = {
+    "VINLI": "2026-10-29",
+    "UIT-VIQUAD-V2": "2026-10-29",
+    "CC100-VI-CLEAN": "2026-10-29",
+}
+LICENSE_APPROVED = "APPROVED_FOR_ACQUISITION"
+LICENSE_OWNER_APPROVED = "APPROVED_BY_OWNER"
+APPROVED_LICENSE_STATUSES = frozenset({LICENSE_APPROVED, LICENSE_OWNER_APPROVED})
+
+
 def _finalize_entry(
     *,
     dataset_id: str,
@@ -211,10 +223,16 @@ def _finalize_entry(
     notes: str,
 ) -> DatasetEntry:
     """VERIFIED requires complete download, row floor met, and an approved license."""
+    owner_approved = not license_approved and dataset_id in OWNER_APPROVED_DATASETS
+    if owner_approved:
+        notes = (
+            f"{notes} License not declared by the publisher; use approved by the project owner "
+            f"on {OWNER_APPROVED_DATASETS[dataset_id]} (owner decision, not a legal clearance)."
+        ).strip()
     schema_valid = complete and rows >= min_rows
     if not complete or rows == 0:
         status = "SKIPPED_TEMPORARILY"
-    elif schema_valid and license_approved:
+    elif schema_valid and (license_approved or owner_approved):
         status = "VERIFIED"
     else:
         status = "DOWNLOADED"
@@ -224,7 +242,13 @@ def _finalize_entry(
         version=version,
         official_source_url=source_url,
         license_name=license_name,
-        license_status="APPROVED_FOR_ACQUISITION" if license_approved else "NEEDS_LICENSE_REVIEW",
+        license_status=(
+            LICENSE_APPROVED
+            if license_approved
+            else LICENSE_OWNER_APPROVED
+            if owner_approved
+            else "NEEDS_LICENSE_REVIEW"
+        ),
         acquisition_status=status,
         language=language,
         sample_unit=sample_unit,

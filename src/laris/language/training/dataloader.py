@@ -215,7 +215,7 @@ class StreamingParquetMultiTaskDataLoader:
 
         # Build task counts for active tasks
         active_counts: Dict[str, int] = {}
-        counts_src = task_counts or self.DEFAULT_TASK_COUNTS
+        counts_src = task_counts or self._count_rows() or self.DEFAULT_TASK_COUNTS
         for task in self.task_paths:
             active_counts[task] = counts_src.get(task, 100000)
 
@@ -245,17 +245,31 @@ class StreamingParquetMultiTaskDataLoader:
                     path_list, self.buffer_size
                 )
 
+    def _count_rows(self) -> Dict[str, int]:
+        """Row counts per task from Parquet footers (no data is read)."""
+        counts: Dict[str, int] = {}
+        for task, paths in self.task_paths.items():
+            total = 0
+            for path in paths:
+                try:
+                    total += pq.ParquetFile(path).metadata.num_rows
+                except Exception as exc:
+                    logger.warning("Cannot read row count of %s: %s", path, exc)
+            if total > 0:
+                counts[task] = total
+        return counts
+
     def _discover_task_paths(self) -> None:
         """Discovers Parquet shards of the configured split within data_dir."""
         if not self.data_dir.is_dir():
             return
 
         task_dir_map = {
-            "mlm": ["wikipedia_en", "wikipedia_vi", "mlm"],
-            "nli": ["all_nli", "anli", "nli"],
+            "mlm": ["wikipedia_en", "wikipedia_vi", "cc100_vi_clean", "mlm"],
+            "nli": ["all_nli", "anli", "vinli", "nli"],
             "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
-            "similarity": ["stsb", "similarity"],
-            "qa": ["squad", "viquad", "qa"],
+            "similarity": ["stsb", "vists", "similarity"],
+            "qa": ["squad", "viquad", "viquad_v2", "hotpotqa", "qa"],
         }
 
         for task, subdirs in task_dir_map.items():

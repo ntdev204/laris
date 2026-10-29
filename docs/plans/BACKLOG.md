@@ -904,3 +904,14 @@ This document serves as the single source of truth for active task tracking, exe
   1. `ViNLI`, `ViSTS`, `HotpotQA`, `FEVER`, `UIT-ViQuAD2.0` and bounded streamed `CC-100 VI` are acquired by `scripts/acquire_datasets.py`; `VI-PAWS` is `BLOCKED` without fabricated data.
   2. Manifest tracks 24 datasets with 8,347,135 acquired records; datasets without an approved license stay `DOWNLOADED` / `NEEDS_LICENSE_REVIEW`.
   3. The earlier ~16.5M target is documented as unreachable with real public sources.
+
+### Task `M2-DATA-011`: Partitioning of Bilingual Expansion Datasets
+- **Objective:** Leakage-safe physical partitioning, cross-dataset deduplication and loader integration for the expansion datasets (Issue #249).
+- **Module:** `MOD-CORPUS-001` (Corpus Ingestion).
+- **Dependencies:** `M2-DATA-010` (Issue #244).
+- **Status:** `DONE` (Issue #249).
+- **Acceptance Criteria:**
+  1. Partitioners exist for ViNLI, ViSTS, HotpotQA, FEVER, UIT-ViQuAD2.0 and CC-100 VI; no group (sentence component, article, claim, document) spans two splits.
+  2. CC-100 documents duplicating Wikipedia-VI are removed; UIT-ViQuAD2.0 supersedes v1.1 (identical contexts) so only one of them is a QA source.
+  3. Datasets with unreviewed licenses are skipped by default.
+  4. The streaming loader reads the new directories (train split only by default).

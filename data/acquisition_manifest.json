@@ -668,8 +668,8 @@
       "version": "HF presencesw/vinli_4_label (default)",
       "official_source_url": "https://huggingface.co/datasets/presencesw/vinli_4_label",
       "license_name": "Not declared by uploader (research use only pending review)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "Vietnamese",
       "sample_unit": "3-Way NLI Hypothesis-Premise Pair (gold_label, sentence1, sentence2)",
       "expected_sample_count": ">= 30,000 pairs (24,376 train / 3,009 dev / 2,991 test per dataset card)",
@@ -678,7 +678,7 @@
       "sha256_checksum": "9f2b564de27fd0ce60da92a6eb64aa615cad65e8cc1fe0a36ecdcbb93cd00e7f",
       "storage_path": "data/raw/vinli",
       "schema_valid": true,
-      "notes": "Spec URL github.com/vnlp/vinli returns 404; community mirror used. Uploader declares no license: NEEDS_LICENSE_REVIEW before any redistribution.",
+      "notes": "Spec URL github.com/vnlp/vinli returns 404; community mirror used. Uploader declares no license: NEEDS_LICENSE_REVIEW before any redistribution. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -787,8 +787,8 @@
       "version": "CC-100 vi.txt.xz (bounded prefix)",
       "official_source_url": "https://data.statmt.org/cc-100/",
       "license_name": "Common Crawl Terms of Use (CC-100 declares no dataset license)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "Vietnamese",
       "sample_unit": "Cleaned Web Document (NFC, >= 200 chars, exact-deduplicated)",
       "expected_sample_count": "2,700,000 documents (bounded stream of https://data.statmt.org/cc-100/vi.txt.xz; full file is ~29.5 GB xz)",
@@ -797,7 +797,7 @@
       "sha256_checksum": "4ebe8daeed213ba788a1f5196519896664bb27d2d0d3d506dc3a87c37e5423a7",
       "storage_path": "data/raw/cc100_vi_clean",
       "schema_valid": true,
-      "notes": "Prefix of the CC-100 stream, not a random sample: topical bias is possible. License is NOT CC-BY-SA as earlier spec stated; NEEDS_LICENSE_REVIEW before redistribution.",
+      "notes": "Prefix of the CC-100 stream, not a random sample: topical bias is possible. License is NOT CC-BY-SA as earlier spec stated; NEEDS_LICENSE_REVIEW before redistribution. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
       "files": [
         {
           "filename": "0000.parquet",
@@ -1207,8 +1207,8 @@
       "version": "HF taidng/UIT-ViQuAD2.0",
       "official_source_url": "https://huggingface.co/datasets/taidng/UIT-ViQuAD2.0",
       "license_name": "Academic research use (UIT-NLP; HF card declares no SPDX license)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "Vietnamese",
       "sample_unit": "Context-Question-Answer Item (incl. unanswerable)",
       "expected_sample_count": "~39K items (train/validation/test)",
@@ -1217,7 +1217,7 @@
       "sha256_checksum": "6e68a0c8fb6fa3c7f89e5b3825e3b3e96fd66913db89a9bdfcaf8fa2b5469e19",
       "storage_path": "data/raw/viquad_v2",
       "schema_valid": true,
-      "notes": "Upstream license is non-commercial academic; the mirror declares no license, so NEEDS_LICENSE_REVIEW. v1.1 answerable items in UIT-VIQUAD overlap: dedupe at partition time.",
+      "notes": "Upstream license is non-commercial academic; the mirror declares no license, so NEEDS_LICENSE_REVIEW. v1.1 answerable items in UIT-VIQUAD overlap: dedupe at partition time. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
