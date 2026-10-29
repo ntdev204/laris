@@ -59,6 +59,9 @@ class TrainingMetricsSnapshot:
     loss_value: float
     effective_batch_size: int
     peak_vram_gb: Optional[float] = None
+    optimizer_step: int = 0
+    learning_rate: Optional[float] = None
+    grad_norm: Optional[float] = None
 
 
 class MultiTaskLossCalculator:
@@ -156,7 +159,16 @@ class LanguageEncoderTrainer:
         max_grad_norm: float = 1.0,
         max_vram_ceiling_gb: float = 14.5,
         device: Optional[str] = None,
+        precision: str = "fp32",
+        warmup_steps: int = 0,
+        total_optimizer_steps: Optional[int] = None,
+        min_lr_ratio: float = 0.1,
     ) -> None:
+        if precision not in ("fp32", "bf16", "fp16"):
+            raise ValueError(f"precision must be fp32, bf16 or fp16, got '{precision}'")
+        self.precision = precision
+        self.optimizer_steps = 0
+        self.skipped_steps = 0
         self.model = model
         self.config = config
         self.dataloader = dataloader
@@ -209,7 +221,17 @@ class LanguageEncoderTrainer:
         else:
             self.optimizer = None
 
+        if scheduler is None and self.optimizer is not None and total_optimizer_steps:
+            from laris.language.training.schedule import build_warmup_cosine_scheduler
+
+            scheduler = build_warmup_cosine_scheduler(
+                self.optimizer, warmup_steps, total_optimizer_steps, min_lr_ratio
+            )
         self.scheduler = scheduler
+
+        self.scaler: Any = None
+        if TORCH_AVAILABLE and precision == "fp16" and str(self.device).startswith("cuda"):
+            self.scaler = torch.amp.GradScaler("cuda")
 
         if optimizer is not None and TORCH_AVAILABLE and isinstance(self.model, nn.Module):
             model_param_ids = {id(prm) for prm in self.model.parameters()}
@@ -221,6 +243,81 @@ class LanguageEncoderTrainer:
                     "Injected optimizer is not bound to the model's parameters; construct it "
                     "after the model has been moved to its target device."
                 )
+
+    def _autocast(self) -> Any:
+        """Autocast context for the configured precision (no-op for fp32)."""
+        import contextlib
+
+        if not TORCH_AVAILABLE or self.precision == "fp32":
+            return contextlib.nullcontext()
+        device_type = "cuda" if str(self.device).startswith("cuda") else "cpu"
+        if self.precision == "fp16" and device_type == "cpu":
+            return contextlib.nullcontext()
+        dtype = torch.bfloat16 if self.precision == "bf16" else torch.float16
+        return torch.autocast(device_type=device_type, dtype=dtype)
+
+    def _to_device(self, batch: Any) -> Any:
+        token_ids = batch.token_ids
+        if not isinstance(token_ids, torch.Tensor):
+            token_ids = torch.as_tensor(token_ids, dtype=torch.long, device=self.device)
+        else:
+            token_ids = token_ids.to(self.device)
+        attention_mask = getattr(batch, "attention_mask", None)
+        if attention_mask is not None:
+            if not isinstance(attention_mask, torch.Tensor):
+                attention_mask = torch.as_tensor(
+                    attention_mask, dtype=torch.long, device=self.device
+                )
+            else:
+                attention_mask = attention_mask.to(self.device)
+        return token_ids, attention_mask
+
+    def counters(self) -> Dict[str, Any]:
+        """Progress counters persisted in checkpoints."""
+        return {
+            "micro_steps": len(self.step_history),
+            "optimizer_steps": self.optimizer_steps,
+            "skipped_steps": self.skipped_steps,
+            "accum_counter": self._accum_counter,
+        }
+
+    def load_counters(self, counters: Dict[str, Any]) -> None:
+        self.optimizer_steps = int(counters.get("optimizer_steps", 0))
+        self.skipped_steps = int(counters.get("skipped_steps", 0))
+        self._accum_counter = int(counters.get("accum_counter", 0))
+
+    def evaluate(
+        self,
+        eval_loader: Any,
+        batches_per_task: int = 8,
+        tasks: Optional[List[str]] = None,
+    ) -> Dict[str, float]:
+        """Mean loss per task (and `mean`) on a held-out loader; weights are not modified.
+
+        Uses the inference path (no gradients), so it needs no training authorization.
+        """
+        if not (TORCH_AVAILABLE and isinstance(self.model, nn.Module)):
+            raise RuntimeError("evaluate requires a PyTorch model")
+        was_training = self.model.training
+        self.model.eval()
+        task_names = tasks or sorted(eval_loader.task_paths)
+        results: Dict[str, float] = {}
+        try:
+            with torch.no_grad():
+                for task in task_names:
+                    losses = []
+                    for _ in range(batches_per_task):
+                        batch = eval_loader.generate_batch(task_type=task)
+                        token_ids, attention_mask = self._to_device(batch)
+                        with self._autocast():
+                            outputs = self.model(token_ids, attention_mask=attention_mask)
+                            loss = self._compute_torch_loss(task, outputs, batch.labels)
+                        losses.append(float(loss.float().item()))
+                    results[task] = float(np.mean(losses))
+        finally:
+            self.model.train(was_training)
+        results["mean"] = float(np.mean([results[t] for t in task_names]))
+        return results
 
     def _compute_torch_loss(
         self,
@@ -297,6 +394,41 @@ class LanguageEncoderTrainer:
         else:
             raise ValueError(f"Unknown task_type: {task_type}")
 
+    def current_learning_rate(self) -> Optional[float]:
+        if self.optimizer is None:
+            return None
+        return float(self.optimizer.param_groups[0]["lr"])
+
+    def _optimizer_update(self) -> Optional[float]:
+        """Clips, steps and resets after a full accumulation window; returns the grad norm."""
+        if self.scaler is not None:
+            self.scaler.unscale_(self.optimizer)
+        grad_norm = float(
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.max_grad_norm if self.max_grad_norm > 0 else 1e9
+            )
+        )
+        if not np.isfinite(grad_norm):
+            # never apply a non-finite update; drop this window's gradients
+            self.skipped_steps += 1
+            warnings.warn(
+                "Non-finite gradient norm; skipping optimizer update", RuntimeWarning, stacklevel=2
+            )
+            if self.scaler is not None:
+                self.scaler.update()
+            self.optimizer.zero_grad(set_to_none=True)
+            return grad_norm
+        if self.scaler is not None:
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            self.optimizer.step()
+        self.optimizer.zero_grad(set_to_none=True)
+        self.optimizer_steps += 1
+        if self.scheduler is not None:
+            self.scheduler.step()
+        return grad_norm
+
     def execute_training_step(self, batch: Any) -> TrainingMetricsSnapshot:
         """Executes a single optimization step under strict authorization governance.
 
@@ -316,42 +448,25 @@ class LanguageEncoderTrainer:
         # Check if PyTorch neural execution is active
         if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
             self.model.train()
+            token_ids, attention_mask = self._to_device(batch)
 
-            token_ids = batch.token_ids
-            if not isinstance(token_ids, torch.Tensor):
-                token_ids = torch.as_tensor(token_ids, dtype=torch.long, device=self.device)
-            else:
-                token_ids = token_ids.to(self.device)
+            with self._autocast():
+                outputs = self.model(token_ids, attention_mask=attention_mask, training_pass=True)
+                loss = self._compute_torch_loss(task_type, outputs, batch.labels)
+            loss_value = float(loss.detach().float().item())
 
-            attention_mask = getattr(batch, "attention_mask", None)
-            if attention_mask is not None:
-                if not isinstance(attention_mask, torch.Tensor):
-                    attention_mask = torch.as_tensor(
-                        attention_mask, dtype=torch.long, device=self.device
-                    )
-                else:
-                    attention_mask = attention_mask.to(self.device)
-
-            # Forward pass with autograd enabled
-            outputs = self.model(token_ids, attention_mask=attention_mask, training_pass=True)
-
-            # Compute weighted task loss
-            loss = self._compute_torch_loss(task_type, outputs, batch.labels)
-            loss_value = float(loss.detach().item())
-
-            # Scaled backward pass for gradient accumulation
+            # Scaled backward pass; gradients accumulate across micro-batches (and tasks)
             scaled_loss = loss / self.grad_accum_steps
-            scaled_loss.backward()
+            if self.scaler is not None:
+                self.scaler.scale(scaled_loss).backward()
+            else:
+                scaled_loss.backward()
 
             self._accum_counter += 1
-            if (self._accum_counter % self.grad_accum_steps) == 0:
-                if self.optimizer is not None:
-                    if self.max_grad_norm > 0:
-                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-                    self.optimizer.step()
-                    self.optimizer.zero_grad()
-                    if self.scheduler is not None:
-                        self.scheduler.step()
+            lr_used = self.current_learning_rate()  # rate applied by this window's update
+            grad_norm: Optional[float] = None
+            if (self._accum_counter % self.grad_accum_steps) == 0 and self.optimizer is not None:
+                grad_norm = self._optimizer_update()
 
             # Peak VRAM measurement
             peak_vram_gb: Optional[float] = None
@@ -364,6 +479,9 @@ class LanguageEncoderTrainer:
                 loss_value=loss_value,
                 effective_batch_size=effective_batch_size,
                 peak_vram_gb=peak_vram_gb,
+                optimizer_step=self.optimizer_steps,
+                learning_rate=lr_used,
+                grad_norm=grad_norm,
             )
             self.step_history.append(snapshot)
             return snapshot

@@ -44,6 +44,40 @@ def test_training_refuses_without_authorization_flag(capsys: pytest.CaptureFixtu
     assert "--authorized" in capsys.readouterr().out
 
 
+def test_training_hyperparameters_come_from_yaml_and_flags_override() -> None:
+    from laris.cli.commands.language_encoder import _resolve_hyperparameters
+
+    parser = build_parser()
+    args = parser.parse_args(["train", "language-encoder", "--model-size", "compact"])
+    hyper = _resolve_hyperparameters(args)
+    assert hyper.learning_rate == 1e-4 and hyper.warmup_steps == 2000  # compact.yaml
+    args = parser.parse_args(
+        ["train", "language-encoder", "--model-size", "large", "--learning-rate", "3e-4",
+         "--steps", "50"]
+    )
+    hyper = _resolve_hyperparameters(args)
+    assert hyper.learning_rate == 3e-4 and hyper.max_steps == 50
+    assert hyper.micro_batch_size == 16 and hyper.gradient_accumulation_steps == 4  # large.yaml
+
+
+def test_training_needs_environment_authorization(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("LARIS_TRAINING_AUTHORIZED", raising=False)
+    code = main(["train", "language-encoder", "--model-size", "compact", "--authorized"])
+    assert code == 1
+    assert "LARIS_TRAINING_AUTHORIZED" in capsys.readouterr().out
+
+
+def test_training_requires_a_tokenizer(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LARIS_TRAINING_AUTHORIZED", "1")
+    code = main(["train", "language-encoder", "--model-size", "compact", "--authorized"])
+    assert code == 1
+    assert "--tokenizer-model" in capsys.readouterr().out
+
+
 def test_acquire_rejects_unknown_dataset_id() -> None:
     assert main(["data", "acquire", "--only", "NOT-A-DATASET"]) == 2
 

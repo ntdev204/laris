@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Language encoder training loop (Issue #248):**
+  - Linear-warmup + cosine LR schedule (`training/schedule.py`); `--steps`, `--learning-rate`, `--warmup-steps` and loss weights now come from `configs/language_encoder/<size>.yaml` with CLI overrides.
+  - Real mixed precision: `torch.autocast` for bf16/fp16 (+ `GradScaler` for fp16 on CUDA); non-finite gradients skip the update instead of corrupting weights.
+  - Steps are counted per optimizer update (gradients accumulate across micro-batches and tasks); snapshots carry learning rate and gradient norm.
+  - Atomic checkpoints (`training/checkpoint.py`): `model.pt`, `training_state.pt` (optimizer, scheduler, scaler, RNG, counters) and a provenance `manifest.json` (git commit, seed, config, tokenizer and dataset digests, model SHA-256); corrupt checkpoints are rejected on load.
+  - `training/loop.py`: periodic validation on the held-out `val` split (never `test`), `best/` and `last/` checkpoints, early stopping and `--resume`.
+
+### Added
 - **Partitioning for the bilingual expansion datasets (Issue #249):**
   - `laris data partition` now handles ViNLI, ViSTS, HotpotQA, FEVER, UIT-ViQuAD2.0 and CC-100 VI with leakage-safe splits (per-dataset modules in `corpus.splits.partitioners`).
   - ViNLI keeps official splits and drops the 4th `other` label (the NLI head is 3-way); ViSTS is split by connected sentence components and rescaled to [0, 1]; HotpotQA is converted to extractive QA (supporting paragraphs first; yes/no answers carry no span); UIT-ViQuAD2.0 keeps its official train and sub-splits validation by article (it supersedes v1.1 on the same contexts, so v1.1 is not used as a QA source); CC-100 is hash-split with exact-duplicate removal against Wikipedia-VI; FEVER (claims only, no evidence text) is partitioned but not loaded for training.
