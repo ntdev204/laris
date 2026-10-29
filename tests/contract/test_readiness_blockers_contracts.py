@@ -12,32 +12,32 @@ Enforces:
 from pathlib import Path
 
 from laris.core.errors import TrainingExecutionProhibitedError
-from laris.corpus.task_splits import (
+from laris.corpus.splits import (
     PartitionRatios,
     QuestionPairGraphPartitioner,
     WikipediaArticlePartitioner,
     validate_split_isolation,
 )
-from laris.language.config_handoff import (
+from laris.language.encoder.config_handoff import (
     get_immutable_invariants,
     get_tunable_parameters,
 )
-from laris.language.neural import (
+from laris.language.encoder.transformer import (
+    LanguageEncoderConfig,
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
-    TransformerEncoderConfig,
 )
-from laris.language.profiling import HardwareEnvironmentProfile
-from laris.language.tokenizer_trainer import (
+from laris.language.tokenization.trainer import (
     TokenizerTrainingPipeline,
 )
+from laris.language.training.profiling import HardwareEnvironmentProfile
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def test_contract_109m_parameter_count_formula() -> None:
-    """Contract: Model 1 encoder parameters must equal 109,561,856 under canonical config."""
-    config = TransformerEncoderConfig(
+    """Contract: Language encoder parameters must equal 109,561,856 under canonical config."""
+    config = LanguageEncoderConfig(
         vocab_size=32000,
         d_model=768,
         num_layers=12,
@@ -60,7 +60,7 @@ def test_contract_tokenizer_training_pipeline_prohibition() -> None:
 
 def test_contract_neural_model_readiness_state() -> None:
     """Contract: Neural encoder must instantiate as RANDOMLY_INITIALIZED and prohibit training."""
-    config = TransformerEncoderConfig(
+    config = LanguageEncoderConfig(
         vocab_size=100,
         d_model=384,
         num_layers=2,

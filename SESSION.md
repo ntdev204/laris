@@ -51,24 +51,24 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 
 ### Key Modules Implemented
 - **Centralized Configuration (`src/laris/config/`):** 4-tier configuration system (CLI, YAML, Defaults, Invariants) with cryptographic SHA-256 state tracking and safety ceilings.
-- **Physical Dataset Partitioning (`src/laris/corpus/task_splits.py`):**
+- **Physical Dataset Partitioning (`src/laris/corpus/splits/`):**
   - Streaming Parquet partitioner using `pyarrow.parquet.ParquetFile.iter_batches`.
   - Multi-worker parallel processing via `concurrent.futures.ProcessPoolExecutor` utilizing 14 CPU cores.
   - Streaming merge and automatic temporary cleanup on NVMe SSD.
   - Memory-safe under bounded allocations.
-- **Clean Tokenizer Extraction & Runner (`src/laris/language/tokenizer_trainer.py`):**
+- **Clean Tokenizer Extraction & Runner (`src/laris/language/tokenization/trainer.py`):**
   - Train-only Wikipedia text extraction strictly rejecting validation/test splits (`DataLeakageError`).
   - SentencePiece 32k BPE training runner gated by `assert_tokenizer_training_authorized()`.
-- **Neural Model Architecture (`src/laris/language/neural.py`):**
+- **Neural Model Architecture (`src/laris/language/encoder/transformer.py`):**
   - **110M Baseline:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE, RMSNorm, GELU, tied MLM embeddings, 109.56M/109.76M params).
   - **512M Scaled Foundation:** 24-layer bidirectional Transformer encoder ($d_{\text{model}}=1280$, 20 heads, $d_{\text{ff}}=5120$, $S=1024$, RoPE, RMSNorm, GELU, tied MLM embeddings, 512.91M/513.25M params).
   - Multi-task capability heads: MLM, 3-way NLI, Paraphrase binary classification, STS-B continuous similarity, QA span logits.
   - Native FlashAttention-2 / SDPA and Activation Checkpointing for 14GB VRAM target optimization.
-- **Real Multi-Task Streaming DataLoader & Trainer (`src/laris/language/dataloader.py`, `src/laris/language/trainer.py`):**
+- **Real Multi-Task Streaming DataLoader & Trainer (`src/laris/language/training/dataloader.py`, `src/laris/language/training/trainer.py`):**
   - `StreamingParquetMultiTaskDataLoader`: True streaming PyArrow Parquet loader with bounded buffer (`ParquetFile.iter_batches`), strictly preserving the $\le 250\text{ MB}$ RAM ceiling, 15% dynamic MLM masking (80% MASK, 10% random, 10% keep), and temperature sampling ($\alpha = 0.7$).
-  - `Stage1LanguageTrainer`: Genuine optimization steps executing autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), scaled backward, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()` with 8-bit AdamW / PyTorch AdamW.
+  - `LanguageEncoderTrainer`: Genuine optimization steps executing autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), scaled backward, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()` with 8-bit AdamW / PyTorch AdamW.
   - Strict authorization barrier (`assert_training_authorized`) strictly enforced.
-- **Artifact Governance (`src/laris/language/artifacts.py`):**
+- **Artifact Governance (`src/laris/language/training/artifacts.py`):**
   - `LanguageArtifactBundle`, `VocabularyContract`, `LanguageTrainingRunManifest`.
 
 ---
@@ -79,26 +79,26 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 # 1. Validate Target Server Hardware (Run on Server)
 bash scripts/verify_target_server.sh
 
-# 2. Partition Datasets with 14 Cores and 100k Batch Size (Run on Server)
-python3 scripts/partition_datasets.py --num-workers 14 --batch-size 100000
+# 2. Acquire / refresh datasets (resumable; --only merges into the manifest)
+laris data acquire --only CC100-VI-CLEAN
 
-# 3. Fit 32k SentencePiece Tokenizer from Clean Train Split (Run on Server)
-python3 scripts/train_tokenizer.py --authorized
+# 3. Partition datasets into leakage-safe train/val/test
+laris data partition --num-workers 14 --batch-size 100000
 
-# 4. Profile 500M Model VRAM Feasibility (Zero Training, Local or Server)
-python3 scripts/train_stage1.py --model-tier 500m --profile-only
+# 4. Fit the SentencePiece tokenizer from the clean train split (authorized)
+laris train tokenizer --authorized
 
-# 5. Execute Stage 1 Training on Target Server (Requires Authorization)
+# 5. Profile VRAM feasibility (zero training, local or server)
+laris train language-encoder --model-size large --profile-only
+
+# 6. Train the language encoder on the target server (requires authorization)
 export LARIS_TRAINING_AUTHORIZED=1
-python3 scripts/train_stage1.py --model-tier 500m --authorized
+laris train language-encoder --model-size large --authorized \
+  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model
 
-# 6. Run Documentation Quality Gate (Local / CI)
+# 7. Documentation quality gate and all gates (local / CI)
 python3 scripts/validate_docs.py
-
-# 5. Run All Quality Gates (Local WSL2)
-laris-env/bin/pytest tests/
-laris-env/bin/ruff check .
-laris-env/bin/mypy src
+make check
 ```
 
 ---

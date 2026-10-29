@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Union
 
 from laris.core.errors import ModuleContractViolationError
 from laris.corpus.partition import SplitManifest, SplitRatios
-from laris.corpus.pipeline import Layer0PipelineOutput
+from laris.corpus.pipeline import CorpusIngestionOutput
 from laris.corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
@@ -136,7 +136,7 @@ def _dict_to_split_manifest(data: Dict[str, Any]) -> SplitManifest:
 
 
 def export_processed_corpus(
-    output: Layer0PipelineOutput,
+    output: CorpusIngestionOutput,
     target_dir: Union[str, Path],
 ) -> Dict[str, Path]:
     """Persists partitioned dataset splits and manifests into target_dir.

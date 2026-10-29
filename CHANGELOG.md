@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Functional package layout and `laris` CLI (Issue #247, ADR-013):**
+  - `language/` split into `tokenization/`, `encoder/`, `training/`, `benchmarks/`; BM25 and the baseline comparison moved to `retrieval/`.
+  - `corpus.acquisition` (common, sources, registry, runner) replaces the 1,450-line acquisition script; `corpus.splits` (ratios, physical, partitioners, coverage, runner) replaces `task_splits.py`.
+  - Names no longer encode versions or stages: `LanguageEncoderTrainer`, `MultiTaskLossCalculator`, `LanguageEncoderConfig`/`LargeLanguageEncoderConfig`, `CorpusIngestionPipeline`; `--model-tier 500m` is now `--model-size large`.
+  - New `laris` command (`data acquire|partition`, `train tokenizer|language-encoder`); `scripts/*.py` are thin wrappers. `train_stage1.py` is now `train_language_encoder.py`.
+  - Configs organised by function (`configs/language_encoder/{compact,large}.yaml`, `configs/data/partition.yaml`); unit tests mirror the source tree under `tests/unit/<domain>/`.
+
 ### Fixed
 - **Training data integrity (Issue #246):**
   - `StreamingParquetMultiTaskDataLoader` reads only the configured split (`split="train"` by default); val/test shards are never mixed into training.

@@ -47,6 +47,9 @@ training = [
     "bitsandbytes>=0.43.0; sys_platform == 'linux'",
 ]
 
+[project.scripts]
+laris = "laris.cli.main:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
