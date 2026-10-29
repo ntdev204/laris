@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-29
+
+### Removed
+- **Dataset registry narrowed from 24 to 17 (Issue #274):** the registry keeps the 14 datasets that feed the language encoder plus S2ORC-STEM, LARIS-GOLD and NATURAL-QUESTIONS (planned for fine-tuning). VI-PAWS, UIT-VIQUAD v1.1, PUBLAYNET-MINI, DOCLAYNET-BOUNDED, UD-EWT-EN, UD-VTB-VI and SCIFACT lose their acquirers, manifest entries, coverage handling and tests; the manifest now reports 17 datasets, 8,288,209 records and 12.06 GB. Their raw directories (about 48 MB) were deleted from disk; they are re-downloadable from the public sources if a consumer appears.
+
 ## [1.1.0] - 2026-10-29
 
 ### Added

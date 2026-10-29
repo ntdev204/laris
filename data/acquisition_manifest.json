@@ -2,87 +2,8 @@
   "manifest_version": "1.0.0",
   "created_at": "2026-10-16T23:45:00Z",
   "verified_by": "LARIS Dataset Governance Agent",
-  "total_datasets_tracked": 24,
-  "total_acquired_bytes": 12095074485,
-  "total_acquired_samples": 8347135,
   "training_freeze_confirmed": true,
   "datasets": [
-    {
-      "dataset_id": "UD-EWT-EN",
-      "name": "Universal Dependencies English-EWT",
-      "version": "v2.14",
-      "official_source_url": "https://github.com/UniversalDependencies/UD_English-EWT",
-      "license_name": "CC-BY-SA-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "English",
-      "sample_unit": "Annotated Sentence (CoNLL-U)",
-      "expected_sample_count": "~16,622 sentences",
-      "actual_sample_count": 16622,
-      "actual_size_bytes": 18833168,
-      "sha256_checksum": "d68e06122a702464c613076523d56740f047e5bbe89dd90ec32737e04d952143",
-      "storage_path": "data/raw/ud_english_ewt",
-      "schema_valid": true,
-      "notes": "Full gold syntactic dependencies, POS tags, and morphological annotations.",
-      "files": [
-        {
-          "filename": "en_ewt-ud-train.conllu",
-          "bytes": 15034493,
-          "sample_count": 12544,
-          "sha256": "d68e06122a702464c613076523d56740f047e5bbe89dd90ec32737e04d952143"
-        },
-        {
-          "filename": "en_ewt-ud-dev.conllu",
-          "bytes": 1898574,
-          "sample_count": 2001,
-          "sha256": "39239e0a60db3ae68f4b7036189f11b6692741d10ff8240dd91f74f2760d90f8"
-        },
-        {
-          "filename": "en_ewt-ud-test.conllu",
-          "bytes": 1900101,
-          "sample_count": 2077,
-          "sha256": "fa024f43dc5da3c5ac02563bc9bd0e974f46cbb1560823976a8f342a37dc494a"
-        }
-      ]
-    },
-    {
-      "dataset_id": "UD-VTB-VI",
-      "name": "Universal Dependencies Vietnamese-VTB",
-      "version": "v2.14",
-      "official_source_url": "https://github.com/UniversalDependencies/UD_Vietnamese-VTB",
-      "license_name": "CC-BY-SA-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "Vietnamese",
-      "sample_unit": "Annotated Sentence (CoNLL-U)",
-      "expected_sample_count": "~3,000 sentences",
-      "actual_sample_count": 3323,
-      "actual_size_bytes": 2717736,
-      "sha256_checksum": "1df180722db99b724f7368aca50597133bee28606de3394cd8d12a57da89978d",
-      "storage_path": "data/raw/ud_vietnamese_vtb",
-      "schema_valid": true,
-      "notes": "Vietnamese treebank dependency structures and universal POS tags.",
-      "files": [
-        {
-          "filename": "vi_vtb-ud-train.conllu",
-          "bytes": 946835,
-          "sample_count": 1400,
-          "sha256": "1df180722db99b724f7368aca50597133bee28606de3394cd8d12a57da89978d"
-        },
-        {
-          "filename": "vi_vtb-ud-dev.conllu",
-          "bytes": 1232268,
-          "sample_count": 1123,
-          "sha256": "0b779257b9225575b3b30e15d64cc4ef9945a77f8cceb9f92d794b483a2752dd"
-        },
-        {
-          "filename": "vi_vtb-ud-test.conllu",
-          "bytes": 538633,
-          "sample_count": 800,
-          "sha256": "abc1b0ea98661bbb494a8c0da123ba2fe1a3ef71322c380fe66468884d9b4285"
-        }
-      ]
-    },
     {
       "dataset_id": "PAWS-WIKI",
       "name": "PAWS: Paraphrase Adversaries from Word Scrambling",
@@ -326,140 +247,6 @@
           "bytes": 810487,
           "sample_count": 1200,
           "sha256": "fe456c2935f71d7ffe49bd8d95c2b2355f7383f72423c3018fa40479992f0004"
-        }
-      ]
-    },
-    {
-      "dataset_id": "SCIFACT",
-      "name": "SciFact: Scientific Claim Verification",
-      "version": "v1.0.0",
-      "official_source_url": "https://github.com/allenai/scifact",
-      "license_name": "CC-BY-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "English",
-      "sample_unit": "Claim & Evidence Document",
-      "expected_sample_count": "1,409 claims + 5,183 cited abstracts",
-      "actual_sample_count": 6592,
-      "actual_size_bytes": 3115079,
-      "sha256_checksum": "11c621288d41ac144d29b13b0f8503b3820b7d6e8b1f6ff24dff335c196d76be",
-      "storage_path": "data/raw/scifact",
-      "schema_valid": true,
-      "notes": "Gold scientific claims paired with abstracts and SUPPORT/CONTRADICT labels.",
-      "files": [
-        {
-          "filename": "data/claims_train.jsonl",
-          "bytes": 175616,
-          "sample_count": 809,
-          "sha256": "f4c8fa82d8bd0653a9cc8d61a6ea48c25eacea64e90af5dbf390ebb1b74372f0"
-        },
-        {
-          "filename": "data/claims_dev.jsonl",
-          "bytes": 65007,
-          "sample_count": 300,
-          "sha256": "86f0435d08fdb65d1aa41d1472684f57e6e71930626497bdf4d7a9ec1a632217"
-        },
-        {
-          "filename": "data/claims_test.jsonl",
-          "bytes": 33769,
-          "sample_count": 300,
-          "sha256": "558930d75215c73f84a28fe538307d6d397c9de1ec7239514cf45f80d75d2ca3"
-        },
-        {
-          "filename": "data/corpus.jsonl",
-          "bytes": 8307875,
-          "sample_count": 5183,
-          "sha256": "b8d6c89624cb2ed74dee8938effc4f5d8bd2086887880af8110d64be4ceade62"
-        }
-      ]
-    },
-    {
-      "dataset_id": "UIT-VIQUAD",
-      "name": "UIT Vietnamese Question Answering Dataset",
-      "version": "v1.1",
-      "official_source_url": "https://github.com/TrungDS10/UIT-ViQuAD",
-      "license_name": "CC-BY-NC-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "Vietnamese",
-      "sample_unit": "Context-Question-Answer Triple",
-      "expected_sample_count": "~23,000 QA pairs",
-      "actual_sample_count": 32278,
-      "actual_size_bytes": 14272951,
-      "sha256_checksum": "28f9e08832c5ecf97225f5d040af1838d38c3f60dc959a7c44eb012432b7d282",
-      "storage_path": "data/raw/viquad",
-      "schema_valid": true,
-      "notes": "Vietnamese reading comprehension with Wikipedia contexts and answer spans.",
-      "files": [
-        {
-          "filename": "train.json",
-          "bytes": 12012832,
-          "sample_count": 28457,
-          "sha256": "28f9e08832c5ecf97225f5d040af1838d38c3f60dc959a7c44eb012432b7d282"
-        },
-        {
-          "filename": "dev.json",
-          "bytes": 2260119,
-          "sample_count": 3821,
-          "sha256": "53d586afa4b053b372c86cc509e112ec4cce7d72eb08e5c2629429cc6f14b0c7"
-        }
-      ]
-    },
-    {
-      "dataset_id": "PUBLAYNET-MINI",
-      "name": "PubLayNet Document Layout (Bounded Validation Sample)",
-      "version": "v1.0-tiny",
-      "official_source_url": "https://huggingface.co/datasets/miikatoi/publaynet-tiny",
-      "license_name": "CDLA-Permissive-1.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "English",
-      "sample_unit": "Bounding Box / Layout Region Annotation",
-      "expected_sample_count": "~1,000 region annotations",
-      "actual_sample_count": 110,
-      "actual_size_bytes": 58880,
-      "sha256_checksum": "c9f19f24541dc23e77a5709eff5b66611faf3f7689308164c60095dff3badc92",
-      "storage_path": "data/raw/publaynet",
-      "schema_valid": true,
-      "notes": "Scientific document layout annotations: text, title, list, table, figure boxes.",
-      "files": [
-        {
-          "filename": "mini_publaynet_train.json",
-          "bytes": 52535,
-          "sample_count": 100,
-          "sha256": "c9f19f24541dc23e77a5709eff5b66611faf3f7689308164c60095dff3badc92"
-        },
-        {
-          "filename": "mini_publaynet_val.json",
-          "bytes": 6345,
-          "sample_count": 10,
-          "sha256": "b8b3a6f93955e9eda81681ba0346bcedbab28a7878491d5eb130fb072ff390f7"
-        }
-      ]
-    },
-    {
-      "dataset_id": "DOCLAYNET-BOUNDED",
-      "name": "DocLayNet Document Layout Analysis",
-      "version": "v1.0",
-      "official_source_url": "https://github.com/DS4SD/DocLayNet",
-      "license_name": "CDLA-Permissive-2.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "VERIFIED",
-      "language": "English",
-      "sample_unit": "Document Layout Loading Script (Bounded Sample Artifact)",
-      "expected_sample_count": "80,863 pages (full corpus), bounded loading script acquired",
-      "actual_sample_count": 1,
-      "actual_size_bytes": 13359,
-      "sha256_checksum": "9e670d918b0ca912231ee2cbcef981d7326c8b46fb9feeee6e43bbee3ee9e62d",
-      "storage_path": "data/raw/doclaynet",
-      "schema_valid": true,
-      "notes": "Official IBM DocLayNet layout taxonomy (11 classes). The full 80,863 pages (30 GB) are not downloaded to respect local disk ceilings; local verification confirmed the canonical loading artifact (1 sample). Full-corpus page count is not claimed as downloaded samples (reconciling Issue #205 item 1).",
-      "files": [
-        {
-          "filename": "DocLayNet-small.py",
-          "bytes": 13359,
-          "sample_count": 1,
-          "sha256": "9e670d918b0ca912231ee2cbcef981d7326c8b46fb9feeee6e43bbee3ee9e62d"
         }
       ]
     },
@@ -761,25 +548,6 @@
           "sha256": "f2b7a73bf2dd40554b2c4108565767c755f12b8c93378d195de192a8dfdaa867"
         }
       ]
-    },
-    {
-      "dataset_id": "VI-PAWS",
-      "name": "Vietnamese Paraphrase Adversaries (Vi-PAWS)",
-      "version": "N/A",
-      "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws-x",
-      "license_name": "N/A (PAWS-X: license 'other')",
-      "license_status": "BLOCKED",
-      "acquisition_status": "BLOCKED",
-      "language": "Vietnamese",
-      "sample_unit": "Adversarial Sentence Pair",
-      "expected_sample_count": "~600,000 pairs (unsupported by any public release)",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
-      "storage_path": "data/raw/vi_paws",
-      "schema_valid": false,
-      "notes": "PAWS-X ships de/en/es/fr/ja/ko/zh only; no public Vietnamese PAWS found on Hugging Face. Machine-translating PAWS-Wiki would be a new derived dataset and requires owner approval.",
-      "files": []
     },
     {
       "dataset_id": "CC100-VI-CLEAN",
@@ -1245,5 +1013,8 @@
         }
       ]
     }
-  ]
+  ],
+  "total_datasets_tracked": 17,
+  "total_acquired_bytes": 12056063312,
+  "total_acquired_samples": 8288209
 }

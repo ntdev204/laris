@@ -21,7 +21,6 @@ class _Acq:
     urllib = _common.urllib
     _finalize_entry = staticmethod(_common._finalize_entry)
     EXPANSION_ACQUIRERS = _registry.EXPANSION_ACQUIRERS
-    record_vi_paws_status = staticmethod(_expansion.record_vi_paws_status)
     _iter_cc100_documents = staticmethod(_cc100._iter_cc100_documents)
     _resume_cc100_state = staticmethod(_cc100._resume_cc100_state)
 
@@ -54,11 +53,10 @@ def _finalize(acq, tmp_path, **overrides):
     return acq._finalize_entry(**kwargs)
 
 
-def test_expansion_registry_covers_all_seven_datasets(acq):
+def test_expansion_registry_covers_all_six_datasets(acq):
     assert set(acq.EXPANSION_ACQUIRERS) == {
         "VINLI",
         "VISTS",
-        "VI-PAWS",
         "CC100-VI-CLEAN",
         "HOTPOTQA",
         "FEVER",
@@ -100,13 +98,6 @@ def test_row_floor_failure_is_not_verified(acq, tmp_path):
     entry = _finalize(acq, tmp_path, rows=10)
     assert entry.schema_valid is False
     assert entry.acquisition_status == "DOWNLOADED"
-
-
-def test_vi_paws_is_blocked_without_fabricated_data(acq):
-    entry = acq.record_vi_paws_status()
-    assert entry.acquisition_status == "BLOCKED"
-    assert entry.actual_sample_count == 0
-    assert entry.files == []
 
 
 class _FakeResponse(io.BytesIO):
