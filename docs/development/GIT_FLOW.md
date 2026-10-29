@@ -13,7 +13,7 @@ related_documents:
   - "docs/development/CODING_STANDARDS.md"
   - "docs/development/DOCUMENTATION.md"
   - "docs/plans/ROADMAP.md"
-  - "docs/plans/BACKLOG.md"
+  - "docs/plans/ROADMAP.md"
 decision_references:
   - "ADR-007"
   - "ADR-008"
@@ -46,7 +46,7 @@ Each implementation unit follows a strict deterministic lifecycle:
 [Create feature/<issue-id>-* branch from develop]
       │
       ▼
-[Implement changes + tests + docs + BACKLOG update]
+[Implement changes + tests + docs + CHANGELOG update]
       │
       ▼
 [Run all local quality gates: pytest, ruff, mypy, validate_docs]

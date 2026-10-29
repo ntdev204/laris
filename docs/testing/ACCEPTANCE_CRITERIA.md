@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/plans/ROADMAP.md"
   - "docs/development/DOCUMENTATION.md"
 decision_references:
@@ -30,7 +30,7 @@ Milestone M0 is successfully achieved ONLY when all criteria below are satisfied
 - [x] Clean-slate status confirmed; zero conflicting third-party dependencies or legacy code.
 
 ### 1.2. Foundational Vision & Architectural Tenets
-- [x] Official [docs/archive/IDEA.md](../archive/IDEA.md) captures all locked decisions without scope narrowing.
+- [x] Official [docs/architecture/SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md) captures all locked decisions without scope narrowing.
 - [x] Self-built language foundation principle established; no mandatory external pretrained LLMs.
 - [x] Language-first, document-agnostic processing mandated; no brittle heading dependencies.
 - [x] Evidence-first epistemology enforced; zero hallucination tolerance.
@@ -42,7 +42,7 @@ Milestone M0 is successfully achieved ONLY when all criteria below are satisfied
 - [x] [docs/development/DOCUMENTATION.md](../development/DOCUMENTATION.md) defines metadata schema, RFC 2119 rules, and source-of-truth hierarchy.
 - [x] [docs/development/DOCUMENTATION.md](../development/DOCUMENTATION.md) establishes the 5 canonical states, freeze protocol, and CR workflow.
 - [x] ADR baseline established with 8 accepted records ([ADR-001](../adr/ADR-001-local-first-system-boundary.md) through [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md)).
-- [x] [docs/DECISION_LOG.md](../DECISION_LOG.md) and [docs/OPEN_QUESTIONS.md](../OPEN_QUESTIONS.md) created.
+- [x] [docs/adr/README.md](../adr/README.md) and [docs/OPEN_QUESTIONS.md](../OPEN_QUESTIONS.md) created.
 - [x] [docs/GLOSSARY.md](../GLOSSARY.md) defines canonical terminology.
 
 ### 1.4. Architecture & Interface Specifications

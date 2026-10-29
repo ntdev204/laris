@@ -10,8 +10,8 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
-  - "docs/DECISION_LOG.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
+  - "docs/adr/README.md"
 decision_references: []
 change_summary: "Registry of unresolved architectural decisions, technical trade-offs, and research questions."
 ---

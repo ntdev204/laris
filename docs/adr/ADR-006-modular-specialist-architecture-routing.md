@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/MODEL_ROUTING.md"
   - "docs/specifications/ORCHESTRATION_SPECIFICATION.md"
 decision_references:

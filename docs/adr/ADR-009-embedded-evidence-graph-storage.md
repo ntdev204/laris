@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
 decision_references:
@@ -80,7 +80,7 @@ To satisfy the local-first system boundary ([ADR-001](ADR-001-local-first-system
 - [x] No external database daemon or service required for execution.
 
 ## 7. Related Documents
-- [IDEA.md](../archive/IDEA.md)
+- [SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md)
 - [MODULE_CONTRACTS.md](../specifications/MODULE_CONTRACTS.md)
 - [LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md)
 - [ADR-001: Local-First System Boundary](ADR-001-local-first-system-boundary.md)

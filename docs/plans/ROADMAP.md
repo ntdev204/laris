@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/archive/IDEA.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/testing/ACCEPTANCE_CRITERIA.md"
 decision_references:
   - "ADR-001"
@@ -22,7 +22,7 @@ change_summary: "Consolidates the implementation roadmap and the milestone exit-
 
 # LARIS Roadmap: Milestones and Exit Criteria
 
-Milestone sequence and the exit criteria that gate each one. Task-level status lives in docs/plans/BACKLOG.md.
+Milestone sequence and the exit criteria that gate each one. Task-level status lives in docs/plans/ROADMAP.md.
 
 ## 1. Implementation Roadmap
 
@@ -51,7 +51,7 @@ flowchart TD
 
 #### Milestone M0: Documentation, Governance, and Architecture Baseline
 - **Objective:** Establish the complete architectural, governance, and specification foundation before executing model training or heavy code implementation.
-- **Deliverables:** Repository audit, official `IDEA.md`, documentation standards, freeze lifecycle policy, ADR baseline (ADR-001 through ADR-008), 12-layer specifications, module contracts, data schemas, validation scripts, and initial test harness.
+- **Deliverables:** Repository audit, system vision (`SYSTEM_OVERVIEW`), documentation standards, freeze lifecycle policy, ADR baseline (ADR-001 through ADR-008), 12-layer specifications, module contracts, data schemas, validation scripts, and initial test harness.
 - **Entry Criteria:** Clean greenfield repository.
 - **Exit Criteria:** Validation script (`scripts/validate_docs.py`) runs with 0 errors; all core docs created and reviewed; milestone approval by project owner.
 
