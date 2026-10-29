@@ -79,6 +79,18 @@ def test_unapproved_license_is_downloaded_not_verified(acq, tmp_path):
     assert entry.license_status == "NEEDS_LICENSE_REVIEW"
 
 
+def test_owner_approved_dataset_is_verified_with_audit_note(acq, tmp_path):
+    entry = _finalize(acq, tmp_path, dataset_id="VINLI", license_approved=False)
+    assert entry.acquisition_status == "VERIFIED"
+    assert entry.license_status == "APPROVED_BY_OWNER"
+    assert "owner" in entry.notes and "not a legal clearance" in entry.notes
+
+
+def test_owner_approval_does_not_rescue_incomplete_download(acq, tmp_path):
+    entry = _finalize(acq, tmp_path, dataset_id="VINLI", license_approved=False, complete=False)
+    assert entry.acquisition_status == "SKIPPED_TEMPORARILY"
+
+
 def test_incomplete_or_empty_download_is_skipped(acq, tmp_path):
     assert _finalize(acq, tmp_path, complete=False).acquisition_status == "SKIPPED_TEMPORARILY"
     assert _finalize(acq, tmp_path, rows=0, records=[]).acquisition_status == "SKIPPED_TEMPORARILY"

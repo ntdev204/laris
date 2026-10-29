@@ -49,7 +49,8 @@ def test_manifest_and_disaggregated_accounting_invariants() -> None:
     )
 
     verified = [d for d in datasets if d.get("acquisition_status") == "VERIFIED"]
-    assert all(d.get("license_status") == "APPROVED_FOR_ACQUISITION" for d in verified)
+    approved = {"APPROVED_FOR_ACQUISITION", "APPROVED_BY_OWNER"}
+    assert all(d.get("license_status") in approved for d in verified)
     assert all(d.get("schema_valid") is True for d in verified)
 
 

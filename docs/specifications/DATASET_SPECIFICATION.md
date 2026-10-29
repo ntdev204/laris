@@ -62,13 +62,13 @@ In accordance with [ADR-002](file:///home/thientn204/laris/docs/adr/ADR-002-self
 | **S2ORC-STEM** | Semantic Scholar Open Research Corpus (STEM Subset) | [Semantic Scholar API](https://api.semanticscholar.org/datasets/v1/release/latest/dataset/s2orc) | `ODC-BY-1.0` | Open Data Commons with attribution | Stage 2 & 4: STEM Pretraining & Structure | `SKIPPED_TEMPORARILY` |
 | **NATURAL-QUESTIONS** | Google Natural Questions (NQ) | [Google Research NQ](https://ai.google.com/research/NaturalQuestions) | `CC-BY-4.0` | Open redistribution with attribution | Stage 1: General Reading Comprehension | `PROPOSED` |
 | **LARIS-GOLD** | LARIS Epistemic Scientific Research Benchmark | Internal Repository Project Spec | `CC-BY-4.0` | Open project benchmark | Stage 5 & 6: End-to-End Epistemic Evaluation | `PROPOSED` |
-| **VINLI** | Vietnamese Natural Language Inference (ViNLI) | [HF presencesw/vinli_4_label](https://huggingface.co/datasets/presencesw/vinli_4_label) | Not declared by uploader | Research use only; `NEEDS_LICENSE_REVIEW` before any redistribution (upstream `vnlp/vinli` returns 404) | Stage 1: Vietnamese 3-Way NLI & Reasoning | `DOWNLOADED` |
+| **VINLI** | Vietnamese Natural Language Inference (ViNLI) | [HF presencesw/vinli_4_label](https://huggingface.co/datasets/presencesw/vinli_4_label) | Not declared by uploader | Research use only; `NEEDS_LICENSE_REVIEW` before any redistribution (upstream `vnlp/vinli` returns 404) | Stage 1: Vietnamese 3-Way NLI & Reasoning | `VERIFIED` (owner-approved) |
 | **VISTS** | Vietnamese Semantic Textual Similarity (ViSTS) | [HF anti-ai/ViSTS](https://huggingface.co/datasets/anti-ai/ViSTS) | `MIT` | Open redistribution with attribution (test suites only; upstream `vnlp/vists` returns 404) | Stage 1: Vietnamese Continuous Similarity | `VERIFIED` |
 | **VI-PAWS** | Vietnamese Paraphrase Adversaries (Vi-PAWS) | [PAWS-X](https://huggingface.co/datasets/google-research-datasets/paws-x) | N/A | No public Vietnamese release: PAWS-X covers de/en/es/fr/ja/ko/zh only | Stage 1: Vietnamese Adversarial Paraphrase | `BLOCKED` |
-| **CC100-VI-CLEAN** | Cleaned CC-100 Vietnamese Web Corpus (bounded stream) | [CC-100](https://data.statmt.org/cc-100/) | Common Crawl Terms of Use (no dataset license) | `NEEDS_LICENSE_REVIEW`; bounded prefix of a 29.5 GB xz stream, NFC-normalized and exact-deduplicated | Stage 1: Clean General Vietnamese Documents | `DOWNLOADED` |
+| **CC100-VI-CLEAN** | Cleaned CC-100 Vietnamese Web Corpus (bounded stream) | [CC-100](https://data.statmt.org/cc-100/) | Common Crawl Terms of Use (no dataset license) | `NEEDS_LICENSE_REVIEW`; bounded prefix of a 29.5 GB xz stream, NFC-normalized and exact-deduplicated | Stage 1: Clean General Vietnamese Documents | `VERIFIED` (owner-approved) |
 | **HOTPOTQA** | HotpotQA Multi-Hop Reading Comprehension (distractor) | [HF hotpotqa/hotpot_qa](https://huggingface.co/datasets/hotpotqa/hotpot_qa) | `CC-BY-SA-4.0` | Open redistribution with ShareAlike | Stage 1 & 2: Multi-Hop Evidence Reasoning | `VERIFIED` |
 | **FEVER** | Fact Extraction and VERification (FEVER) v1.0 | [FEVER Project](https://fever.ai/dataset/fever.html) | `CC-BY-SA-3.0` | Open redistribution with ShareAlike (Wikipedia-derived; not MIT) | Stage 1 & 2: Fact-Checking & Claim Verification | `VERIFIED` |
-| **UIT-VIQUAD-V2** | UIT-ViQuAD 2.0 (Unanswerable QA) | [HF taidng/UIT-ViQuAD2.0](https://huggingface.co/datasets/taidng/UIT-ViQuAD2.0) | Academic research use (no SPDX license declared) | Non-commercial academic research; `NEEDS_LICENSE_REVIEW` | Stage 1: Vietnamese Unanswerable QA | `DOWNLOADED` |
+| **UIT-VIQUAD-V2** | UIT-ViQuAD 2.0 (Unanswerable QA) | [HF taidng/UIT-ViQuAD2.0](https://huggingface.co/datasets/taidng/UIT-ViQuAD2.0) | Academic research use (no SPDX license declared) | Non-commercial academic research; `NEEDS_LICENSE_REVIEW` | Stage 1: Vietnamese Unanswerable QA | `VERIFIED` (owner-approved) |
 
 ---
 
@@ -81,10 +81,10 @@ In strict accordance with Issue #205 and Issue #209, LARIS distinguishes between
 4. **Layout Regions / Pages:** Bounding-box annotations or layout-segmented document pages.
 
 ### Current Local Summary (Manifest Reconciled)
-- **Tracked Datasets:** 24 (VERIFIED 17, DOWNLOADED 3, BLOCKED 1, SKIPPED_TEMPORARILY 1, PROPOSED 2). Totals count `VERIFIED` + `DOWNLOADED` only.
+- **Tracked Datasets:** 24 (VERIFIED 20, BLOCKED 1, SKIPPED_TEMPORARILY 1, PROPOSED 2). Totals count `VERIFIED` + `DOWNLOADED` only.
 - **Total Acquired Storage:** 12,092,268,300 bytes (~12.09 GB, strictly $< 20\text{ GB}$).
 - **Total Acquired Sample Records:** **8,347,135 records** (English 4,229,059; Vietnamese 4,118,076).
-- **License caveat:** `VINLI`, `UIT-VIQUAD-V2` and `CC100-VI-CLEAN` are `DOWNLOADED` with `NEEDS_LICENSE_REVIEW` (no dataset license declared); they must be excluded from training until reviewed.
+- **License caveat:** `VINLI`, `UIT-VIQUAD-V2` and `CC100-VI-CLEAN` declare no dataset license. Their use was approved by the project owner on 2026-10-29 (`license_status = APPROVED_BY_OWNER`). This is an owner governance decision, not a legal clearance, and is recorded in each manifest entry's notes.
 
 #### Detailed Dataset Breakdown
 - `WIKIPEDIA-EN-BOUNDED`: 2,031,750 clean article documents
@@ -136,7 +136,7 @@ Semantic similarity is explicitly represented and acquired via the **STS-B (Sema
 - **Target Scale:** $\ge 5,000,000$ and strictly $< 20,000,000$ records: **met** (8,347,135).
 - **Earlier ~16.5M projection:** **not reachable with real public sources.** Published sizes of the sources are far below the projected figures (ViNLI ~30k not 1M; UIT-ViQuAD2.0 ~39.6k not 600k; FEVER 349k not 1.5M; HotpotQA 98k not 700k). No synthetic or fabricated records are added to close the gap.
 - **Disk Storage Bound:** Strictly $< 20\text{ GB}$; achieved **12.09 GB**.
-- **License Compliance:** `VERIFIED` datasets have approved open licenses (`CC-BY-SA-3.0/4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA-Permissive-1.0/2.0`, `MIT`). `DOWNLOADED` datasets await license review (see above).
+- **License Compliance:** `VERIFIED` datasets have approved licenses (open licenses, or owner-approved as noted above) (`CC-BY-SA-3.0/4.0`, `CC-BY-4.0`, `CC-BY-NC-4.0`, `CDLA-Permissive-1.0/2.0`, `MIT`). `DOWNLOADED` datasets await license review (see above).
 - **Integrity Verification:** Every file recorded with SHA-256; CC-100 shards are written atomically and resumable.
 
 ---

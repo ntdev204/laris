@@ -47,7 +47,7 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 | **Automated Tests** | 1030 passing unit, contract, and integration tests under `tests/` |
 | **Linters & Typers** | 100% clean: `ruff` 0 errors, `mypy` 0 errors across all 92 source files |
 | **Documentation** | 61 formal Markdown documents under `docs/`, 100% compliant with `scripts/validate_docs.py` |
-| **Acquired Datasets** | 8,347,135 records across 20 datasets (17 verified, 3 pending license review) in `data/raw/` (4.23M English, 4.12M Vietnamese; 12.09 GB) |
+| **Acquired Datasets** | 8,347,135 records across 20 verified datasets (3 owner-approved without a declared license) in `data/raw/` (4.23M English, 4.12M Vietnamese; 12.09 GB) |
 
 ### Key Modules Implemented
 - **Centralized Configuration (`src/laris/config/`):** 4-tier configuration system (CLI, YAML, Defaults, Invariants) with cryptographic SHA-256 state tracking and safety ceilings.
@@ -84,6 +84,7 @@ laris data acquire --only CC100-VI-CLEAN
 
 # 3. Partition datasets into leakage-safe train/val/test
 laris data partition --num-workers 14 --batch-size 100000
+# datasets still NEEDS_LICENSE_REVIEW are skipped unless --include-unreviewed-licenses is given
 
 # 4. Fit the SentencePiece tokenizer from the clean train split (authorized)
 laris train tokenizer --authorized

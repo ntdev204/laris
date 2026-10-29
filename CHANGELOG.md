@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Partitioning for the bilingual expansion datasets (Issue #249):**
+  - `laris data partition` now handles ViNLI, ViSTS, HotpotQA, FEVER, UIT-ViQuAD2.0 and CC-100 VI with leakage-safe splits (per-dataset modules in `corpus.splits.partitioners`).
+  - ViNLI keeps official splits and drops the 4th `other` label (the NLI head is 3-way); ViSTS is split by connected sentence components and rescaled to [0, 1]; HotpotQA is converted to extractive QA (supporting paragraphs first; yes/no answers carry no span); UIT-ViQuAD2.0 keeps its official train and sub-splits validation by article (it supersedes v1.1 on the same contexts, so v1.1 is not used as a QA source); CC-100 is hash-split with exact-duplicate removal against Wikipedia-VI; FEVER (claims only, no evidence text) is partitioned but not loaded for training.
+  - Datasets whose license is not approved are skipped unless `--include-unreviewed-licenses` is given.
+  - The streaming loader discovers the new directories and derives task sampling weights from Parquet footers instead of hard-coded counts.
+
 ### Changed
 - **Functional package layout and `laris` CLI (Issue #247, ADR-013):**
   - `language/` split into `tokenization/`, `encoder/`, `training/`, `benchmarks/`; BM25 and the baseline comparison moved to `retrieval/`.
@@ -28,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Bilingual expansion dataset acquisition (Issue #244):**
   - Automated, resumable acquisition for `VINLI`, `VISTS`, `HOTPOTQA`, `FEVER`, `UIT-VIQUAD-V2` and streamed `CC100-VI-CLEAN` (2.7M documents), plus `VI-PAWS` recorded as `BLOCKED` (no Vietnamese PAWS-X exists). `scripts/acquire_datasets.py --only DATASET_ID` merges into the existing manifest.
-  - Manifest now tracks 24 datasets, 8,347,135 acquired records (4.23M English, 4.12M Vietnamese), 12.09 GB. `VINLI`, `UIT-VIQUAD-V2`, `CC100-VI-CLEAN` are `DOWNLOADED` pending license review.
+  - Manifest now tracks 24 datasets, 8,347,135 acquired records (4.23M English, 4.12M Vietnamese), 12.09 GB. `VINLI`, `UIT-VIQUAD-V2`, `CC100-VI-CLEAN` declare no license; the project owner approved their use on 2026-10-29 (`APPROVED_BY_OWNER`, a governance decision rather than a legal clearance), so they are `VERIFIED`.
   - Corrected spec sources/licenses (FEVER CC-BY-SA-3.0, ViSTS MIT) and documented that the ~16.5M projection is unreachable with real data.
   - Manifest accounting contract test now checks invariants instead of a hard-coded total.
 - **Genuine Multi-Task Parameter Optimization in `Stage1LanguageTrainer` (Issue #242):**

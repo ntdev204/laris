@@ -39,6 +39,11 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Optional ceiling on processed records per dataset (for smoke tests / debugging)",
     )
     parser.add_argument(
+        "--include-unreviewed-licenses",
+        action="store_true",
+        help="Also partition datasets whose license is still NEEDS_LICENSE_REVIEW",
+    )
+    parser.add_argument(
         "--batch-size",
         type=int,
         default=100000,
@@ -73,9 +78,12 @@ def run(args: argparse.Namespace) -> int:
             max_records=args.max_records,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
+            include_unreviewed_licenses=args.include_unreviewed_licenses,
         )
         print("\n[SUCCESS] Physical partitioning completed successfully.")
         print(f"Total Datasets Partitioned: {report['total_datasets_partitioned']}")
+        for skipped in report["skipped_datasets"]:
+            print(f" ! skipped {skipped['dataset_id']}: license {skipped['reason']}")
         for ds in report["partitioned_datasets"]:
             print(f" - {ds['dataset_id']}: counts={ds['counts']}")
         return 0
