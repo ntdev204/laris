@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `laris evaluate calibrate` ratchets `configs/evaluation/language_encoder.yaml` up from passing `val` reports (never lowers; refuses `test` reports). The shipped thresholds remain baseline-relative floors until a trained checkpoint is measured.
 
 ### Changed
+- **Security reporting (Issue #265):** `SECURITY.md` points to GitHub private vulnerability reporting, which is now enabled for the repository.
 - **Documentation slimmed and standardized (Issue #260):**
   - Removed redundant or historical files: `docs/archive/`, `docs/RELEASE_NOTES.md` (this changelog is the release history), `docs/DECISION_LOG.md` (the ADR index is the register), `docs/plans/BACKLOG.md` (work is tracked in GitHub issues), `SESSION.md` and `implement_plan.md`.
   - Condensed `DOCUMENTATION.md` (262 to ~110 lines) and the language encoder training specification (494 to ~330); stage 2-6 detail now lives in a gate table and the roadmap.
