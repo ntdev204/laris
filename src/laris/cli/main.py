@@ -6,13 +6,15 @@ Command tree (each leaf maps to a module in `laris.cli.commands`):
     laris data partition           physically split raw datasets into train/val/test
     laris train tokenizer          fit the SentencePiece tokenizer
     laris train language-encoder   train (or profile) the multi-task language encoder
+    laris evaluate language-encoder   score a checkpoint on the val/test split vs baselines
+    laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
 """
 
 import argparse
 import sys
 from typing import Callable, Optional, Sequence
 
-from laris.cli.commands import language_encoder, partition, tokenizer
+from laris.cli.commands import evaluate, infer, language_encoder, partition, tokenizer
 from laris.corpus.acquisition import runner as acquisition
 
 Handler = Callable[[argparse.Namespace], int]
@@ -26,6 +28,10 @@ COMMANDS = {
         "tokenizer": ("Fit the SentencePiece tokenizer", tokenizer),
         "language-encoder": ("Train or profile the language encoder", language_encoder),
     },
+    "evaluate": {
+        "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
+    },
+    "infer": {name: (f"Run {name} on a checkpoint", cmd) for name, cmd in infer.COMMANDS.items()},
 }
 
 

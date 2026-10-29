@@ -926,3 +926,14 @@ This document serves as the single source of truth for active task tracking, exe
   2. bf16/fp16 autocast is applied; non-finite gradients never update weights.
   3. Checkpoints are atomic, carry provenance, restore weights/optimizer/scheduler/RNG exactly and detect corruption.
   4. Validation uses only the `val` split; early stopping and best-checkpoint selection work.
+
+### Task `M2-LANG-011`: Language Encoder CLI Evaluation and Inference
+- **Objective:** Evaluate a trained checkpoint against baselines and run single-example inference from the CLI (Issue #250).
+- **Module:** `MOD-LANG-004` (Language Foundation Training Architecture).
+- **Dependencies:** `M2-LANG-010` (Issue #248), `M2-DATA-011` (Issue #249).
+- **Status:** `DONE` (Issue #250).
+- **Acceptance Criteria:**
+  1. `laris evaluate language-encoder` reports per-dataset and per-language metrics vs baselines, writes JSON, and sets the exit code from the thresholds config.
+  2. Training evaluates the best checkpoint on the test split by default.
+  3. `laris infer` supports fill-mask, nli, paraphrase, similarity, qa and embed.
+  4. The train split is never scored; a verified split manifest and matching tokenizer/weights digests are required.

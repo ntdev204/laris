@@ -7,6 +7,7 @@ Declarative configuration files, organised by function.
 | `default.yaml` | Canonical defaults for `LarisConfig` |
 | `language_encoder/compact.yaml` | Compact (~110M parameter) language encoder architecture and training |
 | `language_encoder/large.yaml` | Large (~513M parameter) language encoder architecture and training |
+| `evaluation/language_encoder.yaml` | Acceptance thresholds for `laris evaluate language-encoder` (not a `LarisConfig`) |
 | `data/partition.yaml` | Train/val/test ratios, partition seed and leakage settings |
 
 ## Guidelines

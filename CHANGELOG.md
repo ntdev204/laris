@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI evaluation and inference (Issue #250):**
+  - `laris evaluate language-encoder` scores a checkpoint on `val`/`test` for MLM, NLI, paraphrase, similarity and QA per dataset and per language against baselines, writes a JSON report and exits non-zero when a task/language group misses `configs/evaluation/language_encoder.yaml`.
+  - `laris train language-encoder` runs the same check on the best checkpoint after training (`--evaluate-after`, default on).
+  - `laris infer fill-mask|nli|paraphrase|similarity|qa|embed` for single-example predictions; checkpoints and tokenizers are verified by SHA-256 before use.
+  - Evaluation refuses the `train` split and requires a leakage-verified split manifest.
+
+### Added
 - **Language encoder training loop (Issue #248):**
   - Linear-warmup + cosine LR schedule (`training/schedule.py`); `--steps`, `--learning-rate`, `--warmup-steps` and loss weights now come from `configs/language_encoder/<size>.yaml` with CLI overrides.
   - Real mixed precision: `torch.autocast` for bf16/fp16 (+ `GradScaler` for fp16 on CUDA); non-finite gradients skip the update instead of corrupting weights.

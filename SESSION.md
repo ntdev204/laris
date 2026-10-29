@@ -99,7 +99,13 @@ laris train language-encoder --model-size large --authorized \
 # resume: add --resume artifacts/checkpoints/language_encoder/<run-id>/last
 # outputs: <run-id>/best (lowest val loss) and <run-id>/last, each with manifest.json
 
-# 7. Documentation quality gate and all gates (local / CI)
+# 7. Evaluate a checkpoint on the held-out test split (also runs after training)
+laris evaluate language-encoder --checkpoint artifacts/checkpoints/language_encoder/<run-id>/best \
+  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model --split test
+laris infer nli --checkpoint <run-id>/best --tokenizer-model <spm.model> \
+  --premise "..." --hypothesis "..."
+
+# 8. Documentation quality gate and all gates (local / CI)
 python3 scripts/validate_docs.py
 make check
 ```

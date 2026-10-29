@@ -18,12 +18,20 @@ def test_every_command_module_exposes_the_command_contract() -> None:
             assert callable(module.run)
 
 
-def test_parser_resolves_every_leaf_command() -> None:
+def test_every_leaf_command_has_working_help() -> None:
     parser = build_parser()
     for group, commands in COMMANDS.items():
-        for name, (_, module) in commands.items():
-            args = parser.parse_args([group, name])
-            assert args.handler is module.run
+        for name in commands:
+            with pytest.raises(SystemExit) as exc:
+                parser.parse_args([group, name, "--help"])
+            assert exc.value.code == 0
+
+
+def test_commands_without_required_flags_resolve_to_their_handler() -> None:
+    parser = build_parser()
+    for group in ("data", "train"):
+        for name, (_, module) in COMMANDS[group].items():
+            assert parser.parse_args([group, name]).handler is module.run
 
 
 def test_unknown_command_exits_with_usage_error() -> None:
@@ -95,3 +103,38 @@ def test_compatibility_wrappers_delegate_to_cli(script: str) -> None:
     )
     assert result.returncode == 0
     assert "usage: laris" in result.stdout
+
+
+def test_evaluate_and_infer_commands_are_registered() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        ["evaluate", "language-encoder", "--checkpoint", "c", "--tokenizer-model", "t"]
+    )
+    assert args.split == "test" and args.handler is not None
+    for task in ("fill-mask", "nli", "paraphrase", "similarity", "qa", "embed"):
+        assert task in COMMANDS["infer"]
+
+
+def test_evaluate_reports_usage_error_for_missing_checkpoint(tmp_path: Path) -> None:
+    code = main(
+        ["evaluate", "language-encoder", "--checkpoint", str(tmp_path / "nope"),
+         "--tokenizer-model", str(tmp_path / "tok.model"), "--data-dir", str(tmp_path)]
+    )  # fmt: skip
+    assert code == 2
+
+
+def test_evaluate_rejects_the_training_split() -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(
+            ["evaluate", "language-encoder", "--checkpoint", "c", "--tokenizer-model", "t",
+             "--split", "train"]
+        )  # fmt: skip
+    assert exc.value.code == 2
+
+
+def test_infer_reports_error_for_missing_checkpoint(tmp_path: Path) -> None:
+    code = main(
+        ["infer", "nli", "--checkpoint", str(tmp_path / "nope"),
+         "--tokenizer-model", str(tmp_path / "t.model"), "--premise", "a", "--hypothesis", "b"]
+    )  # fmt: skip
+    assert code == 2

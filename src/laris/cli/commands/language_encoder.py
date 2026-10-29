@@ -22,6 +22,7 @@ from laris.language.encoder.transformer import (
     LargeLanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
+from laris.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
 from laris.language.training.checkpoint import current_git_commit, file_sha256
 from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
@@ -134,6 +135,17 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         type=int,
         default=5,
         help="Stop after N validations without improvement; 0 disables (default: 5)",
+    )
+    parser.add_argument(
+        "--evaluate-after",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="After training, score the best checkpoint on the test split (default: on)",
+    )
+    parser.add_argument(
+        "--evaluation-config",
+        default="configs/evaluation/language_encoder.yaml",
+        help="Acceptance thresholds used by --evaluate-after",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--run-id", type=str, default=None, help="Run directory name")
@@ -377,4 +389,25 @@ def run(args: argparse.Namespace) -> int:
         print(f"Best checkpoint: {result.best_dir} (val mean loss {result.best_metric:.4f} "
               f"at step {result.best_step})")
     print(f"Last checkpoint: {result.last_dir}")
-    return 0
+
+    if not args.evaluate_after:
+        return 0
+    checkpoint = result.best_dir or result.last_dir
+    assert checkpoint is not None
+    print(f"\n[EVALUATION] Scoring {checkpoint} on the test split...")
+    try:
+        code, _ = evaluate_checkpoint(
+            Path(checkpoint),
+            Path(args.data_dir),
+            "test",
+            Path(args.evaluation_config),
+            output=run_dir / "evaluation-test.json",
+            tokenizer_model=Path(args.tokenizer_model),
+            batch_size=args.micro_batch_size,
+            seed=args.seed,
+            device=device,
+        )
+    except (FileNotFoundError, ValueError, RuntimeError) as exc:
+        print(f"[ERROR] evaluation could not run: {exc}")
+        return EXIT_USAGE
+    return code
