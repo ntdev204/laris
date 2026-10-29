@@ -41,6 +41,11 @@ gpu = [
 tokenizer = [
     "sentencepiece>=0.1.99",
 ]
+training = [
+    "torch>=2.6.0",
+    "sentencepiece>=0.1.99",
+    "bitsandbytes>=0.43.0; sys_platform == 'linux'",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -48,6 +53,12 @@ where = ["src"]
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers"
+markers = [
+    "torch: requires PyTorch",
+    "gpu: requires a CUDA device",
+    "network: requires network access",
+    "slow: long-running test",
+]
 testpaths = ["tests"]
 pythonpath = ["src"]
 

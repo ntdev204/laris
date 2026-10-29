@@ -53,6 +53,15 @@ artifacts/checkpoints/*
 *.onnx
 *.gguf
 
+# Run outputs (tokenizer, evaluation reports, run logs)
+artifacts/*
+!artifacts/README.md
+!artifacts/checkpoints/.gitkeep
+
+# Temporary and background-run files
+*.tmp
+nohup.out
+
 # Raw & Processed Datasets (Corpora must not be tracked in Git)
 data/raw/*
 !data/raw/.gitkeep
