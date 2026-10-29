@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Documentation consolidation (Issue #251):**
+  - Merged overlapping documents: agent/skill/tool/workflow specs into `ORCHESTRATION_SPECIFICATION`; documentation standard and lifecycle into `development/DOCUMENTATION`; roadmap and milestones into `plans/ROADMAP`; training specification and staged pipeline into `LANGUAGE_ENCODER_TRAINING_SPECIFICATION`; language foundation, local model and semantic strategies into `research/LANGUAGE_AND_MODEL_STRATEGY`.
+  - Moved `IDEA.md` and the delivered M1-M10 backlog task specifications to `docs/archive/` (excluded from the documentation gate); removed the duplicate ADR template.
+  - Replaced machine-specific `file:///` links with relative links; rebuilt `docs/README.md`; shrank `SESSION.md`; added `docs/development/CLI.md`.
+
 ### Added
 - **CLI evaluation and inference (Issue #250):**
   - `laris evaluate language-encoder` scores a checkpoint on `val`/`test` for MLM, NLI, paraphrase, similarity and QA per dataset and per language against baselines, writes a JSON report and exits non-zero when a task/language group misses `configs/evaluation/language_encoder.yaml`.

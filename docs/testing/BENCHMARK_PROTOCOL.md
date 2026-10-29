@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/testing/TEST_STRATEGY.md"
   - "docs/research/EVALUATION_STRATEGY.md"
 decision_references:
@@ -22,7 +22,7 @@ change_summary: "Formal benchmark execution protocol, evaluation metrics, and da
 
 ## 1. Governance & Protocol Principles
 
-In accordance with [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md), benchmarks in LARIS are reproducible, version-controlled experiments executed against frozen test datasets.
+In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), benchmarks in LARIS are reproducible, version-controlled experiments executed against frozen test datasets.
 
 ### Non-Negotiable Protocol Rules:
 1. **Zero Test Set Contamination:** Test documents must never be included in tokenization or pretraining corpora.

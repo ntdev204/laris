@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/research/SCIENTIFIC_NLP.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
 decision_references:

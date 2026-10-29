@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/DECISION_LOG.md"
 decision_references: []
 change_summary: "Registry of unresolved architectural decisions, technical trade-offs, and research questions."
@@ -18,7 +18,7 @@ change_summary: "Registry of unresolved architectural decisions, technical trade
 
 # LARIS Open Architecture Questions & Research Inquiries
 
-This registry tracks open technical questions, unverified hypotheses, and pending decisions requiring empirical evaluation or project owner approval. In accordance with [docs/DOCUMENTATION_STANDARD.md](file:///home/thientn204/laris/docs/DOCUMENTATION_STANDARD.md), unapproved technical choices MUST NOT be documented as accepted decisions.
+This registry tracks open technical questions, unverified hypotheses, and pending decisions requiring empirical evaluation or project owner approval. In accordance with [docs/development/DOCUMENTATION.md](development/DOCUMENTATION.md), unapproved technical choices MUST NOT be documented as accepted decisions.
 
 ---
 

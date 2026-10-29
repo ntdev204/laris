@@ -10,7 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/testing/BENCHMARK_PROTOCOL.md"
   - "docs/testing/TEST_STRATEGY.md"
 decision_references:
@@ -22,7 +22,7 @@ change_summary: "Research strategy for empirical benchmark gating, error taxonom
 
 ## 1. Capability Evaluation Framework
 
-In accordance with [ADR-008](file:///home/thientn204/laris/docs/adr/ADR-008-evaluation-before-capability-claims.md), capability claims must be supported by empirical, reproducible benchmarks.
+In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), capability claims must be supported by empirical, reproducible benchmarks.
 
 ### The Eight Empirical Capability Dimensions:
 1. **Paraphrase & Question Intent Equivalence:** Macro F1 and accuracy on scientific paraphrase sets.

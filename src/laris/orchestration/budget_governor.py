@@ -1,6 +1,6 @@
 """Budget governor enforcing recursion ceiling and resource limits in Layer 8.
 
-Adheres to DOC-SPEC-MOD-001 (Boundary H), DOC-SPEC-AGENT-001, ADR-006, and Issue #67:
+Adheres to DOC-SPEC-MOD-001 (Boundary H), DOC-SPEC-ORCH-001, ADR-006, and Issue #67:
 - Enforces hard recursion ceiling (N <= 10 steps maximum per sub-goal)
 - Tracks cumulative token consumption against budget.max_tokens
 - Tracks cumulative execution wall-clock time against budget.timeout_seconds

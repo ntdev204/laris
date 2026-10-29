@@ -11,8 +11,8 @@ reviewers:
   - "LARIS Maintainer"
 source_of_truth: true
 related_documents:
-  - "docs/DOCUMENTATION_STANDARD.md"
-  - "docs/plans/IMPLEMENTATION_ROADMAP.md"
+  - "docs/development/DOCUMENTATION.md"
+  - "docs/plans/ROADMAP.md"
   - "docs/specifications/REPORT_SPECIFICATION.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
 decision_references:

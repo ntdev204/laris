@@ -10,9 +10,9 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/IDEA.md"
+  - "docs/archive/IDEA.md"
   - "docs/architecture/MODEL_ROUTING.md"
-  - "docs/specifications/AGENT_SPECIFICATION.md"
+  - "docs/specifications/ORCHESTRATION_SPECIFICATION.md"
 decision_references:
   - "ADR-006"
 change_summary: "Approved modular specialist architecture and dynamic task routing model."
@@ -41,7 +41,7 @@ Attempting to force all these heterogeneous functions into a single monolithic m
    - Deterministic graph algorithms (e.g. shortest-path contradiction search).
 3. **Multi-Agent Teaming:** Layer 8 SHALL maintain distinct agent roles (`Supervisor`, `Query Planner`, `Language Analysis Agent`, `Document Analysis Agent`, `Evidence Retrieval Agent`, `Scientific Claim Agent`, `Cross-Paper Synthesis Agent`, `Gap Discovery Agent`, `Critical Reviewer`, `Report Composer`).
 4. **Conditional Execution:** No workflow is required to execute all agents or all models. The Task Router SHALL dynamically construct minimal execution Directed Acyclic Graphs (DAGs) tailored to the specific query, uncertainty level, and available resource budget.
-5. **Standardized Contracts:** Every specialist and agent MUST implement standard interface contracts defining input schemas, output schemas, pre/postconditions, error handling, and performance metrics as specified in [docs/specifications/MODULE_CONTRACTS.md](file:///home/thientn204/laris/docs/specifications/MODULE_CONTRACTS.md).
+5. **Standardized Contracts:** Every specialist and agent MUST implement standard interface contracts defining input schemas, output schemas, pre/postconditions, error handling, and performance metrics as specified in [docs/specifications/MODULE_CONTRACTS.md](../specifications/MODULE_CONTRACTS.md).
 
 ## 3. Alternatives Considered
 1. **Single Monolithic Generalist Model:**

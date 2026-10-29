@@ -269,10 +269,10 @@ laris infer embed       --checkpoint ... --input file.txt --output emb.npy
 | (mới) `docs/development/CLI.md` | Tham chiếu mọi lệnh `laris ...` |
 
 - **Việc đi kèm:**
-  - [ ] Cập nhật `validate_docs.py` để bỏ qua `docs/archive/`.
-  - [ ] Kiểm tra `related_documents` không trỏ tới file đã bị gộp.
-  - [ ] Cập nhật `docs/README.md` làm mục lục duy nhất.
-  - [ ] Cập nhật `README.md` gốc theo lệnh CLI mới.
+  - [x] Cập nhật `validate_docs.py` để bỏ qua `docs/archive/`.
+  - [x] Kiểm tra `related_documents` không trỏ tới file đã bị gộp.
+  - [x] Cập nhật `docs/README.md` làm mục lục duy nhất.
+  - [x] Cập nhật `README.md` gốc theo lệnh CLI mới.
 
 ---
 

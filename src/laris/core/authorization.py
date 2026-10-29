@@ -1,6 +1,6 @@
 """Training authorization gate and governance enforcement.
 
-Adheres to ADR-007, ADR-008, and DOC-PLAN-TRAIN-001.
+Adheres to ADR-007, ADR-008, and DOC-SPEC-TRAIN-001.
 Enforces strict training freeze by default across all execution contexts.
 Transitioning to authorized training requires explicit repository owner authorization,
 verifiable via environment variables or explicit configuration overrides.
