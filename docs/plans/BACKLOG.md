@@ -895,17 +895,12 @@ This document serves as the single source of truth for active task tracking, exe
   6. Streaming multi-task dataloader with temperature-scaled dynamic sampling ($\alpha = 0.7$) and Stage 1 trainer runner CLI `scripts/train_stage1.py`.
   7. Strict authorization barrier and zero-training compliance enforced on development host.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Task `M2-DATA-010`: Bilingual Expansion Dataset Acquisition
+- **Objective:** Add automated acquisition for the 7 PROPOSED expansion datasets with real sources and licenses, and reconcile manifest totals (Issue #244).
+- **Module:** `MOD-CORPUS-001` (Corpus Ingestion).
+- **Dependencies:** `M2-LANG-008` (Issue #240).
+- **Status:** `DONE` (Issue #244).
+- **Acceptance Criteria:**
+  1. `ViNLI`, `ViSTS`, `HotpotQA`, `FEVER`, `UIT-ViQuAD2.0` and bounded streamed `CC-100 VI` are acquired by `scripts/acquire_datasets.py`; `VI-PAWS` is `BLOCKED` without fabricated data.
+  2. Manifest tracks 24 datasets with 8,347,135 acquired records; datasets without an approved license stay `DOWNLOADED` / `NEEDS_LICENSE_REVIEW`.
+  3. The earlier ~16.5M target is documented as unreachable with real public sources.

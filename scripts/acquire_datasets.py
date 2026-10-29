@@ -14,15 +14,20 @@ schema inspection, sample count auditing, and manifest generation for priority d
 9. LARIS-GOLD (Project-owned specification tracked)
 """
 
+import argparse
+import codecs
 import hashlib
 import json
+import lzma
 import shutil
+import sys
 import tarfile
+import unicodedata
 import urllib.request
 import zipfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
@@ -923,44 +928,571 @@ def record_nq_status() -> DatasetEntry:
     )
 
 
+# ---------------------------------------------------------------------------
+# Bilingual expansion datasets (Issue: expand Stage 1 corpus with Vietnamese / reasoning data)
+# ---------------------------------------------------------------------------
+
+HF_RESOLVE = "https://huggingface.co/datasets/{repo}/resolve/{rev}/{path}"
+HF_PARQUET_REV = "refs%2Fconvert%2Fparquet"
+CC100_VI_URL = "https://data.statmt.org/cc-100/vi.txt.xz"
+CC100_DEFAULT_MAX_DOCS = 2_700_000
+CC100_SHARD_DOCS = 50_000
+CC100_MIN_CHARS = 200
+CC100_MAX_ATTEMPTS = 5
+
+
+def _record_files(
+    dest_dir: Path, names: Sequence[str], counter
+) -> Tuple[List[Dict[str, Any]], int, int]:
+    """Builds manifest file records (bytes, rows, SHA-256) for already downloaded files."""
+    records: List[Dict[str, Any]] = []
+    total_size = 0
+    total_rows = 0
+    for name in names:
+        fpath = dest_dir / name
+        if not fpath.exists():
+            continue
+        size = fpath.stat().st_size
+        rows = counter(fpath)
+        total_size += size
+        total_rows += rows
+        records.append({
+            "filename": name,
+            "bytes": size,
+            "sample_count": rows,
+            "sha256": compute_sha256(fpath),
+        })
+    return records, total_size, total_rows
+
+
+def _acquire_remote_files(
+    dest_dir: Path,
+    files: Sequence[Tuple[str, str]],
+    counter,
+) -> Tuple[List[Dict[str, Any]], int, int, bool]:
+    """Downloads (remote_url, local_name) pairs; returns records, bytes, rows, all_ok."""
+    all_ok = True
+    for url, local_name in files:
+        if not download_file(url, dest_dir / local_name):
+            all_ok = False
+    records, size, rows = _record_files(dest_dir, [n for _, n in files], counter)
+    return records, size, rows, all_ok and len(records) == len(files)
+
+
+def _blocked_entry(
+    dataset_id: str,
+    name: str,
+    version: str,
+    source_url: str,
+    license_name: str,
+    language: str,
+    sample_unit: str,
+    expected: str,
+    storage: str,
+    notes: str,
+) -> DatasetEntry:
+    return DatasetEntry(
+        dataset_id=dataset_id,
+        name=name,
+        version=version,
+        official_source_url=source_url,
+        license_name=license_name,
+        license_status="BLOCKED",
+        acquisition_status="BLOCKED",
+        language=language,
+        sample_unit=sample_unit,
+        expected_sample_count=expected,
+        actual_sample_count=0,
+        actual_size_bytes=0,
+        sha256_checksum="",
+        storage_path=storage,
+        schema_valid=False,
+        notes=notes,
+        files=[],
+    )
+
+
+def _finalize_entry(
+    *,
+    dataset_id: str,
+    name: str,
+    version: str,
+    source_url: str,
+    license_name: str,
+    license_approved: bool,
+    language: str,
+    sample_unit: str,
+    expected: str,
+    dest_dir: Path,
+    records: List[Dict[str, Any]],
+    size: int,
+    rows: int,
+    complete: bool,
+    min_rows: int,
+    notes: str,
+) -> DatasetEntry:
+    """VERIFIED requires complete download, row floor met, and an approved license."""
+    schema_valid = complete and rows >= min_rows
+    if not complete or rows == 0:
+        status = "SKIPPED_TEMPORARILY"
+    elif schema_valid and license_approved:
+        status = "VERIFIED"
+    else:
+        status = "DOWNLOADED"
+    return DatasetEntry(
+        dataset_id=dataset_id,
+        name=name,
+        version=version,
+        official_source_url=source_url,
+        license_name=license_name,
+        license_status="APPROVED_FOR_ACQUISITION" if license_approved else "NEEDS_LICENSE_REVIEW",
+        acquisition_status=status,
+        language=language,
+        sample_unit=sample_unit,
+        expected_sample_count=expected,
+        actual_sample_count=rows,
+        actual_size_bytes=size,
+        sha256_checksum=records[0]["sha256"] if records else "",
+        storage_path=str(dest_dir.relative_to(REPO_ROOT)),
+        schema_valid=schema_valid,
+        notes=notes,
+        files=records,
+    )
+
+
+def acquire_vinli() -> DatasetEntry:
+    """Acquires Vietnamese 3-way NLI pairs (community HF mirror; upstream vnlp/vinli is 404)."""
+    print("\n--- Acquiring Vietnamese NLI (ViNLI, presencesw/vinli_4_label) ---")
+    dest_dir = RAW_DIR / "vinli"
+    repo = "presencesw/vinli_4_label"
+    files = [
+        (HF_RESOLVE.format(repo=repo, rev="main", path=f"data/{s}-00000-of-00001.parquet"),
+         f"{s}-00000-of-00001.parquet")
+        for s in ("train", "dev", "test")
+    ]
+    records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_parquet_rows)
+    return _finalize_entry(
+        dataset_id="VINLI",
+        name="Vietnamese Natural Language Inference (ViNLI)",
+        version="HF presencesw/vinli_4_label (default)",
+        source_url=f"https://huggingface.co/datasets/{repo}",
+        license_name="Not declared by uploader (research use only pending review)",
+        license_approved=False,
+        language="Vietnamese",
+        sample_unit="3-Way NLI Hypothesis-Premise Pair (gold_label, sentence1, sentence2)",
+        expected=">= 30,000 pairs (24,376 train / 3,009 dev / 2,991 test per dataset card)",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=30000,
+        notes=(
+            "Spec URL github.com/vnlp/vinli returns 404; community mirror used. "
+            "Uploader declares no license: NEEDS_LICENSE_REVIEW before any redistribution."
+        ),
+    )
+
+
+def acquire_vists() -> DatasetEntry:
+    """Acquires Vietnamese STS test suites (MIT) translated from STS12-16, SICK-R and STS-B."""
+    print("\n--- Acquiring Vietnamese STS (ViSTS, anti-ai/ViSTS) ---")
+    dest_dir = RAW_DIR / "vists"
+    repo = "anti-ai/ViSTS"
+    names = [
+        "sickr_sts/sickr_sts_vi.jsonl",
+        "sts12/sts12_vi.jsonl",
+        "sts13/sts13_vi.jsonl",
+        "sts14/sts14_vi.jsonl",
+        "sts15/sts15_vi.jsonl",
+        "sts16/sts16_vi.jsonl",
+        "stsb/stsbenchmark_vi.jsonl",
+    ]
+    files = [
+        (HF_RESOLVE.format(repo=repo, rev="main", path=f"test/{n}"), n.replace("/", "__"))
+        for n in names
+    ]
+    records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_jsonl_lines)
+    return _finalize_entry(
+        dataset_id="VISTS",
+        name="Vietnamese Semantic Textual Similarity (ViSTS)",
+        version="HF anti-ai/ViSTS (7 STS suites)",
+        source_url=f"https://huggingface.co/datasets/{repo}",
+        license_name="MIT",
+        license_approved=True,
+        language="Vietnamese",
+        sample_unit="Scored Sentence Pair",
+        expected="10K-100K pairs (dataset card size category)",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=10000,
+        notes=(
+            "Spec URL github.com/vnlp/vists returns 404; MIT-licensed HF release used. "
+            "Contains test suites only (no train split); licensed MIT, "
+            "not CC-BY-4.0 as in earlier spec."
+        ),
+    )
+
+
+def acquire_hotpotqa() -> DatasetEntry:
+    """Acquires HotpotQA distractor-setting multi-hop QA (CC-BY-SA-4.0)."""
+    print("\n--- Acquiring HotpotQA (distractor setting) ---")
+    dest_dir = RAW_DIR / "hotpotqa"
+    repo = "hotpotqa/hotpot_qa"
+    names = [
+        "distractor/train-00000-of-00002.parquet",
+        "distractor/train-00001-of-00002.parquet",
+        "distractor/validation-00000-of-00001.parquet",
+    ]
+    files = [
+        (HF_RESOLVE.format(repo=repo, rev="main", path=n), n.replace("/", "__")) for n in names
+    ]
+    records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_parquet_rows)
+    return _finalize_entry(
+        dataset_id="HOTPOTQA",
+        name="HotpotQA Multi-Hop Reading Comprehension (distractor)",
+        version="HF hotpotqa/hotpot_qa distractor",
+        source_url=f"https://huggingface.co/datasets/{repo}",
+        license_name="CC-BY-SA-4.0",
+        license_approved=True,
+        language="English",
+        sample_unit="Multi-Hop QA Item (question, answer, context, supporting_facts)",
+        expected="97,852 items (90,447 train / 7,405 validation)",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=97000,
+        notes=(
+            "Fullwiki setting excluded: it repeats the same questions with retrieval context "
+            "and its test split has no answers. Distractor already carries gold supporting facts."
+        ),
+    )
+
+
+def acquire_fever() -> DatasetEntry:
+    """Acquires FEVER v1.0 labelled claims via the Hugging Face parquet conversion branch."""
+    print("\n--- Acquiring FEVER v1.0 (labelled claims) ---")
+    dest_dir = RAW_DIR / "fever"
+    repo = "fever/fever"
+    names = ["v1.0/train/0000.parquet", "v1.0/labelled_dev/0000.parquet"]
+    files = [
+        (HF_RESOLVE.format(repo=repo, rev=HF_PARQUET_REV, path=n), n.replace("/", "__"))
+        for n in names
+    ]
+    records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_parquet_rows)
+    return _finalize_entry(
+        dataset_id="FEVER",
+        name="Fact Extraction and VERification (FEVER) v1.0",
+        version="v1.0 (train + labelled_dev)",
+        source_url="https://fever.ai/dataset/fever.html",
+        license_name="CC-BY-SA-3.0",
+        license_approved=True,
+        language="English",
+        sample_unit="Claim with SUPPORTS/REFUTES/NOT ENOUGH INFO label and Wikipedia evidence ids",
+        expected="348,997 claims (311,431 train + 37,566 labelled_dev)",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=348997,
+        notes=(
+            "License is CC-BY-SA-3.0 (Wikipedia-derived), not MIT as in earlier spec. "
+            "paper_dev/paper_test are subsets of labelled_dev and unlabelled_* carry no labels, "
+            "so both are excluded. wiki_pages (281 MB) is not fetched: evidence resolution "
+            "is deferred."
+        ),
+    )
+
+
+def acquire_viquad_v2() -> DatasetEntry:
+    """Acquires UIT-ViQuAD 2.0 (Vietnamese QA with unanswerable questions)."""
+    print("\n--- Acquiring UIT-ViQuAD 2.0 (taidng/UIT-ViQuAD2.0) ---")
+    dest_dir = RAW_DIR / "viquad_v2"
+    repo = "taidng/UIT-ViQuAD2.0"
+    files = [
+        (HF_RESOLVE.format(repo=repo, rev="main", path=f"data/{s}-00000-of-00001.parquet"),
+         f"{s}-00000-of-00001.parquet")
+        for s in ("train", "validation", "test")
+    ]
+    records, size, rows, ok = _acquire_remote_files(dest_dir, files, count_parquet_rows)
+    return _finalize_entry(
+        dataset_id="UIT-VIQUAD-V2",
+        name="UIT-ViQuAD 2.0 (Unanswerable Vietnamese QA)",
+        version="HF taidng/UIT-ViQuAD2.0",
+        source_url=f"https://huggingface.co/datasets/{repo}",
+        license_name="Academic research use (UIT-NLP; HF card declares no SPDX license)",
+        license_approved=False,
+        language="Vietnamese",
+        sample_unit="Context-Question-Answer Item (incl. unanswerable)",
+        expected="~39K items (train/validation/test)",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=30000,
+        notes=(
+            "Upstream license is non-commercial academic; the mirror declares no license, "
+            "so NEEDS_LICENSE_REVIEW. v1.1 answerable items in UIT-VIQUAD overlap: "
+            "dedupe at partition time."
+        ),
+    )
+
+
+def record_vi_paws_status() -> DatasetEntry:
+    """Vi-PAWS does not exist; PAWS-X covers de/en/es/fr/ja/ko/zh only."""
+    print("\n--- Recording Vi-PAWS status (no public source) ---")
+    return _blocked_entry(
+        dataset_id="VI-PAWS",
+        name="Vietnamese Paraphrase Adversaries (Vi-PAWS)",
+        version="N/A",
+        source_url="https://huggingface.co/datasets/google-research-datasets/paws-x",
+        license_name="N/A (PAWS-X: license 'other')",
+        language="Vietnamese",
+        sample_unit="Adversarial Sentence Pair",
+        expected="~600,000 pairs (unsupported by any public release)",
+        storage="data/raw/vi_paws",
+        notes=(
+            "PAWS-X ships de/en/es/fr/ja/ko/zh only; no public Vietnamese PAWS found on "
+            "Hugging Face. Machine-translating PAWS-Wiki would be a new derived dataset "
+            "and requires owner approval."
+        ),
+    )
+
+
+def _iter_cc100_documents(url: str, max_docs: int) -> Any:
+    """Streams blank-line separated documents from the remote xz without downloading it all."""
+    headers = {"User-Agent": "LARIS-Research-Agent/1.0 (+https://github.com/ntdev204/laris)"}
+    req = urllib.request.Request(url, headers=headers)
+    decomp = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
+    utf8 = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    lines: List[str] = []
+    tail = ""
+    emitted = 0
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        while emitted < max_docs:
+            chunk = resp.read(1 << 20)
+            if not chunk:
+                break
+            try:
+                data = decomp.decompress(chunk)
+            except EOFError:
+                break
+            parts = (tail + utf8.decode(data)).split("\n")
+            tail = parts.pop()
+            for line in parts:
+                if line.strip():
+                    lines.append(line.strip())
+                    continue
+                if lines:
+                    yield "\n".join(lines)
+                    emitted += 1
+                    lines = []
+                    if emitted >= max_docs:
+                        return
+
+
+def _resume_cc100_state(dest_dir: Path) -> Tuple[set, int, int]:
+    """Rebuilds the digest set, document count and next shard index from existing shards."""
+    import pyarrow.parquet as pq
+
+    for stale in dest_dir.glob("*.tmp"):
+        stale.unlink()
+    seen: set = set()
+    kept = 0
+    shards = sorted(dest_dir.glob("*.parquet"))
+    for shard in shards:
+        texts = pq.read_table(shard, columns=["text"]).column("text").to_pylist()
+        for text in texts:
+            seen.add(hashlib.sha256(text.encode("utf-8")).digest()[:16])
+        kept += len(texts)
+    return seen, kept, len(shards)
+
+
+def acquire_cc100_vi(max_docs: int = CC100_DEFAULT_MAX_DOCS) -> DatasetEntry:
+    """Streams a bounded, cleaned and exact-deduplicated Vietnamese CC-100 sample into parquet."""
+    print(f"\n--- Acquiring CC-100 Vietnamese (streamed, <= {max_docs:,} documents) ---")
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    dest_dir = RAW_DIR / "cc100_vi_clean"
+    expected = (
+        f"{max_docs:,} documents (bounded stream of {CC100_VI_URL}; full file is ~29.5 GB xz)"
+    )
+    complete_marker = dest_dir / ".complete"
+    if complete_marker.exists():
+        print(f"  [CACHE] CC-100 shards already complete in {dest_dir.name}")
+    else:
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        seen, kept, shard_idx = _resume_cc100_state(dest_dir)
+        if kept:
+            print(f"  [RESUME] {kept:,} documents already on disk ({shard_idx} shards)")
+        batch: List[Dict[str, str]] = []
+
+        def flush() -> None:
+            nonlocal batch, shard_idx
+            if not batch:
+                return
+            table = pa.Table.from_pylist(batch, schema=pa.schema([
+                ("doc_id", pa.string()), ("text", pa.string()), ("source", pa.string()),
+            ]))
+            tmp_path = dest_dir / f"{shard_idx:04d}.parquet.tmp"
+            pq.write_table(table, tmp_path, compression="zstd")
+            tmp_path.replace(dest_dir / f"{shard_idx:04d}.parquet")
+            shard_idx += 1
+            batch = []
+
+        # A dropped connection restarts the stream from the beginning; documents already
+        # written are recognised by digest and skipped, so every attempt resumes in place.
+        for attempt in range(1, CC100_MAX_ATTEMPTS + 1):
+            try:
+                for doc in _iter_cc100_documents(CC100_VI_URL, sys.maxsize):
+                    if kept >= max_docs:
+                        break
+                    text = unicodedata.normalize("NFC", doc)
+                    if len(text) < CC100_MIN_CHARS:
+                        continue
+                    digest = hashlib.sha256(text.encode("utf-8")).digest()[:16]
+                    if digest in seen:
+                        continue
+                    seen.add(digest)
+                    batch.append(
+                        {"doc_id": f"cc100-vi-{kept:09d}", "text": text, "source": "cc100-vi"}
+                    )
+                    kept += 1
+                    if len(batch) >= CC100_SHARD_DOCS:
+                        flush()
+                        print(f"  [STREAM] {kept:,} documents written ({shard_idx} shards)")
+                flush()
+                complete_marker.write_text(json.dumps({"kept": kept}), encoding="utf-8")
+                break
+            except Exception as e:
+                flush()
+                print(
+                    f"  [ERROR] CC-100 stream interrupted after {kept:,} documents "
+                    f"(attempt {attempt}/{CC100_MAX_ATTEMPTS}): {e}"
+                )
+
+    done = complete_marker.exists()
+    names = [p.name for p in sorted(dest_dir.glob("*.parquet"))] if dest_dir.exists() else []
+    records, size, rows = _record_files(dest_dir, names, count_parquet_rows)
+    return _finalize_entry(
+        dataset_id="CC100-VI-CLEAN",
+        name="Cleaned CC-100 Vietnamese Web Corpus (bounded stream)",
+        version="CC-100 vi.txt.xz (bounded prefix)",
+        source_url="https://data.statmt.org/cc-100/",
+        license_name="Common Crawl Terms of Use (CC-100 declares no dataset license)",
+        license_approved=False,
+        language="Vietnamese",
+        sample_unit="Cleaned Web Document (NFC, >= 200 chars, exact-deduplicated)",
+        expected=expected,
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=done,
+        min_rows=max_docs,
+        notes=(
+            "Prefix of the CC-100 stream, not a random sample: topical bias is possible. "
+            "License is NOT CC-BY-SA as earlier spec stated; NEEDS_LICENSE_REVIEW "
+            "before redistribution."
+        ),
+    )
+
+
+EXPANSION_ACQUIRERS = {
+    "VINLI": acquire_vinli,
+    "VISTS": acquire_vists,
+    "VI-PAWS": record_vi_paws_status,
+    "CC100-VI-CLEAN": acquire_cc100_vi,
+    "HOTPOTQA": acquire_hotpotqa,
+    "FEVER": acquire_fever,
+    "UIT-VIQUAD-V2": acquire_viquad_v2,
+}
+
+
 def main():
+    parser = argparse.ArgumentParser(
+        description="LARIS dataset acquisition and verification runner"
+    )
+    parser.add_argument(
+        "--only",
+        nargs="+",
+        metavar="DATASET_ID",
+        help="Acquire only these expansion datasets and merge them into the existing manifest "
+        f"(choices: {', '.join(EXPANSION_ACQUIRERS)})",
+    )
+    parser.add_argument(
+        "--cc100-max-docs",
+        type=int,
+        default=CC100_DEFAULT_MAX_DOCS,
+        help="Maximum cleaned CC-100 Vietnamese documents to stream",
+    )
+    args = parser.parse_args()
+    unknown = [d for d in (args.only or []) if d not in EXPANSION_ACQUIRERS]
+    if unknown:
+        parser.error(f"unknown dataset id(s): {', '.join(unknown)}")
+
+    def run_expansion(dataset_id: str) -> DatasetEntry:
+        if dataset_id == "CC100-VI-CLEAN":
+            return acquire_cc100_vi(args.cc100_max_docs)
+        return EXPANSION_ACQUIRERS[dataset_id]()
+
     print("============================================================")
     print("LARIS Dataset Acquisition & Verification Runner")
     print("============================================================")
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    entries = [
-        acquire_ud_english(),
-        acquire_ud_vietnamese(),
-        acquire_paws(),
-        acquire_stsb(),
-        acquire_quora_duplicates(),
-        acquire_all_nli(),
-        acquire_squad(),
-        acquire_anli(),
-        acquire_scifact(),
-        acquire_viquad(),
-        acquire_publaynet_sample(),
-        acquire_doclaynet_sample(),
-        acquire_wikipedia_vietnamese(),
-        acquire_wikipedia_english_subset(),
-        record_s2orc_status(),
-        record_laris_gold_status(),
-        record_nq_status(),
-    ]
+    if args.only:
+        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+        by_id = {d["dataset_id"]: d for d in manifest["datasets"]}
+        for dataset_id in args.only:
+            by_id[dataset_id] = asdict(run_expansion(dataset_id))
+        datasets = list(by_id.values())
+    else:
+        entries = [
+            acquire_ud_english(),
+            acquire_ud_vietnamese(),
+            acquire_paws(),
+            acquire_stsb(),
+            acquire_quora_duplicates(),
+            acquire_all_nli(),
+            acquire_squad(),
+            acquire_anli(),
+            acquire_scifact(),
+            acquire_viquad(),
+            acquire_publaynet_sample(),
+            acquire_doclaynet_sample(),
+            acquire_wikipedia_vietnamese(),
+            acquire_wikipedia_english_subset(),
+            record_s2orc_status(),
+            record_laris_gold_status(),
+            record_nq_status(),
+        ]
+        entries.extend(run_expansion(dataset_id) for dataset_id in EXPANSION_ACQUIRERS)
+        datasets = [asdict(e) for e in entries]
+        manifest = {
+            "manifest_version": "1.0.0",
+            "created_at": "2026-10-16T23:45:00Z",
+            "verified_by": "LARIS Dataset Governance Agent",
+            "training_freeze_confirmed": True,
+        }
 
-    manifest = {
-        "manifest_version": "1.0.0",
-        "created_at": "2026-10-16T23:45:00Z",
-        "verified_by": "LARIS Dataset Governance Agent",
-        "total_datasets_tracked": len(entries),
-        "total_acquired_bytes": sum(e.actual_size_bytes for e in entries),
-        "total_acquired_samples": sum(
-            e.actual_sample_count for e in entries if e.acquisition_status == "VERIFIED"
-        ),
-        "training_freeze_confirmed": True,
-        "datasets": [asdict(e) for e in entries],
-    }
+    counted = ("VERIFIED", "DOWNLOADED")
+    manifest["datasets"] = datasets
+    manifest["total_datasets_tracked"] = len(datasets)
+    manifest["total_acquired_bytes"] = sum(d["actual_size_bytes"] for d in datasets)
+    manifest["total_acquired_samples"] = sum(
+        d["actual_sample_count"] for d in datasets if d["acquisition_status"] in counted
+    )
+    manifest["training_freeze_confirmed"] = True
 
     with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
@@ -968,7 +1500,7 @@ def main():
     print("\n============================================================")
     print(f"Acquisition Complete. Manifest written to: {MANIFEST_PATH.relative_to(REPO_ROOT)}")
     print(f"Total Acquired Bytes: {manifest['total_acquired_bytes']:,} bytes")
-    print(f"Total Verified Samples: {manifest['total_acquired_samples']:,} samples")
+    print(f"Total Samples (VERIFIED + DOWNLOADED): {manifest['total_acquired_samples']:,} samples")
     print("NO MODEL TRAINING WAS RUN.")
     print("============================================================")
 

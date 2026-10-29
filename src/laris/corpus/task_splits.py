@@ -455,6 +455,25 @@ def audit_dataset_inventory(
         elif ds_id in ("S2ORC-STEM", "LARIS-GOLD", "NATURAL-QUESTIONS"):
             split_usability = "PENDING_ACQUISITION"
             blocker = "Planned for subsequent stage; 0 files on disk."
+        elif ds_id == "VI-PAWS":
+            split_usability = "PENDING_ACQUISITION"
+            blocker = "No public Vietnamese PAWS release exists (PAWS-X excludes Vietnamese)."
+        elif ds_id == "CC100-VI-CLEAN":
+            split_usability = "UNPARTITIONED_RAW_DUMP"
+            blocker = "Monolithic Parquet shards require deterministic document hash partitioning."
+        elif ds_id == "VISTS":
+            split_usability = "TEST_ONLY_NEEDS_SUBSPLIT"
+            blocker = (
+                "Only test suites are released; train/validation require a pair-grouped sub-split."
+            )
+        elif ds_id == "FEVER":
+            split_usability = "TEST_SET_PRIVATE_HELD_OUT"
+            blocker = (
+                "Labelled test split is unreleased; labelled_dev needs a claim-grouped sub-split."
+            )
+        elif ds_id == "UIT-VIQUAD-V2":
+            split_usability = "TEST_SET_PRIVATE_HELD_OUT"
+            blocker = "Test split has no public answers; overlaps UIT-VIQUAD v1.1 contexts."
 
         # Ledger assignment
         if sample_cnt > 0:

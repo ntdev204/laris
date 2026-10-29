@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Bilingual expansion dataset acquisition (Issue #244):**
+  - Automated, resumable acquisition for `VINLI`, `VISTS`, `HOTPOTQA`, `FEVER`, `UIT-VIQUAD-V2` and streamed `CC100-VI-CLEAN` (2.7M documents), plus `VI-PAWS` recorded as `BLOCKED` (no Vietnamese PAWS-X exists). `scripts/acquire_datasets.py --only DATASET_ID` merges into the existing manifest.
+  - Manifest now tracks 24 datasets, 8,347,135 acquired records (4.23M English, 4.12M Vietnamese), 12.09 GB. `VINLI`, `UIT-VIQUAD-V2`, `CC100-VI-CLEAN` are `DOWNLOADED` pending license review.
+  - Corrected spec sources/licenses (FEVER CC-BY-SA-3.0, ViSTS MIT) and documented that the ~16.5M projection is unreachable with real data.
+  - Manifest accounting contract test now checks invariants instead of a hard-coded total.
 - **Genuine Multi-Task Parameter Optimization in `Stage1LanguageTrainer` (Issue #242):**
   - Implemented real autograd forward, task loss computation (`F.cross_entropy`, `F.binary_cross_entropy`, `F.mse_loss`), `loss.backward()`, gradient accumulation, `clip_grad_norm_`, and `optimizer.step()`.
   - Supported plug-and-play 8-bit AdamW (`bitsandbytes`) with automatic fallback to standard PyTorch AdamW.
