@@ -39,11 +39,13 @@ def _answers_or_empty(answers: Optional[dict]) -> dict:
 
 
 def _offsets_match(context: str, answers: dict) -> bool:
-    """Unanswerable rows (no answer) are real labels; an answer whose offset points at other
-    text is a data defect and is dropped rather than relabelled "no answer"."""
+    """Only a row with no answer text is unanswerable (a real label). An answer whose offset is
+    missing or points at other text is a data defect and is dropped, not relabelled."""
     texts, starts = answers.get("text") or [], answers.get("answer_start") or []
-    if not texts or not starts:
+    if not texts or not texts[0]:
         return True
+    if not starts:
+        return False
     return bool(context[int(starts[0]) : int(starts[0]) + len(texts[0])] == texts[0])
 
 

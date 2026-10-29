@@ -69,3 +69,12 @@ def test_requesting_a_task_without_shards_raises_instead_of_switching(tmp_path: 
     rows = [{"premise": "a", "hypothesis": "b", "label": "neutral"}] * 2
     with pytest.raises(KeyError, match="no data shards"):
         _loader(tmp_path, "nli", rows).generate_batch("qa")
+
+
+def test_answer_text_without_an_offset_raises_instead_of_becoming_unanswerable(
+    tmp_path: Path,
+) -> None:
+    answers = {"text": ["world"], "answer_start": []}
+    rec = {"question": "q", "context": "hello world", "answers": answers}
+    with pytest.raises(ValueError, match="no answer_start"):
+        _loader(tmp_path, "qa", [rec] * 2).generate_batch("qa")

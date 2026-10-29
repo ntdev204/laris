@@ -286,3 +286,12 @@ def test_viquad_v2_drops_rows_whose_answer_offset_is_wrong_but_keeps_unanswerabl
             start, text = a["answer_start"][0], a["text"][0]
             assert r["context"][start : start + len(text)] == text
     assert any(not r["answers"]["text"] for r in rows)  # unanswerable rows are kept
+
+
+def test_viquad_v2_offset_check_drops_text_without_offset_and_keeps_true_unanswerable() -> None:
+    from laris.corpus.splits.partitioners.viquad_v2 import _offsets_match
+
+    assert _offsets_match("good filler", {"text": [], "answer_start": []})
+    assert _offsets_match("good filler", {"text": ["good"], "answer_start": [0]})
+    assert not _offsets_match("good filler", {"text": ["good"], "answer_start": []})
+    assert not _offsets_match("good filler", {"text": ["good"], "answer_start": [1]})

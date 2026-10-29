@@ -82,7 +82,10 @@ def profile_training_memory(
             )
             loss = trainer._compute_torch_loss(task, outputs, batch.labels)
         if with_training_step:
-            (loss / trainer.grad_accum_steps).backward()
+            scaled = loss / trainer.grad_accum_steps
+            if trainer.scaler is not None:  # fp16: the optimizer step unscales these gradients
+                scaled = trainer.scaler.scale(scaled)
+            scaled.backward()
         torch.cuda.synchronize()
         return loss.detach()
 
