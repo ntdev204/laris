@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No silent synthetic-data fallback (`fallback_to_synthetic=False` by default); unreadable shards are logged and dropped and cannot hang the stream.
   - Trainer moves the model to its device; falling back from 8-bit AdamW emits a `RuntimeWarning`.
   - SentencePiece args reserve `[MASK]` as id 4, matching the special-token contract (previously id 4 was `[MATH]`).
+  - CI installs CPU PyTorch so neural tests run instead of being skipped.
 
 ### Added
 - **Bilingual expansion dataset acquisition (Issue #244):**
