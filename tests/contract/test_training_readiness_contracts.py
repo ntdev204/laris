@@ -1,7 +1,7 @@
 """Contract tests for Natural Language Foundation Training Readiness & Audit invariants.
 
 Enforces:
-- Exact reconciliation of 17 tracked datasets and disaggregated unit ledgers
+- Reconciliation of tracked datasets and disaggregated unit ledgers
 - Mathematical soundness of VRAM estimation formulas under hardware budget
 - Zero trained model weights/checkpoints in repository (Mandatory Stop Condition)
 - Formal readiness gate taxonomy validation
@@ -14,37 +14,42 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def test_manifest_and_disaggregated_accounting_invariants() -> None:
-    """Verifies that the acquisition manifest disaggregated totals match exactly."""
+    """Verifies that the acquisition manifest totals reconcile with per-dataset ledgers."""
     manifest_path = REPO_ROOT / "data" / "acquisition_manifest.json"
     assert manifest_path.exists(), "acquisition_manifest.json must exist"
 
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    total_samples = manifest.get("total_acquired_samples", 0)
-    assert total_samples == 5106491, f"Expected 5,106,491 samples, got {total_samples}"
-
     datasets = manifest.get("datasets", [])
-    assert len(datasets) == 24, f"Expected 24 tracked datasets, got {len(datasets)}"
+    assert manifest.get("total_datasets_tracked") == len(datasets)
+    ids = [d["dataset_id"] for d in datasets]
+    assert len(ids) == len(set(ids)), "dataset_id values must be unique"
 
+    counted_statuses = {"VERIFIED", "DOWNLOADED"}
     english_samples = 0
     vietnamese_samples = 0
-    acquired_count = 0
-
     for d in datasets:
         samples = d.get("actual_sample_count", 0)
-        lang = d.get("language", "")
-        if d.get("acquisition_status") == "VERIFIED":
-            acquired_count += 1
-            if lang == "English":
+        if d.get("acquisition_status") in counted_statuses:
+            if d.get("language") == "English":
                 english_samples += samples
-            elif lang == "Vietnamese":
+            elif d.get("language") == "Vietnamese":
                 vietnamese_samples += samples
+        elif d.get("acquisition_status") in {"BLOCKED", "PROPOSED"}:
+            assert samples == 0, f"{d['dataset_id']} is not acquired but reports samples"
 
-    assert acquired_count == 14, f"Expected 14 verified acquired datasets, got {acquired_count}"
-    assert english_samples == 3782210, f"Expected 3.78M EN records, got {english_samples}"
-    assert vietnamese_samples == 1324281, f"Expected 1.32M VI records, got {vietnamese_samples}"
+    total_samples = manifest.get("total_acquired_samples", 0)
     assert english_samples + vietnamese_samples == total_samples
+    assert total_samples == sum(
+        d.get("actual_sample_count", 0)
+        for d in datasets
+        if d.get("acquisition_status") in counted_statuses
+    )
+
+    verified = [d for d in datasets if d.get("acquisition_status") == "VERIFIED"]
+    assert all(d.get("license_status") == "APPROVED_FOR_ACQUISITION" for d in verified)
+    assert all(d.get("schema_valid") is True for d in verified)
 
 
 def test_training_readiness_hardware_budget_formula() -> None:

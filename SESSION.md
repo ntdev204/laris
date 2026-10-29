@@ -47,7 +47,7 @@ LARIS is a local-first, epistemic AI research platform designed to ingest scient
 | **Automated Tests** | 1030 passing unit, contract, and integration tests under `tests/` |
 | **Linters & Typers** | 100% clean: `ruff` 0 errors, `mypy` 0 errors across all 92 source files |
 | **Documentation** | 61 formal Markdown documents under `docs/`, 100% compliant with `scripts/validate_docs.py` |
-| **Acquired Datasets** | 5,106,491 records across 14 verified datasets in `data/raw/` (3.78M English, 1.32M Vietnamese) |
+| **Acquired Datasets** | 8,347,135 records across 20 datasets (17 verified, 3 pending license review) in `data/raw/` (4.23M English, 4.12M Vietnamese; 12.09 GB) |
 
 ### Key Modules Implemented
 - **Centralized Configuration (`src/laris/config/`):** 4-tier configuration system (CLI, YAML, Defaults, Invariants) with cryptographic SHA-256 state tracking and safety ceilings.

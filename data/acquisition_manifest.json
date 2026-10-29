@@ -3,8 +3,8 @@
   "created_at": "2026-10-16T23:45:00Z",
   "verified_by": "LARIS Dataset Governance Agent",
   "total_datasets_tracked": 24,
-  "total_acquired_bytes": 4579300002,
-  "total_acquired_samples": 5106491,
+  "total_acquired_bytes": 12092268300,
+  "total_acquired_samples": 8347135,
   "training_freeze_confirmed": true,
   "datasets": [
     {
@@ -665,135 +665,579 @@
     {
       "dataset_id": "VINLI",
       "name": "Vietnamese Natural Language Inference (ViNLI)",
-      "version": "v1.0",
-      "official_source_url": "https://github.com/vnlp/vinli",
-      "license_name": "CC-BY-NC-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "version": "HF presencesw/vinli_4_label (default)",
+      "official_source_url": "https://huggingface.co/datasets/presencesw/vinli_4_label",
+      "license_name": "Not declared by uploader (research use only pending review)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
       "language": "Vietnamese",
-      "sample_unit": "3-Way NLI Hypothesis-Premise Pair",
-      "expected_sample_count": "~1,000,000 pairs",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "3-Way NLI Hypothesis-Premise Pair (gold_label, sentence1, sentence2)",
+      "expected_sample_count": ">= 30,000 pairs (24,376 train / 3,009 dev / 2,991 test per dataset card)",
+      "actual_sample_count": 30376,
+      "actual_size_bytes": 2757680,
+      "sha256_checksum": "9f2b564de27fd0ce60da92a6eb64aa615cad65e8cc1fe0a36ecdcbb93cd00e7f",
       "storage_path": "data/raw/vinli",
       "schema_valid": true,
-      "notes": "Remediates Vietnamese NLI gap for Stage 1 reasoning.",
-      "files": []
+      "notes": "Spec URL github.com/vnlp/vinli returns 404; community mirror used. Uploader declares no license: NEEDS_LICENSE_REVIEW before any redistribution.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 2013264,
+          "sample_count": 24376,
+          "sha256": "9f2b564de27fd0ce60da92a6eb64aa615cad65e8cc1fe0a36ecdcbb93cd00e7f"
+        },
+        {
+          "filename": "dev-00000-of-00001.parquet",
+          "bytes": 377932,
+          "sample_count": 3009,
+          "sha256": "d70e711c5858e3c02b29df562fcd79b51c3100495fab0336d57590cb35223ce7"
+        },
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 366484,
+          "sample_count": 2991,
+          "sha256": "9ad06bba2d622b282464076e1ccd797c3a47dcc478643d151381498968364188"
+        }
+      ]
     },
     {
       "dataset_id": "VISTS",
-      "name": "Vietnamese Semantic Textual Similarity Benchmark (ViSTS)",
-      "version": "v1.0",
-      "official_source_url": "https://github.com/vnlp/vists",
-      "license_name": "CC-BY-4.0",
+      "name": "Vietnamese Semantic Textual Similarity (ViSTS)",
+      "version": "HF anti-ai/ViSTS (7 STS suites)",
+      "official_source_url": "https://huggingface.co/datasets/anti-ai/ViSTS",
+      "license_name": "MIT",
       "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "acquisition_status": "VERIFIED",
       "language": "Vietnamese",
-      "sample_unit": "Scored Sentence Pair [0.0-1.0]",
-      "expected_sample_count": "~600,000 pairs",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "Scored Sentence Pair",
+      "expected_sample_count": "10K-100K pairs (dataset card size category)",
+      "actual_sample_count": 23850,
+      "actual_size_bytes": 4651130,
+      "sha256_checksum": "0b51895e1f31aa075a08970c5283edb41f203f067a625a520d0939a655088ea8",
       "storage_path": "data/raw/vists",
       "schema_valid": true,
-      "notes": "Remediates Vietnamese continuous semantic similarity gap.",
-      "files": []
+      "notes": "Spec URL github.com/vnlp/vists returns 404; MIT-licensed HF release used. Contains test suites only (no train split); licensed MIT, not CC-BY-4.0 as in earlier spec.",
+      "files": [
+        {
+          "filename": "sickr_sts__sickr_sts_vi.jsonl",
+          "bytes": 1782625,
+          "sample_count": 9927,
+          "sha256": "0b51895e1f31aa075a08970c5283edb41f203f067a625a520d0939a655088ea8"
+        },
+        {
+          "filename": "sts12__sts12_vi.jsonl",
+          "bytes": 685685,
+          "sample_count": 3108,
+          "sha256": "229f5d4bc0ffb988ae111d032333ee1bb859048a108fe8ea3f75a2006b2e129a"
+        },
+        {
+          "filename": "sts13__sts13_vi.jsonl",
+          "bytes": 300936,
+          "sample_count": 1500,
+          "sha256": "2261497ba03d29718f1360fad8a9a0fbde7bb9303dff7d2bd168e7b920c1726d"
+        },
+        {
+          "filename": "sts14__sts14_vi.jsonl",
+          "bytes": 736395,
+          "sample_count": 3750,
+          "sha256": "e814df9a4018db7fd34ece51a70b51ec5841737f3f2a8af7f32d6292026b4522"
+        },
+        {
+          "filename": "sts15__sts15_vi.jsonl",
+          "bytes": 611518,
+          "sample_count": 3000,
+          "sha256": "e01b324317377d45784fe24961436f74368576ec27dff5ff64aaf869151f1ebc"
+        },
+        {
+          "filename": "sts16__sts16_vi.jsonl",
+          "bytes": 259973,
+          "sample_count": 1186,
+          "sha256": "10395d8cd808bcd19cccf6e79c7dde0db07b1bb2d17d4855cbb1b1d263f2b7dd"
+        },
+        {
+          "filename": "stsb__stsbenchmark_vi.jsonl",
+          "bytes": 273998,
+          "sample_count": 1379,
+          "sha256": "f2b7a73bf2dd40554b2c4108565767c755f12b8c93378d195de192a8dfdaa867"
+        }
+      ]
     },
     {
       "dataset_id": "VI-PAWS",
-      "name": "Vietnamese Paraphrase Adversaries from Word Scrambling (Vi-PAWS)",
-      "version": "v1.0",
-      "official_source_url": "https://github.com/google-research-datasets/paws",
-      "license_name": "CC-BY-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "name": "Vietnamese Paraphrase Adversaries (Vi-PAWS)",
+      "version": "N/A",
+      "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws-x",
+      "license_name": "N/A (PAWS-X: license 'other')",
+      "license_status": "BLOCKED",
+      "acquisition_status": "BLOCKED",
       "language": "Vietnamese",
       "sample_unit": "Adversarial Sentence Pair",
-      "expected_sample_count": "~600,000 pairs",
+      "expected_sample_count": "~600,000 pairs (unsupported by any public release)",
       "actual_sample_count": 0,
       "actual_size_bytes": 0,
       "sha256_checksum": "",
       "storage_path": "data/raw/vi_paws",
-      "schema_valid": true,
-      "notes": "Remediates Vietnamese paraphrase equivalence detection gap.",
+      "schema_valid": false,
+      "notes": "PAWS-X ships de/en/es/fr/ja/ko/zh only; no public Vietnamese PAWS found on Hugging Face. Machine-translating PAWS-Wiki would be a new derived dataset and requires owner approval.",
       "files": []
     },
     {
       "dataset_id": "CC100-VI-CLEAN",
-      "name": "Cleaned Vietnamese CC-100 Corpus Subset",
-      "version": "v1.0-CLEAN",
+      "name": "Cleaned CC-100 Vietnamese Web Corpus (bounded stream)",
+      "version": "CC-100 vi.txt.xz (bounded prefix)",
       "official_source_url": "https://data.statmt.org/cc-100/",
-      "license_name": "CC-BY-SA-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "license_name": "Common Crawl Terms of Use (CC-100 declares no dataset license)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
       "language": "Vietnamese",
-      "sample_unit": "Cleaned Article Document",
-      "expected_sample_count": "~2,700,000 articles",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "Cleaned Web Document (NFC, >= 200 chars, exact-deduplicated)",
+      "expected_sample_count": "2,700,000 documents (bounded stream of https://data.statmt.org/cc-100/vi.txt.xz; full file is ~29.5 GB xz)",
+      "actual_sample_count": 2700000,
+      "actual_size_bytes": 7125249866,
+      "sha256_checksum": "4ebe8daeed213ba788a1f5196519896664bb27d2d0d3d506dc3a87c37e5423a7",
       "storage_path": "data/raw/cc100_vi_clean",
       "schema_valid": true,
-      "notes": "High-quality deduplicated web articles for general Vietnamese pretraining.",
-      "files": []
+      "notes": "Prefix of the CC-100 stream, not a random sample: topical bias is possible. License is NOT CC-BY-SA as earlier spec stated; NEEDS_LICENSE_REVIEW before redistribution.",
+      "files": [
+        {
+          "filename": "0000.parquet",
+          "bytes": 140003925,
+          "sample_count": 50000,
+          "sha256": "4ebe8daeed213ba788a1f5196519896664bb27d2d0d3d506dc3a87c37e5423a7"
+        },
+        {
+          "filename": "0001.parquet",
+          "bytes": 141565247,
+          "sample_count": 50000,
+          "sha256": "e56d4a5394207993d3097e3fffc8fe464f7521f53d54337b98c859106ac1ea2d"
+        },
+        {
+          "filename": "0002.parquet",
+          "bytes": 146758621,
+          "sample_count": 50000,
+          "sha256": "5bab4a05ddef3a8506480faf852f68282926f277384c5b36cb2020e6b225000d"
+        },
+        {
+          "filename": "0003.parquet",
+          "bytes": 130807806,
+          "sample_count": 50000,
+          "sha256": "5010efc8345f10cccfb47e61d84fe7d4a0e56768e568e313554d01b1f6d3c99b"
+        },
+        {
+          "filename": "0004.parquet",
+          "bytes": 145641082,
+          "sample_count": 50000,
+          "sha256": "0a78b07dab455358f358c5913d94db78ba632da1cef9ce238c31e6bbeaf6bf04"
+        },
+        {
+          "filename": "0005.parquet",
+          "bytes": 141201927,
+          "sample_count": 50000,
+          "sha256": "2cf9017021cb4f81c80b399b2943670748bc75859bdc42daee02623a0f2fc85c"
+        },
+        {
+          "filename": "0006.parquet",
+          "bytes": 154718893,
+          "sample_count": 50000,
+          "sha256": "627314d0dab04dc19c242a697c2e2f450f821e267d2696a2262c17e3599ea75f"
+        },
+        {
+          "filename": "0007.parquet",
+          "bytes": 147214329,
+          "sample_count": 50000,
+          "sha256": "863d0497dacf5129fec91a032c8c04cdde91b2a3c29319591231d177af90ebb1"
+        },
+        {
+          "filename": "0008.parquet",
+          "bytes": 145808155,
+          "sample_count": 50000,
+          "sha256": "dd12fd42135f653d0dd43a4ae3d4641035432a1f8ad4a52f178ab6ad3132361b"
+        },
+        {
+          "filename": "0009.parquet",
+          "bytes": 137263218,
+          "sample_count": 50000,
+          "sha256": "74610362369f32e4905c319a4923fc1f35da1453aa21980e98c65c6766534a81"
+        },
+        {
+          "filename": "0010.parquet",
+          "bytes": 139887125,
+          "sample_count": 50000,
+          "sha256": "fee70ba1e772c76afd2e6ad65f1bf85e31d95b2e495221619d0baacbc477b43a"
+        },
+        {
+          "filename": "0011.parquet",
+          "bytes": 142860556,
+          "sample_count": 50000,
+          "sha256": "3f945e044f32ac6f8ba972838f10a372b4df5179131e84d21ddacaf30fff7e6c"
+        },
+        {
+          "filename": "0012.parquet",
+          "bytes": 130188704,
+          "sample_count": 50000,
+          "sha256": "8abaa6de92996ee87f8e0d8692c11086476ecbf8076adf5fa580b232ca065caa"
+        },
+        {
+          "filename": "0013.parquet",
+          "bytes": 135914062,
+          "sample_count": 50000,
+          "sha256": "dac674a53747c7d57faed7f8cee123118a5c6e8e7892830ee6aa5cd96c3595c6"
+        },
+        {
+          "filename": "0014.parquet",
+          "bytes": 129225437,
+          "sample_count": 50000,
+          "sha256": "47cdad99aa80c3b4a0fafb6cafd410c42c00af74ade788cca83d5f77290328bc"
+        },
+        {
+          "filename": "0015.parquet",
+          "bytes": 132644029,
+          "sample_count": 50000,
+          "sha256": "9db0fc2bd5d12080ca31121196ab481e31fee61eac6a4e92e32ab2e034d61e6c"
+        },
+        {
+          "filename": "0016.parquet",
+          "bytes": 135753248,
+          "sample_count": 50000,
+          "sha256": "183ef4a4e6674473f9f202c551741d1205ccae424cfa5634b843833c6a56cc08"
+        },
+        {
+          "filename": "0017.parquet",
+          "bytes": 128108699,
+          "sample_count": 50000,
+          "sha256": "117dfddc78938496073f3df9d8e90f021e4693d58b212138c0cd00dc53cd0fd9"
+        },
+        {
+          "filename": "0018.parquet",
+          "bytes": 143353025,
+          "sample_count": 50000,
+          "sha256": "b2c11be009c937915a566c7806de29f9931e0c663ea1e24268d22d915a3efeae"
+        },
+        {
+          "filename": "0019.parquet",
+          "bytes": 133332153,
+          "sample_count": 50000,
+          "sha256": "b5d240ca9ef0556eab36a744f35930d7c076d32c1afe43e2e73d20126355ddb8"
+        },
+        {
+          "filename": "0020.parquet",
+          "bytes": 138064462,
+          "sample_count": 50000,
+          "sha256": "bc9782aa5d675f5e2b71cb8430ecc7ec5fdea460bb40ec3311ce9ac4a1a0e74d"
+        },
+        {
+          "filename": "0021.parquet",
+          "bytes": 135638669,
+          "sample_count": 50000,
+          "sha256": "a4fad66a04ef254ee623e3dd4db76d85cef5136ff3a8f146eef49587d715d45a"
+        },
+        {
+          "filename": "0022.parquet",
+          "bytes": 128552307,
+          "sample_count": 50000,
+          "sha256": "ff2439951aca826d5b99fae7d18d282c2b43255a082fd1d07a51c2039594cbcb"
+        },
+        {
+          "filename": "0023.parquet",
+          "bytes": 125056878,
+          "sample_count": 50000,
+          "sha256": "f651bd548b6b9df0fc257d57f40b560857eda118fd9ed531db1f0a7ebc7c375f"
+        },
+        {
+          "filename": "0024.parquet",
+          "bytes": 134219165,
+          "sample_count": 50000,
+          "sha256": "1521c7bd8352c4280367872c3ad9e0230e66ac5c4be230f8dd15cd5bd4438be2"
+        },
+        {
+          "filename": "0025.parquet",
+          "bytes": 126248339,
+          "sample_count": 50000,
+          "sha256": "08964615ac9a21088a24e3321c2f818e9d6b608ef3b91a17bc154dc4063e0a03"
+        },
+        {
+          "filename": "0026.parquet",
+          "bytes": 130940643,
+          "sample_count": 50000,
+          "sha256": "125f740ff9f5fcbf3b73d17b07c5df977f4f92fb3b8ad3ff1069f86766767e74"
+        },
+        {
+          "filename": "0027.parquet",
+          "bytes": 135443837,
+          "sample_count": 50000,
+          "sha256": "3f66b540a61268dffa99253f933f43907a071dbc111a1780f301c5c125d4cce4"
+        },
+        {
+          "filename": "0028.parquet",
+          "bytes": 121621826,
+          "sample_count": 50000,
+          "sha256": "ec7d07285f499a17f3e620afc514969a0379cfd8dcbf93633177325d990bf4f1"
+        },
+        {
+          "filename": "0029.parquet",
+          "bytes": 128864774,
+          "sample_count": 50000,
+          "sha256": "88989b6e7ef02482f108701e02ae07821f76d89d5ec1a715c4912c467a776aa8"
+        },
+        {
+          "filename": "0030.parquet",
+          "bytes": 133113860,
+          "sample_count": 50000,
+          "sha256": "3c702347fa281cbb6b78d9507cea8c0cd6476814c4458b63bea1225171751e74"
+        },
+        {
+          "filename": "0031.parquet",
+          "bytes": 127591950,
+          "sample_count": 50000,
+          "sha256": "7482fdea2e3452b123aaa628685750bedb4b621cfecb1f98aa443d0a5d17155d"
+        },
+        {
+          "filename": "0032.parquet",
+          "bytes": 131577163,
+          "sample_count": 50000,
+          "sha256": "6dd7b96b93c8bec051d6bd8ed7f47fa330598f587cb5df10a25a694c3e16badf"
+        },
+        {
+          "filename": "0033.parquet",
+          "bytes": 118272162,
+          "sample_count": 50000,
+          "sha256": "96c4e795cbe0102ddd4850d11539d0088e9202ca3e4f02f20a24f5cb8c503a8a"
+        },
+        {
+          "filename": "0034.parquet",
+          "bytes": 128392115,
+          "sample_count": 50000,
+          "sha256": "1778898119da97cbd8514005e79e37219b04fc02f148765415de82973f13c8d0"
+        },
+        {
+          "filename": "0035.parquet",
+          "bytes": 122063105,
+          "sample_count": 50000,
+          "sha256": "5d73a7809bc09f6cc7383a9cfe0f9e8d5fb4a49847b7439cf80d54bf2f67c53a"
+        },
+        {
+          "filename": "0036.parquet",
+          "bytes": 133672982,
+          "sample_count": 50000,
+          "sha256": "677511efc882b541177796ae8e47cc719aefb07a55d0acdbc2580c3a19de6960"
+        },
+        {
+          "filename": "0037.parquet",
+          "bytes": 129250079,
+          "sample_count": 50000,
+          "sha256": "fd8cede0787503be5dd87b94c2f28b5ecc7b24521e76c63a68f9f9285dee2d31"
+        },
+        {
+          "filename": "0038.parquet",
+          "bytes": 124200782,
+          "sample_count": 50000,
+          "sha256": "09efa4f0309d256395830e19c1c16bd3dc1c789a24adf88e73fd37df25f00434"
+        },
+        {
+          "filename": "0039.parquet",
+          "bytes": 130937632,
+          "sample_count": 50000,
+          "sha256": "3ad74ee32a0b6d9ced629e94c5461626ec9e55b45dd603b1b2d9db4be85bf16a"
+        },
+        {
+          "filename": "0040.parquet",
+          "bytes": 122310011,
+          "sample_count": 50000,
+          "sha256": "4418d715681079b3f6a91c7bffaa44d5488741618323595d9c5b4a82a8287944"
+        },
+        {
+          "filename": "0041.parquet",
+          "bytes": 128002233,
+          "sample_count": 50000,
+          "sha256": "3140858724440f74f0f55d9353c257c44684d8059c053cbb2c6ead03c2a6d948"
+        },
+        {
+          "filename": "0042.parquet",
+          "bytes": 128522414,
+          "sample_count": 50000,
+          "sha256": "3a28d95d8c0c83a04b4e3b8c5b422f7ee11206b27f6c6c7003085945bbdbbeed"
+        },
+        {
+          "filename": "0043.parquet",
+          "bytes": 121536897,
+          "sample_count": 49084,
+          "sha256": "5c528d7e40a2d19b645eb3e67d6bbbe03fd86b02a6c29caa125788683a2557f6"
+        },
+        {
+          "filename": "0044.parquet",
+          "bytes": 125243468,
+          "sample_count": 50000,
+          "sha256": "f4ac304dd7f30f7bccb74327250a03575ce949f9e4c250b7c5fd72b56553e770"
+        },
+        {
+          "filename": "0045.parquet",
+          "bytes": 123107451,
+          "sample_count": 50000,
+          "sha256": "1be8fd1d6321fc854c489a291d8547ffab65577d276edf1352c759d87cb6473c"
+        },
+        {
+          "filename": "0046.parquet",
+          "bytes": 126645590,
+          "sample_count": 50000,
+          "sha256": "9acbca24dc0a50d9ea734772824dda74f0ad03d4aec365d68c08da3aea516ffa"
+        },
+        {
+          "filename": "0047.parquet",
+          "bytes": 121781290,
+          "sample_count": 50000,
+          "sha256": "01852c353ed46e2f9d3129d2ae09e826f39a4946a3f361ae364269713e5a43ad"
+        },
+        {
+          "filename": "0048.parquet",
+          "bytes": 126581615,
+          "sample_count": 50000,
+          "sha256": "67a38f5e497ed4552132e957293cb1fd8ea18475b0ee117752b0e47a58b762ad"
+        },
+        {
+          "filename": "0049.parquet",
+          "bytes": 121121085,
+          "sample_count": 50000,
+          "sha256": "6de3feee18a55830acf76709b775463c5bc4e42d1ff15549cc6b5b9c1bb97ef1"
+        },
+        {
+          "filename": "0050.parquet",
+          "bytes": 124493038,
+          "sample_count": 50000,
+          "sha256": "1f0b84a4f6dbfdc04b1d4665b1f2f5fa6089ddee70905eaca49ec455a7780f11"
+        },
+        {
+          "filename": "0051.parquet",
+          "bytes": 127783001,
+          "sample_count": 50000,
+          "sha256": "e8b3574dc94107a6197122e326f468c1f59f56f4b3524f683d1322e7edcd8797"
+        },
+        {
+          "filename": "0052.parquet",
+          "bytes": 125631831,
+          "sample_count": 50000,
+          "sha256": "530c70716539407707a435b436819077649d9da888fe8b0dead4a2a364eb2215"
+        },
+        {
+          "filename": "0053.parquet",
+          "bytes": 134254207,
+          "sample_count": 50000,
+          "sha256": "a4b7c3474be44eb5359e4e3ba124473d8843b2abcb462ea6e7a135a9141f8683"
+        },
+        {
+          "filename": "0054.parquet",
+          "bytes": 2262764,
+          "sample_count": 916,
+          "sha256": "d9b41048746bc4de1edc8fcf5d4a4ce71c91e083961c0549e52db1b9b5146b28"
+        }
+      ]
     },
     {
       "dataset_id": "HOTPOTQA",
-      "name": "HotpotQA Multi-Hop Reading Comprehension",
-      "version": "v1.0",
-      "official_source_url": "https://hotpotqa.github.io/",
+      "name": "HotpotQA Multi-Hop Reading Comprehension (distractor)",
+      "version": "HF hotpotqa/hotpot_qa distractor",
+      "official_source_url": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
       "license_name": "CC-BY-SA-4.0",
       "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "acquisition_status": "VERIFIED",
       "language": "English",
-      "sample_unit": "Multi-Hop Question Answering Item",
-      "expected_sample_count": "~700,000 items",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "Multi-Hop QA Item (question, answer, context, supporting_facts)",
+      "expected_sample_count": "97,852 items (90,447 train / 7,405 validation)",
+      "actual_sample_count": 97852,
+      "actual_size_bytes": 359239231,
+      "sha256_checksum": "76d3bb3048a7cc73c1958107c0c5872a00d7e7d00c105b81e92f6769e7822e68",
       "storage_path": "data/raw/hotpotqa",
       "schema_valid": true,
-      "notes": "Enables cross-document bridging and multi-hop reasoning.",
-      "files": []
+      "notes": "Fullwiki setting excluded: it repeats the same questions with retrieval context and its test split has no answers. Distractor already carries gold supporting facts.",
+      "files": [
+        {
+          "filename": "distractor__train-00000-of-00002.parquet",
+          "bytes": 165624177,
+          "sample_count": 45224,
+          "sha256": "76d3bb3048a7cc73c1958107c0c5872a00d7e7d00c105b81e92f6769e7822e68"
+        },
+        {
+          "filename": "distractor__train-00001-of-00002.parquet",
+          "bytes": 166162479,
+          "sample_count": 45223,
+          "sha256": "713661628434fbb19fff7392e2e321e4ed107e3c7c7784d0690946e5f722763f"
+        },
+        {
+          "filename": "distractor__validation-00000-of-00001.parquet",
+          "bytes": 27452575,
+          "sample_count": 7405,
+          "sha256": "c20b638ca82b21d04fe12e14ff417ad05153d4d215a65de54497fca4e972f7c6"
+        }
+      ]
     },
     {
       "dataset_id": "FEVER",
-      "name": "Fact Extraction and VERification (FEVER)",
-      "version": "v1.0",
-      "official_source_url": "https://fever.ai/",
-      "license_name": "MIT",
+      "name": "Fact Extraction and VERification (FEVER) v1.0",
+      "version": "v1.0 (train + labelled_dev)",
+      "official_source_url": "https://fever.ai/dataset/fever.html",
+      "license_name": "CC-BY-SA-3.0",
       "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "acquisition_status": "VERIFIED",
       "language": "English",
-      "sample_unit": "Scientific/Factual Claim & Evidence Triple",
-      "expected_sample_count": "~1,500,000 claims",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "Claim with SUPPORTS/REFUTES/NOT ENOUGH INFO label and Wikipedia evidence ids",
+      "expected_sample_count": "~145K train + ~19.9K labelled dev claims",
+      "actual_sample_count": 348997,
+      "actual_size_bytes": 13970899,
+      "sha256_checksum": "d9cc89cd698581d1861a247eba6021081bfbd4d959774939e99fe74e19ab2036",
       "storage_path": "data/raw/fever",
       "schema_valid": true,
-      "notes": "Fact verification and claim-evidence support/refutation.",
-      "files": []
+      "notes": "License is CC-BY-SA-3.0 (Wikipedia-derived), not MIT as in earlier spec. paper_dev/paper_test are subsets of labelled_dev and unlabelled_* carry no labels, so both are excluded. wiki_pages (281 MB) is not fetched: evidence resolution is deferred.",
+      "files": [
+        {
+          "filename": "v1.0__train__0000.parquet",
+          "bytes": 12437096,
+          "sample_count": 311431,
+          "sha256": "d9cc89cd698581d1861a247eba6021081bfbd4d959774939e99fe74e19ab2036"
+        },
+        {
+          "filename": "v1.0__labelled_dev__0000.parquet",
+          "bytes": 1533803,
+          "sample_count": 37566,
+          "sha256": "dc70281c3d57a8faaed5ba119cd8cbbf263ad032576c136260e515c3cdd88532"
+        }
+      ]
     },
     {
       "dataset_id": "UIT-VIQUAD-V2",
-      "name": "UIT-ViQuAD v2.0 (With Unanswerable Questions)",
-      "version": "v2.0",
-      "official_source_url": "https://github.com/TrungDS10/UIT-ViQuAD",
-      "license_name": "CC-BY-NC-4.0",
-      "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "PROPOSED",
+      "name": "UIT-ViQuAD 2.0 (Unanswerable Vietnamese QA)",
+      "version": "HF taidng/UIT-ViQuAD2.0",
+      "official_source_url": "https://huggingface.co/datasets/taidng/UIT-ViQuAD2.0",
+      "license_name": "Academic research use (UIT-NLP; HF card declares no SPDX license)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
       "language": "Vietnamese",
-      "sample_unit": "Context-Question-Answer Item",
-      "expected_sample_count": "~600,000 items",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
+      "sample_unit": "Context-Question-Answer Item (incl. unanswerable)",
+      "expected_sample_count": "~39K items (train/validation/test)",
+      "actual_sample_count": 39569,
+      "actual_size_bytes": 7099492,
+      "sha256_checksum": "6e68a0c8fb6fa3c7f89e5b3825e3b3e96fd66913db89a9bdfcaf8fa2b5469e19",
       "storage_path": "data/raw/viquad_v2",
       "schema_valid": true,
-      "notes": "Reading comprehension with unanswerable questions to prevent hallucination.",
-      "files": []
+      "notes": "Upstream license is non-commercial academic; the mirror declares no license, so NEEDS_LICENSE_REVIEW. v1.1 answerable items in UIT-VIQUAD overlap: dedupe at partition time.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 5200852,
+          "sample_count": 28454,
+          "sha256": "6e68a0c8fb6fa3c7f89e5b3825e3b3e96fd66913db89a9bdfcaf8fa2b5469e19"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 734914,
+          "sample_count": 3814,
+          "sha256": "8c81bdd75bd39eeff98df769f2282453397fa8c7004085e4fe3fc6e419733ae0"
+        },
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 1163726,
+          "sample_count": 7301,
+          "sha256": "e6453e0fa0bc94128579b37a9ca4e8381c5301960944ca6399dccc85a785a805"
+        }
+      ]
     }
   ]
 }
