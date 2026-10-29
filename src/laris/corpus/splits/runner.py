@@ -8,6 +8,12 @@ from laris.corpus.acquisition.common import APPROVED_LICENSE_STATUSES
 from laris.corpus.splits.partitioners.cc100 import partition_cc100_physical, wikipedia_digests
 from laris.corpus.splits.partitioners.fever import partition_fever_physical
 from laris.corpus.splits.partitioners.hotpotqa import partition_hotpotqa_physical
+from laris.corpus.splits.partitioners.pairwise import (
+    partition_all_nli_physical,
+    partition_anli_physical,
+    partition_paws_physical,
+    partition_stsb_physical,
+)
 from laris.corpus.splits.partitioners.quora import partition_quora_dataset_physical
 from laris.corpus.splits.partitioners.squad import partition_qa_dataset_physical
 from laris.corpus.splits.partitioners.vinli import partition_vinli_physical
@@ -122,6 +128,18 @@ def execute_physical_partitioning(
             results.append(res_squad.to_dict())
 
     # 5. Bilingual expansion datasets
+    for dataset_id, raw_name, partition in (
+        ("ALL-NLI", "all_nli", partition_all_nli_physical),
+        ("ANLI", "anli", partition_anli_physical),
+        ("PAWS-WIKI", "paws", partition_paws_physical),
+        ("STSB", "stsb", partition_stsb_physical),
+    ):
+        if wanted(dataset_id, raw_name):
+            results.append(
+                partition(
+                    raw_path / raw_name, proc_path / raw_name, max_records=max_records
+                ).to_dict()
+            )
     if wanted("VINLI", "vinli"):
         results.append(
             partition_vinli_physical(raw_path / "vinli", proc_path / "vinli").to_dict()
@@ -157,6 +175,18 @@ def execute_physical_partitioning(
                 batch_size=min(batch_size, 20000),
             ).to_dict()
         )
+
+    if selected is not None and target_manifest.is_file():
+        # A partial run must not erase the entries recorded by earlier runs.
+        with open(target_manifest, "r", encoding="utf-8") as handle:
+            previous = json.load(handle)
+        fresh = {r["dataset_id"] for r in results} | {s["dataset_id"] for s in skipped}
+        results = [
+            r for r in previous.get("partitioned_datasets", []) if r["dataset_id"] not in fresh
+        ] + results
+        skipped = [
+            s for s in previous.get("skipped_datasets", []) if s["dataset_id"] not in fresh
+        ] + skipped
 
     summary = {
         "manifest_version": "1.1.0",

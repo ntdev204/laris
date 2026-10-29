@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Pairwise dataset partitioning (Issue #264):**
+  - `laris data partition` now partitions All-NLI, ANLI (R1-R3), PAWS-Wiki and STSB, keeping the upstream train/dev/test splits and removing train rows that collide with held-out val/test (pair level for NLI and STSB, either-sentence level for PAWS). The NLI, paraphrase and similarity tasks read them from `data/processed`.
+  - A partial run (`--datasets X`) now merges into the existing `task_splits_manifest.json` by `dataset_id` instead of overwriting it.
 - **FEVER evidence and threshold calibration (Issue #262):**
   - `laris data acquire --only FEVER` now resolves evidence references against the official FEVER Wikipedia snapshot (`wiki-pages.zip`) into `evidence_sentences.parquet` (the Hugging Face parquet copy is truncated and is not used). `laris data partition` turns SUPPORTS/REFUTES claims into entailment/contradiction premise-hypothesis pairs; NOT ENOUGH INFO has no evidence and is dropped. The language encoder's NLI task now loads `fever`.
   - `laris evaluate calibrate` ratchets `configs/evaluation/language_encoder.yaml` up from passing `val` reports (never lowers; refuses `test` reports). The shipped thresholds remain baseline-relative floors until a trained checkpoint is measured.
