@@ -539,9 +539,13 @@ class StreamingParquetMultiTaskDataLoader:
         answers = rec.get("answers")
         texts = answers.get("text") if isinstance(answers, dict) else None
         starts = answers.get("answer_start") if isinstance(answers, dict) else None
-        if not texts or not starts or not texts[0]:
+        if not texts or not texts[0]:
             self.stats["qa_unanswerable"] += 1  # a real "no answer" label (SQuAD 2.0 style)
             return 0, 0
+        if not starts:
+            raise ValueError(
+                f"Answer {texts[0]!r} has no answer_start; refusing to relabel it 'no answer'"
+            )
         char_start = int(starts[0])
         if char_start < 0 or context[char_start : char_start + len(texts[0])] != texts[0]:
             raise ValueError(
