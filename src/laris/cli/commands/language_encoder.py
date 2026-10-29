@@ -4,29 +4,49 @@ Supports compact and large model sizes, 8-bit AdamW, FlashAttention SDPA, activa
 checkpointing, a --profile-only mode without weight updates, and the strict authorization gate."""
 
 import argparse
+import random
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
+import numpy as np
+
+from laris.config.loader import load_config
+from laris.config.schemas import TrainingConfig
 from laris.core.authorization import (
     assert_training_authorized,
 )
+from laris.core.errors import TrainingExecutionProhibitedError
 from laris.language.encoder.transformer import (
     TORCH_AVAILABLE,
     LanguageEncoderConfig,
     LargeLanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
+from laris.language.training.checkpoint import current_git_commit, file_sha256
 from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
 )
+from laris.language.training.loop import TrainingRunConfig, run_training
 from laris.language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
 from laris.language.training.trainer import (
     LanguageEncoderTrainer,
     MultiTaskLossCalculator,
+    MultiTaskLossWeights,
 )
+
+
+def seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    if TORCH_AVAILABLE:
+        import torch
+
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -40,14 +60,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--micro-batch-size",
         type=int,
-        default=16,
-        help="Micro-batch size per device forward step (default: 16)",
+        default=None,
+        help="Micro-batch size per device forward step (default: from --training-config)",
     )
     parser.add_argument(
         "--grad-accum-steps",
         type=int,
-        default=4,
-        help="Gradient accumulation steps before optimizer update (default: 4)",
+        default=None,
+        help="Gradient accumulation steps per optimizer update (default: from --training-config)",
     )
     parser.add_argument(
         "--max-seq-len",
@@ -90,16 +110,44 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Path to the fitted SentencePiece .model file (required for training)",
     )
     parser.add_argument(
+        "--training-config",
+        type=str,
+        default=None,
+        help="YAML with learning rate, warmup, steps and loss weights "
+        "(default: configs/language_encoder/<model-size>.yaml)",
+    )
+    parser.add_argument(
         "--steps",
         type=int,
-        default=1000,
-        help="Total training optimization steps to execute (default: 1000)",
+        default=None,
+        help="Total optimizer steps (default: training.max_steps from the training config)",
+    )
+    parser.add_argument("--learning-rate", type=float, default=None, help="Peak learning rate")
+    parser.add_argument("--warmup-steps", type=int, default=None, help="LR warmup optimizer steps")
+    parser.add_argument("--eval-interval", type=int, default=200, help="Validate every N steps")
+    parser.add_argument(
+        "--eval-batches", type=int, default=8, help="Validation batches per task (default: 8)"
+    )
+    parser.add_argument("--save-interval", type=int, default=500, help="Checkpoint every N steps")
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=5,
+        help="Stop after N validations without improvement; 0 disables (default: 5)",
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    parser.add_argument("--run-id", type=str, default=None, help="Run directory name")
+    parser.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Checkpoint directory (e.g. <run>/last) to resume from",
     )
     parser.add_argument(
         "--log-interval",
         type=int,
         default=10,
-        help="Step logging interval (default: 10)",
+        help="Log every N optimizer steps (default: 10)",
     )
     parser.add_argument(
         "--output-dir",
@@ -109,7 +157,28 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
+    """CLI flags override the training YAML, which overrides schema defaults."""
+    config_path = Path(args.training_config or f"configs/language_encoder/{args.model_size}.yaml")
+    training = load_config(config_path).training if config_path.is_file() else TrainingConfig()
+    overrides = {
+        "micro_batch_size": args.micro_batch_size,
+        "gradient_accumulation_steps": args.grad_accum_steps,
+        "learning_rate": args.learning_rate,
+        "warmup_steps": args.warmup_steps,
+        "max_steps": args.steps,
+    }
+    merged = {**training.model_dump(), **{k: v for k, v in overrides.items() if v is not None}}
+    merged["batch_size"] = max(
+        merged["batch_size"], merged["micro_batch_size"] * merged["gradient_accumulation_steps"]
+    )
+    return TrainingConfig(**merged)
+
+
 def run(args: argparse.Namespace) -> int:
+    hyper = _resolve_hyperparameters(args)
+    args.micro_batch_size = hyper.micro_batch_size
+    args.grad_accum_steps = hyper.gradient_accumulation_steps
 
     # 1. Instantiate Configuration
     config: LanguageEncoderConfig
@@ -185,7 +254,11 @@ def run(args: argparse.Namespace) -> int:
         print("Run with '--profile-only' to inspect memory feasibility without training.")
         return 1
 
-    assert_training_authorized("language encoder pretraining")
+    try:
+        assert_training_authorized("language encoder pretraining")
+    except TrainingExecutionProhibitedError as exc:
+        print(f"[ERROR] {exc}")
+        return 1
     print("\n[TRAINING AUTHORIZED] Initializing language encoder training engine...")
 
     if not args.tokenizer_model or not Path(args.tokenizer_model).is_file():
@@ -207,8 +280,8 @@ def run(args: argparse.Namespace) -> int:
         )
         return 1
 
-    # Initialize Streaming Parquet DataLoader (train split only, no synthetic fallback)
-    loader = StreamingParquetMultiTaskDataLoader(
+    seed_everything(args.seed)
+    common = dict(
         data_dir=args.data_dir,
         tokenizer=tokenizer,
         fallback_to_synthetic=False,
@@ -216,49 +289,92 @@ def run(args: argparse.Namespace) -> int:
         seq_len=args.max_seq_len,
         batch_size=args.micro_batch_size,
         return_tensors="pt" if TORCH_AVAILABLE else "np",
+        seed=args.seed,
     )
+    # train split only; validation uses the held-out val split, never test
+    loader = StreamingParquetMultiTaskDataLoader(split="train", **common)  # type: ignore[arg-type]
+    eval_loader = StreamingParquetMultiTaskDataLoader(split="val", **common)  # type: ignore[arg-type]
 
     for task_name, shard_paths in sorted(loader.task_paths.items()):
-        print(f"Data shards [{loader.split}] {task_name:<11}: {len(shard_paths)}")
+        print(f"Data shards [train] {task_name:<11}: {len(shard_paths)}")
+    missing_val = sorted(set(loader.task_paths) - set(eval_loader.task_paths))
+    if missing_val:
+        print(f"[ERROR] Tasks without validation shards: {missing_val}.")
+        print("Run `laris data partition` first.")
+        return 1
 
-    # Initialize Model
-    model: Any
-    if TORCH_AVAILABLE:
-        import torch
+    if not TORCH_AVAILABLE:
+        print("[ERROR] PyTorch is required for training: pip install -e '.[training]'")
+        return 1
+    import torch
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Target Compute Device:     {device.upper()}")
-        model = PyTorchTransformerEncoder(config).to(device)
-    else:
-        from laris.language.encoder.transformer import RandomlyInitializedTransformerEncoder
-
-        device = "cpu"
-        print("Target Compute Device:     CPU (NumPy Reference Model)")
-        model = RandomlyInitializedTransformerEncoder(config)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Target Compute Device:     {device.upper()}")
+    model = PyTorchTransformerEncoder(config).to(device)
 
     trainer = LanguageEncoderTrainer(
         model=model,
         config=config,
         dataloader=loader,
         use_8bit_adam=use_8bit_adam,
+        learning_rate=hyper.learning_rate,
         grad_accum_steps=args.grad_accum_steps,
         device=device,
+        precision=args.precision,
+        warmup_steps=hyper.warmup_steps,
+        total_optimizer_steps=hyper.max_steps,
+    )
+    trainer.loss_calculator = MultiTaskLossCalculator(
+        MultiTaskLossWeights(
+            lambda_mlm=hyper.loss_lambda_mlm,
+            lambda_nli=hyper.loss_lambda_nli,
+            lambda_para=hyper.loss_lambda_para,
+            lambda_sim=hyper.loss_lambda_sim,
+            lambda_qa=hyper.loss_lambda_qa,
+        )
     )
 
-    print(f"Starting language encoder training loop for {args.steps} steps...")
-    for step_idx in range(1, args.steps + 1):
-        batch = loader.generate_batch()
-        metrics = trainer.execute_training_step(batch)
-        if step_idx % args.log_interval == 0 or step_idx == 1:
-            vram_str = f"{metrics.peak_vram_gb:.2f} GB" if metrics.peak_vram_gb else "N/A"
-            print(
-                f"[Step {metrics.step:05d}/{args.steps}] "
-                f"Task: {metrics.task_type:<10} | "
-                f"Loss: {metrics.loss_value:.4f} | "
-                f"EffBatch: {metrics.effective_batch_size} | "
-                f"Peak VRAM: {vram_str}"
-            )
-
-    print(f"\n[SUCCESS] Completed {args.steps} training steps successfully.")
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%SZ")
+    run_dir = Path(args.output_dir) / run_id
+    dataset_manifest = Path(args.data_dir) / "task_splits_manifest.json"
+    provenance = {
+        "run_id": run_id,
+        "git_commit": current_git_commit(),
+        "seed": args.seed,
+        "model_size": args.model_size,
+        "model_config": config,
+        "training": hyper.model_dump(),
+        "precision": args.precision,
+        "use_8bit_adam": use_8bit_adam,
+        "tokenizer_model": str(args.tokenizer_model),
+        "tokenizer_sha256": file_sha256(Path(args.tokenizer_model)),
+        "dataset_manifest_sha256": (
+            file_sha256(dataset_manifest) if dataset_manifest.is_file() else None
+        ),
+    }
+    print(f"Run directory:             {run_dir}")
+    print(f"Training for {hyper.max_steps} optimizer steps (effective batch "
+          f"{args.micro_batch_size * args.grad_accum_steps})...")
+    result = run_training(
+        trainer,
+        loader,
+        TrainingRunConfig(
+            total_optimizer_steps=hyper.max_steps,
+            eval_interval=args.eval_interval,
+            eval_batches_per_task=args.eval_batches,
+            save_interval=args.save_interval,
+            patience=args.patience,
+            log_interval=args.log_interval,
+        ),
+        run_dir,
+        eval_loader=eval_loader,
+        provenance=provenance,
+        resume_from=Path(args.resume) if args.resume else None,
+    )
+    status = "stopped early" if result.stopped_early else "completed"
+    print(f"\n[SUCCESS] Training {status} at optimizer step {result.optimizer_steps}.")
+    if result.best_dir is not None:
+        print(f"Best checkpoint: {result.best_dir} (val mean loss {result.best_metric:.4f} "
+              f"at step {result.best_step})")
+    print(f"Last checkpoint: {result.last_dir}")
     return 0
-

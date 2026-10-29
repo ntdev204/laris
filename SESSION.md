@@ -96,6 +96,8 @@ laris train language-encoder --model-size large --profile-only
 export LARIS_TRAINING_AUTHORIZED=1
 laris train language-encoder --model-size large --authorized \
   --tokenizer-model artifacts/tokenizer/laris_spm_32k.model
+# resume: add --resume artifacts/checkpoints/language_encoder/<run-id>/last
+# outputs: <run-id>/best (lowest val loss) and <run-id>/last, each with manifest.json
 
 # 7. Documentation quality gate and all gates (local / CI)
 python3 scripts/validate_docs.py

@@ -915,3 +915,14 @@ This document serves as the single source of truth for active task tracking, exe
   2. CC-100 documents duplicating Wikipedia-VI are removed; UIT-ViQuAD2.0 supersedes v1.1 (identical contexts) so only one of them is a QA source.
   3. Datasets with unreviewed licenses are skipped by default.
   4. The streaming loader reads the new directories (train split only by default).
+
+### Task `M2-LANG-010`: Language Encoder Training Loop
+- **Objective:** Production training loop with real mixed precision, LR schedule, checkpoint/resume, validation and early stopping (Issue #248).
+- **Module:** `MOD-LANG-004` (Language Foundation Training Architecture).
+- **Dependencies:** `M2-DATA-011` (Issue #249).
+- **Status:** `DONE` (Issue #248); real training on the target server remains gated by `LARIS_TRAINING_AUTHORIZED`.
+- **Acceptance Criteria:**
+  1. Optimizer steps are counted per accumulation window and follow a warmup + cosine schedule.
+  2. bf16/fp16 autocast is applied; non-finite gradients never update weights.
+  3. Checkpoints are atomic, carry provenance, restore weights/optimizer/scheduler/RNG exactly and detect corruption.
+  4. Validation uses only the `val` split; early stopping and best-checkpoint selection work.
