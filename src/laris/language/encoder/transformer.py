@@ -558,6 +558,8 @@ try:
 
     TORCH_AVAILABLE = True
 
+    _TASK_HEADS = ("mlm", "nli", "paraphrase", "similarity", "qa")
+
     class PyTorchTransformerEncoder(nn.Module):  # type: ignore[misc]
         """Real PyTorch Transformer encoder with autograd and GPU capability.
 
@@ -627,19 +629,30 @@ try:
             token_ids: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
             training_pass: bool = False,
+            task: Optional[str] = None,
+            mlm_positions: Optional[torch.Tensor] = None,
         ) -> Dict[str, torch.Tensor]:
-            """Forward pass for inference/profiling or authorized training."""
+            """Forward pass for inference/profiling or authorized training.
+
+            With `task` only that task's head is computed (every head otherwise). For `mlm`,
+            `mlm_positions` (B, S bool) restricts the vocabulary projection to those positions
+            and `mlm_logits` becomes (N, V) instead of (B, S, V).
+            """
             if training_pass:
                 assert_training_authorized("PyTorch neural model forward pass with gradients")
-                return self._forward_impl(token_ids, attention_mask=attention_mask)
+                return self._forward_impl(token_ids, attention_mask, task, mlm_positions)
             with torch.no_grad():
-                return self._forward_impl(token_ids, attention_mask=attention_mask)
+                return self._forward_impl(token_ids, attention_mask, task, mlm_positions)
 
         def _forward_impl(
             self,
             token_ids: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
+            task: Optional[str] = None,
+            mlm_positions: Optional[torch.Tensor] = None,
         ) -> Dict[str, torch.Tensor]:
+            if task is not None and task not in _TASK_HEADS:
+                raise ValueError(f"Unknown task '{task}'; expected one of {sorted(_TASK_HEADS)}")
             batch_size, seq_len = token_ids.shape
             x = self.token_embeddings(token_ids)
 
@@ -658,22 +671,24 @@ try:
             hidden_states = self.final_norm(x)
             cls_rep = hidden_states[:, 0, :]
 
-            # Heads
-            mlm_logits = F.linear(hidden_states, self.token_embeddings.weight, self.mlm_bias)
-            nli_logits = self.nli_head(cls_rep)
-            para_prob = torch.sigmoid(self.para_head(cls_rep))
-            similarity_score = torch.sigmoid(self.sim_head(cls_rep))
-            qa_logits = self.qa_head(hidden_states)
-
-            return {
+            outputs: Dict[str, torch.Tensor] = {
                 "hidden_states": hidden_states,
                 "cls_embedding": cls_rep,
-                "mlm_logits": mlm_logits,
-                "nli_logits": nli_logits,
-                "paraphrase_prob": para_prob,
-                "similarity_score": similarity_score,
-                "qa_logits": qa_logits,
             }
+            if task in (None, "mlm"):
+                mlm_input = hidden_states if mlm_positions is None else hidden_states[mlm_positions]
+                outputs["mlm_logits"] = F.linear(
+                    mlm_input, self.token_embeddings.weight, self.mlm_bias
+                )
+            if task in (None, "nli"):
+                outputs["nli_logits"] = self.nli_head(cls_rep)
+            if task in (None, "paraphrase"):
+                outputs["paraphrase_prob"] = torch.sigmoid(self.para_head(cls_rep))
+            if task in (None, "similarity"):
+                outputs["similarity_score"] = torch.sigmoid(self.sim_head(cls_rep))
+            if task in (None, "qa"):
+                outputs["qa_logits"] = self.qa_head(hidden_states)
+            return outputs
 
         def train_step(self, *args: Any, **kwargs: Any) -> None:
             """Barrier preventing unauthorized model training or weight updates."""

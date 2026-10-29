@@ -378,6 +378,8 @@ def run(args: argparse.Namespace) -> int:
         seed=args.seed,
     )
     # train split only; validation uses the held-out val split, never test
+    # training and validation drop padding and group similar lengths (results are unchanged)
+    common.update(trim_padding=True, length_pool_batches=8)
     loader = StreamingParquetMultiTaskDataLoader(split="train", **common)  # type: ignore[arg-type]
     eval_loader = StreamingParquetMultiTaskDataLoader(split="val", **common)  # type: ignore[arg-type]
 
