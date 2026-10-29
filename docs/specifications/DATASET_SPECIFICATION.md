@@ -3,7 +3,7 @@ document_id: "DOC-SPEC-DATA-001"
 title: "LARIS Dataset Inventory, Licensing Matrix & Scalable Sampling Specification"
 document_type: "specification"
 status: "APPROVED"
-version: "1.2.0"
+version: "1.2.1"
 created_at: "2026-10-16"
 updated_at: "2026-10-29"
 owner: "LARIS Architecture Team"
@@ -21,7 +21,7 @@ decision_references:
   - "ADR-004"
   - "ADR-007"
   - "ADR-008"
-change_summary: "Added acquisition logic and real sources/licenses for 7 bilingual expansion datasets (ViNLI, ViSTS, Vi-PAWS blocked, CC-100 VI, HotpotQA, FEVER, UIT-ViQuAD2.0); reconciled totals to 8,347,135 records and documented the gap versus the earlier ~16.5M projection (Issue #244)."
+change_summary: "Documented which of the 24 datasets are partitioned and why (Issue #264). Added acquisition logic and real sources/licenses for 7 bilingual expansion datasets (ViNLI, ViSTS, Vi-PAWS blocked, CC-100 VI, HotpotQA, FEVER, UIT-ViQuAD2.0); reconciled totals to 8,347,135 records and documented the gap versus the earlier ~16.5M projection (Issue #244)."
 ---
 
 # LARIS Dataset Inventory, Licensing Matrix & Scalable Sampling Specification
@@ -126,6 +126,22 @@ Semantic similarity is explicitly represented and acquired via the **STS-B (Sema
 - **Canonical Schema:** `(sentence1: str, sentence2: str, score: float)` where `score` is normalized to the continuous range `[0.0, 1.0]`.
 - **Verified Record Count:** 8,628 pairs (5,749 train / 1,500 validation / 1,379 test).
 - **Integrity Digest:** Verified SHA-256 digests recorded in `data/acquisition_manifest.json`.
+
+---
+
+## 4.1 Partition Coverage (`laris data partition`)
+
+Of the 24 tracked datasets, 14 feed the five language-encoder tasks and are partitioned into leakage-safe train/val/test splits: WIKIPEDIA-VI, WIKIPEDIA-EN-BOUNDED, CC100-VI-CLEAN (mlm); ALL-NLI, ANLI, VINLI, FEVER (nli); QUORA-DUPLICATES, PAWS-WIKI (paraphrase); STSB, VISTS (similarity); SQUAD, UIT-VIQUAD-V2, HOTPOTQA (qa). The other ten are intentionally not partitioned:
+
+| Dataset | Reason |
+| :--- | :--- |
+| S2ORC-STEM | Not downloaded: the official API requires a key (HTTP 401). |
+| LARIS-GOLD | Not built: no pre-existing benchmark; status `PROPOSED`. |
+| NATURAL-QUESTIONS | Not downloaded: the full dump is 42 GB; status `PROPOSED`. |
+| VI-PAWS | `BLOCKED`: no public Vietnamese PAWS release. |
+| UIT-VIQUAD | Superseded: UIT-VIQUAD-V2 is a superset over the same contexts. |
+| PUBLAYNET-MINI, DOCLAYNET-BOUNDED | Layout data (110 records and one loader script), outside the language-encoder tasks. |
+| UD-EWT-EN, UD-VTB-VI, SCIFACT | Data present, but no current task reads syntax treebanks or claim verification; partition when a consumer exists. |
 
 ---
 
