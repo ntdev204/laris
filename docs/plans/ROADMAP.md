@@ -3,9 +3,9 @@ document_id: "DOC-PLAN-ROADMAP-001"
 title: "LARIS Roadmap: Milestones and Exit Criteria"
 document_type: "plan"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-29"
+updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -17,12 +17,12 @@ decision_references:
   - "ADR-002"
   - "ADR-007"
   - "ADR-008"
-change_summary: "Consolidates the implementation roadmap and the milestone exit-criteria matrix."
+change_summary: "Distinguishes implemented components from empirically satisfied milestone exits."
 ---
 
 # LARIS Roadmap: Milestones and Exit Criteria
 
-Milestone sequence and the exit criteria that gate each one. Task-level status lives in docs/plans/ROADMAP.md.
+Milestone sequence and the exit criteria that gate each one. Task-level work is tracked in GitHub issues. Implemented components and passing contract tests do not establish empirical milestone completion. The [measured status report](../research/EMPIRICAL_STATUS.md) records the current checkpoint validation and real-paper pilot, including unmet retrieval, extraction and gap-discovery gates.
 
 ## 1. Implementation Roadmap
 

@@ -1,0 +1,322 @@
+[
+  {
+    "id": "D18-1360",
+    "title": "Multi-Task Identification of Entities, Relations, and Coreference for Scientific Knowledge Graph Construction",
+    "url": "https://aclanthology.org/D18-1360/",
+    "pdf_url": "https://aclanthology.org/D18-1360.pdf",
+    "pdf_sha256": "a0955c173c503e5762bb685eabc5acb3c0212908ec60dff56dbf706f335126ba",
+    "text_sha256": "150aa4971eb602fd7ef0063514951f32bd7ee5af8e9d91eb76c35654409d1115",
+    "text_file": "sources/D18-1360.txt",
+    "pages": 14,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2020.acl-main.670",
+    "title": "SciREX: A Challenge Dataset for Document-Level Information Extraction",
+    "url": "https://aclanthology.org/2020.acl-main.670/",
+    "pdf_url": "https://aclanthology.org/2020.acl-main.670.pdf",
+    "pdf_sha256": "b19535b67223edfc3b89a299ea5d32ad88f003d2ceb30d3967073d501e9079ff",
+    "text_sha256": "70a30a7244ff7efbc4d83ea1211116b4ecd062b7e166295a4a84ff3583c51ff6",
+    "text_file": "sources/2020.acl-main.670.txt",
+    "pages": 11,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "D19-1371",
+    "title": "SciBERT: A Pretrained Language Model for Scientific Text",
+    "url": "https://aclanthology.org/D19-1371/",
+    "pdf_url": "https://aclanthology.org/D19-1371.pdf",
+    "pdf_sha256": "42e7bb57b92fbe6077c073edaffaf173728b7b685395700ac255ce0359344268",
+    "text_sha256": "6789ee72c1db8b4482d1582945258a5af61c048b0df6853f9e0ef3bf2a1a0153",
+    "text_file": "sources/D19-1371.txt",
+    "pages": 6,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "N19-1361",
+    "title": "Structural Scaffolds for Citation Intent Classification in Scientific Publications",
+    "url": "https://aclanthology.org/N19-1361/",
+    "pdf_url": "https://aclanthology.org/N19-1361.pdf",
+    "pdf_sha256": "01a4727c45f7418c0135124f4ebe61dc13e4bfebba616cef1a43cde1cf56c32f",
+    "text_sha256": "e769035113648bde4a8509b5b6a80a51f37aa735f075c009106212389e1f47c4",
+    "text_file": "sources/N19-1361.txt",
+    "pages": 11,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2020.emnlp-main.609",
+    "title": "Fact or Fiction: Verifying Scientific Claims",
+    "url": "https://aclanthology.org/2020.emnlp-main.609/",
+    "pdf_url": "https://aclanthology.org/2020.emnlp-main.609.pdf",
+    "pdf_sha256": "e51a1fab569f2dcb00f7806fe95094e25a34c027140709725d3d05b7a0af9ac7",
+    "text_sha256": "45518c547400969581c5e451dc8b9a1d13987bfce8fc54aa695a2c1e72d17ea9",
+    "text_file": "sources/2020.emnlp-main.609.txt",
+    "pages": 17,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2022.findings-emnlp.347",
+    "title": "SciFact-Open: Towards open-domain scientific claim verification",
+    "url": "https://aclanthology.org/2022.findings-emnlp.347/",
+    "pdf_url": "https://aclanthology.org/2022.findings-emnlp.347.pdf",
+    "pdf_sha256": "dedc957c7a3696620b2682fe1fa4cc2e3703204ee1f4e4d4ca4475ada0a04a85",
+    "text_sha256": "5165e4637e661769e0f99eb92808c0dd39af3aa5b2e1f306524de7135786ed2a",
+    "text_file": "sources/2022.findings-emnlp.347.txt",
+    "pages": 16,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2023.emnlp-main.483",
+    "title": "SCITAB: A Challenging Benchmark for Compositional Reasoning and Claim Verification on Scientific Tables",
+    "url": "https://aclanthology.org/2023.emnlp-main.483/",
+    "pdf_url": "https://aclanthology.org/2023.emnlp-main.483.pdf",
+    "pdf_sha256": "4deac2cf29619bb4cb3583efbf9cd039ce435bed3a5bcd90337dfa8f243ece9f",
+    "text_sha256": "339c1c0d9160b957d5374f614c610b6c84fe5756094cabbb395310b7fa370373",
+    "text_file": "sources/2023.emnlp-main.483.txt",
+    "pages": 27,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2025.coling-main.573",
+    "title": "Extracting, Detecting, and Generating Research Questions for Scientific Articles",
+    "url": "https://aclanthology.org/2025.coling-main.573/",
+    "pdf_url": "https://aclanthology.org/2025.coling-main.573.pdf",
+    "pdf_sha256": "89df9de752ff802493f25ebf6e4c28bcd9356f32a0bcee60dd29546ed553a1a0",
+    "text_sha256": "6d5f17eb069b6469b2ec2eca8223187ceffff9d9d93373370e0fe1a8ab657ebd",
+    "text_file": "sources/2025.coling-main.573.txt",
+    "pages": 16,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.findings-acl.644",
+    "title": "ResearchBench: Benchmarking LLMs in Scientific Discovery via Inspiration-Based Task Decomposition",
+    "url": "https://aclanthology.org/2026.findings-acl.644/",
+    "pdf_url": "https://aclanthology.org/2026.findings-acl.644.pdf",
+    "pdf_sha256": "5d2f94548f79c4be4df94656ccd1492b5cf9eb9c5484e643c6ebd8d4ab1476f4",
+    "text_sha256": "ad4d86396528af761397d3b90b851954327b98bfc1a300802580e761e7712532",
+    "text_file": "sources/2026.findings-acl.644.txt",
+    "pages": 21,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.acl-long.669",
+    "title": "Generating Literature-Driven Scientific Theories at Scale",
+    "url": "https://aclanthology.org/2026.acl-long.669/",
+    "pdf_url": "https://aclanthology.org/2026.acl-long.669.pdf",
+    "pdf_sha256": "2c23395758b58315588c344805c632728346f600ee15fa087e4c60c516770892",
+    "text_sha256": "f743480bf481347d4ae08640f3e4ab2387823741e6ca08fcd15905cdbc28f17f",
+    "text_file": "sources/2026.acl-long.669.txt",
+    "pages": 22,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.lrec-1.864",
+    "title": "SciClaimEval: Cross-modal Claim Verification in Scientific Papers",
+    "url": "https://aclanthology.org/2026.lrec-1.864/",
+    "pdf_url": "https://aclanthology.org/2026.lrec-1.864.pdf",
+    "pdf_sha256": "d179da8d86aa6a25afb94a1481a9913a0393fcdaf246907a33cc05e195187bb5",
+    "text_sha256": "5c2419b8055c4d00870c0ac041207c5fb27814970ec2a41ceb532753e09b2192",
+    "text_file": "sources/2026.lrec-1.864.txt",
+    "pages": 12,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2025.findings-emnlp.631",
+    "title": "From Hypothesis to Publication: A Comprehensive Survey of AI-Driven Research Support Systems",
+    "url": "https://aclanthology.org/2025.findings-emnlp.631/",
+    "pdf_url": "https://aclanthology.org/2025.findings-emnlp.631.pdf",
+    "pdf_sha256": "337808e83092cf8b4a43472c733d0d6c2f4f721678954db5579f7a1f30f352d6",
+    "text_sha256": "968e988f77743153410b781172f393f62001775b6f5a255b537f9db6e621c902",
+    "text_file": "sources/2025.findings-emnlp.631.txt",
+    "pages": 31,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.emnlp-main.2616",
+    "title": "SurveyLens: A Discipline-Aware Benchmark for Automatic Survey Generation",
+    "url": "https://aclanthology.org/2026.emnlp-main.2616/",
+    "pdf_url": "https://aclanthology.org/2026.emnlp-main.2616.pdf",
+    "pdf_sha256": "971bfb3131b4abf46b0bae42838537b37791afb45beb670d1abd6b2e30807376",
+    "text_sha256": "ce739f6ec63190e472adf11aecf70b62fc56eee94a7caa76bf8114ac8d516ec9",
+    "text_file": "sources/2026.emnlp-main.2616.txt",
+    "pages": 33,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2024.sdp-1.3",
+    "title": "Overview of the Context24 Shared Task on Contextualizing Scientific Claims",
+    "url": "https://aclanthology.org/2024.sdp-1.3/",
+    "pdf_url": "https://aclanthology.org/2024.sdp-1.3.pdf",
+    "pdf_sha256": "81dc8d0eb89db3ddce6f5e31f46fec06bc2e3786948952cf87444e1855b953cf",
+    "text_sha256": "147c43755f623eb8c1dc07a1891d5938e3013b157211c5653c4a508207cb943f",
+    "text_file": "sources/2024.sdp-1.3.txt",
+    "pages": 10,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2024.lrec-main.248",
+    "title": "Can Large Language Models Discern Evidence for Scientific Hypotheses? Case Studies in the Social Sciences",
+    "url": "https://aclanthology.org/2024.lrec-main.248/",
+    "pdf_url": "https://aclanthology.org/2024.lrec-main.248.pdf",
+    "pdf_sha256": "e4ce7ffb3cf4101ab9595b1334e9a7c961134d17eef86e4b5f91414d2741fcda",
+    "text_sha256": "b0f77d1fda5862756e1d95b51a6120a412f11c3494bd97908b889976bb40f1c5",
+    "text_file": "sources/2024.lrec-main.248.txt",
+    "pages": 11,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.findings-eacl.81",
+    "title": "Pushing the Frontiers of Scientific Fact-Checking: The SCINLP Dataset",
+    "url": "https://aclanthology.org/2026.findings-eacl.81/",
+    "pdf_url": "https://aclanthology.org/2026.findings-eacl.81.pdf",
+    "pdf_sha256": "008176e4aa12baaa1462f1296e182586e99a5808ebc2f537c2c9162745b9167f",
+    "text_sha256": "63ed60a4849b7fdc88437cd44d01440f83d736e584f56b4eeb13c68fc4fe152a",
+    "text_file": "sources/2026.findings-eacl.81.txt",
+    "pages": 28,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2026.lrec-1.404",
+    "title": "CareMedEval Dataset: Evaluating Critical Appraisal and Reasoning in the Biomedical Field",
+    "url": "https://aclanthology.org/2026.lrec-1.404/",
+    "pdf_url": "https://aclanthology.org/2026.lrec-1.404.pdf",
+    "pdf_sha256": "96cffe122ca0329ea15e8eea9e3cf1ad144a27e5265ceea9656ec03ed03d3c61",
+    "text_sha256": "3d43231c690baf13dd74ed9e9de85c7fe6704e3f738e9cacd9e7042026223199",
+    "text_file": "sources/2026.lrec-1.404.txt",
+    "pages": 13,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2023.acl-short.61",
+    "title": "Detecting Contradictory COVID-19 Drug Efficacy Claims from Biomedical Literature",
+    "url": "https://aclanthology.org/2023.acl-short.61/",
+    "pdf_url": "https://aclanthology.org/2023.acl-short.61.pdf",
+    "pdf_sha256": "07ca25c617dd49642f0b2a2dd101aa65460faa09b0903bad2a793e19374531a8",
+    "text_sha256": "6919de09bf1df34777fdd4836e1f54983aa951e4aedecee20751674b11dc7c2d",
+    "text_file": "sources/2023.acl-short.61.txt",
+    "pages": 20,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2023.findings-acl.888",
+    "title": "Check-COVID: Fact-Checking COVID-19 News Claims with Scientific Evidence",
+    "url": "https://aclanthology.org/2023.findings-acl.888/",
+    "pdf_url": "https://aclanthology.org/2023.findings-acl.888.pdf",
+    "pdf_sha256": "d6e2217ac09061b02131a80a10e977e264b7a57f2778139093d908917983587c",
+    "text_sha256": "ef9c788fb360d40790d0538918c3f0a9e7b1a8118110c1e463ae0218ccd60b4b",
+    "text_file": "sources/2023.findings-acl.888.txt",
+    "pages": 14,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  },
+  {
+    "id": "2024.findings-acl.8",
+    "title": "CHIME: LLM-Assisted Hierarchical Organization of Scientific Studies for Literature Review Support",
+    "url": "https://aclanthology.org/2024.findings-acl.8/",
+    "pdf_url": "https://aclanthology.org/2024.findings-acl.8.pdf",
+    "pdf_sha256": "b88ac1aaaf5f654bb4f58cb4d85623c6d8764eda107e8c43b82a26b3abf062cc",
+    "text_sha256": "bb7a41fae5fe71ebf0e89686e468fdbba61159c8b003a58a2bc7e8edf4363e85",
+    "text_file": "sources/2024.findings-acl.8.txt",
+    "pages": 15,
+    "license_links": [
+      "http://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "https://creativecommons.org/licenses/by/4.0/"
+    ],
+    "use": "local_reading_and_pilot_only_not_training"
+  }
+]

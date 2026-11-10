@@ -1,0 +1,60 @@
+# Formal section-5 gates; distinct from baseline-relative regression floors.
+version: "1.0.0"
+stage: natural_language
+required_split: test
+gates:
+  - {id: G01, dataset: anli, language: en, metric: macro_f1, operator: ge, threshold: 0.85}
+  - {id: G02, dataset: vinli, language: vi, metric: macro_f1, operator: ge, threshold: 0.78}
+  - {id: G03, dataset: paws, language: en, metric: accuracy, operator: ge, threshold: 0.88}
+  - {id: G04, dataset: paws, language: en, metric: macro_f1, operator: ge, threshold: 0.88}
+  - {id: G05, dataset: stsb, language: en, metric: spearman, operator: ge, threshold: 0.82}
+  - id: G06
+    dataset: squad
+    language: en
+    metric: exact_match
+    operator: ge
+    threshold: 0.72
+    protocol: normalized_answer_text
+  - id: G07
+    dataset: squad
+    language: en
+    metric: f1
+    operator: ge
+    threshold: 0.83
+    protocol: normalized_answer_text
+  - id: G08
+    dataset: viquad_v2
+    language: vi
+    metric: exact_match
+    operator: ge
+    threshold: 0.65
+    protocol: normalized_answer_text
+  - id: G09
+    dataset: viquad_v2
+    language: vi
+    metric: f1
+    operator: ge
+    threshold: 0.78
+    protocol: normalized_answer_text
+  - id: G10
+    dataset: unseen_text
+    language: en
+    metric: fertility
+    operator: le
+    threshold: 1.35
+    protocol: unseen_text_tokens_per_word
+  - id: G11
+    dataset: unseen_text
+    language: vi
+    metric: fertility
+    operator: le
+    threshold: 1.35
+    protocol: unseen_text_tokens_per_word
+  - id: G12
+    dataset: stem_retrieval
+    language: all
+    metric: mrr
+    operator: ge
+    threshold: 0.82
+    protocol: held_out_query_relevance
+    must_beat_baseline: true

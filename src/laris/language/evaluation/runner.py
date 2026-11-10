@@ -47,6 +47,8 @@ def evaluate_checkpoint(
         "git_commit": current_git_commit(),
         "thresholds_sha256": file_sha256(config_path),
         "max_samples_per_dataset": max_samples,
+        "dataset_manifest_sha256": file_sha256(data_dir / "task_splits_manifest.json"),
+        "split_isolation_checked": True,
     }
     body = report_to_dict(report, extra)
 

@@ -1,0 +1,72 @@
+{
+  "checked_at": "2026-11-10T15:35:42.131641+00:00",
+  "scope": "Owner-only-training repository preparation",
+  "no_training": true,
+  "model_inference_executed": false,
+  "optimizer_steps_executed": 0,
+  "checkpoint_identity_matches": true,
+  "checks": [
+    {
+      "command": [
+        "make",
+        "PY=.venv/bin/python",
+        "check-no-training"
+      ],
+      "expected_exit": 0,
+      "exit_code": 0,
+      "passed": true,
+      "stdout": ".venv/bin/python -m ruff check .\nAll checks passed!\n.venv/bin/python -m mypy src\nSuccess: no issues found in 147 source files\n.venv/bin/python scripts/validate_docs.py\n============================================================\nLARIS Documentation & Metadata Validation Quality Gate\n============================================================\nScanned and parsed 53 documentation files.\n\n--- SUCCESS ---\nAll documents passed metadata completeness, uniqueness, lifecycle status,\nADR cross-referencing, and link integrity checks.\nQuality Gate: PASSED\n.venv/bin/python scripts/validate_work_plan.py\n[PASS] spec <-> plan <-> task: requirements, order, notes and evidence agree.\n.venv/bin/python -m pytest -p no:cacheprovider tests/documentation \\\n\ttests/contract/test_work_plan.py tests/contract/test_training_readiness_contracts.py \\\n\ttests/unit/language/test_readiness.py tests/cli/test_owner_runbook.py\n.........................................                                [100%]\n41 passed in 1.34s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "expected_exit": 0,
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".venv/bin/laris",
+        "data",
+        "check",
+        "--verify-sha256"
+      ],
+      "expected_exit": 0,
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "manifest: 14 datasets partitioned\nmlm        train wikipedia_en=1991346, wikipedia_vi=1262808, cc100_vi_clean=2160400\nmlm        val   wikipedia_en=20149, wikipedia_vi=13018, cc100_vi_clean=269708\nmlm        test  wikipedia_en=20255, wikipedia_vi=12854, cc100_vi_clean=269878\nnli        train all_nli=942068, anli=162864, vinli=18282, fever=77139\nnli        val   all_nli=19657, anli=3200, vinli=2249, fever=4249\nnli        test  all_nli=19656, anli=3200, vinli=2264, fever=4120\nparaphrase train paws=49401, quora_duplicates=330352\nparaphrase val   paws=8000, quora_duplicates=37432\nparaphrase test  paws=8000, quora_duplicates=36504\nsimilarity train stsb=5734, vists=19440\nsimilarity val   stsb=1500, vists=2363\nsimilarity test  stsb=1379, vists=2047\nqa         train squad=87599, viquad_v2=28300, hotpotqa=80721\nqa         val   squad=3286, viquad_v2=1713, hotpotqa=3479\nqa         test  squad=7284, viquad_v2=2088, hotpotqa=3468\n\n[READY] processed data and tooling are in place; no training was run.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".venv/bin/laris",
+        "evaluate",
+        "readiness",
+        "--reports",
+        "reports/language_encoder/compact-1024-04-best-val.json",
+        "--output",
+        "artifacts/readiness/preparation-final.json"
+      ],
+      "expected_exit": 1,
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "G01 anli/en macro_f1: FAIL (Below formal gate; value=0.4041940209702362)\nG02 vinli/vi macro_f1: FAIL (Below formal gate; value=0.538469495929854)\nG03 paws/en accuracy: FAIL (Below formal gate; value=0.696)\nG04 paws/en macro_f1: MISSING (Metric is missing or non-finite; value=None)\nG05 stsb/en spearman: FAIL (Below formal gate; value=0.7704709608144864)\nG06 squad/en exact_match: UNVERIFIED (Metric protocol is missing/incompatible; value=0.4755)\nG07 squad/en f1: UNVERIFIED (Metric protocol is missing/incompatible; value=0.6705057418965864)\nG08 viquad_v2/vi exact_match: UNVERIFIED (Metric protocol is missing/incompatible; value=0.3525977816695855)\nG09 viquad_v2/vi f1: UNVERIFIED (Metric protocol is missing/incompatible; value=0.4190124612894531)\nG10 unseen_text/en fertility: MISSING (No measurement; value=None)\nG11 unseen_text/vi fertility: MISSING (No measurement; value=None)\nG12 stem_retrieval/all mrr: MISSING (No measurement; value=None)\n[BLOCKER] Report 0: 'val' is not held-out test evidence\n[BLOCKER] Report 0: missing dataset manifest identity\n[BLOCKER] Report 0: split isolation was not recorded\n[NOT QUALIFIED] no model/training executed\n",
+      "stderr": ""
+    }
+  ],
+  "all_passed": true,
+  "excluded_checks": "Full pytest and optimizer-bearing profiling/training/tokenizer fitting were deliberately not executed.",
+  "packaging": {
+    "build": "PASS: uv build --out-dir /tmp/laris-preparation-dist",
+    "wheel_sha256": "0016c9ec0872786bc79bb819c490338ec0b3207d204f980b87b7af99a09d7064",
+    "fresh_environment_smoke": "4 import-only tests passed; installed wheel path verified",
+    "readiness_help_without_torch": "PASS",
+    "optimization_executed": false
+  }
+}

@@ -1,7 +1,7 @@
 """`laris train language-encoder`: multi-task language encoder training and bounded profiling.
 
-Supports compact and large model sizes, 8-bit AdamW, FlashAttention SDPA, activation
-checkpointing, a --profile-only mode without weight updates, and the strict authorization gate."""
+Supports compact/large models and memory profiling. Authorized --profile-only
+includes real optimizer steps on a discarded model; it is not a no-training mode."""
 
 import argparse
 import random
@@ -93,7 +93,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--profile-only",
         action="store_true",
-        help="Execute bounded non-training memory and latency profiling without weight updates",
+        help="Measure forward memory; with LARIS_TRAINING_AUTHORIZED=1 runs real optimizer steps",
     )
     parser.add_argument(
         "--authorized",

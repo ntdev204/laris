@@ -1,0 +1,94 @@
+---
+schema_version: 1
+document: plan
+no_training: true
+steps:
+- id: T01
+  requirement: R01
+  title: Thiết lập ba file đối chứng và quy tắc làm việc
+  depends_on: []
+  deliverables:
+  - .agents/spec
+  - .agents/plan
+  - .agents/task
+  - AGENTS.md
+  - scripts/validate_work_plan.py
+  - tests/contract/test_work_plan.py
+  checks: validator và contract tests đối chứng
+  status: done
+  note: 'PASS: 9 pure-file contract tests; no training or model execution.'
+- id: T02
+  requirement: R02
+  title: Tách experiment, report và test theo chức năng
+  depends_on:
+  - T01
+  deliverables:
+  - experiments/scientific_nlp/acquire.py
+  - experiments/scientific_nlp/pilot.py
+  - reports/README.md
+  - reports/language_encoder/compact-1024-04-best-val.json
+  - reports/scientific_nlp/corpus.json
+  - reports/scientific_nlp/pilot.json
+  checks: kiểm tra cấu trúc, tham chiếu và lint
+  status: done
+  note: 'PASS: report bytes unchanged; experiment lint, documentation links and three-way
+    cross-check pass.'
+- id: T03
+  requirement: R03
+  title: Chuẩn hóa đặc tả, thứ tự model và trạng thái thực tế
+  depends_on:
+  - T02
+  deliverables:
+  - docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md
+  - docs/training/README.md
+  - docs/research/EMPIRICAL_STATUS.md
+  - docs/development/CODING_STANDARDS.md
+  checks: đối chiếu gate, số liệu và documentation validator
+  status: done
+  note: 'PASS: canonical stage gates reconciled; obsolete snapshots removed; 14 non-training
+    checks and 52-document validation pass.'
+- id: T04
+  requirement: R04
+  title: Thêm kiểm tra readiness offline, tách baseline khỏi gate chuyển stage
+  depends_on:
+  - T03
+  deliverables:
+  - configs/evaluation/foundation.yaml
+  - src/laris/language/evaluation/readiness.py
+  - src/laris/cli/commands/readiness.py
+  - tests/unit/language/test_readiness.py
+  checks: unit tests JSON/YAML thuần; báo cáo sẵn có không được qualify
+  status: done
+  note: 'PASS: offline audit rejects current checkpoint; 35 non-training tests cover
+    invalid evidence and protocols; no model or optimizer executed.'
+- id: T05
+  requirement: R05
+  title: Bàn giao runbook và lệnh do chủ dự án tự thực thi
+  depends_on:
+  - T04
+  deliverables:
+  - docs/training/OWNER_RUNBOOK.md
+  checks: parse lệnh qua argparse; không gọi handler train/profile
+  status: done
+  note: 'PASS: six documented CLI commands parse without handlers; owner-only training
+    boundary and remaining metric blockers documented.'
+- id: T06
+  requirement: R06
+  title: Kiểm tra cuối và đối chứng ba chiều
+  depends_on:
+  - T05
+  deliverables:
+  - reports/verification/reorganization.json
+  - Makefile
+  - .github/workflows/ci.yml
+  checks: lint, mypy, docs, tests không optimization, đối chứng ba file
+  status: done
+  note: 'PASS: 41 no-training tests, lint, mypy, 53 docs, data SHA checks, packaging
+    and 4 fresh-wheel smoke tests; checkpoint unchanged; all three work files reconcile.'
+---
+
+# Plan
+
+Thực hiện T01 → T02 → T03 → T04 → T05 → T06. Mỗi bước chỉ được hoàn thành khi requirement, dependency, deliverable, kết quả kiểm tra và ghi chú thống nhất ở cả ba file. Không tự tiến sang training hay stage sau.
+
+Gate chức năng và metric phải có một nguồn chuẩn. Report validation hiện có chỉ cho phép chẩn đoán; không tự động thỏa gate chuyển stage.

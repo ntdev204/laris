@@ -1,0 +1,161 @@
+{
+  "stage": "natural_language",
+  "qualified": false,
+  "evidence_issues": [
+    "Report 0: 'val' is not held-out test evidence",
+    "Report 0: missing dataset manifest identity",
+    "Report 0: split isolation was not recorded"
+  ],
+  "gates": [
+    {
+      "id": "G01",
+      "dataset": "anli",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.85,
+      "status": "FAIL",
+      "value": 0.4041940209702362,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G02",
+      "dataset": "vinli",
+      "language": "vi",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "status": "FAIL",
+      "value": 0.538469495929854,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G03",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "accuracy",
+      "operator": "ge",
+      "threshold": 0.88,
+      "status": "FAIL",
+      "value": 0.696,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G04",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.88,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Metric is missing or non-finite"
+    },
+    {
+      "id": "G05",
+      "dataset": "stsb",
+      "language": "en",
+      "metric": "spearman",
+      "operator": "ge",
+      "threshold": 0.82,
+      "status": "FAIL",
+      "value": 0.7704709608144864,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G06",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.72,
+      "protocol": "normalized_answer_text",
+      "status": "UNVERIFIED",
+      "value": 0.4755,
+      "reason": "Metric protocol is missing/incompatible"
+    },
+    {
+      "id": "G07",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.83,
+      "protocol": "normalized_answer_text",
+      "status": "UNVERIFIED",
+      "value": 0.6705057418965864,
+      "reason": "Metric protocol is missing/incompatible"
+    },
+    {
+      "id": "G08",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.65,
+      "protocol": "normalized_answer_text",
+      "status": "UNVERIFIED",
+      "value": 0.3525977816695855,
+      "reason": "Metric protocol is missing/incompatible"
+    },
+    {
+      "id": "G09",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "protocol": "normalized_answer_text",
+      "status": "UNVERIFIED",
+      "value": 0.4190124612894531,
+      "reason": "Metric protocol is missing/incompatible"
+    },
+    {
+      "id": "G10",
+      "dataset": "unseen_text",
+      "language": "en",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "status": "MISSING",
+      "value": null,
+      "reason": "No measurement"
+    },
+    {
+      "id": "G11",
+      "dataset": "unseen_text",
+      "language": "vi",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "status": "MISSING",
+      "value": null,
+      "reason": "No measurement"
+    },
+    {
+      "id": "G12",
+      "dataset": "stem_retrieval",
+      "language": "all",
+      "metric": "mrr",
+      "operator": "ge",
+      "threshold": 0.82,
+      "protocol": "held_out_query_relevance",
+      "must_beat_baseline": true,
+      "status": "MISSING",
+      "value": null,
+      "reason": "No measurement"
+    }
+  ],
+  "model_executed": false,
+  "training_executed": false,
+  "next_stage": "scientific_language",
+  "gate_config_sha256": "b8b18094111f84327307164807d48f155e3c6fcac93e91ebeeea48255ff8d941",
+  "inputs": [
+    {
+      "path": "reports/language_encoder/compact-1024-04-best-val.json",
+      "sha256": "717f1515a8bdfdc5a83d496ca5a949918835b0a4ebcc534eb301e76a191f5f14"
+    }
+  ]
+}
