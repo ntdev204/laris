@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Benchmark certification (Issue #309):** evaluation now requires an evaluator or explicit measured metrics, rejects empty/non-finite measurements, and fails runs with incomplete or failed benchmark items instead of returning fixed passing scores.
 
-## [Unreleased]
-
 ## [1.1.7] - 2026-10-30
 
 ### Fixed
