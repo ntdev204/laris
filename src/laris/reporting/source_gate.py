@@ -64,6 +64,9 @@ class SourceEvidenceGate(EvidenceGate):
                         actual = hashlib.sha256(self._sources[doc_id].encode("utf-8")).hexdigest()
                         if actual != manifest[doc_id]:
                             raise ProvenanceViolationError("Source checksum mismatch.")
+                        page = self._sources[doc_id][:coordinate.char_start].count("\f") + 1
+                        if coordinate.page_number != page or "\f" in coordinate.verbatim_snippet:
+                            raise ProvenanceViolationError("Citation page does not match source span.")
                         validator.validate_coordinate(coordinate)
                         excerpts.append(coordinate.verbatim_snippet)
                     if not excerpts or any(assertion.statement != text for text in excerpts):

@@ -37,7 +37,7 @@ def test_exact_excerpt_is_certified():
     assert SourceEvidenceGate({"d1": TEXT}).verify_report(r).is_valid
 
 
-@pytest.mark.parametrize("defect", ["source", "offset", "snippet", "checksum", "identity",
+@pytest.mark.parametrize("defect", ["source", "offset", "page", "snippet", "checksum", "identity",
                                     "unsupported", "prose", "empty", "missing_source"])
 def test_false_certification_is_rejected(defect):
     r = report()
@@ -47,6 +47,8 @@ def test_false_certification_is_rejected(defect):
         sources["d1"] = "Tampered source"
     elif defect == "offset":
         r.citation_index["c1"] = replace(r.citation_index["c1"], char_start=1)
+    elif defect == "page":
+        r.citation_index["c1"] = replace(r.citation_index["c1"], page_number=99)
     elif defect == "snippet":
         r.citation_index["c1"] = replace(r.citation_index["c1"], verbatim_snippet="Invented")
     elif defect == "checksum":
