@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Source-backed reports (Issue #311):** `SourceEvidenceGate` validates actual source hashes, citation identities, offsets and verbatim excerpts, rejects unsupported synthesis and unregistered prose, and refuses zero-assertion reports. The existing gate labels its verification scope as citation IDs only.
+
 ## [1.1.7] - 2026-10-30
 
 ### Fixed

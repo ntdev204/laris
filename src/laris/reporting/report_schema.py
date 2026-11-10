@@ -363,7 +363,8 @@ class EvidenceGate:
         report: StructuredResearchReport,
         strict: bool = True,
     ) -> ReportVerificationSummary:
-        """Audit all assertions in report and verify compliance with coverage thresholds."""
+        """Audit citation-ID coverage only; source support needs SourceEvidenceGate."""
+        report.metadata["verification_scope"] = "citation_ids_only"
         if not report.verify_all_sections_present():
             missing_secs = [st.value for st in ReportSectionType if st not in report.sections]
             raise ReportSchemaValidationError(

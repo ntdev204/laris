@@ -3,9 +3,9 @@ document_id: "DOC-DEV-CLI-001"
 title: "LARIS Command-Line Interface Reference"
 document_type: "specification"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-10-29"
-updated_at: "2026-10-29"
+updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -15,7 +15,7 @@ related_documents:
   - "docs/adr/ADR-013-functional-package-layout-and-cli.md"
 decision_references:
   - "ADR-013"
-change_summary: "Reference for the laris command-line interface, including the server runbook."
+change_summary: "Documents citation-ID verification versus source-backed extractive certification."
 ---
 
 # LARIS Command-Line Interface Reference
@@ -95,3 +95,18 @@ Notes:
 Training shows a live progress bar with running per-task losses, learning rate, gradient norm, GPU memory and ETA when run in a terminal; when output is redirected (`nohup ... > train.log`) it prints one plain line every `--log-interval` steps instead.
 
 Checkpoints are written atomically to `artifacts/checkpoints/language_encoder/<run-id>/{best,last}` with a provenance manifest and SHA-256. Resume with `--resume <run-id>/last`.
+
+## Report verification scope
+
+`EvidenceGate` checks registered assertion citation IDs only. Its `verification_scope`
+metadata is `citation_ids_only`; a passing coverage ratio is not evidence of source
+integrity or entailment.
+
+For source-backed extractive reports, use `SourceEvidenceGate(source_documents)`
+with `StructuredReportGenerator(evidence_gate=gate)`. Supply canonical UTF-8 source
+texts keyed by document ID, and corpus hashes computed from those texts. Every
+assertion must equal its cited excerpt; each section's Markdown must equal its
+assertion statements joined by blank lines. Empty sections are allowed, but reports
+without assertions are rejected. Sources, hashes, coordinate IDs and character spans
+are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
+semantic support or establish research-gap novelty.
