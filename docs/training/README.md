@@ -3,7 +3,7 @@ document_id: "DOC-INDEX-TRAINING-001"
 title: "Ordered Training and Owner Handoff"
 document_type: "plan"
 status: "DRAFT"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-11-10"
 updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
@@ -40,8 +40,8 @@ Execution order:
 6. Only then implement/execute scientific-language learning, followed by OCR,
    manuscript learning, integration and later specialists.
 
-Current implementation tasks live in `.agents/spec`, `.agents/plan` and
-`.agents/task`. Completed preparation tasks do not mean completed model training.
+The system specification, remaining project plan and implementation tasks live in `.agents/spec.md`, `.agents/plan.md` and
+`.agents/task.md`. Completed preparation tasks do not mean completed model training.
 Agents must not run fitting, backward passes, optimizer steps, authorized memory
 profiling or tests that perform these operations.
 
