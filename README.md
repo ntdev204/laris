@@ -1,12 +1,14 @@
 # Local Agentic Research Intelligence System (LARIS)
 
-[![Status: Pre-training baseline](https://img.shields.io/badge/status-pre--training-blue.svg)](docs/plans/ROADMAP.md)
+[![Status: Engineering baseline](https://img.shields.io/badge/status-engineering%20baseline-blue.svg)](docs/research/EMPIRICAL_STATUS.md)
 [![Hardware Target: RTX 5070 Ti 16GB](https://img.shields.io/badge/hardware-RTX%205070%20Ti%2016GB-green.svg)](docs/architecture/SYSTEM_OVERVIEW.md)
 [![License: Internal / Work-in-Progress](https://img.shields.io/badge/license-Proprietary%20%2F%20Internal-lightgrey.svg)](docs/development/DOCUMENTATION.md)
 
 **LARIS** is an autonomous, local-first scientific intelligence platform engineered to comprehend natural language, model complex semantic relations, reason over empirical scientific evidence, synthesize knowledge across multiple publications, discover verifiable research gaps, and propose actionable experimental directions.
 
 LARIS is **not** a generic PDF chatbot, not a naive semantic search tool, and not an off-the-shelf RAG pipeline wrapping cloud LLM APIs. It is a ground-up scientific research platform constructed on self-built language foundations, selective compute orchestration, and evidence-first epistemology.
+
+Current measured readiness: the local compact checkpoint passes baseline-relative validation, while the real-paper pilot has not established effective dense retrieval, production report quality or verified research-gap discovery. See the [empirical status report](docs/research/EMPIRICAL_STATUS.md).
 
 ---
 

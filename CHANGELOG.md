@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Empirical readiness (Issue #313):** records validation of the compact checkpoint on 27,213 samples and a reproducible 20-paper scientific-NLP pilot, including weak dense retrieval and manual extraction failures. Adds bounded experiment scripts, measured evidence, and current-readiness links; training and thresholds are unchanged.
+
 ## [1.1.7] - 2026-10-30
 
 ### Fixed

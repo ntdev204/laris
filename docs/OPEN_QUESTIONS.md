@@ -3,9 +3,9 @@ document_id: "DOC-GOV-OPEN-001"
 title: "LARIS Open Architecture Questions & Research Inquiries"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-15"
+updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,7 +13,7 @@ related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/adr/README.md"
 decision_references: []
-change_summary: "Registry of unresolved architectural decisions, technical trade-offs, and research questions."
+change_summary: "Updates refactored module paths and current dataset-manifest references."
 ---
 
 # LARIS Open Architecture Questions & Research Inquiries
@@ -30,11 +30,11 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 
 ### OQ-002: Graph Storage Engine for Layer 5 Evidence Graph
 - **Status:** DECIDED / RESOLVED (ADR-009)
-- **Resolution:** Embedded SQLite with indexed node/edge schema (`src/laris/graph/evidence_graph.py`). Provides deterministic relational transactions, zero daemon overhead, and complete graph integrity.
+- **Resolution:** Embedded SQLite with indexed node/edge schema (`src/laris/graph/sqlite_adapter.py`). Provides deterministic relational transactions, zero daemon overhead, and complete graph integrity.
 
 ### OQ-003: Vector Indexing Backend for Layer 6 Hybrid Retrieval
 - **Status:** DECIDED / RESOLVED (ADR-010)
-- **Resolution:** Reciprocal Rank Fusion (RRF) combining lexical BM25 and dense cosine projections with numpy vectorization (`src/laris/retrieval/hybrid.py`). Multi-channel fusion operates within host RAM budget.
+- **Resolution:** Reciprocal Rank Fusion (RRF) combining lexical BM25 and dense cosine projections with numpy vectorization (`src/laris/retrieval/engine.py`). Multi-channel fusion operates within host RAM budget.
 
 ### OQ-004: Ingestion Strategy for Multi-Modal Tables & Figures in Layer 4
 - **Status:** OPEN / RESEARCH
@@ -43,4 +43,4 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 
 ### OQ-005: Corpus Ingestion Sourcing for Milestone M1
 - **Status:** DECIDED / RESOLVED (DOC-SPEC-DATA-001, Issue #205)
-- **Resolution:** Acquired 14 verified open-access datasets (5,106,491 records) across Wikipedia EN/VI, Universal Dependencies, All-NLI, ANLI, Quora, PAWS, STS-B, SQuAD, ViQuAD, SciFact, PubLayNet.
+- **Resolution:** Acquisition status and licensing are recorded in `data/acquisition_manifest.json`; the 14 physically partitioned language-encoder datasets are recorded in `data/processed/task_splits_manifest.json`. Earlier datasets without an encoder consumer were removed from the active registry in release 1.1.1. These records do not establish scientific-domain coverage or model capability.
