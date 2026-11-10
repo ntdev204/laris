@@ -3,7 +3,7 @@ document_id: "DOC-REPORT-EMPIRICAL-001"
 title: "Checkpoint Validation and Scientific NLP Pilot"
 document_type: "report"
 status: "DRAFT"
-version: "1.0.0"
+version: "1.2.0"
 created_at: "2026-11-10"
 updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
@@ -29,13 +29,14 @@ manifest. All 14 validation file hashes also matched their partition manifest.
 This verifies file identity against the recorded manifest, rather than independently
 re-proving that the original partitions contain no leakage.
 
-The encoder exceeds the shipped baseline-relative acceptance floors. It has not
-established the roadmap's scientific contradiction, retrieval or research-gap gates.
+The encoder exceeds the shipped baseline-relative acceptance floors. Model 01 has
+not met its own formal foundation exit gates; model 02 scientific-language learning
+is not implemented. The pilot below does not authorize skipping either stage.
 No test-set evaluation, additional training or threshold calibration was performed.
 
 ## Encoder validation
 
-Source: [raw evaluation report](evidence/compact-1024-04-best-val.json).
+Source: [raw evaluation report](../../reports/language_encoder/compact-1024-04-best-val.json).
 The evaluation used 27,213 validation samples: up to 2,000 per dataset, batch 8,
 seed 42, 1,024-token checkpoint configuration, and CUDA inference on RTX 5070 Ti.
 Runtime was PyTorch 2.14.1+cu130. Total observed GPU usage during evaluation was
@@ -75,8 +76,8 @@ OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 .venv/bin/laris evaluate language-encoder \
 
 ## Real-paper integration pilot
 
-Sources: [20-paper manifest](evidence/scientific-nlp-corpus.json) and
-[results with manual audit](evidence/scientific-nlp-pilot.json).
+Sources: [20-paper manifest](../../reports/scientific_nlp/corpus.json) and
+[results with manual audit](../../reports/scientific_nlp/pilot.json).
 The bounded corpus covers scientific information extraction, evidence verification,
 research-question generation and literature synthesis. PDFs were downloaded from
 ACL Anthology; the manifest preserves URLs, PDF hashes, extracted-text hashes and
@@ -112,38 +113,34 @@ then run the bounded experiment scripts. Checkpoint and tokenizer artifacts must
 be present; downloads require internet and inference requires CUDA:
 
 ```bash
-.venv/bin/python tests/experiments/scientific_nlp_acquire.py
+.venv/bin/python experiments/scientific_nlp/acquire.py
 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-  .venv/bin/python tests/experiments/scientific_nlp_pilot.py
+  .venv/bin/python experiments/scientific_nlp/pilot.py
 ```
 
 Outputs go under `artifacts/pilots/scientific_nlp/`. Manual-audit annotations in
 the committed results are not generated automatically by a rerun.
 
-## Next experiment gates
+## Correct next steps: foundation first
 
-1. Build independent relevance judgments for scientific retrieval, covering
-   paraphrased queries, hard negatives, multiple relevant papers and Vietnamese.
-   Freeze a held-out set before tuning. Compare BM25, dense and hybrid using MRR
-   and nDCG, with per-query error review.
-2. Repair and evaluate PDF reading order, sentence boundaries and figure/table
-   contamination before treating extracted spans as usable assertions. Retain
-   page mapping and review failure cases from this pilot.
-3. Evaluate scientific contradiction and evidence support with verified labels,
-   including scope/conditions and counter-evidence. General NLI validation scores
-   do not certify scientific reasoning.
-4. Only then compare retrieval-aligned training, such as contrastive query/evidence
-   learning, against the current CLS baseline. Measure retrieval gains and regression
-   on the five existing tasks before selecting a new checkpoint or scaling models.
-5. Validate source-backed, semantically supported cross-paper synthesis and
-   adversarial gap rejection. A missing search result must not be treated as proof
-   of an unexplored research gap.
+1. Audit model 01 against section 5 of the canonical training specification. ANLI,
+   ViNLI, PAWS and QA validation values are below the formal targets or have
+   incompatible metric protocols. Validation-only results cannot qualify a stage.
+2. Add the missing PAWS macro F1, normalized answer-text QA, unseen-text fertility
+   and independent retrieval measurements. A missing metric is not a pass.
+3. Use these diagnostics to prepare data/curriculum changes and owner-run training
+   commands. Agents do not train, fit tokenizers or execute optimizer profiling.
+4. The owner trains and returns measurements. Promote only after all required
+   foundation gates pass on held-out test data with matching artifact identities.
+5. Then implement scientific-language learning and its scientific NLI/evidence
+   gates. OCR, manuscript learning, integration and later specialists follow.
 
-The current decision is to preserve the measured checkpoint and acceptance
-thresholds. Additional training is deferred until independent retrieval/evidence
-evaluation can identify and measure the intended improvement.
+The current checkpoint and measured reports are preserved. The earlier 20-paper
+pilot remains a historical integration diagnostic, not the next implementation
+stage. Its weak dense results do not establish failure of scientific specialization,
+since the scientific-language model has not been implemented or trained.
 
-## Change validation
+## Historical change validation (before current no-training instruction)
 
 The combined proposed benchmark, source-gate and empirical-report changes passed
 all 1,176 tests locally with CUDA enabled and optional progress tooling installed.
@@ -152,3 +149,5 @@ and whitespace checks also passed. One existing PyTorch warning in an
 initialization test concerns converting a gradient-tracking tensor to a scalar.
 The proposed changes remain in draft PRs and have not been merged into the
 release or integration branches.
+
+Current preparation verification deliberately uses `make PY=.venv/bin/python check-no-training`; it does not rerun optimizer-bearing tests. The current result is recorded in `reports/verification/reorganization.json`. No fitting, backward or optimizer steps are part of this preparation.

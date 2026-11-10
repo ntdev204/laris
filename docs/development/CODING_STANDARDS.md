@@ -3,9 +3,9 @@ document_id: "DOC-SPEC-DEV-001"
 title: "LARIS Canonical Coding Standards & Engineering Principles"
 document_type: "specification"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-16"
+updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -21,7 +21,7 @@ decision_references:
   - "ADR-005"
   - "ADR-006"
   - "ADR-008"
-change_summary: "Canonical specification of engineering principles, code design, type standards, testing, and review governance."
+change_summary: "Aligns package paths with ADR-013 and records the current owner-only training boundary."
 ---
 
 # LARIS Canonical Coding Standards & Engineering Principles
@@ -57,7 +57,7 @@ Every implementation subtask, pull request, and code review must adhere to these
 - When a third genuinely equivalent occurrence emerges, extract a shared, well-tested helper or utility.
 
 ### 2.5 Separation of Concerns
-- Maintain clean boundaries between domain models (`src/laris/core/`), layer processing logic (`src/laris/layers/`), external execution adapters, and CLI presentation.
+- Maintain clean boundaries between domain models (`src/laris/core/`), domain processing logic (`src/laris/language/`, `corpus/`, `scientific/`, etc.), external execution adapters, and CLI presentation.
 - Do not mix business rules with infrastructure details or I/O handling.
 
 ### 2.6 SOLID Principles
@@ -115,14 +115,14 @@ When engineering trade-offs arise, resolve conflicts using the following priorit
 
 ### 4.2 Module Boundaries
 - `src/laris/core/`: Common schemas, error hierarchy, logging, and mathematical utilities.
-- `src/laris/layers/`: Layer implementations (0 through 11) adhering to `MODULE_CONTRACTS.md`.
+- `src/laris/{corpus,language,scientific,graph,retrieval,reasoning,orchestration,execution,evaluation,reporting}/`: functional domain implementations mapped to conceptual layers by `LAYER_ARCHITECTURE.md` (ADR-013).
 - `tests/`: Organized into `tests/unit/`, `tests/contract/`, `tests/integration/`, and `tests/documentation/`.
 
 ---
 
 ## 5. Testing, Reproducibility & Quality Gates
 
-Every implementation unit must satisfy all applicable local quality gates:
+Every implementation unit must satisfy all applicable local quality gates. Under the current owner instruction, agents must not execute tests containing training, fitting, backward or optimizer steps; record the selected non-training checks and any excluded checks explicitly:
 
 1. **Unit & Contract Tests:** `pytest` or `python -m unittest discover tests` with 100% pass rate.
 2. **Documentation Quality Gate:** `python3 scripts/validate_docs.py` passes with zero errors.

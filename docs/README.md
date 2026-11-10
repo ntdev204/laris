@@ -3,7 +3,7 @@ document_id: "DOC-INDEX-001"
 title: "LARIS Documentation Directory Index & Navigation Guide"
 document_type: "architecture"
 status: "APPROVED"
-version: "0.3.0"
+version: "0.4.0"
 created_at: "2026-10-15"
 updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
@@ -39,6 +39,7 @@ Start with the repository [README](../README.md), then the sections below. Super
 | | [DATASET_SPECIFICATION.md](specifications/DATASET_SPECIFICATION.md), [CONFIGURATION_SPECIFICATION.md](specifications/CONFIGURATION_SPECIFICATION.md), [LARIS_GOLD_SPECIFICATION.md](specifications/LARIS_GOLD_SPECIFICATION.md), [REPORT_SPECIFICATION.md](specifications/REPORT_SPECIFICATION.md) | Datasets, configuration, gold set, reports |
 | Research | [LANGUAGE_AND_MODEL_STRATEGY.md](research/LANGUAGE_AND_MODEL_STRATEGY.md) | Language foundation, semantics, local model budgets |
 | | [SCIENTIFIC_NLP.md](research/SCIENTIFIC_NLP.md), [HYBRID_RAG.md](research/HYBRID_RAG.md), [RESEARCH_GAP_DISCOVERY.md](research/RESEARCH_GAP_DISCOVERY.md), [EVALUATION_STRATEGY.md](research/EVALUATION_STRATEGY.md), [S2ORC_SUBSET_SELECTION.md](research/S2ORC_SUBSET_SELECTION.md) | Scientific NLP, retrieval, gaps, evaluation, corpus subset |
+| Training order | [Training index](training/README.md) | Model 01 qualification precedes model 02; owner alone trains |
 | Measured status | [EMPIRICAL_STATUS.md](research/EMPIRICAL_STATUS.md) | Checkpoint validation, real-paper pilot failures and next experiment gates |
 | Plans | [ROADMAP.md](plans/ROADMAP.md) | Milestones and status; open work is tracked in GitHub issues |
 | Testing | [TEST_STRATEGY.md](testing/TEST_STRATEGY.md), [BENCHMARK_PROTOCOL.md](testing/BENCHMARK_PROTOCOL.md), [ACCEPTANCE_CRITERIA.md](testing/ACCEPTANCE_CRITERIA.md) | Verification scope and benchmarks |

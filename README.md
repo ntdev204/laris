@@ -8,7 +8,7 @@
 
 LARIS is **not** a generic PDF chatbot, not a naive semantic search tool, and not an off-the-shelf RAG pipeline wrapping cloud LLM APIs. It is a ground-up scientific research platform constructed on self-built language foundations, selective compute orchestration, and evidence-first epistemology.
 
-Current measured readiness: the local compact checkpoint passes baseline-relative validation, while the real-paper pilot has not established effective dense retrieval, production report quality or verified research-gap discovery. See the [empirical status report](docs/research/EMPIRICAL_STATUS.md).
+Current measured readiness: the local compact checkpoint passes baseline-relative validation, but has not met the formal model 01 exit gates. Model 02 scientific-language learning is not implemented; the earlier paper pilot is diagnostic. See the [empirical status report](docs/research/EMPIRICAL_STATUS.md).
 
 ---
 
@@ -27,7 +27,10 @@ Current measured readiness: the local compact checkpoint passes baseline-relativ
 ```
 /
 ├── README.md, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md
-├── docs/            # Architecture, specifications, ADRs, research, plans, testing (index: docs/README.md)
+├── .agents/         # Cross-checked spec, plan and task ledger
+├── docs/            # Architecture, specifications, training runbooks, ADRs and plans
+├── experiments/     # Manually invoked diagnostic experiments
+├── reports/         # Versioned measurements and verification evidence
 ├── src/laris/       # Domain packages: language, corpus, retrieval, cli, core, config, ...
 ├── tests/           # unit/<domain>, contract, integration, cli
 ├── configs/         # YAML configuration by function (language_encoder, data, evaluation)
@@ -48,14 +51,16 @@ uv venv ./laris-env --python 3.10
 source ./laris-env/bin/activate
 uv pip install -e ".[dev]"
 
-# Run full local quality gates
+# Owner full-suite checks (may contain optimizer-bearing unit tests)
 pytest
 ruff check .
 mypy src
 python3 scripts/validate_docs.py   # or: make check
 ```
 
-Language-encoder workflow (see [CLI reference](docs/development/CLI.md)): `laris data acquire`, `laris data partition`, `laris train tokenizer`, `laris train language-encoder`, `laris evaluate language-encoder`. Training requires explicit owner authorization.
+Owner-only language-encoder workflow (see [training index](docs/training/README.md) and [CLI reference](docs/development/CLI.md)): `laris data acquire`, `laris data partition`, `laris train tokenizer`, `laris train language-encoder`, `laris evaluate language-encoder`. Training requires explicit owner authorization.
+
+Current agent preparation checks: `make PY=.venv/bin/python check-no-training`. This deliberately excludes optimizer-bearing tests; agents must not run the full `make check` during this task.
 
 ### Engineering Governance & Guidelines
 - [Coding Standards & Engineering Principles (docs/development/CODING_STANDARDS.md)](docs/development/CODING_STANDARDS.md)

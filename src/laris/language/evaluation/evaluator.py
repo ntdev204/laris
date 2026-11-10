@@ -230,6 +230,7 @@ class LanguageEncoderEvaluator:
             gold.extend(int(v) for v in batch.labels["para_labels"][:take].tolist())
         metrics = {
             "auc": M.auc(prob, gold),
+            "macro_f1": M.macro_f1([int(p >= 0.5) for p in prob], gold, 2),
             "f1": M.f1_binary([int(p >= 0.5) for p in prob], gold),
             "accuracy": M.accuracy([int(p >= 0.5) for p in prob], gold),
         }
@@ -377,6 +378,9 @@ def report_to_dict(
             {
                 "task": r.task, "dataset": r.dataset, "language": r.language,
                 "samples": r.samples, "metrics": r.metrics, "baseline": r.baseline,
+                "metric_protocols": (
+                    {"exact_match": "token_span", "f1": "token_span"} if r.task == "qa" else {}
+                ),
                 "baseline_source": r.baseline_source,
             }
             for r in report.results

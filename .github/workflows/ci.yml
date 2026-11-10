@@ -67,8 +67,8 @@ jobs:
       - name: Run mypy static type check
         run: uv run mypy src
 
-      - name: Run pytest suite with coverage
-        run: uv run pytest -v --cov=laris
+      - name: Run owner-authorized preparation checks (no training tests)
+        run: make PY='uv run python' check-no-training
 
   build-and-smoke:
     name: Package Build & Fresh Environment Smoke Test

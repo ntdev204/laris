@@ -1,4 +1,4 @@
-"""Bounded real-paper pilot. Re-run after scientific_nlp_acquire.py, on the source-gate branch."""
+"""Bounded real-paper pilot. Re-run after acquire.py, on the source-gate branch."""
 
 import hashlib
 import json

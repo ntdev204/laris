@@ -23,6 +23,7 @@ from laris.cli.commands import (
     infer,
     language_encoder,
     partition,
+    readiness,
     tokenizer,
 )
 from laris.corpus.acquisition import runner as acquisition
@@ -40,6 +41,7 @@ COMMANDS = {
         "language-encoder": ("Train or profile the language encoder", language_encoder),
     },
     "evaluate": {
+        "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
         "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
         "calibrate": ("Tighten thresholds from measured val reports", calibrate),
     },

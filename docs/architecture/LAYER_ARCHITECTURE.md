@@ -1,27 +1,28 @@
 ---
-document_id: "DOC-ARCH-LAYER-001"
-title: "LARIS Twelve-Layer Architectural Specification"
-document_type: "architecture"
-status: "DRAFT"
-version: "0.2.0"
-created_at: "2026-10-15"
-updated_at: "2026-10-29"
-owner: "LARIS Architecture Team"
+document_id: DOC-ARCH-LAYER-001
+title: LARIS Twelve-Layer Architectural Specification
+document_type: architecture
+status: DRAFT
+version: 0.3.0
+created_at: '2026-10-15'
+updated_at: '2026-11-10'
+owner: LARIS Architecture Team
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/specifications/MODULE_CONTRACTS.md"
+- docs/architecture/SYSTEM_OVERVIEW.md
+- docs/specifications/MODULE_CONTRACTS.md
 decision_references:
-  - "ADR-001"
-  - "ADR-002"
-  - "ADR-003"
-  - "ADR-004"
-  - "ADR-005"
-  - "ADR-006"
-  - "ADR-011"
-  - "ADR-012"
-change_summary: "Condensed to one table per layer: responsibility, inputs, outputs and invariants; mapping to domain packages unchanged."
+- ADR-001
+- ADR-002
+- ADR-003
+- ADR-004
+- ADR-005
+- ADR-006
+- ADR-011
+- ADR-012
+change_summary: Aligns implementation names with source and distinguishes conceptual
+  layers from measured capabilities.
 ---
 
 # LARIS Twelve-Layer Architectural Specification
@@ -49,18 +50,20 @@ The conceptual layers below define responsibilities, interfaces and invariants. 
 
 All parallel numbered layer directories (`src/laris/layers/layerX_*`) are retired. Each layer maps to one authoritative domain package:
 
-| Conceptual Layer | Cognitive Role | Physical Domain Package | Primary Module Exports |
+| Conceptual Layer | Cognitive Role | Physical Domain Package | Implementation Examples |
 | :--- | :--- | :--- | :--- |
-| **Layer 0** | Corpus & Data Governance | `laris.corpus` | `Layer0Pipeline`, `normalize_scientific_text`, `DeduplicationEngine`, `DatasetPartitionEngine` |
-| **Layer 1** | Language Foundation | `laris.language` | `STEMSubwordTokenizer`, `CompactSentenceEncoder`, `LexicalBM25Baseline` |
-| **Layer 2** | Semantic Relations & Calibration | `laris.reasoning` | `ScientificNLIEngine`, `ConfidenceCalibrator`, `SemanticRelationClassifier` |
-| **Layer 3** | Scientific NLP & Discourse | `laris.scientific` | `DiscourseExtractor`, `LimitationExtractor`, `STEMUnitNormalizer` |
-| **Layer 4 / 5** | Heterogeneous Evidence Graph | `laris.graph` | `SQLiteEvidenceGraphAdapter`, `EvidenceNode`, `EvidenceEdge` |
-| **Layer 6** | Hybrid Hierarchical Retrieval | `laris.retrieval` | `HybridRetrievalEngine`, `ReciprocalRankFusion`, `DenseRetrievalAdapter` |
-| **Layer 7** | Research Gap Discovery Engine | `laris.reasoning` | `MatrixSynthesisEngine`, `GapClassifier`, `ConflictDetector`, `AdversarialEngine` |
-| **Layer 8** | Multi-Agent Orchestration | `laris.orchestration`| `OrchestrationRuntime`, `SpecialistSupervisor`, `TokenBudgetGovernor` |
-| **Layer 9** | Adaptive Local Execution | `laris.execution` | `TaskRouter`, `HardwareTelemetryMonitor`, `HeadroomGovernor`, `WeightStaging` |
-| **Layer 10** | Feedback & Policy Learning | `laris.evaluation` | `BenchmarkRunner`, `ScientificErrorTaxonomy`, `FeedbackMiner` |
+| **Layer 0** | Corpus & Data Governance | `laris.corpus` | `CorpusIngestionPipeline`, `normalize_scientific_text`, `DeduplicationEngine`, `DatasetPartitionEngine` |
+| **Layer 1** | Language Foundation | `laris.language` | `ScientificTokenizer`, `PyTorchTransformerEncoder`, `CompactSentenceEncoder` |
+| **Layer 2** | Semantic Relations & Calibration | `laris.reasoning` | `DeterministicScientificNLIEngine`, NLI calibration functions and relation schemas |
+| **Layer 3** | Scientific NLP & Discourse | `laris.scientific` | `ScientificDiscourseExtractor`, `HeadingIndependentLimitationDetector`, `STEMUnitNormalizer` |
+| **Layer 5** | Heterogeneous Evidence Graph | `laris.graph` | `SQLiteGraphPersistenceAdapter`, `EvidenceNode`, `EvidenceEdge` |
+| **Layer 6** | Hybrid Hierarchical Retrieval | `laris.retrieval` | `HybridRetrievalEngine`, `ReciprocalRankFusion`, `DenseVectorAdapter` |
+| **Layer 7** | Research Gap Discovery Engine | `laris.reasoning` | `ComparativeMatrixEngine`, `RuleBasedGapClassifier`, `AdversarialCounterEvidenceEngine` |
+| **Layer 8** | Multi-Agent Orchestration | `laris.orchestration`| `DAGScheduler`, `BaseSpecialistAgent`, `BudgetGovernor` |
+| **Layer 9** | Adaptive Local Execution | `laris.execution` | `TaskRouter`, `HardwareTelemetryEngine`, `HeadroomBudgetGovernor`, `SpecialistLRUCache` |
+| **Layer 10** | Feedback & Policy Learning | `laris.evaluation` | `BenchmarkRunner`, `ScientificErrorTaxonomy`, `FeedbackMiningRepository` |
 | **Layer 11** | Epistemic Reporting & Packaging | `laris.reporting` | `StructuredReportGenerator`, `EvidenceInspector`, `ManuscriptComposer` |
 | **Shared** | Universal Schemas & Errors | `laris.core` | `EvidenceCoordinate`, `LarisError`, `ModuleContractViolationError` |
 
+
+The table maps existing components to conceptual layers; it does not certify learned capability. Layer 4 has no production scientific-document parser yet. The earlier PDF pilot is diagnostic. Several listed NLP/reasoning components are deterministic or heuristic, and default orchestration/staging paths include simulation.

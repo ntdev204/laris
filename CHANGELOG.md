@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Owner-only training preparation (Issue #315):** adds cross-checked `.agents/spec`, `.agents/plan` and `.agents/task`, preserves functional source packages, moves diagnostics to `experiments/` and measurements to `reports/`, and removes conflicting/historical training claims. Model 01 qualification precedes model 02. Agent/CI preparation checks explicitly exclude optimizer-bearing tests.
+
 ### Added
+- **Formal offline readiness (Issue #315):** `laris evaluate readiness` audits all twelve foundation gates, protocols, split and artifact identities without loading a model. Current validation remains NOT QUALIFIED. Future model evaluation reports include PAWS macro F1, explicit QA token-span protocols and split-manifest provenance. An owner runbook provides parsed profiling/training commands without executing them.
+
 - **Empirical readiness (Issue #313):** records validation of the compact checkpoint on 27,213 samples and a reproducible 20-paper scientific-NLP pilot, including weak dense retrieval and manual extraction failures. Adds bounded experiment scripts, measured evidence, and current-readiness links; training and thresholds are unchanged.
 
 ## [1.1.7] - 2026-10-30
