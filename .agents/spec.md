@@ -10,7 +10,7 @@ stage_order:
 - integration
 - specialists
 - product
-next_task: F01
+next_task: G02
 models:
   foundation:
     status: not_qualified
@@ -42,9 +42,12 @@ requirements:
 - id: REQ-GOV
   title: Quản trị và khả năng đối chứng
   acceptance: Mọi thay đổi có truy vết; spec/plan/task thống nhất; task done có gạch, note và bằng chứng.
+    Gate không bị nới; chính sách dữ liệu, gold và tiền điều kiện owner được ghi trước khi triển khai.
   task_ids:
   - G00
   - G01
+  - G02
+  - G03
 - id: REQ-FND-EVAL
   title: Phép đo foundation đúng protocol
   acceptance: Đủ QA answer-text, PAWS macro F1, fertility và retrieval held-out, tách EN/VI; không thay
@@ -61,9 +64,11 @@ requirements:
   - F04
 - id: REQ-FND-TRAIN
   title: Chuẩn bị và chạy foundation theo quyền chủ dự án
-  acceptance: Agent chỉ làm code/config/lệnh; owner tự train/profile và trả provenance; không khẳng định
-    lặp baseline sẽ tự đạt chất lượng.
+  acceptance: Agent chỉ làm code/config/lệnh; ngân sách compute, điều kiện dừng và nhánh tokenizer do
+    owner chốt trước run; owner tự train/profile và trả provenance; không khẳng định lặp baseline sẽ tự
+    đạt chất lượng.
   task_ids:
+  - F04A
   - F05
   - F06
 - id: REQ-FND-QUAL
@@ -75,26 +80,31 @@ requirements:
 - id: REQ-SCI
   title: Ngôn ngữ khoa học model 02
   acceptance: Học STEM sau foundation qualified; bảo toàn semantic quantities; scientific NLI/evidence
-    đạt gate và không làm hỏng foundation.
+    đạt gate và không làm hỏng foundation. Gold do người gán, có đồng thuận và audit; agent không tự sinh
+    gold.
   task_ids:
   - S01
+  - S01A
   - S02
   - S03
   - S04
   - S05
 - id: REQ-OCR
   title: Document intelligence và scientific OCR
-  acceptance: Đọc đúng thứ tự, giữ tọa độ và gold layout/text; pass CER/IoU và audit nguồn vật lý.
+  acceptance: Đọc đúng thứ tự, giữ tọa độ và gold layout/text; pass CER/IoU và audit nguồn vật lý. Gold
+    do người gán, có đồng thuận và audit; agent không tự sinh gold.
   task_ids:
   - O01
+  - O01A
   - O02
   - O03
   - O04
 - id: REQ-MANUSCRIPT
   title: Học discourse gắn OCR
   acceptance: Phân loại vai trò khoa học bằng nội dung, có gold và provenance; đạt gate discourse trên
-    văn bản OCR.
+    văn bản OCR. Gold do người gán, có đồng thuận và audit; agent không tự sinh gold.
   task_ids:
+  - M01A
   - M01
   - M02
   - M03
@@ -138,6 +148,12 @@ task_progress:
   status: done
   note: Đã viết ba file Markdown đúng phạm vi hệ thống/dự án; cập nhật validator và tham chiếu; chưa thực
     hiện các task triển khai tiếp theo.
+- id: G02
+  status: pending
+  note: ''
+- id: G03
+  status: pending
+  note: ''
 - id: F01
   status: pending
   note: ''
@@ -150,6 +166,9 @@ task_progress:
 - id: F04
   status: pending
   note: ''
+- id: F04A
+  status: pending
+  note: ''
 - id: F05
   status: pending
   note: ''
@@ -160,6 +179,9 @@ task_progress:
   status: pending
   note: ''
 - id: S01
+  status: pending
+  note: ''
+- id: S01A
   status: pending
   note: ''
 - id: S02
@@ -177,6 +199,9 @@ task_progress:
 - id: O01
   status: pending
   note: ''
+- id: O01A
+  status: pending
+  note: ''
 - id: O02
   status: pending
   note: ''
@@ -184,6 +209,9 @@ task_progress:
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: O04
+  status: pending
+  note: ''
+- id: M01A
   status: pending
   note: ''
 - id: M01
@@ -289,7 +317,8 @@ phải được ghi nhãn, không dùng làm đường chứng nhận model th�
 | Integration | Kết nối các model đã qualified | E2E thật, audit, failure handling, VRAM full-load ≤ 15 GB | Có nhiều component; chưa qualified |
 | Specialists | Reasoning/verification/generation | Gate từng specialist được chốt trước training, human review và phản chứng | Có baseline; chưa qualified |
 
-Gate chi tiết model 01 có một nguồn chuẩn tại
+Rủi ro đã ghi nhận: một số gate foundation (ANLI, SQuAD, PAWS, ViNLI) cách xa kết quả hiện tại và
+chưa có ngân sách compute; chính sách xử lý nằm ở mục 7 của plan. Gate chi tiết model 01 có một nguồn chuẩn tại
 [`foundation.yaml`](../configs/evaluation/foundation.yaml) và
 [đặc tả training](../docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md).
 Không thay gate này bằng baseline-relative floors trong `language_encoder.yaml`.
@@ -309,6 +338,9 @@ Artifact phải nối được checkpoint → config/git/seed → tokenizer → 
 → measurement reports. Resume không được tuyên bố khôi phục chính xác data stream
 nếu loader chưa lưu vị trí stream. Các report phải ghi metric protocol, sample count,
 source split, identity và baseline; thiếu trường quan trọng thì chưa đủ nghiệm thu.
+
+Nhãn gold (NLI/evidence/discourse khoa học, OCR/layout, discourse trên OCR) phải do người gán, có
+đồng thuận và audit; agent không tự sinh gold rồi dùng làm benchmark.
 
 Evidence cần phân biệt: excerpt đúng nguồn, claim được hỗ trợ, synthesis nhiều nguồn,
 hypothesis và gap ứng viên. Research gap không được kết luận chỉ từ việc search

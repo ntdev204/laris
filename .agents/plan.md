@@ -10,7 +10,7 @@ stage_order:
 - integration
 - specialists
 - product
-next_task: F01
+next_task: G02
 models:
   foundation:
     status: not_qualified
@@ -72,6 +72,38 @@ steps:
   status: done
   note: Đã viết ba file Markdown đúng phạm vi hệ thống/dự án; cập nhật validator và tham chiếu; chưa thực
     hiện các task triển khai tiếp theo.
+- id: G02
+  requirement: REQ-GOV
+  stage: governance
+  owner: agent
+  operation: engineering
+  title: Đối chiếu baseline, PR cũ và môi trường kiểm tra
+  depends_on:
+  - G01
+  deliverables:
+  - reports/verification/baseline-reconciliation.json
+  acceptance: 'Kiểm trạng thái GitHub thực tế của #310/#312 và các branch liên quan; liệt kê module benchmark/retrieval
+    trùng chức năng; chốt nguồn chuẩn giữa ROADMAP.md và .agents (fertility 1,35 so với 1,4, milestone
+    so với stage) và sửa tài liệu lệch; ghi môi trường (.venv, torch, sentencepiece, poppler) và thư viện
+    OCR/PDF còn thiếu; chạy check-no-training; không đổi gate.'
+  status: pending
+  note: ''
+- id: G03
+  requirement: REQ-GOV
+  stage: governance
+  owner: joint
+  operation: documentation
+  title: Chốt chính sách gate, quyền dữ liệu, gold và tiền điều kiện của owner
+  depends_on:
+  - G02
+  deliverables:
+  - docs/training/PROJECT_PREREQUISITES.md
+  acceptance: 'Ghi chính sách mặc định: giữ nguyên 12 gate và ADR-002, agent không nới gate; liệt kê theo
+    stage nguồn dữ liệu cần có (SciFact, khóa S2ORC, dữ liệu STEM tiếng Việt, dữ liệu OCR), quyết định
+    giấy phép đang NEEDS_LICENSE_REVIEW (ViNLI, ViQuAD, CC-100), người gán nhãn và ngưỡng đồng thuận cho
+    gold, thư viện OCR/PDF được phép cài; owner xác nhận từng mục hoặc ghi rõ mục bị chặn.'
+  status: pending
+  note: ''
 - id: F01
   requirement: REQ-FND-EVAL
   stage: foundation
@@ -79,7 +111,7 @@ steps:
   operation: implementation
   title: Hoàn thiện metric QA và hợp đồng báo cáo
   depends_on:
-  - G01
+  - G03
   deliverables:
   - src/laris/language/evaluation/evaluator.py
   - tests/unit/language/test_answer_metrics.py
@@ -99,7 +131,7 @@ steps:
   - src/laris/language/benchmarks/fertility.py
   - reports/tokenizer/fertility.json
   acceptance: Tách EN/VI; định nghĩa word/token rõ ràng; corpus unseen có manifest, chống leakage và report
-    tương thích readiness.
+    tương thích readiness. Nếu fertility vượt gate, ghi đề xuất tokenizer cho F04A; agent không fit tokenizer.
   status: pending
   note: ''
 - id: F03
@@ -114,7 +146,8 @@ steps:
   - src/laris/language/benchmarks/retrieval.py
   - configs/evaluation/foundation_retrieval.yaml
   acceptance: Đóng băng query/relevance và split; đo MRR/nDCG, BM25/dense/hybrid, hard negatives; không
-    dùng pilot sáu query để thay gate.
+    dùng pilot sáu query để thay gate. Băng hash query/relevance trước khi đo model; ngưỡng không chỉnh
+    sau khi thấy kết quả; query không lấy từ dữ liệu train.
   status: pending
   note: ''
 - id: F04
@@ -129,7 +162,25 @@ steps:
   - reports/language_encoder/foundation-error-analysis.json
   - configs/data/foundation_sampling.yaml
   acceptance: Lỗi ANLI, ViNLI, PAWS, STS, QA phân theo dataset/ngôn ngữ; kiểm nhãn, phân bố, leakage;
-    thay đổi dữ liệu có checksum và lý do.
+    thay đổi dữ liệu có checksum và lý do. Đánh giá khả thi từng gate dựa trên số đã đo, không dự đoán
+    không có căn cứ.
+  status: pending
+  note: ''
+- id: F04A
+  requirement: REQ-FND-TRAIN
+  stage: foundation
+  owner: joint
+  operation: documentation
+  title: Chốt ngân sách compute, điều kiện dừng và nhánh tokenizer
+  depends_on:
+  - F04
+  deliverables:
+  - docs/training/FOUNDATION_BUDGET.md
+  acceptance: Owner cung cấp throughput và VRAM đo thật từ profiling do owner chạy; chốt số bước/giờ GPU
+    tối đa, số vòng thử tối đa và điều kiện dừng; quyết định giữ hay fit lại tokenizer (fit lại làm vô
+    hiệu checkpoint hiện có và phải ghi vào lineage); đánh giá khả thi từng gate từ learning curve đã
+    đo; nếu gate không đạt trong ngân sách, owner chọn tiếp tục, dừng hoặc mở sửa gate qua ADR có lý do,
+    agent không tự giảm gate.
   status: pending
   note: ''
 - id: F05
@@ -139,12 +190,15 @@ steps:
   operation: implementation
   title: Chuẩn bị curriculum và lệnh train model 01
   depends_on:
-  - F04
+  - F04A
   deliverables:
   - configs/language_encoder/compact.yaml
+  - src/laris/language/training/objectives.py
+  - tests/unit/language/test_retrieval_objective.py
   - docs/training/OWNER_RUNBOOK.md
-  acceptance: Chốt objective/sampling/loss, ablation và ngân sách; cấu hình khớp parser/checkpoint; chỉ
-    xuất lệnh, không fitting/backward/optimizer.
+  acceptance: Chốt objective/sampling/loss, ablation và ngân sách theo F04A; thêm objective contrastive
+    cho retrieval (G12 cần vượt BM25) kèm test chỉ tính giá trị loss, không backward; cấu hình khớp parser/checkpoint;
+    chỉ xuất lệnh, không fitting/backward/optimizer.
   status: pending
   note: ''
 - id: F06
@@ -157,8 +211,8 @@ steps:
   - F05
   deliverables:
   - reports/language_encoder/foundation-owner-run.json
-  acceptance: Chủ dự án tự profile/train; trả manifest, cấu hình, log, checkpoint digest và validation;
-    không commit weights.
+  acceptance: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự profile/train; trả manifest,
+    cấu hình, log, checkpoint digest và validation; không commit weights.
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: F07
@@ -172,7 +226,8 @@ steps:
   deliverables:
   - reports/language_encoder/foundation-qualification.json
   acceptance: Đủ 12 gate, protocol đúng, cùng model/tokenizer, nguồn test độc lập và được chủ dự án duyệt;
-    thiếu bất kỳ gate nào thì không promote.
+    thiếu bất kỳ gate nào thì không promote. Nếu gate fail, mở vòng sửa theo mục 7 của plan; không gạch
+    F07.
   status: pending
   note: ''
 - id: S01
@@ -187,7 +242,22 @@ steps:
   - docs/specifications/SCIENTIFIC_LANGUAGE_SPECIFICATION.md
   - reports/scientific_language/data-readiness.json
   acceptance: Nguồn/quyền sử dụng rõ, split theo document/family, nhãn NLI/evidence/discourse có audit;
-    ghi thiếu dữ liệu VI thay vì giả định đủ.
+    ghi thiếu dữ liệu VI thay vì giả định đủ. Gồm thu thập SciFact và nguồn STEM theo G03; ghi chặn nếu
+    thiếu quyền truy cập thay vì dùng dữ liệu thay thế.
+  status: pending
+  note: ''
+- id: S01A
+  requirement: REQ-SCI
+  stage: scientific_language
+  owner: joint
+  operation: implementation
+  title: Gán nhãn gold khoa học và đo đồng thuận
+  depends_on:
+  - S01
+  deliverables:
+  - reports/scientific_language/gold-audit.json
+  acceptance: Nhãn NLI/evidence/discourse khoa học do người gán theo guideline; có inter-annotator agreement,
+    split theo document/family và tách khỏi dữ liệu train; agent không tự sinh nhãn gold.
   status: pending
   note: ''
 - id: S02
@@ -197,7 +267,7 @@ steps:
   operation: implementation
   title: Triển khai adaptation và inference model 02
   depends_on:
-  - S01
+  - S01A
   deliverables:
   - src/laris/scientific/language/model.py
   - tests/contract/test_scientific_language.py
@@ -231,7 +301,8 @@ steps:
   - S03
   deliverables:
   - reports/scientific_language/owner-run.json
-  acceptance: Chủ dự án tự train, trả artifacts/provenance và validation theo cấu hình đã chốt.
+  acceptance: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự train, trả artifacts/provenance
+    và validation theo cấu hình đã chốt.
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: S05
@@ -262,6 +333,20 @@ steps:
     text; không nhận diện layout chỉ bằng heading.
   status: pending
   note: ''
+- id: O01A
+  requirement: REQ-OCR
+  stage: ocr
+  owner: joint
+  operation: implementation
+  title: Chuẩn bị gold OCR/layout và toolchain đã duyệt
+  depends_on:
+  - O01
+  deliverables:
+  - reports/documents/ocr-gold-audit.json
+  acceptance: Gold text/layout clean và degraded do người kiểm; toolchain OCR/PDF đã được owner duyệt
+    ở G03 và cài vào môi trường; có audit/agreement; không dùng output OCR làm gold.
+  status: pending
+  note: ''
 - id: O02
   requirement: REQ-OCR
   stage: ocr
@@ -269,7 +354,7 @@ steps:
   operation: implementation
   title: Triển khai dữ liệu, parser và OCR pipeline
   depends_on:
-  - O01
+  - O01A
   deliverables:
   - src/laris/documents/parsing.py
   - src/laris/documents/ocr.py
@@ -288,7 +373,8 @@ steps:
   - O02
   deliverables:
   - reports/documents/ocr-owner-run.json
-  acceptance: Chủ dự án thực thi training đã duyệt; trả checkpoint/dataset lineage và measurements.
+  acceptance: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án thực thi training đã duyệt;
+    trả checkpoint/dataset lineage và measurements.
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: O04
@@ -305,6 +391,20 @@ steps:
     gồm lỗi hai cột đã thấy ở pilot.
   status: pending
   note: ''
+- id: M01A
+  requirement: REQ-MANUSCRIPT
+  stage: manuscript
+  owner: joint
+  operation: implementation
+  title: Gán nhãn gold discourse trên đầu ra OCR
+  depends_on:
+  - O04
+  deliverables:
+  - reports/documents/discourse-gold-audit.json
+  acceptance: Gold discourse-role có tọa độ do người gán trên đầu ra OCR; có agreement, split theo document
+    và heading-stripped subset; agent không tự sinh nhãn gold.
+  status: pending
+  note: ''
 - id: M01
   requirement: REQ-MANUSCRIPT
   stage: manuscript
@@ -312,7 +412,7 @@ steps:
   operation: implementation
   title: Triển khai học cấu trúc bản thảo gắn OCR
   depends_on:
-  - O04
+  - M01A
   deliverables:
   - src/laris/documents/discourse.py
   - docs/training/MANUSCRIPT_LEARNING_RUNBOOK.md
@@ -330,7 +430,8 @@ steps:
   - M01
   deliverables:
   - reports/documents/manuscript-owner-run.json
-  acceptance: Chủ dự án tự train theo lệnh, trả log, provenance và validation.
+  acceptance: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự train theo lệnh, trả log,
+    provenance và validation.
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: M03
@@ -442,8 +543,8 @@ steps:
   - R02
   deliverables:
   - reports/specialists/owner-runs.json
-  acceptance: Chủ dự án thực thi từng run được duyệt và trả artifacts/validation; không train tự phát
-    hoặc cập nhật online khi chạy nghiên cứu.
+  acceptance: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án thực thi từng run được duyệt
+    và trả artifacts/validation; không train tự phát hoặc cập nhật online khi chạy nghiên cứu.
   status: blocked
   note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 - id: R04
@@ -511,7 +612,7 @@ steps:
 Kế hoạch này dẫn từ baseline phần mềm hiện có đến hệ thống được nghiệm thu. Đây
 không phải kế hoạch dọn thư mục đã kết thúc. Chỉ G00/G01 được đánh dấu done; các
 bước model, evaluation và sản phẩm còn lại chưa được thực hiện theo kế hoạch này.
-Việc hiện tại chỉ viết/kiểm tra ba tài liệu; chưa bắt đầu F01 và không training.
+Việc hiện tại chỉ viết/kiểm tra ba tài liệu; chưa bắt đầu G02/F01 và không training.
 
 Đặc tả đích: [spec.md](spec.md). Sổ công việc chi tiết: [task.md](task.md).
 Giai đoạn sau chỉ được thực thi khi qualification giai đoạn trước hoàn thành và
@@ -521,8 +622,8 @@ Giai đoạn sau chỉ được thực thi khi qualification giai đoạn trư�
 
 | Phase | Task | Kết quả phải có | Chặn việc gì nếu chưa xong |
 | --- | --- | --- | --- |
-| Quản trị | G00–G01 | Baseline đã merge; ba file hệ thống/dự án đối chứng được | Chưa bắt đầu triển khai task mới |
-| Foundation | F01–F07 | Đủ phép đo, dữ liệu/curriculum, owner train, nghiệm thu model 01 | Không triển khai model 02 |
+| Quản trị | G00–G03 | Baseline đã merge và đối chiếu; ba file đối chứng được; chính sách gate, dữ liệu, gold và tiền điều kiện owner được chốt | Chưa bắt đầu F01 |
+| Foundation | F01–F07 (gồm F04A) | Đủ phép đo, dữ liệu/curriculum, ngân sách do owner chốt, owner train, nghiệm thu model 01 | Không triển khai model 02 |
 | Scientific language | S01–S05 | Corpus và model 02, scientific NLI/evidence, owner train, qualification | Không nhảy sang OCR/PDF research workflow |
 | OCR | O01–O04 | Document schema, reading order/layout/OCR và audit tọa độ | Không tuyên bố manuscript learning đã có đầu vào tin cậy |
 | Manuscript learning | M01–M03 | Discourse learning trên đầu ra OCR, đủ gold và gate | Không certify tích hợp đầy đủ |
@@ -532,13 +633,13 @@ Giai đoạn sau chỉ được thực thi khi qualification giai đoạn trư�
 
 ## 3. Ưu tiên ngay sau khi chủ dự án cho tiếp tục
 
-**Task kế tiếp là F01**, không phải thu thập thêm một tập bài báo để làm research
+**Task kế tiếp là G02** (đối chiếu baseline, PR cũ và môi trường), rồi G03 (owner chốt chính sách) trước F01. Sau đó mới đến F01, không phải thu thập thêm một tập bài báo để làm research
 workflow. Evaluator QA hiện dùng token-span; cần normalized answer-text EM/F1,
 gold alternatives/no-answer/truncation đúng và report không nhầm protocol.
 Sau đó bổ sung fertility và benchmark retrieval độc lập, rồi dùng error analysis
 ANLI/ViNLI/PAWS/STS/QA để quyết định thay đổi dữ liệu/curriculum.
 
-Chỉ sau F01–F05 mới bàn giao một cấu hình/lệnh candidate có mục đích rõ cho owner.
+Chỉ sau F01–F05 (gồm F04A) mới bàn giao một cấu hình/lệnh candidate có mục đích rõ cho owner.
 Không mặc định train lại baseline 100k bước sẽ cải thiện chất lượng. Runbook hiện
 có là mẫu owner-executed, sẽ được cập nhật từ các kết quả F01–F05 trước run mới.
 
@@ -581,3 +682,27 @@ make PY=.venv/bin/python check-no-training
 chọn thêm test không optimization tương ứng; full training tests thuộc owner.
 Không ấn định thời gian/GPU giờ khi chưa có profiling và dữ liệu; cập nhật estimate
 sau phép đo và giữ quyết định ngân sách cho owner.
+
+## 7. Chính sách gate, ngân sách và vòng sửa
+
+**Chính sách gate mặc định.** Giữ nguyên 12 gate foundation và ADR-002; agent không nới gate.
+Cả ba file ghi rõ rủi ro: model 01 là encoder khoảng 110M huấn luyện từ đầu trên một GPU
+16 GB, trong khi ANLI macro F1 hiện 0,40 so với 0,85, SQuAD, PAWS và ViNLI cũng còn cách
+xa. F04A đánh giá khả thi bằng số đã đo. Nếu ngân sách hết mà gate chưa đạt, chỉ owner
+được chọn: tiếp tục với ngân sách mới, dừng, hoặc mở sửa gate/ADR có lý do và bằng chứng.
+Không khôi phục đường dùng pretrained ngoài nếu chưa có thay đổi ADR-002 được duyệt.
+
+**Vòng sửa khi qualification fail.** Chèn cặp task agent (chuẩn bị) và owner (train) với
+hậu tố `-R1`, `-R2`... đặt trước task qualification, thêm chúng vào `depends_on` của task
+qualification và `task_ids` của requirement, rồi chạy validator. Số vòng tối đa theo
+F04A (foundation) hoặc theo quyết định owner tương ứng. Không gạch task qualification.
+
+**Smoke run.** Agent không chạy được backward nên code huấn luyện chỉ kiểm được bằng
+test forward và fixture. Mọi task train của owner bắt đầu bằng một smoke run ngắn, báo
+kết quả rồi mới chạy dài, để lỗi lộ sớm.
+
+**Gold.** Nhãn gold cần người gán (G03 chốt người và ngưỡng đồng thuận; S01A, O01A, M01A
+thực hiện). Agent chỉ viết guideline, công cụ và kiểm tra, không sinh gold.
+
+**Chưa áp dụng.** Chạy song song các việc chuẩn bị ở stage sau khi model trước chưa
+qualified bị cấm bởi validator và AGENTS.md. Nếu owner muốn, cần đổi cả hai.

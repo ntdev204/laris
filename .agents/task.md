@@ -10,7 +10,7 @@ stage_order:
 - integration
 - specialists
 - product
-next_task: F01
+next_task: G02
 models:
   foundation:
     status: not_qualified
@@ -37,7 +37,7 @@ models:
     qualification_task: R04
     owner_approved: false
 document: task
-scope: Sổ nhiệm vụ toàn dự án; chỉ G00/G01 hoàn thành, chưa khởi chạy F01.
+scope: Sổ nhiệm vụ toàn dự án; chỉ G00/G01 hoàn thành, chưa khởi chạy G02.
 tasks:
 - id: G00
   requirement: REQ-GOV
@@ -61,6 +61,18 @@ tasks:
   - AGENTS.md
   - scripts/validate_work_plan.py
   - tests/contract/test_work_plan.py
+- id: G02
+  requirement: REQ-GOV
+  title: Đối chiếu baseline, PR cũ và môi trường kiểm tra
+  status: pending
+  note: ''
+  evidence: []
+- id: G03
+  requirement: REQ-GOV
+  title: Chốt chính sách gate, quyền dữ liệu, gold và tiền điều kiện của owner
+  status: pending
+  note: ''
+  evidence: []
 - id: F01
   requirement: REQ-FND-EVAL
   title: Hoàn thiện metric QA và hợp đồng báo cáo
@@ -85,6 +97,12 @@ tasks:
   status: pending
   note: ''
   evidence: []
+- id: F04A
+  requirement: REQ-FND-TRAIN
+  title: Chốt ngân sách compute, điều kiện dừng và nhánh tokenizer
+  status: pending
+  note: ''
+  evidence: []
 - id: F05
   requirement: REQ-FND-TRAIN
   title: Chuẩn bị curriculum và lệnh train model 01
@@ -106,6 +124,12 @@ tasks:
 - id: S01
   requirement: REQ-SCI
   title: Chuẩn bị corpus ngôn ngữ khoa học EN/VI
+  status: pending
+  note: ''
+  evidence: []
+- id: S01A
+  requirement: REQ-SCI
+  title: Gán nhãn gold khoa học và đo đồng thuận
   status: pending
   note: ''
   evidence: []
@@ -139,6 +163,12 @@ tasks:
   status: pending
   note: ''
   evidence: []
+- id: O01A
+  requirement: REQ-OCR
+  title: Chuẩn bị gold OCR/layout và toolchain đã duyệt
+  status: pending
+  note: ''
+  evidence: []
 - id: O02
   requirement: REQ-OCR
   title: Triển khai dữ liệu, parser và OCR pipeline
@@ -154,6 +184,12 @@ tasks:
 - id: O04
   requirement: REQ-OCR
   title: Nghiệm thu OCR và provenance vật lý
+  status: pending
+  note: ''
+  evidence: []
+- id: M01A
+  requirement: REQ-MANUSCRIPT
+  title: Gán nhãn gold discourse trên đầu ra OCR
   status: pending
   note: ''
   evidence: []
@@ -257,7 +293,7 @@ có owner, dependency, đầu ra và tiêu chí nghiệm thu trong YAML của pl
 - `done`: đã nghiệm thu task, có evidence/note, đã gạch và đối chứng ba file PASS.
 
 Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại, không phải hứa
-đã có model. Lần này chỉ viết tài liệu; không bắt đầu F01 hay chạy training.
+đã có model. Lần này chỉ sửa tài liệu; chưa bắt đầu G02 hay F01 và không chạy training. Task có hậu tố A (F04A, S01A, O01A, M01A) là bước bổ sung phát hiện khi thẩm định khả thi.
 
 ## Quản trị và baseline
 
@@ -277,12 +313,28 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Nghiệm thu: Ba file Markdown đúng vai trò; validator, tham chiếu và các kiểm tra không training pass.
 
+- [ ] G02 — Đối chiếu baseline, PR cũ và môi trường kiểm tra
+
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: G01.
+
+  Đầu ra: `reports/verification/baseline-reconciliation.json`.
+
+  Nghiệm thu: Kiểm trạng thái GitHub thực tế của #310/#312 và các branch liên quan; liệt kê module benchmark/retrieval trùng chức năng; chốt nguồn chuẩn giữa ROADMAP.md và .agents (fertility 1,35 so với 1,4, milestone so với stage) và sửa tài liệu lệch; ghi môi trường (.venv, torch, sentencepiece, poppler) và thư viện OCR/PDF còn thiếu; chạy check-no-training; không đổi gate.
+
+- [ ] G03 — Chốt chính sách gate, quyền dữ liệu, gold và tiền điều kiện của owner
+
+  Người thực hiện: **joint**. Trạng thái: `pending`. Phụ thuộc: G02.
+
+  Đầu ra: `docs/training/PROJECT_PREREQUISITES.md`.
+
+  Nghiệm thu: Ghi chính sách mặc định: giữ nguyên 12 gate và ADR-002, agent không nới gate; liệt kê theo stage nguồn dữ liệu cần có (SciFact, khóa S2ORC, dữ liệu STEM tiếng Việt, dữ liệu OCR), quyết định giấy phép đang NEEDS_LICENSE_REVIEW (ViNLI, ViQuAD, CC-100), người gán nhãn và ngưỡng đồng thuận cho gold, thư viện OCR/PDF được phép cài; owner xác nhận từng mục hoặc ghi rõ mục bị chặn.
+
 
 ## Model 01 — ngôn ngữ tự nhiên
 
 - [ ] F01 — Hoàn thiện metric QA và hợp đồng báo cáo
 
-  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: G01.
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: G03.
 
   Đầu ra: `src/laris/language/evaluation/evaluator.py`, `tests/unit/language/test_answer_metrics.py`.
 
@@ -294,7 +346,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `src/laris/language/benchmarks/fertility.py`, `reports/tokenizer/fertility.json`.
 
-  Nghiệm thu: Tách EN/VI; định nghĩa word/token rõ ràng; corpus unseen có manifest, chống leakage và report tương thích readiness.
+  Nghiệm thu: Tách EN/VI; định nghĩa word/token rõ ràng; corpus unseen có manifest, chống leakage và report tương thích readiness. Nếu fertility vượt gate, ghi đề xuất tokenizer cho F04A; agent không fit tokenizer.
 
 - [ ] F03 — Xây benchmark retrieval nền tảng độc lập
 
@@ -302,7 +354,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `src/laris/language/benchmarks/retrieval.py`, `configs/evaluation/foundation_retrieval.yaml`.
 
-  Nghiệm thu: Đóng băng query/relevance và split; đo MRR/nDCG, BM25/dense/hybrid, hard negatives; không dùng pilot sáu query để thay gate.
+  Nghiệm thu: Đóng băng query/relevance và split; đo MRR/nDCG, BM25/dense/hybrid, hard negatives; không dùng pilot sáu query để thay gate. Băng hash query/relevance trước khi đo model; ngưỡng không chỉnh sau khi thấy kết quả; query không lấy từ dữ liệu train.
 
 - [ ] F04 — Phân tích lỗi và chuẩn bị dữ liệu model 01
 
@@ -310,15 +362,23 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/language_encoder/foundation-error-analysis.json`, `configs/data/foundation_sampling.yaml`.
 
-  Nghiệm thu: Lỗi ANLI, ViNLI, PAWS, STS, QA phân theo dataset/ngôn ngữ; kiểm nhãn, phân bố, leakage; thay đổi dữ liệu có checksum và lý do.
+  Nghiệm thu: Lỗi ANLI, ViNLI, PAWS, STS, QA phân theo dataset/ngôn ngữ; kiểm nhãn, phân bố, leakage; thay đổi dữ liệu có checksum và lý do. Đánh giá khả thi từng gate dựa trên số đã đo, không dự đoán không có căn cứ.
+
+- [ ] F04A — Chốt ngân sách compute, điều kiện dừng và nhánh tokenizer
+
+  Người thực hiện: **joint**. Trạng thái: `pending`. Phụ thuộc: F04.
+
+  Đầu ra: `docs/training/FOUNDATION_BUDGET.md`.
+
+  Nghiệm thu: Owner cung cấp throughput và VRAM đo thật từ profiling do owner chạy; chốt số bước/giờ GPU tối đa, số vòng thử tối đa và điều kiện dừng; quyết định giữ hay fit lại tokenizer (fit lại làm vô hiệu checkpoint hiện có và phải ghi vào lineage); đánh giá khả thi từng gate từ learning curve đã đo; nếu gate không đạt trong ngân sách, owner chọn tiếp tục, dừng hoặc mở sửa gate qua ADR có lý do, agent không tự giảm gate.
 
 - [ ] F05 — Chuẩn bị curriculum và lệnh train model 01
 
-  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: F04.
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: F04A.
 
-  Đầu ra: `configs/language_encoder/compact.yaml`, `docs/training/OWNER_RUNBOOK.md`.
+  Đầu ra: `configs/language_encoder/compact.yaml`, `src/laris/language/training/objectives.py`, `tests/unit/language/test_retrieval_objective.py`, `docs/training/OWNER_RUNBOOK.md`.
 
-  Nghiệm thu: Chốt objective/sampling/loss, ablation và ngân sách; cấu hình khớp parser/checkpoint; chỉ xuất lệnh, không fitting/backward/optimizer.
+  Nghiệm thu: Chốt objective/sampling/loss, ablation và ngân sách theo F04A; thêm objective contrastive cho retrieval (G12 cần vượt BM25) kèm test chỉ tính giá trị loss, không backward; cấu hình khớp parser/checkpoint; chỉ xuất lệnh, không fitting/backward/optimizer.
 
 - [ ] F06 — Chủ dự án train candidate model 01
 
@@ -326,7 +386,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/language_encoder/foundation-owner-run.json`.
 
-  Nghiệm thu: Chủ dự án tự profile/train; trả manifest, cấu hình, log, checkpoint digest và validation; không commit weights.
+  Nghiệm thu: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự profile/train; trả manifest, cấu hình, log, checkpoint digest và validation; không commit weights.
 
   Note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 
@@ -336,7 +396,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/language_encoder/foundation-qualification.json`.
 
-  Nghiệm thu: Đủ 12 gate, protocol đúng, cùng model/tokenizer, nguồn test độc lập và được chủ dự án duyệt; thiếu bất kỳ gate nào thì không promote.
+  Nghiệm thu: Đủ 12 gate, protocol đúng, cùng model/tokenizer, nguồn test độc lập và được chủ dự án duyệt; thiếu bất kỳ gate nào thì không promote. Nếu gate fail, mở vòng sửa theo mục 7 của plan; không gạch F07.
 
 
 ## Model 02 — ngôn ngữ khoa học
@@ -347,11 +407,19 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `docs/specifications/SCIENTIFIC_LANGUAGE_SPECIFICATION.md`, `reports/scientific_language/data-readiness.json`.
 
-  Nghiệm thu: Nguồn/quyền sử dụng rõ, split theo document/family, nhãn NLI/evidence/discourse có audit; ghi thiếu dữ liệu VI thay vì giả định đủ.
+  Nghiệm thu: Nguồn/quyền sử dụng rõ, split theo document/family, nhãn NLI/evidence/discourse có audit; ghi thiếu dữ liệu VI thay vì giả định đủ. Gồm thu thập SciFact và nguồn STEM theo G03; ghi chặn nếu thiếu quyền truy cập thay vì dùng dữ liệu thay thế.
+
+- [ ] S01A — Gán nhãn gold khoa học và đo đồng thuận
+
+  Người thực hiện: **joint**. Trạng thái: `pending`. Phụ thuộc: S01.
+
+  Đầu ra: `reports/scientific_language/gold-audit.json`.
+
+  Nghiệm thu: Nhãn NLI/evidence/discourse khoa học do người gán theo guideline; có inter-annotator agreement, split theo document/family và tách khỏi dữ liệu train; agent không tự sinh nhãn gold.
 
 - [ ] S02 — Triển khai adaptation và inference model 02
 
-  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: S01.
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: S01A.
 
   Đầu ra: `src/laris/scientific/language/model.py`, `tests/contract/test_scientific_language.py`.
 
@@ -371,7 +439,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/scientific_language/owner-run.json`.
 
-  Nghiệm thu: Chủ dự án tự train, trả artifacts/provenance và validation theo cấu hình đã chốt.
+  Nghiệm thu: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự train, trả artifacts/provenance và validation theo cấu hình đã chốt.
 
   Note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 
@@ -394,9 +462,17 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Nghiệm thu: Chốt page/block/paragraph/sentence/char coordinates, reading order, hash nguồn và canonical text; không nhận diện layout chỉ bằng heading.
 
+- [ ] O01A — Chuẩn bị gold OCR/layout và toolchain đã duyệt
+
+  Người thực hiện: **joint**. Trạng thái: `pending`. Phụ thuộc: O01.
+
+  Đầu ra: `reports/documents/ocr-gold-audit.json`.
+
+  Nghiệm thu: Gold text/layout clean và degraded do người kiểm; toolchain OCR/PDF đã được owner duyệt ở G03 và cài vào môi trường; có audit/agreement; không dùng output OCR làm gold.
+
 - [ ] O02 — Triển khai dữ liệu, parser và OCR pipeline
 
-  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: O01.
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: O01A.
 
   Đầu ra: `src/laris/documents/parsing.py`, `src/laris/documents/ocr.py`, `docs/training/OCR_RUNBOOK.md`.
 
@@ -408,7 +484,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/documents/ocr-owner-run.json`.
 
-  Nghiệm thu: Chủ dự án thực thi training đã duyệt; trả checkpoint/dataset lineage và measurements.
+  Nghiệm thu: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án thực thi training đã duyệt; trả checkpoint/dataset lineage và measurements.
 
   Note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 
@@ -423,9 +499,17 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
 ## Manuscript/discourse learning
 
+- [ ] M01A — Gán nhãn gold discourse trên đầu ra OCR
+
+  Người thực hiện: **joint**. Trạng thái: `pending`. Phụ thuộc: O04.
+
+  Đầu ra: `reports/documents/discourse-gold-audit.json`.
+
+  Nghiệm thu: Gold discourse-role có tọa độ do người gán trên đầu ra OCR; có agreement, split theo document và heading-stripped subset; agent không tự sinh nhãn gold.
+
 - [ ] M01 — Triển khai học cấu trúc bản thảo gắn OCR
 
-  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: O04.
+  Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: M01A.
 
   Đầu ra: `src/laris/documents/discourse.py`, `docs/training/MANUSCRIPT_LEARNING_RUNBOOK.md`.
 
@@ -437,7 +521,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/documents/manuscript-owner-run.json`.
 
-  Nghiệm thu: Chủ dự án tự train theo lệnh, trả log, provenance và validation.
+  Nghiệm thu: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án tự train theo lệnh, trả log, provenance và validation.
 
   Note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 
@@ -509,7 +593,7 @@ Chỉ G00/G01 done. Các dòng chưa gạch là công việc dự án còn lại
 
   Đầu ra: `reports/specialists/owner-runs.json`.
 
-  Nghiệm thu: Chủ dự án thực thi từng run được duyệt và trả artifacts/validation; không train tự phát hoặc cập nhật online khi chạy nghiên cứu.
+  Nghiệm thu: Chạy smoke ngắn và trả kết quả trước khi chạy dài; chủ dự án thực thi từng run được duyệt và trả artifacts/validation; không train tự phát hoặc cập nhật online khi chạy nghiên cứu.
 
   Note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
 

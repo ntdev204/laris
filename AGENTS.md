@@ -19,4 +19,4 @@ They define the system specification, remaining project plan and project task le
 - Preserve measured evidence and existing changes. Merge/release only within explicit
   owner authorization. The prior preparation PR #314 is merged into develop.
 - The current request is to write and validate the three Markdown documents, then
-  report back. Do not start the next project implementation task (F01) until asked.
+  report back. Do not start the next project implementation task (G02, then F01) until asked.
