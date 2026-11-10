@@ -142,3 +142,13 @@ the committed results are not generated automatically by a rerun.
 The current decision is to preserve the measured checkpoint and acceptance
 thresholds. Additional training is deferred until independent retrieval/evidence
 evaluation can identify and measure the intended improvement.
+
+## Change validation
+
+The combined proposed benchmark, source-gate and empirical-report changes passed
+all 1,176 tests locally with CUDA enabled and optional progress tooling installed.
+Ruff, mypy (146 source files), documentation validation (51 Markdown documents)
+and whitespace checks also passed. One existing PyTorch warning in an
+initialization test concerns converting a gradient-tracking tensor to a scalar.
+The proposed changes remain in draft PRs and have not been merged into the
+release or integration branches.
