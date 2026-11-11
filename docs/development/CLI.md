@@ -92,10 +92,15 @@ entailment checks.
 The web interface was removed (owner decision, 2026-11-11); LARIS is a terminal client. Two parts:
 
 ```bash
-laris model serve --port 8000     # model API (OpenAI-compatible), run by the operator on the server
+LARIS_SERVER_KEYS="key1,key2" laris model serve --port 8000   # operator: authenticated model API
 laris login                       # user: enter the API key once (hidden input, saved with mode 0600)
 laris                             # terminal chat; also -p "prompt", --resume, --resume <id>
 ```
+
+The server refuses to start without keys (`serving.api_key_env`, `serving.allowed_file`; digests only in
+memory), answers 401 to any other key, and stores nothing about users (ADR-015: the user's disk is the
+database and the user's machine is the sandbox). `laris login` and each session check the key against
+the server (`model_api.base_url`; remote hosts need `model_api.allow_remote: true`).
 
 Each API key opens its own private space: conversations, settings, uploads, archive, audit and
 collected sessions live under `artifacts/chat/users/<fingerprint>/` (`app.users_dir`), where the

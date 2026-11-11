@@ -14,7 +14,14 @@ class _Login:
 
     def run(self, args: argparse.Namespace) -> int:
         cfg = load_runtime().config.app
+        runtime = load_runtime()
         key = credentials.validate(getpass.getpass("API key: "))
+        status = credentials.verify_with_server(runtime.config.model_api, key)
+        if status == "rejected":
+            print("Máy chủ từ chối API key này. Không lưu.")
+            return 2
+        if status == "unreachable":
+            print("Cảnh báo: không kết nối được máy chủ để kiểm tra khóa; vẫn lưu.")
         path = credentials.save(cfg, key)
         print(f"Đã lưu khóa (chỉ chủ sở hữu đọc được) tại {path}.")
         print(f"Người dùng: {credentials.fingerprint(key)}")

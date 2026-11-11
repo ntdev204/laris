@@ -159,7 +159,9 @@ serving:
   max_body_bytes: 33554432
   model_name: laris-core
   placeholder_name: laris-placeholder
-  api_key_env: ''
+  api_key_env: LARIS_SERVER_KEYS
+  allowed_file: ''
+  require_auth: true
 
 # Chat application and document workspace.
 app:

@@ -70,3 +70,4 @@ loop:
   max_steps: "Đã dừng: hết số bước cho phép trước khi có câu trả lời cuối. Hãy cho biết có muốn tiếp tục không."
   timeout: "Đã dừng: hết thời gian cho một lượt xử lý."
   provider_error: "Không gọi được API mô hình. Kiểm tra server mô hình rồi thử lại."
+  auth_error: "Máy chủ từ chối API key. Chạy `laris login` để nhập lại khóa đúng."

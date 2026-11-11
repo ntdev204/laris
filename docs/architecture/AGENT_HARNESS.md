@@ -22,7 +22,7 @@ change_summary: "Defines the shared harness: prompt modules, agent loop, guards,
 
 # LARIS Agent Harness, System Prompt and Confidentiality Architecture
 
-The harness is the single runtime that every front end (the terminal client and the model server) uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
+The harness is the single runtime that every front end (the terminal client; the model server only authenticates and infers, see ADR-015) uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
 
 ## 1. Design rules
 

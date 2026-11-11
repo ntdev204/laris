@@ -254,6 +254,19 @@ The three ledger files stay consistent (`scripts/validate_spec.py`); changes go 
 CI and the documented release flow; policy files stay under the integrity lock.
 Acceptance: validator and CI pass; release 1.4.0 follows the git flow.
 
+### SR-H7 — Local data plane and authenticated server
+The user's disk is the system's database and the user's machine is its sandbox. Documents, vault,
+skills, memory, conversations, uploads, collected data and every tool run (file access, OCR, ingestion,
+extraction, writes) stay on the user's machine. The server only authenticates the API key and runs the
+model on the messages of a request; it keeps no user data, writes no files and logs no content. The
+server refuses to start without accepted keys, rejects any other key with HTTP 401, and the client checks
+its key at login and at start. Everything sent to the server (system prompt, brain brief, tool results)
+is internal data sent to the owner's own server, so remote use is an explicit configuration
+(`model_api.allow_remote`).
+Acceptance: the serving package cannot import tools, vault, learning or application code and writes no
+files (contract test); wrong, missing or empty keys get 401; the server does not start with no keys; a
+rejected key is never saved by `laris login` and stops a chat session with a clear message.
+
 ### SR-H6 — Model boundary
 The harness depends on the model only through `ChatProvider`, the embedder callable and configuration; the
 core model remains paused; resumption criteria and the owner gate are written down. No agent run trains,
@@ -318,5 +331,5 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 ## 10. Task progress index
 
-The authoritative status of every task is in task.md. Phase 0: T01-T04. Phase 1: T05-T10. Phase 2:
+The authoritative status of every task is in task.md. Phase 0: T01-T40. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.

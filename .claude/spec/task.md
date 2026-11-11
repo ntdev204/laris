@@ -60,6 +60,18 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: done
 - Note: ADR-014 records D1 to D9; the owner instructed the work to proceed on the defaults on 2026-11-11, each remains changeable by a later ADR.
 
+### T40 — Local data plane and authenticated server
+- Requirements: SR-H7
+- Depends: T01
+- Deliverables:
+  - ADR-015; `serving.auth.KeyRing` (SHA-256 digests, env and file sources); `laris model serve` refuses to start without keys (`serving.require_auth`); `AuthError`, `check_key`, key check at `laris login` and at chat start
+  - Contract tests: serving imports no tool/vault/learning/application code, writes no files, health reveals nothing
+- Validation:
+  - Wrong, missing and empty keys get 401; each configured key is accepted
+  - A rejected key is not saved and stops the session with a clear message
+- Status: done
+- Note: Delivered with tests/unit/cli/test_server_auth.py. Not done: rate limiting of failed attempts, key rotation without restart, TLS (use a reverse proxy).
+
 ## Phase 1 — Vault core library
 
 ### T05 — Note parser: links, embeds, tags, properties, headings, blocks

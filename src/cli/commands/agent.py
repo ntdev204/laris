@@ -45,6 +45,10 @@ def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
     app = runtime.config.app
     key = credentials.resolve(app, interactive=interactive and sys.stdin.isatty())
     os.environ[app.key_env] = key  # the redactor hides it; the model client reads it
+    if credentials.verify_with_server(runtime.config.model_api, key) == "rejected":
+        raise credentials.CredentialError(
+            "máy chủ từ chối API key; chạy `laris login` để nhập khóa đúng"
+        )
     overrides = cli_overrides(args)
     overrides.setdefault("model_api.api_key_env", app.key_env)
     return ChatApp(

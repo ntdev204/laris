@@ -58,6 +58,9 @@ deferred (decision D3).
 
 | TH13 | A hostile document plants instructions in a knowledge note that the brain then shows to the model | knowledge notes are untrusted, titles and summaries pass the injection scan before they reach the model, flagged full text is withheld; the core brain is never written | `test_knowledge.py::test_injection_text_in_a_document_title_or_summary_is_not_passed_to_the_model`, `test_save_knowledge_refuses_injection_and_unknown_domain_falls_back`, `test_ingest_adds_knowledge_under_the_matching_domain_and_no_skill` |
 
+| TH14 | An unauthenticated caller uses the model server | keys required, server refuses to start without them, 401 on wrong, missing or empty keys, digests only in memory | `test_server_auth.py::test_server_rejects_missing_and_wrong_keys_and_accepts_each_valid_key`, `test_serve_refuses_to_start_without_keys` |
+| TH15 | The server stores or leaks what users send | the `serving` package imports no data or tool code, writes no files and logs nothing | `test_server_auth.py::test_model_server_cannot_touch_user_data_or_tools`, `test_model_server_writes_no_files_and_logs_nothing` |
+
 ## 4. Open work
 
 - Extraction suite (paraphrase, translation, encoding, step-by-step) against the leak guard: task T33.

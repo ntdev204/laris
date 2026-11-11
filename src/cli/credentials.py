@@ -14,7 +14,7 @@ import stat
 from pathlib import Path
 from typing import Callable, Mapping, Optional
 
-from config.runtime_schemas import AppConfig
+from config.runtime_schemas import AppConfig, ModelApiConfig
 
 FINGERPRINT_CHARS = 16
 MIN_KEY_CHARS = 8
@@ -83,3 +83,12 @@ def resolve(
     key = validate((ask or getpass.getpass)("API key: "))
     save(cfg, key)
     return key
+
+
+def verify_with_server(api: ModelApiConfig, key: str) -> str:
+    """`ok`, `rejected`, `unreachable` or `local` (no model API configured: nothing to check)."""
+    if not api.base_url:
+        return "local"
+    from agent.provider import check_key
+
+    return check_key(api.base_url, key, min(api.timeout_s, 10.0))

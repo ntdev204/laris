@@ -159,7 +159,9 @@ class ServingConfig(BaseModel):
     max_body_bytes: int = Field(default=32 * 1024 * 1024, ge=1024)
     model_name: str = Field(default="laris-core")
     placeholder_name: str = Field(default="laris-placeholder")
-    api_key_env: str = Field(default="")
+    api_key_env: str = Field(default="LARIS_SERVER_KEYS")  # env var with the accepted keys
+    allowed_file: str = Field(default="")  # optional file, one key per line
+    require_auth: bool = Field(default=True)  # the server refuses to start without keys
 
 
 class AppConfig(BaseModel):

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from agent.context import CompactionResult, ContextManager, TokenEstimator
-from agent.provider import AssistantTurn, ChatProvider, Message, ProviderError
+from agent.provider import AssistantTurn, AuthError, ChatProvider, Message, ProviderError
 from agent.tools import ToolExecutionError, ToolRegistry, dumps
 from harness.runtime import HarnessRuntime, SessionHarness
 from harness.verifier import AnswerVerifier, Verdict
@@ -164,7 +164,10 @@ class AgentSession:
                     yield from self._maybe_compact(force=True)
                     continue
                 audit.event("provider_error", detail=str(exc))
-                status, answer = "provider_error", strings.get("loop.provider_error")
+                status = "provider_error"
+                answer = strings.get(
+                    "loop.auth_error" if isinstance(exc, AuthError) else "loop.provider_error"
+                )
                 break
             for piece in stream.finish():
                 pieces.append(piece)

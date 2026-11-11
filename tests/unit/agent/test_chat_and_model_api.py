@@ -12,6 +12,7 @@ from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
 from harness.prefs import PrefsError
 from harness.runtime import HarnessRuntime
+from serving.auth import KeyRing
 from serving.model_server import ModelService, build_server, load_backend
 
 
@@ -82,7 +83,8 @@ def test_upload_is_sandboxed_by_name_and_ingested(chat):
 
 def test_model_server_round_trip_with_streaming_and_auth():
     rt = HarnessRuntime()
-    service = ModelService(OfflinePlanner(rt.strings), "laris-core", api_key="secret")
+    ring = KeyRing(["secret-key-1", "secret-key-2"])
+    service = ModelService(OfflinePlanner(rt.strings), "laris-core", keys=ring)
     server = build_server(service, "127.0.0.1", 0, rt.config.serving.max_body_bytes)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}/v1"
@@ -95,7 +97,7 @@ def test_model_server_round_trip_with_streaming_and_auth():
             HttpChatProvider(base, "m", timeout_s=3).chat(messages, tools)
         import os
 
-        os.environ["LARIS_TEST_KEY"] = "secret"
+        os.environ["LARIS_TEST_KEY"] = "secret-key-2"
         provider = HttpChatProvider(base, "m", "LARIS_TEST_KEY", timeout_s=5)
         assert provider.chat(messages, tools).tool_calls[0].name == "search_corpus"
         events = list(provider.stream(messages, tools))

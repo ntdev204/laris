@@ -16,12 +16,13 @@ explicit authorisation each time.
 
 ### Phase 0 — Foundations and decisions
 Goal: adopt this ledger, fix the format rules and the threat model before code.
-Tasks: T01, T02, T03, T04
+Tasks: T01, T02, T03, T04, T40
 Exit criteria:
 - `scripts/validate_spec.py` runs in CI and `make check-no-training`.
 - `docs/specifications/OBSIDIAN_VAULT_FORMAT.md` and the golden fixture vault exist and cite the official rules.
 - Threat model lists every threat with a control and a planned test.
 - ADR records the Obsidian-compatible brain decision (D1 to D9 confirmed or changed by the owner).
+- ADR-015 fixes the local data plane (user disk = database, user machine = sandbox) and the server authenticates keys.
 
 ### Phase 1 — Vault core library
 Goal: a dependency-free library that reads, indexes, writes and checks Obsidian-format vaults.

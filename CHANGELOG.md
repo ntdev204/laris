@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Server authenticates keys (ADR-015):** `laris model serve` accepts only configured API keys (`LARIS_SERVER_KEYS`, comma separated, or `serving.allowed_file`), refuses to start without any (`serving.require_auth`), answers 401 otherwise and `/health` reveals nothing. The client checks its key at `laris login` (a rejected key is not saved) and at session start. The `serving` package is contract-tested to hold no user data: no tool/vault/application imports, no file writes, no logging. Principle: the user's disk is the database and the user's machine is the sandbox.
+
 ### Removed
 - **Web interface:** `src/application/server.py`, `web_ui.py`, `laris app serve`, the `/guide` page and all HTTP chat routes are removed by owner decision; LARIS is terminal-only for now. `laris model serve` (the OpenAI-compatible model API) stays.
 
