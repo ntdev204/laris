@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Install and run on every OS (no build, no Python needed):** the npm client is now a small launcher (`@ntdev204/laris-cli`) plus one package per platform (`-win32-x64`, `-linux-x64`, `-linux-arm64`, `-darwin-x64`, `-darwin-arm64`, optional dependencies, so npm fetches only the matching one). When no suitable Python is installed, the first run downloads a private one through uv (SHA-256 checked; `LARIS_NO_DOWNLOAD=1` forbids it). Windows tries each installed Python through `py -3.x`. The compiled wheels are built by the manual workflow `client-package.yml` (5 platforms x Python 3.10-3.13) and split by `packaging/assemble_npm.py`; `build_client.py` no longer assumes Linux, `uv` or gcc.
+- **`laris --version`** prints the installed version; a global install adds the npm bin folder to the user PATH on Windows (`postinstall`, opt out with `LARIS_NO_PATH_EDIT=1`) or prints the line to add elsewhere.
+
 ### Added
 - **S2ORC acquisition (stages 01 and 02):** `laris-server data acquire --only S2ORC-GENERAL-LM|S2ORC-STEM` streams `s2orc` shards from the Semantic Scholar Datasets API (key from `S2ORC_API_KEY` only), filters on the fly (STEM identifier, open per-paper license, full text; both release schemas), and stores parquet with a hard byte budget per stage (`--s2orc-budget-gb`, default 10) and per-run shard limit (`--s2orc-max-shards`). No raw shard is stored; stages use disjoint shards; interrupted runs resume. STEM is approximated by external id, not field of study. No training is run.
 

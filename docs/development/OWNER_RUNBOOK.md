@@ -67,10 +67,15 @@ SQLite in WAL mode: copy with `sqlite3 laris-server.db ".backup backup.db"` whil
 ## 6. Build and release
 
 1. `python scripts/validate_spec.py`, `make check-no-training`, and on the workstation `make bench-vault`.
-2. Build the client wheel on each target platform and Python version: `packaging/build_wheel.sh` (needs the
-   `build` extra: Cython). The wheel contains compiled modules only.
+2. Run the **Client package (all platforms)** workflow (`.github/workflows/client-package.yml`, manual). It
+   builds the compiled client wheel for Linux x64/arm64, macOS Intel/Apple Silicon and Windows x64 on
+   Python 3.10-3.13, smoke-tests each, and assembles six npm packages (`packaging/assemble_npm.py`).
+   Locally, `packaging/build_wheel.sh` still builds the wheel for the current platform only.
 3. Follow `docs/development/GIT_FLOW.md`: feature branch, pull request to `develop`, release branch, tag.
-4. `cd packaging/npm && npm pack` to inspect, `npm publish --access public` after `npm login`.
+4. Download the workflow artifact. Publish the five `@ntdev204/laris-cli-<platform>` packages first, then the
+   launcher `@ntdev204/laris-cli` (`npm publish --access public` after `npm login`). Users install only the
+   launcher; npm fetches the platform package that matches their machine, and the first `laris` run fetches a
+   private Python (via uv, SHA-256 checked) when none suitable is installed. `LARIS_NO_DOWNLOAD=1` forbids that.
 5. Never publish without the owner's explicit authorisation for that release.
 
 ## 7. What is not covered
