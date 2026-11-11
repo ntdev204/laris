@@ -14,12 +14,16 @@ Provides:
 
 import importlib.util
 import platform
-import resource
 import shutil
 import subprocess
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+
+try:  # POSIX only: the client wheel is imported on Windows too, where this module is absent
+    import resource
+except ImportError:  # pragma: no cover - exercised on Windows
+    resource = None  # type: ignore[assignment]
 
 import numpy as np
 
@@ -240,8 +244,10 @@ class BoundedResourceProfiler:
             finite_outputs = all(np.all(np.isfinite(t)) for t in outputs_np.values())
 
         # Memory inspection
-        rusage = resource.getrusage(resource.RUSAGE_SELF)
-        peak_ram_mb = rusage.ru_maxrss / 1024.0
+        if resource is None:  # not measurable here: NaN fails the safety check, never passes it
+            peak_ram_mb = float("nan")
+        else:
+            peak_ram_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
         # Safety envelope checks (< 14.5 GB)
         safety_passed = (peak_ram_mb / 1024.0) < 14.5
