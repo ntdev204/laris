@@ -33,6 +33,7 @@ def run(cmd: List[str], **kw) -> None:  # type: ignore[no-untyped-def]
 
 
 def main(wheels: Path, out: Path) -> None:
+    wheels, out = wheels.resolve(), out.resolve()  # PyInstaller runs from another directory
     wheel = next(iter(sorted(wheels.glob("*.whl"))), None)
     if wheel is None:
         raise SystemExit(f"no wheel in {wheels}")
