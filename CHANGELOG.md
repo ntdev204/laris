@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **System ledger for the next phase:** `.claude/spec/spec.md`, `plan.md` and `task.md` define the Obsidian-compatible brain (system brain and project vault), six scholarly application directions, a harness-first plan and 39 tasks; `scripts/validate_spec.py` and a contract test keep the three files consistent. The core model stays paused.
+
 ## [1.3.1] - 2026-11-11
 
 ### Removed
