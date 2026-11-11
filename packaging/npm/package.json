@@ -4,9 +4,9 @@
   "description": "LARIS terminal client: local-first research assistant. The model and system policy run on your LARIS server.",
   "license": "MIT",
   "bin": { "laris": "bin/laris.js" },
-  "files": ["bin", "scripts", "vendor/*.whl", "vendor/requirements.txt", "README.md"],
+  "files": ["bin", "scripts", "README.md"],
   "engines": { "node": ">=18" },
   "publishConfig": { "access": "public" },
   "repository": { "type": "git", "url": "git+https://github.com/ntdev204/laris.git" },
-  "scripts": { "prepack": "sh ../build_wheel.sh", "postinstall": "node scripts/postinstall.js" }
+  "scripts": { "postinstall": "node scripts/postinstall.js" }
 }

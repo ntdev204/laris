@@ -95,6 +95,20 @@ laris = "cli.client:main"
 DEPENDENCIES = ["pyyaml>=6.0", "pydantic>=2.0", "numpy>=1.24.0", "pyarrow>=12.0.0"]
 
 
+def imported_modules(files: list) -> list:
+    """Every module the client source imports. Compiled extensions hide their imports from
+    freezers, so these are handed to PyInstaller as hidden imports."""
+    names: Set[str] = set()
+    for file in files:
+        for node in ast.walk(ast.parse(file.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                names.update(a.name for a in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                names.add(node.module)
+                names.update(f"{node.module}.{a.name}" for a in node.names if a.name != "*")
+    return sorted(n for n in names if module_file(n) is None)
+
+
 def compile_sources(stage: Path, files: list) -> None:
     """Turn every module (except package markers) into C, then delete its Python source."""
     from Cython.Build import cythonize  # build-time only; never a runtime dependency
@@ -191,6 +205,7 @@ def main(out: Path) -> None:
     (out / ".gitignore").unlink(missing_ok=True)
     smoke(next(out.glob("*.whl")))
     (out / "requirements.txt").write_text("\n".join(DEPENDENCIES) + "\n", encoding="utf-8")
+    (out / "imports.txt").write_text("\n".join(imported_modules(files)) + "\n", encoding="utf-8")
     print(f"{len(files)} modules compiled")
 
 
