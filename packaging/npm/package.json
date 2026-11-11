@@ -1,6 +1,6 @@
 {
   "name": "@ntdev204/laris-cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "LARIS terminal client: local-first research assistant. The model and system policy run on your LARIS server.",
   "license": "MIT",
   "bin": { "laris": "bin/laris.js" },
