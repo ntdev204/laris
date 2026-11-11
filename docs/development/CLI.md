@@ -140,11 +140,12 @@ owner approves the change.
 `laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
 refreshes the lock after an owner-approved change. A tampered policy stops every session.
 
-#### Learning: skills from new knowledge and fine-tune data
+#### Learning: knowledge by domain, skills on request and fine-tune data
 
-Ingesting documents creates or refreshes a generated `corpus-*` skill (`laris skills sync` rebuilds
-them all); `laris skills lint|add` checks and installs a hand-written one, and the agent can save one
-with `save_skill` after approval. Good answers are kept locally under `artifacts/finetune`
+Ingesting documents adds knowledge notes by domain under `vault/Knowledge/<domain hub>/`, shown next to
+the matching brain hub (`save_knowledge` adds taught knowledge). Skills are made only on request:
+`laris skills lint|add` checks and installs a hand-written one, the agent saves one with `save_skill`
+after approval, and `laris skills sync` (or `learning.skill_on_ingest: true`) builds optional corpus skills. Good answers are kept locally under `artifacts/finetune`
 (`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
 
 #### Instructions, skills and automatic context compaction

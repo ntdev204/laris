@@ -43,8 +43,12 @@ brain used by the whole system for reasoning.
 3. LARIS implements the format itself; no dependency on Obsidian or its CLI.
 4. The brain is reached only through `brain_*` tools and a harness consult step; file tools are denied;
    it is covered by the integrity lock and by leak detection.
-5. Runtime learnings go to the project vault or to `_inbox/`; the brain changes only by owner-approved
-   release.
+5. Runtime learnings go to the project vault or to `_inbox/`; the protected core brain changes only by
+   owner-approved release.
+6. **New knowledge is added by domain, skills only on request** (owner instruction, 2026-11-11). Ingested
+   documents and taught facts become notes under `vault/Knowledge/<domain hub>/`, which the brain tools
+   list beside the matching domain hub. Skills are no longer generated on ingestion; they are created
+   when the user asks (`save_skill`).
 
 ## 3. Owner decisions D1 to D9
 
@@ -61,7 +65,7 @@ ADR.
 | D6 | System-generated notes are written automatically inside managed blocks; free-form model proposals go to `_inbox/` |
 | D7 | Brain notes are written in English; replies follow the configured language |
 | D8 | `.laris/memory` migrates into `vault/Memory/` (task T14) |
-| D9 | No runtime self-modification of the brain |
+| D9 | No runtime self-modification of the protected core brain; user knowledge is added in the vault and shown beside the hubs |
 
 ## 4. Consequences
 

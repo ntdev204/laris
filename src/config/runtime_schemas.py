@@ -191,6 +191,7 @@ class VaultConfig(BaseModel):
     index_recent: int = Field(default=20, ge=1, le=200)
     snippet_chars: int = Field(default=240, ge=40)
     cache_dir: str = Field(default="artifacts/vault_cache")  # disposable index cache
+    knowledge_dir: str = Field(default="Knowledge")  # user knowledge by domain, inside the vault
 
 
 class BrainConfig(BaseModel):
@@ -207,6 +208,11 @@ class BrainConfig(BaseModel):
     turn_budget_chars: int = Field(default=6000, ge=1000)  # all brain text returned in a turn
     consult_budget_chars: int = Field(default=2200, ge=500)  # the automatic consult brief
     search_limit: int = Field(default=5, ge=1, le=20)
+    knowledge: bool = Field(default=True)  # user knowledge notes join the domain hubs
+    knowledge_per_hub: int = Field(default=5, ge=1, le=30)
+    knowledge_extract_chars: int = Field(default=20000, ge=1000)
+    knowledge_max_claims: int = Field(default=5, ge=0, le=20)
+    general_hub: str = Field(default="General")  # folder for knowledge no domain hub matches
     required_properties: List[str] = Field(
         default_factory=lambda: ["type", "domain", "level", "summary"]
     )
@@ -254,7 +260,7 @@ class LearningConfig(BaseModel):
     max_tool_result_chars: int = Field(default=3000, ge=200)
     store_passage_text: bool = Field(default=True)  # false keeps only chunk ids and hashes
     export_min_rating: Literal["none", "up"] = Field(default="none")
-    skill_on_ingest: bool = Field(default=True)  # new knowledge -> a complete RAG skill
+    skill_on_ingest: bool = Field(default=False)  # skills only on request
     skill_dir: str = Field(default=".laris/skills")
     knowledge_template: str = Field(default="templates/knowledge_skill.md")  # under prompts.dir
     max_generated_skills: int = Field(default=40, ge=1)

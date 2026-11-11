@@ -161,8 +161,10 @@ Acceptance: on the fixture corpus, graph-aware retrieval is measured against BM2
 cites sources; trace lists notes used without revealing internal text.
 
 ### SR-B5 — Learning without self-modification
-Runtime learnings are written to the project vault and to a proposals inbox; changes to the system brain
-happen only by owner-approved release. A review command shows, accepts or rejects proposals.
+Runtime learnings are written to the project vault and to a proposals inbox; changes to the protected core
+brain happen only by owner-approved release. New knowledge (from ingested documents or taught by the user)
+is added by domain under `vault/Knowledge/<domain hub>/` and shown beside the matching hub; skills are
+created only on the user's request, never on ingestion. A review command shows, accepts or rejects proposals.
 Acceptance: no code path writes to the system brain at runtime; proposals carry provenance and are
 excluded from retrieval until accepted.
 

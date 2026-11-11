@@ -159,7 +159,7 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Notes lint clean
   - Hook failure never fails ingestion
 - Status: in_progress
-- Note: Ingest hook writes Source and Concept notes (vault/hooks.py), failure never breaks ingestion. Missing: content hash and passage-level metadata.
+- Note: Ingest hook writes Source and Concept notes and, by owner instruction (2026-11-11), a Knowledge note by domain under vault/Knowledge/ (src/vault/knowledge.py); skills are no longer generated on ingestion (learning.skill_on_ingest false). Missing: content hash and passage-level metadata.
 
 ### T13 — Session and question-answer notes
 - Requirements: SR-V4, SR-A2
@@ -193,7 +193,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Spans match source text
   - Duplicate concepts merge by stable id and alias
-- Status: pending
+- Status: in_progress
+- Note: Knowledge notes carry key terms, claims, methods, datasets and metrics from the extractor, linked to the Source note and listed beside the domain hub; save_knowledge adds taught knowledge. Missing: per-entity Concept/Claim notes with character-span provenance and stable-id merging.
 
 ### T16 — User-edit safety, sync and repair
 - Requirements: SR-V4

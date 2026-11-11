@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Sequence
 from application.workspace import Chunk
 from harness.runtime import HarnessRuntime
 from learning.skills import _terms
+from vault.knowledge import KnowledgeWriter
 from vault.project import ProjectVault, source_title
 
 
@@ -24,6 +25,7 @@ def record_ingest(runtime: HarnessRuntime, new_chunks: Sequence[Chunk]) -> Dict[
     for chunk in new_chunks:
         by_source.setdefault(chunk.source, []).append(chunk)
     written, skipped = 0, 0
+    domains: set = set()
     for source, chunks in sorted(by_source.items()):
         terms = _terms(chunks, runtime.config.learning)[: runtime.config.learning.skill_top_terms]
         text = runtime.redactor.redact(chunks[0].text)[0]
@@ -34,8 +36,17 @@ def record_ingest(runtime: HarnessRuntime, new_chunks: Sequence[Chunk]) -> Dict[
             skipped += 1
         else:
             written += 1
+            if runtime.config.brain.enabled and runtime.config.brain.knowledge:
+                known = KnowledgeWriter(
+                    vault, runtime.brain, runtime.config.brain, runtime.redactor.redact
+                ).add_document(source_title(source), chunks, terms)
+                if known is not None and known.note.status != "skipped":
+                    domains.add(known.domain)
     vault.refresh_index()
-    return {"vault_notes": written, "vault_skipped": skipped}
+    out: Dict[str, Any] = {"vault_notes": written, "vault_skipped": skipped}
+    if domains:
+        out["knowledge_domains"] = sorted(domains)
+    return out
 
 
 def _cited_sources(messages: Sequence[Dict[str, Any]]) -> List[str]:

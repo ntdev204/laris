@@ -209,8 +209,40 @@ def build_registry(
 
         return run
 
+    def save_knowledge(args: Dict[str, Any]) -> Any:
+        from vault.hooks import project_vault
+        from vault.knowledge import KnowledgeWriter
+
+        if not (rt.config.vault.enabled and rt.config.brain.knowledge):
+            raise ToolExecutionError("disabled", "knowledge notes are turned off")
+        writer = KnowledgeWriter(project_vault(rt), rt.brain, rt.config.brain, rt.redactor.redact)
+        found = writer.add_taught(args["title"], args["content"], args.get("domain", ""))
+        if found.note.status == "skipped":
+            raise ToolExecutionError("refused", found.note.reason or "note was refused")
+        rt.brain.refresh_knowledge()
+        return {
+            "domain": found.domain,
+            "note": found.note.note.rsplit("/", 1)[-1][:-3],
+            "status": found.note.status,
+        }
+
     brain = rt.brain
     brain_tools = (
+        ToolSpec(
+            "save_knowledge",
+            "Add new knowledge the user taught to the brain under its domain (needs approval). "
+            "This is knowledge, not a skill: use save_skill only when asked for a skill.",
+            schema(
+                {
+                    "title": {"type": "string"},
+                    "content": {"type": "string"},
+                    "domain": {"type": "string", "description": "A domain hub name, optional"},
+                },
+                ["title", "content"],
+            ),
+            save_knowledge,
+            writes=True,
+        ),
         ToolSpec(
             "brain_open_root",
             "Open the entry note of the internal guidance tree (domain hubs, relation types).",

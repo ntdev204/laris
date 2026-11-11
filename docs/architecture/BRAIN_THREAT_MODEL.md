@@ -56,6 +56,8 @@ deferred (decision D3).
 | TH11 | Brain text is sent to an external endpoint | existing egress policy (loopback only unless configured); brain text is only used in local prompts | `test_harness.py` egress tests |
 | TH12 | The brain grows into an unreadable mass that costs context | hub tree with depth, width and budget limits enforced by lint and runtime budgets | `test_brain.py::test_shipped_brain_passes_structure_lint`, `test_structure_lint_catches_orphan_wide_hub_missing_summary_and_depth` |
 
+| TH13 | A hostile document plants instructions in a knowledge note that the brain then shows to the model | knowledge notes are untrusted, titles and summaries pass the injection scan before they reach the model, flagged full text is withheld; the core brain is never written | `test_knowledge.py::test_injection_text_in_a_document_title_or_summary_is_not_passed_to_the_model`, `test_save_knowledge_refuses_injection_and_unknown_domain_falls_back`, `test_ingest_adds_knowledge_under_the_matching_domain_and_no_skill` |
+
 ## 4. Open work
 
 - Extraction suite (paraphrase, translation, encoding, step-by-step) against the leak guard: task T33.

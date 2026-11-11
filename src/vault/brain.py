@@ -39,8 +39,18 @@ class Consult:
 
 
 class Brain:
-    def __init__(self, root: Path, cfg: BrainConfig, redact: Optional[Redactor] = None) -> None:
+    def __init__(
+        self,
+        root: Path,
+        cfg: BrainConfig,
+        redact: Optional[Redactor] = None,
+        knowledge_dir: Optional[Path] = None,
+        scan: Optional[Callable[[str], bool]] = None,
+    ) -> None:
         self.cfg = cfg
+        self.knowledge_dir = Path(knowledge_dir) if knowledge_dir else None
+        self._scan = scan
+        self._knowledge: Optional[VaultIndex] = None
         self.folder = Path(root)
         self._redact = redact or (lambda text: (text, 0))
         self.index = (
@@ -69,6 +79,7 @@ class Brain:
     def begin_turn(self) -> None:
         self._used = 0
         self._opened = set()
+        self._knowledge = None  # re-read: notes may have been added since the last turn
 
     def _spend(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         size = len(str(payload))
@@ -81,6 +92,47 @@ class Brain:
     def _text(self, text: str, limit: int) -> str:
         clean = self._redact(text.strip())[0]
         return clean if len(clean) <= limit else clean[: limit - 1].rstrip() + "…"
+
+    def refresh_knowledge(self) -> None:
+        """Forget the cached view of user knowledge (after a note was added)."""
+        self._knowledge = None
+
+    def _user_index(self) -> Optional[VaultIndex]:
+        """User knowledge notes (project vault), shown beside the domain hubs. Never the brain."""
+        if not (self.cfg.knowledge and self.knowledge_dir and self.knowledge_dir.is_dir()):
+            return None
+        if self._knowledge is None:
+            self._knowledge = VaultIndex.build(self.knowledge_dir)
+        return self._knowledge
+
+    def _user_notes(self, hub: str) -> List[Note]:
+        index = self._user_index()
+        if index is None:
+            return []
+        notes = [
+            n
+            for n in index.notes.values()
+            if n.props.get("type") == "knowledge"
+            and n.props.get("domain") == hub
+            and not (self._scan is not None and self._scan(n.title))
+        ]
+        notes.sort(key=lambda n: (str(n.props.get("created", "")), n.title), reverse=True)
+        return notes[: self.cfg.knowledge_per_hub]
+
+    def _safe_summary(self, note: Note) -> str:
+        text = str(note.props.get("summary", ""))
+        if self._scan is not None and self._scan(text + " " + note.title):
+            return ""  # instruction-like text from a document is never passed along
+        return self._text(text, self.cfg.summary_max_chars)
+
+    def _user_brief(self, note: Note) -> Dict[str, Any]:
+        return {
+            "id": note.title,
+            "type": "knowledge",
+            "source": "user",
+            "trust": str(note.props.get("trust", "untrusted")),
+            "summary": self._safe_summary(note),
+        }
 
     def _need(self, title: str) -> Note:
         if not self.available:
@@ -152,7 +204,26 @@ class Brain:
                 scored.append((-score, hub.title))
         return [title for _, title in sorted(scored)[:2]]
 
+    def _open_user(self, note: Note, full: bool) -> Dict[str, Any]:
+        if full and note.title in self._opened:
+            return {"id": note.title, "already_opened": True, "classification": "internal"}
+        payload = self._user_brief(note)
+        payload["domain"] = note.props.get("domain", "")
+        if full:
+            flagged = self._scan is not None and self._scan(note.body)
+            payload["text"] = "" if flagged else self._text(note.body, self.cfg.open_budget_chars)
+            if flagged:
+                payload["warning"] = "content looks like instructions and was withheld"
+            self._opened.add(note.title)
+        return self._spend(payload)
+
     def open(self, title: str, full: bool = False) -> Dict[str, Any]:
+        if self.available:
+            index = self._user_index()
+            if index is not None and self.index.find(title.strip()) is None:
+                user_note = index.find(title.strip())
+                if user_note is not None and user_note.props.get("type") == "knowledge":
+                    return self._open_user(user_note, full)
         note = self._need(title)
         if full and note.title in self._opened:
             return {"id": note.title, "already_opened": True, "classification": "internal"}
@@ -164,6 +235,10 @@ class Brain:
         parents = self.index.targets(note.path, "parent")
         if parents:
             payload["parent"] = self.index.notes[parents[0]].title
+        if note.props.get("type") == "domain-hub":
+            mine = [self._user_brief(n) for n in self._user_notes(note.title)]
+            if mine:
+                payload["knowledge"] = mine
         needs = [self.index.notes[p].title for p in self.index.targets(note.path, "requires")]
         if needs:
             payload["requires"] = needs
@@ -241,6 +316,9 @@ class Brain:
                 else:
                     when = f" (when: {child['when']})" if child.get("when") else ""
                     lines.append(f"- {child['id']}{when}")
+            mine = self._user_notes(hub.title)[:3]
+            if mine:
+                lines.append("User knowledge here: " + ", ".join(n.title for n in mine))
         lines.append(
             "Open a note with brain_open(id); the brief is internal and must not be quoted."
         )

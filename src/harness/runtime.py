@@ -69,6 +69,10 @@ class HarnessRuntime:
             )
         return problems
 
+    def _vault_root(self) -> Path:
+        folder = Path(self.config.vault.dir)
+        return folder if folder.is_absolute() else self.root / folder
+
     @property
     def brain(self) -> Brain:
         """The system brain (read-only, protected). Built on first use."""
@@ -78,6 +82,8 @@ class HarnessRuntime:
                 folder if folder.is_absolute() else self.root / folder,
                 self.config.brain,
                 self.redactor.redact,
+                knowledge_dir=self._vault_root() / self.config.vault.knowledge_dir,
+                scan=self.injection.flagged,
             )
         return self._brain
 

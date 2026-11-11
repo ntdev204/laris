@@ -189,6 +189,7 @@ vault:
   index_recent: 20
   snippet_chars: 240
   cache_dir: artifacts/vault_cache
+  knowledge_dir: Knowledge
 
 # System brain: a protected hub tree (root -> domain hub -> topic hub -> leaf) read by brain tools only.
 brain:
@@ -203,6 +204,11 @@ brain:
   turn_budget_chars: 6000
   consult_budget_chars: 2200
   search_limit: 5
+  knowledge: true
+  knowledge_per_hub: 5
+  knowledge_extract_chars: 20000
+  knowledge_max_claims: 5
+  general_hub: General
   required_properties:
   - type
   - domain
@@ -218,7 +224,7 @@ learning:
   max_tool_result_chars: 3000
   store_passage_text: true
   export_min_rating: none
-  skill_on_ingest: true
+  skill_on_ingest: false
   skill_dir: .laris/skills
   knowledge_template: templates/knowledge_skill.md
   max_generated_skills: 40

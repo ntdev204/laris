@@ -33,10 +33,14 @@ laris agent chat                               # phiên làm việc trong termin
 | Trong chat | Nhờ trợ lý dùng công cụ `ingest_path` (cần bạn đồng ý) |
 
 - Hỗ trợ: txt, md, pdf (có lớp chữ), ảnh và PDF scan (OCR `eng+vie`), jsonl/parquet kiểu BEIR.
-- Mỗi lần nạp, hệ thống **tự tạo hoặc cập nhật một skill** `corpus-<tên thư mục hoặc tài liệu>`
-  (chỉ chứa tên nguồn, số đoạn, thuật ngữ chính, các bước tìm kiếm và giới hạn; không chứa nội dung).
-- Nạp lại cùng tài liệu sẽ thay thế bản cũ. Xem trạng thái kho: `laris app status` hoặc bảng Kho tài liệu.
-- Tạo lại skill cho cả kho: `laris skills sync`.
+- Mỗi lần nạp, hệ thống **không tạo skill**. Thay vào đó nó thêm **tri thức mới theo lĩnh vực** vào bộ
+  não: một ghi chú trong `vault/Knowledge/<lĩnh vực>/` (thuật ngữ chính, các khẳng định, phương pháp,
+  tập dữ liệu, chỉ số trích từ tài liệu), nối với ghi chú nguồn và hiện cạnh hub lĩnh vực tương ứng
+  (xem mục 11). Tài liệu không khớp lĩnh vực nào vào nhóm `General`.
+- Nạp lại cùng tài liệu sẽ cập nhật ghi chú, không nhân đôi. Xem trạng thái kho: `laris app status`.
+- Nếu bạn vẫn muốn skill mô tả kho (tùy chọn): `laris skills sync`.
+- Skill chỉ được tạo khi **bạn yêu cầu** (mục 5). Muốn dạy một kiến thức mới bằng lời, nói *"hãy ghi nhớ
+  rằng ..."*: trợ lý gọi `save_knowledge` (cần bạn đồng ý) để thêm vào đúng lĩnh vực.
 
 ## 3. Hỏi đáp và tìm kiếm
 
@@ -75,6 +79,7 @@ Skill là cách làm việc có sẵn (ví dụ tổng quan tài liệu, thiết
 
 - Xem: `laris skills list`, `laris skills show <tên>`.
 - Dùng: `/<tên-skill> <yêu cầu>`, hoặc để trợ lý tự gọi khi yêu cầu khớp mô tả.
+- Skill chỉ tạo khi bạn yêu cầu; kiến thức mới (sự kiện, định nghĩa, kết quả) thì dùng `save_knowledge`.
 - Dạy kỹ năng mới: nói *"tôi muốn thêm một skill ..."* — trợ lý dùng skill `skill-authoring`, soạn bản
   nháp rồi gọi `save_skill` (cần bạn đồng ý). Hoặc tự viết `SKILL.md` rồi
   `laris skills lint <file>` và `laris skills add --file <file>`.
@@ -145,6 +150,9 @@ Sau đó mỗi lần làm việc sẽ thêm ghi chú có liên kết với nhau:
 
 - `Sources/`: mỗi tài liệu đã nạp, kèm khái niệm chính; `Concepts/`: thuật ngữ và nơi nó xuất hiện;
 - `Questions/` và `Sessions/`: câu hỏi, câu trả lời đã được xác minh và buổi làm việc, nối tới nguồn đã dẫn;
+- `Knowledge/<lĩnh vực>/`: tri thức mới theo lĩnh vực (từ tài liệu hoặc do bạn dạy), mỗi lĩnh vực có
+  một ghi chú danh sách; bộ não hiển thị chúng cạnh hub lĩnh vực khớp, nên suy luận tìm thấy chúng khi
+  đi theo cây;
 - `_inbox/`: đề xuất đang chờ bạn duyệt (chưa dùng để trả lời).
 
 Mở thư mục `vault/` bằng Obsidian (không bắt buộc) để xem đồ thị liên kết. Bạn có thể sửa ghi chú: hệ
@@ -154,7 +162,8 @@ bạn sửa và báo xung đột thay vì ghi đè. Lệnh: `laris vault init|ch
 
 **Bộ não hệ thống** là cây hướng dẫn suy luận nội bộ (bảo mật, chỉ đọc). Hệ thống không đọc toàn bộ: nó vào
 ở nút gốc, theo liên kết cha → con tới đúng hub rồi mở đúng ghi chú cần. Bạn chỉ thấy tên các ghi chú đã
-dùng (dòng `◈ bộ não: ...`), không thấy nội dung. Kiểm tra cấu trúc: `laris brain check`; xem cây tên:
+dùng (dòng `◈ bộ não: ...`), không thấy nội dung. Lõi bộ não không bao giờ bị sửa lúc chạy; tri thức mới nằm
+trong `vault/Knowledge/` và chỉ được gắn vào cây ở lúc đọc. Kiểm tra cấu trúc: `laris brain check`; xem cây tên:
 `laris brain tree`; xem một tác vụ đi vào hub nào: `laris brain route "câu hỏi"`.
 
 ## 12. Xử lý sự cố
