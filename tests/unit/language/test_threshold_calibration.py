@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from laris.cli.main import main
-from laris.language.evaluation.calibration import calibrate_thresholds
+from cli.main import main
+from language.evaluation.calibration import calibrate_thresholds
 
 THRESHOLDS = {
     "tasks": {

@@ -117,8 +117,8 @@ steps:
   depends_on:
   - G03
   deliverables:
-  - src/laris/language/evaluation/evaluator.py
-  - src/laris/language/evaluation/metrics.py
+  - src/language/evaluation/evaluator.py
+  - src/language/evaluation/metrics.py
   - tests/unit/language/test_answer_metrics.py
   acceptance: EM/F1 theo answer-text chuẩn hóa; xử lý đa đáp án, no-answer, truncation; không nhầm token-span
     với answer-text; provenance/protocol được ghi.
@@ -135,7 +135,7 @@ steps:
   depends_on:
   - F01
   deliverables:
-  - src/laris/language/benchmarks/fertility.py
+  - src/language/benchmarks/fertility.py
   - tests/unit/language/test_fertility.py
   - reports/tokenizer/fertility.json
   acceptance: Tách EN/VI; định nghĩa word/token rõ ràng; corpus unseen có manifest, chống leakage và report
@@ -153,7 +153,7 @@ steps:
   depends_on:
   - F02
   deliverables:
-  - src/laris/language/benchmarks/retrieval.py
+  - src/language/benchmarks/retrieval.py
   - configs/evaluation/foundation_retrieval.yaml
   - tests/unit/language/test_retrieval_benchmark.py
   - reports/retrieval/foundation.json
@@ -214,7 +214,7 @@ steps:
   - F04A
   deliverables:
   - configs/language_encoder/compact.yaml
-  - src/laris/language/training/objectives.py
+  - src/language/training/objectives.py
   - tests/unit/language/test_retrieval_objective.py
   - docs/training/OWNER_RUNBOOK.md
   acceptance: 'Chốt objective/sampling/loss, ablation và ngân sách theo F04A; thêm objective contrastive
@@ -334,7 +334,7 @@ steps:
   depends_on:
   - S01A
   deliverables:
-  - src/laris/scientific/language/model.py
+  - src/scientific/language/model.py
   - tests/contract/test_scientific_language.py
   acceptance: Khởi tạo từ foundation đã qualified theo thiết kế được duyệt; tokenizer lineage, thuật ngữ,
     phủ định, số/đơn vị và điều kiện được giữ; không dùng foundation pretrained bên ngoài.
@@ -349,7 +349,7 @@ steps:
   depends_on:
   - S02
   deliverables:
-  - src/laris/scientific/training/runner.py
+  - src/scientific/training/runner.py
   - configs/evaluation/scientific_language.yaml
   - docs/training/SCIENTIFIC_LANGUAGE_RUNBOOK.md
   acceptance: Code/lệnh train và evaluator SciFact/evidence/discourse có contract và fixture; không optimizer
@@ -422,8 +422,8 @@ steps:
   depends_on:
   - O01A
   deliverables:
-  - src/laris/documents/parsing.py
-  - src/laris/documents/ocr.py
+  - src/documents/parsing.py
+  - src/documents/ocr.py
   - docs/training/OCR_RUNBOOK.md
   acceptance: Dữ liệu clean/degraded có gold; phân biệt text-native/scanned; giữ order, công thức, bảng/hình
     và đánh dấu phần chưa hỗ trợ; code và lệnh, không train.
@@ -481,7 +481,7 @@ steps:
   depends_on:
   - M01A
   deliverables:
-  - src/laris/documents/discourse.py
+  - src/documents/discourse.py
   - docs/training/MANUSCRIPT_LEARNING_RUNBOOK.md
   acceptance: Dữ liệu discourse-role có gold/coordinate; code học claim/method/result/limitation trên
     đầu ra OCR; heading-stripped tests; không lẫn với viết manuscript.

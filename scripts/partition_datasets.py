@@ -3,7 +3,7 @@
 
 import sys
 
-from laris.cli.main import main
+from cli.main import main
 
 if __name__ == "__main__":
     sys.exit(main(["data", "partition", *sys.argv[1:]]))

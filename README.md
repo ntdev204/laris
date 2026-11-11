@@ -31,7 +31,7 @@ Current measured readiness: the local compact checkpoint passes baseline-relativ
 ├── docs/            # Architecture, specifications, training runbooks, ADRs and plans
 ├── experiments/     # Manually invoked diagnostic experiments
 ├── reports/         # Versioned measurements and verification evidence
-├── src/laris/       # Domain packages: language, corpus, retrieval, cli, core, config, ...
+├── src/       # Domain packages: language, corpus, retrieval, cli, core, config, ...
 ├── tests/           # unit/<domain>, contract, integration, cli
 ├── configs/         # YAML configuration by function (language_encoder, data, evaluation)
 ├── scripts/         # validate_docs.py and thin wrappers over the laris CLI

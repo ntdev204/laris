@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from laris.language.evaluation.readiness import assess_readiness
+from language.evaluation.readiness import assess_readiness
 
 ROOT = Path(__file__).resolve().parents[3]
 CONFIG = ROOT / "configs/evaluation/foundation.yaml"
@@ -155,7 +155,7 @@ def test_gate_config_matches_normative_table(config):
 
 
 def test_qa_report_protocol_does_not_claim_answer_text():
-    from laris.language.evaluation.evaluator import (
+    from language.evaluation.evaluator import (
         DatasetResult,
         EvaluationReport,
         report_to_dict,
@@ -176,7 +176,7 @@ def test_paraphrase_macro_f1_is_not_positive_class_f1():
 
     import torch
 
-    from laris.language.evaluation.evaluator import LanguageEncoderEvaluator
+    from language.evaluation.evaluator import LanguageEncoderEvaluator
 
     # Fixed CPU predictions, without constructing a model or invoking optimization.
     evaluator = object.__new__(LanguageEncoderEvaluator)

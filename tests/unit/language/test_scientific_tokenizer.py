@@ -10,14 +10,14 @@ Tests:
 
 import pytest
 
-from laris.core.errors import ModuleContractViolationError
-from laris.language.schemas import (
+from core.errors import ModuleContractViolationError
+from language.schemas import (
     CLS_TOKEN,
     SEP_TOKEN,
     UNK_TOKEN,
     VocabularyContract,
 )
-from laris.language.tokenization.tokenizer import (
+from language.tokenization.tokenizer import (
     ScientificTokenizer,
     compute_token_fertility,
     evaluate_stem_fertility,

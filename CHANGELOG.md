@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Flat source layout:** the `src/laris/` package directory is removed; every domain package (`agent`, `application`, `cli`, `config`, `core`, `corpus`, `evaluation`, `execution`, `graph`, `language`, `orchestration`, `reasoning`, `reporting`, `retrieval`, `scientific`, `serving`) now lives directly in `src/`. Imports change from `laris.language...` to `language...`, `python -m laris.x` to `python -m x`, and the `laris` command points at `cli.main:main`. `__version__` moved to `core`. Reinstall once with `uv pip install -e . --no-deps` to refresh the console script.
+
+### Added
+- **Local chat application and agent:** chat web UI, Claude-Code-style terminal session, typed tool layer with OCR, and an OpenAI-compatible model server with a pluggable backend (placeholder until the core model is trained).
+
 ## [1.2.0] - 2026-11-11
 
 ### Added

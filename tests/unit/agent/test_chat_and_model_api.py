@@ -5,13 +5,13 @@ import threading
 
 import pytest
 
-from laris.agent.conversations import ConversationStore, SettingsStore
-from laris.agent.provider import HttpChatProvider, OfflinePlanner
-from laris.application.chat_app import ChatApp
-from laris.application.server import handle_api
-from laris.application.service import SearchService
-from laris.application.workspace import Workspace, chunks_from_text
-from laris.serving.model_server import ModelService, build_server, load_backend
+from agent.conversations import ConversationStore, SettingsStore
+from agent.provider import HttpChatProvider, OfflinePlanner
+from application.chat_app import ChatApp
+from application.server import handle_api
+from application.service import SearchService
+from application.workspace import Workspace, chunks_from_text
+from serving.model_server import ModelService, build_server, load_backend
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ def test_model_server_round_trip_with_streaming_and_auth():
     try:
         tools = [{"type": "function", "function": {"name": "search_corpus"}}]
         messages = [{"role": "user", "content": "graphene"}]
-        from laris.agent.provider import ProviderError
+        from agent.provider import ProviderError
 
         with pytest.raises(ProviderError):  # wrong key is rejected
             HttpChatProvider(base, "m", timeout_s=3).chat(messages, tools)

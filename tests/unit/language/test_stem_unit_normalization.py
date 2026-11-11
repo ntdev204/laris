@@ -18,12 +18,12 @@ import math
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EpistemicOverreachError,
     ModuleContractViolationError,
     UnitConversionError,
 )
-from laris.scientific import (
+from scientific import (
     DimensionalVector,
     EpistemicAssertionType,
     STEMUnitNormalizer,

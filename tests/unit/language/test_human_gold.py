@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from laris.evaluation import human_gold as H
+from evaluation import human_gold as H
 
 
 def test_kappa_known_values():

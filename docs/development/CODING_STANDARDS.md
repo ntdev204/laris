@@ -57,7 +57,7 @@ Every implementation subtask, pull request, and code review must adhere to these
 - When a third genuinely equivalent occurrence emerges, extract a shared, well-tested helper or utility.
 
 ### 2.5 Separation of Concerns
-- Maintain clean boundaries between domain models (`src/laris/core/`), domain processing logic (`src/laris/language/`, `corpus/`, `scientific/`, etc.), external execution adapters, and CLI presentation.
+- Maintain clean boundaries between domain models (`src/core/`), domain processing logic (`src/language/`, `corpus/`, `scientific/`, etc.), external execution adapters, and CLI presentation.
 - Do not mix business rules with infrastructure details or I/O handling.
 
 ### 2.6 SOLID Principles
@@ -73,7 +73,7 @@ Every implementation subtask, pull request, and code review must adhere to these
 - **High Cohesion, Low Coupling:** Keep logically related routines grouped together; prevent circular imports and hidden side effects across modules.
 - **Encapsulation:** Hide internal mutable state; expose immutable dataclasses or strictly validated properties.
 - **Principle of Least Astonishment:** Functions, defaults, and error types must behave predictably. Avoid hidden side effects, unexpected network access, or silent mutations.
-- **Fail Fast:** Validate inputs, schemas, and preconditions at module entry points. Raise precise domain exceptions from `src/laris/core/errors.py`. Never silently swallow exceptions or substitute arbitrary defaults.
+- **Fail Fast:** Validate inputs, schemas, and preconditions at module entry points. Raise precise domain exceptions from `src/core/errors.py`. Never silently swallow exceptions or substitute arbitrary defaults.
 
 ### 2.8 Clean Code, Naming & Simplicity
 - **Domain-Specific Naming:** Use clear, unambiguous identifiers (`evidence_coordinate_id`, `epistemic_status`, `citation_span`). Avoid cryptic abbreviations.
@@ -114,8 +114,8 @@ When engineering trade-offs arise, resolve conflicts using the following priorit
 - All code passes static analysis with `mypy src`.
 
 ### 4.2 Module Boundaries
-- `src/laris/core/`: Common schemas, error hierarchy, logging, and mathematical utilities.
-- `src/laris/{corpus,language,scientific,graph,retrieval,reasoning,orchestration,execution,evaluation,reporting}/`: functional domain implementations mapped to conceptual layers by `LAYER_ARCHITECTURE.md` (ADR-013).
+- `src/core/`: Common schemas, error hierarchy, logging, and mathematical utilities.
+- `src/{corpus,language,scientific,graph,retrieval,reasoning,orchestration,execution,evaluation,reporting}/`: functional domain implementations mapped to conceptual layers by `LAYER_ARCHITECTURE.md` (ADR-013).
 - `tests/`: Organized into `tests/unit/`, `tests/contract/`, `tests/integration/`, and `tests/documentation/`.
 
 ---

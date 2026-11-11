@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from laris.core.errors import DataLeakageError, ModuleContractViolationError
-from laris.corpus.pipeline import CorpusIngestionPipeline
-from laris.corpus.schemas import DatasetSplit
-from laris.language.schemas import (
+from core.errors import DataLeakageError, ModuleContractViolationError
+from corpus.pipeline import CorpusIngestionPipeline
+from corpus.schemas import DatasetSplit
+from language.schemas import (
     TokenizerTrainingInputSpec,
     VocabularyContract,
 )

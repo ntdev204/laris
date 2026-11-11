@@ -1,7 +1,7 @@
 """Normalising tokenizer wrapper: same text as the fit corpus, forwarding, and checkpoint wiring."""
 
-from laris.corpus.normalizer import normalize_scientific_text
-from laris.language.tokenization.normalized import (
+from corpus.normalizer import normalize_scientific_text
+from language.tokenization.normalized import (
     NORMALIZATION_ID,
     NormalizedSentencePiece,
     normalize_for_tokenizer,

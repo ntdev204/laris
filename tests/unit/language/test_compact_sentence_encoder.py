@@ -4,15 +4,15 @@ import math
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EmbeddingDimensionMismatchError,
     ModuleContractViolationError,
     SequenceLengthExceededError,
 )
-from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
-from laris.language.schemas import VocabularyContract
-from laris.language.tokenization.tokenizer import ScientificTokenizer
+from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from language.encoder.sentence_encoder import CompactSentenceEncoder
+from language.schemas import VocabularyContract
+from language.tokenization.tokenizer import ScientificTokenizer
 
 
 @pytest.fixture
@@ -156,7 +156,7 @@ def test_compact_sentence_encoder_out_of_bounds_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verifies that an out-of-bounds token ID gracefully falls back to zero vector."""
-    from laris.language.schemas import TokenizedSentenceOutput
+    from language.schemas import TokenizedSentenceOutput
 
     encoder = CompactSentenceEncoder(stem_tokenizer, embedding_dim=384)
     # Monkeypatch tokenizer.encode to return an out-of-bounds token id

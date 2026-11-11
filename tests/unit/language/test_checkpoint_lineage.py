@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from laris.core.errors import DataIntegrityError
-from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
-from laris.language.schemas import (
+from core.errors import DataIntegrityError
+from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from language.encoder.sentence_encoder import CompactSentenceEncoder
+from language.schemas import (
     LanguageTrainingRunManifest,
     VocabularyContract,
 )
-from laris.language.tokenization.tokenizer import ScientificTokenizer
-from laris.language.training.artifacts import (
+from language.tokenization.tokenizer import ScientificTokenizer
+from language.training.artifacts import (
     LanguageArtifactBundle,
     LanguageArtifactManager,
 )

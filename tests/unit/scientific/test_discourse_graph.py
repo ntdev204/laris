@@ -5,8 +5,8 @@ Module ID: MOD-SEM-001 (Boundary C)
 Governed by: ADR-002, ADR-004, and ADR-008.
 """
 
-from laris.core.schemas import EvidenceCoordinate
-from laris.reasoning import (
+from core.schemas import EvidenceCoordinate
+from reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,

@@ -35,6 +35,6 @@ Every change starts as a GitHub issue (templates in `.github/ISSUE_TEMPLATE/`), 
 - All contributors must comply with the canonical engineering standards defined in [docs/development/CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md).
 - Strict Git Flow branching, review cycles, and merge policies are defined in [docs/development/GIT_FLOW.md](docs/development/GIT_FLOW.md).
 - Python 3.10+ with strict type annotations (`typing`, `dataclasses`, `pydantic`).
-- Code must reside within `src/laris/` adhering to layer modularity defined in [docs/architecture/LAYER_ARCHITECTURE.md](docs/architecture/LAYER_ARCHITECTURE.md) and [docs/specifications/MODULE_CONTRACTS.md](docs/specifications/MODULE_CONTRACTS.md).
+- Code must reside within `src/` adhering to layer modularity defined in [docs/architecture/LAYER_ARCHITECTURE.md](docs/architecture/LAYER_ARCHITECTURE.md) and [docs/specifications/MODULE_CONTRACTS.md](docs/specifications/MODULE_CONTRACTS.md).
 - All new features require unit tests in `tests/unit/` or contract tests in `tests/contract/`.
 - Local quality gates must pass prior to opening PRs: `pytest`, `ruff check .`, `mypy src`, and `python3 scripts/validate_docs.py`.

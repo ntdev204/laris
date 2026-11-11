@@ -7,8 +7,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from laris.language.training.dataloader import StreamingParquetMultiTaskDataLoader
-from laris.language.training.objectives import contrastive_retrieval_loss
+from language.training.dataloader import StreamingParquetMultiTaskDataLoader
+from language.training.objectives import contrastive_retrieval_loss
 
 
 def test_aligned_embeddings_have_expected_cosine_loss():

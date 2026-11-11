@@ -17,16 +17,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from laris.core.errors import HardwareBudgetExceededError
-from laris.execution.headroom_governor import (
+from core.errors import HardwareBudgetExceededError
+from execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from laris.execution.schemas import (
+from execution.schemas import (
     HardwareTarget,
     SpecialistExecutionRequest,
     TelemetryStatus,
 )
-from laris.execution.telemetry import (
+from execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
     PyTorchCudaSampler,

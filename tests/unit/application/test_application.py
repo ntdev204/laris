@@ -4,9 +4,9 @@ import base64
 
 import pytest
 
-from laris.application.server import handle_api
-from laris.application.service import SearchService
-from laris.application.workspace import IngestError, Workspace, chunks_from_text, decode_upload
+from application.server import handle_api
+from application.service import SearchService
+from application.workspace import IngestError, Workspace, chunks_from_text, decode_upload
 
 
 def _service(tmp_path):

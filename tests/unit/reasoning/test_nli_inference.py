@@ -8,12 +8,12 @@ import math
 
 import pytest
 
-from laris.core.errors import InvalidNLIInputError
-from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.encoder.sentence_encoder import CompactSentenceEncoder
-from laris.language.schemas import VocabularyContract
-from laris.language.tokenization.tokenizer import ScientificTokenizer
-from laris.reasoning import (
+from core.errors import InvalidNLIInputError
+from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from language.encoder.sentence_encoder import CompactSentenceEncoder
+from language.schemas import VocabularyContract
+from language.tokenization.tokenizer import ScientificTokenizer
+from reasoning import (
     DeterministicScientificNLIEngine,
     NLILabel,
     SentencePairInput,
@@ -205,7 +205,7 @@ class TestNLIBoundaryAndResourceGates:
     def test_invariant_violation_raises_runtime_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from laris.reasoning import NLIOutput
+        from reasoning import NLIOutput
 
         monkeypatch.setattr(NLIOutput, "verify_contradiction_invariant", lambda self: False)
         pair = SentencePairInput(premise="A holds.", hypothesis="A holds.")

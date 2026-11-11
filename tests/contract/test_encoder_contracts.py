@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EmbeddingDimensionMismatchError,
     ModuleContractViolationError,
 )
-from laris.language.schemas import (
+from language.schemas import (
     ALLOWED_EMBEDDING_DIMENSIONS,
     EmbeddingBatchOutput,
     EncoderCheckpointMetadata,

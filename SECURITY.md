@@ -7,7 +7,7 @@ Do not open a public issue for a security problem. Use GitHub private vulnerabil
 ## Scope
 
 - Local-first boundary: no component may send corpus or user data to external services without an accepted ADR ([ADR-001](docs/adr/ADR-001-local-first-system-boundary.md)).
-- Training authorization: neural training must stay behind `src/laris/core/authorization.py` and `LARIS_TRAINING_AUTHORIZED=1`.
+- Training authorization: neural training must stay behind `src/core/authorization.py` and `LARIS_TRAINING_AUTHORIZED=1`.
 - Artifacts: checkpoints are verified by SHA-256 before loading; never load unverified weights.
 - Secrets and credentials must not be committed; datasets and model weights are gitignored.
 

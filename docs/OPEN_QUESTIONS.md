@@ -26,15 +26,15 @@ This registry tracks open technical questions, unverified hypotheses, and pendin
 
 ### OQ-001: Neural Architecture for Layer 1 Sentence Encoder
 - **Status:** DECIDED / RESOLVED (ADR-002, DOC-SPEC-TRAIN-001)
-- **Resolution:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE positional encoding, RMSNorm pre-norm, GELU, tied MLM embeddings, 109.56M backbone params, 109.76M with multi-task heads). Implemented in `src/laris/language/encoder/transformer.py`.
+- **Resolution:** 12-layer bidirectional Transformer encoder ($d_{\text{model}}=768$, 12 heads, $d_{\text{ff}}=3072$, RoPE positional encoding, RMSNorm pre-norm, GELU, tied MLM embeddings, 109.56M backbone params, 109.76M with multi-task heads). Implemented in `src/language/encoder/transformer.py`.
 
 ### OQ-002: Graph Storage Engine for Layer 5 Evidence Graph
 - **Status:** DECIDED / RESOLVED (ADR-009)
-- **Resolution:** Embedded SQLite with indexed node/edge schema (`src/laris/graph/sqlite_adapter.py`). Provides deterministic relational transactions, zero daemon overhead, and complete graph integrity.
+- **Resolution:** Embedded SQLite with indexed node/edge schema (`src/graph/sqlite_adapter.py`). Provides deterministic relational transactions, zero daemon overhead, and complete graph integrity.
 
 ### OQ-003: Vector Indexing Backend for Layer 6 Hybrid Retrieval
 - **Status:** DECIDED / RESOLVED (ADR-010)
-- **Resolution:** Reciprocal Rank Fusion (RRF) combining lexical BM25 and dense cosine projections with numpy vectorization (`src/laris/retrieval/engine.py`). Multi-channel fusion operates within host RAM budget.
+- **Resolution:** Reciprocal Rank Fusion (RRF) combining lexical BM25 and dense cosine projections with numpy vectorization (`src/retrieval/engine.py`). Multi-channel fusion operates within host RAM budget.
 
 ### OQ-004: Ingestion Strategy for Multi-Modal Tables & Figures in Layer 4
 - **Status:** OPEN / RESEARCH

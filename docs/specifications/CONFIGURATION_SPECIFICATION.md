@@ -43,7 +43,7 @@ flowchart TD
 1. **Tier 1 — Explicit CLI Overrides**: Dot-separated key-value pairs passed directly to invocation commands (e.g. `{"model.d_model": 384}`).
 2. **Tier 2 — Environment Variables**: Prefixed environment variables formatted as `LARIS_<SECTION>__<KEY>` (e.g. `LARIS_TRAINING__BATCH_SIZE=64`).
 3. **Tier 3 — Selected YAML Configuration File**: Declarative configuration templates stored in `configs/` or custom run configurations.
-4. **Tier 4 — Canonical Pydantic Schema Defaults**: Hardened safe defaults declared in `laris.config.schemas`.
+4. **Tier 4 — Canonical Pydantic Schema Defaults**: Hardened safe defaults declared in `config.schemas`.
 
 ## 3. Schema Hierarchy & Structural Invariants
 
@@ -69,7 +69,7 @@ Any configuration attempting to specify `max_vram_gb > 14.5` will immediately ra
 Every resolved configuration generates an authoritative SHA-256 digest:
 
 ```python
-from laris.config import compute_config_hash, load_config
+from config import compute_config_hash, load_config
 
 cfg = load_config("configs/default.yaml")
 digest = compute_config_hash(cfg)

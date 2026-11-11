@@ -15,11 +15,11 @@ import time
 
 import pytest
 
-from laris.core.errors import WeightStagingError
-from laris.execution.headroom_governor import (
+from core.errors import WeightStagingError
+from execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from laris.execution.weight_staging import (
+from execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,

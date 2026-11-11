@@ -26,7 +26,7 @@ change_summary: "Splits large domain modules into functional sub-packages, forbi
 - **Status:** ACCEPTED
 - **Date Decided:** 2026-10-29
 - **Decision Owner:** LARIS Architecture Team
-- **Target Scope:** `src/laris/`, `scripts/`, `configs/`, `tests/`
+- **Target Scope:** `src/`, `scripts/`, `configs/`, `tests/`
 
 ---
 
@@ -51,7 +51,7 @@ model size or curriculum changes.
    `MultiTaskLossCalculator`, `LanguageEncoderConfig` / `LargeLanguageEncoderConfig`,
    `CorpusIngestionPipeline`. The only exception is the official name of an external dataset.
 3. **One CLI entry point.** `laris data acquire|partition` and `laris train tokenizer|language-encoder`
-   live in `laris.cli`; each command module exposes `add_arguments(parser)` and `run(args)`.
+   live in `cli`; each command module exposes `add_arguments(parser)` and `run(args)`.
    Files in `scripts/` are thin compatibility wrappers (documentation tooling such as
    `validate_docs.py` stays a script).
 4. **Configuration by function** under `configs/` (`language_encoder/`, `data/`); tests mirror the
@@ -68,7 +68,7 @@ model size or curriculum changes.
 
 ### Negative / Trade-offs
 - Branches written against the old flat paths must be rebased.
-- Importers of `laris.language.bm25` / `laris.language.retrieval_benchmark` now use `laris.retrieval`.
+- Importers of `language.bm25` / `language.retrieval_benchmark` now use `retrieval`.
 
 ## 4. Validation
 - Contract tests assert that new sub-package modules import and that legacy flat modules are gone.

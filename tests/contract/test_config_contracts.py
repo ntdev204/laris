@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from laris.config.loader import load_config
-from laris.config.schemas import LarisConfig
-from laris.core.errors import ModuleContractViolationError
+from config.loader import load_config
+from config.schemas import LarisConfig
+from core.errors import ModuleContractViolationError
 
 CONFIGS_DIR = Path("configs")
 

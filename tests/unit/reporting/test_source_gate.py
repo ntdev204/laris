@@ -5,16 +5,16 @@ from dataclasses import replace
 
 import pytest
 
-from laris.core.errors import UnanchoredAssertionError
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting.report_schema import (
+from core.errors import UnanchoredAssertionError
+from core.schemas import EvidenceCoordinate
+from reporting.report_schema import (
     CorpusManifestEntry,
     ReportAssertion,
     ReportSection,
     ReportSectionType,
     StructuredResearchReport,
 )
-from laris.reporting.source_gate import SourceEvidenceGate
+from reporting.source_gate import SourceEvidenceGate
 
 TEXT = "The benchmark contains 500 annotated abstracts."
 

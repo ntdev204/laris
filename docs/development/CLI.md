@@ -20,7 +20,7 @@ change_summary: "Adds offline formal readiness, links the owner-only runbook and
 
 # LARIS Command-Line Interface Reference
 
-The `laris` entry point (`src/laris/cli/main.py`) exposes one module per command under `src/laris/cli/commands/`. Each module defines `add_arguments(parser)` and `run(args)`. Scripts under `scripts/` are thin wrappers over the same functions. Run `laris <group> <command> --help` for the full option list.
+The `laris` entry point (`src/cli/main.py`) exposes one module per command under `src/cli/commands/`. Each module defines `add_arguments(parser)` and `run(args)`. Scripts under `scripts/` are thin wrappers over the same functions. Run `laris <group> <command> --help` for the full option list.
 
 ## Commands
 

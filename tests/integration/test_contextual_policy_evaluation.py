@@ -16,11 +16,11 @@ from typing import List
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     ModuleContractViolationError,
     PolicyRewardValidationError,
 )
-from laris.evaluation.contextual_bandit import (
+from evaluation.contextual_bandit import (
     DeterministicBaselineRouter,
     OfflineContextualBanditEvaluator,
     PolicyEvaluationResult,
@@ -28,7 +28,7 @@ from laris.evaluation.contextual_bandit import (
     RoutingReward,
     compute_routing_reward,
 )
-from laris.execution.task_router import (
+from execution.task_router import (
     ExecutionTier,
     TaskDomain,
 )

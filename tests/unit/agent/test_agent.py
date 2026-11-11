@@ -8,9 +8,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from laris.agent.builtin_tools import build_registry
-from laris.agent.loop import MAX_STEPS, AgentSession
-from laris.agent.provider import (
+from agent.builtin_tools import build_registry
+from agent.loop import MAX_STEPS, AgentSession
+from agent.provider import (
     AssistantTurn,
     ChatProvider,
     HttpChatProvider,
@@ -18,9 +18,9 @@ from laris.agent.provider import (
     ProviderError,
     ToolCall,
 )
-from laris.agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
-from laris.application.service import SearchService
-from laris.application.workspace import Workspace, chunks_from_text
+from agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
+from application.service import SearchService
+from application.workspace import Workspace, chunks_from_text
 
 
 @pytest.fixture
@@ -185,7 +185,7 @@ def test_ocr_reads_rendered_text():
 
     from PIL import Image, ImageDraw, ImageFont
 
-    from laris.application.ocr import ocr_image_bytes
+    from application.ocr import ocr_image_bytes
 
     image = Image.new("RGB", (700, 90), "white")
     ImageDraw.Draw(image).text(

@@ -15,28 +15,28 @@ class TestEnvironmentSmoke(unittest.TestCase):
                 self.assertIsNotNone(mod)
 
     def test_laris_package_importable(self):
-        import laris
-        import laris.core.errors
-        import laris.core.schemas
+        import core
+        import core.errors
+        import core.schemas
 
-        self.assertIsNotNone(laris)
-        self.assertEqual(laris.__version__, "1.2.0")
-        self.assertIsNotNone(laris.core.schemas.ScientificClaim)
-        self.assertIsNotNone(laris.core.errors.LarisError)
+        self.assertIsNotNone(core)
+        self.assertEqual(core.__version__, "1.2.0")
+        self.assertIsNotNone(core.schemas.ScientificClaim)
+        self.assertIsNotNone(core.errors.LarisError)
 
     def test_all_canonical_domain_packages_importable(self):
         """Verifies every canonical domain package is importable."""
         domain_packages = [
-            "laris.corpus",
-            "laris.language",
-            "laris.reasoning",
-            "laris.scientific",
-            "laris.graph",
-            "laris.retrieval",
-            "laris.orchestration",
-            "laris.execution",
-            "laris.evaluation",
-            "laris.reporting",
+            "corpus",
+            "language",
+            "reasoning",
+            "scientific",
+            "graph",
+            "retrieval",
+            "orchestration",
+            "execution",
+            "evaluation",
+            "reporting",
         ]
         for pkg in domain_packages:
             with self.subTest(package=pkg):
@@ -46,7 +46,7 @@ class TestEnvironmentSmoke(unittest.TestCase):
 
     def test_reporting_layer_key_classes_functional(self):
         """Verifies key Layer 11 reporting classes can be imported and instantiated."""
-        from laris.reporting import (
+        from reporting import (
             AcademicManuscript,
             EvidenceGate,
             EvidenceInspector,

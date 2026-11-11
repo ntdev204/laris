@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from laris.core.errors import GraphIntegrityError
-from laris.core.schemas import EpistemicStatus, EvidenceCoordinate
-from laris.graph import (
+from core.errors import GraphIntegrityError
+from core.schemas import EpistemicStatus, EvidenceCoordinate
+from graph import (
     AuthorNode,
     ClaimNode,
     DatasetNode,
@@ -196,7 +196,7 @@ class TestSQLiteGraphPersistenceAdapter(unittest.TestCase):
             self.assertEqual(len(loaded.edges), len(self.graph.edges))
 
     def test_connection_rollback_and_helpers(self) -> None:
-        from laris.graph.sqlite_adapter import asdict_coord
+        from graph.sqlite_adapter import asdict_coord
 
         self.assertIsNone(asdict_coord(None))
 

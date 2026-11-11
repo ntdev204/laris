@@ -45,7 +45,7 @@ The system specification, remaining project plan and implementation tasks live i
 Agents must not run fitting, backward passes, optimizer steps, authorized memory
 profiling or tests that perform these operations.
 
-Source packages remain functional under `src/laris/`, as required by ADR-013.
+Source packages remain functional under `src/`, as required by ADR-013.
 Experiments live under `experiments/`, measured reports under `reports/`, and
 weights/data remain local under ignored `artifacts/` and `data/` paths.
 

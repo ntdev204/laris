@@ -13,24 +13,24 @@ import unittest
 
 import numpy as np
 
-from laris.core.authorization import (
+from core.authorization import (
     temporary_training_authorization,
 )
-from laris.core.errors import (
+from core.errors import (
     TrainingExecutionProhibitedError,
 )
-from laris.language.encoder.transformer import (
+from language.encoder.transformer import (
     LargeLanguageEncoderConfig,
 )
-from laris.language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
-from laris.language.training.dataloader import (
+from language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
+from language.training.dataloader import (
     SyntheticMultiTaskDataLoader,
     TemperatureSamplingScheduler,
 )
-from laris.language.training.profiling import (
+from language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
-from laris.language.training.trainer import (
+from language.training.trainer import (
     LanguageEncoderTrainer,
     MultiTaskLossCalculator,
 )

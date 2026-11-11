@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import ModuleContractViolationError
-from laris.core.schemas import EvidenceCoordinate
-from laris.reasoning import (
+from core.errors import ModuleContractViolationError
+from core.schemas import EvidenceCoordinate
+from reasoning import (
     AdversarialCounterEvidenceEngine,
     AdversarialRefutationResult,
     CalibratedGapScores,

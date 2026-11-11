@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from laris.reasoning import (
+from reasoning import (
     CalibratedGapScores,
     CalibratedGapScoringEngine,
     CorpusScope,

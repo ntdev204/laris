@@ -20,7 +20,7 @@ change_summary: "Field tables replace the verbose JSON Schema listings; required
 
 # LARIS Core Data Schemas Specification
 
-All data exchanged between modules MUST conform to these schemas. The Python models in `src/laris/` (for example `laris.core`, `laris.reasoning.schemas`) are the executable form; JSON Schema draft 2020-12 is the interchange form. A field marked **required** must be present; ranges are inclusive.
+All data exchanged between modules MUST conform to these schemas. The Python models in `src/` (for example `core`, `reasoning.schemas`) are the executable form; JSON Schema draft 2020-12 is the interchange form. A field marked **required** must be present; ranges are inclusive.
 
 ## 1. `EvidenceCoordinate`
 

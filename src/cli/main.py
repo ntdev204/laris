@@ -1,0 +1,94 @@
+"""`laris` command-line entry point.
+
+Command tree (each leaf maps to a module in `cli.commands`):
+
+    laris data acquire             download and verify datasets, update the manifest
+    laris data partition           physically split raw datasets into train/val/test
+    laris data check               verify processed splits, manifest and sentencepiece
+    laris train tokenizer          fit the SentencePiece tokenizer
+    laris train language-encoder   train (or profile) the multi-task language encoder
+    laris evaluate language-encoder   score a checkpoint on the val/test split vs baselines
+    laris evaluate calibrate       ratchet acceptance thresholds up from passing val reports
+    laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
+    laris agent tools|run|chat       tool-using assistant (offline planner or model API)
+    laris model serve                OpenAI-compatible model API (placeholder backend for now)
+    laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
+"""
+
+import argparse
+import sys
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+
+from cli.commands import (
+    agent,
+    app,
+    calibrate,
+    check,
+    evaluate,
+    infer,
+    language_encoder,
+    model,
+    partition,
+    readiness,
+    tokenizer,
+)
+from corpus.acquisition import runner as acquisition
+
+Handler = Callable[[argparse.Namespace], int]
+
+COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
+    "data": {
+        "acquire": ("Download and verify datasets", acquisition),
+        "partition": ("Physically partition raw datasets (zero training)", partition),
+        "check": ("Verify processed data and tooling before training", check),
+    },
+    "train": {
+        "tokenizer": ("Fit the SentencePiece tokenizer", tokenizer),
+        "language-encoder": ("Train or profile the language encoder", language_encoder),
+    },
+    "evaluate": {
+        "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
+        "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
+        "calibrate": ("Tighten thresholds from measured val reports", calibrate),
+    },
+    "app": {
+        "ingest": ("Add documents to the local workspace", app.COMMANDS["ingest"]),
+        "index": ("Embed passages with a checkpoint (inference only)", app.COMMANDS["index"]),
+        "search": ("Search the workspace", app.COMMANDS["search"]),
+        "ask": ("Extractive answer with source passages", app.COMMANDS["ask"]),
+        "status": ("Show workspace and model status", app.COMMANDS["status"]),
+        "serve": ("Serve the web UI and JSON API locally", app.COMMANDS["serve"]),
+    },
+    "agent": {
+        "tools": ("List the agent's tools", agent.COMMANDS["tools"]),
+        "run": ("Run one task with the agent and print the steps", agent.COMMANDS["run"]),
+        "chat": ("Interactive agent session", agent.COMMANDS["chat"]),
+    },
+    "model": {
+        "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
+    },
+    "infer": {name: (f"Run {name} on a checkpoint", cmd) for name, cmd in infer.COMMANDS.items()},
+}
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="laris", description="LARIS command-line interface")
+    groups = parser.add_subparsers(dest="group", required=True)
+    for group, commands in COMMANDS.items():
+        group_parser = groups.add_parser(group, help=f"{group} commands")
+        leaves = group_parser.add_subparsers(dest="command", required=True)
+        for name, (help_text, module) in commands.items():
+            leaf = leaves.add_parser(name, help=help_text, description=help_text)
+            module.add_arguments(leaf)
+            leaf.set_defaults(handler=module.run)
+    return parser
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    args = build_parser().parse_args(argv)
+    handler: Handler = args.handler
+    return handler(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

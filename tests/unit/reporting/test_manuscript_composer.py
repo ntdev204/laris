@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     ModuleContractViolationError,
     ReportSchemaValidationError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from reporting import (
     AcademicManuscript,
     AssertionStatus,
     CorpusManifestEntry,
