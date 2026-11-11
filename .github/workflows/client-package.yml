@@ -1,12 +1,14 @@
 name: Client package (all platforms)
 
-# Builds the compiled client wheel for every supported OS and Python, then assembles one npm
+# Runs on release branches and by hand. Builds the compiled client wheel for every supported OS and Python, then assembles one npm
 # set of npm packages: one per platform plus the launcher. It never publishes: download the
 # artifact, inspect it, then publish the five platform packages first and the launcher last, yourself,
 # with the owner's authorisation (OWNER_RUNBOOK.md).
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["release/**"]
 
 jobs:
   wheels:
