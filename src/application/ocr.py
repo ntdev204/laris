@@ -3,8 +3,6 @@
 import io
 from typing import List
 
-DEFAULT_LANG = "eng+vie"
-
 
 class OcrError(RuntimeError):
     """Raised when OCR is unavailable or the input cannot be read as an image."""
@@ -25,11 +23,11 @@ def _ocr_image(data: bytes, lang: str) -> str:
         raise OcrError(f"OCR failed: {exc}") from exc
 
 
-def ocr_image_bytes(data: bytes, lang: str = DEFAULT_LANG) -> str:
+def ocr_image_bytes(data: bytes, lang: str) -> str:
     return _ocr_image(data, lang).strip()
 
 
-def ocr_pdf_bytes(data: bytes, lang: str = DEFAULT_LANG, max_pages: int = 50) -> str:
+def ocr_pdf_bytes(data: bytes, lang: str, max_pages: int) -> str:
     """OCR the page images embedded in a scanned PDF (text-layer pages are not re-read)."""
     try:
         from pypdf import PdfReader

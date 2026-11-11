@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import Callable, Dict, Iterable, Iterator, List, Optional, Tuple
 
 from application.ocr import OcrError, ocr_image_bytes, ocr_pdf_bytes
+from config.runtime_schemas import AppConfig
 
-CHUNK_WORDS = 140
-MIN_CHUNK_WORDS = 20
 TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".text"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}
 CHUNKS_FILE = "chunks.jsonl"
@@ -42,8 +41,10 @@ def clean_text(text: str) -> str:
     return re.sub(r"[ \t\f\v]+", " ", text).strip()
 
 
-def split_passages(text: str, target_words: int = CHUNK_WORDS) -> List[Tuple[int, int]]:
-    """Paragraph-aware spans of about `target_words` words; tiny tails join the previous span."""
+def split_passages(text: str, cfg: Optional[AppConfig] = None) -> List[Tuple[int, int]]:
+    """Paragraph-aware spans of about `chunk_words` words; tiny tails join the previous span."""
+    cfg = cfg or AppConfig()
+    target_words, min_words = cfg.chunk_words, cfg.min_chunk_words
     spans: List[Tuple[int, int]] = []
     start: Optional[int] = None
     end = 0
@@ -58,7 +59,7 @@ def split_passages(text: str, target_words: int = CHUNK_WORDS) -> List[Tuple[int
             spans.append((start, end))
             start, words = None, 0
     if start is not None:
-        if spans and words < MIN_CHUNK_WORDS:
+        if spans and words < min_words:
             spans[-1] = (spans[-1][0], end)
         else:
             spans.append((start, end))
@@ -74,26 +75,29 @@ def split_passages(text: str, target_words: int = CHUNK_WORDS) -> List[Tuple[int
     return out
 
 
-def chunks_from_text(source: str, text: str, title: str = "") -> List[Chunk]:
+def chunks_from_text(
+    source: str, text: str, title: str = "", cfg: Optional[AppConfig] = None
+) -> List[Chunk]:
     text = clean_text(text)
     if not text:
         raise IngestError(f"{source}: no text found")
     doc_id = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
     return [
         Chunk(f"{doc_id}:{n}", doc_id, source, title or source, text[s:e], s, e)
-        for n, (s, e) in enumerate(split_passages(text))
+        for n, (s, e) in enumerate(split_passages(text, cfg))
     ]
 
 
-def read_text_from_bytes(name: str, data: bytes) -> str:
+def read_text_from_bytes(name: str, data: bytes, cfg: Optional[AppConfig] = None) -> str:
     """Plain text of a txt/md/pdf/image file; scanned PDFs and images go through OCR."""
+    cfg = cfg or AppConfig()
     suffix = Path(name).suffix.lower()
     if suffix in IMAGE_SUFFIXES:
-        return _ocr_or_fail(lambda: ocr_image_bytes(data), name)
+        return _ocr_or_fail(lambda: ocr_image_bytes(data, cfg.ocr_lang), name)
     if suffix == ".pdf":
         text = _pdf_text(data, name)
         if len(text.strip()) < 20:  # no text layer: treat as a scan
-            text = _ocr_or_fail(lambda: ocr_pdf_bytes(data), name)
+            text = _ocr_or_fail(lambda: ocr_pdf_bytes(data, cfg.ocr_lang, cfg.ocr_max_pages), name)
         return text
     if suffix in TEXT_SUFFIXES or not suffix:
         return data.decode("utf-8", errors="replace")
@@ -119,8 +123,8 @@ def _pdf_text(data: bytes, name: str) -> str:
         raise IngestError(f"{name}: unreadable PDF ({exc})") from exc
 
 
-def chunks_from_bytes(name: str, data: bytes) -> List[Chunk]:
-    return chunks_from_text(name, read_text_from_bytes(name, data))
+def chunks_from_bytes(name: str, data: bytes, cfg: Optional[AppConfig] = None) -> List[Chunk]:
+    return chunks_from_text(name, read_text_from_bytes(name, data, cfg), cfg=cfg)
 
 
 def chunks_from_jsonl(path: Path, limit: Optional[int] = None) -> Iterator[Chunk]:
@@ -156,29 +160,47 @@ def chunks_from_parquet(path: Path, limit: Optional[int] = None) -> Iterator[Chu
             yield Chunk(f"{path.stem}:{ident}", path.stem, path.name, title, body, 0, len(body))
 
 
-def chunks_from_path(path: Path, limit: Optional[int] = None) -> List[Chunk]:
+def _source_name(path: Path, base: Optional[Path]) -> str:
+    """Project-relative name for citations; never an absolute path."""
+    if base is not None:
+        try:
+            return path.resolve().relative_to(base.resolve()).as_posix()
+        except ValueError:
+            pass
+    return path.name
+
+
+def chunks_from_path(
+    path: Path,
+    limit: Optional[int] = None,
+    cfg: Optional[AppConfig] = None,
+    base: Optional[Path] = None,
+    skip: Optional[Callable[[Path], bool]] = None,
+) -> List[Chunk]:
+    """Chunks for a file or folder; `skip` excludes paths (internal and secret files)."""
+    if skip is not None and skip(path):
+        return []
     if path.is_dir():
         found: List[Chunk] = []
+        allowed = TEXT_SUFFIXES | IMAGE_SUFFIXES | {".pdf", ".jsonl", ".parquet"}
         for child in sorted(path.rglob("*")):
-            if child.is_file() and child.suffix.lower() in TEXT_SUFFIXES | {
-                ".pdf",
-                ".jsonl",
-                ".parquet",
-            }:
-                found.extend(chunks_from_path(child, limit))
+            if child.is_file() and child.suffix.lower() in allowed:
+                found.extend(chunks_from_path(child, limit, cfg, base, skip))
         return found
     if path.suffix.lower() == ".jsonl":
         return list(chunks_from_jsonl(path, limit))
     if path.suffix.lower() == ".parquet":
         return list(chunks_from_parquet(path, limit))
-    return chunks_from_bytes(str(path), path.read_bytes())
+    return chunks_from_bytes(_source_name(path, base), path.read_bytes(), cfg)
 
 
-def decode_upload(name: str, text: Optional[str], data_base64: Optional[str]) -> List[Chunk]:
+def decode_upload(
+    name: str, text: Optional[str], data_base64: Optional[str], cfg: Optional[AppConfig] = None
+) -> List[Chunk]:
     if data_base64:
-        return chunks_from_bytes(name, base64.b64decode(data_base64))
+        return chunks_from_bytes(name, base64.b64decode(data_base64), cfg)
     if text is not None:
-        return chunks_from_text(name, text)
+        return chunks_from_text(name, text, cfg=cfg)
     raise IngestError("provide text or data_base64")
 
 

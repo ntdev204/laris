@@ -9,8 +9,9 @@ from application.chat_app import ChatApp
 from application.service import SearchService, ServiceError
 from application.web_ui import PAGE
 from application.workspace import IngestError, decode_upload
+from config.runtime_schemas import AppConfig
+from harness.prefs import PrefsError
 
-MAX_BODY_BYTES = 32 * 1024 * 1024
 _CONVERSATION = re.compile(r"^/api/conversations/([0-9a-f]{12})(/messages)?$")
 _COMPACT = re.compile(r"^/api/conversations/([0-9a-f]{12})/compact$")
 
@@ -27,11 +28,17 @@ def handle_api(
         if method == "GET" and path == "/api/status":
             info = service.status()
             if chat:
+                if not chat.runtime.config.security.expose_internal_info:
+                    info.pop("checkpoint", None)  # internal paths and digests stay private
+                    info.pop("model_sha256", None)
                 info["model_api"] = chat.model_health()
             return 200, info
         if method == "POST" and path == "/api/ingest":
             chunks = decode_upload(
-                str(body.get("name") or "document.txt"), body.get("text"), body.get("data_base64")
+                str(body.get("name") or "document.txt"),
+                body.get("text"),
+                body.get("data_base64"),
+                chat.runtime.config.app if chat else None,
             )
             with service._lock:
                 counts = service.workspace.add(chunks)
@@ -50,6 +57,8 @@ def handle_api(
                 return routed
     except (ServiceError, IngestError) as exc:
         return 400, {"error": str(exc)}
+    except PrefsError as exc:
+        return 400, {"error": str(exc)}
     except KeyError:
         return 404, {"error": "not found"}
     except (FileNotFoundError, RuntimeError, ValueError) as exc:
@@ -62,9 +71,9 @@ def _chat_routes(
 ) -> Optional[Tuple[int, Any]]:
     if path == "/api/settings":
         if method == "GET":
-            return 200, chat.settings.load()
+            return 200, chat.settings()
         if method == "POST":
-            return 200, chat.settings.update(body)
+            return 200, chat.update_settings(body)
     if path == "/api/model-health" and method == "GET":
         return 200, chat.model_health()
     if path == "/api/conversations":
@@ -86,7 +95,7 @@ def _chat_routes(
             chat.conversations.save(conversation)
             return 200, conversation
     if path == "/api/skills" and method == "GET":
-        chat.skills.reload()
+        library = chat.skills_for(chat.runtime)
         return 200, {
             "skills": [
                 {
@@ -95,14 +104,12 @@ def _chat_routes(
                     "scope": k.scope,
                     "references": len(k.references),
                 }
-                for k in (chat.skills.skills[n] for n in chat.skills.names())
+                for k in (library.skills[n] for n in library.names())
             ],
-            "problems": chat.skills.problems,
+            "problems": library.problems,
         }
     if path == "/api/instructions" and method == "GET":
-        return 200, [
-            {"file": label, "chars": len(text)} for label, text in chat.instruction_files()
-        ]
+        return 200, chat.instruction_summary()
     compact = _COMPACT.match(path)
     if compact and method == "POST":
         events = list(chat.compact(compact.group(1), str(body.get("instructions", ""))))
@@ -116,7 +123,11 @@ def _chat_routes(
     return None
 
 
-def make_handler(service: SearchService, chat: Optional[ChatApp] = None) -> type:
+def make_handler(
+    service: SearchService, chat: Optional[ChatApp] = None, max_body_bytes: Optional[int] = None
+) -> type:
+    max_body = max_body_bytes or AppConfig().max_body_bytes
+
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, payload: Any, content_type: str = "application/json") -> None:
             data = (
@@ -137,7 +148,7 @@ def make_handler(service: SearchService, chat: Optional[ChatApp] = None) -> type
                 self._send(415, {"error": "Content-Type must be application/json"})
                 return None  # blocks cross-site form posts to the local server
             length = int(self.headers.get("Content-Length") or 0)
-            if length > MAX_BODY_BYTES:
+            if length > max_body:
                 self._send(413, {"error": "request too large"})
                 return None
             try:
@@ -204,4 +215,5 @@ def make_handler(service: SearchService, chat: Optional[ChatApp] = None) -> type
 def serve(
     service: SearchService, host: str, port: int, chat: Optional[ChatApp] = None
 ) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_handler(service, chat))
+    limit = chat.runtime.config.app.max_body_bytes if chat else None
+    return ThreadingHTTPServer((host, port), make_handler(service, chat, limit))

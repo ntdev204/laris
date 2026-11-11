@@ -5,22 +5,24 @@ import threading
 
 import pytest
 
-from agent.conversations import ConversationStore, SettingsStore
+from agent.conversations import ConversationStore
 from agent.provider import HttpChatProvider, OfflinePlanner
 from application.chat_app import ChatApp
 from application.server import handle_api
 from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
+from harness.prefs import PrefsError
+from harness.runtime import HarnessRuntime
 from serving.model_server import ModelService, build_server, load_backend
 
 
 @pytest.fixture
-def chat(tmp_path):
+def chat(tmp_path, project):
     service = SearchService(Workspace(tmp_path / "ws"))
     service.workspace.add(
         chunks_from_text("solar.txt", "Perovskite solar cells reach 25% efficiency.")
     )
-    return ChatApp(service, tmp_path / "chat")
+    return ChatApp(service, project, project / "chat")
 
 
 def test_conversation_ids_cannot_escape_the_store(tmp_path):
@@ -34,10 +36,16 @@ def test_conversation_ids_cannot_escape_the_store(tmp_path):
     assert store.list() == []
 
 
-def test_settings_ignore_unknown_keys_and_wrong_types(tmp_path):
-    settings = SettingsStore(tmp_path / "s.json")
-    out = settings.update({"base_url": "http://x/v1", "allow_write": "yes", "evil": 1})
-    assert out["base_url"] == "http://x/v1" and out["allow_write"] is False and "evil" not in out
+def test_settings_reject_unknown_keys_and_wrong_types(chat):
+    out = chat.update_settings({"base_url": "http://127.0.0.1:9/v1", "allow_write": True})
+    assert out["base_url"] == "http://127.0.0.1:9/v1" and out["allow_write"] is True
+    for bad in ({"evil": 1}, {"allow_write": "yes"}, {"context_window": 5}):
+        with pytest.raises(PrefsError):
+            chat.update_settings(bad)
+    # security settings are not editable from the UI or the CLI
+    with pytest.raises(PrefsError):
+        chat.update_settings({"deny_read_globs": []})
+    assert "evil" not in chat.settings()
 
 
 def test_multi_turn_conversation_is_saved_and_titled(chat):
@@ -58,6 +66,9 @@ def test_chat_routes_through_handle_api(chat):
     assert handle_api(service, "GET", f"/api/conversations/{created['id']}", {}, chat)[0] == 200
     assert handle_api(service, "GET", "/api/conversations/ffffffffffff", {}, chat)[0] == 404
     assert handle_api(service, "POST", "/api/settings", {"model": "m"}, chat)[1]["model"] == "m"
+    assert handle_api(service, "POST", "/api/settings", {"nope": 1}, chat)[0] == 400
+    info = handle_api(service, "GET", "/api/instructions", {}, chat)[1]
+    assert info == {"count": info["count"]} and "files" not in info  # internals stay hidden
     assert handle_api(service, "GET", "/api/model-health", {}, chat)[1]["mode"] == "offline"
     assert handle_api(service, "DELETE", f"/api/conversations/{created['id']}", {}, chat)[0] == 200
 
@@ -66,12 +77,14 @@ def test_upload_is_sandboxed_by_name_and_ingested(chat):
     import base64
 
     out = chat.upload("../../evil name.txt", base64.b64encode(b"graphene conducts").decode(), True)
-    assert out["path"].startswith(str(chat.uploads)) and out["ingested"]["passages"] == 1
+    assert "evil" in out["path"] and ".." not in out["path"]
+    assert out["ingested"]["passages"] == 1
 
 
 def test_model_server_round_trip_with_streaming_and_auth():
-    service = ModelService(OfflinePlanner(), api_key="secret")
-    server = build_server(service, "127.0.0.1", 0)
+    rt = HarnessRuntime()
+    service = ModelService(OfflinePlanner(rt.strings), "laris-core", api_key="secret")
+    server = build_server(service, "127.0.0.1", 0, rt.config.serving.max_body_bytes)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}/v1"
     try:
@@ -116,15 +129,17 @@ def test_model_server_round_trip_with_streaming_and_auth():
 
 
 def test_backend_loader_validates_spec():
-    assert isinstance(load_backend(None), OfflinePlanner)
+    strings = HarnessRuntime().strings
+    assert isinstance(load_backend(None, strings), OfflinePlanner)
     with pytest.raises(ValueError):
-        load_backend("no_class_given")
+        load_backend("no_class_given", strings)
     with pytest.raises(TypeError):
-        load_backend("json:JSONDecoder")
+        load_backend("json:JSONDecoder", strings)
 
 
 def test_embeddings_need_a_loaded_model():
+    planner = OfflinePlanner(HarnessRuntime().strings)
     with pytest.raises(ValueError):
-        ModelService(OfflinePlanner()).embeddings({"input": "x"})
-    vectors = ModelService(OfflinePlanner(), embedder=lambda t: [[1.0, 0.0]] * len(t))
+        ModelService(planner, "m").embeddings({"input": "x"})
+    vectors = ModelService(planner, "m", embedder=lambda t: [[1.0, 0.0]] * len(t))
     assert len(vectors.embeddings({"input": ["a", "b"]})["data"]) == 2

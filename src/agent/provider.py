@@ -55,6 +55,14 @@ class ChatProvider(ABC):
         yield {"type": "turn", "turn": turn}
 
 
+_WIRE_KEYS = ("role", "content", "tool_calls", "tool_call_id", "name")
+
+
+def wire_messages(messages: List[Message]) -> List[Message]:
+    """What the model API receives: internal bookkeeping keys and superseded drafts removed."""
+    return [{k: m[k] for k in _WIRE_KEYS if k in m} for m in messages if not m.get("superseded")]
+
+
 class HttpChatProvider(ChatProvider):
     """Client for an OpenAI-compatible chat-completions endpoint (local or remote)."""
 
@@ -66,14 +74,21 @@ class HttpChatProvider(ChatProvider):
         model: str,
         api_key_env: Optional[str] = None,
         timeout_s: float = 120.0,
+        temperature: float = 0.0,
     ) -> None:
         self.url = base_url.rstrip("/") + "/chat/completions"
         self.model = model
         self.api_key = os.environ.get(api_key_env) if api_key_env else None
         self.timeout_s = timeout_s
+        self.temperature = temperature
 
     def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
-        body = {"model": self.model, "messages": messages, "tools": tools, "temperature": 0}
+        body = {
+            "model": self.model,
+            "messages": wire_messages(messages),
+            "tools": tools,
+            "temperature": self.temperature,
+        }
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -107,9 +122,9 @@ class HttpChatProvider(ChatProvider):
         """Server-sent events from `stream: true`; tool-call fragments are merged by index."""
         body = {
             "model": self.model,
-            "messages": messages,
+            "messages": wire_messages(messages),
             "tools": tools,
-            "temperature": 0,
+            "temperature": self.temperature,
             "stream": True,
         }
         headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
@@ -157,18 +172,25 @@ class HttpChatProvider(ChatProvider):
 
 
 _PATH_RE = re.compile(r"(?:^|\s)([\w./~-]+\.(?:txt|md|pdf|png|jpe?g|tiff?))(?=\s|$|[.,;:?])", re.I)
+_EXTRACT_RE = re.compile(r"claim|metric|extract|trích|tách", re.I)
 
 
 class OfflinePlanner(ChatProvider):
     """Scripted workflow: read mentioned files, search the corpus, quote the best evidence.
 
-    It decides tool calls with fixed rules and writes the final answer from tool results only.
+    It decides tool calls with fixed rules and writes the final answer from tool results only. Every
+    sentence it produces comes from the string catalogue (`planner.*`).
     """
 
     name = "offline"
 
-    def __init__(self, has_model: bool = False) -> None:
+    def __init__(
+        self, strings: Any, has_model: bool = False, top_k: int = 5, read_chars: int = 4000
+    ):
+        self.strings = strings
         self.has_model = has_model
+        self.top_k = top_k
+        self.read_chars = read_chars
 
     @staticmethod
     def _results(messages: List[Message]) -> Dict[str, List[Any]]:
@@ -186,7 +208,9 @@ class OfflinePlanner(ChatProvider):
         return done
 
     def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
-        last_user = max(i for i, m in enumerate(messages) if m["role"] == "user")
+        last_user = max(
+            i for i, m in enumerate(messages) if m["role"] == "user" and not m.get("harness")
+        )
         task = messages[last_user]["content"]
         messages = messages[last_user:]  # only this turn's tool results count
         done = self._results(messages)
@@ -199,67 +223,69 @@ class OfflinePlanner(ChatProvider):
             return AssistantTurn(self._skill_notice(done["use_skill"][-1]))
         paths = _PATH_RE.findall(task)
         if paths and "read_file" not in done:
-            return call("read_file", path=paths[0], max_chars=4000)
-        wants_extraction = re.search(r"claim|metric|extract|trích|tách", task, re.I)
-        if paths and wants_extraction and "extract_discourse" not in done:
+            return call("read_file", path=paths[0], max_chars=self.read_chars)
+        if paths and _EXTRACT_RE.search(task) and "extract_discourse" not in done:
             return call("extract_discourse", path=paths[0])
         if "search_corpus" not in done:
-            return call("search_corpus", query=task, top_k=5)
+            return call("search_corpus", query=task, top_k=self.top_k)
         hits = done["search_corpus"][-1].get("hits", [])
         if self.has_model and hits and "answer_question" not in done:
             return call("answer_question", question=task)
         return AssistantTurn(self._compose(task, done, hits))
 
-    @staticmethod
-    def _skill_notice(result: Dict[str, Any]) -> str:
+    def _skill_notice(self, result: Dict[str, Any]) -> str:
+        t = self.strings
         if "error" in result:
-            return "Skill error: " + str(result["error"]["message"])
+            return str(result["error"]["message"])
         headings = [
             line.lstrip("# ").strip()
             for line in result["instructions"].splitlines()
             if line.startswith("## ")
         ]
         lines = [
-            f"Skill `{result['name']}` đã được nạp ({len(result['instructions'])} ký tự).",
+            t.get("planner.skill_loaded", name=result["name"], chars=len(result["instructions"])),
             "",
             result["description"][:400],
             "",
-            "Các phần của skill: " + ", ".join(headings[:10]),
+            t.get("planner.skill_sections", sections=", ".join(headings[:10])),
         ]
         if result.get("arguments"):
-            lines += ["", f"Yêu cầu của bạn: {result['arguments']}"]
-        lines += [
-            "",
-            "Trợ lý tích hợp chưa có mô hình ngôn ngữ nên không thể thực hiện các bước của skill. "
-            "Khi server mô hình lõi chạy, mô hình sẽ nhận đúng nội dung skill này và làm theo.",
-        ]
+            lines += ["", t.get("planner.skill_request", request=result["arguments"])]
+        lines += ["", t.get("planner.skill_no_model")]
         return "\n".join(lines)
 
-    @staticmethod
-    def _compose(task: str, done: Dict[str, List[Any]], hits: List[Dict[str, Any]]) -> str:
-        lines = [f"Task: {task}", ""]
+    def _compose(self, task: str, done: Dict[str, List[Any]], hits: List[Dict[str, Any]]) -> str:
+        t = self.strings
+        lines = [t.get("planner.task", task=task), ""]
         read = (done.get("read_file") or [{}])[-1]
         if read.get("text"):
-            lines += [f"Read {read['path']} ({read['total_chars']} chars):", read["text"][:600], ""]
+            head = t.get("planner.read_line", path=read["path"], chars=read["total_chars"])
+            lines += [head, read["text"][:600], ""]
         found = (done.get("extract_discourse") or [{}])[-1]
         if "metrics" in found:
             counts = {k: len(found[k]) for k in ("claims", "methods", "datasets", "metrics")}
-            lines.append("Extracted entities: " + ", ".join(f"{n} {k}" for k, n in counts.items()))
+            lines.append(
+                t.get("planner.entities", counts=", ".join(f"{n} {k}" for k, n in counts.items()))
+            )
             for metric in found["metrics"][:5]:
-                lines.append(f"- metric {metric['name']} {metric.get('value')}")
+                lines.append(f"- {metric['name']} {metric.get('value')}")
             lines.append("")
-        if "error" in (done.get("search_corpus") or [{}])[-1]:
-            lines.append("Search failed: " + done["search_corpus"][-1]["error"]["message"])
+        search = (done.get("search_corpus") or [{}])[-1]
+        if "error" in search:
+            lines.append(t.get("planner.search_failed", message=search["error"]["message"]))
+        elif search.get("truncated"):
+            lines.append(t.get("planner.trimmed"))
         elif not hits:
-            lines.append("No passage in the corpus matches this task.")
+            lines.append(t.get("planner.no_match"))
         else:
             answer = ((done.get("answer_question") or [{}])[-1]).get("primary")
             if answer:
-                lines.append(f"Extractive answer: {answer['answer']} (source: {answer['source']})")
-            lines.append("Evidence passages:")
+                lines.append(
+                    t.get("planner.answer_line", answer=answer["answer"], source=answer["source"])
+                )
+            lines.append(t.get("planner.evidence_heading"))
             for hit in hits[:3]:
                 snippet = " ".join(hit["text"].split())[:240]
                 lines.append(f"- [{hit['source']} #{hit['rank']}] {hit['title']}: {snippet}")
-        lines.append("")
-        lines.append("Offline planner: results are quoted passages, not a model-written synthesis.")
+        lines += ["", t.get("planner.disclaimer")]
         return "\n".join(lines)

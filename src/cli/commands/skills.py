@@ -4,12 +4,24 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from skills import SkillLibrary, default_skill_roots
+from cli.common import load_runtime
+from skills import SkillLibrary
 from skills.loader import SkillError
 
 
 def _library(args: argparse.Namespace) -> SkillLibrary:
-    return SkillLibrary(default_skill_roots(Path(args.project_root)))
+    root = Path(args.project_root).resolve()
+    runtime = load_runtime(args)
+    roots = []
+    for entry in runtime.config.prompts.skill_roots:
+        path = Path(entry).expanduser()
+        roots.append(
+            (
+                path if path.is_absolute() else root / path,
+                "user" if entry.startswith("~") else "project",
+            )
+        )
+    return SkillLibrary(roots)
 
 
 def _common(parser: argparse.ArgumentParser) -> None:

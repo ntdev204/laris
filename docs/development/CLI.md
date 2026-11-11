@@ -103,7 +103,14 @@ The **web UI** has conversation history, streaming answers, tool-call cards, fil
 (PDF, text, scans and images through OCR), a document-corpus panel and a settings panel for the model
 API address. The **terminal** session streams text, prints each tool call with a one-line result, asks
 before write tools (`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`.
-Both share conversations and settings under `artifacts/chat`.
+Both share conversations and settings under `artifacts/chat` (config `app.chat_dir`).
+
+Nothing here is hardcoded: ports, workspace, model API, limits, approval policy, prompts and
+security patterns come from `configs/default.yaml`, `~/.laris/config.yaml`,
+`<project>/.laris/config.yaml`, saved preferences, `LARIS_*` environment variables (nesting with
+`__`, JSON for lists; see `.env.example`) and finally the flags, in that order. Credentials are
+referenced by environment-variable name only. The prompt, loop, guards and leak policy are described
+in `docs/architecture/AGENT_HARNESS.md`; `LARIS.md` is internal policy and is never shown to users.
 
 Tools (JSON-schema arguments, 30 s default timeout, typed errors): `list_files`, `read_file` (txt, md,
 pdf, images; scans use tesseract `eng+vie`), `write_file` and `ingest_path` (need approval; writes land
@@ -121,9 +128,10 @@ the client settings; keys are never stored in files.
 
 #### Instructions, skills and automatic context compaction
 
-- **`LARIS.md`** (project root) is read at the start of every turn and put in the system prompt,
-  after the optional user-level `~/.laris/LARIS.md` and before `.laris/LARIS.md` and the git-ignored
-  `LARIS.local.md`. Edits apply on the next message.
+- **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the
+  system prompt as confidential, after the optional user-level `~/.laris/LARIS.md` and before
+  `.laris/LARIS.md` and the git-ignored `LARIS.local.md` (`prompts.instruction_files`). Edits apply on
+  the next message; the files cannot be read through the agent's tools.
 - **Skills** live in `.laris/skills/<name>/SKILL.md` (YAML `name` and `description`, Markdown body,
   optional `references/`). Only name and description are in the prompt; the model loads a skill with the
   `use_skill` tool, or the user runs `/<skill-name> request` (terminal and web `/` menu). `laris skills

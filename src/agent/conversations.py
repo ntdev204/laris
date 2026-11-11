@@ -63,41 +63,6 @@ class ConversationStore:
         return sorted(rows, key=lambda r: -r["updated"])
 
 
-DEFAULT_SETTINGS: Dict[str, Any] = {
-    "base_url": "",  # empty = built-in offline planner; otherwise an OpenAI-compatible API
-    "model": "laris-core",
-    "api_key_env": "",
-    "allow_write": False,
-    "system_prompt": "",
-    "context_window": 32768,  # tokens the model accepts; autocompact keeps the session below it
-    "auto_compact": True,  # on by default so long sessions never stop at the context limit
-    "compact_threshold": 0.8,
-}
-
-
-class SettingsStore:
-    def __init__(self, path: Path) -> None:
-        self.path = Path(path)
-
-    def load(self) -> Dict[str, Any]:
-        data = dict(DEFAULT_SETTINGS)
-        if self.path.exists():
-            try:
-                data.update(json.loads(self.path.read_text(encoding="utf-8")))
-            except json.JSONDecodeError:
-                pass
-        return data
-
-    def update(self, changes: Dict[str, Any]) -> Dict[str, Any]:
-        data = self.load()
-        for key, value in changes.items():
-            if key in DEFAULT_SETTINGS and type(value) is type(DEFAULT_SETTINGS[key]):
-                data[key] = value
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        return data
-
-
 def title_from(text: str, limit: int = 48) -> str:
     line = " ".join(text.split())
     return (line[: limit - 1] + "…") if len(line) > limit else (line or "Cuộc trò chuyện mới")

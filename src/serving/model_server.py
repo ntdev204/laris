@@ -18,14 +18,11 @@ from typing import Any, Callable, Dict, List, Optional
 
 from agent.provider import AssistantTurn, ChatProvider, OfflinePlanner, ProviderError
 
-MAX_BODY_BYTES = 32 * 1024 * 1024
-PLACEHOLDER_NAME = "laris-placeholder"
 
-
-def load_backend(spec: Optional[str]) -> ChatProvider:
+def load_backend(spec: Optional[str], strings: Any = None) -> ChatProvider:
     """`package.module:ClassName` (zero-argument constructor) or the offline placeholder."""
     if not spec:
-        return OfflinePlanner()
+        return OfflinePlanner(strings)
     module_name, _, class_name = spec.partition(":")
     if not class_name:
         raise ValueError("--backend must look like package.module:ClassName")
@@ -53,7 +50,7 @@ class ModelService:
     def __init__(
         self,
         backend: ChatProvider,
-        model_name: str = PLACEHOLDER_NAME,
+        model_name: str,
         embedder: Optional[Callable[[List[str]], List[List[float]]]] = None,
         api_key: Optional[str] = None,
     ) -> None:
@@ -124,7 +121,7 @@ class ModelService:
         }
 
 
-def make_handler(service: ModelService) -> type:
+def make_handler(service: ModelService, max_body_bytes: int) -> type:
     class Handler(BaseHTTPRequestHandler):
         def _json(self, code: int, payload: Any) -> None:
             data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -153,7 +150,7 @@ def make_handler(service: ModelService) -> type:
                 self._json(401, {"error": "invalid API key"})
                 return
             length = int(self.headers.get("Content-Length") or 0)
-            if length > MAX_BODY_BYTES:
+            if length > max_body_bytes:
                 self._json(413, {"error": "request too large"})
                 return
             try:
@@ -195,9 +192,12 @@ def make_handler(service: ModelService) -> type:
     return Handler
 
 
-def build_server(service: ModelService, host: str, port: int) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_handler(service))
+def build_server(
+    service: ModelService, host: str, port: int, max_body_bytes: int
+) -> ThreadingHTTPServer:
+    return ThreadingHTTPServer((host, port), make_handler(service, max_body_bytes))
 
 
-def api_key_from_env(name: Optional[str]) -> Optional[str]:
-    return os.environ.get(name) if name else None
+def api_key_from_env(name: Optional[str], environ: Optional[Any] = None) -> Optional[str]:
+    env = os.environ if environ is None else environ
+    return env.get(name) if name else None

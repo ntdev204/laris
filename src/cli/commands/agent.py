@@ -1,77 +1,41 @@
-"""`laris agent ...`: tool-using assistant (offline planner now, model API later)."""
+"""`laris agent ...`: tool-using assistant on the shared harness (terminal front end).
+
+Every default (workspace, model API, limits, approval policy) comes from configuration; flags
+only override it. Conversations and preferences are shared with the web UI.
+"""
 
 import argparse
 import json
 import sys
-from pathlib import Path
 from typing import Any, Dict, Optional
 
-from agent.builtin_tools import build_registry, default_sandbox
-from agent.loop import AgentSession
-from agent.provider import ChatProvider, HttpChatProvider, OfflinePlanner
-from application.service import SearchService
-from application.workspace import Workspace
+from application.chat_app import ChatApp
+from cli.common import load_runtime, make_service, model_flags
 
 
 def _common(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace", default="artifacts/app/workspace")
-    parser.add_argument("--checkpoint", help="Local checkpoint for dense search and QA tools")
-    parser.add_argument("--tokenizer-model", help="SentencePiece .model for the checkpoint")
-    parser.add_argument("--device", default=None)
-    parser.add_argument("--provider", choices=["offline", "http"], default="offline")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000/v1", help="Model API base URL")
-    parser.add_argument("--model", default="laris-core", help="Model name sent to the API")
-    parser.add_argument("--api-key-env", default=None, help="Environment variable with the API key")
-    parser.add_argument("--read-root", action="append", help="Extra readable folder (repeatable)")
+    model_flags(parser)
     parser.add_argument(
-        "--output-dir", default="artifacts/agent/output", help="Where write_file writes"
+        "--workspace", default=None, help="Workspace folder (config: app.workspace)"
+    )
+    parser.add_argument("--chat-dir", default=None, help="Chat state folder (config: app.chat_dir)")
+    parser.add_argument(
+        "--model-api-url", default=None, help="Model API base URL (config: model_api.base_url)"
+    )
+    parser.add_argument("--model-name", default=None, help="Model name (config: model_api.model)")
+    parser.add_argument(
+        "--api-key-env", default=None, help="Environment variable holding the API key"
     )
     parser.add_argument(
         "--allow-write", action="store_true", help="Approve write tools automatically"
     )
 
 
-def make_service(args: argparse.Namespace) -> SearchService:
-    return SearchService(
-        Workspace(Path(args.workspace)),
-        Path(args.checkpoint) if args.checkpoint else None,
-        Path(args.tokenizer_model) if args.tokenizer_model else None,
-        args.device,
-    )
+def make_chat(args: argparse.Namespace) -> ChatApp:
+    from cli.common import cli_overrides
 
-
-def make_provider(args: argparse.Namespace, service: SearchService) -> ChatProvider:
-    if args.provider == "http":
-        return HttpChatProvider(args.base_url, args.model, args.api_key_env)
-    return OfflinePlanner(has_model=service.has_model)
-
-
-def make_session(args: argparse.Namespace, interactive: bool = False) -> AgentSession:
-    service = make_service(args)
-    registry = build_registry(
-        service,
-        default_sandbox([Path(r) for r in (args.read_root or [])] or None, Path(args.output_dir)),
-    )
-
-    def approve(name: str, arguments: Dict[str, Any]) -> bool:
-        if args.allow_write:
-            return True
-        if not interactive:
-            return False
-        reply = input(f"Allow {name} {json.dumps(arguments, ensure_ascii=False)[:200]}? [y/N] ")
-        return reply.strip().lower() in ("y", "yes")
-
-    return AgentSession(
-        make_provider(args, service), registry, approve, Path("artifacts/agent/sessions")
-    )
-
-
-def print_result(result: Any) -> None:
-    for step in result.steps:
-        failed = "error" in step["result"] if isinstance(step["result"], dict) else False
-        shown = json.dumps(step["arguments"], ensure_ascii=False)[:120]
-        print(f"  [{'x' if failed else 'ok'}] {step['tool']} {shown}")
-    print(f"\n{result.answer}\n(status: {result.status}; log: {result.log_path})")
+    runtime = load_runtime(args)
+    return ChatApp(make_service(args, runtime), runtime.root, overrides=cli_overrides(args))
 
 
 class _Tools:
@@ -79,8 +43,7 @@ class _Tools:
         _common(parser)
 
     def run(self, args: argparse.Namespace) -> int:
-        session = make_session(args)
-        for spec in session.registry.tools.values():
+        for spec in make_chat(args).tool_specs():
             flag = " (writes, needs approval)" if spec.writes else ""
             print(f"{spec.name}{flag}: {spec.description}")
         return 0
@@ -92,9 +55,10 @@ class _Run:
         parser.add_argument("--task", required=True)
 
     def run(self, args: argparse.Namespace) -> int:
-        result = make_session(args).run(args.task)
-        print_result(result)
-        return 0 if result.status == "completed" else 1
+        chat = make_chat(args)
+        conversation = chat.conversations.create()
+        always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
+        return _turn(chat, conversation["id"], args.task, always, interactive=False)
 
 
 _USE = "\033[1m"
@@ -128,12 +92,16 @@ def _ask_permission(name: str, arguments: Dict[str, Any], always: set) -> bool:
     return reply in ("y", "yes")
 
 
-def _turn(chat: Any, conversation_id: str, text: str, always: set) -> int:
+def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: bool = True) -> int:
     """Stream one user message: live text, tool calls with one-line results, final status."""
     streaming = False
     code = 0
     for event in chat.send(
-        conversation_id, text, lambda name, arguments: _ask_permission(name, arguments, always)
+        conversation_id,
+        text,
+        (lambda name, arguments: _ask_permission(name, arguments, always))
+        if interactive
+        else (lambda name, arguments: name in always),
     ):
         kind = event["type"]
         if kind == "text":
@@ -155,7 +123,12 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set) -> int:
                     f"{event['after']} token, {event['summarized']} tin nhắn được tóm tắt",
                 )
             )
+        elif kind == "verify":
+            print(_paint(_DIM, "  ↻ kiểm tra trích dẫn, đang viết lại"))
         elif kind == "usage" and event["window"]:
+            if streaming:
+                print()
+                streaming = False
             print(_paint(_DIM, f"  ngữ cảnh ≈ {event['tokens']}/{event['window']} token"))
         elif kind == "done":
             if streaming:
@@ -172,25 +145,15 @@ class _Chat:
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         _common(parser)
-        parser.add_argument("--chat-dir", default="artifacts/chat")
         parser.add_argument("-p", "--print", dest="print_text", help="Run one prompt and exit")
         parser.add_argument(
             "--resume", nargs="?", const="last", help="Resume a conversation id (or the last)"
         )
 
     def run(self, args: argparse.Namespace) -> int:
-        from application.chat_app import ChatApp
-
-        chat = ChatApp(make_service(args), Path(args.chat_dir))
-        changes: Dict[str, Any] = {}
-        if args.provider == "http":
-            changes.update(base_url=args.base_url, model=args.model)
-        if args.allow_write:
-            changes["allow_write"] = True
-        if changes:
-            chat.settings.update(changes)
+        chat = make_chat(args)
         conversation = self._start(chat, args.resume)
-        always: set = {"write_file", "ingest_path"} if args.allow_write else set()
+        always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
         if args.print_text:
             return _turn(chat, conversation["id"], args.print_text, always)
         print(
@@ -251,24 +214,28 @@ class _Chat:
             except KeyError:
                 print(f"no such session: {rest}")
         elif name == "/tools":
-            for spec in build_registry(chat.service, chat.sandbox).tools.values():
+            for spec in chat.tool_specs():
                 print(f"  {spec.name}{' (asks)' if spec.writes else ''}: {spec.description}")
         elif name == "/status":
             print(json.dumps(chat.service.status(), indent=2, ensure_ascii=False))
         elif name == "/model":
             if rest:
                 parts = rest.split()
-                chat.settings.update(
-                    {"base_url": parts[0], **({"model": parts[1]} if len(parts) > 1 else {})}
-                )
+                try:
+                    chat.update_settings(
+                        {"base_url": parts[0], **({"model": parts[1]} if len(parts) > 1 else {})}
+                    )
+                except ValueError as exc:
+                    print(_paint(_ERR, str(exc)))
             print(chat.model_health()["detail"])
         elif name == "/write":
-            chat.settings.update({"allow_write": rest == "on"})
+            chat.update_settings({"allow_write": rest == "on"})
             print(f"write tools {'auto-approved' if rest == 'on' else 'ask permission'}")
         elif name == "/skills":
-            for skill_name in chat.skills.names():
-                print(f"  /{skill_name}: {chat.skills.skills[skill_name].summary(110)}")
-            for problem in chat.skills.problems:
+            library = chat.skills_for(chat.runtime)
+            for skill_name in library.names():
+                print(f"  /{skill_name}: {library.skills[skill_name].summary(110)}")
+            for problem in library.problems:
                 print(_paint(_ERR, f"  skill problem: {problem}"))
         elif name == "/compact":
             events = list(chat.compact(conversation["id"], rest))
@@ -280,22 +247,18 @@ class _Chat:
             conversation = dict(chat.conversations.get(conversation["id"]))
         elif name == "/context":
             usage = chat.usage(conversation["id"])
-            cfg = chat.settings.load()
+            cfg = chat.settings()
             print(
                 f"≈ {usage['tokens']}/{usage['window']} token; autocompact "
                 f"{'bật' if cfg['auto_compact'] else 'tắt'} ở "
                 f"{int(cfg['compact_threshold'] * 100)}%"
             )
-        elif name[1:] in chat.skills.skills:
+        elif name[1:] in chat.skills_for(chat.runtime).skills:
             _turn(chat, conversation["id"], line, always)
             conversation = dict(chat.conversations.get(conversation["id"]))
         else:
             print(f"unknown command {name}; try /help")
         return conversation
-
-
-def build_api_session(args: argparse.Namespace) -> Optional[AgentSession]:
-    return make_session(args)
 
 
 COMMANDS = {"tools": _Tools(), "run": _Run(), "chat": _Chat()}

@@ -6,21 +6,14 @@ from pathlib import Path
 import pytest
 
 from agent.builtin_tools import build_registry
-from agent.context import (
-    SUMMARY_MARKER,
-    ContextManager,
-    estimate_tokens,
-    extractive_summary,
-    is_overflow_error,
-)
-from agent.conversations import DEFAULT_SETTINGS
+from agent.context import ContextManager, is_overflow_error
 from agent.loop import AgentSession
-from agent.prompt import build_system_prompt
 from agent.provider import AssistantTurn, ChatProvider, OfflinePlanner, ProviderError
 from agent.tools import Sandbox
 from application.chat_app import ChatApp
 from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
+from harness.runtime import HarnessRuntime
 from skills import SkillLibrary
 from skills.loader import SkillError
 
@@ -46,9 +39,9 @@ def make_skill(root: Path, name: str = "demo-skill", text: str = SKILL) -> None:
 
 
 @pytest.fixture
-def project(tmp_path):
-    make_skill(tmp_path)
-    return tmp_path
+def project(project):
+    make_skill(project)
+    return project
 
 
 def library(project):
@@ -77,28 +70,36 @@ def test_skill_loading_and_validation(project):
     assert len(library(project).problems) == 2
 
 
-def test_system_prompt_includes_instructions_skills_and_memory(project):
-    (project / "LARIS.md").write_text("Always answer in Vietnamese.", encoding="utf-8")
+def test_system_prompt_includes_policy_skills_and_memory(project):
     (project / "LARIS.local.md").write_text("Local note.", encoding="utf-8")
     (project / ".laris" / "memory").mkdir()
     (project / ".laris" / "memory" / "research-state.md").write_text("RQ1", encoding="utf-8")
-    prompt = build_system_prompt(project, library(project))
+    rt = HarnessRuntime.load(project)
+    prompt = rt.composer.compose("abc", library(project), "Prefer short answers.")
     for needle in (
-        "Always answer in Vietnamese.",
         "Local note.",
         "demo-skill",
         "research-state.md",
+        "Prefer short answers.",
+        "internal_policy",
     ):
-        assert needle in prompt
-    assert prompt.index("Always answer") < prompt.index("Local note.")
-    (project / "LARIS.md").write_text("Changed.", encoding="utf-8")
-    assert "Changed." in build_system_prompt(project, library(project))  # re-read every time
+        assert needle in prompt.text
+    assert prompt.text.index("internal_policy") < prompt.text.index("Local note.")
+    (project / "LARIS.md").write_text("Changed policy line.", encoding="utf-8")
+    again = HarnessRuntime.load(project).composer.compose("abc", library(project))
+    assert "Changed policy line." in again.text  # re-read every time
+    assert again.sha256 != prompt.sha256
 
 
 def test_use_skill_tool_and_memory_write(project, tmp_path):
+    rt = HarnessRuntime.load(project)
     service = SearchService(Workspace(tmp_path / "ws"))
     registry = build_registry(
-        service, Sandbox([project], tmp_path / "o"), library(project), project / ".laris" / "memory"
+        service,
+        Sandbox([project], tmp_path / "o"),
+        rt,
+        library(project),
+        project / ".laris" / "memory",
     )
     out = registry.call("use_skill", {"name": "demo-skill", "arguments": "go"})
     assert "Do the thing." in out["instructions"] and out["references"][0]["bytes"] > 0
@@ -138,33 +139,44 @@ def conversation(turns: int, tool_chars: int = 4000):
     return messages
 
 
+def manager(rt, window=None, threshold=None, summarizer=None, enabled=True):
+    cfg = rt.config.context.model_copy(update={"enabled": enabled})
+    if window:
+        cfg.window_tokens = window
+    if threshold:
+        cfg.threshold = threshold
+    return ContextManager(cfg, rt.strings, summarizer)
+
+
 def test_autocompact_is_on_by_default():
-    assert DEFAULT_SETTINGS["auto_compact"] is True
+    assert HarnessRuntime().config.context.enabled is True
 
 
 def test_compaction_trims_then_summarises_and_keeps_tool_pairs():
+    rt = HarnessRuntime()
     messages = conversation(30)
-    manager = ContextManager(window=8000, threshold=0.8)
-    assert manager.needs_compaction(messages)
-    new, result = manager.compact(messages)
+    cm = manager(rt, window=8000, threshold=0.8)
+    assert cm.needs_compaction(messages)
+    new, result = cm.compact(messages)
     assert result is not None and result.after < result.before
-    assert new[0]["role"] == "system" and new[1]["content"].startswith(SUMMARY_MARKER)
+    assert new[0]["role"] == "system" and new[1]["content"].startswith(cm.marker)
     assert new[2]["role"] == "assistant" and new[3]["role"] == "user"
     ids_called = {c["id"] for m in new if m.get("tool_calls") for c in m["tool_calls"]}
     ids_answered = {m["tool_call_id"] for m in new if m["role"] == "tool"}
     assert ids_called == ids_answered  # no orphaned tool call or result
     assert "question 29" in json.dumps(new)  # the latest turn survives verbatim
-    assert estimate_tokens(new) < 8000 * 0.8
+    assert cm.estimate(new) < 8000 * 0.8
 
 
 def test_model_summary_is_used_and_falls_back_on_failure():
+    rt = HarnessRuntime()
     messages = conversation(20)
-    ok = ContextManager(4000, summarizer=lambda transcript, hint: "MODEL SUMMARY")
+    ok = manager(rt, window=4000, summarizer=lambda transcript, hint: "MODEL SUMMARY")
     assert "MODEL SUMMARY" in ok.compact(messages, force=True)[0][1]["content"]
-    bad = ContextManager(4000, summarizer=lambda transcript, hint: 1 / 0)
+    bad = manager(rt, window=4000, summarizer=lambda transcript, hint: 1 / 0)
     new, result = bad.compact(messages, force=True)
     assert result is not None and result.method == "extractive" and "question" in new[1]["content"]
-    assert "question 0" in extractive_summary(messages[1:])
+    assert "question 0" in bad.extractive_summary(messages[1:])
 
 
 class Overflowing(ChatProvider):
@@ -179,27 +191,35 @@ class Overflowing(ChatProvider):
 
 
 def test_session_autocompacts_before_calls_and_retries_on_overflow(tmp_path):
+    rt = HarnessRuntime()
     service = SearchService(Workspace(tmp_path / "ws"))
-    registry = build_registry(service, Sandbox([tmp_path], tmp_path / "o"))
-    history = conversation(25)
+    registry = build_registry(service, Sandbox([tmp_path], tmp_path / "o"), rt)
     session = AgentSession(
-        Overflowing(), registry, messages=history, context=ContextManager(6000, threshold=0.9)
+        Overflowing(),
+        registry,
+        rt,
+        messages=conversation(25)[1:],
+        context=manager(rt, window=6000, threshold=0.9),
     )
     events = list(session.send("next question"))
     kinds = [e["type"] for e in events]
     assert "compact" in kinds and kinds[-1] == "done" and events[-1]["status"] == "completed"
     assert any(e["type"] == "usage" for e in events)
-    assert is_overflow_error("This model's Maximum Context Length is 4096")
+    assert is_overflow_error(
+        "This model's Maximum Context Length is 4096", rt.config.context.overflow_hints
+    )
 
 
 def test_disabled_autocompact_leaves_messages_alone(tmp_path):
+    rt = HarnessRuntime()
     service = SearchService(Workspace(tmp_path / "ws"))
-    registry = build_registry(service, Sandbox([tmp_path], tmp_path / "o"))
+    registry = build_registry(service, Sandbox([tmp_path], tmp_path / "o"), rt)
     session = AgentSession(
-        OfflinePlanner(),
+        OfflinePlanner(rt.strings),
         registry,
-        messages=conversation(25),
-        context=ContextManager(4000, enabled=False),
+        rt,
+        messages=conversation(25)[1:],
+        context=manager(rt, window=4000, enabled=False),
     )
     assert not [e for e in session.send("hello world") if e["type"] == "compact"]
 
@@ -207,17 +227,17 @@ def test_disabled_autocompact_leaves_messages_alone(tmp_path):
 def test_chat_app_runs_skill_command_and_archives_compaction(project, tmp_path):
     service = SearchService(Workspace(tmp_path / "ws"))
     service.workspace.add(chunks_from_text("a.txt", "graphene conducts electricity"))
-    chat = ChatApp(service, tmp_path / "chat", project_root=project)
+    chat = ChatApp(service, project, project / "chat")
     conv = chat.conversations.create()
     events = list(chat.send(conv["id"], "/demo-skill make a demo"))
     assert [e["name"] for e in events if e["type"] == "tool_call"] == ["use_skill"]
     final = events[-1]["answer"]
     assert "demo-skill" in final and "make a demo" in final
-    chat.settings.update({"context_window": 2048, "compact_threshold": 0.3})
+    chat.update_settings({"context_window": 2048, "compact_threshold": 0.3})
     saved = chat.conversations.get(conv["id"])
     saved["messages"] += conversation(12, tool_chars=500)[1:]
     chat.conversations.save(saved)
     events = list(chat.compact(conv["id"]))
     assert any(e["type"] == "compact" for e in events)
-    assert list((tmp_path / "chat" / "archive").glob(f"{conv['id']}-*.json"))
+    assert list((project / "chat" / "archive").glob(f"{conv['id']}-*.json"))
     assert chat.conversations.get(conv["id"])["messages"][0].get("compacted") is True

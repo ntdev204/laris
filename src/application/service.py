@@ -13,12 +13,6 @@ from application.workspace import Chunk, Workspace
 from retrieval.bm25 import BM25Document, BM25RetrievalBaseline
 
 MODES = ("bm25", "dense", "hybrid")
-RRF_K = 60
-QUALIFICATION_NOTICE = (
-    "Research preview: the foundation model is NOT QUALIFIED. BM25 is the reliable channel; "
-    "the dense channel is untrained for retrieval and answers are extractive and unverified "
-    "beyond the quoted passage."
-)
 
 
 class ServiceError(ValueError):
@@ -40,7 +34,13 @@ class SearchService:
         checkpoint: Optional[Path] = None,
         tokenizer_model: Optional[Path] = None,
         device: Optional[str] = None,
+        notice: str = "",
+        rrf_k: int = 60,
+        max_top_k: int = 50,
     ) -> None:
+        self.notice = notice
+        self.rrf_k = rrf_k
+        self.max_top_k = max_top_k
         self.workspace = workspace
         self.checkpoint = Path(checkpoint) if checkpoint else None
         self.tokenizer_model = Path(tokenizer_model) if tokenizer_model else None
@@ -111,7 +111,7 @@ class SearchService:
                 "dense_ready": self._matrix is not None,
                 "model_configured": self.has_model,
                 "checkpoint": str(self.checkpoint) if self.checkpoint else None,
-                "notice": QUALIFICATION_NOTICE,
+                "notice": self.notice,
             }
             if self.checkpoint:
                 manifest = self.checkpoint / "manifest.json"
@@ -167,7 +167,7 @@ class SearchService:
             raise ServiceError("Query is empty")
         if mode not in MODES:
             raise ServiceError(f"mode must be one of {MODES}")
-        top_k = max(1, min(int(top_k), 50))
+        top_k = max(1, min(int(top_k), self.max_top_k))
         with self._lock:
             self._refresh()
             if not self._chunks:
@@ -181,10 +181,10 @@ class SearchService:
                 fused: Dict[int, float] = {}
                 for ranking in (self._bm25_rank(query, pool), self._dense_rank(query, pool)):
                     for rank, idx in enumerate(ranking, start=1):
-                        fused[idx] = fused.get(idx, 0.0) + 1.0 / (RRF_K + rank)
+                        fused[idx] = fused.get(idx, 0.0) + 1.0 / (self.rrf_k + rank)
                 order = sorted(fused, key=lambda i: (-fused[i], i))[:top_k]
             hits = [self._hit(self._chunks[i], rank) for rank, i in enumerate(order, start=1)]
-        return {"query": query, "mode": mode, "hits": hits, "notice": QUALIFICATION_NOTICE}
+        return {"query": query, "mode": mode, "hits": hits, "notice": self.notice}
 
     @staticmethod
     def _hit(chunk: Chunk, rank: int) -> Dict[str, Any]:

@@ -1,4 +1,7 @@
-"""`laris app ...`: local end-to-end application (ingest, index, search, ask, serve)."""
+"""`laris app ...`: local end-to-end application (ingest, index, search, ask, serve).
+
+Every default (workspace, host, port, limits) comes from configuration; flags only override.
+"""
 
 import argparse
 import json
@@ -7,47 +10,32 @@ from typing import Any, Callable, Dict, Optional
 
 from application.server import serve
 from application.service import SearchService, ServiceError
-from application.workspace import IngestError, Workspace, chunks_from_path
-
-DEFAULT_WORKSPACE = "artifacts/app/workspace"
-
-
-def _common(parser: argparse.ArgumentParser, model: bool = True) -> None:
-    parser.add_argument("--workspace", default=DEFAULT_WORKSPACE, help="Workspace directory")
-    if model:
-        parser.add_argument(
-            "--checkpoint", help="Checkpoint dir (e.g. <run>/best); enables dense/QA"
-        )
-        parser.add_argument("--tokenizer-model", help="SentencePiece .model file")
-        parser.add_argument("--device", default=None, help="cuda or cpu (default: auto)")
-
-
-def _service(args: argparse.Namespace) -> SearchService:
-    return SearchService(
-        Workspace(Path(args.workspace)),
-        Path(args.checkpoint) if getattr(args, "checkpoint", None) else None,
-        Path(args.tokenizer_model) if getattr(args, "tokenizer_model", None) else None,
-        getattr(args, "device", None),
-    )
+from application.workspace import IngestError, chunks_from_path
+from cli.common import load_runtime, make_service, model_flags
 
 
 class _Command:
     def __init__(
         self,
         flags: Dict[str, Dict[str, Any]],
-        call: Callable[[SearchService, argparse.Namespace], Any],
+        call: Callable[[SearchService, argparse.Namespace, Any], Any],
         model: bool = True,
     ) -> None:
         self.flags, self.call, self.model = flags, call, model
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        _common(parser, self.model)
+        parser.add_argument(
+            "--workspace", default=None, help="Workspace directory (config: app.workspace)"
+        )
+        if self.model:
+            model_flags(parser)
         for name, kwargs in self.flags.items():
             parser.add_argument(name, **kwargs)
 
     def run(self, args: argparse.Namespace) -> int:
         try:
-            result = self.call(_service(args), args)
+            runtime = load_runtime(args)
+            result = self.call(make_service(args, runtime), args, runtime)
         except (ServiceError, IngestError, FileNotFoundError, ValueError, RuntimeError) as exc:
             print(f"[ERROR] {exc}")
             return 2
@@ -56,33 +44,39 @@ class _Command:
         return 0
 
 
-def _ingest(service: SearchService, args: argparse.Namespace) -> Optional[Dict[str, int]]:
+def _ingest(service: SearchService, args: argparse.Namespace, rt: Any) -> Optional[Dict[str, int]]:
     total = {"documents": 0, "passages": 0}
     for raw in args.paths:
-        counts = service.workspace.add(chunks_from_path(Path(raw), args.limit))
+        chunks = chunks_from_path(
+            Path(raw), args.limit, rt.config.app, rt.root, skip=rt.paths.denied
+        )
+        counts = service.workspace.add(chunks)
         total["documents"] += counts["documents"]
         total["passages"] += counts["passages"]
     total["total_passages"] = len(service.workspace.load())
     return total
 
 
-def _index(service: SearchService, args: argparse.Namespace) -> Dict[str, Any]:
+def _index(service: SearchService, args: argparse.Namespace, rt: Any) -> Dict[str, Any]:
     return service.build_dense_index(
         lambda done, n: print(f"embedding {done}/{n}") if done % 640 == 0 or done == n else None
     )
 
 
-def _search(service: SearchService, args: argparse.Namespace) -> Dict[str, Any]:
-    result = service.search(args.query, args.mode, args.top_k)
+def _top_k(args: argparse.Namespace, rt: Any) -> int:
+    return int(args.top_k or rt.config.app.search_default_top_k)
+
+
+def _search(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
+    result = service.search(args.query, args.mode, _top_k(args, rt))
     for hit in result["hits"]:
         snippet = " ".join(hit["text"].split())[:200]
         print(f"{hit['rank']}. [{hit['source']}] {hit['title']}\n   {snippet}")
     print(f"\n{result['notice']}")
-    return None  # type: ignore[return-value]
 
 
-def _ask(service: SearchService, args: argparse.Namespace) -> Optional[Dict[str, Any]]:
-    result = service.answer(args.query, args.mode, args.top_k)
+def _ask(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
+    result = service.answer(args.query, args.mode, _top_k(args, rt))
     primary = result["primary"]
     print(
         f"Answer: {primary['answer']} (source: {primary['source']})"
@@ -92,30 +86,25 @@ def _ask(service: SearchService, args: argparse.Namespace) -> Optional[Dict[str,
     for hit in result["hits"]:
         print(f"  - [{hit['source']}] {' '.join(hit['text'].split())[:160]}")
     print(f"\n{result['notice']}")
-    return None
 
 
-def _status(service: SearchService, args: argparse.Namespace) -> Dict[str, Any]:
-    return service.status()
+def _status(service: SearchService, args: argparse.Namespace, rt: Any) -> Dict[str, Any]:
+    info = service.status()
+    if not rt.config.security.expose_internal_info:
+        info.pop("checkpoint", None)
+        info.pop("model_sha256", None)
+    return info
 
 
-def _serve(service: SearchService, args: argparse.Namespace) -> None:
+def _serve(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
     from application.chat_app import ChatApp
 
-    chat = ChatApp(service, Path(args.chat_dir))
-    changes: Dict[str, Any] = {}
-    if args.model_api_url:
-        changes.update(base_url=args.model_api_url, model=args.model_name)
-    if args.allow_write:
-        changes["allow_write"] = True
-    if changes:
-        chat.settings.update(changes)
-    server = serve(service, args.host, args.port, chat)
-    print(
-        f"LARIS chat on http://{args.host}:{args.port}  (workspace {args.workspace}). Ctrl+C stops."
-    )
-    health = chat.model_health()
-    print(f"Model: {health['detail']}")
+    chat = ChatApp(service, Path.cwd(), overrides=_overrides(args))
+    cfg = chat.runtime.config.app
+    host, port = args.host or cfg.host, args.port or cfg.port
+    server = serve(service, host, port, chat)
+    print(f"LARIS chat on http://{host}:{port}. Ctrl+C stops.")
+    print(f"Model: {chat.model_health()['detail']}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -124,38 +113,59 @@ def _serve(service: SearchService, args: argparse.Namespace) -> None:
         server.server_close()
 
 
-_Q = {"help": "Question or keywords"}
+def _overrides(args: argparse.Namespace) -> Dict[str, Any]:
+    from cli.common import cli_overrides
+
+    return cli_overrides(args)
+
+
 _SEARCH_FLAGS: Dict[str, Dict[str, Any]] = {
-    "--query": {"required": True, **_Q},
+    "--query": {"required": True, "help": "Question or keywords"},
     "--mode": {"choices": ["bm25", "dense", "hybrid"], "default": "bm25"},
-    "--top-k": {"type": int, "default": 5},
+    "--top-k": {
+        "type": int,
+        "default": None,
+        "help": "Passages (config: app.search_default_top_k)",
+    },
 }
+
+
+class _Serve(_Command):
+    def run(self, args: argparse.Namespace) -> int:
+        try:
+            runtime = load_runtime(args)
+            _serve(make_service(args, runtime), args, runtime)
+        except (ServiceError, FileNotFoundError, ValueError, RuntimeError) as exc:
+            print(f"[ERROR] {exc}")
+            return 2
+        return 0
+
 
 COMMANDS = {
     "ingest": _Command(
         {
-            "paths": {"nargs": "+", "help": "Files or folders (txt, md, pdf, BEIR corpus .jsonl)"},
+            "paths": {"nargs": "+", "help": "Files or folders (txt, md, pdf, images, BEIR corpus)"},
             "--limit": {"type": int, "default": None, "help": "Max records per .jsonl file"},
         },
         _ingest,
         model=False,
     ),
     "index": _Command({}, _index),
-    "search": _Command(_SEARCH_FLAGS, _search),
-    "ask": _Command(_SEARCH_FLAGS, _ask),
+    "search": _Command(_SEARCH_FLAGS, lambda s, a, r: _search(s, a, r)),
+    "ask": _Command(_SEARCH_FLAGS, lambda s, a, r: _ask(s, a, r)),
     "status": _Command({}, _status, model=False),
-    "serve": _Command(
+    "serve": _Serve(
         {
-            "--host": {"default": "127.0.0.1", "help": "Bind address (local by default)"},
-            "--port": {"type": int, "default": 8765},
+            "--host": {"default": None, "help": "Bind address (config: app.host)"},
+            "--port": {"type": int, "default": None, "help": "Port (config: app.port)"},
             "--model-api-url": {
                 "default": None,
-                "help": "OpenAI-compatible model API for the agent",
+                "help": "Model API base URL (config: model_api.base_url)",
             },
-            "--model-name": {"default": "laris-core"},
-            "--allow-write": {"action": "store_true", "help": "Let the web agent use write tools"},
-            "--chat-dir": {"default": "artifacts/chat", "help": "Conversations, settings, uploads"},
+            "--model-name": {"default": None, "help": "Model name (config: model_api.model)"},
+            "--allow-write": {"action": "store_true", "help": "Auto-approve write tools"},
+            "--chat-dir": {"default": None, "help": "Conversations folder (config: app.chat_dir)"},
         },
-        _serve,
+        lambda s, a, r: None,
     ),
 }

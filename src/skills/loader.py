@@ -8,7 +8,7 @@ the system prompt; the body is loaded when the skill is used (progressive disclo
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 import yaml
 
@@ -52,12 +52,6 @@ def parse_skill_file(path: Path) -> Tuple[Dict[str, Any], str]:
     if not isinstance(meta, dict):
         raise SkillError(f"{path}: front matter must be a mapping")
     return meta, match.group(2).strip()
-
-
-def default_skill_roots(project_root: Optional[Path] = None) -> List[Tuple[Path, str]]:
-    """Project skills first (they win name clashes), then the user's global skills."""
-    base = Path(project_root or Path.cwd())
-    return [(base / ".laris" / "skills", "project"), (Path.home() / ".laris" / "skills", "user")]
 
 
 class SkillLibrary:

@@ -10,8 +10,17 @@ Enforces:
 
 from typing import Set
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from config.runtime_schemas import (
+    AgentConfig,
+    AppConfig,
+    ContextConfig,
+    ModelApiConfig,
+    PromptConfig,
+    SecurityConfig,
+    ServingConfig,
+)
 from core.errors import HardwareBudgetExceededError
 
 ALLOWED_EMBEDDING_DIMENSIONS: Set[int] = {384, 768, 1024, 1280}
@@ -144,9 +153,18 @@ class HardwareConfig(BaseModel):
 class LarisConfig(BaseModel):
     """Root configuration object uniting all system subsystems."""
 
+    model_config = ConfigDict(protected_namespaces=())
+
     config_version: str = Field(default="1.0.0")
     environment: str = Field(default="development")
     model: ModelConfig = Field(default_factory=ModelConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
+    agent: AgentConfig = Field(default_factory=AgentConfig)
+    context: ContextConfig = Field(default_factory=ContextConfig)
+    model_api: ModelApiConfig = Field(default_factory=ModelApiConfig)
+    security: SecurityConfig = Field(default_factory=SecurityConfig)
+    serving: ServingConfig = Field(default_factory=ServingConfig)
+    app: AppConfig = Field(default_factory=AppConfig)
+    prompts: PromptConfig = Field(default_factory=PromptConfig)

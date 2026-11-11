@@ -12,9 +12,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
-DEFAULT_TIMEOUT_S = 30.0
-MAX_READ_CHARS = 20000
-
 
 class ToolExecutionError(Exception):
     """Typed tool failure with a machine-readable code and payload."""
@@ -84,7 +81,8 @@ class ToolSpec:
     parameters: Dict[str, Any]
     handler: Callable[[Dict[str, Any]], Any]
     writes: bool = False
-    timeout_s: float = DEFAULT_TIMEOUT_S
+    timeout_s: Optional[float] = None  # None: the registry default from configuration
+    untrusted: bool = False  # output carries third-party content (documents, passages)
 
     def as_function(self) -> Dict[str, Any]:
         """OpenAI-compatible function descriptor (the format model APIs expect)."""
@@ -105,6 +103,7 @@ def schema(properties: Dict[str, Dict[str, Any]], required: Sequence[str] = ()) 
 @dataclass
 class ToolRegistry:
     tools: Dict[str, ToolSpec] = field(default_factory=dict)
+    default_timeout_s: float = 30.0  # overridden from `agent.default_tool_timeout_s`
 
     def register(self, spec: ToolSpec) -> None:
         if spec.name in self.tools:
@@ -132,9 +131,10 @@ class ToolRegistry:
 
         worker = threading.Thread(target=run, daemon=True)
         worker.start()
-        worker.join(spec.timeout_s)
+        limit = spec.timeout_s or self.default_timeout_s
+        worker.join(limit)
         if worker.is_alive():
-            raise ToolExecutionError("timeout", f"{name} exceeded {spec.timeout_s:.0f}s")
+            raise ToolExecutionError("timeout", f"{name} exceeded {limit:.0f}s")
         if "error" in box:
             raise box["error"]
         return to_jsonable(box["value"])
@@ -146,20 +146,26 @@ class Sandbox:
 
     read_roots: Sequence[Path]
     output_dir: Path
+    policy: Optional[Any] = None  # PathPolicy: deny-list of internal and secret files
+    denied_message: str = "this file is internal or secret and cannot be read"
+    base: Optional[Path] = None  # relative paths resolve against the project root
 
     def resolve_read(self, raw: str) -> Path:
         path = Path(raw).expanduser()
-        path = (path if path.is_absolute() else Path.cwd() / path).resolve()
+        anchor = self.base or Path.cwd()
+        path = (path if path.is_absolute() else anchor / path).resolve()
         for root in [*self.read_roots, self.output_dir]:
             if path == root.resolve() or root.resolve() in path.parents:
+                if self.policy is not None and self.policy.denied(path):
+                    raise ToolExecutionError("denied", self.denied_message)
                 return path
-        raise ToolExecutionError("outside_sandbox", f"read not allowed outside sandbox: {raw}")
+        raise ToolExecutionError("outside_sandbox", "read not allowed outside the sandbox")
 
     def resolve_write(self, raw: str) -> Path:
         out = self.output_dir.resolve()
         path = (out / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
         if out not in path.parents:
-            raise ToolExecutionError("outside_sandbox", f"writes are limited to {out}")
+            raise ToolExecutionError("outside_sandbox", "writes are limited to the output folder")
         return path
 
 

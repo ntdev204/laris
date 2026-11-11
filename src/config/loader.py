@@ -14,7 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Sequence, Union, cast
 
 import yaml
 
@@ -83,12 +83,17 @@ def _parse_env_overrides(env_prefix: str = "LARIS_") -> Dict[str, Any]:
         if not env_k.startswith(env_prefix):
             continue
 
-        raw_key = env_k[len(env_prefix):].lower()
+        raw_key = env_k[len(env_prefix) :].lower()
         parts = raw_key.split("__")
 
-        # Parse basic types
+        # Lists and objects are JSON, e.g. LARIS_SECURITY__EXTRA_SECRET_ENV='["X"]'
         val: Any = env_v
-        if env_v.lower() in {"true", "yes"}:
+        if env_v.lstrip().startswith(("[", "{")):
+            try:
+                val = json.loads(env_v)
+            except json.JSONDecodeError:
+                val = env_v
+        elif env_v.lower() in {"true", "yes"}:
             val = True
         elif env_v.lower() in {"false", "no"}:
             val = False
@@ -129,10 +134,58 @@ def _parse_cli_overrides(overrides: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     return nested
 
 
+def _read_yaml_mapping(path: Path) -> Dict[str, Any]:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise ModuleContractViolationError(f"Malformed YAML in {path}: {e}") from e
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def assert_no_literal_secrets(data: Any, source: str, trail: str = "") -> None:
+    """Reject YAML that embeds a credential; configs may only name an environment variable."""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            lowered = str(key).lower()
+            where = f"{trail}.{key}" if trail else str(key)
+            sensitive = any(marker in lowered for marker in SENSITIVE_KEY_SUBSTRINGS)
+            if sensitive and not lowered.endswith(("_env", "_envs")) and isinstance(value, str):
+                if value.strip() and lowered not in {"vocab_size", "special_tokens"}:
+                    raise ModuleContractViolationError(
+                        f"{source}: '{where}' looks like a literal secret; "
+                        "store it in an environment variable and reference its name"
+                    )
+            assert_no_literal_secrets(value, source, where)
+    elif isinstance(data, list):
+        for item in data:
+            assert_no_literal_secrets(item, source, trail)
+
+
+def load_dotenv(path: Path, environ: Optional[Dict[str, str]] = None) -> int:
+    """Load KEY=VALUE lines into the environment without overriding existing variables."""
+    target = os.environ if environ is None else environ
+    if not path.is_file():
+        return 0
+    loaded = 0
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip().removeprefix("export ").strip()
+        if key and key not in target:
+            target[key] = value.strip().strip("\"'")
+            loaded += 1
+    return loaded
+
+
 def load_config(
     config_path: Optional[Union[str, Path]] = None,
     env_prefix: str = "LARIS_",
     overrides: Optional[Dict[str, Any]] = None,
+    extra_files: Optional[Sequence[Union[str, Path]]] = None,
+    extra_layers: Optional[Sequence[Dict[str, Any]]] = None,
 ) -> LarisConfig:
     """Loads and resolves system configuration using strict 4-tier precedence.
 
@@ -153,12 +206,18 @@ def load_config(
         p = Path(config_path)
         if not p.is_file():
             raise FileNotFoundError(f"Configuration file not found: {p}")
-        try:
-            with open(p, "r", encoding="utf-8") as f:
-                loaded = yaml.safe_load(f)
-                file_data = loaded if isinstance(loaded, dict) else {}
-        except yaml.YAMLError as e:
-            raise ModuleContractViolationError(f"Malformed YAML in {p}: {e}") from e
+        file_data = _read_yaml_mapping(p)
+        assert_no_literal_secrets(file_data, str(p))
+
+    for extra in extra_files or []:  # later files win: user-level, then project-level
+        extra_path = Path(extra)
+        if extra_path.is_file():
+            layer = _read_yaml_mapping(extra_path)
+            assert_no_literal_secrets(layer, str(extra_path))
+            file_data = _deep_merge_dict(file_data, layer)
+
+    for layer in extra_layers or []:  # e.g. the user's saved preferences, above files, below env
+        file_data = _deep_merge_dict(file_data, layer)
 
     # 1. Environment variables
     env_data = _parse_env_overrides(env_prefix=env_prefix)
@@ -172,3 +231,27 @@ def load_config(
 
     # Validate against canonical Pydantic model
     return LarisConfig(**merged)
+
+
+def load_runtime_config(
+    project_root: Optional[Union[str, Path]] = None,
+    overrides: Optional[Dict[str, Any]] = None,
+    env_prefix: str = "LARIS_",
+    user_layer: Optional[Dict[str, Any]] = None,
+) -> LarisConfig:
+    """Resolve the runtime configuration for a project.
+
+    Order (later wins): schema defaults, `configs/default.yaml`, `~/.laris/config.yaml`,
+    `<project>/.laris/config.yaml`, the user's saved preferences, `LARIS_*` environment (after
+    loading `<project>/.env`), then explicit overrides.
+    """
+    root = Path(project_root or Path.cwd())
+    load_dotenv(root / ".env")
+    default = root / "configs" / "default.yaml"
+    return load_config(
+        default if default.is_file() else None,
+        env_prefix=env_prefix,
+        overrides=overrides,
+        extra_files=[Path.home() / ".laris" / "config.yaml", root / ".laris" / "config.yaml"],
+        extra_layers=[user_layer] if user_layer else None,
+    )

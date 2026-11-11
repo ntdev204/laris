@@ -9,7 +9,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 
 from agent.builtin_tools import build_registry
-from agent.loop import MAX_STEPS, AgentSession
+from agent.loop import AgentSession
 from agent.provider import (
     AssistantTurn,
     ChatProvider,
@@ -21,6 +21,10 @@ from agent.provider import (
 from agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
 from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
+from harness.runtime import HarnessRuntime
+
+RT = HarnessRuntime()
+MAX_STEPS = RT.config.agent.max_steps
 
 
 @pytest.fixture
@@ -44,7 +48,7 @@ class Scripted(ChatProvider):
 
 
 def test_argument_validation_and_unknown_tool(env):
-    registry = build_registry(env[0], env[1])
+    registry = build_registry(env[0], env[1], RT)
     with pytest.raises(ToolExecutionError) as exc:
         registry.call("read_file", {})
     assert exc.value.code == "invalid_arguments"
@@ -59,7 +63,7 @@ def test_argument_validation_and_unknown_tool(env):
 
 def test_sandbox_blocks_reads_and_writes_outside(env):
     service, sandbox, tmp = env
-    registry = build_registry(service, sandbox)
+    registry = build_registry(service, sandbox, RT)
     assert (
         registry.call("read_file", {"path": str(tmp / "docs" / "note.txt")})["text"]
         == "hello from a file"
@@ -95,13 +99,15 @@ def test_loop_denies_writes_without_approval_and_allows_with(env):
     write = ToolCall("c1", "write_file", {"path": "x.txt", "content": "hi"})
     denied = AgentSession(
         Scripted([AssistantTurn(None, [write]), AssistantTurn("done")]),
-        build_registry(service, sandbox),
+        build_registry(service, sandbox, RT),
+        RT,
     ).run("write")
     assert "approval_denied" in json.dumps(denied.steps[0]["result"])
     assert not (tmp / "out" / "x.txt").exists()
     allowed = AgentSession(
         Scripted([AssistantTurn(None, [write]), AssistantTurn("done")]),
-        build_registry(service, sandbox),
+        build_registry(service, sandbox, RT),
+        RT,
         approve=lambda name, args: True,
     ).run("write")
     assert allowed.status == "completed" and (tmp / "out" / "x.txt").exists()
@@ -111,7 +117,8 @@ def test_identical_call_twice_halts(env):
     call = ToolCall("c", "corpus_status", {})
     result = AgentSession(
         Scripted([AssistantTurn(None, [call]), AssistantTurn(None, [call])]),
-        build_registry(env[0], env[1]),
+        build_registry(env[0], env[1], RT),
+        RT,
     ).run("loop")
     assert result.status == "cyclic"
 
@@ -120,13 +127,14 @@ def test_step_ceiling_is_ten(env):
     calls = [
         AssistantTurn(None, [ToolCall(f"c{i}", "list_files", {"limit": i + 1})]) for i in range(30)
     ]
-    result = AgentSession(Scripted(calls), build_registry(env[0], env[1]), max_steps=99).run("go")
+    result = AgentSession(Scripted(calls), build_registry(env[0], env[1], RT), RT).run("go")
     assert result.status == "max_steps" and len(result.steps) == MAX_STEPS
 
 
 def test_offline_planner_reads_searches_and_quotes(env):
     service, sandbox, tmp = env
-    session = AgentSession(OfflinePlanner(), build_registry(service, sandbox), log_dir=tmp / "log")
+    planner = OfflinePlanner(RT.strings)
+    session = AgentSession(planner, build_registry(service, sandbox, RT), RT, log_dir=tmp / "log")
     result = session.run(f"perovskite efficiency, see {tmp / 'docs' / 'note.txt'}")
     assert result.status == "completed"
     assert [s["tool"] for s in result.steps] == ["read_file", "search_corpus"]
@@ -196,4 +204,4 @@ def test_ocr_reads_rendered_text():
     )
     buffer = io.BytesIO()
     image.save(buffer, "PNG")
-    assert "Accuracy" in ocr_image_bytes(buffer.getvalue())
+    assert "Accuracy" in ocr_image_bytes(buffer.getvalue(), RT.config.app.ocr_lang)
