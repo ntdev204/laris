@@ -5,8 +5,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
+from agent.context import CompactionResult, ContextManager, estimate_tokens, is_overflow_error
 from agent.provider import AssistantTurn, ChatProvider, Message, ProviderError
 from agent.tools import ToolExecutionError, ToolRegistry, dumps
 
@@ -44,6 +45,8 @@ class AgentSession:
         messages: Optional[List[Message]] = None,
         session_id: Optional[str] = None,
         system_prompt: str = SYSTEM_PROMPT,
+        context: Optional[ContextManager] = None,
+        on_compact: Optional[Callable[[CompactionResult], None]] = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -53,9 +56,11 @@ class AgentSession:
         self.time_budget_s = time_budget_s
         self.session_id = session_id or uuid.uuid4().hex[:12]
         self.messages: List[Message] = messages or [{"role": "system", "content": system_prompt}]
+        self.context = context
+        self.on_compact = on_compact
 
     # -- conversation ----------------------------------------------------------------------
-    def send(self, user_text: str) -> Iterator[Event]:
+    def send(self, user_text: str, skill: Optional[Tuple[str, str]] = None) -> Iterator[Event]:
         """Append a user message and stream events until the assistant gives a final answer.
 
         Events: text(delta), tool_call(name, arguments), tool_result(name, result),
@@ -65,10 +70,14 @@ class AgentSession:
         seen: set = set()
         started = time.monotonic()
         status, answer = "max_steps", ""
+        if skill is not None:
+            yield from self._preload_skill(*skill, seen)
+        overflow_retried = False
         for _ in range(self.max_steps):
             if time.monotonic() - started > self.time_budget_s:
                 status = "timeout"
                 break
+            yield from self._maybe_compact()
             turn: Optional[AssistantTurn] = None
             try:
                 for event in self.provider.stream(self.messages, self.registry.functions()):
@@ -77,6 +86,10 @@ class AgentSession:
                     else:
                         yield event
             except ProviderError as exc:
+                if self.context and is_overflow_error(str(exc)) and not overflow_retried:
+                    overflow_retried = True  # the model rejected the size: compact and retry once
+                    yield from self._maybe_compact(force=True)
+                    continue
                 status, answer = "provider_error", str(exc)
                 break
             assert turn is not None
@@ -124,7 +137,55 @@ class AgentSession:
         if status != "completed":
             self.messages.append({"role": "assistant", "content": answer})
         self._log()
+        yield self.usage_event()
         yield {"type": "done", "status": status, "answer": answer}
+
+    def usage_event(self) -> Event:
+        window = self.context.window if self.context else 0
+        tokens = estimate_tokens(self.messages) + estimate_tokens(self.registry.functions())
+        return {"type": "usage", "tokens": tokens, "window": window}
+
+    def compact(self, instructions: str = "") -> Iterator[Event]:
+        """Manual compaction (the /compact command)."""
+        yield from self._maybe_compact(force=True, instructions=instructions)
+        yield self.usage_event()
+
+    def _maybe_compact(self, force: bool = False, instructions: str = "") -> Iterator[Event]:
+        if self.context is None or (not force and not self.context.enabled):
+            return
+        tools_tokens = estimate_tokens(self.registry.functions())
+        if not force and not self.context.needs_compaction(self.messages, tools_tokens):
+            return
+        new_messages, result = self.context.compact(self.messages, instructions, force)
+        if result is None:
+            return
+        self.messages[:] = new_messages
+        if self.on_compact:
+            self.on_compact(result)
+        yield result.event()
+
+    def _preload_skill(self, name: str, arguments: str, seen: set) -> Iterator[Event]:
+        """A /skill command runs `use_skill` first so the model starts with its instructions."""
+        call_args = {"name": name, "arguments": arguments}
+        call_id = f"skill_{uuid.uuid4().hex[:8]}"
+        self.messages.append(
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": call_id,
+                        "type": "function",
+                        "function": {"name": "use_skill", "arguments": dumps(call_args)},
+                    }
+                ],
+            }
+        )
+        seen.add(("use_skill", json.dumps(call_args, sort_keys=True)))
+        yield {"type": "tool_call", "name": "use_skill", "arguments": call_args}
+        output = self._execute("use_skill", call_args)
+        yield {"type": "tool_result", "name": "use_skill", "result": output}
+        self.messages.append({"role": "tool", "tool_call_id": call_id, "content": dumps(output)})
 
     def run(self, task: str) -> AgentResult:
         """Blocking one-shot form used by `laris agent run` and tests."""

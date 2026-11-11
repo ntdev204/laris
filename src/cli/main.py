@@ -11,6 +11,7 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris evaluate calibrate       ratchet acceptance thresholds up from passing val reports
     laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
     laris agent tools|run|chat       tool-using assistant (offline planner or model API)
+    laris skills list|show|check     inspect and validate .laris/skills
     laris model serve                OpenAI-compatible model API (placeholder backend for now)
     laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
 """
@@ -30,6 +31,7 @@ from cli.commands import (
     model,
     partition,
     readiness,
+    skills,
     tokenizer,
 )
 from corpus.acquisition import runner as acquisition
@@ -63,6 +65,11 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "tools": ("List the agent's tools", agent.COMMANDS["tools"]),
         "run": ("Run one task with the agent and print the steps", agent.COMMANDS["run"]),
         "chat": ("Interactive agent session", agent.COMMANDS["chat"]),
+    },
+    "skills": {
+        "list": ("List available skills", skills.COMMANDS["list"]),
+        "show": ("Print one skill's instructions", skills.COMMANDS["show"]),
+        "check": ("Validate every SKILL.md", skills.COMMANDS["check"]),
     },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),

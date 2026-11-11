@@ -12,6 +12,7 @@ from application.workspace import IngestError, decode_upload
 
 MAX_BODY_BYTES = 32 * 1024 * 1024
 _CONVERSATION = re.compile(r"^/api/conversations/([0-9a-f]{12})(/messages)?$")
+_COMPACT = re.compile(r"^/api/conversations/([0-9a-f]{12})/compact$")
 
 
 def handle_api(
@@ -74,7 +75,8 @@ def _chat_routes(
     match = _CONVERSATION.match(path)
     if match and not match.group(2):
         if method == "GET":
-            return 200, chat.conversations.get(match.group(1))
+            conversation = chat.conversations.get(match.group(1))
+            return 200, {**conversation, "usage": chat.usage(match.group(1))}
         if method == "DELETE":
             chat.conversations.delete(match.group(1))
             return 200, {"deleted": match.group(1)}
@@ -83,6 +85,28 @@ def _chat_routes(
             conversation["title"] = str(body.get("title") or conversation["title"])[:120]
             chat.conversations.save(conversation)
             return 200, conversation
+    if path == "/api/skills" and method == "GET":
+        chat.skills.reload()
+        return 200, {
+            "skills": [
+                {
+                    "name": k.name,
+                    "description": k.summary(400),
+                    "scope": k.scope,
+                    "references": len(k.references),
+                }
+                for k in (chat.skills.skills[n] for n in chat.skills.names())
+            ],
+            "problems": chat.skills.problems,
+        }
+    if path == "/api/instructions" and method == "GET":
+        return 200, [
+            {"file": label, "chars": len(text)} for label, text in chat.instruction_files()
+        ]
+    compact = _COMPACT.match(path)
+    if compact and method == "POST":
+        events = list(chat.compact(compact.group(1), str(body.get("instructions", ""))))
+        return 200, {"events": events}
     if path == "/api/upload" and method == "POST":
         return 200, chat.upload(
             str(body.get("name") or "upload"),

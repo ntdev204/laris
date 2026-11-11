@@ -69,6 +69,9 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "api_key_env": "",
     "allow_write": False,
     "system_prompt": "",
+    "context_window": 32768,  # tokens the model accepts; autocompact keeps the session below it
+    "auto_compact": True,  # on by default so long sessions never stop at the context limit
+    "compact_threshold": 0.8,
 }
 
 

@@ -147,6 +147,16 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set) -> int:
             print(_paint(_USE, f"● {event['name']}") + _paint(_DIM, f" {shown}"))
         elif kind == "tool_result":
             print(_paint(_DIM, "  ⎿ ") + _summarise(event["result"]))
+        elif kind == "compact":
+            print(
+                _paint(
+                    _DIM,
+                    f"⟳ Đã nén ngữ cảnh ({event['method']}): {event['before']} → "
+                    f"{event['after']} token, {event['summarized']} tin nhắn được tóm tắt",
+                )
+            )
+        elif kind == "usage" and event["window"]:
+            print(_paint(_DIM, f"  ngữ cảnh ≈ {event['tokens']}/{event['window']} token"))
         elif kind == "done":
             if streaming:
                 print()
@@ -225,7 +235,8 @@ class _Chat:
             return None
         if name == "/help":
             print(
-                "/new /sessions /resume ID /tools /status /model [URL [NAME]] /write on|off /exit"
+                "/new /sessions /resume ID /tools /skills /<skill> <yêu cầu> /compact [ghi chú] "
+                "/context /status /model [URL [NAME]] /write on|off /exit"
             )
         elif name == "/new":
             conversation = dict(chat.conversations.create())
@@ -254,6 +265,30 @@ class _Chat:
         elif name == "/write":
             chat.settings.update({"allow_write": rest == "on"})
             print(f"write tools {'auto-approved' if rest == 'on' else 'ask permission'}")
+        elif name == "/skills":
+            for skill_name in chat.skills.names():
+                print(f"  /{skill_name}: {chat.skills.skills[skill_name].summary(110)}")
+            for problem in chat.skills.problems:
+                print(_paint(_ERR, f"  skill problem: {problem}"))
+        elif name == "/compact":
+            events = list(chat.compact(conversation["id"], rest))
+            shown = [e for e in events if e["type"] == "compact"]
+            for event in shown:
+                print(f"nén {event['before']} → {event['after']} token ({event['method']})")
+            if not shown:
+                print("không có gì để nén")
+            conversation = dict(chat.conversations.get(conversation["id"]))
+        elif name == "/context":
+            usage = chat.usage(conversation["id"])
+            cfg = chat.settings.load()
+            print(
+                f"≈ {usage['tokens']}/{usage['window']} token; autocompact "
+                f"{'bật' if cfg['auto_compact'] else 'tắt'} ở "
+                f"{int(cfg['compact_threshold'] * 100)}%"
+            )
+        elif name[1:] in chat.skills.skills:
+            _turn(chat, conversation["id"], line, always)
+            conversation = dict(chat.conversations.get(conversation["id"]))
         else:
             print(f"unknown command {name}; try /help")
         return conversation

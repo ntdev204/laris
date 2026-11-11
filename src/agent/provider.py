@@ -178,9 +178,11 @@ class OfflinePlanner(ChatProvider):
             for c in m.get("tool_calls") or []:
                 calls[c["id"]] = c["function"]["name"]
             if m.get("role") == "tool":
-                done.setdefault(calls.get(m["tool_call_id"], "?"), []).append(
-                    json.loads(m["content"])
-                )
+                try:
+                    payload = json.loads(m["content"])
+                except json.JSONDecodeError:
+                    payload = {"truncated": True}  # trimmed by context compaction
+                done.setdefault(calls.get(m["tool_call_id"], "?"), []).append(payload)
         return done
 
     def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
@@ -193,6 +195,8 @@ class OfflinePlanner(ChatProvider):
         def call(name: str, **arguments: Any) -> AssistantTurn:
             return AssistantTurn(None, [ToolCall(f"call_{step}", name, arguments)])
 
+        if "use_skill" in done and len(done) == 1:
+            return AssistantTurn(self._skill_notice(done["use_skill"][-1]))
         paths = _PATH_RE.findall(task)
         if paths and "read_file" not in done:
             return call("read_file", path=paths[0], max_chars=4000)
@@ -205,6 +209,31 @@ class OfflinePlanner(ChatProvider):
         if self.has_model and hits and "answer_question" not in done:
             return call("answer_question", question=task)
         return AssistantTurn(self._compose(task, done, hits))
+
+    @staticmethod
+    def _skill_notice(result: Dict[str, Any]) -> str:
+        if "error" in result:
+            return "Skill error: " + str(result["error"]["message"])
+        headings = [
+            line.lstrip("# ").strip()
+            for line in result["instructions"].splitlines()
+            if line.startswith("## ")
+        ]
+        lines = [
+            f"Skill `{result['name']}` đã được nạp ({len(result['instructions'])} ký tự).",
+            "",
+            result["description"][:400],
+            "",
+            "Các phần của skill: " + ", ".join(headings[:10]),
+        ]
+        if result.get("arguments"):
+            lines += ["", f"Yêu cầu của bạn: {result['arguments']}"]
+        lines += [
+            "",
+            "Trợ lý tích hợp chưa có mô hình ngôn ngữ nên không thể thực hiện các bước của skill. "
+            "Khi server mô hình lõi chạy, mô hình sẽ nhận đúng nội dung skill này và làm theo.",
+        ]
+        return "\n".join(lines)
 
     @staticmethod
     def _compose(task: str, done: Dict[str, List[Any]], hits: List[Dict[str, Any]]) -> str:

@@ -118,3 +118,21 @@ scripted placeholder that quotes passages (`laris-placeholder`). The trained cor
 `ChatProvider` subclass: `laris model serve --backend package.module:ClassName --model-name laris-core`,
 with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
 the client settings; keys are never stored in files.
+
+#### Instructions, skills and automatic context compaction
+
+- **`LARIS.md`** (project root) is read at the start of every turn and put in the system prompt,
+  after the optional user-level `~/.laris/LARIS.md` and before `.laris/LARIS.md` and the git-ignored
+  `LARIS.local.md`. Edits apply on the next message.
+- **Skills** live in `.laris/skills/<name>/SKILL.md` (YAML `name` and `description`, Markdown body,
+  optional `references/`). Only name and description are in the prompt; the model loads a skill with the
+  `use_skill` tool, or the user runs `/<skill-name> request` (terminal and web `/` menu). `laris skills
+  list|show|check` inspects and validates them. Project skills override `~/.laris/skills`.
+- **Memory** is `.laris/memory/*.md` (short dated notes the skills read first); `save_memory` writes it
+  after approval.
+- **Autocompact is on by default** (`auto_compact`, `context_window` 32768 tokens, `compact_threshold`
+  0.8, all in settings). Before each model call the session estimates its size; above the threshold it
+  trims old tool outputs, then replaces older turns with a summary (model-written when a model API is
+  connected, otherwise extracted) while keeping recent turns and every tool-call/result pair intact. A
+  context-length error from the model triggers one forced compaction and a retry. The original messages
+  are archived in `artifacts/chat/archive/`. `/compact [note]` compacts now; `/context` shows usage.

@@ -1,5 +1,6 @@
 """Built-in tools: files, OCR, corpus search, extractive QA and scientific discourse extraction."""
 
+import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -18,11 +19,19 @@ from application.workspace import (
     chunks_from_path,
     read_text_from_bytes,
 )
+from skills.loader import SkillError, SkillLibrary
 
+MAX_SKILL_CHARS = 24000
+MAX_HIT_CHARS = 900
 _PATH = {"type": "string", "description": "File or folder path"}
 
 
-def build_registry(service: SearchService, sandbox: Sandbox) -> ToolRegistry:
+def build_registry(
+    service: SearchService,
+    sandbox: Sandbox,
+    skills: Optional[SkillLibrary] = None,
+    memory_dir: Optional[Path] = None,
+) -> ToolRegistry:
     registry = ToolRegistry()
 
     def list_files(args: Dict[str, Any]) -> Any:
@@ -72,9 +81,14 @@ def build_registry(service: SearchService, sandbox: Sandbox) -> ToolRegistry:
 
     def search(args: Dict[str, Any]) -> Any:
         try:
-            return service.search(
+            found = service.search(
                 args["query"], args.get("mode", "bm25"), int(args.get("top_k", 5))
             )
+            for hit in found["hits"]:  # small tool output keeps long sessions inside the context
+                if len(hit["text"]) > MAX_HIT_CHARS:
+                    hit["text"] = hit["text"][:MAX_HIT_CHARS] + "…"
+                    hit["truncated"] = True
+            return found
         except ServiceError as exc:
             raise ToolExecutionError("search_failed", str(exc)) from exc
 
@@ -106,6 +120,36 @@ def build_registry(service: SearchService, sandbox: Sandbox) -> ToolRegistry:
 
     def status(args: Dict[str, Any]) -> Any:
         return service.status()
+
+    def use_skill(args: Dict[str, Any]) -> Any:
+        if skills is None:
+            raise ToolExecutionError("no_skills", "no skills are configured")
+        try:
+            skill = skills.get(args["name"])
+        except SkillError as exc:
+            raise ToolExecutionError("unknown_skill", str(exc)) from exc
+        return {
+            "name": skill.name,
+            "description": skill.description,
+            "instructions": skill.body[:MAX_SKILL_CHARS],
+            "truncated": len(skill.body) > MAX_SKILL_CHARS,
+            "arguments": args.get("arguments", ""),
+            "references": [{"path": str(p), "bytes": p.stat().st_size} for p in skill.references],
+            "note": "Follow these instructions. Read a reference with read_file only if needed.",
+        }
+
+    def save_memory(args: Dict[str, Any]) -> Any:
+        if memory_dir is None:
+            raise ToolExecutionError("no_memory", "memory folder is not configured")
+        name = args["name"].strip().removesuffix(".md")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", name):
+            raise ToolExecutionError("invalid_arguments", "name: lowercase letters, digits, - or _")
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        path = memory_dir / f"{name}.md"
+        mode = "a" if args.get("append", True) and path.exists() else "w"
+        with open(path, mode, encoding="utf-8") as handle:
+            handle.write(("\n" if mode == "a" else "") + args["content"].strip() + "\n")
+        return {"path": str(path), "mode": "appended" if mode == "a" else "created"}
 
     for spec in (
         ToolSpec(
@@ -182,6 +226,26 @@ def build_registry(service: SearchService, sandbox: Sandbox) -> ToolRegistry:
             schema({"text": {"type": "string"}, "path": _PATH, "document_id": {"type": "string"}}),
             discourse,
             timeout_s=60.0,
+        ),
+        ToolSpec(
+            "use_skill",
+            "Load a skill's instructions (see the Skills list in the system prompt).",
+            schema({"name": {"type": "string"}, "arguments": {"type": "string"}}, ["name"]),
+            use_skill,
+        ),
+        ToolSpec(
+            "save_memory",
+            "Save a short note to the project memory folder (needs approval).",
+            schema(
+                {
+                    "name": {"type": "string"},
+                    "content": {"type": "string"},
+                    "append": {"type": "boolean"},
+                },
+                ["name", "content"],
+            ),
+            save_memory,
+            writes=True,
         ),
         ToolSpec("corpus_status", "Show corpus size and model availability.", schema({}), status),
     ):
