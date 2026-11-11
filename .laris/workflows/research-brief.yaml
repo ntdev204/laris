@@ -1,8 +1,8 @@
 name: research-brief
-version: "1.0.0"
+version: "1.1.0"
 description: Produce a short written research brief from corpus evidence and save it to a file after approval.
 triggers: ["write a brief", "summarise into a document"]
-allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse, write_file]
+allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse, write_file, brain_consult, brain_open, brain_neighbors]
 max_steps: 8
 require_citations: true
 approval: ask

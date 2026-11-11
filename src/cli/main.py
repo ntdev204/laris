@@ -9,12 +9,16 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris train language-encoder   train (or profile) the multi-task language encoder
     laris evaluate language-encoder   score a checkpoint on the val/test split vs baselines
     laris evaluate calibrate       ratchet acceptance thresholds up from passing val reports
-    laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
+    laris app ingest|index|search|ask|status   local document store and search
+    laris login|logout|whoami        API key: each key opens its own private conversations
+    laris [--resume [ID]]            open the terminal chat (pick a saved session with --resume)
     laris agent tools|run|chat       tool-using assistant (offline planner or model API)
     laris skills list|show|check     inspect and validate .laris/skills
     laris skills add|lint|sync       install, lint or build knowledge skills
     laris learn stats|export|purge   locally collected fine-tune data (never trains)
     laris workflows list|show|check  inspect and validate .laris/workflows
+    laris vault init|check|status    project vault (Obsidian-format memory in your codebase)
+    laris brain check|tree|route     inspect the protected system brain (hub tree)
     laris harness verify|lock        policy integrity (LARIS.md, prompts, rules, workflows)
     laris model serve                OpenAI-compatible model API (placeholder backend for now)
     laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
@@ -22,9 +26,10 @@ Command tree (each leaf maps to a module in `cli.commands`):
 
 import argparse
 import sys
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from cli.commands import (
+    account,
     agent,
     app,
     calibrate,
@@ -39,6 +44,7 @@ from cli.commands import (
     readiness,
     skills,
     tokenizer,
+    vault,
 )
 from corpus.acquisition import runner as acquisition
 
@@ -65,7 +71,6 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "search": ("Search the workspace", app.COMMANDS["search"]),
         "ask": ("Extractive answer with source passages", app.COMMANDS["ask"]),
         "status": ("Show workspace and model status", app.COMMANDS["status"]),
-        "serve": ("Serve the web UI and JSON API locally", app.COMMANDS["serve"]),
     },
     "agent": {
         "tools": ("List the agent's tools", agent.COMMANDS["tools"]),
@@ -101,6 +106,21 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
             policy.HARNESS_COMMANDS["lock"],
         ),
     },
+    "account": {
+        "login": ("Enter and save your API key", account.COMMANDS["login"]),
+        "logout": ("Forget the saved API key", account.COMMANDS["logout"]),
+        "whoami": ("Show which private space the key opens", account.COMMANDS["whoami"]),
+    },
+    "vault": {
+        "init": ("Create the project vault in this codebase", vault.VAULT_COMMANDS["init"]),
+        "check": ("Lint the project vault", vault.VAULT_COMMANDS["check"]),
+        "status": ("Counts per folder and link health", vault.VAULT_COMMANDS["status"]),
+    },
+    "brain": {
+        "check": ("Lint the system brain structure", vault.BRAIN_COMMANDS["check"]),
+        "tree": ("Print the brain hub tree (titles only)", vault.BRAIN_COMMANDS["tree"]),
+        "route": ("Show which hub a task routes to", vault.BRAIN_COMMANDS["route"]),
+    },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
     },
@@ -121,15 +141,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def interactive_default(argv: Sequence[str]) -> List[str]:
+    """`laris` and `laris --resume [id]` open the terminal chat; named commands are unchanged."""
+    items = list(argv)
+    if items and items[0] in ("-h", "--help"):
+        return items
+    if items and items[0] in ("login", "logout", "whoami"):
+        return ["account", *items]
+    if not items or items[0].startswith("-"):
+        return ["agent", "chat", *items]
+    return items
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
+    args = build_parser().parse_args(interactive_default(sys.argv[1:] if argv is None else argv))
     handler: Handler = args.handler
+    from cli.credentials import CredentialError
     from harness.integrity import IntegrityError
     from harness.prompts import PromptError
 
     try:
         return handler(args)
-    except (IntegrityError, PromptError) as exc:  # policy problems are reported, not traced
+    except (IntegrityError, PromptError, CredentialError) as exc:  # reported, not traced
         print(f"[ERROR] {exc}")
         return 2
 

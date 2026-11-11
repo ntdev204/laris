@@ -2,7 +2,10 @@
 
 The owner's current direction (2026-11-11): build the complete system harness first (RAG, agent,
 tools, skills, workflows, policy, learning data); the core reasoning model is paused and resumed
-afterwards. The earlier spec/plan/task ledger under `.agents/` is retired; do not recreate it.
+afterwards. The working ledger is `.claude/spec/spec.md`, `plan.md` and `task.md` (Obsidian brain and
+scholarly harness). Read them before changing the repository, execute tasks in plan order, update all
+three together, and run `python scripts/validate_spec.py` before starting the next task. The earlier
+`.agents/` ledger is retired; do not recreate it.
 
 - Do not execute neural training, tokenizer fitting, backward/optimizer steps, or
   optimizer-bearing profiling. Do not run tests that perform these operations.

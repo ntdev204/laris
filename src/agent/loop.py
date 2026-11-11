@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from agent.context import CompactionResult, ContextManager, TokenEstimator
-from agent.provider import AssistantTurn, ChatProvider, Message, ProviderError
+from agent.provider import AssistantTurn, AuthError, ChatProvider, Message, ProviderError
 from agent.tools import ToolExecutionError, ToolRegistry, dumps
 from harness.runtime import HarnessRuntime, SessionHarness
 from harness.verifier import AnswerVerifier, Verdict
@@ -131,6 +131,7 @@ class AgentSession:
             workflow=wf.name if wf else "",
         )
         verified = True
+        user_text = self.harness.redactor.redact_secrets(user_text)[0]  # never store a typed key
         self.messages.append({"role": "user", "content": user_text})
         seen: set = set()
         turn_results: List[Dict[str, Any]] = []
@@ -139,6 +140,7 @@ class AgentSession:
         retries, overflow_retried, steps = 0, False, 0
         if skill is not None:
             yield from self._preload_skill(skill[0], skill[1], seen, turn_results)
+        yield from self._consult_brain(user_text, wf, allowed)
         for steps in range(1, max_steps + 1):
             if time.monotonic() - started > self.cfg.time_budget_s:
                 status = "timeout"
@@ -162,7 +164,10 @@ class AgentSession:
                     yield from self._maybe_compact(force=True)
                     continue
                 audit.event("provider_error", detail=str(exc))
-                status, answer = "provider_error", strings.get("loop.provider_error")
+                status = "provider_error"
+                answer = strings.get(
+                    "loop.auth_error" if isinstance(exc, AuthError) else "loop.provider_error"
+                )
                 break
             for piece in stream.finish():
                 pieces.append(piece)
@@ -365,6 +370,33 @@ class AgentSession:
         turn_results.append({"tool": "use_skill", "result": output})
         yield {"type": "tool_result", "name": "use_skill", "result": output}
         self.messages.append({"role": "tool", "tool_call_id": call_id, "content": dumps(output)})
+
+    def _consult_brain(
+        self, task: str, wf: Optional[WorkflowSpec], allowed: Optional[set]
+    ) -> Iterator[Event]:
+        """Before answering, enter the brain at the hub that matches the task and add a short brief.
+
+        The brief reaches the model as a hidden harness message; the user only sees the titles of
+        the notes used (never their text). Skipped when disabled or when the workflow excludes it.
+        """
+        assert self.sh is not None
+        cfg = self.harness.config.brain
+        brain = self.harness.brain
+        brain.begin_turn()
+        if cfg.consult == "off" or not brain.available:
+            return
+        if "brain_consult" not in self.registry.tools:
+            return
+        if allowed is not None and "brain_consult" not in allowed:
+            return
+        found = brain.consult(task, wf.name if wf else "", cfg.consult == "always")
+        if found is None:
+            return
+        text = self.sh.guard.tool_result({"brief": found.brief}, False)["brief"]
+        header = self.harness.strings.get("brain.brief_header")
+        self.messages.append({"role": "user", "content": f"{header}\n{text}", "harness": True})
+        self.sh.audit.event("brain_consult", notes=json.dumps(found.trace))
+        yield {"type": "brain", "trace": found.trace}
 
     def _execute(self, name: str, arguments: Dict[str, Any]) -> Any:
         spec = self.registry.tools.get(name)

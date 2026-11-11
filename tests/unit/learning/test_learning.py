@@ -28,6 +28,7 @@ GRAPHENE = (
 
 
 def make(project, tmp_path, overrides=None):
+    overrides = {"learning.skill_on_ingest": True, **(overrides or {})}
     rt = HarnessRuntime.load(project, overrides)
     service = SearchService(Workspace(tmp_path / "ws"))
     service.on_ingest = make_ingest_hook(lambda: rt)
@@ -346,7 +347,9 @@ def test_chat_upload_reports_the_generated_skill(project, tmp_path):
     import base64
 
     service = SearchService(Workspace(tmp_path / "ws"))
-    chat = ChatApp(service, project, project / "chat")
+    chat = ChatApp(
+        service, project, project / "chat", overrides={"learning.skill_on_ingest": True}
+    )
     out = chat.upload("graphene notes.txt", base64.b64encode(GRAPHENE.encode()).decode(), True)
     assert out["ingested"]["skill"] == "corpus-graphene-notes"
     assert (skills_dir(project) / "corpus-graphene-notes" / "SKILL.md").exists()

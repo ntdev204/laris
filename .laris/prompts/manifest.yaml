@@ -3,7 +3,7 @@
 # `internal_policy` is the only section not read from this folder: the composer fills it from the
 # LARIS.md instruction files. Sections whose content is empty (skills, memory, user_preferences) are
 # omitted.
-version: "1.1.0"
+version: "1.2.0"
 variables:
   - assistant_name
   - reply_language

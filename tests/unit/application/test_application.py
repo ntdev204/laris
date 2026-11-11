@@ -4,7 +4,6 @@ import base64
 
 import pytest
 
-from application.server import handle_api
 from application.service import SearchService
 from application.workspace import IngestError, Workspace, chunks_from_text, decode_upload
 
@@ -44,18 +43,3 @@ def test_bm25_search_vietnamese_and_english(tmp_path):
     top = service.search("thủ đô Việt Nam")["hits"][0]
     assert top["source"] == "vi.txt"
     assert service.search("capital France")["hits"][0]["source"] == "en.txt"
-
-
-def test_api_errors_and_modes(tmp_path):
-    service = _service(tmp_path)
-    assert handle_api(service, "GET", "/api/status", {})[1]["passages"] == 0
-    assert handle_api(service, "POST", "/api/search", {"query": "x"})[0] == 400  # no documents
-    code, counts = handle_api(
-        service, "POST", "/api/ingest", {"name": "n.txt", "text": "solar energy"}
-    )
-    assert code == 200 and counts["passages"] == 1
-    assert handle_api(service, "POST", "/api/search", {"query": ""})[0] == 400
-    assert handle_api(service, "POST", "/api/search", {"query": "solar", "mode": "x"})[0] == 400
-    assert handle_api(service, "POST", "/api/search", {"query": "solar", "mode": "dense"})[0] == 400
-    assert handle_api(service, "POST", "/api/answer", {"query": "solar"})[0] == 400  # no model
-    assert handle_api(service, "GET", "/api/nope", {})[0] == 404

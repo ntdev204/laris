@@ -35,6 +35,30 @@ class ProviderError(RuntimeError):
     """The model API failed or returned something outside the contract."""
 
 
+class AuthError(ProviderError):
+    """The server rejected the API key (HTTP 401 or 403)."""
+
+
+def _http_failure(exc: urllib.error.HTTPError) -> ProviderError:
+    if exc.code in (401, 403):
+        return AuthError(f"API key rejected by the server (HTTP {exc.code})")
+    return ProviderError(f"model API returned HTTP {exc.code}")
+
+
+def check_key(base_url: str, key: str, timeout_s: float = 5.0) -> str:
+    """Ask the server whether it accepts the key: `ok`, `rejected` or `unreachable`."""
+    request = urllib.request.Request(
+        base_url.rstrip("/") + "/models", headers={"Authorization": f"Bearer {key}"}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_s):
+            return "ok"
+    except urllib.error.HTTPError as exc:
+        return "rejected" if exc.code in (401, 403) else "unreachable"
+    except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError):
+        return "unreachable"
+
+
 class ChatProvider(ABC):
     name = "provider"
 
@@ -115,6 +139,8 @@ class HttpChatProvider(ChatProvider):
                     )
                 )
             return AssistantTurn(message.get("content"), calls)
+        except urllib.error.HTTPError as exc:
+            raise _http_failure(exc) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
             raise ProviderError(f"model API unreachable: {exc}") from exc
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
@@ -160,6 +186,8 @@ class HttpChatProvider(ChatProvider):
                         fn = frag.get("function") or {}
                         slot["name"] = fn.get("name") or slot["name"]
                         slot["arguments"] += fn.get("arguments") or ""
+        except urllib.error.HTTPError as exc:
+            raise _http_failure(exc) from exc
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
             raise ProviderError(f"model API unreachable: {exc}") from exc
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:

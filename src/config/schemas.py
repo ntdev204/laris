@@ -15,12 +15,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from config.runtime_schemas import (
     AgentConfig,
     AppConfig,
+    BrainConfig,
     ContextConfig,
     LearningConfig,
     ModelApiConfig,
     PromptConfig,
     SecurityConfig,
     ServingConfig,
+    VaultConfig,
 )
 from core.errors import HardwareBudgetExceededError
 
@@ -170,3 +172,5 @@ class LarisConfig(BaseModel):
     app: AppConfig = Field(default_factory=AppConfig)
     learning: LearningConfig = Field(default_factory=LearningConfig)
     prompts: PromptConfig = Field(default_factory=PromptConfig)
+    vault: VaultConfig = Field(default_factory=VaultConfig)
+    brain: BrainConfig = Field(default_factory=BrainConfig)

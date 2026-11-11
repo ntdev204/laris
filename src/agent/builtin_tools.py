@@ -21,6 +21,7 @@ from application.workspace import (
 from harness.runtime import HarnessRuntime
 from learning.skills import install_skill, lint_skill
 from skills.loader import SkillError, SkillLibrary
+from vault.brain import BrainError
 
 _PATH = {"type": "string", "description": "File or folder path (project-relative)"}
 _MEMORY_NAME = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
@@ -191,6 +192,100 @@ def build_registry(
             raise ToolExecutionError("exists", str(exc)) from exc
         return {"skill": name, "path": rel(path), "replaced": replaced}
 
+    def consult_brief(args: Dict[str, Any]) -> Any:
+        found = rt.brain.consult(
+            args["task"], args.get("workflow", ""), rt.config.brain.consult == "always"
+        )
+        if found is None:
+            return {"brief": "", "trace": [], "classification": "internal"}
+        return {"brief": found.brief, "trace": found.trace, "classification": "internal"}
+
+    def brain_call(fn: Any) -> Any:
+        def run(args: Dict[str, Any]) -> Any:
+            try:
+                return fn(args)
+            except BrainError as exc:
+                raise ToolExecutionError(exc.code, str(exc)) from exc
+
+        return run
+
+    def save_knowledge(args: Dict[str, Any]) -> Any:
+        from vault.hooks import project_vault
+        from vault.knowledge import KnowledgeWriter
+
+        if not (rt.config.vault.enabled and rt.config.brain.knowledge):
+            raise ToolExecutionError("disabled", "knowledge notes are turned off")
+        writer = KnowledgeWriter(project_vault(rt), rt.brain, rt.config.brain, rt.redactor.redact)
+        found = writer.add_taught(args["title"], args["content"], args.get("domain", ""))
+        if found.note.status == "skipped":
+            raise ToolExecutionError("refused", found.note.reason or "note was refused")
+        rt.brain.refresh_knowledge()
+        return {
+            "domain": found.domain,
+            "note": found.note.note.rsplit("/", 1)[-1][:-3],
+            "status": found.note.status,
+        }
+
+    brain = rt.brain
+    brain_tools = (
+        ToolSpec(
+            "save_knowledge",
+            "Add new knowledge the user taught to the brain under its domain (needs approval). "
+            "This is knowledge, not a skill: use save_skill only when asked for a skill.",
+            schema(
+                {
+                    "title": {"type": "string"},
+                    "content": {"type": "string"},
+                    "domain": {"type": "string", "description": "A domain hub name, optional"},
+                },
+                ["title", "content"],
+            ),
+            save_knowledge,
+            writes=True,
+        ),
+        ToolSpec(
+            "brain_open_root",
+            "Open the entry note of the internal guidance tree (domain hubs, relation types).",
+            schema({}),
+            brain_call(lambda a: brain.open_root()),
+        ),
+        ToolSpec(
+            "brain_route",
+            "Pick the domain hub for a task (by workflow name or keywords). Returns hub ids.",
+            schema({"task": {"type": "string"}, "workflow": {"type": "string"}}, ["task"]),
+            brain_call(
+                lambda a: {
+                    "hubs": brain.route(a["task"], a.get("workflow", "")),
+                    "classification": "internal",
+                }
+            ),
+        ),
+        ToolSpec(
+            "brain_open",
+            "Open one guidance note by id: summary, children and prerequisites; full text only "
+            "when full is true. Internal: never quote it.",
+            schema({"id": {"type": "string"}, "full": {"type": "boolean"}}, ["id"]),
+            brain_call(lambda a: brain.open(a["id"], bool(a.get("full")))),
+        ),
+        ToolSpec(
+            "brain_neighbors",
+            "List the typed relations (requires, uses, feeds, ...) of a guidance note.",
+            schema({"id": {"type": "string"}}, ["id"]),
+            brain_call(lambda a: brain.neighbours(a["id"])),
+        ),
+        ToolSpec(
+            "brain_search",
+            "Fallback when no hub fits: match words against guidance titles and summaries.",
+            schema({"query": {"type": "string"}}, ["query"]),
+            brain_call(lambda a: brain.search(a["query"])),
+        ),
+        ToolSpec(
+            "brain_consult",
+            "Brief for a task: matching domain hub, its playbook and next notes. Internal.",
+            schema({"task": {"type": "string"}, "workflow": {"type": "string"}}, ["task"]),
+            brain_call(consult_brief),
+        ),
+    )
     top_k = {"type": "integer", "minimum": 1, "maximum": agent.search_max_top_k}
     mode = {"type": "string", "enum": ["bm25", "dense", "hybrid"]}
     specs = (
@@ -298,6 +393,6 @@ def build_registry(
         ),
         ToolSpec("corpus_status", "Show corpus size and model availability.", schema({}), status),
     )
-    for spec in specs:
+    for spec in (*specs, *(brain_tools if rt.config.brain.enabled else ())):
         registry.register(spec)
     return registry

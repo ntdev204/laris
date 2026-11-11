@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Server authenticates keys (ADR-015):** `laris model serve` accepts only configured API keys (`LARIS_SERVER_KEYS`, comma separated, or `serving.allowed_file`), refuses to start without any (`serving.require_auth`), answers 401 otherwise and `/health` reveals nothing. The client checks its key at `laris login` (a rejected key is not saved) and at session start. The `serving` package is contract-tested to hold no user data: no tool/vault/application imports, no file writes, no logging. Principle: the user's disk is the database and the user's machine is the sandbox.
+
+### Removed
+- **Web interface:** `src/application/server.py`, `web_ui.py`, `laris app serve`, the `/guide` page and all HTTP chat routes are removed by owner decision; LARIS is terminal-only for now. `laris model serve` (the OpenAI-compatible model API) stays.
+
+### Changed
+- **API key per user:** `laris login|logout|whoami`; bare `laris` asks for the key (hidden input) when none is known (`LARIS_API_KEY`, else the 0600 file `~/.laris/credentials.json`, config `app.key_env`, `app.account_file`). The key is the model API bearer token and names a private space: conversations, settings, uploads, archive, audit and collected sessions live under `artifacts/chat/users/<one-way fingerprint>/`; another key sees none of it. `laris --resume` lists only the signed-in key's sessions. Keys typed into a message are masked before they reach the model, the conversation file or its title.
+- **User guide is for users; `laris` opens the chat:** `/how-to-use` no longer documents running servers or operator commands (a test enforces it). Bare `laris` opens the terminal chat; `laris --resume` lists saved sessions to choose from (Enter = newest, `n` = new) and `laris --resume <id|prefix>` reopens one.
+- **New knowledge goes to the brain by domain; skills only on request:** ingestion no longer creates `corpus-*` skills (`learning.skill_on_ingest` now defaults to false). Instead each ingested document adds a Knowledge note under `vault/Knowledge/<domain hub>/` (domain chosen by routing over the brain hubs, `General` otherwise) with key terms, claims, methods, datasets and metrics; the brain tools list these notes beside the matching hub while the protected core brain stays unchanged. New tool `save_knowledge` (approval required) adds taught knowledge; `save_skill` is reserved for skills the user asks for.
+
+### Added
+- **Project vault and system brain (Obsidian format):** `src/vault/` reads, indexes, lints and safely writes Obsidian-format vaults (properties, wikilinks, tags, managed blocks with user-edit conflict detection). The first piece of work in a codebase creates `vault/` and every ingest and verified chat turn adds linked Source, Concept, Question and Session notes. The system brain `.laris/brain/` is a protected hub tree (65 notes: root, ten domain hubs, topic hubs, leaves, playbooks for the six scholarly directions) read only through `brain_open_root|route|open|neighbors|search|consult`; a consult step adds a short hidden brief per task and shows only note titles. Brain text is covered by `integrity.lock`, denied to file tools and counted as confidential by the leak guard. New: `laris vault init|check|status`, `laris brain check|tree|route`, ADR-014, `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`, `docs/architecture/BRAIN_THREAT_MODEL.md`, a golden fixture vault. Prompt manifest 1.2.0, rule C-7, workflows 1.1.0.
+- **System ledger for the next phase:** `.claude/spec/spec.md`, `plan.md` and `task.md` define the Obsidian-compatible brain (system brain and project vault), six scholarly application directions, a harness-first plan and 39 tasks; `scripts/validate_spec.py` and a contract test keep the three files consistent. The core model stays paused.
+
 ## [1.3.1] - 2026-11-11
 
 ### Removed

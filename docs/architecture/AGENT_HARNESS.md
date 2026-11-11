@@ -22,7 +22,7 @@ change_summary: "Defines the shared harness: prompt modules, agent loop, guards,
 
 # LARIS Agent Harness, System Prompt and Confidentiality Architecture
 
-The harness is the single runtime that every front end (command line, web UI, model server) uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
+The harness is the single runtime that every front end (the terminal client; the model server only authenticates and infers, see ADR-015) uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
 
 ## 1. Design rules
 
@@ -101,7 +101,7 @@ Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `descriptio
 
 ## 8. Learning from use: RAG skills and fine-tune data
 
-**New knowledge becomes a complete skill.** Every ingestion path (`laris app ingest`, the `ingest_path` tool, web upload, `/api/ingest`) goes through `SearchService.ingest`, which calls the learning hook. The hook builds or refreshes `.laris/skills/corpus-<folder|document>/SKILL.md` from the protected template `.laris/prompts/templates/knowledge_skill.md`: when to use, coverage, key terms, search steps, output rules and limits. A generated skill carries only metadata (source names, counts, key terms), never passage text, and instruction-like titles are dropped, so a hostile document cannot write into the prompt. Generated files are marked `generated: true`; hand-written skills are never overwritten, and the count is capped (`learning.max_generated_skills`). `laris skills sync` rebuilds them for an existing corpus.
+**New knowledge joins the brain by domain; skills only on request.** Every ingestion path (`laris app ingest`, the `ingest_path` tool, chat uploads) goes through `SearchService.ingest`, whose hook writes a Source note and a Knowledge note under `vault/Knowledge/<domain hub>/` (domain by keyword routing over the brain hubs, `General` when none matches). The notes carry key terms, claims, methods, datasets and metrics extracted from the document, are marked `trust: untrusted`, and are listed beside the matching hub by the brain tools; the protected core brain is never modified. `save_knowledge` (approval required) adds knowledge the user teaches. Skills are no longer generated on ingestion (`learning.skill_on_ingest` defaults to false; `laris skills sync` still builds optional `corpus-*` skills).
 
 **New skills from the user.** The `skill-authoring` skill guides the model to gather the missing facts and draft a skill; the `save_skill` tool (approval required) installs it only after the same lint used by `laris skills lint|add`: front matter, "Use when" description, required sections (`learning.skill_required_sections`), size, no instruction-override wording, no credentials and no references to policy or secret files.
 
@@ -110,3 +110,18 @@ Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `descriptio
 ## 9. Change control
 
 `LARIS.md` and the protected parts of `.laris/` (`prompts/`, `rules/`, `workflows/`) are versioned in Git. A change needs owner approval, a manifest `version` bump, `laris harness lock` and a passing run of `tests/unit/harness`. Prompt behaviour is tested, not trusted: tests cover precedence, strict placeholders, shingle and canary leaks, stream splitting, redaction, deny globs, egress, verifier retry, audit content and the absence of hardcoded endpoints.
+
+## Project vault and system brain
+
+Two Obsidian-format vaults support the harness (see ADR-014 and `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`).
+
+- **Project vault** (`vault/`, configuration `vault.*`): created on first work, then extended after every
+  ingest and verified chat turn with linked Source, Concept, Question and Session notes. LARIS writes only
+  inside managed blocks and never overwrites a person's edit (conflict is reported). Notes made from
+  documents carry `trust: untrusted` and pass the injection scan.
+- **System brain** (`.laris/brain/`, configuration `brain.*`, `prompts.brain_dir`): a hub tree (root, domain hub, topic
+  hub, leaf) that is never read whole. The loop's consult step routes the task to a domain hub by workflow
+  name or keywords and adds a short hidden brief; the model can navigate further with `brain_open`,
+  `brain_neighbors`, `brain_route`, `brain_search`. Output is marked internal, redacted, and budgeted per turn.
+  The brain is in `integrity.lock`, denied to file tools, counted as confidential by the leak guard, and has
+  no write path at runtime. Threats and tests: `docs/architecture/BRAIN_THREAT_MODEL.md`.
