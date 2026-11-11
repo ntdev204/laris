@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **S2ORC acquisition (stages 01 and 02):** `laris-server data acquire --only S2ORC-GENERAL-LM|S2ORC-STEM` streams `s2orc` shards from the Semantic Scholar Datasets API (key from `S2ORC_API_KEY` only), filters on the fly (STEM identifier, open per-paper license, full text; both release schemas), and stores parquet with a hard byte budget per stage (`--s2orc-budget-gb`, default 10) and per-run shard limit (`--s2orc-max-shards`). No raw shard is stored; stages use disjoint shards; interrupted runs resume. STEM is approximated by external id, not field of study. No training is run.
+
 ## [1.5.0] - 2026-11-11
 
 ### Security
