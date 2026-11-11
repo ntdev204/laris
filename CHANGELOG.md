@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-11
+
 ### Added
 - **Foundation tokenizer remediation F06-R1:** 48k SentencePiece BPE without digit splitting passes fertility (EN 1.286, VI 1.193 against a 1.35 limit), a shared scientific-text normalization (`--normalize-input`) applied at training and inference, `--vocab-size` and `--no-split-digits` options, and a first from-scratch 10,000-step round (best validation mean loss 0.3827). Dense retrieval is still untrained (SciFact dev MRR 0.007 against BM25 0.636) because the contrastive stage has not run; the model is NOT QUALIFIED.
 - **Retrieval benchmark and human-gold workflow:** frozen SHA-256 retrieval benchmark (BM25, dense, hybrid RRF) with SciFact expert relevance and a Vietnamese cross-lingual diagnostic, pooling, blind sheets, weighted kappa and adjudication for human relevance gold (no agent-created labels), plus the D05 protocol and owner prerequisites documents.
