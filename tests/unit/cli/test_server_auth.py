@@ -133,7 +133,9 @@ def test_tls_server_is_verified_by_the_client(tmp_path, monkeypatch):
     try:
         monkeypatch.delenv("SSL_CERT_FILE", raising=False)
         assert check_key(url, GOOD, 3) == "unreachable"  # unknown CA: never trusted silently
-        monkeypatch.setenv("SSL_CERT_FILE", str(cert))  # the operator's CA, given to the client
+        from harness import trust
+
+        trust.install(str(cert))  # the pinned certificate, as `laris login` records it
         assert check_key(url, GOOD, 3) == "ok"
         assert check_key(url, "wrong-key-123456", 3) == "rejected"
         assert check_key(url.replace("https", "http"), GOOD, 2) == "unreachable"
