@@ -43,7 +43,7 @@ def create_self_signed(
     tls_dir: str, hosts: List[str], days: int = 365, force: bool = False
 ) -> Tuple[Path, Path]:
     """Write a self-signed certificate (ECDSA P-256) and a 0600 private key under `tls_dir`.
-    Clients must trust the certificate (`SSL_CERT_FILE=cert.pem`) or you use a real CA instead."""
+    Clients pin it on first login (`laris login --server`, trust on first use), or use a real CA."""
     cert_path, key_path = default_paths(tls_dir)
     if (cert_path.exists() or key_path.exists()) and not force:
         raise FileExistsError(f"{cert_path.parent} already holds a certificate (use --force)")
