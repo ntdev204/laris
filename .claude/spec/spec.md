@@ -166,6 +166,26 @@ happen only by owner-approved release. A review command shows, accepts or reject
 Acceptance: no code path writes to the system brain at runtime; proposals carry provenance and are
 excluded from retrieval until accepted.
 
+### SR-B6 — Progressive disclosure (hub-to-leaf navigation)
+The brain is never loaded or scanned whole. Reasoning enters at one small root note (`Brain Index`, at most
+`brain.root_budget_tokens`), follows typed links parent to child (root, domain hub, topic hub, leaf) and
+opens only the notes the current task needs. Structure is designed, not discovered by search:
+- Fixed levels: L0 root, L1 domain hubs (one per direction plus tools, policy, evaluation), L2 topic hubs,
+  L3 leaf notes. Each hub lists its children with a one-line purpose and a `when` trigger, so choosing a
+  child needs no search.
+- Every note has `type`, `domain`, `level`, `parent`, `children`, `related` (typed relation from the
+  relation vocabulary), `summary` (at most 2 sentences) and `requires` (prerequisite notes). A leaf is
+  reachable from the root by at most `brain.max_depth` hops; every note has exactly one primary parent.
+- Navigation tools return summaries and ids first; full text is opened only by id, per-turn and
+  per-note budgets apply, and already-opened ids are not repeated in a turn.
+- Entry routing is deterministic: task type or workflow name maps to a domain hub through the routing
+  table kept in the root note; free-text search is a fallback, not the default path.
+- Lint enforces the structure: no orphan, no note beyond max depth, no hub with more than
+  `brain.max_children` children, no child without a parent link, summaries present, links resolve.
+Acceptance: on the fixture, a representative task for each direction reaches its playbook in at most
+`brain.max_depth` navigation steps without search; tokens consumed per consult stay under the configured
+budget and are reported; structural lint fails on a seeded orphan, over-wide hub and missing summary.
+
 ### SR-A1 — Literature mining
 Extract bibliographic metadata (title, authors, year, DOI, arXiv id), find duplicates and near-duplicates,
 report term frequencies and trends over time, group similar documents, and expose a corpus overview tool
@@ -264,6 +284,22 @@ vault/
   _templates/                 note templates
   .obsidian/                  minimal configuration (graph colour groups, wikilinks on)
 ```
+
+## 7b. Layout of the system brain (informative, hub tree)
+
+```text
+Brain Index (L0)            routing table: task type / workflow -> domain hub; <= root budget
+  Literature Mining (L1) -> Topic hubs (L2) -> leaf notes (L3: playbook, rubric, relation, glossary term)
+  Research QA (L1)
+  Citation Analysis (L1)
+  Scientific RAG (L1)
+  Knowledge Graph (L1)
+  Scientific NLP (L1)
+  Tools and Workflows (L1)  Policy Boundaries (L1)  Evaluation (L1)
+```
+
+Reasoning enters at L0, follows `children` to the one L1 hub that matches, then to the needed leaf; `requires`
+and typed `related` links add prerequisites and neighbours. Nothing else is read (SR-B6).
 
 ## 8. Threat model summary (details in T03)
 

@@ -107,7 +107,7 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: pending
 
 ### T09 — Vault graph analytics
-- Requirements: SR-V2, SR-A5
+- Requirements: SR-V2, SR-A5, SR-B6
 - Depends: T06
 - Deliverables:
   - `src/vault/graph.py`: degree, PageRank, components, shortest path, local graph to depth N, neighbours by relation
@@ -117,10 +117,11 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: pending
 
 ### T10 — Vault lint command
-- Requirements: SR-V2, SR-H1, SR-H3
+- Requirements: SR-V2, SR-H1, SR-H3, SR-B6
 - Depends: T07, T08
 - Deliverables:
   - `laris vault check`: broken links, orphans, duplicate aliases, schema failures, forbidden characters, secrets, oversize notes; exit codes
+  - Structural lint for hierarchy: levels, single parent, max depth, max children per hub, summaries, no orphans (config `brain.*`)
 - Validation:
   - Fixture with seeded defects is detected exactly
   - Clean fixture passes
@@ -217,10 +218,11 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: pending
 
 ### T19 — Brain tools
-- Requirements: SR-B1, SR-B3
+- Requirements: SR-B1, SR-B3, SR-B6
 - Depends: T18
 - Deliverables:
   - Tools `brain_search`, `brain_read`, `brain_neighbors`: excerpts marked `internal`, size budgets, redaction, ids in audit only
+  - `brain_open_root`, `brain_open(id)` returns summary plus child ids; full text only on request; per-turn budget and no repeat of opened ids
 - Validation:
   - Tools respect budgets
   - No path or absolute location in results
@@ -238,10 +240,11 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: pending
 
 ### T21 — Brain content v1: ontology, vocabulary, concept maps
-- Requirements: SR-B2
+- Requirements: SR-B2, SR-B6
 - Depends: T18, T08
 - Deliverables:
   - Owner-reviewed notes: ontology, relation vocabulary, glossary, concept maps for the six directions, tool/skill/workflow map, rubrics
+  - Brain authored as a hub tree: root with routing table, domain hubs, topic hubs, leaves; every note carries parent, children, summary, requires, typed related
 - Validation:
   - `laris vault check` passes on the brain
   - No-secrets scan passes
@@ -250,7 +253,7 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Note: Content needs owner review and approval; a draft can be prepared by the agent.
 
 ### T22 — Reasoning playbooks and workflow links
-- Requirements: SR-B2, SR-B4
+- Requirements: SR-B2, SR-B4, SR-B6
 - Depends: T21, T19
 - Deliverables:
   - One playbook per direction (decide, verify, stop); workflows reference playbooks; `.laris/workflows` updated under the lock
@@ -272,20 +275,22 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 ## Phase 4 — Brain-assisted reasoning
 
 ### T24 — Graph-aware retrieval
-- Requirements: SR-A4, SR-B4
+- Requirements: SR-A4, SR-B4, SR-B6
 - Depends: T09, T19, T12
 - Deliverables:
   - BM25 over notes, link-neighbourhood expansion, deterministic fusion with corpus search, provenance in results
+  - Navigation-first retrieval: route by task type through hubs, expand along typed links; search only as fallback; token use reported
 - Validation:
   - Deterministic ordering
   - Recall@k, MRR and nDCG computed on the fixture against BM25 alone
 - Status: pending
 
 ### T25 — Loop integration of the consult step
-- Requirements: SR-B4
+- Requirements: SR-B4, SR-B6
 - Depends: T24, T20
 - Deliverables:
   - Prompt module and loop step that consults the brain before answering; config toggle; audit records note ids; short visible trace of titles
+  - Consult step navigates root to leaf within budget and records the path of ids
 - Validation:
   - Trace never contains internal text
   - Disabled toggle restores previous behaviour
