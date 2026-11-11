@@ -14,7 +14,7 @@ def project(tmp_path):
     root = tmp_path / "project"
     (root / "configs").mkdir(parents=True)
     shutil.copy(REPO / "configs" / "default.yaml", root / "configs" / "default.yaml")
-    for part in ("prompts", "rules", "workflows", "help", "brain"):
+    for part in ("prompts", "rules", "workflows", "help", "brain", "vault"):
         shutil.copytree(REPO / ".laris" / part, root / ".laris" / part)
     shutil.copy(REPO / ".laris" / "integrity.lock", root / ".laris" / "integrity.lock")
     shutil.copy(REPO / "LARIS.md", root / "LARIS.md")

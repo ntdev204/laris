@@ -242,11 +242,16 @@ def load_runtime_config(
     """Resolve the runtime configuration for a project.
 
     Order (later wins): schema defaults, `configs/default.yaml`, `~/.laris/config.yaml`,
-    `<project>/.laris/config.yaml`, the user's saved preferences, `LARIS_*` environment (after
+    `<project>/.laris/config.yaml`, the user's saved preferences (`~/.laris/settings.json`, where
+    `base_url` names the server), `LARIS_*` environment (after
     loading `<project>/.env`), then explicit overrides.
     """
     root = Path(project_root or Path.cwd())
     load_dotenv(root / ".env")
+    if user_layer is None:  # the global settings.json (server address, model) applies everywhere
+        from harness.prefs import UserPrefs
+
+        user_layer = UserPrefs(Path.home() / ".laris" / "settings.json").layer() or None
     default = root / "configs" / "default.yaml"
     return load_config(
         default if default.is_file() else None,

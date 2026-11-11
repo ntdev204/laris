@@ -1,0 +1,125 @@
+[
+ {
+  "id": "cite-parsing",
+  "text": "We propose a novel framework for citation parsing. We trained a BiLSTM with AdamW on the PubMed corpus. Our results indicate that the model achieves an accuracy of 0.91 and an F1 of 87.5%. We assume that references are well formed. A limitation of this study is that only English papers were used. The Transformer outperforms the baseline on SQuAD (p < 0.01). Future work is needed to cover scanned documents.",
+  "gold": [
+   {
+    "type": "claim",
+    "quote": "We propose a novel framework for citation parsing."
+   },
+   {
+    "type": "claim",
+    "quote": "Our results indicate that the model achieves an accuracy of 0.91 and an F1 of 87.5%. "
+   },
+   {
+    "type": "method",
+    "quote": "BiLSTM"
+   },
+   {
+    "type": "method",
+    "quote": "AdamW"
+   },
+   {
+    "type": "method",
+    "quote": "Transformer"
+   },
+   {
+    "type": "dataset",
+    "quote": "PubMed"
+   },
+   {
+    "type": "dataset",
+    "quote": "SQuAD"
+   },
+   {
+    "type": "metric",
+    "quote": "accuracy of 0.91"
+   },
+   {
+    "type": "metric",
+    "quote": "F1 of 87.5%"
+   },
+   {
+    "type": "result",
+    "quote": "Our results indicate that the model achieves an accuracy of 0.91 and an F1 of 87.5%. "
+   },
+   {
+    "type": "result",
+    "quote": "The Transformer outperforms the baseline on SQuAD (p < 0.01). "
+   },
+   {
+    "type": "assumption",
+    "quote": "We assume that references are well formed. "
+   },
+   {
+    "type": "limitation",
+    "quote": "A limitation of this study is that only English papers were used. "
+   },
+   {
+    "type": "limitation",
+    "quote": "Future work is needed to cover scanned documents."
+   }
+  ]
+ },
+ {
+  "id": "misses-by-design",
+  "text": "The authors present a new method for protein folding. They evaluated it on the CASP14 benchmark and report strong gains. Training used a cosine schedule. The approach cannot handle membrane proteins.",
+  "gold": [
+   {
+    "type": "claim",
+    "quote": "The authors present a new method for protein folding. "
+   },
+   {
+    "type": "dataset",
+    "quote": "CASP14"
+   },
+   {
+    "type": "limitation",
+    "quote": "The approach cannot handle membrane proteins."
+   }
+  ]
+ },
+ {
+  "id": "no-entities",
+  "text": "Weekly meeting notes. We discussed travel plans and the budget for next year. Lunch was served at noon.",
+  "gold": []
+ },
+ {
+  "id": "mixed",
+  "text": "We show that contrastive learning improves retrieval on MS-COCO. The recall reached 0.82 under the proposed setting. Our approach is limited to short captions. We observe that LoRA fine-tuning is stable with SGD.",
+  "gold": [
+   {
+    "type": "claim",
+    "quote": "We show that contrastive learning improves retrieval on MS-COCO. "
+   },
+   {
+    "type": "claim",
+    "quote": "We observe that LoRA fine-tuning is stable with SGD."
+   },
+   {
+    "type": "method",
+    "quote": "contrastive learning"
+   },
+   {
+    "type": "method",
+    "quote": "LoRA"
+   },
+   {
+    "type": "method",
+    "quote": "SGD"
+   },
+   {
+    "type": "dataset",
+    "quote": "MS-COCO"
+   },
+   {
+    "type": "metric",
+    "quote": "recall reached 0.82"
+   },
+   {
+    "type": "limitation",
+    "quote": "Our approach is limited to short captions. "
+   }
+  ]
+ }
+]

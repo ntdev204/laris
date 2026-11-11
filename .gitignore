@@ -82,3 +82,4 @@ LARIS.local.md
 # Generated from local documents (user data)
 .laris/skills/corpus-*/
 .laris/memory/
+packaging/npm/vendor/

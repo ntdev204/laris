@@ -98,7 +98,7 @@ def test_login_commands_and_bare_laris_routes(project, tmp_path, monkeypatch, ca
     assert main(["whoami"]) == 0
     out = capsys.readouterr().out
     assert credentials.fingerprint(KEY_A) in out and KEY_A not in out
-    assert main(["logout"]) == 0 and not cred.exists()
+    assert main(["logout"]) == 0 and "api_key" not in json.loads(cred.read_text())
 
 
 def test_chat_without_a_key_stops_with_a_clear_message(project, monkeypatch, capsys, tmp_path):

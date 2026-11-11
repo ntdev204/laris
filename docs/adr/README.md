@@ -46,6 +46,9 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 | [ADR-013](ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI | ACCEPTED | 2026-10-29 | System-Wide |
 | [ADR-014](ADR-014-obsidian-compatible-brain.md) | Obsidian-Compatible Project Vault and Protected System Brain | ACCEPTED | 2026-11-11 | System-Wide |
 | [ADR-015](ADR-015-local-data-plane-and-authenticated-server.md) | Local Data Plane (User Disk = Database, User Machine = Sandbox) and Authenticated Server | ACCEPTED | 2026-11-11 | System-Wide |
+| [ADR-016](ADR-016-policy-server-and-thin-client.md) | Policy Server and Thin Client (system .laris stays on the server) | ACCEPTED | 2026-11-11 | System-Wide |
+| [ADR-017](ADR-017-layers-and-capability-ladder.md) | Runtime Layers and Capability Ladder (Agentic required) | ACCEPTED | 2026-11-11 | System-Wide |
+| [ADR-018](ADR-018-server-database-keys-and-reasoning.md) | Server Database, Managed API Keys and Private Reasoning | ACCEPTED | 2026-11-11 | System-Wide |
 
 ## Freeze Register
 

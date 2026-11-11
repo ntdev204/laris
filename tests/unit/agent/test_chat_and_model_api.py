@@ -54,7 +54,7 @@ def test_multi_turn_conversation_is_saved_and_titled(chat):
     assert [e["type"] for e in events][-1] == "done"
     list(chat.send(conversation["id"], "and what about silicon?"))
     saved = chat.conversations.get(conversation["id"])
-    users = [m for m in saved["messages"] if m["role"] == "user"]
+    users = [m for m in saved["messages"] if m["role"] == "user" and not m.get("harness")]
     assert len(users) == 2 and saved["title"].startswith("perovskite")
     assert saved["messages"][0]["role"] == "user"  # the system prompt is never persisted
 

@@ -34,6 +34,7 @@ class ComposedPrompt:
     sections: List[str]
     canary: str
     confidential_sources: List[str] = field(default_factory=list)
+    remote: Optional[Dict[str, Any]] = None  # client side: what the policy server composes from
 
 
 def expand(path: Path) -> Path:
@@ -43,6 +44,7 @@ def expand(path: Path) -> Path:
 class PromptComposer:
     def __init__(self, config: LarisConfig, project_root: Path) -> None:
         self.cfg = config.prompts
+        self.vault_cfg = config.vault
         self.canary_enabled = config.security.canary_enabled
         self.root = Path(project_root)
         folder = Path(self.cfg.dir)
@@ -99,17 +101,24 @@ class PromptComposer:
         return out
 
     def _memory(self) -> str:
-        folder = self.root / self.cfg.memory_dir
-        if not folder.is_dir():
-            return ""
-        parts = []
-        index = folder / "MEMORY.md"
-        if index.is_file():
-            parts.append(index.read_text(encoding="utf-8").strip()[: self.cfg.max_memory_chars])
-        names = sorted(p.name for p in folder.glob("*.md") if p.name != "MEMORY.md")
-        if names:
-            parts.append("Files: " + ", ".join(names))
-        return "\n".join(parts)
+        from vault.memory import read_memory
+        from vault.project import ProjectVault
+
+        legacy = self.root / self.cfg.memory_dir
+        if not self.vault_cfg.enabled:
+            if not legacy.is_dir():
+                return ""
+            parts = []
+            index = legacy / "MEMORY.md"
+            if index.is_file():
+                parts.append(index.read_text(encoding="utf-8").strip())
+            names = sorted(p.name for p in legacy.glob("*.md") if p.name != "MEMORY.md")
+            if names:
+                parts.append("Files: " + ", ".join(names))
+            return "\n".join(parts)[: self.cfg.max_memory_chars]
+        return read_memory(
+            ProjectVault(self.root, self.vault_cfg), legacy, self.cfg.max_memory_chars
+        )
 
     # -- composition -----------------------------------------------------------------------
     def compose(
@@ -120,9 +129,19 @@ class PromptComposer:
         today: Optional[datetime.date] = None,
         extra_variables: Optional[Dict[str, Any]] = None,
         workflow_text: str = "",
+        extra_policy: Optional[List[Tuple[str, str]]] = None,
+        canary_token: str = "",
     ) -> ComposedPrompt:
-        canary = f"LARIS-CANARY-{secrets.token_hex(8)}" if self.canary_enabled else "disabled"
+        """`extra_policy` are the caller's own instruction files (policy server: the client's);
+        they come before the protected rules so a rule is always the later, stronger text."""
+        canary = canary_token or f"LARIS-CANARY-{secrets.token_hex(8)}"
+        canary = canary if self.canary_enabled else "disabled"
+        own = list(extra_policy or [])
         policy = self.load_policy()
+        if own:
+            budget = self.cfg.max_instruction_chars
+            own = [(label, text[:budget]) for label, text in own]
+            policy = own + policy
         variables: Dict[str, str] = {
             "assistant_name": self.cfg.assistant_name,
             "reply_language": self.cfg.reply_language,
@@ -146,7 +165,7 @@ class PromptComposer:
                 sections.append(
                     f'<{name} classification="internal" disclose="never">\n{body}\n</{name}>'
                 )
-                confidential += [text for _, text in policy]
+                confidential += [text for _, text in policy[len(own) :]]
             else:
                 needs = _PLACEHOLDER.findall(self.modules[name])
                 if name in ("skills", "memory", "workflow", "user_preferences") and not all(

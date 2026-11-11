@@ -5,14 +5,24 @@ Link resolution follows Obsidian's shortest-path rule: a bare name matches a not
 reported, never guessed.
 """
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from vault.notes import Link, Note, link_name, parse_note
+from vault.notes import Link, Note, link_name, note_from_dict, note_to_dict, parse_note
 
-IGNORED_DIRS = {".obsidian", ".git", ".trash", "__pycache__"}
+IGNORED_DIRS = {".obsidian", ".git", ".trash", "__pycache__", ".laris", "_templates"}
+CACHE_VERSION = 1
 Fingerprint = Tuple[int, int]  # (mtime_ns, size)
+
+
+def _inside(path: Path, base: Path) -> bool:
+    try:
+        path.resolve().relative_to(base.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 @dataclass
@@ -30,14 +40,25 @@ class VaultIndex:
 
     # -- build -----------------------------------------------------------------------------
     @classmethod
-    def build(cls, root: Path, previous: Optional["VaultIndex"] = None) -> "VaultIndex":
-        """Scan the folder; notes whose size and mtime are unchanged are reused from `previous`."""
+    def build(
+        cls,
+        root: Path,
+        previous: Optional["VaultIndex"] = None,
+        cache_file: Optional[Path] = None,
+    ) -> "VaultIndex":
+        """Scan the folder; notes whose size and mtime are unchanged are reused from `previous`
+        (or from the disposable `cache_file`, which is rewritten afterwards; deleting it loses
+        nothing)."""
+        if previous is None and cache_file is not None:
+            previous = cls.load_cache(Path(root), Path(cache_file))
         index = cls(root=Path(root))
         base = index.root
         for path in sorted(base.rglob("*.md")):
             rel = path.relative_to(base)
             if any(part in IGNORED_DIRS for part in rel.parts) or not path.is_file():
                 continue
+            if path.is_symlink() and not _inside(path, base):
+                continue  # a link to a file outside the vault is never read
             stat = path.stat()
             key = rel.as_posix()
             fingerprint = (stat.st_mtime_ns, stat.st_size)
@@ -49,7 +70,44 @@ class VaultIndex:
             index.notes[key] = note
             index._fingerprints[key] = fingerprint
         index._link()
+        if cache_file is not None:
+            index.save_cache(Path(cache_file))
         return index
+
+    # -- disposable cache --------------------------------------------------------------------
+    def dumps(self) -> str:
+        """Deterministic serialisation: same notes, same bytes."""
+        payload = {
+            "version": CACHE_VERSION,
+            "notes": {
+                p: {"fp": list(self._fingerprints.get(p, (0, 0))), "note": note_to_dict(n)}
+                for p, n in sorted(self.notes.items())
+            },
+        }
+        return json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+    def save_cache(self, path: Path) -> None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(path.suffix + ".tmp")
+            tmp.write_text(self.dumps(), encoding="utf-8")
+            tmp.replace(path)
+        except OSError:  # a cache that cannot be written is not an error
+            pass
+
+    @classmethod
+    def load_cache(cls, root: Path, path: Path) -> Optional["VaultIndex"]:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if data.get("version") != CACHE_VERSION:
+                return None
+            index = cls(root=root)
+            for key, row in data["notes"].items():
+                index.notes[key] = note_from_dict(row["note"])
+                index._fingerprints[key] = (int(row["fp"][0]), int(row["fp"][1]))
+            return index
+        except (OSError, ValueError, KeyError, TypeError, IndexError):
+            return None  # corrupt or missing: rebuild from the notes
 
     def _link(self) -> None:
         for path, note in self.notes.items():

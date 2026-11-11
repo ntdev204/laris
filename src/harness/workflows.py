@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set
 
 import yaml
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]{1,62}$")
 
@@ -26,7 +26,14 @@ class Phase(BaseModel):
     exit: str = Field(default="")
 
 
+def _probe() -> None:
+    """Its type is the function type of this module: plain Python, or compiled in the client."""
+
+
 class WorkflowSpec(BaseModel):
+    # methods of a compiled module are not `FunctionType`; tell pydantic they are not fields
+    model_config = ConfigDict(ignored_types=(type(_probe),))
+
     name: str
     description: str = Field(min_length=10)
     version: str = Field(default="1.0.0")

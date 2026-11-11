@@ -40,6 +40,12 @@ dev = [
     "mypy>=1.6.0",
     "types-PyYAML>=6.0.12",
 ]
+server = [
+    "cryptography>=42,<51",  # AES-GCM for API keys stored by the model server (not in the client)
+]
+build = [
+    "cython>=3.0,<4",  # build time only: compiles the client wheel so it ships no readable source
+]
 gpu = [
     "torch>=2.6.0",
 ]
@@ -59,6 +65,9 @@ laris-server = "cli.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+harness = ["public_strings.yaml"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

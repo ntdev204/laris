@@ -124,4 +124,4 @@ Two Obsidian-format vaults support the harness (see ADR-014 and `docs/specificat
   name or keywords and adds a short hidden brief; the model can navigate further with `brain_open`,
   `brain_neighbors`, `brain_route`, `brain_search`. Output is marked internal, redacted, and budgeted per turn.
   The brain is in `integrity.lock`, denied to file tools, counted as confidential by the leak guard, and has
-  no write path at runtime. Threats and tests: `docs/architecture/BRAIN_THREAT_MODEL.md`.
+  no write path at runtime. Threats and tests: `docs/architecture/BRAIN_THREAT_MODEL.md`. How the vault, the brain and the analytics fit together: `docs/architecture/BRAIN_AND_VAULT.md`.

@@ -63,13 +63,6 @@ def test_health_reveals_nothing_and_models_need_a_key(server):
         assert json.loads(r.read()) == {"status": "ok"}
 
 
-def test_serve_refuses_to_start_without_keys(project, monkeypatch, capsys):
-    monkeypatch.chdir(project)
-    monkeypatch.delenv("LARIS_SERVER_KEYS", raising=False)
-    assert main(["model", "serve", "--port", "0"]) == 2
-    assert "no API keys" in capsys.readouterr().out
-
-
 def test_chat_stops_when_the_server_rejects_the_key(server, project, monkeypatch, capsys):
     monkeypatch.chdir(project)
     monkeypatch.setenv("LARIS_API_KEY", "wrong-key-123456")
@@ -116,3 +109,49 @@ def test_model_server_writes_no_files_and_logs_nothing():
     text = "".join(p.read_text(encoding="utf-8") for p in (SRC / "serving").glob("*.py"))
     for needle in ("write_text", "write_bytes", "open(", "logging", "print("):
         assert needle not in text, needle
+
+
+# -- TLS ---------------------------------------------------------------------------------------
+def _self_signed(folder):
+    import shutil
+    import subprocess
+
+    if not shutil.which("openssl"):
+        pytest.skip("openssl not available")
+    cert, identity = folder / "cert.pem", folder / "identity.pem"
+    subprocess.run(
+        ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "2",
+         "-subj", "/CN=localhost", "-addext", "subjectAltName=IP:127.0.0.1,DNS:localhost",
+         "-keyout", str(identity), "-out", str(cert)],
+        check=True, capture_output=True,
+    )  # fmt: skip
+    return cert, identity
+
+
+def test_tls_server_is_verified_by_the_client(tmp_path, monkeypatch):
+    from serving.model_server import enable_tls
+
+    cert, identity = _self_signed(tmp_path)
+    rt = HarnessRuntime()
+    service = ModelService(OfflinePlanner(rt.strings), "m", keys=KeyRing([GOOD]))
+    srv = build_server(service, "127.0.0.1", 0, rt.config.serving.max_body_bytes)
+    enable_tls(srv, str(cert), str(identity))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    url = f"https://127.0.0.1:{srv.server_port}/v1"
+    try:
+        monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+        assert check_key(url, GOOD, 3) == "unreachable"  # unknown CA: never trusted silently
+        monkeypatch.setenv("SSL_CERT_FILE", str(cert))  # the operator's CA, given to the client
+        assert check_key(url, GOOD, 3) == "ok"
+        assert check_key(url, "wrong-key-123456", 3) == "rejected"
+        assert check_key(url.replace("https", "http"), GOOD, 2) == "unreachable"
+    finally:
+        srv.shutdown()
+
+
+def test_serve_refuses_plain_http_off_loopback_and_half_a_tls_pair(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("LARIS_SERVER_KEYS", GOOD)
+    assert main(["model", "serve", "--host", "0.0.0.0", "--port", "0"]) == 2
+    assert "plain HTTP" in capsys.readouterr().out
+    assert main(["model", "serve", "--tls-cert", str(tmp_path / "c.pem")]) == 2
+    assert "both a certificate" in capsys.readouterr().out

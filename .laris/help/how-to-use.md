@@ -100,6 +100,9 @@ nguồn và các mục phải có trong câu trả lời.
 | `document-intake` | Nạp tài liệu mới sau khi bạn đồng ý, rồi báo cáo kết quả |
 | `evidence-review` | Rút claim, phương pháp, hạn chế và so sánh giữa các nguồn |
 | `research-brief` | Viết bản tóm tắt nghiên cứu và lưu ra file sau khi bạn đồng ý |
+| `literature-map` | Bản đồ kho tài liệu: số lượng, năm, thuật ngữ nổi bật, tài liệu trùng lặp, nhóm chủ đề (mỗi con số ghi rõ phạm vi) |
+| `citation-analysis` | Ai trích dẫn ai trong kho, đồng trích dẫn, tài liệu có ảnh hưởng, và danh sách tham khảo chưa khớp được |
+| `kg-explore` | Khám phá đồ thị tri thức (khái niệm, phương pháp, khẳng định, bài báo) kèm nguồn gốc từng liên kết; xuất JSON, GraphML hoặc canvas của Obsidian |
 
 Chạy: `/workflow grounded-qa <câu hỏi>`.
 Chỉ bạn mới khởi chạy được quy trình; mô hình không tự chọn hay mở rộng nó.
@@ -122,6 +125,14 @@ Chỉ bạn mới khởi chạy được quy trình; mô hình không tự chọ
 - API mô hình ngoài máy bị chặn trừ khi bật `model_api.allow_remote`. Khóa API chỉ khai báo bằng
   **tên biến môi trường**, không ghi vào file.
 - Chính sách có khóa toàn vẹn; chỉ quản trị viên được thay đổi.
+- **Suy luận của mô hình không hiển thị cho bạn và được lưu trên máy chủ.** Khi dùng máy chủ LARIS,
+  phần suy luận nội bộ của mô hình không bao giờ được gửi về máy bạn. Máy chủ lưu phần này (đã che
+  bí mật) kèm yêu cầu của bạn trong cơ sở dữ liệu của máy chủ, chỉ quản trị viên xem được, và tự xóa
+  sau thời hạn lưu giữ. Đừng nhập thông tin bạn không muốn quản trị viên máy chủ thấy.
+- Kết nối tới máy chủ dùng TLS (HTTPS) và máy khách kiểm tra chứng chỉ; với chứng chỉ riêng (tự ký),
+  `laris login --server URL` hiện dấu vân tay SHA-256 của chứng chỉ: so với dấu vân tay quản trị viên công
+  bố rồi xác nhận (hoặc thêm `--trust-fingerprint SHA256:...`); chứng chỉ được ghi nhớ riêng cho máy chủ đó. Khóa API của bạn được máy chủ lưu dưới dạng
+  mã hóa và tính theo hạn mức token của chính khóa đó.
 
 ## 9. Cài đặt
 
@@ -157,6 +168,30 @@ Mở thư mục `vault/` bằng Obsidian (không bắt buộc) để xem đồ t
 thống chỉ ghi trong khối `laris:begin ... laris:end`; nếu bạn sửa trong khối đó, hệ thống giữ nguyên phần
 bạn sửa và báo xung đột thay vì ghi đè.
 
+Thêm vào đó, mỗi tài liệu nạp vào còn sinh ghi chú cho từng **phương pháp, tập dữ liệu, chỉ số, khẳng định
+và hạn chế** (trong `Concepts/` và `Claims/`), mỗi ghi chú ghi vị trí ký tự của câu gốc trong tài liệu; cùng
+một thực thể xuất hiện ở nhiều tài liệu chỉ có một ghi chú. **Bộ nhớ** (`save_memory`) cũng nằm trong
+`vault/Memory/`; bộ nhớ cũ ở `.laris/memory` được chép sang bằng `laris vault migrate-memory` (hoàn tác
+được bằng `--undo`).
+
+Lệnh làm việc với vault:
+
+```text
+laris vault init | status | check      tạo, đếm, kiểm tra (liên kết, schema, bí mật, ghi chú quá lớn)
+laris vault search "từ khóa"           tìm trong các ghi chú
+laris vault show "Tên ghi chú"         xem một ghi chú và các liên kết
+laris vault graph [--note N --depth D --format json]   thống kê hoặc xuất đồ thị liên kết
+laris vault sync [--accept]            liệt kê (hoặc chấp nhận) chỗ bạn đã sửa tay trong khối của hệ thống
+laris vault repair [--restore "Ghi chú"]   sửa hư hỏng hoặc khôi phục từ bản sao lưu
+laris vault migrate-memory [--undo]    chép bộ nhớ cũ vào vault (hoàn tác được)
+laris vault propose|review|accept|reject   đề xuất học được chờ bạn duyệt (chưa dùng để trả lời)
+/vault [từ khóa]                       trong phiên: đếm ghi chú hoặc tìm kiếm
+```
+
+Chính sách xung đột: hệ thống không bao giờ xóa chữ của bạn. Trước khi ghi lại một khối nó lưu bản sao
+trong `vault/.laris/backups/`; nếu bạn sửa trong khối, nó dừng ghi khối đó và báo, cho đến khi bạn chạy
+`laris vault sync --accept`.
+
 **Bộ não hệ thống** là cây hướng dẫn suy luận nội bộ (bảo mật, chỉ đọc). Hệ thống không đọc toàn bộ: nó vào
 ở ghi chú gốc, theo liên kết cha → con tới đúng hub rồi mở đúng ghi chú cần. Bạn chỉ thấy tên các ghi chú đã
 dùng (dòng `◈ bộ não: ...`), không thấy nội dung. Lõi bộ não không bao giờ bị sửa lúc chạy; tri thức mới nằm
@@ -181,5 +216,5 @@ laris --resume                chọn một phiên đã lưu
 laris --resume <mã-phiên>     mở lại một phiên
 laris -p "câu hỏi"            hỏi một câu rồi thoát
 /how-to-use /help /sessions /resume /new /skills /workflows /workflow /compact /context
-/status /model /write /learn /rate /exit
+/status /vault /model /write /learn /rate /exit
 ```

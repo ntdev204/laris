@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from vault.index import VaultIndex
 from vault.notes import FORBIDDEN_NAME_CHARS, link_name
@@ -115,4 +115,35 @@ def lint_hierarchy(
                 problems.append(Problem(path, "parent", "parent does not match the listing hub"))
         if str(note.props.get("level", "")) != str(depth[path]):
             problems.append(Problem(path, "level", f"level should be {depth[path]}"))
+    return problems
+
+
+def lint_content(
+    index: VaultIndex,
+    max_note_chars: int,
+    max_property_chars: int,
+    redact: Optional[Callable[[str], Tuple[Any, ...]]] = None,
+) -> List[Problem]:
+    """Rules about what a note contains: oversize, duplicate aliases, stored secrets."""
+    problems: List[Problem] = []
+    aliases: Dict[str, str] = {}
+    for path, note in sorted(index.notes.items()):
+        if len(note.body) > max_note_chars:
+            problems.append(
+                Problem(path, "oversize", f"note is longer than {max_note_chars} chars")
+            )
+        for name, value in note.props.items():
+            if len(str(value)) > max_property_chars:
+                problems.append(Problem(path, "oversize", f"property {name} is very long"))
+        for alias in note.prop_list("aliases"):
+            key = alias.strip().lower()
+            if key in aliases and aliases[key] != path:
+                problems.append(
+                    Problem(path, "alias", f"alias '{alias}' is also used by {aliases[key]}")
+                )
+            aliases.setdefault(key, path)
+        if redact is not None:
+            text = note.body + "\n" + "\n".join(str(v) for v in note.props.values())
+            if redact(text)[0] != text:
+                problems.append(Problem(path, "secret", "the note appears to contain a secret"))
     return problems

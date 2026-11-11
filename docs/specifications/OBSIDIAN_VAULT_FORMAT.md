@@ -90,7 +90,7 @@ matches and LARIS reports a conflict and leaves the block alone. Text outside bl
 |---|---|---|
 | Whether dot-folders other than `.obsidian` are indexed by the app | not verified | LARIS creates no dot-folders besides `.obsidian`; the inbox is `_inbox/` |
 | Exact keys of `.obsidian/*.json` beyond `app.json` | not verified | only the three keys of section 2 are written; no `graph.json`, no plugin files |
-| JSON Canvas (`.canvas`) | not verified | not read or written |
+| JSON Canvas (`.canvas`) | the public JSON Canvas 1.0 specification (jsoncanvas.org: `nodes` with `id`, `type`, `x`, `y`, `width`, `height`, `text`; `edges` with `id`, `fromNode`, `toNode`, `label`) | written only by `laris vault graph --format canvas` and `kg_query` export, validated by a test; never read |
 | Licence terms of the help pages | page not found | no help text is copied; rules are restated in LARIS's own words |
 | Obsidian CLI | needs the running app | not used |
 

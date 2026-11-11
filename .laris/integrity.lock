@@ -66,7 +66,7 @@
     ".laris/brain/tools/Tool Map.md": "3b65a96d5860ff23beba7b7991c5c3e62a9a12497844e64729bc5abe1ae0cdd5",
     ".laris/brain/tools/Tools and Workflows.md": "34b41b9193183bb0e9332077d462fba79cc2295b439a3aea08d849c3b596fa2e",
     ".laris/brain/tools/Workflow Map.md": "26d5b9d5905fe4faee50c69463659fac71a92ff7f17a9894e0b43df69108b670",
-    ".laris/help/how-to-use.md": "64059808bfa91bc4b5b143b167b543c27b2900ce2adf7c8ada19477ec6ffe96d",
+    ".laris/help/how-to-use.md": "d948e8e378f24a64f0a235c520277a491385c3073f4a9d943720f6f1a9da1031",
     ".laris/prompts/manifest.yaml": "8820211bf44f57c16952cf8fa9ca51f64da36a661cc89c47d98f93f6c1e99082",
     ".laris/prompts/strings.yaml": "92e81359fdb9a29652e07f51db96acbfcf73e1858b4f67020e25a49128ad43b6",
     ".laris/prompts/system/10_identity.md": "d919f1c624b84a2d5cff5e1e5c50b1cdcd83a81ca606a6650f1cbaf661764750",
@@ -89,9 +89,13 @@
     ".laris/rules/50_output.md": "9106c1e4c0f86d6b1fb728cbbf80c2d82845ea635b53d2beef30ee4de9f9ef63",
     ".laris/rules/60_memory_context.md": "8dde10f7c86763188beaed350669a21ffc4f2d7ebbcd7223415a69456131c5c3",
     ".laris/rules/70_limits.md": "319a0a1400d3ee103748e5c35d86cff1cd02a6a84fda3e2efd389a2eae514860",
+    ".laris/vault/schema.yaml": "82743e83e255b8c76bc3b589a3185d7667278b1112bd1d9d9534795f0ffeb7ad",
+    ".laris/workflows/citation-analysis.yaml": "1c287dc22bd0e00d79e720b5348f4c51810a01902f5f61a6e9eb3a61ffbe8060",
     ".laris/workflows/document-intake.yaml": "1240c8fa3ebd4ae8e69223833cce86216561feba3e359906e2149c26c1eea503",
     ".laris/workflows/evidence-review.yaml": "ce02ada909f8acf01f02fb75c2605f27f2ebe3b4eab986ad8cfa431e78f4183c",
-    ".laris/workflows/grounded-qa.yaml": "58cf806639e85a9d2555a781e8166ed827fb235076a181602e3964cc47d90e7b",
+    ".laris/workflows/grounded-qa.yaml": "2204f4b5ceb59dde4db5230d9a1b894e3ac1ba36c50a900cb502abfdd751ec58",
+    ".laris/workflows/kg-explore.yaml": "10b4c822fed15032d0525742b917f68b98f86718fd79aa8054b3de05f15d70eb",
+    ".laris/workflows/literature-map.yaml": "2d458721543f6f5ee3fcd19fea46420e8f750556b621b6157c012a81513585d8",
     ".laris/workflows/research-brief.yaml": "dda3ff54a2d6bbeeaad445fc23cb00565e58abb2c4730a8246d76e269c27b33b",
     "LARIS.md": "cab8e77604bc46c6939c846d518c0fea2b6482f668fa4fd1568d70ea9e441484"
   }

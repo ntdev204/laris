@@ -13,6 +13,8 @@ related_documents:
   - "docs/specifications/OBSIDIAN_VAULT_FORMAT.md"
   - "docs/architecture/BRAIN_THREAT_MODEL.md"
   - "docs/architecture/AGENT_HARNESS.md"
+  - "docs/architecture/BRAIN_AND_VAULT.md"
+  - "docs/development/OWNER_RUNBOOK.md"
 decision_references:
   - "ADR-013"
 change_summary: "Adopts Obsidian-format vaults as project memory and as a protected hub-tree brain read through navigation tools."
