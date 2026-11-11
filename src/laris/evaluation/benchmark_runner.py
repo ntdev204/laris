@@ -11,6 +11,7 @@ Adheres to DOC-SPEC-MOD-001 (Boundary J), ADR-001, ADR-007, ADR-008, and Issue #
 from __future__ import annotations
 
 import datetime
+import math
 import threading
 from typing import Callable, Dict, List, Optional
 
@@ -156,7 +157,17 @@ class BenchmarkRunner:
         cataloged_errors: List[ScientificErrorRecord] = []
         metrics_accum: Dict[str, float] = {}
 
-        if custom_metrics:
+        if custom_metrics is not None and evaluator_fn is not None:
+            raise ModuleContractViolationError(
+                "Supply either evaluator_fn or custom_metrics, not both."
+            )
+
+        def validate_metrics(metrics: Dict[str, float]) -> None:
+            if not metrics or any(not math.isfinite(value) for value in metrics.values()):
+                raise ModuleContractViolationError("Evaluation requires non-empty, finite metrics.")
+
+        if custom_metrics is not None:
+            validate_metrics(custom_metrics)
             metrics_accum.update(custom_metrics)
         elif evaluator_fn:
             # Execute evaluator across items
@@ -164,6 +175,11 @@ class BenchmarkRunner:
             for idx, item in enumerate(manifest.items):
                 try:
                     item_metrics = evaluator_fn(item)
+                    validate_metrics(item_metrics)
+                    if scores and set(item_metrics) != set(scores):
+                        raise ModuleContractViolationError(
+                            "Evaluator metric names differ across items."
+                        )
                     for k, v in item_metrics.items():
                         scores.setdefault(k, []).append(v)
                 except Exception as exc:
@@ -179,17 +195,15 @@ class BenchmarkRunner:
             for k, v_list in scores.items():
                 metrics_accum[k] = round(sum(v_list) / len(v_list), 4) if v_list else 0.0
         else:
-            # Default deterministic metrics for synthetic evaluation
-            metrics_accum = {
-                "nli_accuracy": 0.925,
-                "contradiction_recall": 0.910,
-                "citation_precision": 0.995,
-                "gap_novelty_f1": 0.860,
-                "peak_vram_gb": 13.8,
-            }
+            raise ModuleContractViolationError(
+                "Evaluation requires evaluator_fn or measured custom_metrics; "
+                "synthetic default scores cannot certify a checkpoint."
+            )
 
         # Compare against regression thresholds
-        pass_fail = True
+        pass_fail = bool(metrics_accum) and not cataloged_errors
+        if not pass_fail:
+            regressions.append("Evaluation incomplete: missing metrics or failed benchmark items.")
         baseline = (
             self.get_baseline(request.baseline_checkpoint_id)
             if request.baseline_checkpoint_id
