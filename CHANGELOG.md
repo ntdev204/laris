@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-11
+
 ### Security
 - **Trust on first use for private certificates:** `laris login --server URL` shows the server certificate's SHA-256 fingerprint and pins it after the user confirms (or `--trust-fingerprint`), so clients no longer need `SSL_CERT_FILE`; `laris-server tls init` and `model serve` print the fingerprint.
 - **Client `settings.json` like Claude Code:** `~/.laris/settings.json` holds `base_url`, `model`, `api_key` (written by `laris login`, file mode 0600), `api_key_env` and personal notes; `laris logout` removes only the key.
