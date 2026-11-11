@@ -22,6 +22,7 @@ from corpus.acquisition.sources.core_corpora import (
     record_nq_status,
     record_s2orc_status,
 )
+from corpus.acquisition.sources.s2orc import S2ORC_DEFAULT_BUDGET_BYTES, STAGES, acquire_s2orc
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -40,6 +41,20 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+    parser.add_argument(
+        "--s2orc-budget-gb",
+        type=float,
+        default=S2ORC_DEFAULT_BUDGET_BYTES / 1e9,
+        help="Hard storage budget in GB for each S2ORC stage",
+    )
+    parser.add_argument(
+        "--s2orc-max-shards",
+        type=int,
+        default=None,
+        help="Process at most this many S2ORC shards in this run (trial runs)",
+    )
+
+
 def run(args: argparse.Namespace) -> int:
     unknown = [d for d in (args.only or []) if d not in EXPANSION_ACQUIRERS]
     if unknown:
@@ -49,6 +64,11 @@ def run(args: argparse.Namespace) -> int:
     def run_expansion(dataset_id: str) -> DatasetEntry:
         if dataset_id == "CC100-VI-CLEAN":
             return acquire_cc100_vi(args.cc100_max_docs)
+        for stage, (s2orc_id, _, _) in STAGES.items():
+            if dataset_id == s2orc_id:
+                return acquire_s2orc(
+                    stage, int(args.s2orc_budget_gb * 1e9), args.s2orc_max_shards
+                )
         return EXPANSION_ACQUIRERS[dataset_id]()
 
     print("============================================================")

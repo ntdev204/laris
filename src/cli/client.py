@@ -59,7 +59,21 @@ COMMANDS: Table = {
 }
 
 
+def _version() -> str:
+    from importlib import metadata
+
+    try:
+        return metadata.version("laris")
+    except metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    if args in (["--version"], ["-V"]):
+        print(f"laris {_version()}")
+        return 0
+
     from cli.bootstrap import ensure_global_home
 
     ensure_global_home()

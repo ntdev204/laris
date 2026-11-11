@@ -1,6 +1,6 @@
 """Core primitives, schemas, and error hierarchies for LARIS."""
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 __author__ = "LARIS Architecture Team"
 
 from core.authorization import (
