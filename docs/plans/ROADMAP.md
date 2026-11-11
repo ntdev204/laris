@@ -22,13 +22,13 @@ change_summary: "Reconciles historical engineering milestones with the staged ex
 
 # LARIS Roadmap: Milestones and Exit Criteria
 
-Historical engineering milestones and their exit criteria. Task-level work is tracked in GitHub issues and the [project plan](../../.agents/plan.md). Implemented components and passing contract tests do not establish empirical milestone completion. The [measured status report](../research/EMPIRICAL_STATUS.md) records the current checkpoint validation and real-paper pilot, including unmet retrieval, extraction and gap-discovery gates.
+Historical engineering milestones and their exit criteria. Task-level work is tracked in GitHub issues. Implemented components and passing contract tests do not establish empirical milestone completion. The [measured status report](../research/EMPIRICAL_STATUS.md) records the current checkpoint validation and real-paper pilot, including unmet retrieval, extraction and gap-discovery gates.
 
 ## 1. Implementation Roadmap
 
 ### 1. Roadmap Architecture & Execution Philosophy
 
-M0–M11 are historical component-delivery labels, not the order in which models may be trained or qualified. Their listed dependencies describe engineering relationships. The execution order and task ownership come from `.agents/plan.md`; detailed model contracts come from the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md). In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), component implementation does not satisfy an empirical exit criterion. M11 governance applies before learning, rather than after productization.
+M0–M11 are historical component-delivery labels, not the order in which models may be trained or qualified. Their listed dependencies describe engineering relationships. The current order of work is set by the owner: the system harness first, the core model afterwards; detailed model contracts come from the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md). In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), component implementation does not satisfy an empirical exit criterion. M11 governance applies before learning, rather than after productization.
 
 | Execution phase | Task IDs | Required boundary |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ M0–M11 are historical component-delivery labels, not the order in which models
 | Specialists | R01–R04 | Qualified integration; specialist gates and owner review |
 | Product/release | P01–P03 | Reviewed capability evidence and explicit release authorization |
 
-The diagram below shows component relationships only. It does not authorize skipping any phase above. Full task dependencies, deliverables and stop conditions remain in the three `.agents` Markdown files. ADRs and canonical specifications govern thresholds; this roadmap cannot override them.
+The diagram below shows component relationships only. It does not authorize skipping any phase above. ADRs and canonical specifications govern thresholds; this roadmap cannot override them.
 
 ```mermaid
 flowchart TD

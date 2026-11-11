@@ -28,8 +28,7 @@ Research direction for the self-built language foundation, local training under 
 The alternatives and compute figures below are historical research proposals,
 not measurements or approved run budgets. The current architecture and 32,000-subword
 vocabulary are defined in the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md)
-and shipped configuration. `.agents/plan.md` governs execution: foundation qualification
-precedes scientific language; the owner decides compute/tokenizer changes at F04A.
+and shipped configuration. Foundation qualification precedes scientific language; the owner decides compute/tokenizer changes at F04A.
 
 ## 1. Self-Built Language Foundation and Encoders
 

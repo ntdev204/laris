@@ -27,7 +27,6 @@ Current measured readiness: the local compact checkpoint passes baseline-relativ
 ```
 /
 ├── README.md, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md
-├── .agents/         # System spec.md, project plan.md and task.md
 ├── docs/            # Architecture, specifications, training runbooks, ADRs and plans
 ├── experiments/     # Manually invoked diagnostic experiments
 ├── reports/         # Versioned measurements and verification evidence
