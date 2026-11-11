@@ -69,3 +69,52 @@ assertion statements joined by blank lines. Empty sections are allowed, but repo
 without assertions are rejected. Sources, hashes, coordinate IDs and character spans
 are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
 semantic support or establish research-gap novelty.
+
+## Local application (`laris app`)
+
+An end-to-end local workflow that needs no extra dependency and never trains or fits.
+
+```bash
+laris app ingest path/to/docs data/raw/scifact/corpus__corpus-00000-of-00001.parquet
+laris app search --query "..."            # BM25, works without a model
+laris app index  --checkpoint <run>/best --tokenizer-model <model>   # dense embeddings
+laris app ask    --checkpoint <run>/best --tokenizer-model <model> --query "..."
+laris app serve  --checkpoint <run>/best --tokenizer-model <model>   # web UI on 127.0.0.1:8765
+```
+
+Accepted inputs are txt, md, pdf (needs `pypdf`), and BEIR corpus `.jsonl` or `.parquet`. The
+workspace (`artifacts/app/workspace` by default) holds `chunks.jsonl` and, after `index`,
+`embeddings.npy`; adding a document invalidates the dense index. The server binds to localhost,
+rejects non-JSON POSTs and exposes `/api/status`, `/api/ingest`, `/api/search`, `/api/answer` and
+`/api/index`. Until the foundation model is qualified the UI shows a research-preview notice;
+BM25 is the reliable channel and extractive answers are quoted from passages without entailment checks.
+
+### Chat, agent and model API
+
+Three processes mirror a hosted assistant, but everything runs locally:
+
+```bash
+laris model serve --port 8000                         # model API (OpenAI-compatible)
+laris app serve --model-api-url http://127.0.0.1:8000/v1 --model-name laris-core   # chat web UI :8765
+laris agent chat                                       # terminal session (also -p "prompt", --resume)
+```
+
+The **web UI** has conversation history, streaming answers, tool-call cards, file attach and drag-drop
+(PDF, text, scans and images through OCR), a document-corpus panel and a settings panel for the model
+API address. The **terminal** session streams text, prints each tool call with a one-line result, asks
+before write tools (`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`.
+Both share conversations and settings under `artifacts/chat`.
+
+Tools (JSON-schema arguments, 30 s default timeout, typed errors): `list_files`, `read_file` (txt, md,
+pdf, images; scans use tesseract `eng+vie`), `write_file` and `ingest_path` (need approval; writes land
+only in `artifacts/chat/output`), `search_corpus`, `answer_question`, `extract_discourse`,
+`corpus_status`. Reads are limited to the working folder and uploads. A message stops after 10 steps,
+on an identical repeated call, or after the time budget; every session is logged as JSONL.
+
+The client runs the tools and the **model server decides**: it receives `messages` and `tools` at
+`POST /v1/chat/completions` (JSON or `stream: true` SSE) and answers with text or `tool_calls`;
+`GET /v1/models`, `GET /health` and `POST /v1/embeddings` are also served. Today the backend is a
+scripted placeholder that quotes passages (`laris-placeholder`). The trained core model plugs in as a
+`ChatProvider` subclass: `laris model serve --backend package.module:ClassName --model-name laris-core`,
+with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
+the client settings; keys are never stored in files.
