@@ -113,18 +113,10 @@ def test_model_server_writes_no_files_and_logs_nothing():
 
 # -- TLS ---------------------------------------------------------------------------------------
 def _self_signed(folder):
-    import shutil
-    import subprocess
+    pytest.importorskip("cryptography")
+    from serverdata.tls import create_self_signed
 
-    if not shutil.which("openssl"):
-        pytest.skip("openssl not available")
-    cert, identity = folder / "cert.pem", folder / "identity.pem"
-    subprocess.run(
-        ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "2",
-         "-subj", "/CN=localhost", "-addext", "subjectAltName=IP:127.0.0.1,DNS:localhost",
-         "-keyout", str(identity), "-out", str(cert)],
-        check=True, capture_output=True,
-    )  # fmt: skip
+    cert, identity = create_self_signed(str(folder), ["localhost", "127.0.0.1"])
     return cert, identity
 
 
