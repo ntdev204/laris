@@ -62,10 +62,15 @@ def main(wheels: Path, out: Path) -> None:
                 args += ["--hidden-import", name]
         run(args + [str(entry)], cwd=work)  # cwd away from the source tree: only the wheel is seen
     exe = out / "laris" / ("laris.exe" if os.name == "nt" else "laris")
-    for probe in (["--version"], ["--help"], ["skills", "check"]):
-        result = subprocess.run([str(exe), *probe], capture_output=True, text=True, timeout=120)
-        if result.returncode != 0 or not (result.stdout or result.stderr).strip():
-            raise SystemExit(f"smoke test failed: {probe}\n{result.stdout}\n{result.stderr}")
+    # Run like a user would: an empty folder and a fresh home, never the source checkout.
+    with tempfile.TemporaryDirectory() as empty, tempfile.TemporaryDirectory() as home:
+        env = {**os.environ, "LARIS_HOME": home}
+        for probe in (["--version"], ["--help"], ["skills", "check"]):
+            result = subprocess.run(
+                [str(exe), *probe], capture_output=True, text=True, timeout=180, cwd=empty, env=env
+            )
+            if result.returncode != 0 or not (result.stdout or result.stderr).strip():
+                raise SystemExit(f"smoke test failed: {probe}\n{result.stdout}\n{result.stderr}")
     version = subprocess.run([str(exe), "--version"], capture_output=True, text=True).stdout
     print(f"built {exe}: {version.strip()}")
 
