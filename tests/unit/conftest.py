@@ -8,6 +8,16 @@ import pytest
 REPO = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def _fresh_url_opener():
+    """No test may inherit (or leave behind) a process-wide pinned-certificate opener."""
+    from harness import trust
+
+    trust.reset()
+    yield
+    trust.reset()
+
+
 @pytest.fixture
 def project(tmp_path):
     """A throwaway project root with configs/ and LARIS.md copied from the repository."""
