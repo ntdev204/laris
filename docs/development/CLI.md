@@ -15,7 +15,7 @@ related_documents:
   - "docs/adr/ADR-013-functional-package-layout-and-cli.md"
 decision_references:
   - "ADR-013"
-change_summary: "Adds offline formal readiness and links the owner-only runbook instead of duplicate training instructions."
+change_summary: "Adds offline formal readiness, links the owner-only runbook and documents citation-ID verification versus source-backed extractive certification."
 ---
 
 # LARIS Command-Line Interface Reference
@@ -54,3 +54,18 @@ foundation exit gate.
 Training progress and checkpoints remain under
 `artifacts/checkpoints/language_encoder/<run-id>/{best,last}`. Resuming requires
 matching recorded settings and does not restore the exact streaming data position.
+
+## Report verification scope
+
+`EvidenceGate` checks registered assertion citation IDs only. Its `verification_scope`
+metadata is `citation_ids_only`; a passing coverage ratio is not evidence of source
+integrity or entailment.
+
+For source-backed extractive reports, use `SourceEvidenceGate(source_documents)`
+with `StructuredReportGenerator(evidence_gate=gate)`. Supply canonical UTF-8 source
+texts keyed by document ID, and corpus hashes computed from those texts. Every
+assertion must equal its cited excerpt; each section's Markdown must equal its
+assertion statements joined by blank lines. Empty sections are allowed, but reports
+without assertions are rejected. Sources, hashes, coordinate IDs and character spans
+are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
+semantic support or establish research-gap novelty.

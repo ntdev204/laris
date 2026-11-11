@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Empirical readiness (Issue #313):** records validation of the compact checkpoint on 27,213 samples and a reproducible 20-paper scientific-NLP pilot, including weak dense retrieval and manual extraction failures. Adds bounded experiment scripts, measured evidence, and current-readiness links; training and thresholds are unchanged.
 
+### Fixed
+- **Benchmark certification (Issue #309):** evaluation now requires an evaluator or explicit measured metrics, rejects empty/non-finite measurements, and fails runs with incomplete or failed benchmark items instead of returning fixed passing scores.
+
+### Fixed
+- **Source-backed reports (Issue #311):** `SourceEvidenceGate` validates actual source hashes, citation identities, offsets and verbatim excerpts, rejects unsupported synthesis and unregistered prose, and refuses zero-assertion reports. The existing gate labels its verification scope as citation IDs only.
+
 ## [1.1.7] - 2026-10-30
 
 ### Fixed

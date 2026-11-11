@@ -473,8 +473,8 @@ class TestBenchmarkRunnerExecution:
         with pytest.raises(ModuleContractViolationError, match="not found"):
             runner.get_manifest("UNKNOWN-MANIFEST")
 
-    def test_run_evaluation_default_synthetic_pass(self) -> None:
-        """Test benchmark evaluation with compliant synthetic metrics satisfies all gates."""
+    def test_run_evaluation_requires_measured_input(self) -> None:
+        """A registered benchmark alone must not certify an unmeasured checkpoint."""
         runner = BenchmarkRunner()
         manifest = runner.create_synthetic_manifest(
             "SUITE-PASS", BenchmarkSuiteType.NLI_CONTRADICTION
@@ -486,11 +486,36 @@ class TestBenchmarkRunnerExecution:
             benchmark_suite_id="SUITE-PASS",
             target_checkpoint_id="CHK-2026-10",
         )
-        report = runner.run_evaluation(req)
-        assert report.pass_fail_status is True
-        assert len(report.regressions_detected) == 0
-        assert report.is_verified_offline is True
-        assert len(runner.get_run_history()) == 1
+        with pytest.raises(ModuleContractViolationError, match="requires evaluator_fn"):
+            runner.run_evaluation(req)
+        assert runner.get_run_history() == []
+
+    @pytest.mark.parametrize("metrics", [{}, {"nli_accuracy": float("nan")},
+                                         {"nli_accuracy": float("inf")}])
+    def test_invalid_measurements_cannot_pass(self, metrics) -> None:
+        runner = BenchmarkRunner()
+        manifest = runner.create_synthetic_manifest("INVALID", BenchmarkSuiteType.NLI_CONTRADICTION)
+        runner.register_manifest(manifest)
+        req = EvaluationRunRequest(run_id="invalid", benchmark_suite_id="INVALID",
+                                   target_checkpoint_id="checkpoint")
+        with pytest.raises(ModuleContractViolationError, match="finite metrics"):
+            runner.run_evaluation(req, custom_metrics=metrics)
+
+    def test_partially_measured_benchmark_fails(self) -> None:
+        runner = BenchmarkRunner()
+        manifest = runner.create_synthetic_manifest(
+            "PARTIAL", BenchmarkSuiteType.NLI_CONTRADICTION, num_items=3
+        )
+        runner.register_manifest(manifest)
+        req = EvaluationRunRequest(run_id="partial", benchmark_suite_id="PARTIAL",
+                                   target_checkpoint_id="checkpoint")
+
+        def incomplete(item):
+            return {"nli_accuracy": 0.99} if "item_000" in item.item_id else {}
+
+        report = runner.run_evaluation(req, evaluator_fn=incomplete)
+        assert not report.pass_fail_status
+        assert len(report.errors_cataloged) == 2
 
     def test_run_evaluation_floor_metric_regression_failure(self) -> None:
         """Test that dropping below minimum acceptable threshold fails the run report."""

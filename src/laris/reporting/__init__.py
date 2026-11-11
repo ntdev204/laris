@@ -43,6 +43,7 @@ from laris.reporting.report_schema import (
     ReportVerificationSummary,
     StructuredResearchReport,
 )
+from laris.reporting.source_gate import SourceEvidenceGate
 
 __all__ = [
     "AcademicManuscript",
@@ -67,6 +68,7 @@ __all__ = [
     "ReportVersionRecord",
     "RunVersionRecord",
     "StructuredReportGenerator",
+    "SourceEvidenceGate",
     "StructuredResearchReport",
     "TargetEntityType",
     "UserInterventionRecord",
