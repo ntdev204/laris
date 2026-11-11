@@ -51,7 +51,7 @@ table{border-collapse:collapse;margin:8px 0;font-size:13px}th,td{border:1px soli
 </style></head><body>
 <aside id="side"><h1>LARIS<small>trợ lý nghiên cứu cục bộ</small></h1>
 <button id="new">+ Cuộc trò chuyện mới</button><div id="list"></div>
-<button class="ghost" id="bhelp">Hướng dẫn</button><button class="ghost" id="bskills">Skills</button><button class="ghost" id="bcorpus">Kho tài liệu</button><button class="ghost" id="bset">Cài đặt</button>
+<button class="ghost" id="bhelp">Hướng dẫn</button><a class="ghost" href="/guide" target="_blank" rel="noopener" style="text-decoration:none;padding:6px 10px">Trang hướng dẫn</a><button class="ghost" id="bskills">Skills</button><button class="ghost" id="bcorpus">Kho tài liệu</button><button class="ghost" id="bset">Cài đặt</button>
 <div class="meta" id="health"><span class="dot"></span>đang kiểm tra…</div></aside>
 <main><header><button class="ghost" id="menu">☰</button><b id="title">Cuộc trò chuyện mới</b></header>
 <div id="msgs"><div class="wrap" id="chat"></div></div>
@@ -219,3 +219,30 @@ loadSkills();
 open(location.hash.startsWith('#c=')?location.hash.slice(3):null);health();
 </script></body></html>
 """
+
+
+def _between(start: str, end: str) -> str:
+    i = PAGE.index(start)
+    return PAGE[i : PAGE.index(end, i)]
+
+
+GUIDE_PAGE = (
+    """<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hướng dẫn sử dụng LARIS</title>
+"""
+    + _between("<style>", "</style>")
+    + """</style>
+<style>body{display:block;height:auto}main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+nav{display:flex;gap:12px;align-items:center;margin-bottom:12px}nav a{color:inherit}</style></head><body>
+<main><nav><a href="/">← Về trang trò chuyện</a></nav><div id="doc">Đang tải…</div></main>
+<script>
+"""
+    + _between("function el(", "async function api(")
+    + _between("function inline(", "function scrollDown(")
+    + """
+fetch('/api/guide').then(r=>r.json()).then(d=>{const box=document.getElementById('doc');
+box.textContent='';box.append(markdown(d.markdown||''))}).catch(()=>{document.getElementById('doc').textContent='Không tải được hướng dẫn.'});
+</script></body></html>
+"""
+)

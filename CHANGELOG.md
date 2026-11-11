@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **User guide is for users; `laris` opens the chat:** `/how-to-use` no longer documents running servers or operator commands (a test enforces it). Bare `laris` opens the terminal chat; `laris --resume` lists saved sessions to choose from (Enter = newest, `n` = new) and `laris --resume <id|prefix>` reopens one. The web server serves the same guide as a public page at `/guide` (`/api/guide`), linked from the chat. Note: the web server has no authentication yet; put it behind a reverse proxy with login before exposing it on a domain.
 - **New knowledge goes to the brain by domain; skills only on request:** ingestion no longer creates `corpus-*` skills (`learning.skill_on_ingest` now defaults to false). Instead each ingested document adds a Knowledge note under `vault/Knowledge/<domain hub>/` (domain chosen by routing over the brain hubs, `General` otherwise) with key terms, claims, methods, datasets and metrics; the brain tools list these notes beside the matching hub while the protected core brain stays unchanged. New tool `save_knowledge` (approval required) adds taught knowledge; `save_skill` is reserved for skills the user asks for.
 
 ### Added

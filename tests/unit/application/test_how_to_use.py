@@ -86,9 +86,57 @@ def test_guide_mentions_every_user_command():
     text = (REPO / ".laris" / "help" / "how-to-use.md").read_text(encoding="utf-8")
     for needle in (
         "/how-to-use", "/workflow", "/compact", "/context", "/rate", "/learn", "/skills",
-        "laris app ingest", "laris skills sync", "laris learn export", "laris harness verify",
+        "laris --resume", "/sessions", "/guide",
         "grounded-qa", "document-intake", "evidence-review", "research-brief", "save_skill",
-        "laris vault init", "laris brain check", "vault/",
+        "vault/",
     ):  # fmt: skip
         assert needle in text, needle
     assert json.dumps(text)  # valid text
+
+
+def test_guide_is_for_users_not_operators():
+    from tests.unit.harness.test_harness import REPO
+
+    text = (REPO / ".laris" / "help" / "how-to-use.md").read_text(encoding="utf-8")
+    for forbidden in ("model serve", "app serve", "harness verify", "harness lock", "brain check"):
+        assert forbidden not in text, forbidden
+
+
+def test_bare_laris_and_resume_open_the_chat_and_commands_are_unchanged():
+    from cli.main import build_parser, interactive_default
+
+    assert interactive_default([]) == ["agent", "chat"]
+    assert interactive_default(["--resume"]) == ["agent", "chat", "--resume"]
+    assert interactive_default(["--resume", "ab12"]) == ["agent", "chat", "--resume", "ab12"]
+    assert interactive_default(["skills", "list"]) == ["skills", "list"]
+    assert interactive_default(["--help"]) == ["--help"]
+    args = build_parser().parse_args(interactive_default(["--resume"]))
+    assert args.resume == "pick"
+    assert build_parser().parse_args(interactive_default(["--resume", "ab"])).resume == "ab"
+
+
+def test_resume_picker_prefix_and_new(chat, monkeypatch):
+    from cli.commands.agent import _Chat
+
+    first = chat.conversations.create("Một")
+    second = chat.conversations.create("Hai")
+    monkeypatch.setattr("builtins.input", lambda _="": "")
+    assert _Chat._start(chat, "pick")["id"] in (first["id"], second["id"])
+    assert _Chat._start(chat, second["id"][:6])["id"] == second["id"]
+    monkeypatch.setattr("builtins.input", lambda _="": "n")
+    fresh = _Chat._start(chat, "pick")
+    assert fresh["id"] not in (first["id"], second["id"])
+    monkeypatch.setattr("builtins.input", lambda _="": "2")
+    rows = chat.conversations.list()
+    assert _Chat._start(chat, "pick")["id"] == rows[1]["id"]
+    assert _Chat._start(chat, "nonexistent")["messages"] == []
+
+
+def test_guide_page_is_served_at_a_public_path(chat):
+    from application.server import handle_api
+    from application.web_ui import GUIDE_PAGE, PAGE
+
+    assert "/api/guide" in GUIDE_PAGE and "function markdown(" in GUIDE_PAGE
+    assert 'href="/guide"' in PAGE
+    code, payload = handle_api(chat.service, "GET", "/api/guide", {}, chat)
+    assert code == 200 and "Hướng dẫn sử dụng LARIS" in payload["markdown"]

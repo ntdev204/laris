@@ -10,6 +10,7 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris evaluate language-encoder   score a checkpoint on the val/test split vs baselines
     laris evaluate calibrate       ratchet acceptance thresholds up from passing val reports
     laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
+    laris [--resume [ID]]            open the terminal chat (pick a saved session with --resume)
     laris agent tools|run|chat       tool-using assistant (offline planner or model API)
     laris skills list|show|check     inspect and validate .laris/skills
     laris skills add|lint|sync       install, lint or build knowledge skills
@@ -24,7 +25,7 @@ Command tree (each leaf maps to a module in `cli.commands`):
 
 import argparse
 import sys
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from cli.commands import (
     agent,
@@ -134,8 +135,18 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def interactive_default(argv: Sequence[str]) -> List[str]:
+    """`laris` and `laris --resume [id]` open the terminal chat; named commands are unchanged."""
+    items = list(argv)
+    if items and items[0] in ("-h", "--help"):
+        return items
+    if not items or items[0].startswith("-"):
+        return ["agent", "chat", *items]
+    return items
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
+    args = build_parser().parse_args(interactive_default(sys.argv[1:] if argv is None else argv))
     handler: Handler = args.handler
     from harness.integrity import IntegrityError
     from harness.prompts import PromptError

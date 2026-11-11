@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from application.chat_app import ChatApp
 from application.service import SearchService, ServiceError
-from application.web_ui import PAGE
+from application.web_ui import GUIDE_PAGE, PAGE
 from application.workspace import IngestError, decode_upload
 from config.runtime_schemas import AppConfig
 from harness.prefs import PrefsError
@@ -92,7 +92,7 @@ def _chat_routes(
             conversation["title"] = str(body.get("title") or conversation["title"])[:120]
             chat.conversations.save(conversation)
             return 200, conversation
-    if path == "/api/how-to-use" and method == "GET":
+    if path in ("/api/how-to-use", "/api/guide") and method == "GET":
         return 200, {"markdown": chat.how_to_use()}
     if path == "/api/feedback" and method == "POST":
         try:
@@ -174,6 +174,8 @@ def make_handler(
         def do_GET(self) -> None:  # noqa: N802
             if self.path in ("/", "/index.html"):
                 self._send(200, PAGE, "text/html")
+            elif self.path in ("/guide", "/how-to-use") and chat is not None:
+                self._send(200, GUIDE_PAGE, "text/html")
             else:
                 self._send(*handle_api(service, "GET", self.path, {}, chat))
 
