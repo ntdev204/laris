@@ -9,6 +9,7 @@ from laris.language.encoder.transformer import (
     LargeLanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
+from laris.language.tokenization.normalized import NORMALIZATION_ID, NormalizedSentencePiece
 from laris.language.training.checkpoint import MODEL_FILE, file_sha256, read_manifest
 
 
@@ -60,6 +61,10 @@ def load_encoder(
         tokenizer = load_tokenizer(Path(tokenizer_model))
     if tokenizer is None:
         raise ValueError("A tokenizer (--tokenizer-model) is required")
+    if provenance.get("text_normalization") == NORMALIZATION_ID and not isinstance(
+        tokenizer, NormalizedSentencePiece
+    ):
+        tokenizer = NormalizedSentencePiece(tokenizer)  # the checkpoint was trained on this text
 
     config_cls = (
         LargeLanguageEncoderConfig

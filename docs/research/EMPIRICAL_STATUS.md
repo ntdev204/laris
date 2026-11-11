@@ -3,9 +3,9 @@ document_id: "DOC-REPORT-EMPIRICAL-001"
 title: "Checkpoint Validation and Scientific NLP Pilot"
 document_type: "report"
 status: "DRAFT"
-version: "1.2.0"
+version: "1.3.0"
 created_at: "2026-11-10"
-updated_at: "2026-11-10"
+updated_at: "2026-11-11"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
@@ -15,7 +15,7 @@ related_documents:
   - "docs/development/CLI.md"
 decision_references:
   - "ADR-008"
-change_summary: "Records measured checkpoint and pilot results, extraction failures, and the next experiment gates."
+change_summary: "Reconciles actual develop merge state while preserving historical measurements and no-training verification scope."
 ---
 
 # Checkpoint validation and scientific NLP pilot
@@ -147,7 +147,17 @@ all 1,176 tests locally with CUDA enabled and optional progress tooling installe
 Ruff, mypy (146 source files), documentation validation (51 Markdown documents)
 and whitespace checks also passed. One existing PyTorch warning in an
 initialization test concerns converting a gradient-tracking tensor to a scalar.
-The proposed changes remain in draft PRs and have not been merged into the
-release or integration branches.
+As checked on 2026-11-11, benchmark PR #310 and source-gate PR #312 remain open
+drafts targeting develop. Preparation/readiness PR #314 is merged at `873dd91`,
+and the system specification/project-plan PR #317 is merged at `5954f53`.
+Issue #313 remains open despite PR #314 being merged. Therefore the pilot's
+source-gate dependency still needs integration; the historical combined-worktree
+test result does not prove that source gate exists on develop. No release merge
+or new model qualification is established by these merges.
 
 Current preparation verification deliberately uses `make PY=.venv/bin/python check-no-training`; it does not rerun optimizer-bearing tests. The current result is recorded in `reports/verification/reorganization.json`. No fitting, backward or optimizer steps are part of this preparation.
+
+The subsequent G02 source/environment reconciliation is recorded separately in
+[`baseline-reconciliation.json`](../../reports/verification/baseline-reconciliation.json).
+It inventories overlapping benchmark paths and dependency metadata without loading
+a model, acquiring datasets or installing packages.

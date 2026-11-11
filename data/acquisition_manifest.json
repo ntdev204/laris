@@ -1012,9 +1012,53 @@
           "sha256": "e6453e0fa0bc94128579b37a9ca4e8381c5301960944ca6399dccc85a785a805"
         }
       ]
+    },
+    {
+      "dataset_id": "SCIFACT",
+      "name": "SciFact scientific claim retrieval (BEIR form)",
+      "version": "HF BeIR/scifact + BeIR/scifact-qrels",
+      "official_source_url": "https://github.com/allenai/scifact",
+      "license_name": "CC-BY-NC (upstream SciFact; BEIR mirrors declare CC-BY-SA-4.0, conflicting)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Claim query, abstract passage and relevance judgement (qrels)",
+      "expected_sample_count": "5,183 abstracts, 1,109 claims, train/test qrels",
+      "actual_sample_count": 7550,
+      "actual_size_bytes": 4554789,
+      "sha256_checksum": "243324b35f03d82bd6d98a5f575966876e86cad7ce16e5333a35b1b793dc4f45",
+      "storage_path": "data/raw/scifact",
+      "schema_valid": true,
+      "notes": "Relevance is the SciFact expert annotation of which abstracts support or contradict a claim. Sources disagree on the license; the most restrictive (non-commercial) applies. No owner use approval is recorded, so the entry stays DOWNLOADED, not VERIFIED. Evaluation use only; no redistribution.",
+      "files": [
+        {
+          "filename": "corpus__corpus-00000-of-00001.parquet",
+          "bytes": 4469916,
+          "sample_count": 5183,
+          "sha256": "243324b35f03d82bd6d98a5f575966876e86cad7ce16e5333a35b1b793dc4f45"
+        },
+        {
+          "filename": "queries__queries-00000-of-00001.parquet",
+          "bytes": 64982,
+          "sample_count": 1109,
+          "sha256": "1c37956c5dc8b810b60302323c24d1a9e79e26411ba8f5ad9d0888642e2a9034"
+        },
+        {
+          "filename": "qrels__train.tsv",
+          "bytes": 14502,
+          "sample_count": 919,
+          "sha256": "a53f2114831916c096b6c37d9e54da68cef4efdcdbd5ed46533601af972acf1d"
+        },
+        {
+          "filename": "qrels__test.tsv",
+          "bytes": 5389,
+          "sample_count": 339,
+          "sha256": "0864bb985e0ca2367ba217977e72004d549054b2b06666ed9d4825ac7c21284c"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 17,
-  "total_acquired_bytes": 12056063312,
-  "total_acquired_samples": 8288209
+  "total_datasets_tracked": 18,
+  "total_acquired_bytes": 12060618101,
+  "total_acquired_samples": 8295759
 }

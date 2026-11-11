@@ -1,0 +1,34 @@
+# Diagnostic (never gate): cross-lingual EN->VI alignment over machine-translated ViPubmed pairs.
+# Relevance holds by construction (the translation of the same abstract), not by human judgement.
+# Contains only the frozen STEM-VI source, so no held-out test source is read.
+version: "1.0.0"
+benchmark_id: foundation_stem_vi_crosslingual_diagnostic
+protocol: held_out_query_relevance
+gate_dataset: stem_retrieval
+gate_system: dense
+baseline_system: bm25
+systems:
+  bm25: {k1: 1.5, b: 0.75}
+  dense: {embedding: cls_embedding_l2_normalised}
+  hybrid_rrf: {k: 60}
+sources:
+  - id: stem_vi_crosslingual_en_to_vi
+    language: vi
+    query_language: en
+    kind: parallel
+    parquet: raw/vi_pubmed_candidate/pubmed22-00000-of-00089-5cd8ea7c3541d46a.parquet
+    manifest_file: raw/vi_pubmed_candidate/manifest.json
+    manifest_id: VIPUBMED
+    query_column: en
+    doc_column: vi
+    sample_size: 2000
+    sample_seed: 42
+    min_chars: 200
+    domain: biomedical_machine_translated
+    gate_eligible: false
+    gate_ineligible_reason: machine-translated pairs with relevance by construction; G12 needs human relevance
+frozen:
+  stem_vi_crosslingual_en_to_vi:
+    queries: 2000
+    documents: 2000
+    digest: 76830f498103eaa148b46d147343726056a4672d0c04564e3ceb41b59ce67590

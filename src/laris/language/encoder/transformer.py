@@ -558,7 +558,7 @@ try:
 
     TORCH_AVAILABLE = True
 
-    _TASK_HEADS = ("mlm", "nli", "paraphrase", "similarity", "qa")
+    _TASK_HEADS = ("mlm", "nli", "paraphrase", "similarity", "qa", "embedding")
 
     class PyTorchTransformerEncoder(nn.Module):  # type: ignore[misc]
         """Real PyTorch Transformer encoder with autograd and GPU capability.

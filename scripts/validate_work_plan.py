@@ -130,7 +130,9 @@ def validate_work_plan(root: Path = REPO_ROOT) -> list[str]:
                     errors.append(f"{tid}: dependency graph bypasses preceding stage qualification")
                 if status in {"in_progress", "done"} and previous["status"] != "qualified":
                     errors.append(f"{tid}: preceding model is not qualified")
-            lines = re.findall(rf"^- \[[ x]\] (?:~~)?{re.escape(tid)}\b.*$", files["task"][1], re.M)
+            lines = re.findall(
+                rf"^- \[[ x]\] (?:~~)?{re.escape(tid)} — .*$", files["task"][1], re.M
+            )
             label = f"{tid} — {task['title']}"
             expected = (
                 f"- [x] ~~{label}~~ — Note: {task['note']}"

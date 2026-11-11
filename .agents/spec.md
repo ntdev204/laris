@@ -10,7 +10,7 @@ stage_order:
 - integration
 - specialists
 - product
-next_task: G02
+next_task: F06-R1
 models:
   foundation:
     status: not_qualified
@@ -71,6 +71,8 @@ requirements:
   - F04A
   - F05
   - F06
+  - F05-R1
+  - F06-R1
 - id: REQ-FND-QUAL
   title: Model 01 qualified trước model 02
   acceptance: Tất cả gate của cấu hình foundation và protocol/identity/test evidence được kiểm tra, có
@@ -149,41 +151,67 @@ task_progress:
   note: Đã viết ba file Markdown đúng phạm vi hệ thống/dự án; cập nhật validator và tham chiếu; chưa thực
     hiện các task triển khai tiếp theo.
 - id: G02
-  status: pending
-  note: ''
+  status: done
+  note: Đã đối chiếu GitHub, 22 module và môi trường; sửa mô tả fertility/stage theo nguồn chuẩn; check-no-training
+    PASS (49 test); không training, cài dependency hay đổi gate.
 - id: G03
-  status: pending
-  note: ''
+  status: done
+  note: 'D01–D04, D06 đã xử lý: ViPubmed (STEM-VI) được owner cho dùng 2026-11-11 bất chấp license chưa rõ (dịch máy, không phải gold, chưa có quyền training), SciFact tải làm nguồn G12 EN (chờ owner ghi nhận license), DocLayNet chọn nguồn, OCR EN/VI đã cài. Owner mở lại
+    D05 (2026-11-11) bắt đầu từ D05-a retrieval relevance; chưa có annotator được chỉ định nên chưa có
+    nhãn, S01A/O01A/M01A vẫn blocked, F03 chỉ dùng relevance có sẵn; không training hay đổi gate.'
 - id: F01
-  status: pending
-  note: ''
+  status: done
+  note: Đã thêm EM/F1 answer-text chuẩn hóa (đa đáp án, no-answer, truncation giữ và đếm), tách khỏi token-span;
+    15 test mới, check-no-training PASS; chạy inference trên val mẫu, chưa phải bằng chứng qualification;
+    không training.
 - id: F02
-  status: pending
-  note: ''
+  status: done
+  note: 'Đã đo fertility EN/VI trên 4 nguồn test unseen (seed 42, kiểm trùng corpus fit, bootstrap CI):
+    EN 1,420 và VI 1,363 đều FAIL G10/G11 (≤1,35); báo cáo hợp lệ cho readiness; 10 test mới, check-no-training
+    PASS; không fit tokenizer hay training.'
 - id: F03
-  status: pending
-  note: ''
+  status: done
+  note: 'Đã đóng băng benchmark (SQuAD EN 7284 query/1338 đoạn; ViQuAD VI 1429/288, tách theo bài viết)
+    và đo BM25/dense/hybrid: dense MRR 0,034 EN và 0,116 VI so với BM25 0,783 và 0,813; nguồn general-domain
+    nên G12 vẫn MISSING; 16 test mới, check-no-training PASS; không training.'
 - id: F04
-  status: pending
-  note: ''
+  status: done
+  note: Đã đo lỗi validation trên 6 dataset và đối chiếu 18 shard với manifest. Phát hiện 5 cặp STS-B
+    trùng train/test và 9 dòng ViQuAD có offset lệch. Đã ghi đối chiếu 12 gate và phương án sampling có
+    SHA-256. 49 test không training và 42 test metric/retrieval PASS.
 - id: F04A
-  status: pending
-  note: ''
+  status: done
+  note: Owner chốt tối đa 2 giờ GPU, 2 vòng × 2.000 bước, validation mỗi 500 bước, patience 3 theo loss
+    validation trung bình và giữ tokenizer hiện tại cho chẩn đoán. Profiling đạt peak 3,64 GiB.
 - id: F05
-  status: pending
-  note: ''
+  status: done
+  note: Đã nối sampler train và loss contrastive QA tùy chọn, kiểm khởi tạo từ checkpoint theo SHA-256
+    và bàn giao hai vòng đối chứng sampling theo F04A. 49 test không training và 47 test tập trung PASS.
 - id: F06
+  status: done
+  note: Owner ủy quyền trực tiếp chạy F06. Hai smoke 10 bước và hai vòng chính 1.990 bước đã hoàn tất,
+    peak log 3,9 GiB và tổng 37 phút 26 giây gồm validation. Checkpoint và validation đã đối chiếu SHA-256.
+    Sampling có loss validation tốt nhất 0,221779 tại bước 1.500, baseline 0,222040 tại bước 1.990.
+- id: F05-R1
+  status: done
+  note: 'Đã chuẩn bị 3.999.993 mục train từ bốn nguồn có SHA-256 và khóa 9.748 văn bản validation dùng
+    chung. Fertility development của tokenizer cũ: EN 1,4417, VI 1,3442. Đã kiểm parser lệnh owner, 49
+    test không training và 47 test tập trung PASS.'
+- id: F06-R1
   status: blocked
-  note: Chỉ chủ dự án thực thi sau khi các phụ thuộc hoàn thành; agent không training.
+  note: Chờ owner duyệt fit nhánh BPE 32k và ngân sách CPU. Sau so sánh validation, cần chốt tokenizer
+    và ngân sách GPU mới trước khi huấn luyện encoder. Đo inference 2026-11-11, dense MRR 0,012 so với BM25 0,636 trên SciFact train; embedding CLS chưa học retrieval (trọng số 0), nên ngân sách GPU phải có giai đoạn contrastive (retrieval-loss-weight > 0) để G12 khả thi. Tokenizer 48k không tách chữ số đã fit và qua gate trên mẫu development (EN 1,300, VI 1,185); còn lại đổi vocab encoder lên 48000, đo lại profiling và chốt ngân sách GPU có giai đoạn contrastive.
 - id: F07
-  status: pending
-  note: ''
+  status: blocked
+  note: Chưa qualified. G10 EN 1,420 và G11 VI 1,363 vượt 1,35. G12 có nguồn SciFact (relevance chuyên gia, 300 query) đã đóng băng digest nhưng chưa chấm; chưa có nguồn VI người gán. F06
+    cung cấp validation cho G01–G09. Mở F05-R1 và F06-R1 trước khi nghiệm thu lại.
 - id: S01
   status: pending
   note: ''
 - id: S01A
-  status: pending
-  note: ''
+  status: blocked
+  note: 'D05 bị owner bỏ qua: chưa có annotator/adjudicator; agent không tự sinh gold. Chờ owner chỉ định
+    người gán và protocol rồi mới mở task.'
 - id: S02
   status: pending
   note: ''
@@ -200,8 +228,9 @@ task_progress:
   status: pending
   note: ''
 - id: O01A
-  status: pending
-  note: ''
+  status: blocked
+  note: 'D05 bị owner bỏ qua: chưa có annotator/adjudicator; agent không tự sinh gold. Chờ owner chỉ định
+    người gán và protocol rồi mới mở task.'
 - id: O02
   status: pending
   note: ''
@@ -212,8 +241,9 @@ task_progress:
   status: pending
   note: ''
 - id: M01A
-  status: pending
-  note: ''
+  status: blocked
+  note: 'D05 bị owner bỏ qua: chưa có annotator/adjudicator; agent không tự sinh gold. Chờ owner chỉ định
+    người gán và protocol rồi mới mở task.'
 - id: M01
   status: pending
   note: ''
@@ -373,8 +403,8 @@ trong bộ query nhỏ và nhiều excerpt không hữu ích dù khớp nguồn.
 thành model 02 hoặc research-gap engine.
 
 Các PR #310 (benchmark) và #312 (source evidence) là thay đổi riêng chưa được merge
-trong mốc baseline #314; khi tích hợp phải kiểm tra trạng thái GitHub thực tế, không
-coi kế hoạch hay sự tồn tại draft PR là code đã có trên develop.
+trong mốc baseline #314. G02 kiểm tra lại ngày 2026-11-11: cả hai vẫn là draft; PR #317 đã merge tại `5954f53`.
+[Đối chiếu baseline](../reports/verification/baseline-reconciliation.json) ghi module trùng chức năng, môi trường và nguồn chuẩn; không coi draft PR là code đã có trên develop.
 
 ## 9. Truy vết yêu cầu và quy tắc thay đổi
 
@@ -382,6 +412,12 @@ Mỗi requirement trong YAML front matter là yêu cầu hệ thống; `task_ids
 bước trong [plan.md](plan.md) và checklist trong [task.md](task.md). `task_progress`
 chỉ là chỉ mục đối chứng, không thay nội dung đặc tả. Một yêu cầu có thể cần nhiều
 task; task engineering done không tự đổi trạng thái model thành qualified.
+
+G02 đã hoàn tất đối chiếu local; G03 đã đóng với D05 human gold bị owner bỏ qua; nguồn/dependency đã xử lý tại
+[tiền điều kiện dự án](../docs/training/PROJECT_PREREQUISITES.md). Giữ approval
+dùng dữ liệu đã ghi nhận; không tự mở rộng sang redistribution hoặc giả định đã
+có người gán gold. Thiếu gold người gán thì các gate cần gold (evidence, OCR/layout, discourse)
+không thể được đo hợp lệ.
 
 Sau từng task: đối chiếu requirement/acceptance → plan/dependency/deliverable → task/
 evidence; sửa mọi lệch, cập nhật status/note ở cả ba file, gạch task done, rồi chạy

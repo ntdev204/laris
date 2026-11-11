@@ -1,0 +1,217 @@
+{
+  "stage": "natural_language",
+  "qualified": false,
+  "evidence_issues": [],
+  "gates": [
+    {
+      "id": "G01",
+      "dataset": "anli",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.85,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.37098456252806944,
+        "sampling": 0.38995451319387203
+      }
+    },
+    {
+      "id": "G02",
+      "dataset": "vinli",
+      "language": "vi",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.5559563693873525,
+        "sampling": 0.5669000920347917
+      }
+    },
+    {
+      "id": "G03",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "accuracy",
+      "operator": "ge",
+      "threshold": 0.88,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.71484375,
+        "sampling": 0.693359375
+      }
+    },
+    {
+      "id": "G04",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.88,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.7087599544937428,
+        "sampling": 0.6873470943551806
+      }
+    },
+    {
+      "id": "G05",
+      "dataset": "stsb",
+      "language": "en",
+      "metric": "spearman",
+      "operator": "ge",
+      "threshold": 0.82,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.8357589137675597,
+        "sampling": 0.831661249486701
+      }
+    },
+    {
+      "id": "G06",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.72,
+      "protocol": "normalized_answer_text",
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.64453125,
+        "sampling": 0.625
+      }
+    },
+    {
+      "id": "G07",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.83,
+      "protocol": "normalized_answer_text",
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.7448642313078049,
+        "sampling": 0.7378958958397005
+      }
+    },
+    {
+      "id": "G08",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.65,
+      "protocol": "normalized_answer_text",
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.361328125,
+        "sampling": 0.365234375
+      }
+    },
+    {
+      "id": "G09",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "protocol": "normalized_answer_text",
+      "status": "MISSING",
+      "value": null,
+      "reason": "Validation diagnostics available. Held-out test evidence was not collected.",
+      "validation_diagnostic": {
+        "baseline": 0.4321210475306799,
+        "sampling": 0.4356076334661696
+      }
+    },
+    {
+      "id": "G10",
+      "dataset": "unseen_text",
+      "language": "en",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "status": "FAIL",
+      "value": 1.4199381203924717,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G11",
+      "dataset": "unseen_text",
+      "language": "vi",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "status": "FAIL",
+      "value": 1.3630681557000428,
+      "reason": "Below formal gate"
+    },
+    {
+      "id": "G12",
+      "dataset": "stem_retrieval",
+      "language": "all",
+      "metric": "mrr",
+      "operator": "ge",
+      "threshold": 0.82,
+      "protocol": "held_out_query_relevance",
+      "must_beat_baseline": true,
+      "status": "MISSING",
+      "value": null,
+      "reason": "Missing independently judged STEM relevance and the corresponding BM25 comparison."
+    }
+  ],
+  "model_executed": false,
+  "training_executed": false,
+  "next_stage": null,
+  "task": "F07",
+  "verdict": "NOT_QUALIFIED",
+  "owner_approved": false,
+  "candidate": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best",
+  "model_sha256": "c24e9ec81d62966b9a4d824f7f4616705b4ffaef3b4ded7a3088754ba73c1aed",
+  "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+  "gate_config": {
+    "path": "configs/evaluation/foundation.yaml",
+    "sha256": "b8b18094111f84327307164807d48f155e3c6fcac93e91ebeeea48255ff8d941"
+  },
+  "evidence_sources": [
+    {
+      "path": "reports/language_encoder/foundation-owner-run.json",
+      "sha256": "cd28f08cdbe19f721041c0c2254a2e4dfdaa65cc45d0ec89ed937aa8f77061a6"
+    },
+    {
+      "path": "reports/tokenizer/foundation-f07.json",
+      "sha256": "71bef5fad3dca6f2ed9c8d150d873f1b0647178966fa34013d2a6951925ee47f"
+    },
+    {
+      "path": "reports/retrieval/foundation.json",
+      "sha256": "bd8a3725f274f95ca277c2da9cf19847bc62ee606c1fdf4bf893c689cffbb550"
+    }
+  ],
+  "remaining_data_integrity_issues": [
+    "STS-B has five normalized train/test pair collisions. The affected split is unchanged.",
+    "ViQuAD has nine mismatched alternative answer offsets, including four in test."
+  ],
+  "test_model_inference_executed": false,
+  "note": "G10 and G11 depend on tokenizer segmentation. The F06 model runs retained the failing tokenizer.",
+  "candidate_manifest": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best/manifest.json"
+}

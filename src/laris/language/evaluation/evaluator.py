@@ -8,7 +8,8 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from types import SimpleNamespace
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import numpy as np
 import pyarrow.parquet as pq
@@ -21,6 +22,7 @@ from laris.language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
 )
 
+ANSWER_TEXT_PROTOCOL = M.ANSWER_TEXT_PROTOCOL
 EVAL_SPLITS = ("val", "test")
 NLI_CLASSES = 3
 DATASET_LANGUAGE = {
@@ -29,6 +31,9 @@ DATASET_LANGUAGE = {
     "wikipedia_vi": "vi", "cc100_vi_clean": "vi", "vinli": "vi", "vists": "vi",
     "viquad_v2": "vi",
 }  # fmt: skip
+QA_MAX_ANSWER_TOKENS = 64  # longest decoded answer, in tokens
+QA_NULL_THRESHOLD = 0.0  # fixed no-answer margin; never tuned on held-out data
+QA_PROTOCOL_VERSION = "answer-text-1"
 PRIMARY_METRIC = {
     "mlm": "masked_accuracy", "nli": "macro_f1", "paraphrase": "auc",
     "similarity": "spearman", "qa": "f1",
@@ -44,6 +49,7 @@ class DatasetResult:
     metrics: Dict[str, float]
     baseline: Dict[str, float]
     baseline_source: str = "train"
+    details: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -105,6 +111,7 @@ class LanguageEncoderEvaluator:
         self.max_samples = max_samples
         self.batch_size = batch_size
         self.seed = seed
+        self._details: Dict[str, Dict[str, Any]] = {}
 
     # ------------------------------------------------------------------ data access
     def _loader(self, task: str, files: List[Path]) -> StreamingParquetMultiTaskDataLoader:
@@ -256,26 +263,153 @@ class LanguageEncoderEvaluator:
         }
         return metrics, (base, "lexical")
 
-    def _score_qa(self, files: List[Path], train_files: List[Path], n: int) -> Tuple[Any, Any]:
-        pred: List[Tuple[int, int]] = []
-        gold: List[Tuple[int, int]] = []
-        for batch, take in self._batches("qa", files, n):
-            out = self._forward(batch)
-            logits = out["qa_logits"][:take].float().cpu().numpy()
-            pred.extend(_spans(logits, batch.attention_mask[:take].numpy()))
-            starts = batch.labels["qa_start_positions"][:take].tolist()
-            ends = batch.labels["qa_end_positions"][:take].tolist()
-            gold.extend(zip(starts, ends))
+    def _decode(self, token_ids: List[int]) -> str:
+        tokenizer = self.encoder.tokenizer
+        ids = [int(t) for t in token_ids]
+        if hasattr(tokenizer, "decode_ids"):
+            return str(tokenizer.decode_ids(ids))
+        if hasattr(tokenizer, "decode"):
+            return str(tokenizer.decode(ids))
+        raise TypeError("Answer-text QA needs a tokenizer that can decode token ids")
+
+    def _records(self, files: List[Path], limit: int):
+        """The first `limit` rows of the split in file order (no shuffling), in batches."""
+        buffer: List[Dict[str, Any]] = []
+        emitted = 0
+        for path in files:
+            for chunk in pq.ParquetFile(path).iter_batches(batch_size=self.batch_size):
+                for record in chunk.to_pylist():
+                    if emitted >= limit:
+                        break
+                    buffer.append(record)
+                    emitted += 1
+                    if len(buffer) == self.batch_size:
+                        yield buffer
+                        buffer = []
+        if buffer:
+            yield buffer
+
+    def qa_predictions(self, files: List[Path], n: int, language: str) -> Iterator[Dict[str, Any]]:
+        """Per-row answer-text predictions of the first `n` rows (shared with error analysis).
+
+        The predicted span is restricted to the context and decoded back to text; it is scored
+        against every gold answer string. Rows whose gold answer was cut off by the sequence
+        window are kept and scored as they are, never silently dropped.
+        """
+        import torch
+
+        loader = self._loader("qa", files)
+        for records in self._records(files, n):
+            sequences, masks, texts_per_record, golds, context_lengths = [], [], [], [], []
+            for rec in records:
+                question, context = rec.get("question") or "", rec.get("context") or ""
+                q_tokens, c_tokens = loader._tokenize(question), loader._tokenize(context)
+                ids, mask = loader._prepare_sequence(q_tokens, c_tokens)
+                sequences.append(ids)
+                masks.append(mask)
+                golds.append(loader._locate_answer_span(rec, context, q_tokens))
+                answers = rec.get("answers")
+                texts = answers.get("text") if isinstance(answers, dict) else None
+                texts_per_record.append([t for t in (texts or []) if t and t.strip()])
+                context_lengths.append(len(c_tokens))
+            batch = SimpleNamespace(
+                token_ids=torch.tensor(sequences, dtype=torch.long),
+                attention_mask=torch.tensor(masks, dtype=torch.long),
+            )
+            logits = self._forward(batch)["qa_logits"].float().cpu().numpy()
+            for i, ids in enumerate(sequences):
+                seps = [j for j, t in enumerate(ids) if t == SEP_ID]
+                start = seps[0] + 1 if seps else 1
+                end = seps[1] - 1 if len(seps) > 1 else start - 1
+                span = M.select_answer_span(
+                    logits[i, :, 0], logits[i, :, 1], start, end,
+                    QA_MAX_ANSWER_TOKENS, QA_NULL_THRESHOLD,
+                )  # fmt: skip
+                text = self._decode(ids[span[0] : span[1] + 1]) if span else ""
+                em, f1 = M.answer_scores(text, texts_per_record[i], language)
+                b_em, b_f1 = M.answer_scores("", texts_per_record[i], language)
+                has_answer = bool(texts_per_record[i])
+                yield {
+                    "id": records[i].get("id"),
+                    "question": records[i].get("question") or "",
+                    "gold_texts": texts_per_record[i],
+                    "prediction": text,
+                    "em": em,
+                    "f1": f1,
+                    "baseline_em": b_em,
+                    "baseline_f1": b_f1,
+                    "has_answer": has_answer,
+                    "pred_span": span or (0, 0),
+                    "gold_span": golds[i],
+                    "context_tokens": context_lengths[i],
+                    "answer_outside_window": has_answer and golds[i] == (0, 0),
+                    "context_truncated": context_lengths[i] > max(0, end - start + 1),
+                }
+
+    def _score_qa(
+        self, files: List[Path], train_files: List[Path], n: int, dataset: str = ""
+    ) -> Tuple[Any, Any]:
+        """Normalised answer-text EM/F1 (the formal protocol) plus token-span diagnostics.
+
+        Questions whose gold answer was cut off by the sequence window are kept and scored as
+        they are (the model cannot reach them), never silently dropped; their count is recorded.
+        """
+        language = DATASET_LANGUAGE.get(dataset, "unknown")
+        rows: List[Dict[str, float]] = []
+        baseline_rows: List[Dict[str, float]] = []
+        span_pred: List[Tuple[int, int]] = []
+        span_gold: List[Tuple[int, int]] = []
+        outside_window = context_truncated = 0
+        for row in self.qa_predictions(files, n, language):
+            rows.append({"em": row["em"], "f1": row["f1"], "has_answer": row["has_answer"]})
+            baseline_rows.append(
+                {
+                    "em": row["baseline_em"],
+                    "f1": row["baseline_f1"],
+                    "has_answer": row["has_answer"],
+                }
+            )
+            span_pred.append(row["pred_span"])
+            span_gold.append(row["gold_span"])
+            outside_window += int(row["answer_outside_window"])
+            context_truncated += int(row["context_truncated"])
+        summary = M.answer_text_summary(rows)
+        total = len(rows)
         metrics = {
-            "exact_match": _mean([float(p == g) for p, g in zip(pred, gold)]),
-            "f1": _mean([M.span_f1(p, g) for p, g in zip(pred, gold)]),
+            **summary,
+            "token_span_exact_match": _mean([float(p == g) for p, g in zip(span_pred, span_gold)]),
+            "token_span_f1": _mean([M.span_f1(p, g) for p, g in zip(span_pred, span_gold)]),
+            "answer_outside_window_rate": outside_window / total if total else 0.0,
+            "context_truncated_rate": context_truncated / total if total else 0.0,
         }
-        no_answer = [(0, 0)] * len(gold)
-        baseline_f1 = _mean([M.span_f1(p, g) for p, g in zip(no_answer, gold)])
+        base_summary = M.answer_text_summary(baseline_rows)
         base = {
-            "no_answer_or_first": baseline_f1,
-            "f1": baseline_f1,
-            "exact_match": _mean([float(p == g) for p, g in zip(no_answer, gold)]),
+            "no_answer_or_first": base_summary["f1"],
+            "f1": base_summary["f1"],
+            "exact_match": base_summary["exact_match"],
+        }
+        split_rows = self._row_count(files)
+        self._details[dataset] = {
+            "qa_protocol_version": QA_PROTOCOL_VERSION,
+            "answer_normalization": "nfc_lowercase_strip_punctuation"
+            + ("_drop_en_articles" if language == "en" else ""),
+            "span_decoding": {
+                "restricted_to_context": True,
+                "max_answer_tokens": QA_MAX_ANSWER_TOKENS,
+                "null_threshold": QA_NULL_THRESHOLD,
+                "prediction_text": "tokenizer_decode_of_predicted_span",
+            },
+            "gold_answers": "all_acceptable_texts_best_score",
+            "no_answer_rule": "correct_only_if_prediction_empty",
+            "truncation_policy": "kept_and_scored_without_sliding_window",
+            "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+            "split_rows": split_rows,
+            "scored_rows": total,
+            "complete_split": total == split_rows,
+            "has_answer_rows": sum(1 for r in rows if r["has_answer"]),
+            "no_answer_rows": sum(1 for r in rows if not r["has_answer"]),
+            "answer_outside_window_rows": outside_window,
+            "context_truncated_rows": context_truncated,
         }
         return metrics, (base, "constant")
 
@@ -298,7 +432,10 @@ class LanguageEncoderEvaluator:
                 if not files:
                     continue
                 n = min(self._row_count(files), self.max_samples)
-                metrics, (baseline, source) = scorers[task](files, self._train_files(dataset), n)
+                extra = {"dataset": dataset} if task == "qa" else {}
+                metrics, (baseline, source) = scorers[task](
+                    files, self._train_files(dataset), n, **extra
+                )
                 report.results.append(
                     DatasetResult(
                         task=task,
@@ -308,6 +445,7 @@ class LanguageEncoderEvaluator:
                         metrics=metrics,
                         baseline=baseline,
                         baseline_source=source,
+                        details=self._details.pop(dataset, {}) if task == "qa" else {},
                     )
                 )
         report.groups = self._aggregate(report.results)
@@ -367,6 +505,18 @@ def assert_leakage_verified(data_dir: Path) -> None:
         raise ValueError(f"Datasets without verified split isolation: {bad}")
 
 
+def _qa_protocols(result: DatasetResult) -> Dict[str, str]:
+    """Answer-text protocol is claimed only when the result carries its provenance."""
+    if result.details.get("qa_protocol_version") != QA_PROTOCOL_VERSION:
+        return {"exact_match": "token_span", "f1": "token_span"}
+    return {
+        "exact_match": ANSWER_TEXT_PROTOCOL,
+        "f1": ANSWER_TEXT_PROTOCOL,
+        "token_span_exact_match": "token_span",
+        "token_span_f1": "token_span",
+    }
+
+
 def report_to_dict(
     report: EvaluationReport, extra: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
@@ -378,9 +528,8 @@ def report_to_dict(
             {
                 "task": r.task, "dataset": r.dataset, "language": r.language,
                 "samples": r.samples, "metrics": r.metrics, "baseline": r.baseline,
-                "metric_protocols": (
-                    {"exact_match": "token_span", "f1": "token_span"} if r.task == "qa" else {}
-                ),
+                "metric_protocols": _qa_protocols(r) if r.task == "qa" else {},
+                **({"protocol_details": r.details} if r.details else {}),
                 "baseline_source": r.baseline_source,
             }
             for r in report.results

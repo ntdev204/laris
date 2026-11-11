@@ -233,6 +233,8 @@ class StreamingParquetMultiTaskDataLoader:
         require_real_data: bool = False,
         trim_padding: bool = False,
         length_pool_batches: int = 1,
+        dataset_sampling_exponents: Optional[Dict[str, float]] = None,
+        include_retrieval_pairs: bool = False,
     ) -> None:
         if length_pool_batches < 1:
             raise ValueError("length_pool_batches must be >= 1")
@@ -259,6 +261,15 @@ class StreamingParquetMultiTaskDataLoader:
         self.fallback_to_synthetic = fallback_to_synthetic
         self.trim_padding = trim_padding
         self.length_pool_batches = length_pool_batches
+        self.dataset_sampling_exponents = dict(dataset_sampling_exponents or {})
+        if any(
+            task not in TASK_DATASET_DIRS or not math.isfinite(power) or power <= 0
+            for task, power in self.dataset_sampling_exponents.items()
+        ):
+            raise ValueError("dataset sampling exponents require known tasks and positive powers")
+        if split != "train" and (self.dataset_sampling_exponents or include_retrieval_pairs):
+            raise ValueError("dataset resampling and retrieval pairs require the train split")
+        self.include_retrieval_pairs = include_retrieval_pairs
         self._pending: Dict[str, List[List[Dict[str, Any]]]] = {}
 
         # Discover or assign task file paths
@@ -302,12 +313,15 @@ class StreamingParquetMultiTaskDataLoader:
         self._build_streams()
 
     def _build_streams(self) -> None:
-        """(Re)creates one stream per task; a task's datasets are sampled in proportion to size."""
+        """Recreate per-task streams using the configured dataset count exponents."""
         self._task_iterators: Dict[str, Iterator[Dict[str, Any]]] = {}
         for task_name, path_list in self.task_paths.items():
             if path_list:
                 self._task_iterators[task_name] = self._interleaved_stream(
-                    path_list, self.buffer_size, random.Random(f"{self._seed}:{task_name}")
+                    path_list,
+                    self.buffer_size,
+                    random.Random(f"{self._seed}:{task_name}"),
+                    self.dataset_sampling_exponents.get(task_name, 1.0),
                 )
 
     def reset(self) -> None:
@@ -352,21 +366,28 @@ class StreamingParquetMultiTaskDataLoader:
 
     @classmethod
     def _interleaved_stream(
-        cls, paths: List[Path], buffer_size: int, rng: random.Random
+        cls, paths: List[Path], buffer_size: int, rng: random.Random, dataset_exponent: float = 1.0
     ) -> Iterator[Dict[str, Any]]:
-        """Draws each record from one of the files with probability proportional to its rows.
+        """Draw a dataset by count exponent and a shard within it by row count.
 
         Reading the files one after another would show a bilingual task its first dataset for
         most of a run (all English, then all Vietnamese).
         """
         if len(paths) == 1:
             return cls._create_task_stream(paths, buffer_size)
-        weights = []
+        row_counts = []
         for p in paths:
             try:
-                weights.append(max(1, pq.ParquetFile(p).metadata.num_rows))
+                row_counts.append(max(1, pq.ParquetFile(p).metadata.num_rows))
             except Exception:
-                weights.append(1)  # the stream itself reports an unreadable shard
+                row_counts.append(1)  # the stream itself reports an unreadable shard
+        dataset_counts: Dict[Path, int] = {}
+        for path, count in zip(paths, row_counts):
+            dataset_counts[path.parent] = dataset_counts.get(path.parent, 0) + count
+        weights = [
+            count * dataset_counts[path.parent] ** (dataset_exponent - 1)
+            for path, count in zip(paths, row_counts)
+        ]
         streams = [cls._create_task_stream([p], buffer_size) for p in paths]
 
         def draw() -> Iterator[Dict[str, Any]]:
@@ -631,6 +652,7 @@ class StreamingParquetMultiTaskDataLoader:
         attention_mask_list: List[List[int]] = []
         starts: List[int] = []
         ends: List[int] = []
+        retrieval_pairs: List[Tuple[List[int], List[int]]] = []
 
         for rec in records:
             q = rec.get("question") or ""
@@ -645,18 +667,47 @@ class StreamingParquetMultiTaskDataLoader:
             start_pos, end_pos = self._locate_answer_span(rec, c, q_toks)
             starts.append(start_pos)
             ends.append(end_pos)
+            if self.include_retrieval_pairs and start_pos > 0 and q_toks and c_toks:
+                retrieval_pairs.append((q_toks, c_toks))
 
         tok_arr = np.array(token_ids_list, dtype=np.int64)
         att_arr = np.array(attention_mask_list, dtype=np.int64)
         start_arr = np.array(starts, dtype=np.int64)
         end_arr = np.array(ends, dtype=np.int64)
 
+        labels = {"qa_start_positions": start_arr, "qa_end_positions": end_arr}
+        if len(retrieval_pairs) >= 2:
+            labels.update(self._retrieval_labels(retrieval_pairs))
         return self._to_task_batch(
             "qa",
             tok_arr,
             att_arr,
-            {"qa_start_positions": start_arr, "qa_end_positions": end_arr},
+            labels,
         )
+
+    def _retrieval_labels(
+        self, pairs: List[Tuple[List[int], List[int]]]
+    ) -> Dict[str, np.ndarray]:
+        """Encode standalone QA queries and passages as in dense inference."""
+        result: Dict[str, np.ndarray] = {}
+        encoded = []
+        for column, name in enumerate(("query", "passage")):
+            sequences, masks = zip(
+                *(build_sequence(pair[column], None, self.seq_len) for pair in pairs)
+            )
+            length = max(map(sum, masks))
+            result[f"retrieval_{name}_ids"] = np.asarray(sequences, dtype=np.int64)[:, :length]
+            result[f"retrieval_{name}_mask"] = np.asarray(masks, dtype=np.int64)[:, :length]
+            encoded.append(sequences)
+        queries, passages = encoded
+        result["retrieval_positives"] = np.asarray(
+            [
+                [q1 == q2 or p1 == p2 for q2, p2 in zip(queries, passages)]
+                for q1, p1 in zip(queries, passages)
+            ],
+            dtype=np.bool_,
+        )
+        return result
 
     def _to_task_batch(
         self,
@@ -678,7 +729,7 @@ class StreamingParquetMultiTaskDataLoader:
             attention_mask = np.ascontiguousarray(attention_mask[:, :seq_len])
             labels = {
                 k: np.ascontiguousarray(v[:, :seq_len])
-                if v.ndim == 2 and v.shape[1] == self.seq_len
+                if not k.startswith("retrieval_") and v.ndim == 2 and v.shape[1] == self.seq_len
                 else v
                 for k, v in labels.items()
             }

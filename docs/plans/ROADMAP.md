@@ -3,9 +3,9 @@ document_id: "DOC-PLAN-ROADMAP-001"
 title: "LARIS Roadmap: Milestones and Exit Criteria"
 document_type: "plan"
 status: "DRAFT"
-version: "0.3.0"
+version: "0.4.0"
 created_at: "2026-10-15"
-updated_at: "2026-11-10"
+updated_at: "2026-11-11"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -17,18 +17,31 @@ decision_references:
   - "ADR-002"
   - "ADR-007"
   - "ADR-008"
-change_summary: "Distinguishes implemented components from empirically satisfied milestone exits."
+change_summary: "Reconciles historical engineering milestones with the staged execution plan and canonical foundation gates."
 ---
 
 # LARIS Roadmap: Milestones and Exit Criteria
 
-Milestone sequence and the exit criteria that gate each one. Task-level work is tracked in GitHub issues. Implemented components and passing contract tests do not establish empirical milestone completion. The [measured status report](../research/EMPIRICAL_STATUS.md) records the current checkpoint validation and real-paper pilot, including unmet retrieval, extraction and gap-discovery gates.
+Historical engineering milestones and their exit criteria. Task-level work is tracked in GitHub issues and the [project plan](../../.agents/plan.md). Implemented components and passing contract tests do not establish empirical milestone completion. The [measured status report](../research/EMPIRICAL_STATUS.md) records the current checkpoint validation and real-paper pilot, including unmet retrieval, extraction and gap-discovery gates.
 
 ## 1. Implementation Roadmap
 
 ### 1. Roadmap Architecture & Execution Philosophy
 
-The development of LARIS is organized into twelve sequential milestones (M0 through M11). In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), advancement from one milestone to the next requires satisfying explicit, empirical entry and exit criteria.
+M0–M11 are historical component-delivery labels, not the order in which models may be trained or qualified. Their listed dependencies describe engineering relationships. The execution order and task ownership come from `.agents/plan.md`; detailed model contracts come from the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md). In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md), component implementation does not satisfy an empirical exit criterion. M11 governance applies before learning, rather than after productization.
+
+| Execution phase | Task IDs | Required boundary |
+| --- | --- | --- |
+| Governance | G00–G03 | Baseline reconciliation and owner prerequisite decisions |
+| Foundation | F01–F07, including F04A | All 12 canonical foundation gates and owner review |
+| Scientific language | S01–S05, including S01A | Qualified foundation before model 02; scientific gates and owner review |
+| OCR | O01–O04, including O01A | Qualified scientific language; human OCR/layout gold |
+| Manuscript learning | M01A, M01–M03 | Qualified OCR; human discourse gold |
+| Integration | I01–I04 | Qualified component models; real execution and resource evidence |
+| Specialists | R01–R04 | Qualified integration; specialist gates and owner review |
+| Product/release | P01–P03 | Reviewed capability evidence and explicit release authorization |
+
+The diagram below shows component relationships only. It does not authorize skipping any phase above. Full task dependencies, deliverables and stop conditions remain in the three `.agents` Markdown files. ADRs and canonical specifications govern thresholds; this roadmap cannot override them.
 
 ```mermaid
 flowchart TD
@@ -42,7 +55,8 @@ flowchart TD
     M7 --> M8["M8: Adaptive Local Execution"]
     M8 --> M9["M9: Feedback & Policy Learning"]
     M9 --> M10["M10: Reporting & Productization"]
-    M10 --> M11["M11: Staged Learning & Refactoring"]
+    M0 --> M11["M11: Cross-cutting Learning Governance & Refactoring"]
+    M11 --> M2
 ```
 
 ---
@@ -62,10 +76,10 @@ flowchart TD
 - **Exit Criteria:** Zero train-test leakage across document/author boundaries; 100% of corpus licensed and auditable.
 
 #### Milestone M2: Language Foundation & Core Representations
-- **Objective:** Train custom STEM subword tokenizer and compact scientific sentence encoders.
+- **Objective:** Establish the custom EN/VI natural-language tokenizer and encoder foundation before scientific-language adaptation. All training is owner-executed.
 - **Dependencies:** M1.
 - **Deliverables:** Trained tokenizer checkpoint, vocabulary artifact, compact encoder checkpoint, paraphrase benchmark suite.
-- **Exit Criteria:** Tokenizer fertility $\le 1.4$ subwords/word on STEM test set; sentence encoder exceeds lexical BM25 baseline on semantic retrieval.
+- **Exit Criteria:** All 12 gates in `configs/evaluation/foundation.yaml`, including fertility $\le 1.35$ tokens/word separately on unseen EN and VI text, and held-out retrieval MRR $\ge 0.82$ exceeding BM25; matching artifact identities and owner review. STEM fixture scores alone do not qualify this stage.
 
 #### Milestone M3: Semantic Relations & Natural Language Inference
 - **Objective:** Train and calibrate the in-house scientific NLI model and discourse relation parsers.
@@ -117,7 +131,7 @@ flowchart TD
 
 #### Milestone M11: Staged Learning Pipeline Governance, Dataset Acquisition & Domain Refactoring
 - **Objective:** Establish the authoritative 6-stage model learning sequence, execute licensing verification and empirical dataset acquisition, and refactor numbered source folders into domain packages while preserving the 12-layer architecture.
-- **Dependencies:** M10.
+- **Dependencies:** M0; cross-cutting prerequisites for model learning, not a stage after M10.
 - **Deliverables:** Staged learning pipeline specification (`DOC-SPEC-TRAIN-001`), implementation audit report (`DOC-RES-AUDIT-001`), dataset specification and licensing matrix, acquired and verified priority datasets (Universal Dependencies, PAWS, ANLI, SciFact, ViQuAD, DocLayNet, PubLayNet), S2ORC subset selection analysis, project-owned LARIS-GOLD specification, and domain-based package layout (`src/laris/corpus`, `src/laris/language`, `src/laris/scientific`, `src/laris/retrieval`, `src/laris/reasoning`, `src/laris/orchestration`, `src/laris/execution`, `src/laris/evaluation`, `src/laris/reporting`).
 - **Exit Criteria:** Zero model training executed during M11; all priority datasets verified with checksums and schemas; S2ORC strictly bounded ($<20$ GB, $<20$M samples) or skipped if blocked; source refactoring complete with 100% of unit/contract tests passing and zero breaking changes to existing contracts.
 
@@ -129,7 +143,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Documentation & Governance Baseline | `docs/` complete suite, ADR-001–008, `validate_docs.py`, skeleton tests. | Greenfield workspace initialized. | `scripts/validate_docs.py` passes 100% clean; project owner review. |
 | **M1** | Corpus Ingestion & Data Governance | Partitioned datasets in `data/`, deduplication manifests, provenance records. | M0 Approved. | Zero train-test leakage; 100% license compliance verified. |
-| **M2** | Language Foundation & Encoders | Tokenizer checkpoint, vocab file, sentence encoder weights. | M1 Exit Passed. | Tokenizer fertility $\le 1.4$ on STEM; retrieval MRR baseline surpassed. |
+| **M2** | Language Foundation & Encoders | Tokenizer checkpoint, vocab file, sentence encoder weights. | M1 Exit Passed and learning governance established. | All 12 canonical foundation gates; fertility $\le 1.35$ separately EN/VI; held-out retrieval MRR $\ge 0.82$ and above BM25; owner review. |
 | **M3** | Semantic Relations & NLI | 3-way NLI model weights, coreference resolver, discourse parser. | M2 Exit Passed. | NLI macro F1 $\ge 0.82$; zero topical similarity conflation. |
 | **M4** | Scientific NLP & Discourse | Claim/Limitation extractor, SI unit normalizer. | M3 Exit Passed. | Heading-agnostic limitation detection recall $\ge 80\%$. |
 | **M5** | Hybrid RAG & Evidence Graph | Layer 5 Graph database, Layer 6 hybrid retriever. | M4 Exit Passed. | 100% retrieved items anchor to verified `EvidenceCoordinate`. |

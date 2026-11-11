@@ -1,0 +1,112 @@
+{
+  "task": "G03",
+  "owner_authorization": "2026-11-11: skip missing datasets; acquire STEM-VI if available; agent selects OCR source and installs dependencies. Sudo authorized separately; credential not retained.",
+  "datasets": {
+    "SciFact": "SKIPPED_MISSING",
+    "S2ORC": "SKIPPED_MISSING_ACCESS",
+    "STEM_VI": {
+      "source": "VietAI/vi_pubmed",
+      "url": "https://huggingface.co/datasets/VietAI/vi_pubmed/resolve/decfdcc57efa83466449ccaa658ad431a8a416d4/data/pubmed22-00000-of-00089-5cd8ea7c3541d46a.parquet",
+      "revision": "decfdcc57efa83466449ccaa658ad431a8a416d4",
+      "file": "data/raw/vi_pubmed_candidate/pubmed22-00000-of-00089-5cd8ea7c3541d46a.parquet",
+      "bytes": 254227532,
+      "sha256": "54e411a885c4a349b4bdf154c5482d131fd7acbd21edbacac6b69feb12837231",
+      "rows": 225697,
+      "schema": "en: string\nvi: string",
+      "status": "DOWNLOADED_QUARANTINED",
+      "license": "HF card says cc without subtype; not independently cleared; no training use yet",
+      "provenance": "Upstream machine-translated biomedical abstracts, not human scientific gold",
+      "sampling": "First shard only, not random sample; no train/val/test assignment or model execution"
+    },
+    "OCR": {
+      "selected_source": "https://github.com/DS4SD/DocLayNet",
+      "license_source": "https://github.com/DS4SD/DocLayNet/blob/main/LICENSE",
+      "downloaded": false,
+      "reason": "Source selection only; full 28 GiB core exceeds budget; bounded subset acquisition belongs to O01A."
+    }
+  },
+  "python_packages": {
+    "Pillow": "12.3.0",
+    "pytesseract": "0.3.13",
+    "pypdf": "7.0.1"
+  },
+  "installations": [
+    {
+      "command": "uv pip install --python .venv/bin/python Pillow pytesseract pypdf",
+      "exit_code": 0
+    },
+    {
+      "command": "sudo apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-vie",
+      "exit_code": 0
+    }
+  ],
+  "native_checks": [
+    {
+      "command": [
+        "/usr/bin/tesseract",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "tesseract 5.3.4\n leptonica-1.82.0\n  libgif 5.2.1 : libjpeg 8d (libjpeg-turbo 2.1.5) : libpng 1.6.43 : libtiff 4.5.1 : zlib 1.3 : libwebp 1.3.2 : libopenjp2 2.5.0\n Found AVX2\n Found AVX\n Found FMA\n Found SSE4.1\n Found OpenMP 201511\n Found libarchive 3.7.2 zlib/1.3 liblzma/5.4.5 bz2lib/1.0.8 liblz4/1.9.4 libzstd/1.5.5\n Found libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/tesseract",
+        "--list-langs"
+      ],
+      "exit_code": 0,
+      "stdout": "List of available languages in \"/usr/share/tesseract-ocr/5/tessdata/\" (3):\neng\nosd\nvie\n",
+      "stderr": ""
+    }
+  ],
+  "system_packages": {
+    "command": [
+      "dpkg-query",
+      "-W",
+      "tesseract-ocr",
+      "tesseract-ocr-eng",
+      "tesseract-ocr-vie",
+      "tesseract-ocr-osd",
+      "libtesseract5",
+      "liblept5"
+    ],
+    "exit_code": 0,
+    "stdout": "liblept5:amd64\t1.82.0-3build4\nlibtesseract5:amd64\t5.3.4-1build5\ntesseract-ocr\t5.3.4-1build5\ntesseract-ocr-eng\t1:4.1.0-2\ntesseract-ocr-osd\t1:4.1.0-2\ntesseract-ocr-vie\t1:4.1.0-2\n",
+    "stderr": ""
+  },
+  "training_executed": false,
+  "model_inference_executed": false,
+  "qualification_changed": false,
+  "remaining_owner_input": "D05 annotators/adjudicator and per-type agreement protocol are unassigned; no gold invented.",
+  "validation": [
+    {
+      "command": "make PY=.venv/bin/python check-no-training",
+      "exit_code": 0,
+      "tests_passed": 49,
+      "duration_seconds": 2.77,
+      "mypy_source_files": 147,
+      "documentation_files": 54,
+      "work_plan": "PASS"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/contract/test_work_plan.py -q -o addopts=''",
+      "exit_code": 0,
+      "tests_passed": 17,
+      "duration_seconds": 1.84
+    },
+    {
+      "command": "uv pip check --python .venv/bin/python",
+      "exit_code": 0,
+      "packages_checked": 58
+    },
+    {
+      "check": "pytesseract native version/language inventory, no image inference",
+      "result": "5.3.4; eng, osd, vie"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ]
+}

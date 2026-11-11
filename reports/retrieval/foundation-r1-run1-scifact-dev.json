@@ -1,0 +1,121 @@
+{
+ "benchmark_version": "foundation-retrieval-1",
+ "benchmark_id": "foundation_scifact_dev_retrieval",
+ "split": "test",
+ "datasets": [
+  {
+   "dataset": "paragraph_retrieval",
+   "language": "en",
+   "samples": 809,
+   "metrics": {
+    "mrr": 0.006688539574353561,
+    "ndcg_at_10": 0.005828542820062224,
+    "recall_at_10": 0.014833127317676144,
+    "hybrid_mrr": 0.19953328864956632
+   },
+   "baseline": {
+    "mrr": 0.6362048496294567,
+    "ndcg_at_10": 0.6637728268350467,
+    "recall_at_10": 0.8009888751545118
+   },
+   "metric_protocols": {
+    "mrr": "held_out_query_relevance"
+   },
+   "protocol_details": {
+    "source": "scifact_train_dev_en",
+    "gate_system": "dense",
+    "baseline_system": "bm25",
+    "gate_eligible": false,
+    "gate_ineligible_reason": "development split; the sealed SciFact test claims gate G12"
+   }
+  }
+ ],
+ "sources": [
+  {
+   "id": "scifact_train_dev_en",
+   "language": "en",
+   "domain": "biomedical_claims",
+   "file": "data/raw/scifact/qrels__train.tsv",
+   "file_sha256": "a53f2114831916c096b6c37d9e54da68cef4efdcdbd5ed46533601af972acf1d",
+   "frozen": {
+    "queries": 809,
+    "documents": 5183,
+    "digest": "05e711842c1ba24cb7e2a4a73e59517649b231bd92937b60f29326e601399438"
+   },
+   "isolation": {
+    "train_query_overlap": 0,
+    "train_relevant_document_overlap": 181,
+    "test_relevant_documents": 565,
+    "partitioned_for_training": false,
+    "note": "claims are disjoint; the corpus is shared by design and is not training data"
+   },
+   "systems": {
+    "bm25": {
+     "mrr": 0.6362048496294567,
+     "ndcg_at_10": 0.6637728268350467,
+     "recall_at_1": 0.5550061804697157,
+     "recall_at_5": 0.7379480840543882,
+     "recall_at_10": 0.8009888751545118,
+     "recall_at_50": 0.8776266996291718,
+     "mrr_ci95": [
+      0.6061347606301073,
+      0.6648076391011635
+     ]
+    },
+    "dense": {
+     "mrr": 0.006688539574353561,
+     "ndcg_at_10": 0.005828542820062224,
+     "recall_at_1": 0.002472187886279357,
+     "recall_at_5": 0.007416563658838072,
+     "recall_at_10": 0.014833127317676144,
+     "recall_at_50": 0.03584672435105068,
+     "mrr_ci95": [
+      0.0035736385077878865,
+      0.01055000108776863
+     ]
+    },
+    "hybrid_rrf": {
+     "mrr": 0.19953328864956632,
+     "ndcg_at_10": 0.2786285784016641,
+     "recall_at_1": 0.06798516687268233,
+     "recall_at_5": 0.3053152039555006,
+     "recall_at_10": 0.6291718170580964,
+     "recall_at_50": 0.8603213844252163,
+     "mrr_ci95": [
+      0.18214324273774812,
+      0.2174460136122144
+     ]
+    }
+   },
+   "paired_differences": {
+    "dense_minus_bm25_mrr": {
+     "mean": -0.6295163100551032,
+     "ci95": [
+      -0.6585853580924022,
+      -0.5988901014007427
+     ]
+    },
+    "hybrid_rrf_minus_bm25_mrr": {
+     "mean": -0.4366715609798904,
+     "ci95": [
+      -0.46563499417704096,
+      -0.4087420116921474
+     ]
+    }
+   },
+   "subsets": {}
+  }
+ ],
+ "relevance": "human-written question for its source paragraph (dataset labels); no relevance judgment was generated or edited",
+ "hard_negatives": "other paragraphs of the same article",
+ "tie_policy": "pessimistic: the relevant document ranks below all equal scores",
+ "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+ "split_isolation_checked": true,
+ "seed": 42,
+ "config_sha256": "2dbc20722173abbd7fb95c45efdc2f1fbd8361fa8b4d3a75969467b1168ec6f9",
+ "checkpoint": "artifacts/checkpoints/language_encoder/foundation-r1-run1/best",
+ "model_sha256": "b3dd71391de1e334cae52c613e1942dfc150ddf421b71c2e4bb859aad4dacb2f",
+ "tokenizer_sha256": "36181adf89d9f6547245d358923135289029453d2956afb207052b1881205047",
+ "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+ "training_executed": false
+}

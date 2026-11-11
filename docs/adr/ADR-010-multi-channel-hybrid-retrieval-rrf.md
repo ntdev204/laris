@@ -11,7 +11,7 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/research/HYBRID_RAG.md"
+  - "docs/research/RESEARCH_STRATEGY.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
 decision_references:
@@ -86,7 +86,7 @@ Layer 6 retrieval must:
 - RRF ignores absolute score margins between consecutive ranks in a single channel.
 
 ## 5. Related Documents
-- [HYBRID_RAG.md](../research/HYBRID_RAG.md)
+- [RESEARCH_STRATEGY.md](../research/RESEARCH_STRATEGY.md)
 - [LAYER_ARCHITECTURE.md](../architecture/LAYER_ARCHITECTURE.md)
 - [ADR-001: Local-First System Boundary](ADR-001-local-first-system-boundary.md)
 - [ADR-004: Evidence Provenance First-Class](ADR-004-evidence-provenance-first-class.md)

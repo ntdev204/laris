@@ -11,7 +11,7 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/research/SCIENTIFIC_NLP.md"
+  - "docs/research/RESEARCH_STRATEGY.md"
   - "docs/specifications/MODULE_CONTRACTS.md"
 decision_references:
   - "ADR-003"
