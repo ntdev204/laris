@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     ReportSchemaValidationError,
     UnanchoredAssertionError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,

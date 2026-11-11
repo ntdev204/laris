@@ -14,15 +14,15 @@ from typing import Dict, List
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     ReportSchemaValidationError,
     UnanchoredAssertionError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting.report_generator import (
+from core.schemas import EvidenceCoordinate
+from reporting.report_generator import (
     StructuredReportGenerator,
 )
-from laris.reporting.report_schema import (
+from reporting.report_schema import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,

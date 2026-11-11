@@ -2,7 +2,7 @@
 
 import unittest
 
-from laris.core.schemas import (
+from core.schemas import (
     CalibratedScores,
     EpistemicStatus,
     EvidenceCoordinate,

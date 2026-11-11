@@ -11,10 +11,10 @@ import pyarrow.parquet as pq
 import torch
 import yaml
 
-from laris.language.evaluation import metrics as m
-from laris.language.evaluation.evaluator import DATASET_LANGUAGE, LanguageEncoderEvaluator
-from laris.language.inference.loader import load_encoder
-from laris.language.training.checkpoint import file_sha256
+from language.evaluation import metrics as m
+from language.evaluation.evaluator import DATASET_LANGUAGE, LanguageEncoderEvaluator
+from language.inference.loader import load_encoder
+from language.training.checkpoint import file_sha256
 
 DATA = Path("data/processed")
 MANIFEST = DATA / "task_splits_manifest.json"
@@ -222,7 +222,7 @@ def main():
         model_sha256=file_sha256(checkpoint / "model.pt"),
         tokenizer_sha256=file_sha256(tokenizer),
         dataset_manifest_sha256=file_sha256(MANIFEST),
-        evaluator_sha256=file_sha256(Path("src/laris/language/evaluation/evaluator.py")),
+        evaluator_sha256=file_sha256(Path("src/language/evaluation/evaluator.py")),
         torch_version=torch.__version__,
         validation=scores,
         data_audit=audit_rows,

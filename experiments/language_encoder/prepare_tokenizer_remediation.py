@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import sentencepiece as spm
 
-from laris.language.benchmarks.fertility import (
+from language.benchmarks.fertility import (
     DEFAULT_SOURCES,
     classify_overlap,
     fingerprint_fit_corpus,
@@ -19,8 +19,8 @@ from laris.language.benchmarks.fertility import (
     read_texts,
     sample_indices,
 )
-from laris.language.tokenization.trainer import extract_clean_wikipedia_corpus
-from laris.language.training.checkpoint import file_sha256
+from language.tokenization.trainer import extract_clean_wikipedia_corpus
+from language.training.checkpoint import file_sha256
 
 DATA = Path("data/processed")
 OUTPUT = Path("artifacts/tokenizer/foundation-r1")

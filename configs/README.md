@@ -12,5 +12,6 @@ Declarative configuration files, organised by function.
 
 ## Guidelines
 - Name files by function and size preset, never by version or training stage.
+- Runtime tuning (agent, context, model API, security, serving, app, prompts) lives in `default.yaml`; override per user or project in `.laris/config.yaml` or with `LARIS_*` variables (`.env.example`).
 - Do not store credentials, API keys, or machine-specific absolute paths here.
 - Every YAML file must validate against `LarisConfig` (enforced by `tests/contract/test_config_contracts.py`).

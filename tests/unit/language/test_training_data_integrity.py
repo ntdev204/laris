@@ -10,9 +10,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from laris.language.schemas import SpecialTokenConfig
-from laris.language.tokenization.trainer import TokenizerTrainerConfig, TokenizerTrainingPipeline
-from laris.language.training.dataloader import StreamingParquetMultiTaskDataLoader
+from language.schemas import SpecialTokenConfig
+from language.tokenization.trainer import TokenizerTrainerConfig, TokenizerTrainingPipeline
+from language.training.dataloader import StreamingParquetMultiTaskDataLoader
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -52,7 +52,7 @@ def test_empty_data_dir_fails_fast_by_default(tmp_path: Path) -> None:
 def test_fallback_tokenizer_is_process_independent(tmp_path: Path) -> None:
     code = (
         "import sys;"
-        "from laris.language.training.dataloader import StreamingParquetMultiTaskDataLoader as L;"
+        "from language.training.dataloader import StreamingParquetMultiTaskDataLoader as L;"
         "l = L(data_dir=sys.argv[1], vocab_size=500, seq_len=16, fallback_to_synthetic=True);"
         "print(l._tokenize('quantum entanglement spooky'))"
     )
@@ -147,7 +147,7 @@ def test_sentencepiece_args_reserve_mask_before_other_symbols(tmp_path: Path) ->
 
 def test_injected_optimizer_must_be_bound_to_model_parameters() -> None:
     torch = pytest.importorskip("torch")
-    from laris.language.training.trainer import LanguageEncoderTrainer
+    from language.training.trainer import LanguageEncoderTrainer
 
     model = torch.nn.Linear(2, 2)
     other = torch.nn.Linear(2, 2)

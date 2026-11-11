@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from laris.language.training.progress import (
+from language.training.progress import (
     TrainingProgress,
     format_duration,
     format_metrics,

@@ -13,9 +13,9 @@ import yaml
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
 
-from laris.language.benchmarks import retrieval as R  # noqa: E402
-from laris.language.evaluation.readiness import assess_readiness  # noqa: E402
-from laris.language.training.checkpoint import file_sha256  # noqa: E402
+from language.benchmarks import retrieval as R  # noqa: E402
+from language.evaluation.readiness import assess_readiness  # noqa: E402
+from language.training.checkpoint import file_sha256  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = pa.schema(

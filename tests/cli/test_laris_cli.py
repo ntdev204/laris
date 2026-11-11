@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from laris.cli.main import COMMANDS, build_parser, main
+from cli.main import COMMANDS, build_parser, main
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,7 +62,7 @@ def test_training_refuses_without_authorization_flag(capsys: pytest.CaptureFixtu
 
 
 def test_training_hyperparameters_come_from_yaml_and_flags_override() -> None:
-    from laris.cli.commands.language_encoder import _resolve_hyperparameters
+    from cli.commands.language_encoder import _resolve_hyperparameters
 
     parser = build_parser()
     args = parser.parse_args(["train", "language-encoder", "--model-size", "compact"])

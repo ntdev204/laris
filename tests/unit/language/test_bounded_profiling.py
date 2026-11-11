@@ -15,13 +15,13 @@ Validates:
 import importlib.util
 import unittest
 
-from laris.core.errors import TrainingExecutionProhibitedError
-from laris.language.encoder.transformer import (
+from core.errors import TrainingExecutionProhibitedError
+from language.encoder.transformer import (
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
     RandomlyInitializedTransformerEncoder,
 )
-from laris.language.training.profiling import (
+from language.training.profiling import (
     BoundedProfilingResult,
     BoundedResourceProfiler,
     HardwareEnvironmentProfile,

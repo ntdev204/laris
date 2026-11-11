@@ -92,8 +92,8 @@ tasks:
     15 test mới, check-no-training PASS; chạy inference trên val mẫu, chưa phải bằng chứng qualification;
     không training.
   evidence:
-  - src/laris/language/evaluation/evaluator.py
-  - src/laris/language/evaluation/metrics.py
+  - src/language/evaluation/evaluator.py
+  - src/language/evaluation/metrics.py
   - tests/unit/language/test_answer_metrics.py
   - reports/language_encoder/answer-text-validation-sample.json
 - id: F02
@@ -104,7 +104,7 @@ tasks:
     EN 1,420 và VI 1,363 đều FAIL G10/G11 (≤1,35); báo cáo hợp lệ cho readiness; 10 test mới, check-no-training
     PASS; không fit tokenizer hay training.'
   evidence:
-  - src/laris/language/benchmarks/fertility.py
+  - src/language/benchmarks/fertility.py
   - tests/unit/language/test_fertility.py
   - reports/tokenizer/fertility.json
 - id: F03
@@ -115,7 +115,7 @@ tasks:
     và đo BM25/dense/hybrid: dense MRR 0,034 EN và 0,116 VI so với BM25 0,783 và 0,813; nguồn general-domain
     nên G12 vẫn MISSING; 16 test mới, check-no-training PASS; không training.'
   evidence:
-  - src/laris/language/benchmarks/retrieval.py
+  - src/language/benchmarks/retrieval.py
   - configs/evaluation/foundation_retrieval.yaml
   - tests/unit/language/test_retrieval_benchmark.py
   - reports/retrieval/foundation.json
@@ -148,8 +148,8 @@ tasks:
     và bàn giao hai vòng đối chứng sampling theo F04A. 49 test không training và 47 test tập trung PASS.
   evidence:
   - configs/language_encoder/compact.yaml
-  - src/laris/cli/commands/language_encoder.py
-  - src/laris/language/training/objectives.py
+  - src/cli/commands/language_encoder.py
+  - src/language/training/objectives.py
   - tests/unit/language/test_retrieval_objective.py
   - tests/cli/test_owner_runbook.py
   - docs/training/OWNER_RUNBOOK.md
@@ -409,7 +409,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `done`. Phụ thuộc: G03.
 
-  Đầu ra: `src/laris/language/evaluation/evaluator.py`, `src/laris/language/evaluation/metrics.py`, `tests/unit/language/test_answer_metrics.py`.
+  Đầu ra: `src/language/evaluation/evaluator.py`, `src/language/evaluation/metrics.py`, `tests/unit/language/test_answer_metrics.py`.
 
   Nghiệm thu: EM/F1 theo answer-text chuẩn hóa; xử lý đa đáp án, no-answer, truncation; không nhầm token-span với answer-text; provenance/protocol được ghi.
 
@@ -417,7 +417,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `done`. Phụ thuộc: F01.
 
-  Đầu ra: `src/laris/language/benchmarks/fertility.py`, `tests/unit/language/test_fertility.py`, `reports/tokenizer/fertility.json`.
+  Đầu ra: `src/language/benchmarks/fertility.py`, `tests/unit/language/test_fertility.py`, `reports/tokenizer/fertility.json`.
 
   Nghiệm thu: Tách EN/VI; định nghĩa word/token rõ ràng; corpus unseen có manifest, chống leakage và report tương thích readiness. Nếu fertility vượt gate, ghi đề xuất tokenizer cho F04A; agent không fit tokenizer.
 
@@ -425,7 +425,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `done`. Phụ thuộc: F02.
 
-  Đầu ra: `src/laris/language/benchmarks/retrieval.py`, `configs/evaluation/foundation_retrieval.yaml`, `tests/unit/language/test_retrieval_benchmark.py`, `reports/retrieval/foundation.json`.
+  Đầu ra: `src/language/benchmarks/retrieval.py`, `configs/evaluation/foundation_retrieval.yaml`, `tests/unit/language/test_retrieval_benchmark.py`, `reports/retrieval/foundation.json`.
 
   Nghiệm thu: Đóng băng query/relevance và split; đo MRR/nDCG, BM25/dense/hybrid, hard negatives; không dùng pilot sáu query để thay gate. Băng hash query/relevance trước khi đo model; ngưỡng không chỉnh sau khi thấy kết quả; query không lấy từ dữ liệu train. D05 bị owner bỏ qua nên không có annotator: chỉ dùng relevance do người gán đã có sẵn từ nguồn công khai đã xác minh quyền sử dụng; không tự sinh relevance. Nếu không có nguồn như vậy, G12 giữ MISSING và F07 không qualify.
 
@@ -450,7 +450,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `done`. Phụ thuộc: F04A.
 
-  Đầu ra: `configs/language_encoder/compact.yaml`, `src/laris/language/training/objectives.py`, `tests/unit/language/test_retrieval_objective.py`, `docs/training/OWNER_RUNBOOK.md`.
+  Đầu ra: `configs/language_encoder/compact.yaml`, `src/language/training/objectives.py`, `tests/unit/language/test_retrieval_objective.py`, `docs/training/OWNER_RUNBOOK.md`.
 
   Nghiệm thu: Chốt objective/sampling/loss, ablation và ngân sách theo F04A; thêm objective contrastive cho retrieval (G12 cần vượt BM25) kèm test chỉ tính giá trị loss, không backward; cấu hình khớp parser/checkpoint; chỉ xuất lệnh, không fitting/backward/optimizer. Đầu vào bắt buộc từ F03: dense MRR hiện 0,034 (EN) và 0,116 (VI), thấp hơn BM25 (0,783 và 0,813); kiểm tra đối chứng cho thấy pipeline đúng, nên cần objective retrieval, không phải sửa đo lường.
 
@@ -516,7 +516,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: S01A.
 
-  Đầu ra: `src/laris/scientific/language/model.py`, `tests/contract/test_scientific_language.py`.
+  Đầu ra: `src/scientific/language/model.py`, `tests/contract/test_scientific_language.py`.
 
   Nghiệm thu: Khởi tạo từ foundation đã qualified theo thiết kế được duyệt; tokenizer lineage, thuật ngữ, phủ định, số/đơn vị và điều kiện được giữ; không dùng foundation pretrained bên ngoài.
 
@@ -524,7 +524,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: S02.
 
-  Đầu ra: `src/laris/scientific/training/runner.py`, `configs/evaluation/scientific_language.yaml`, `docs/training/SCIENTIFIC_LANGUAGE_RUNBOOK.md`.
+  Đầu ra: `src/scientific/training/runner.py`, `configs/evaluation/scientific_language.yaml`, `docs/training/SCIENTIFIC_LANGUAGE_RUNBOOK.md`.
 
   Nghiệm thu: Code/lệnh train và evaluator SciFact/evidence/discourse có contract và fixture; không optimizer do agent; labels và phép đo độc lập với model.
 
@@ -571,7 +571,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: O01A.
 
-  Đầu ra: `src/laris/documents/parsing.py`, `src/laris/documents/ocr.py`, `docs/training/OCR_RUNBOOK.md`.
+  Đầu ra: `src/documents/parsing.py`, `src/documents/ocr.py`, `docs/training/OCR_RUNBOOK.md`.
 
   Nghiệm thu: Dữ liệu clean/degraded có gold; phân biệt text-native/scanned; giữ order, công thức, bảng/hình và đánh dấu phần chưa hỗ trợ; code và lệnh, không train.
 
@@ -610,7 +610,7 @@ G00–G03 và F01–F04 done. Các dòng chưa gạch là công việc dự án 
 
   Người thực hiện: **agent**. Trạng thái: `pending`. Phụ thuộc: M01A.
 
-  Đầu ra: `src/laris/documents/discourse.py`, `docs/training/MANUSCRIPT_LEARNING_RUNBOOK.md`.
+  Đầu ra: `src/documents/discourse.py`, `docs/training/MANUSCRIPT_LEARNING_RUNBOOK.md`.
 
   Nghiệm thu: Dữ liệu discourse-role có gold/coordinate; code học claim/method/result/limitation trên đầu ra OCR; heading-stripped tests; không lẫn với viết manuscript.
 

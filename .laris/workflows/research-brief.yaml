@@ -1,0 +1,21 @@
+name: research-brief
+version: "1.0.0"
+description: Produce a short written research brief from corpus evidence and save it to a file after approval.
+triggers: ["write a brief", "summarise into a document"]
+allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse, write_file]
+max_steps: 8
+require_citations: true
+approval: ask
+phases:
+  - id: gather
+    goal: Search and read the passages needed for the brief.
+    exit: Each section of the brief has cited evidence.
+  - id: draft
+    goal: Draft the brief in chat first, with citations [source #rank].
+    instructions: Keep it concise; long material goes to the file, not the chat.
+  - id: save
+    goal: Ask the user, then save the brief with write_file in the output folder.
+    instructions: Never overwrite an existing file; pick a new descriptive name.
+stop_conditions:
+  - the user declines the file write (deliver the draft in chat only)
+output_sections: [Assumptions, Uncertainties, Next step, Sources]

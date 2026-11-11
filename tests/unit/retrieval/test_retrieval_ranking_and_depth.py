@@ -10,8 +10,8 @@ Adheres to DOC-SPEC-MOD-001 (Boundary F), ADR-001, ADR-004, ADR-008, and ADR-010
 
 import pytest
 
-from laris.core.errors import RetrievalDepthExceededError
-from laris.retrieval import (
+from core.errors import RetrievalDepthExceededError
+from retrieval import (
     MAX_RETRIEVAL_DEPTH,
     MetadataFilter,
     RetrievalChannel,

@@ -13,10 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from laris.core.errors import ModuleContractViolationError
-from laris.corpus.pipeline import CorpusIngestionPipeline
-from laris.corpus.schemas import DatasetSplit
-from laris.corpus.storage import (
+from core.errors import ModuleContractViolationError
+from corpus.pipeline import CorpusIngestionPipeline
+from corpus.schemas import DatasetSplit
+from corpus.storage import (
     MANIFEST_FILE_NAME,
     SPLIT_MANIFEST_FILE_NAME,
     export_processed_corpus,

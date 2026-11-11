@@ -17,8 +17,8 @@ import math
 
 import pytest
 
-from laris.core.errors import EpistemicOverreachError
-from laris.scientific import (
+from core.errors import EpistemicOverreachError
+from scientific import (
     EpistemicAssertionType,
     PreservationBenchmarkResult,
     STEMUnitNormalizer,

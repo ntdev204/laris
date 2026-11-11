@@ -12,8 +12,8 @@ Validates:
 
 import unittest
 
-from laris.core.errors import DataLeakageError
-from laris.corpus.partition import (
+from core.errors import DataLeakageError
+from corpus.partition import (
     DEFAULT_PARTITION_SEED,
     PARTITION_ALGORITHM,
     PARTITION_SPEC_VERSION,
@@ -22,7 +22,7 @@ from laris.corpus.partition import (
     SplitRatios,
     verify_split_leakage,
 )
-from laris.corpus.schemas import (
+from corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
     LicenseType,

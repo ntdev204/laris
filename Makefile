@@ -29,4 +29,4 @@ check: lint typecheck docs test
 
 clean:
 	find . -name __pycache__ -not -path './laris-env/*' -prune -exec rm -rf {} +
-	rm -rf .mypy_cache .ruff_cache .pytest_cache src/laris.egg-info
+	rm -rf .mypy_cache .ruff_cache .pytest_cache src/laris.egg-info src/*.egg-info

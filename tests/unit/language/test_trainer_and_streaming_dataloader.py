@@ -18,22 +18,22 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from laris.core.authorization import (
+from core.authorization import (
     temporary_training_authorization,
 )
-from laris.core.errors import (
+from core.errors import (
     TrainingExecutionProhibitedError,
 )
-from laris.language.encoder.transformer import (
+from language.encoder.transformer import (
     TORCH_AVAILABLE,
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from laris.language.training.dataloader import (
+from language.training.dataloader import (
     StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
 )
-from laris.language.training.trainer import (
+from language.training.trainer import (
     LanguageEncoderTrainer,
 )
 

@@ -15,7 +15,7 @@ import hashlib
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     AuditIntegrityError,
     CoordinateResolutionError,
     InvalidInterventionError,
@@ -23,8 +23,8 @@ from laris.core.errors import (
     LineageNotFoundError,
     ReportSchemaValidationError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     CorpusVersionRecord,

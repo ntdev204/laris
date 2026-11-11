@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     BenchmarkContaminationError,
     CycleDetectedError,
     EpistemicOverreachError,
@@ -29,14 +29,14 @@ from laris.core.errors import (
     UncertaintyCeilingExceededError,
     WeightStagingError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.evaluation.benchmark_runner import (
+from core.schemas import EvidenceCoordinate
+from evaluation.benchmark_runner import (
     BenchmarkRunner,
 )
-from laris.evaluation.error_taxonomy import (
+from evaluation.error_taxonomy import (
     ScientificErrorTaxonomy,
 )
-from laris.evaluation.schemas import (
+from evaluation.schemas import (
     BenchmarkBaseline,
     BenchmarkItem,
     BenchmarkRunReport,

@@ -11,26 +11,26 @@ Enforces:
 
 from pathlib import Path
 
-from laris.core.errors import TrainingExecutionProhibitedError
-from laris.corpus.splits import (
+from core.errors import TrainingExecutionProhibitedError
+from corpus.splits import (
     PartitionRatios,
     QuestionPairGraphPartitioner,
     WikipediaArticlePartitioner,
     validate_split_isolation,
 )
-from laris.language.encoder.config_handoff import (
+from language.encoder.config_handoff import (
     get_immutable_invariants,
     get_tunable_parameters,
 )
-from laris.language.encoder.transformer import (
+from language.encoder.transformer import (
     LanguageEncoderConfig,
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
 )
-from laris.language.tokenization.trainer import (
+from language.tokenization.trainer import (
     TokenizerTrainingPipeline,
 )
-from laris.language.training.profiling import HardwareEnvironmentProfile
+from language.training.profiling import HardwareEnvironmentProfile
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 

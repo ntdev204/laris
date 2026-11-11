@@ -42,3 +42,229 @@ data:
 hardware:
   max_vram_gb: 14.5
   target_device: "cuda"
+
+# Agent harness and loop limits. max_steps is capped at 10 by the orchestration specification.
+agent:
+  max_steps: 10
+  time_budget_s: 180.0
+  max_tool_calls_per_step: 4
+  default_tool_timeout_s: 30.0
+  tool_timeouts_s:
+    read_file: 120.0
+    ingest_path: 300.0
+    answer_question: 120.0
+    extract_discourse: 60.0
+  read_max_chars: 20000
+  search_hit_chars: 900
+  search_max_top_k: 20
+  list_max_entries: 500
+  skill_max_chars: 24000
+  approval:
+    mode: ask
+    always_ask:
+    - write_file
+    - ingest_path
+    - save_memory
+    - save_skill
+  verify:
+    require_citations: true
+    max_retries: 1
+    citation_tools:
+    - search_corpus
+    - answer_question
+    - read_file
+
+# Context window and automatic compaction (on by default).
+context:
+  enabled: true
+  window_tokens: 32768
+  threshold: 0.8
+  keep_fraction: 0.3
+  chars_per_token: 3.5
+  message_overhead_tokens: 6
+  trim_keep_chars: 600
+  overflow_hints:
+  - context length
+  - context window
+  - maximum context
+  - too many tokens
+  - context_length
+
+# Model API used by the agent. Empty base_url selects the built-in offline planner. The key is read from the environment variable named in api_key_env; never write a key here.
+model_api:
+  base_url: ''
+  model: laris-core
+  api_key_env: ''
+  timeout_s: 120.0
+  temperature: 0.0
+  allow_remote: false
+
+# Confidentiality and injection defences. Not editable from the web UI.
+security:
+  deny_read_globs:
+  - .env
+  - .env.*
+  - '**/.env'
+  - '**/.env.*'
+  - '**/*.pem'
+  - '**/*.key'
+  - '**/id_rsa*'
+  - LARIS.md
+  - LARIS.local.md
+  - .laris/LARIS.md
+  - .laris/config*.yaml
+  - .laris/prompts/**
+  - .laris/rules/**
+  - .laris/workflows/**
+  - .laris/integrity.lock
+  - configs/default.yaml
+  - .git/**
+  - '**/settings.json'
+  secret_env_markers:
+  - KEY
+  - TOKEN
+  - SECRET
+  - PASSWORD
+  - CREDENTIAL
+  - AUTH
+  extra_secret_env: []
+  secret_patterns:
+  - sk-[A-Za-z0-9_-]{16,}
+  - hf_[A-Za-z0-9]{20,}
+  - gh[pousr]_[A-Za-z0-9]{20,}
+  - AKIA[0-9A-Z]{16}
+  - Bearer\s+[A-Za-z0-9._~+/=-]{16,}
+  - '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  canary_enabled: true
+  leak_detection: true
+  leak_shingle_words: 7
+  leak_min_shingles: 2
+  stream_holdback_chars: 160
+  redact_paths: true
+  injection_scan: true
+  injection_patterns:
+  - ignore (all |any |the )?(previous|prior|above) (instructions|rules|prompts?)
+  - disregard (all |any |the )?(previous|prior|above)
+  - (reveal|print|show|repeat|output|leak) (your |the )?(system|hidden|internal|developer) (prompt|instructions?|message|rules)
+  - you are now (in )?(developer|dan|jailbreak|unrestricted)
+  - bỏ qua (mọi |tất cả )?(chỉ dẫn|hướng dẫn|quy tắc) (trước|ở trên)
+  - (tiết lộ|in ra|cho tôi xem) (system prompt|chỉ dẫn hệ thống|prompt hệ thống)
+  expose_internal_info: false
+
+# Reference model server (laris model serve).
+serving:
+  host: 127.0.0.1
+  port: 8000
+  max_body_bytes: 33554432
+  model_name: laris-core
+  placeholder_name: laris-placeholder
+  api_key_env: ''
+
+# Chat application and document workspace.
+app:
+  host: 127.0.0.1
+  port: 8765
+  workspace: artifacts/app/workspace
+  chat_dir: artifacts/chat
+  max_body_bytes: 33554432
+  upload_max_bytes: 26214400
+  chunk_words: 140
+  min_chunk_words: 20
+  search_default_top_k: 5
+  search_max_top_k: 50
+  rrf_k: 60
+  ocr_lang: eng+vie
+  ocr_max_pages: 50
+  allow_write_default: false
+
+# Learning: fine-tune data collected locally and RAG skills built when knowledge is added.
+learning:
+  enabled: true
+  dir: artifacts/finetune
+  min_answer_chars: 40
+  store_tool_results: true
+  max_tool_result_chars: 3000
+  store_passage_text: true
+  export_min_rating: none
+  skill_on_ingest: true
+  skill_dir: .laris/skills
+  knowledge_template: templates/knowledge_skill.md
+  max_generated_skills: 40
+  skill_top_terms: 12
+  skill_max_sources: 15
+  skill_min_term_chars: 4
+  skill_min_df: 2
+  skill_max_df_ratio: 0.6
+  skill_stopwords:
+  - the
+  - and
+  - for
+  - that
+  - with
+  - this
+  - from
+  - are
+  - was
+  - were
+  - have
+  - has
+  - not
+  - but
+  - can
+  - which
+  - their
+  - also
+  - such
+  - than
+  - these
+  - those
+  - into
+  - một
+  - những
+  - của
+  - và
+  - là
+  - có
+  - được
+  - trong
+  - cho
+  - các
+  - này
+  - khi
+  - với
+  skill_required_sections:
+  - When to use
+  - Steps
+  - Output
+  - Limits
+  skill_min_body_chars: 200
+  skill_protected_patterns:
+  - LARIS\.md
+  - \.laris/(rules|prompts|workflows)
+  - integrity\.lock
+  - (^|[\s`/])\.env\b
+
+# Prompt assembly: modules live under dir, assembled by the manifest.
+prompts:
+  dir: .laris/prompts
+  rules_dir: .laris/rules
+  workflows_dir: .laris/workflows
+  integrity_lock: .laris/integrity.lock
+  integrity: enforce
+  workflow_max_chars: 6000
+  manifest: manifest.yaml
+  assistant_name: LARIS
+  reply_language: Vietnamese
+  instruction_files:
+  - LARIS.md
+  - .laris/LARIS.md
+  - LARIS.local.md
+  user_instruction_file: ~/.laris/LARIS.md
+  max_instruction_chars: 14000
+  max_memory_chars: 4000
+  skill_roots:
+  - .laris/skills
+  - ~/.laris/skills
+  skills_index_chars: 8000
+  memory_dir: .laris/memory
+  user_preferences_max_chars: 1200

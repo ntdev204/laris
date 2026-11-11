@@ -8,7 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from laris.cli.main import main
+from cli.main import main
 
 
 def _populate(root: Path, datasets: list) -> dict:

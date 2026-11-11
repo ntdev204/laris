@@ -24,13 +24,13 @@ except ModuleNotFoundError:
 
 import pytest
 
-import laris
-from laris.core.errors import (
+import core
+from core.errors import (
     ModuleContractViolationError,
     UnanchoredAssertionError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from reporting import (
     AcademicManuscript,
     AssertionStatus,
     CorpusManifestEntry,
@@ -206,7 +206,7 @@ class TestFreshEnvironmentInstallAndRelease:
 
         raw_text = pyproject_path.read_text(encoding="utf-8")
         assert 'name = "laris"' in raw_text
-        assert f'version = "{laris.__version__}"' in raw_text
+        assert f'version = "{core.__version__}"' in raw_text
         assert 'requires-python = ">=3.10"' in raw_text
         assert "build-backend = \"setuptools.build_meta\"" in raw_text
 
@@ -216,10 +216,10 @@ class TestFreshEnvironmentInstallAndRelease:
 
             project = pyproject_data.get("project", {})
             assert project.get("name") == "laris"
-            assert project.get("version") == "1.2.0"
+            assert project.get("version") == "1.3.0"
             assert project.get("license") == "MIT"
             assert project.get("requires-python") == ">=3.10"
-            assert laris.__version__ == project.get("version")
+            assert core.__version__ == project.get("version")
 
             # Verify runtime core dependencies
             dependencies = project.get("dependencies", [])

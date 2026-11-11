@@ -1,0 +1,23 @@
+name: evidence-review
+version: "1.0.0"
+description: Extract claims, methods, results and limitations from corpus sources and compare them across sources.
+triggers: ["review the evidence", "compare sources", "claims and limitations"]
+allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse]
+max_steps: 7
+require_citations: true
+approval: inherit
+phases:
+  - id: collect
+    goal: Search for passages on the topic from at least two different sources when available.
+    exit: Passages from every available source were found, or the topic is absent.
+  - id: extract
+    goal: Run extract_discourse on the strongest passages to list claims, methods, datasets, metrics and limitations.
+    instructions: Treat extraction as a heuristic aid; confirm each item against the passage text.
+  - id: compare
+    goal: Compare sources and keep agreement, conflict and silence distinct.
+    instructions: Absence of a hit is not evidence of absence; do not state a research gap from silence alone.
+  - id: report
+    goal: Write the review with citations [source #rank].
+stop_conditions:
+  - the corpus is empty
+output_sections: [Claims, Methods, Limitations, Assumptions, Uncertainties, Next step, Sources]

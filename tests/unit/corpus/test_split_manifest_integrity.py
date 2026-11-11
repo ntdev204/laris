@@ -10,8 +10,8 @@ Validates:
 
 import unittest
 
-from laris.core.errors import DataLeakageError
-from laris.corpus.partition import (
+from core.errors import DataLeakageError
+from corpus.partition import (
     DEFAULT_PARTITION_SEED,
     DatasetPartitionEngine,
     LargeGroupPolicy,
@@ -20,7 +20,7 @@ from laris.corpus.partition import (
     compute_split_fingerprint,
     verify_split_leakage,
 )
-from laris.corpus.schemas import (
+from corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
     LicenseType,

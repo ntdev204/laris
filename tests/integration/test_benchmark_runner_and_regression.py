@@ -16,16 +16,16 @@ from typing import Dict
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EpistemicOverreachError,
     InvalidNLIInputError,
     ModuleContractViolationError,
     ProvenanceViolationError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.evaluation.benchmark_runner import BenchmarkRunner
-from laris.evaluation.error_taxonomy import ScientificErrorTaxonomy
-from laris.evaluation.schemas import (
+from core.schemas import EvidenceCoordinate
+from evaluation.benchmark_runner import BenchmarkRunner
+from evaluation.error_taxonomy import ScientificErrorTaxonomy
+from evaluation.schemas import (
     BenchmarkBaseline,
     BenchmarkItem,
     BenchmarkRunReport,
