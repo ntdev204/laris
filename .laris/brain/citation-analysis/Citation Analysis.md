@@ -20,6 +20,13 @@ keywords:
 - impact
 - h-index
 - bibliography
+- trích dẫn
+- tham chiếu
+- tài liệu tham khảo
+- đồng trích dẫn
+- chỉ số h
+- hệ số ảnh hưởng
+- danh mục tham khảo
 ---
 
 # Citation Analysis

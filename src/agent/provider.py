@@ -6,6 +6,7 @@
 before the core model exists. It is a scripted workflow, not a language model.
 """
 
+import copy
 import json
 import os
 import re
@@ -13,7 +14,7 @@ import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 Message = Dict[str, Any]
 
@@ -29,10 +30,15 @@ class ToolCall:
 class AssistantTurn:
     content: Optional[str] = None
     tool_calls: List[ToolCall] = field(default_factory=list)
+    reasoning: Optional[str] = None  # the model's private reasoning; only a server may keep it
 
 
 class ProviderError(RuntimeError):
     """The model API failed or returned something outside the contract."""
+
+
+class QuotaError(ProviderError):
+    """The server accepted the key but it has no tokens left (HTTP 429)."""
 
 
 class AuthError(ProviderError):
@@ -40,6 +46,8 @@ class AuthError(ProviderError):
 
 
 def _http_failure(exc: urllib.error.HTTPError) -> ProviderError:
+    if exc.code == 429:
+        return QuotaError("token quota of this API key is used up")
     if exc.code in (401, 403):
         return AuthError(f"API key rejected by the server (HTTP {exc.code})")
     return ProviderError(f"model API returned HTTP {exc.code}")
@@ -70,6 +78,7 @@ class ChatProvider(ABC):
         self, messages: List[Message], tools: List[Dict[str, Any]]
     ) -> Iterator[Dict[str, Any]]:
         """Yield {"type": "text", "delta": str} events, then one {"type": "turn", "turn": ...}.
+        A reasoning model may also yield {"type": "reasoning", "delta": str}.
 
         Providers without native streaming fall back to a single text event.
         """
@@ -82,10 +91,11 @@ class ChatProvider(ABC):
 _WIRE_KEYS = ("role", "content", "tool_calls", "tool_call_id", "name")
 
 
-def wire_messages(messages: List[Message]) -> List[Message]:
-    """What the model API receives: internal bookkeeping keys and superseded drafts removed."""
+def wire_messages(messages: List[Message], keep: Tuple[str, ...] = ()) -> List[Message]:
+    """What the model API receives: internal bookkeeping keys and superseded drafts removed.
+    `keep` names extra keys to pass on (the policy server needs the `harness` mark)."""
     return [
-        {k: m[k] for k in _WIRE_KEYS if k in m}
+        {k: m[k] for k in (*_WIRE_KEYS, *keep) if k in m}
         for m in messages
         if not m.get("superseded") and not m.get("ui_only")
     ]
@@ -109,14 +119,18 @@ class HttpChatProvider(ChatProvider):
         self.api_key = os.environ.get(api_key_env) if api_key_env else None
         self.timeout_s = timeout_s
         self.temperature = temperature
+        self.last_usage: Dict[str, Any] = {}  # tokens the server billed for the last reply
 
-    def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
-        body = {
+    def _body(self, messages: List[Message], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+        return {
             "model": self.model,
             "messages": wire_messages(messages),
             "tools": tools,
             "temperature": self.temperature,
         }
+
+    def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
+        body = self._body(messages, tools)
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -150,13 +164,7 @@ class HttpChatProvider(ChatProvider):
         self, messages: List[Message], tools: List[Dict[str, Any]]
     ) -> Iterator[Dict[str, Any]]:
         """Server-sent events from `stream: true`; tool-call fragments are merged by index."""
-        body = {
-            "model": self.model,
-            "messages": wire_messages(messages),
-            "tools": tools,
-            "temperature": self.temperature,
-            "stream": True,
-        }
+        body = {**self._body(messages, tools), "stream": True}
         headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -174,7 +182,17 @@ class HttpChatProvider(ChatProvider):
                     data = line[5:].strip()
                     if data == "[DONE]":
                         break
-                    delta = json.loads(data)["choices"][0].get("delta", {})
+                    payload = json.loads(data)
+                    if payload.get("usage"):
+                        self.last_usage = dict(payload["usage"])
+                    if payload.get("laris", {}).get("brain"):
+                        yield {"type": "brain", "trace": list(payload["laris"]["brain"])}
+                    if not payload.get("choices"):
+                        continue
+                    delta = payload["choices"][0].get("delta", {})
+                    hidden = delta.get("reasoning_content") or delta.get("reasoning")
+                    if hidden:  # a reasoning model's thoughts: passed on as their own event
+                        yield {"type": "reasoning", "delta": hidden}
                     if delta.get("content"):
                         content.append(delta["content"])
                         yield {"type": "text", "delta": delta["content"]}
@@ -201,6 +219,43 @@ class HttpChatProvider(ChatProvider):
                 raise ProviderError(f"invalid tool arguments from model: {exc}") from exc
             calls.append(ToolCall(slot["id"] or f"call_{index}", slot["name"], args))
         yield {"type": "turn", "turn": AssistantTurn("".join(content) or None, calls)}
+
+
+class PolicyServerProvider(HttpChatProvider):
+    """Client for the policy server: it sends the conversation and the user's own layers; the
+    server adds the system prompt, runs the brain and guards the reply. Streaming only."""
+
+    name = "policy-server"
+
+    def __init__(self, *args: Any, kind: str = "turn", **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.url = self.url.removesuffix("/chat/completions") + "/laris/chat"
+        self.kind = kind
+
+    def summarizer(self) -> "PolicyServerProvider":
+        clone = copy.copy(self)
+        clone.kind = "summarize"
+        return clone
+
+    def _body(self, messages: List[Message], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+        body = super()._body(messages, tools)
+        # our own server also needs to know which user messages are harness notes, not the user
+        wire = wire_messages(messages, keep=("harness",))
+        body["messages"] = [m for m in wire if m.get("role") != "system"]
+        meta: Dict[str, Any] = {"kind": self.kind}
+        system = messages[0] if messages and messages[0].get("role") == "system" else {}
+        meta.update(system.get("laris") or {})
+        body["laris"] = meta
+        return body
+
+    def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
+        turn: Optional[AssistantTurn] = None
+        for event in self.stream(messages, tools):
+            if event["type"] == "turn":
+                turn = event["turn"]
+        if turn is None:
+            raise ProviderError("policy server returned no turn")
+        return turn
 
 
 _PATH_RE = re.compile(r"(?:^|\s)([\w./~-]+\.(?:txt|md|pdf|png|jpe?g|tiff?))(?=\s|$|[.,;:?])", re.I)

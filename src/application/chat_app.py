@@ -3,6 +3,7 @@ uploads and model calls. Every limit and policy comes from the harness runtime (
 
 import base64
 import json
+import os
 import re
 import time
 import urllib.error
@@ -14,7 +15,7 @@ from agent.builtin_tools import build_registry
 from agent.context import CompactionResult, ContextManager, Summarizer
 from agent.conversations import ConversationStore, title_from
 from agent.loop import AgentSession, Approver
-from agent.provider import ChatProvider, HttpChatProvider, OfflinePlanner
+from agent.provider import ChatProvider, HttpChatProvider, OfflinePlanner, PolicyServerProvider
 from agent.tools import Sandbox, ToolSpec
 from application.service import SearchService
 from application.workspace import IngestError, chunks_from_bytes
@@ -25,6 +26,14 @@ from harness.workflows import WorkflowError, WorkflowSpec
 from learning.collector import Collector
 from learning.hooks import make_ingest_hook
 from skills import SkillLibrary
+
+
+def _egress_ok(runtime: HarnessRuntime) -> bool:
+    """Plain http to a non-local host needs `allow_remote`; https to the policy server is fine
+    (a client holds no internal prompts, so the only data sent is the user's own work)."""
+    api = runtime.config.model_api
+    secure = runtime.remote and api.base_url.startswith("https://")
+    return secure or egress_allowed(api.base_url, api.allow_remote)
 
 
 class PolicyError(RuntimeError):
@@ -50,9 +59,12 @@ class ChatApp:
         if user:  # one private conversation space per API key
             self.root = self.root / base.config.app.users_dir / user
         self.conversations = ConversationStore(self.root / "conversations")
-        self.prefs = UserPrefs(
-            self.root / "settings.json", base.config.prompts.user_preferences_max_chars
+        settings = (
+            Path(base.config.app.settings_file).expanduser()
+            if base.config.app.settings_file
+            else self.root / "settings.json"
         )
+        self.prefs = UserPrefs(settings, base.config.prompts.user_preferences_max_chars)
         self.uploads = self.root / "uploads"
         self.output = self.root / "output"
         self.uploads.mkdir(parents=True, exist_ok=True)
@@ -87,6 +99,14 @@ class ChatApp:
     # -- model -----------------------------------------------------------------------------
     def provider(self, runtime: HarnessRuntime) -> ChatProvider:
         api = runtime.config.model_api
+        if runtime.remote:  # the system policy is on the server: there is no offline mode
+            if not api.base_url:
+                raise PolicyError(runtime.strings.get("server.not_configured"))
+            if not _egress_ok(runtime):
+                raise PolicyError(runtime.strings.get("guard.remote_denied"))
+            return PolicyServerProvider(
+                api.base_url, api.model, api.api_key_env or None, api.timeout_s, api.temperature
+            )
         if api.base_url:
             if not egress_allowed(api.base_url, api.allow_remote):
                 raise PolicyError(runtime.strings.get("guard.remote_denied"))
@@ -105,15 +125,26 @@ class ChatApp:
         runtime = self.runtime
         api = runtime.config.model_api
         if not api.base_url:
+            if runtime.remote:
+                return {
+                    "mode": "api",
+                    "ok": False,
+                    "detail": runtime.strings.get("server.not_configured"),
+                }
             return {"mode": "offline", "ok": True, "detail": "built-in scripted planner (no model)"}
-        if not egress_allowed(api.base_url, api.allow_remote):
+        if not _egress_ok(runtime):
             return {
                 "mode": "api",
                 "ok": False,
                 "detail": runtime.strings.get("guard.remote_denied"),
             }
         try:
-            with urllib.request.urlopen(api.base_url.rstrip("/") + "/models", timeout=5) as r:
+            headers = {}
+            key = os.environ.get(api.api_key_env) if api.api_key_env else None
+            if key:
+                headers["Authorization"] = f"Bearer {key}"
+            request = urllib.request.Request(api.base_url.rstrip("/") + "/models", headers=headers)
+            with urllib.request.urlopen(request, timeout=5) as r:
                 names = [m["id"] for m in json.loads(r.read()).get("data", [])]
             return {"mode": "api", "ok": True, "detail": f"connected, models: {', '.join(names)}"}
         except (urllib.error.URLError, TimeoutError, ValueError, KeyError):
@@ -154,6 +185,18 @@ class ChatApp:
             ask = strings.get("compaction.summarizer_instruction")
             if instructions:
                 ask += "\n" + strings.get("compaction.summarizer_focus", focus=instructions)
+            if isinstance(provider, PolicyServerProvider):  # the server owns the instruction
+                return (
+                    provider.summarizer()
+                    .chat(
+                        [
+                            {"role": "system", "content": "", "laris": {"focus": instructions}},
+                            {"role": "user", "content": transcript},
+                        ],
+                        [],
+                    )
+                    .content
+                )
             turn = provider.chat(
                 [{"role": "system", "content": ask}, {"role": "user", "content": transcript}], []
             )
@@ -205,6 +248,7 @@ class ChatApp:
             on_compact=self._archive(conversation["id"]),
             log_dir=self.root / "sessions",
             audit_dir=self.root / "audit",
+            plan=conversation.get("plan"),
         )
 
     def parse_workflow_command(
@@ -235,6 +279,12 @@ class ChatApp:
     def how_to_use(self, runtime: Optional[HarnessRuntime] = None) -> str:
         """The prepared user guide, printed as written (no model call, no inference)."""
         rt = runtime or self.runtime
+        if rt.remote:
+            try:
+                text = str(rt.server_client().get("/laris/help").get("text", "")).strip()
+            except Exception:  # offline or rejected key: fall through to the short notice
+                text = ""
+            return text or rt.strings.get("help.missing")
         path = Path(rt.config.prompts.help_file).expanduser()
         path = path if path.is_absolute() else self.project_root / path
         if path.is_file():
@@ -278,6 +328,7 @@ class ChatApp:
                 yield event
         finally:  # keep what happened even if the client disconnects mid-stream
             conversation["messages"] = session.history
+            conversation["plan"] = session.plan.to_list()  # an unfinished goal survives --resume
             self.conversations.save(conversation)
 
     # -- learning --------------------------------------------------------------------------
@@ -309,7 +360,13 @@ class ChatApp:
             from vault.hooks import record_turn
 
             outcome.update(
-                record_turn(runtime, conversation_id, history[start:], session.last_turn)
+                record_turn(
+                    runtime,
+                    conversation_id,
+                    history[start:],
+                    session.last_turn,
+                    session.plan.summary_lines(),
+                )
             )
         except Exception:  # keeping a note must never break a finished turn
             outcome["vault_status"] = "failed"

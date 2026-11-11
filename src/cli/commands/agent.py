@@ -157,6 +157,22 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
             print(_paint(_DIM, "  ⎿ ") + _summarise(event["result"]))
         elif kind == "brain":
             print(_paint(_DIM, "  ◈ bộ não: " + " → ".join(event["trace"])))
+        elif kind == "plan":
+            if streaming:
+                print()
+                streaming = False
+            marks = {"pending": " ", "in_progress": "~", "done": "x", "failed": "!", "skipped": "-"}
+            head = {"auto": "kế hoạch (tự ghi)", "resumed": "kế hoạch đang dở"}.get(
+                event["source"], "kế hoạch"
+            )
+            print(_paint(_DIM, f"  ☰ {head}:"))
+            for number, step in enumerate(event["steps"], 1):
+                print(_paint(_DIM, f"    {number}. [{marks[step['status']]}] {step['text']}"))
+        elif kind == "reflect":
+            what = "hết lượt lập lại kế hoạch" if event.get("budget_out") else "đổi cách"
+            print(_paint(_DIM, f"  ↺ {what}: " + "; ".join(event["issues"])))
+        elif kind == "goal" and event.get("retry"):
+            print(_paint(_DIM, "  ⚑ mục tiêu chưa xong: " + "; ".join(event["open"])))
         elif kind == "compact":
             print(
                 _paint(
@@ -183,6 +199,26 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
                 code = 1
     print()
     return code
+
+
+def _vault_command(chat: Any, query: str) -> None:
+    """`/vault` shows the vault's size; `/vault <words>` searches its notes."""
+    from vault.index import VaultIndex
+    from vault.search import NoteSearch
+
+    cfg = chat.runtime.config.vault
+    folder = chat.project_root / cfg.dir
+    if not folder.is_dir():
+        print("chưa có vault; nó được tạo ở lần nạp tài liệu hoặc hỏi đáp đầu tiên")
+        return
+    index = VaultIndex.build(folder, cache_file=chat.project_root / cfg.cache_dir / "index.json")
+    if not query:
+        print(
+            f"vault {cfg.dir}/: {len(index.notes)} ghi chú, {len(index.unresolved)} liên kết hỏng"
+        )
+        return
+    for hit in NoteSearch(index).search(query, 8):
+        print(f"  {hit.score:6.2f}  {hit.path}")
 
 
 class _Chat:
@@ -276,7 +312,8 @@ class _Chat:
             print(
                 "/how-to-use /new /sessions /resume ID /tools /skills /<skill> <yêu cầu> "
                 "/compact [ghi chú] "
-                "/context /workflows /workflow NAME <yêu cầu> /status /model [URL [NAME]] "
+                "/context /workflows /workflow NAME <yêu cầu> /status /vault [từ khóa] "
+                "/model [URL [NAME]] "
                 "/write on|off /learn on|off /rate up|down /exit"
             )
         elif name == "/new":
@@ -294,6 +331,8 @@ class _Chat:
         elif name == "/tools":
             for spec in chat.tool_specs():
                 print(f"  {spec.name}{' (asks)' if spec.writes else ''}: {spec.description}")
+        elif name == "/vault":
+            _vault_command(chat, rest)
         elif name == "/status":
             print(json.dumps(chat.service.status(), indent=2, ensure_ascii=False))
         elif name == "/model":

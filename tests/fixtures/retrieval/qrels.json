@@ -1,0 +1,19 @@
+{
+ "perovskite solar": [
+  "Perovskite solar cells.md",
+  "Stability protocol.md",
+  "Encapsulation methods.md"
+ ],
+ "silicon heterojunction devices": [
+  "Silicon heterojunction.md",
+  "Wafer texturing.md"
+ ],
+ "lithium electrolyte": [
+  "Lithium electrolytes.md",
+  "Interphase growth.md"
+ ],
+ "transformer attention": [
+  "Transformer models.md",
+  "Positional encoding.md"
+ ]
+}

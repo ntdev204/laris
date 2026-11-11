@@ -111,7 +111,7 @@ def test_use_skill_tool_and_memory_write(project, tmp_path):
     assert "unknown_skill" in str(exc.value.code)
     registry.call("save_memory", {"name": "decisions-log", "content": "2026-11-11 chose X"})
     registry.call("save_memory", {"name": "decisions-log", "content": "second"})
-    text = (project / ".laris" / "memory" / "decisions-log.md").read_text()
+    text = (project / "vault" / "Memory" / "decisions-log (memory).md").read_text()
     assert "chose X" in text and "second" in text
     with pytest.raises(Exception):
         registry.call("save_memory", {"name": "../evil", "content": "x"})

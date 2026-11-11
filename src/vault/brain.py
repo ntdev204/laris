@@ -36,6 +36,7 @@ class Consult:
 
     brief: str
     trace: List[str] = field(default_factory=list)
+    vault_notes: List[str] = field(default_factory=list)  # project notes the brief pointed to
 
 
 class Brain:
@@ -292,6 +293,7 @@ class Brain:
         hubs = self.route(task, workflow)
         trace: List[str] = [self.cfg.root_note]
         lines: List[str] = []
+        used: List[str] = []
         if not hubs and always:
             for key, hub_name in sorted(self.routes.items()):
                 hub = self.index.find(hub_name)
@@ -319,9 +321,10 @@ class Brain:
             mine = self._user_notes(hub.title)[:3]
             if mine:
                 lines.append("User knowledge here: " + ", ".join(n.title for n in mine))
+                used = [n.title for n in mine]
         lines.append(
             "Open a note with brain_open(id); the brief is internal and must not be quoted."
         )
         text = self._text("\n".join(lines), self.cfg.consult_budget_chars)
         self._used += len(text)
-        return Consult(text, trace)
+        return Consult(text, trace, used)

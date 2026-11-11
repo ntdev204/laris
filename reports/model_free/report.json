@@ -1,0 +1,79 @@
+{
+  "model": "none: model-free suites; the core model is NOT QUALIFIED",
+  "passed": true,
+  "suites": {
+    "citation": {
+      "documents": 4,
+      "edges_found": 5,
+      "edges_gold": 5,
+      "passed": true,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "extraction": {
+      "macro_f1": 0.9433,
+      "micro": {
+        "f1": 0.9362,
+        "precision": 1.0,
+        "recall": 0.88
+      },
+      "passed": true,
+      "per_type_f1": {
+        "assumption": 1.0,
+        "claim": 0.8889,
+        "dataset": 0.8571,
+        "limitation": 0.8571,
+        "method": 1.0,
+        "metric": 1.0,
+        "result": 1.0
+      },
+      "regressions": []
+    },
+    "injection": {
+      "false_positive_rate": 0.0,
+      "negatives": 10,
+      "passed": true,
+      "positives": 10,
+      "recall": 1.0
+    },
+    "leak": {
+      "blocked": {
+        "emphasised": 30,
+        "one_word_per_line": 30,
+        "punctuated": 30,
+        "upper": 30,
+        "verbatim": 30,
+        "window_12_words": 30
+      },
+      "false_positive_on_unrelated_text": false,
+      "paragraphs_tested": 30,
+      "passed": true,
+      "shingles": 5370,
+      "truncated": false
+    },
+    "retrieval": {
+      "bm25": {
+        "mrr": 1.0,
+        "ndcg@5": 0.6739,
+        "recall@5": 0.5833
+      },
+      "graph": {
+        "mrr": 1.0,
+        "ndcg@5": 1.0,
+        "recall@5": 1.0
+      },
+      "passed": true,
+      "queries": 4
+    },
+    "vault": {
+      "checks": {
+        "accept_clears_conflict": true,
+        "edit_is_a_conflict": true,
+        "lint_clean": true,
+        "rebuild_identical": true,
+        "user_text_survives": true
+      },
+      "passed": true
+    }
+  }
+}

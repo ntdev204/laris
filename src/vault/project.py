@@ -19,7 +19,24 @@ from vault.writer import Scanner, VaultWriter, resolve_inside, safe_title
 
 SOURCE_SUFFIX = " (source)"  # keeps source names distinct from concepts of the same word
 MEMORY_SUFFIX = " (memory)"
-FOLDERS = ("Sources", "Concepts", "Claims", "Questions", "Sessions", "Decisions", "Memory")
+FOLDERS = (
+    "Sources",
+    "Concepts",
+    "Claims",
+    "Questions",
+    "Sessions",
+    "Decisions",
+    "Memory",
+    "Analyses",
+)
+TEMPLATES_DIR = "_templates"
+_FRONT = "---\n{}\n---\n\n# {{{{title}}}}\n"
+TEMPLATES = {
+    "Source": _FRONT.format("type: source\ntrust: untrusted\nsource: \ncreated: \nconcepts: []"),
+    "Concept": _FRONT.format("type: concept\ncreated: "),
+    "Question": _FRONT.format("type: answer\ntrust: model\nsession: \ncreated: \nsources: []"),
+    "Session": _FRONT.format("type: session\ncreated: "),
+}
 APP_SETTINGS = {"useMarkdownLinks": False, "newLinkFormat": "shortest", "alwaysUpdateLinks": True}
 GITIGNORE = ".obsidian/workspace.json\n.obsidian/workspace-mobile.json\n"
 SESSION_BLOCK = "session"
@@ -44,12 +61,27 @@ class ProjectVault:
         cfg: VaultConfig,
         scan: Optional[Scanner] = None,
         clock: Optional[Any] = None,
+        protected: Sequence[Path] = (),
     ) -> None:
         folder = Path(cfg.dir)
         self.cfg = cfg
         self.root = folder if folder.is_absolute() else Path(project_root) / folder
-        self.writer = VaultWriter(self.root, cfg.max_note_chars, scan)
+        self.writer = VaultWriter(
+            self.root,
+            cfg.max_note_chars,
+            scan,
+            backup=cfg.backup,
+            max_writes_per_minute=cfg.max_writes_per_minute,
+        )
+        self.protected = [Path(p).resolve() for p in protected]  # the system brain and the like
         self._now = clock or (lambda: datetime.datetime.now(datetime.timezone.utc))
+
+    def enclosing_vault(self) -> Optional[Path]:
+        """The nearest folder above this vault that is itself an Obsidian vault, if any."""
+        for parent in self.root.resolve().parents:
+            if (parent / ".obsidian").is_dir():
+                return parent
+        return None
 
     @property
     def exists(self) -> bool:
@@ -59,7 +91,14 @@ class ProjectVault:
     def ensure(self) -> bool:
         """Create the skeleton if missing. Returns True when something was created."""
         created = not self.exists
-        for name in (*FOLDERS, self.cfg.inbox_dir):
+        here = self.root.resolve()
+        for guarded in self.protected:
+            if here == guarded or guarded in here.parents or here in guarded.parents:
+                raise ValueError("the project vault may not overlap the protected system brain")
+        outer = self.enclosing_vault()
+        if created and outer is not None and not self.cfg.allow_nested:
+            raise ValueError(f"refusing to create a vault inside another vault ({outer.name})")
+        for name in (*FOLDERS, self.cfg.inbox_dir, TEMPLATES_DIR):
             (self.root / name).mkdir(parents=True, exist_ok=True)
         config = self.root / ".obsidian"
         config.mkdir(exist_ok=True)
@@ -69,6 +108,10 @@ class ProjectVault:
         ignore = self.root / ".gitignore"
         if not ignore.exists():
             ignore.write_text(GITIGNORE, encoding="utf-8")
+        for name, text in TEMPLATES.items():
+            target = self.root / TEMPLATES_DIR / f"{name}.md"
+            if not target.exists():
+                target.write_text(text, encoding="utf-8")
         index = self.root / f"{self.cfg.index_note}.md"
         if not index.exists():
             self.writer.write_note(
@@ -87,9 +130,9 @@ class ProjectVault:
     def _write(
         self, folder: str, title: str, props: Dict[str, Any], blocks: Dict[str, str], lead: str = ""
     ) -> RecordResult:
-        self.ensure()
         rel = f"{folder}/{safe_title(title)}.md"
         try:
+            self.ensure()
             status = self.writer.write_note(rel, props, blocks, lead)
         except ValueError as exc:
             return RecordResult(rel, "skipped", str(exc))
@@ -102,9 +145,16 @@ class ProjectVault:
         chunk_count: int,
         terms: Sequence[str] = (),
         excerpt: str = "",
+        meta: Optional[Dict[str, Any]] = None,
     ) -> RecordResult:
+        """`meta` may carry `doc_id`, `sha256` (of the cleaned text), `chars` and `spans`
+        (passage character ranges); they are written as properties, never guessed."""
+        meta = meta or {}
         concepts = [safe_title(t) for t in terms if t.strip()]
         body = [f"- Source file: `{source}`", f"- Passages indexed: {chunk_count}"]
+        if meta.get("spans"):
+            first, last = meta["spans"][0], meta["spans"][-1]
+            body.append(f"- Passages cover characters {first[0]} to {last[1]}")
         if concepts:
             body.append("- Key terms: " + ", ".join(wikilink(c) for c in concepts))
         if excerpt.strip():
@@ -120,6 +170,8 @@ class ProjectVault:
                 "source": source,
                 "created": self._today(),
                 "concepts": [wikilink(c) for c in concepts],
+                **{k: meta[k] for k in ("doc_id", "sha256", "chars", "passages") if k in meta},
+                **(meta.get("bibliography") or {}),
             },
             {"source": "\n".join(body)},
             lead=f"# {safe_title(title)}",
@@ -143,7 +195,13 @@ class ProjectVault:
         )
 
     def record_answer(
-        self, session_id: str, question: str, answer: str, sources: Iterable[str] = ()
+        self,
+        session_id: str,
+        question: str,
+        answer: str,
+        sources: Iterable[str] = (),
+        trace: Sequence[str] = (),
+        notes: Sequence[str] = (),
     ) -> RecordResult:
         """One Q&A note linked to its session and to the sources it cited."""
         stamp = self._now().strftime("%Y-%m-%d %H%M%S")
@@ -156,6 +214,14 @@ class ProjectVault:
         ]
         if cited:
             lines += ["", "Sources: " + ", ".join(wikilink(s) for s in cited)]
+        known = self._existing_titles(notes)
+        extra: Dict[str, Any] = {}
+        trace_lines: List[str] = []
+        if trace:  # titles only: the text of the brain never reaches a note
+            trace_lines.append("Brain path: " + " → ".join(safe_title(t) for t in trace))
+        if known:
+            trace_lines.append("Notes used: " + ", ".join(wikilink(t) for t in known))
+            extra["notes_used"] = [wikilink(t) for t in known]
         result = self._write(
             "Questions",
             title,
@@ -165,12 +231,25 @@ class ProjectVault:
                 "session": wikilink(self.session_title(session_id)),
                 "created": self._today(),
                 "sources": [wikilink(s) for s in cited],
+                **extra,
             },
-            {"qa": "\n".join(lines)},
+            {"qa": "\n".join(lines), **({"trace": "\n".join(trace_lines)} if trace_lines else {})},
             lead=f"# {title}",
         )
         self.record_session(session_id, [title])
         return result
+
+    def _existing_titles(self, titles: Sequence[str]) -> List[str]:
+        """Only notes that exist are ever linked (every cited note exists)."""
+        if not titles or not self.root.is_dir():
+            return []
+        index = VaultIndex.build(self.root)
+        found: List[str] = []
+        for title in titles:
+            note = index.find(safe_title(title)) or index.find(title)
+            if note is not None and note.title not in found:
+                found.append(note.title)
+        return found
 
     def session_title(self, session_id: str) -> str:
         return safe_title(f"{self._today()} Session {session_id[:8]}")
@@ -190,6 +269,22 @@ class ProjectVault:
             {"type": "session", "created": self._today()},
             {SESSION_BLOCK: "\n".join(lines)},
             lead=f"# {title}",
+        )
+
+    def record_analysis(
+        self, name: str, scope: str, text: str, sources: Sequence[str] = ()
+    ) -> RecordResult:
+        """An analysis result with the scope it was computed over (links the sources it used)."""
+        body = text.strip()
+        linked = self._existing_titles([safe_title(s) for s in sources if s])
+        if linked:
+            body += "\n\nSources: " + ", ".join(wikilink(c) for c in linked)
+        return self._write(
+            "Analyses",
+            safe_title(name),
+            {"type": "analysis", "scope": scope, "created": self._today()},
+            {"analysis": body},
+            lead=f"# {safe_title(name)}",
         )
 
     def record_memory(self, name: str, text: str) -> RecordResult:
@@ -214,7 +309,10 @@ class ProjectVault:
     # -- the index note ----------------------------------------------------------------------
     def refresh_index(self) -> RecordResult:
         """Rewrite the managed block of the index: counts per folder and the latest notes."""
-        self.ensure()
+        try:
+            self.ensure()
+        except ValueError as exc:
+            return RecordResult(f"{self.cfg.index_note}.md", "skipped", str(exc))
         index = VaultIndex.build(self.root)
         rows: List[str] = []
         for folder in FOLDERS:

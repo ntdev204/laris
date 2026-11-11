@@ -1,0 +1,23 @@
+name: literature-map
+version: "1.0.0"
+description: Map the user's corpus - size, years, trending terms, near-duplicates and topical groups - with the scope of every figure stated.
+triggers: ["literature map", "map the literature", "corpus overview", "trending terms", "find duplicates", "group papers", "bản đồ tài liệu", "tổng quan kho tài liệu"]
+allowed_tools: [corpus_status, corpus_overview, term_trends, find_duplicates, group_documents, save_analysis, search_corpus, brain_consult, brain_open, brain_neighbors]
+max_steps: 8
+require_citations: true
+approval: ask
+phases:
+  - id: scope
+    goal: Run corpus_overview and state how many documents there are, how many have a stated year, and the year range.
+    instructions: Never describe a trend or a group as covering the whole corpus when documents have no year; say how many were left out.
+    exit: The scope (documents, documents with a year, years) is written down.
+  - id: analyse
+    goal: Run term_trends, find_duplicates and group_documents as the question requires.
+    instructions: Report counts as documents containing a term, not occurrences. Name each duplicate pair and its similarity. Use search_corpus only to quote passages for a claim.
+    exit: Each requested analysis has a result with its scope.
+  - id: report
+    goal: Summarise the findings; offer to save them with save_analysis (the user must approve).
+stop_conditions:
+  - the corpus is empty
+  - the user declines to save
+output_sections: [Scope, Findings, Duplicates, Groups, Caveats]

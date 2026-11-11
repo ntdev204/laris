@@ -1,0 +1,22 @@
+name: citation-analysis
+version: "1.0.0"
+description: Analyse who cites whom inside the user's corpus - edges, co-citation, coupling, influential papers - and list every reference that could not be matched.
+triggers: ["citation analysis", "who cites", "citation graph", "co-citation", "bibliographic coupling", "influential papers", "phân tích trích dẫn", "đồ thị trích dẫn"]
+allowed_tools: [corpus_status, citation_graph, search_corpus, read_file, save_analysis, brain_consult, brain_open, brain_neighbors]
+max_steps: 8
+require_citations: true
+approval: ask
+phases:
+  - id: scope
+    goal: Call citation_graph with kind summary and state how many documents have a reference list and how many references were resolved.
+    instructions: A reference is an edge only when it was resolved to a corpus document. Report the share that is unresolved; do not estimate edges for the rest.
+    exit: Documents, documents with a reference list, references and resolved references are written down.
+  - id: analyse
+    goal: Call citation_graph for the kinds the question needs (edges, cocitation, coupling, centrality).
+    instructions: Name documents by source. Say that centrality describes this corpus only, not the field. Flag ambiguous or weak matches instead of using them.
+    exit: Every claim about influence or similarity cites a result with its scope.
+  - id: gaps
+    goal: List unresolved references with citation_graph kind unresolved and suggest which ones are worth ingesting.
+output_sections: [Scope, Citation structure, Influential documents, Unresolved references, Caveats]
+stop_conditions:
+  - no document has a reference list

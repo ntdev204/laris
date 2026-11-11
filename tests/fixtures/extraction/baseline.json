@@ -1,0 +1,12 @@
+{
+ "macro_f1": 0.9433,
+ "per_type": {
+  "assumption": 1.0,
+  "claim": 0.8889,
+  "dataset": 0.8571,
+  "limitation": 0.8571,
+  "method": 1.0,
+  "metric": 1.0,
+  "result": 1.0
+ }
+}

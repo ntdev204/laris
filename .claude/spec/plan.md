@@ -16,13 +16,14 @@ explicit authorisation each time.
 
 ### Phase 0 — Foundations and decisions
 Goal: adopt this ledger, fix the format rules and the threat model before code.
-Tasks: T01, T02, T03, T04, T40
+Tasks: T01, T02, T03, T04, T40, T41, T47
 Exit criteria:
 - `scripts/validate_spec.py` runs in CI and `make check-no-training`.
 - `docs/specifications/OBSIDIAN_VAULT_FORMAT.md` and the golden fixture vault exist and cite the official rules.
 - Threat model lists every threat with a control and a planned test.
 - ADR records the Obsidian-compatible brain decision (D1 to D9 confirmed or changed by the owner).
 - ADR-015 fixes the local data plane (user disk = database, user machine = sandbox) and the server authenticates keys.
+- ADR-016 keeps the system policy on the server; the client is thin (npm package, global and project `.laris/`).
 
 ### Phase 1 — Vault core library
 Goal: a dependency-free library that reads, indexes, writes and checks Obsidian-format vaults.
@@ -109,3 +110,17 @@ parallel once Phase 2 has produced Source and Concept notes.
 At each phase exit: what was built, what was measured, open decisions, and the next phase. Items that
 need the owner: D1 to D9 confirmation (T04), new dependencies, push, merge and release, and the model
 gate (T39).
+
+### Phase 8 — Layers and Agentic
+Goal: fix the layer vocabulary and make the system Agentic (ADR-017).
+Tasks: T42, T43, T44, T45, T46
+Exit criteria:
+- The layer contract test passes and the scripted Agentic scenario suite passes within all limits.
+
+## 7. Closing status (2026-11-11)
+
+Phases 0 to 6 and Phase 8 are complete: 45 of 47 tasks are `done` (task.md has the completion note and the
+measured figures of each). Two tasks wait for the owner and are not engineering work: T38 (the boundary
+contract and tests are written; the owner reviews the resumption criteria) and T39 (the decision to resume
+the core model, which stays paused). The client wheel is built after this closing, then the release under
+the git flow (see docs/development/OWNER_RUNBOOK.md).

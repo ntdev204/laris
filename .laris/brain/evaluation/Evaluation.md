@@ -19,6 +19,11 @@ keywords:
 - rubric
 - benchmark
 - quality
+- đánh giá
+- độ đo
+- thang điểm
+- chất lượng
+- so sánh chế độ
 ---
 
 # Evaluation

@@ -21,6 +21,17 @@ keywords:
 - bibliometric
 - systematic review
 - state of the art
+- literature review
+- tổng quan tài liệu
+- khai phá tài liệu
+- xu hướng
+- chủ đề
+- kho bài báo
+- khảo sát
+- phân cụm
+- thống kê
+- tiêu chí chọn
+- loại trùng
 ---
 
 # Literature Mining

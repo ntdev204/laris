@@ -1,0 +1,142 @@
+[
+ {
+  "id": "arxiv-new",
+  "text": "Attention Is Not All You Need For Small Corpora\nAda Lovelace, Alan Turing\nAbstract. We study small corpora.\narXiv:2103.01234v2 [cs.CL] 5 Mar 2021\n",
+  "meta": {},
+  "gold": {
+   "title": "Attention Is Not All You Need For Small Corpora",
+   "authors": [
+    "Ada Lovelace",
+    "Alan Turing"
+   ],
+   "year": 2021,
+   "doi": "",
+   "arxiv": "2103.01234"
+  }
+ },
+ {
+  "id": "journal-doi",
+  "text": "Efficient Perovskite Solar Cells with Passivated Interfaces\nMaria Curie; Niels Bohr\nJournal of Applied Photovoltaics\nPublished: 12 May 2019\nDOI: https://doi.org/10.1000/jap.2019.0042.\nAbstract text follows here.\n",
+  "meta": {},
+  "gold": {
+   "title": "Efficient Perovskite Solar Cells with Passivated Interfaces",
+   "authors": [
+    "Maria Curie",
+    "Niels Bohr"
+   ],
+   "year": 2019,
+   "doi": "10.1000/jap.2019.0042",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "no-header",
+  "text": "we measured the films at several temperatures and found no change in the response of the device over the whole range.\n",
+  "meta": {},
+  "gold": {
+   "title": "",
+   "authors": [],
+   "year": null,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "metadata-only",
+  "text": "1 Introduction\nCells matter a great deal for energy.\n",
+  "meta": {
+   "/Title": "Annealing Effects on Thin Film Crystallinity",
+   "/Author": "Rosalind Franklin; Maurice Wilkins",
+   "/CreationDate": "D:20180312101500"
+  },
+  "gold": {
+   "title": "Annealing Effects on Thin Film Crystallinity",
+   "authors": [
+    "Rosalind Franklin",
+    "Maurice Wilkins"
+   ],
+   "year": 2018,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "all-caps",
+  "text": "A SURVEY OF MANY THINGS IN SCIENCE\nSome Author\nbody text\n",
+  "meta": {},
+  "gold": {
+   "title": "",
+   "authors": [],
+   "year": null,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "vietnamese",
+  "text": "Mô hình ngôn ngữ cho văn bản khoa học\nNguyễn Văn An, Trần Thị Bình\n© 2022 Tạp chí Khoa học\n",
+  "meta": {},
+  "gold": {
+   "title": "Mô hình ngôn ngữ cho văn bản khoa học",
+   "authors": [
+    "Nguyễn Văn An",
+    "Trần Thị Bình"
+   ],
+   "year": 2022,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "arxiv-old",
+  "text": "Large N Limit of Superconformal Field Theories\nJuan Maldacena\narXiv:hep-th/9711200v3\n",
+  "meta": {},
+  "gold": {
+   "title": "Large N Limit of Superconformal Field Theories",
+   "authors": [
+    "Juan Maldacena"
+   ],
+   "year": null,
+   "doi": "",
+   "arxiv": "hep-th/9711200"
+  }
+ },
+ {
+  "id": "year-noise",
+  "text": "In 1999 the committee met twice and in 2004 it dissolved after a long debate.\n",
+  "meta": {},
+  "gold": {
+   "title": "",
+   "authors": [],
+   "year": null,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "sentence-first-line",
+  "text": "This paper studies the effect of annealing on films.\nWe find that crystals grow.\n",
+  "meta": {},
+  "gold": {
+   "title": "",
+   "authors": [],
+   "year": null,
+   "doi": "",
+   "arxiv": ""
+  }
+ },
+ {
+  "id": "doi-in-body",
+  "text": "Interface Passivation by Alkylammonium Salts in Solar Devices\nGrace Hopper\nCopyright 2020 The Authors. https://doi.org/10.5555/abc-2020.77), see text.\n",
+  "meta": {},
+  "gold": {
+   "title": "Interface Passivation by Alkylammonium Salts in Solar Devices",
+   "authors": [
+    "Grace Hopper"
+   ],
+   "year": 2020,
+   "doi": "10.5555/abc-2020.77",
+   "arxiv": ""
+  }
+ }
+]

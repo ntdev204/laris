@@ -18,6 +18,11 @@ keywords:
 - relation type
 - note type
 - what does mean
+- thuật ngữ
+- định nghĩa
+- từ điển
+- bảng thuật ngữ
+- loại quan hệ
 ---
 
 # Ontology

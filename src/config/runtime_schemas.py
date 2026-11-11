@@ -25,6 +25,27 @@ class VerifyConfig(BaseModel):
     )
 
 
+class PlanConfig(BaseModel):
+    """Agentic planning: a visible, tracked plan for goals that take several steps."""
+
+    mode: Literal["off", "auto", "always"] = Field(default="auto")
+    min_request_words: int = Field(default=12, ge=1)  # `auto`: longer requests count as multi-step
+    max_steps: int = Field(default=12, ge=1, le=30)
+    step_chars: int = Field(default=240, ge=20)
+
+
+class ReflectConfig(BaseModel):
+    """After each tool result the loop checks progress; a failed or empty step triggers a bounded
+    replan, and a goal closes only when its plan is done."""
+
+    enabled: bool = Field(default=True)
+    max_replans: int = Field(default=2, ge=0, le=5)
+    completion_retries: int = Field(default=2, ge=0, le=3)
+    empty_keys: List[str] = Field(
+        default_factory=lambda: ["hits", "passages", "results", "matches", "items"]
+    )
+
+
 class AgentConfig(BaseModel):
     """Loop limits. `max_steps` is capped at the orchestration specification ceiling of 10."""
 
@@ -47,6 +68,8 @@ class AgentConfig(BaseModel):
     skill_max_chars: int = Field(default=24000, ge=1000)
     approval: ApprovalConfig = Field(default_factory=ApprovalConfig)
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
+    plan: PlanConfig = Field(default_factory=PlanConfig)
+    reflect: ReflectConfig = Field(default_factory=ReflectConfig)
 
 
 class ContextConfig(BaseModel):
@@ -76,6 +99,7 @@ class ModelApiConfig(BaseModel):
     base_url: str = Field(default="")
     model: str = Field(default="laris-core")
     api_key_env: str = Field(default="")  # name of the environment variable, never the key itself
+    ca_file: str = Field(default="")  # PEM of a private server certificate trusted by `laris login`
     timeout_s: float = Field(default=120.0, gt=0.0)
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     allow_remote: bool = Field(default=False)  # internal prompts may only go to loopback hosts
@@ -125,6 +149,7 @@ class SecurityConfig(BaseModel):
     leak_detection: bool = Field(default=True)
     leak_shingle_words: int = Field(default=7, ge=4, le=20)
     leak_min_shingles: int = Field(default=2, ge=1, le=50)
+    leak_max_shingles: int = Field(default=200000, ge=1000)  # memory budget of the detector
     stream_holdback_chars: int = Field(default=160, ge=0, le=2000)
     redact_paths: bool = Field(default=True)
     injection_scan: bool = Field(default=True)
@@ -162,6 +187,39 @@ class ServingConfig(BaseModel):
     api_key_env: str = Field(default="LARIS_SERVER_KEYS")  # env var with the accepted keys
     allowed_file: str = Field(default="")  # optional file, one key per line
     require_auth: bool = Field(default=True)  # the server refuses to start without keys
+    tls_cert_file: str = Field(default="")  # PEM certificate chain; with the identity file: HTTPS
+    tls_identity_file: str = Field(default="")  # PEM private key for that certificate
+    tls_dir: str = Field(default="~/.laris-server/tls")  # cert.pem + key.pem here turn HTTPS on
+    allow_plain_http: bool = Field(default=False)  # plain HTTP is only accepted on loopback
+    data_dir: str = Field(default="artifacts/server")  # database with keys, usage, reasoning traces
+    master_env: str = Field(default="LARIS_SERVER_MASTER")  # env var holding the master secret
+    master_file: str = Field(default="~/.laris-server/master.secret")  # used when the env is unset
+    server_ips: List[str] = Field(default_factory=list)  # extra addresses counted as "the server"
+    default_key_label: str = Field(default="default (server only)")
+    cache_ttl_s: float = Field(default=5.0, ge=0.0)  # key lookups; a revocation applies within it
+    cache_max_entries: int = Field(default=1024, ge=1)
+    chars_per_token: float = Field(
+        default=4.0, gt=0.0
+    )  # token estimate when the backend gives none
+    reasoning_tags: List[List[str]] = Field(default_factory=lambda: [["<think>", "</think>"]])
+    reasoning_http: bool = Field(default=False)  # serve traces over HTTP (off: local CLI only)
+    trace_retention_days: float = Field(default=30.0, gt=0.0)
+    roles: Dict[str, List[str]] = Field(
+        default_factory=lambda: {
+            "user": ["chat", "embed", "models", "workflows", "help", "account"],
+            "readonly": ["models", "workflows", "help", "account"],
+            "auditor": ["account", "usage.read", "reasoning.read"],
+            "admin": [
+                "chat", "embed", "models", "workflows", "help", "account",
+                "usage.read", "reasoning.read", "keys.manage",
+            ],
+        }
+    )  # fmt: skip
+    privileged_roles: List[str] = Field(default_factory=lambda: ["admin", "auditor"])
+    privileged_permissions: List[str] = Field(
+        default_factory=lambda: ["usage.read", "reasoning.read", "keys.manage"]
+    )
+    extra_known: List[str] = Field(default_factory=list)  # permissions beyond those in roles
 
 
 class AppConfig(BaseModel):
@@ -180,8 +238,13 @@ class AppConfig(BaseModel):
     ocr_max_pages: int = Field(default=50, ge=1)
     allow_write_default: bool = Field(default=False)
     key_env: str = Field(default="LARIS_API_KEY")  # environment variable holding the user API key
-    account_file: str = Field(default="~/.laris/credentials.json")  # saved by `laris login`
+    account_file: str = Field(default="~/.laris/settings.json")  # `api_key` saved by `laris login`
     users_dir: str = Field(default="users")  # per-key state below app.chat_dir
+    # Where the system policy (prompts, rules, workflows, brain) lives: `server` = the model server
+    # holds it and the client never has it; `local` = this folder (development and the server
+    # itself); `auto` = server when the folder has no `.laris/prompts`.
+    settings_file: str = Field(default="")  # global preferences file; empty = per-key space
+    policy_source: Literal["auto", "local", "server"] = Field(default="auto")
 
 
 class VaultConfig(BaseModel):
@@ -197,6 +260,14 @@ class VaultConfig(BaseModel):
     snippet_chars: int = Field(default=240, ge=40)
     cache_dir: str = Field(default="artifacts/vault_cache")  # disposable index cache
     knowledge_dir: str = Field(default="Knowledge")  # user knowledge by domain, inside the vault
+    entities: bool = Field(default=True)  # method/dataset/metric/claim notes with spans
+    entity_max_chars: int = Field(default=60000, ge=1000)  # text given to the extractor
+    entity_max_statements: int = Field(default=20, ge=0, le=200)
+    allow_nested: bool = Field(default=False)  # allow a vault inside another Obsidian vault
+    backup: bool = Field(default=True)  # copy a note aside before a managed block is rewritten
+    max_writes_per_minute: int = Field(default=120, ge=0)  # 0 = unlimited
+    max_property_chars: int = Field(default=2000, ge=100)  # lint: longest property value
+    max_note_lint_chars: int = Field(default=60000, ge=1000)  # lint: oversize note
 
 
 class BrainConfig(BaseModel):
@@ -228,6 +299,7 @@ class PromptConfig(BaseModel):
     rules_dir: str = Field(default=".laris/rules")
     workflows_dir: str = Field(default=".laris/workflows")
     brain_dir: str = Field(default=".laris/brain")  # protected, read by brain tools only
+    vault_dir: str = Field(default=".laris/vault")  # note schema registry, under the lock
     integrity_lock: str = Field(default=".laris/integrity.lock")
     integrity: Literal["enforce", "warn", "off"] = Field(default="enforce")
     help_file: str = Field(default=".laris/help/how-to-use.md")  # printed as-is, no model call

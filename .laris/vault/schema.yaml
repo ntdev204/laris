@@ -1,0 +1,21 @@
+# Note types of the project vault. `required` properties must be present and non-empty; `links`
+# are properties whose values must be wikilinks that resolve; `folder` is where the type lives.
+# A note without `type` (the user's own) is never checked. Under the integrity lock.
+version: 1
+types:
+  index: {required: [type], folder: ""}
+  source: {required: [type, trust, source, created], links: [concepts], folder: Sources}
+  concept: {required: [type, created], folder: Concepts}
+  claim: {required: [type, created, source_ref], links: [source_ref], folder: Claims}
+  method: {required: [type, created], folder: Concepts}
+  dataset: {required: [type, created], folder: Concepts}
+  metric: {required: [type, created], folder: Concepts}
+  limitation: {required: [type, created, source_ref], links: [source_ref], folder: Claims}
+  answer: {required: [type, trust, session, created], links: [session, sources, notes_used], folder: Questions}
+  session: {required: [type, created], folder: Sessions}
+  memory: {required: [type, created], folder: Memory}
+  decision: {required: [type, created], folder: Decisions}
+  analysis: {required: [type, created, scope], folder: Analyses}
+  proposal: {required: [type, status, origin, created], folder: _inbox}
+  knowledge: {required: [type], folder: Knowledge}
+  knowledge-hub: {required: [type, domain], folder: Knowledge}

@@ -95,6 +95,7 @@ model_api:
   base_url: ''
   model: laris-core
   api_key_env: ''
+  ca_file: ''
   timeout_s: 120.0
   temperature: 0.0
   allow_remote: false
@@ -140,6 +141,7 @@ security:
   leak_detection: true
   leak_shingle_words: 7
   leak_min_shingles: 2
+  leak_max_shingles: 200000
   stream_holdback_chars: 160
   redact_paths: true
   injection_scan: true
@@ -180,7 +182,7 @@ app:
   ocr_max_pages: 50
   allow_write_default: false
   key_env: LARIS_API_KEY
-  account_file: ~/.laris/credentials.json
+  account_file: ~/.laris/settings.json
   users_dir: users
 
 # Project vault: an Obsidian-format folder kept in the user's codebase as the project memory.
@@ -195,6 +197,14 @@ vault:
   snippet_chars: 240
   cache_dir: artifacts/vault_cache
   knowledge_dir: Knowledge
+  entities: true
+  entity_max_chars: 60000
+  entity_max_statements: 20
+  allow_nested: false
+  backup: true
+  max_writes_per_minute: 120
+  max_property_chars: 2000
+  max_note_lint_chars: 60000
 
 # System brain: a protected hub tree (root -> domain hub -> topic hub -> leaf) read by brain tools only.
 brain:
@@ -293,6 +303,7 @@ prompts:
   rules_dir: .laris/rules
   workflows_dir: .laris/workflows
   brain_dir: .laris/brain
+  vault_dir: .laris/vault
   integrity_lock: .laris/integrity.lock
   integrity: enforce
   help_file: .laris/help/how-to-use.md

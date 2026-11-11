@@ -89,6 +89,10 @@ entailment checks.
 
 ### Chat, agent and model API
 
+Two executables: `laris` is the user client (agent, account, vault, skills, learn, and `app ingest|search|status`)
+and `laris-server` holds the operator side (`model serve`, `harness`, `brain`, `workflows`, data, training,
+evaluation, `app index|ask`); the client does not contain server commands.
+
 The web interface was removed (owner decision, 2026-11-11); LARIS is a terminal client. Two parts:
 
 ```bash
@@ -97,12 +101,50 @@ laris login                       # user: enter the API key once (hidden input, 
 laris                             # terminal chat; also -p "prompt", --resume, --resume <id>
 ```
 
+Run `laris-server model serve` in the codebase that holds the system `.laris/` (or pass `--policy-root`);
+the operator does not log in. HTTPS: `laris-server tls init --host name-or-ip` writes a self-signed
+certificate and a 0600 key to `serving.tls_dir` (`~/.laris-server/tls`); `model serve` then uses them
+automatically. Or give a certificate and its private key
+(`--tls-cert cert.pem --tls-identity identity.pem`, or `serving.tls_cert_file` and
+`serving.tls_identity_file`; TLS 1.2 or newer). The server refuses plain HTTP on any address except
+loopback unless `serving.allow_plain_http` is set (for example behind a reverse proxy that terminates TLS).
+Certificates are always verified. For a private or self-signed certificate `laris login --server URL`
+shows its SHA-256 fingerprint and, once the user confirms it (or passes `--trust-fingerprint`), pins it in
+`~/.laris/trusted/` and `settings.json` (`ca_file`) for that server only; `SSL_CERT_FILE` still works. The server address is the `base_url` field of the global `~/.laris/settings.json`, as in
+`{"base_url": "https://host:8000/v1", "model": "laris-core", "api_key": "lk_..."}` (as Claude Code does);
+`laris login --server URL` and `laris login` write `base_url` and `api_key` there (file mode 0600; `api_key`
+can also come from `LARIS_API_KEY`; `credentials.json` of older installs is still read).
+
+Keys are made on the server machine and stored in its database (`serving.data_dir`):
+
+```bash
+laris-server keys create --label "Alice" --role user --tokens 2000000     # a quota
+laris-server keys create --label "Owner" --role admin --tokens unlimited  # no quota
+laris-server keys list | show ID | revoke ID | limit ID --tokens N [--add] | roles
+laris-server usage summary                                                # token use per key
+laris-server reasoning list | show ID | purge                             # the model's reasoning
+```
+
+The new key is printed once and the running server accepts it at once. Keys are stored encrypted
+(master secret: `LARIS_SERVER_MASTER`, or the file `serving.master_file`, kept apart from the database);
+`laris-server keys reveal ID` prints one again. The first start creates a built-in key with every
+permission and no limit that works only from the server machine itself (`laris-server keys reveal
+default`); restrict any key to addresses with `--allow-ip CIDR` or `keys ip ID --allow CIDR`. Roles (`serving.roles`): `user`,
+`readonly`, `auditor`, `admin`; a request without the route's permission gets 403 and a key without tokens
+left gets 429. The model's reasoning is stored for the operator only and is never sent to any client
+(ADR-018); `laris whoami` shows a user's role and tokens left. Fixed keys in `LARIS_SERVER_KEYS` still work
+for testing (role `user`, unlimited).
+
 The server refuses to start without keys (`serving.api_key_env`, `serving.allowed_file`; digests only in
 memory), answers 401 to any other key, and stores nothing about users (ADR-015: the user's disk is the
 database and the user's machine is the sandbox). `laris login` and each session check the key against
 the server (`model_api.base_url`; remote hosts need `model_api.allow_remote: true`).
 
-Each API key opens its own private space: conversations, settings, uploads, archive, audit and
+Preferences (`settings.json`) are global and shared by every key on the machine, in `~/.laris/`
+(`app.settings_file`); `~/.laris/` also holds `config.yaml`, `LARIS.md`, `skills/` and `memory/`, created
+on first start. The project's `./.laris/` (`laris init`) holds the same kinds of files for one project.
+
+Each API key opens its own private space: conversations, uploads, archive, audit and
 collected sessions live under `artifacts/chat/users/<fingerprint>/` (`app.users_dir`), where the
 fingerprint is a one-way hash of the key. The key itself is read from `LARIS_API_KEY`
 (`app.key_env`), else the credentials file (`app.account_file`), else a hidden prompt, and is sent to the
@@ -153,6 +195,21 @@ the matching brain hub (`save_knowledge` adds taught knowledge). Skills are made
 after approval, and `laris skills sync` (or `learning.skill_on_ingest: true`) builds optional corpus skills. Good answers are kept locally under `artifacts/finetune`
 (`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
 
+#### The project vault and scholarly analytics
+
+`laris vault init|status|check|search|show|graph|sync|repair|migrate-memory|propose|review|accept|reject`
+(see `docs/architecture/BRAIN_AND_VAULT.md`). `check` runs format, schema (`.laris/vault/schema.yaml`),
+secret, oversize and alias lint; `graph --format json|graphml|canvas [--out FILE]` exports the link graph
+or the knowledge graph; `sync [--accept]` lists or adopts hand edits inside managed blocks; `repair
+[--restore NOTE]` fixes damage or restores a backup. In chat: `/vault [words]`. Agent tools:
+`search_vault`, `corpus_overview`, `term_trends`, `find_duplicates`, `group_documents`, `save_analysis`,
+`citation_graph`, `kg_query`; workflows `literature-map`, `citation-analysis`, `kg-explore`.
+
+Operator side: `laris-server evaluate suite [--fast] [--only ...] [--out reports/...]` runs the model-free
+suites (retrieval, citation, extraction, leak, injection, vault round-trip); `make eval-fast`,
+`make test-model-free` and `make bench-vault` are the matching targets. See
+`docs/development/OWNER_RUNBOOK.md`.
+
 #### Instructions, skills and automatic context compaction
 
 - **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the
@@ -163,8 +220,9 @@ after approval, and `laris skills sync` (or `learning.skill_on_ingest: true`) bu
   optional `references/`). Only name and description are in the prompt; the model loads a skill with the
   `use_skill` tool, or the user runs `/<skill-name> request` (terminal and web `/` menu). `laris skills
   list|show|check` inspects and validates them. Project skills override `~/.laris/skills`.
-- **Memory** is `.laris/memory/*.md` (short dated notes the skills read first); `save_memory` writes it
-  after approval.
+- **Memory** lives in the project vault, `vault/Memory/` (`save_memory` writes it after approval); files in
+  the older `.laris/memory/` are still read until `laris vault migrate-memory` copies them (`--undo` removes
+  the copies).
 - **Autocompact is on by default** (`auto_compact`, `context_window` 32768 tokens, `compact_threshold`
   0.8, all in settings). Before each model call the session estimates its size; above the threshold it
   trims old tool outputs, then replaces older turns with a summary (model-written when a model API is
