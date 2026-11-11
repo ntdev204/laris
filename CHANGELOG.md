@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-11
+
 ### Removed
 - **Spec/plan/task ledger:** `.agents/spec.md`, `.agents/plan.md`, `.agents/task.md`, `scripts/validate_work_plan.py`, its contract test and the `workflow` make target are retired by owner decision; the system harness is built first and the core model resumes afterwards. Earlier changelog entries still mention them as history.
 
