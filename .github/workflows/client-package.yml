@@ -1,0 +1,67 @@
+name: Client package (all platforms)
+
+# Builds the compiled client wheel for every supported OS and Python, then assembles one npm
+# set of npm packages: one per platform plus the launcher. It never publishes: download the
+# artifact, inspect it, then publish the five platform packages first and the launcher last, yourself,
+# with the owner's authorisation (OWNER_RUNBOOK.md).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  wheels:
+    name: Wheel ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-latest, windows-latest]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build tools and runtime libraries (the smoke test imports every module)
+        run: python -m pip install --upgrade pip setuptools wheel "cython>=3.0,<4" pyyaml pydantic numpy pyarrow
+      - name: Build and smoke-test the wheel
+        run: python packaging/build_client.py dist-wheels
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            dist-wheels/*.whl
+            dist-wheels/requirements.txt
+          if-no-files-found: error
+
+  package:
+    name: Assemble npm packages
+    needs: wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-*
+          path: wheels
+          merge-multiple: true
+      - name: Split wheels into per-platform packages plus the launcher
+        run: |
+          test "$(ls wheels/*.whl | wc -l)" -ge 20
+          python packaging/assemble_npm.py wheels npm-out
+      - name: Pack every package (nothing is published)
+        run: |
+          mkdir tarballs
+          for d in npm-out/*/; do (cd "$d" && npm pack --ignore-scripts --pack-destination ../../tarballs); done
+          ls -la tarballs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laris-cli-npm-packages
+          path: tarballs/*.tgz
+          if-no-files-found: error

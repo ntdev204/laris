@@ -50,13 +50,19 @@ def closure(entry: str) -> Set[str]:
 
 SETUP = """\
 import glob
+import os
+import sys
 from setuptools import Extension, find_packages, setup
 
-modules = sorted(glob.glob("src/**/*.c", recursive=True))
-extensions = [
-    Extension(m[len("src/"):-2].replace("/", "."), [m], extra_compile_args=["-O2", "-g0"])
-    for m in modules
-]
+modules = sorted(glob.glob(os.path.join("src", "**", "*.c"), recursive=True))
+flags = ["/O2"] if sys.platform == "win32" else ["-O2", "-g0"]
+
+
+def dotted(path):
+    return os.path.relpath(path, "src")[:-2].replace(os.sep, ".")
+
+
+extensions = [Extension(dotted(m), [m], extra_compile_args=flags) for m in modules]
 setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
@@ -115,7 +121,7 @@ import importlib, pkgutil, sys
 # the development checkout must not be able to fill in for a missing module
 sys.meta_path[:] = [f for f in sys.meta_path if "editable" not in type(f).__module__.lower()
                     and "editable" not in type(f).__name__.lower()]
-sys.path[:] = [p for p in sys.path if not p.rstrip("/").endswith("/src")]
+sys.path[:] = [p for p in sys.path if not p.replace("\\\\", "/").rstrip("/").endswith("/src")]
 sys.path.insert(0, sys.argv[1])
 failed = []
 for m in pkgutil.walk_packages([sys.argv[1]]):
@@ -134,6 +140,21 @@ sys.exit(1 if failed else 0)
 """
 
 
+def build_python() -> Path:
+    """The interpreter that builds and smoke-tests the wheel: LARIS_BUILD_PYTHON, else this one."""
+    return Path(os.environ.get("LARIS_BUILD_PYTHON", sys.executable))
+
+
+def wheel_command(python: Path, stage: Path, out: Path) -> list:
+    """`pip wheel` where pip exists (CI, Windows, macOS); `uv build` for pip-less uv venvs."""
+    has_pip = subprocess.run([str(python), "-c", "import pip"], capture_output=True).returncode == 0
+    if has_pip:
+        return [str(python), "-m", "pip", "wheel", "--no-deps", "--no-build-isolation",
+                "--wheel-dir", str(out), "-q", str(stage)]
+    return ["uv", "build", "--wheel", "--no-build-isolation", "--python", str(python),
+            "--out-dir", str(out), "-q", str(stage)]
+
+
 def smoke(wheel: Path) -> None:
     """Unpack the wheel alone and import every module in it; no source file may remain."""
     import zipfile
@@ -144,7 +165,7 @@ def smoke(wheel: Path) -> None:
         leftovers += [p for p in Path(tmp).rglob("*.py") if p.name != "__init__.py"]
         if leftovers:
             raise SystemExit(f"readable source left in the wheel: {leftovers[:3]}")
-        python = Path(os.environ.get("LARIS_BUILD_PYTHON", REPO / ".venv/bin/python"))
+        python = build_python()
         subprocess.run([str(python), "-I", "-c", SMOKE, tmp], check=True)
 
 
@@ -165,22 +186,8 @@ def main(out: Path) -> None:
         )
         (stage / "setup.py").write_text(SETUP, encoding="utf-8")
         out.mkdir(parents=True, exist_ok=True)
-        python = Path(os.environ.get("LARIS_BUILD_PYTHON", REPO / ".venv/bin/python"))
-        subprocess.run(
-            [
-                "uv",
-                "build",
-                "--wheel",
-                "--no-build-isolation",
-                "--python",
-                str(python),
-                "--out-dir",
-                str(out),
-                "-q",
-                str(stage),
-            ],
-            check=True,
-        )
+        python = build_python()
+        subprocess.run(wheel_command(python, stage, out), check=True)
     (out / ".gitignore").unlink(missing_ok=True)
     smoke(next(out.glob("*.whl")))
     (out / "requirements.txt").write_text("\n".join(DEPENDENCIES) + "\n", encoding="utf-8")
