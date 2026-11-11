@@ -40,8 +40,7 @@ Execution order:
 6. Only then implement/execute scientific-language learning, followed by OCR,
    manuscript learning, integration and later specialists.
 
-The system specification, remaining project plan and implementation tasks live in `.agents/spec.md`, `.agents/plan.md` and
-`.agents/task.md`. Completed preparation tasks do not mean completed model training.
+The separate spec/plan/task ledger was retired (2026-11-11): the system harness is built first and the core model is resumed afterwards. Completed engineering does not mean completed model training.
 Agents must not run fitting, backward passes, optimizer steps, authorized memory
 profiling or tests that perform these operations.
 

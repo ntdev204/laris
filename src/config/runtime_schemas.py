@@ -184,6 +184,8 @@ class PromptConfig(BaseModel):
     workflows_dir: str = Field(default=".laris/workflows")
     integrity_lock: str = Field(default=".laris/integrity.lock")
     integrity: Literal["enforce", "warn", "off"] = Field(default="enforce")
+    help_file: str = Field(default=".laris/help/how-to-use.md")  # printed as-is, no model call
+    help_commands: List[str] = Field(default_factory=lambda: ["/how-to-use"])
     workflow_max_chars: int = Field(default=6000, ge=500)
     manifest: str = Field(default="manifest.yaml")
     assistant_name: str = Field(default="LARIS")

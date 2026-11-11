@@ -126,6 +126,13 @@ scripted placeholder that quotes passages (`laris-placeholder`). The trained cor
 with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
 the client settings; keys are never stored in files.
 
+#### User guide (`/how-to-use`)
+
+`/how-to-use` prints `.laris/help/how-to-use.md` exactly as written (`prompts.help_file`,
+`prompts.help_commands`), with no model call. It works in the web chat (also the "Hướng dẫn" button),
+the terminal chat and as `laris agent guide`. Edit the file, then run `laris harness lock` after the
+owner approves the change.
+
 #### Policy folder, workflows and integrity
 
 `.laris/` holds the protected prompts, rules and workflows (see `.laris/README.md`).

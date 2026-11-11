@@ -7,6 +7,7 @@ only override it. Conversations and preferences are shared with the web UI.
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from application.chat_app import ChatApp
@@ -46,6 +47,24 @@ class _Tools:
         for spec in make_chat(args).tool_specs():
             flag = " (writes, needs approval)" if spec.writes else ""
             print(f"{spec.name}{flag}: {spec.description}")
+        return 0
+
+
+class _Guide:
+    """Print the prepared user guide (no model, no workspace)."""
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        pass
+
+    def run(self, args: argparse.Namespace) -> int:
+        runtime = load_runtime(args)
+        path = Path(runtime.config.prompts.help_file).expanduser()
+        path = path if path.is_absolute() else runtime.root / path
+        print(
+            path.read_text(encoding="utf-8")
+            if path.is_file()
+            else runtime.strings.get("help.missing")
+        )
         return 0
 
 
@@ -200,9 +219,12 @@ class _Chat:
         rest = rest.strip()
         if name in ("/exit", "/quit"):
             return None
-        if name == "/help":
+        if line.strip().lower() in chat.runtime.config.prompts.help_commands:
+            print(chat.how_to_use())
+        elif name == "/help":
             print(
-                "/new /sessions /resume ID /tools /skills /<skill> <yêu cầu> /compact [ghi chú] "
+                "/how-to-use /new /sessions /resume ID /tools /skills /<skill> <yêu cầu> "
+                "/compact [ghi chú] "
                 "/context /workflows /workflow NAME <yêu cầu> /status /model [URL [NAME]] "
                 "/write on|off /learn on|off /rate up|down /exit"
             )
@@ -281,4 +303,4 @@ class _Chat:
         return conversation
 
 
-COMMANDS = {"tools": _Tools(), "run": _Run(), "chat": _Chat()}
+COMMANDS = {"tools": _Tools(), "run": _Run(), "chat": _Chat(), "guide": _Guide()}

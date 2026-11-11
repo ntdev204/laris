@@ -1,8 +1,9 @@
 {
   "algorithm": "sha256",
   "files": {
+    ".laris/help/how-to-use.md": "b0c4d3bd8200ddb40dbd115d627a780a0b99a0fcc21b446daa845938535b2d93",
     ".laris/prompts/manifest.yaml": "9b97e8186e5048110733f79d09915619e3139fcf7580a8622a237e3f9f297e0b",
-    ".laris/prompts/strings.yaml": "7a2d2735d947812d974ce0a80664b3aaf93e4f699ba275a5e9747cae92c05e36",
+    ".laris/prompts/strings.yaml": "208219dc1ba80426e63de179e95d38942f143f70c97bfb98b904ca94e6b9bfbe",
     ".laris/prompts/system/10_identity.md": "d919f1c624b84a2d5cff5e1e5c50b1cdcd83a81ca606a6650f1cbaf661764750",
     ".laris/prompts/system/20_principles.md": "ec7594c977511b98af86c88c1bc80dc614b03c4f967cbc9078cbd05a182d7455",
     ".laris/prompts/system/30_confidentiality.md": "c2401c758c3a42798c54176ec137f0336e4740cded3f1fef7536f890d232a454",
