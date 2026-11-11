@@ -131,6 +131,7 @@ class AgentSession:
             workflow=wf.name if wf else "",
         )
         verified = True
+        user_text = self.harness.redactor.redact_secrets(user_text)[0]  # never store a typed key
         self.messages.append({"role": "user", "content": user_text})
         seen: set = set()
         turn_results: List[Dict[str, Any]] = []

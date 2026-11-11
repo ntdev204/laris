@@ -177,6 +177,9 @@ app:
   ocr_lang: eng+vie
   ocr_max_pages: 50
   allow_write_default: false
+  key_env: LARIS_API_KEY
+  account_file: ~/.laris/credentials.json
+  users_dir: users
 
 # Project vault: an Obsidian-format folder kept in the user's codebase as the project memory.
 vault:

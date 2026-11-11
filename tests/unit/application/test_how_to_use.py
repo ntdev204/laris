@@ -6,7 +6,6 @@ import pytest
 
 from agent.provider import ChatProvider, wire_messages
 from application.chat_app import ChatApp
-from application.server import handle_api
 from application.service import SearchService
 from application.workspace import Workspace
 from config.loader import load_runtime_config
@@ -64,9 +63,8 @@ def test_help_turn_is_not_collected_as_training_data(chat):
     assert chat.learning_stats()["examples"]["sft"] == 0
 
 
-def test_api_and_missing_file(chat, project, tmp_path):
-    code, body = handle_api(chat.service, "GET", "/api/how-to-use", {}, chat)
-    assert code == 200 and body["markdown"] == guide_text(project)
+def test_missing_file(chat, project, tmp_path):
+    assert chat.how_to_use() == guide_text(project)
     (project / ".laris" / "help" / "how-to-use.md").unlink()
     relaxed = ChatApp(chat.service, project, project / "chat", {"prompts.integrity": "off"})
     assert "Chưa có" in relaxed.how_to_use()
@@ -86,7 +84,7 @@ def test_guide_mentions_every_user_command():
     text = (REPO / ".laris" / "help" / "how-to-use.md").read_text(encoding="utf-8")
     for needle in (
         "/how-to-use", "/workflow", "/compact", "/context", "/rate", "/learn", "/skills",
-        "laris --resume", "/sessions", "/guide",
+        "laris --resume", "/sessions", "laris login",
         "grounded-qa", "document-intake", "evidence-review", "research-brief", "save_skill",
         "vault/",
     ):  # fmt: skip
@@ -132,11 +130,10 @@ def test_resume_picker_prefix_and_new(chat, monkeypatch):
     assert _Chat._start(chat, "nonexistent")["messages"] == []
 
 
-def test_guide_page_is_served_at_a_public_path(chat):
-    from application.server import handle_api
-    from application.web_ui import GUIDE_PAGE, PAGE
+def test_web_is_removed():
+    from tests.unit.harness.test_harness import REPO
 
-    assert "/api/guide" in GUIDE_PAGE and "function markdown(" in GUIDE_PAGE
-    assert 'href="/guide"' in PAGE
-    code, payload = handle_api(chat.service, "GET", "/api/guide", {}, chat)
-    assert code == 200 and "Hướng dẫn sử dụng LARIS" in payload["markdown"]
+    assert not (REPO / "src" / "application" / "server.py").exists()
+    assert not (REPO / "src" / "application" / "web_ui.py").exists()
+    text = (REPO / ".laris" / "help" / "how-to-use.md").read_text(encoding="utf-8").lower()
+    assert "web" not in text.split() and "trình duyệt" not in text

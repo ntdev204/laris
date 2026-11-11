@@ -8,7 +8,6 @@ import pytest
 from agent.conversations import ConversationStore
 from agent.provider import HttpChatProvider, OfflinePlanner
 from application.chat_app import ChatApp
-from application.server import handle_api
 from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
 from harness.prefs import PrefsError
@@ -59,18 +58,18 @@ def test_multi_turn_conversation_is_saved_and_titled(chat):
     assert saved["messages"][0]["role"] == "user"  # the system prompt is never persisted
 
 
-def test_chat_routes_through_handle_api(chat):
-    service = chat.service
-    code, created = handle_api(service, "POST", "/api/conversations", {}, chat)
-    assert code == 200
-    assert handle_api(service, "GET", f"/api/conversations/{created['id']}", {}, chat)[0] == 200
-    assert handle_api(service, "GET", "/api/conversations/ffffffffffff", {}, chat)[0] == 404
-    assert handle_api(service, "POST", "/api/settings", {"model": "m"}, chat)[1]["model"] == "m"
-    assert handle_api(service, "POST", "/api/settings", {"nope": 1}, chat)[0] == 400
-    info = handle_api(service, "GET", "/api/instructions", {}, chat)[1]
-    assert info == {"count": info["count"]} and "files" not in info  # internals stay hidden
-    assert handle_api(service, "GET", "/api/model-health", {}, chat)[1]["mode"] == "offline"
-    assert handle_api(service, "DELETE", f"/api/conversations/{created['id']}", {}, chat)[0] == 200
+def test_chat_settings_and_conversations(chat):
+    created = chat.conversations.create()
+    assert chat.conversations.get(created["id"])["id"] == created["id"]
+    with pytest.raises(KeyError):
+        chat.conversations.get("ffffffffffff")
+    assert chat.update_settings({"model": "m"})["model"] == "m"
+    with pytest.raises(PrefsError):
+        chat.update_settings({"nope": 1})
+    assert chat.model_health()["mode"] == "offline"
+    chat.conversations.delete(created["id"])
+    with pytest.raises(KeyError):
+        chat.conversations.get(created["id"])
 
 
 def test_upload_is_sandboxed_by_name_and_ingested(chat):

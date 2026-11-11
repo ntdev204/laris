@@ -48,7 +48,7 @@ class HarnessRuntime:
         self.approval = ApprovalPolicy(self.config.agent)
         self.paths = PathPolicy(self.config.security.deny_read_globs, self.root)
         chat_dir = self.config.app.chat_dir.strip("/")
-        for private in ("conversations", "archive", "sessions", "audit"):  # other users' data
+        for private in ("conversations", "archive", "sessions", "audit", "users"):  # user data
             self.paths.add_deny(f"{chat_dir}/{private}/**")
         self.paths.add_deny(f"{chat_dir}/settings.json")
         self.paths.add_deny(f"{self.config.learning.dir.strip('/')}/**")  # collected training data

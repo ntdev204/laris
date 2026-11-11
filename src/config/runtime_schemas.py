@@ -177,6 +177,9 @@ class AppConfig(BaseModel):
     ocr_lang: str = Field(default="eng+vie")
     ocr_max_pages: int = Field(default=50, ge=1)
     allow_write_default: bool = Field(default=False)
+    key_env: str = Field(default="LARIS_API_KEY")  # environment variable holding the user API key
+    account_file: str = Field(default="~/.laris/credentials.json")  # saved by `laris login`
+    users_dir: str = Field(default="users")  # per-key state below app.chat_dir
 
 
 class VaultConfig(BaseModel):

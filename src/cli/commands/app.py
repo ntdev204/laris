@@ -1,4 +1,4 @@
-"""`laris app ...`: local end-to-end application (ingest, index, search, ask, serve).
+"""`laris app ...`: local end-to-end application (ingest, index, search, ask, status).
 
 Every default (workspace, host, port, limits) comes from configuration; flags only override.
 """
@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from application.server import serve
 from application.service import SearchService, ServiceError
 from application.workspace import IngestError, chunks_from_path
 from cli.common import load_runtime, make_service, model_flags
@@ -103,29 +102,6 @@ def _status(service: SearchService, args: argparse.Namespace, rt: Any) -> Dict[s
     return info
 
 
-def _serve(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
-    from application.chat_app import ChatApp
-
-    chat = ChatApp(service, Path.cwd(), overrides=_overrides(args))
-    cfg = chat.runtime.config.app
-    host, port = args.host or cfg.host, args.port or cfg.port
-    server = serve(service, host, port, chat)
-    print(f"LARIS chat on http://{host}:{port}. Ctrl+C stops.")
-    print(f"Model: {chat.model_health()['detail']}")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nstopped")
-    finally:
-        server.server_close()
-
-
-def _overrides(args: argparse.Namespace) -> Dict[str, Any]:
-    from cli.common import cli_overrides
-
-    return cli_overrides(args)
-
-
 _SEARCH_FLAGS: Dict[str, Dict[str, Any]] = {
     "--query": {"required": True, "help": "Question or keywords"},
     "--mode": {"choices": ["bm25", "dense", "hybrid"], "default": "bm25"},
@@ -135,17 +111,6 @@ _SEARCH_FLAGS: Dict[str, Dict[str, Any]] = {
         "help": "Passages (config: app.search_default_top_k)",
     },
 }
-
-
-class _Serve(_Command):
-    def run(self, args: argparse.Namespace) -> int:
-        try:
-            runtime = load_runtime(args)
-            _serve(make_service(args, runtime), args, runtime)
-        except (ServiceError, FileNotFoundError, ValueError, RuntimeError) as exc:
-            print(f"[ERROR] {exc}")
-            return 2
-        return 0
 
 
 COMMANDS = {
@@ -161,18 +126,4 @@ COMMANDS = {
     "search": _Command(_SEARCH_FLAGS, lambda s, a, r: _search(s, a, r)),
     "ask": _Command(_SEARCH_FLAGS, lambda s, a, r: _ask(s, a, r)),
     "status": _Command({}, _status, model=False),
-    "serve": _Serve(
-        {
-            "--host": {"default": None, "help": "Bind address (config: app.host)"},
-            "--port": {"type": int, "default": None, "help": "Port (config: app.port)"},
-            "--model-api-url": {
-                "default": None,
-                "help": "Model API base URL (config: model_api.base_url)",
-            },
-            "--model-name": {"default": None, "help": "Model name (config: model_api.model)"},
-            "--allow-write": {"action": "store_true", "help": "Auto-approve write tools"},
-            "--chat-dir": {"default": None, "help": "Conversations folder (config: app.chat_dir)"},
-        },
-        lambda s, a, r: None,
-    ),
 }

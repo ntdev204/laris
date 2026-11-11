@@ -33,11 +33,26 @@ def _common(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def make_chat(args: argparse.Namespace) -> ChatApp:
+def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
+    """The chat for the signed-in user: the API key picks a private conversation space and is
+    the credential sent to the model API."""
+    import os
+
+    from cli import credentials
     from cli.common import cli_overrides
 
     runtime = load_runtime(args)
-    return ChatApp(make_service(args, runtime), runtime.root, overrides=cli_overrides(args))
+    app = runtime.config.app
+    key = credentials.resolve(app, interactive=interactive and sys.stdin.isatty())
+    os.environ[app.key_env] = key  # the redactor hides it; the model client reads it
+    overrides = cli_overrides(args)
+    overrides.setdefault("model_api.api_key_env", app.key_env)
+    return ChatApp(
+        make_service(args, runtime),
+        runtime.root,
+        overrides=overrides,
+        user=credentials.fingerprint(key),
+    )
 
 
 class _Tools:

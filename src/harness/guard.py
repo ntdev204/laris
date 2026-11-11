@@ -53,6 +53,18 @@ class SecretRedactor:
         self._root = str(project_root.resolve()) if project_root else ""
         self._home = str(Path.home())
 
+    def redact_secrets(self, text: str) -> Tuple[str, int]:
+        """Hide credentials only (paths untouched): used on what the user types."""
+        count = 0
+        for value in self._values:
+            if value in text:
+                count += text.count(value)
+                text = text.replace(value, self._mask)
+        for pattern in self._patterns:
+            text, n = pattern.subn(self._mask, text)
+            count += n
+        return text, count
+
     def redact(self, text: str) -> Tuple[str, int]:
         count = 0
         for value in self._values:

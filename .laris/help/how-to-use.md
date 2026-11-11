@@ -11,28 +11,29 @@ và in nguyên văn, không qua mô hình. Gõ `/how-to-use` bất cứ lúc nà
 
 ## 1. Khởi động nhanh
 
-**Web:** mở địa chỉ (tên miền) mà quản trị viên cung cấp. Trang hướng dẫn này nằm ở `/guide`.
-
-**Terminal:** chỉ cần lệnh `laris` (giao diện giống Claude Code, kết nối tới máy chủ LARIS đã được cấu hình):
+Chỉ cần lệnh `laris` (giao diện terminal giống Claude Code):
 
 ```bash
+laris login                    # nhập API key một lần (nhập ẩn, lưu riêng cho bạn)
 laris                          # mở phiên mới
 laris --resume                 # liệt kê các phiên đã lưu để chọn
 laris --resume <mã-phiên>      # mở lại đúng phiên (gõ vài ký tự đầu của mã cũng được)
 laris -p "câu hỏi"             # hỏi một câu rồi thoát
+laris whoami | laris logout    # xem mã người dùng / xóa khóa đã lưu
 ```
 
+- **API key quyết định không gian riêng của bạn.** Mỗi key có hội thoại, cài đặt, tệp tải lên và dữ
+  liệu riêng; key khác không thấy được. Đổi key là sang một không gian khác. Key không bao giờ được ghi
+  vào hội thoại hay nhật ký. Có thể đặt sẵn bằng biến môi trường `LARIS_API_KEY`; nếu chưa có, `laris`
+  sẽ hỏi.
 - Trong phiên, gõ `/help` để xem lệnh, `/sessions` để xem phiên, `/resume <mã>` để chuyển phiên,
   `/new` để mở phiên mới, Ctrl+D để thoát.
-- Phiên ở terminal và ở web dùng chung kho hội thoại và cài đặt của bạn.
 - Chưa có mô hình thật: hệ thống dùng "trợ lý tích hợp" chỉ trích đoạn văn từ tài liệu.
 
 ## 2. Nạp tài liệu (kiến thức mới)
 
 | Cách | Lệnh / thao tác |
 |---|---|
-| Web | Bảng **Kho tài liệu** → chọn file → **Nạp**; hoặc kéo thả file vào khung chat |
-| Terminal | Nhờ trợ lý nạp thư mục hoặc file bằng công cụ `ingest_path` |
 | Trong chat | Nhờ trợ lý dùng công cụ `ingest_path` (cần bạn đồng ý) |
 
 - Hỗ trợ: txt, md, pdf (có lớp chữ), ảnh và PDF scan (OCR `eng+vie`), jsonl/parquet kiểu BEIR.
@@ -40,7 +41,7 @@ laris -p "câu hỏi"             # hỏi một câu rồi thoát
   não: một ghi chú trong `vault/Knowledge/<lĩnh vực>/` (thuật ngữ chính, các khẳng định, phương pháp,
   tập dữ liệu, chỉ số trích từ tài liệu), nối với ghi chú nguồn và hiện cạnh hub lĩnh vực tương ứng
   (xem mục 11). Tài liệu không khớp lĩnh vực nào vào nhóm `General`.
-- Nạp lại cùng tài liệu sẽ cập nhật ghi chú, không nhân đôi. Xem trạng thái kho: nút **Kho tài liệu** (web) hoặc `/status` (terminal).
+- Nạp lại cùng tài liệu sẽ cập nhật ghi chú, không nhân đôi. Xem trạng thái kho: `/status`.
 - Skill chỉ được tạo khi **bạn yêu cầu** (mục 5). Muốn dạy một kiến thức mới bằng lời, nói *"hãy ghi nhớ
   rằng ..."*: trợ lý gọi `save_knowledge` (cần bạn đồng ý) để thêm vào đúng lĩnh vực.
 
@@ -50,27 +51,27 @@ laris -p "câu hỏi"             # hỏi một câu rồi thoát
 - Câu trả lời về kho tài liệu luôn được tìm trước rồi mới trả lời, kèm trích nguồn `[nguồn #hạng]`.
   Thiếu trích nguồn, hệ thống yêu cầu viết lại một lần rồi mới cảnh báo.
 - Chỉ muốn danh sách đoạn tìm được, không cần câu trả lời: nói rõ *"chỉ tìm, đừng trả lời"*.
-- Đính kèm file vào tin nhắn (nút 📎 hoặc kéo thả): trợ lý nhận đường dẫn tương đối và có thể đọc nó.
+- Nhắc tới file bằng đường dẫn trong tin nhắn: trợ lý có thể đọc nó (đường dẫn tương đối).
 
 ## 4. Lệnh gạch chéo (`/`)
 
-Gõ `/` trong ô chat để mở menu (web) hoặc dùng trực tiếp (terminal).
+Gõ trực tiếp trong phiên.
 
 | Lệnh | Tác dụng |
 |---|---|
 | `/how-to-use` | In hướng dẫn này (không gọi mô hình) |
 | `/<tên-skill> <yêu cầu>` | Chạy một skill, ví dụ `/literature-review ...` |
 | `/workflow <tên> <yêu cầu>` | Chạy một quy trình có giới hạn chặt |
-| `/workflows` | Liệt kê quy trình (terminal) |
-| `/skills` | Liệt kê skill (terminal) |
+| `/workflows` | Liệt kê quy trình  |
+| `/skills` | Liệt kê skill  |
 | `/compact [ghi chú]` | Nén ngữ cảnh ngay |
 | `/context` | Xem mức dùng ngữ cảnh và trạng thái tự nén |
-| `/rate up\|down` | Đánh giá câu trả lời vừa rồi (terminal) |
-| `/learn on\|off` | Bật/tắt lưu dữ liệu fine-tune cục bộ (terminal) |
-| `/write on\|off` | Tự duyệt các thao tác ghi (terminal) |
-| `/model [URL [TÊN]]` | Xem/đổi API mô hình (terminal) |
-| `/new`, `/sessions`, `/resume ID` | Quản lý phiên (terminal) |
-| `/tools`, `/status`, `/exit` | Công cụ, trạng thái, thoát (terminal) |
+| `/rate up\|down` | Đánh giá câu trả lời vừa rồi  |
+| `/learn on\|off` | Bật/tắt lưu dữ liệu fine-tune cục bộ  |
+| `/write on\|off` | Tự duyệt các thao tác ghi  |
+| `/model [URL [TÊN]]` | Xem/đổi API mô hình  |
+| `/new`, `/sessions`, `/resume ID` | Quản lý phiên  |
+| `/tools`, `/status`, `/exit` | Công cụ, trạng thái, thoát  |
 
 Terminal còn có: `laris agent chat -p "câu hỏi"` (chạy một lần rồi thoát) và `--resume` (nối lại phiên cuối).
 
@@ -78,7 +79,7 @@ Terminal còn có: `laris agent chat -p "câu hỏi"` (chạy một lần rồi 
 
 Skill là cách làm việc có sẵn (ví dụ tổng quan tài liệu, thiết kế thí nghiệm, phản biện).
 
-- Xem: `/skills` (terminal) hoặc nút **Skills** (web).
+- Xem: `/skills`.
 - Dùng: `/<tên-skill> <yêu cầu>`, hoặc để trợ lý tự gọi khi yêu cầu khớp mô tả.
 - Skill chỉ tạo khi bạn yêu cầu; kiến thức mới (sự kiện, định nghĩa, kết quả) thì dùng `save_knowledge`.
 - Dạy kỹ năng mới: nói *"tôi muốn thêm một skill ..."* — trợ lý dùng skill `skill-authoring`, soạn bản
@@ -107,7 +108,7 @@ Chỉ bạn mới khởi chạy được quy trình; mô hình không tự chọ
 
 - **Tự nén luôn bật**: khi ngữ cảnh gần đầy (mặc định 80% của 32768 token), hệ thống cắt bớt kết quả
   công cụ cũ rồi tóm tắt các lượt cũ; bản gốc được lưu vào kho lưu trữ. Bạn làm việc liên tục được.
-- Thanh ngữ cảnh hiển thị ở web; `/context` trong terminal. `/compact` để nén thủ công.
+- `/context` cho biết mức dùng ngữ cảnh. `/compact` để nén thủ công.
 - Sau khi nén, nếu cần chi tiết cũ, hãy yêu cầu đọc lại nguồn thay vì dựa vào trí nhớ.
 
 ## 8. Cho phép và bảo mật
@@ -124,9 +125,8 @@ Chỉ bạn mới khởi chạy được quy trình; mô hình không tự chọ
 
 ## 9. Cài đặt
 
-Web: nút **Cài đặt**. Có thể đổi: địa chỉ API mô hình, tên mô hình, tên biến chứa khóa, hướng dẫn bổ
-sung của bạn (không thay thế quy tắc hệ thống), tự duyệt ghi, tự nén (cửa sổ, ngưỡng), và bật/tắt lưu
-dữ liệu fine-tune. Các thiết lập bảo mật không chỉnh được ở đây.
+Đổi bằng lệnh trong phiên: `/model` (API mô hình), `/write on|off` (tự duyệt thao tác ghi), `/learn
+on|off` (lưu dữ liệu fine-tune), `/compact` (nén). Các thiết lập bảo mật không chỉnh được ở đây.
 
 Thứ tự ưu tiên cấu hình (sau thắng): mặc định → `configs/default.yaml` → `~/.laris/config.yaml` →
 `.laris/config.yaml` → cài đặt của bạn → biến `LARIS_*` → tham số dòng lệnh.
@@ -136,8 +136,8 @@ Thứ tự ưu tiên cấu hình (sau thắng): mặc định → `configs/defau
 - Lượt trả lời tốt (hoàn tất, đúng trích nguồn, không lộ thông tin nhạy cảm) được lưu **chỉ trên máy
   này** ở `artifacts/finetune`: hội thoại, cặp truy vấn–đoạn đúng/sai cho truy hồi, và cặp bản nháp
   bị bác–bản cuối.
-- Đánh giá bằng 👍/👎 (web) hoặc `/rate up|down`. Mẫu 👎 bị loại khi xuất.
-- Tắt thu thập: ô cài đặt hoặc `/learn off`. Xuất hoặc xóa dữ liệu do quản trị viên thực hiện.
+- Đánh giá câu trả lời bằng `/rate up|down`. Mẫu 👎 bị loại khi xuất.
+- Tắt thu thập: `/learn off`. Xuất hoặc xóa dữ liệu do quản trị viên thực hiện.
 - Hệ thống **không** tự huấn luyện gì; dữ liệu chỉ để quản trị viên dùng sau.
 
 ## 11. Trí nhớ dự án và bộ não hệ thống
@@ -158,7 +158,7 @@ thống chỉ ghi trong khối `laris:begin ... laris:end`; nếu bạn sửa tr
 bạn sửa và báo xung đột thay vì ghi đè.
 
 **Bộ não hệ thống** là cây hướng dẫn suy luận nội bộ (bảo mật, chỉ đọc). Hệ thống không đọc toàn bộ: nó vào
-ở nút gốc, theo liên kết cha → con tới đúng hub rồi mở đúng ghi chú cần. Bạn chỉ thấy tên các ghi chú đã
+ở ghi chú gốc, theo liên kết cha → con tới đúng hub rồi mở đúng ghi chú cần. Bạn chỉ thấy tên các ghi chú đã
 dùng (dòng `◈ bộ não: ...`), không thấy nội dung. Lõi bộ não không bao giờ bị sửa lúc chạy; tri thức mới nằm
 trong `vault/Knowledge/` và chỉ được gắn vào cây ở lúc đọc.
 
@@ -176,7 +176,7 @@ trong `vault/Knowledge/` và chỉ được gắn vào cây ở lúc đọc.
 ## 13. Tham khảo nhanh lệnh
 
 ```text
-laris                         mở phiên mới (terminal)
+laris                         mở phiên mới 
 laris --resume                chọn một phiên đã lưu
 laris --resume <mã-phiên>     mở lại một phiên
 laris -p "câu hỏi"            hỏi một câu rồi thoát
