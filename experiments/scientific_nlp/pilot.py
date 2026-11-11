@@ -9,27 +9,27 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from laris.core.schemas import EvidenceCoordinate
-from laris.corpus.pipeline import CorpusIngestionPipeline, RawDocumentInput
-from laris.corpus.schemas import LicenseType
-from laris.graph.schemas import DocumentNode, EdgeType, EvidenceEdge, EvidenceGraph
-from laris.graph.sqlite_adapter import SQLiteGraphPersistenceAdapter
-from laris.language.inference.loader import load_encoder
-from laris.language.training.dataloader import build_sequence
-from laris.reasoning.gap_classifier import RuleBasedGapClassifier
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from corpus.pipeline import CorpusIngestionPipeline, RawDocumentInput
+from corpus.schemas import LicenseType
+from graph.schemas import DocumentNode, EdgeType, EvidenceEdge, EvidenceGraph
+from graph.sqlite_adapter import SQLiteGraphPersistenceAdapter
+from language.inference.loader import load_encoder
+from language.training.dataloader import build_sequence
+from reasoning.gap_classifier import RuleBasedGapClassifier
+from reporting import (
     CorpusManifestEntry,
     ReportAssertion,
     ReportSectionType,
     SourceEvidenceGate,
     StructuredReportGenerator,
 )
-from laris.retrieval.dense_adapter import DenseVectorAdapter, DenseVectorItem
-from laris.retrieval.engine import HybridRetrievalEngine
-from laris.retrieval.graph_adapter import GraphRetrievalAdapter
-from laris.retrieval.lexical_adapter import LexicalBM25Adapter, LexicalDocument
-from laris.retrieval.provenance import EvidenceCoordinateValidator
-from laris.retrieval.schemas import RetrievalChannel, RetrievalQuery
+from retrieval.dense_adapter import DenseVectorAdapter, DenseVectorItem
+from retrieval.engine import HybridRetrievalEngine
+from retrieval.graph_adapter import GraphRetrievalAdapter
+from retrieval.lexical_adapter import LexicalBM25Adapter, LexicalDocument
+from retrieval.provenance import EvidenceCoordinateValidator
+from retrieval.schemas import RetrievalChannel, RetrievalQuery
 
 ROOT = Path("artifacts/pilots/scientific_nlp").resolve()
 QUERIES = [

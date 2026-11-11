@@ -11,16 +11,16 @@ import hashlib
 
 import pytest
 
-from laris.core.errors import ProvenanceViolationError
-from laris.core.schemas import EvidenceCoordinate
-from laris.graph.schemas import (
+from core.errors import ProvenanceViolationError
+from core.schemas import EvidenceCoordinate
+from graph.schemas import (
     ClaimNode,
     DocumentNode,
     EdgeType,
     EvidenceEdge,
     EvidenceGraph,
 )
-from laris.retrieval import (
+from retrieval import (
     EvidenceCoordinateValidator,
     GraphRetrievalAdapter,
     HybridRetrievalEngine,

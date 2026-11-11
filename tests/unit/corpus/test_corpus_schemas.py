@@ -3,8 +3,8 @@
 import hashlib
 import unittest
 
-from laris.core.errors import DuplicateCorpusError, LicenseViolationError
-from laris.corpus.schemas import (
+from core.errors import DuplicateCorpusError, LicenseViolationError
+from corpus.schemas import (
     CorpusManifest,
     DatasetSplit,
     LicenseAuthorizationProvenance,

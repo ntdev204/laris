@@ -3,10 +3,10 @@
 import hashlib
 import unittest
 
-from laris.core.errors import (
+from core.errors import (
     ModuleContractViolationError,
 )
-from laris.corpus import (
+from corpus import (
     CorpusManifest,
     DatasetSplit,
     LicenseAuthorizationProvenance,

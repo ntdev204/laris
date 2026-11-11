@@ -4,8 +4,8 @@ import re
 import shlex
 from pathlib import Path
 
-from laris.cli.commands.language_encoder import _resolve_hyperparameters
-from laris.cli.main import build_parser
+from cli.commands.language_encoder import _resolve_hyperparameters
+from cli.main import build_parser
 
 
 def test_owner_runbook_commands_parse_without_execution():

@@ -5,13 +5,13 @@ Task ID: M3-SEM-002-SUB-01 (Issue #54)
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EpistemicOverreachError,
     InvalidNLIInputError,
     ModuleContractViolationError,
     UncertaintyCeilingExceededError,
 )
-from laris.reasoning import (
+from reasoning import (
     CoreferenceCluster,
     DiscourseRelationOutput,
     DiscourseRelationType,
@@ -130,7 +130,7 @@ def test_epistemic_overreach_all_correlational_cues() -> None:
 
 
 def test_semantic_equivalence_invalid_status_type() -> None:
-    from laris.reasoning import SemanticEquivalenceOutput
+    from reasoning import SemanticEquivalenceOutput
 
     with pytest.raises(ModuleContractViolationError, match="status must be an EquivalenceStatus"):
         SemanticEquivalenceOutput(
@@ -143,7 +143,7 @@ def test_semantic_equivalence_invalid_status_type() -> None:
 
 
 def test_coreference_output_json_and_cluster_status_invalid() -> None:
-    from laris.reasoning import CoreferenceOutput
+    from reasoning import CoreferenceOutput
 
     cluster = CoreferenceCluster(
         cluster_id="C-JSON",
@@ -205,7 +205,7 @@ def test_discourse_relation_invalid_relation_type_and_confidence() -> None:
 
 
 def test_discourse_relation_with_evidence_coordinate_roundtrip() -> None:
-    from laris.core.schemas import EvidenceCoordinate
+    from core.schemas import EvidenceCoordinate
 
     coord = EvidenceCoordinate(
         coordinate_id="COORD-REL-1",

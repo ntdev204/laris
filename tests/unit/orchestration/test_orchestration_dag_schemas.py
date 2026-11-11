@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import CycleDetectedError, ModuleContractViolationError
-from laris.orchestration import (
+from core.errors import CycleDetectedError, ModuleContractViolationError
+from orchestration import (
     AgentRole,
     AgentStep,
     BudgetLimits,

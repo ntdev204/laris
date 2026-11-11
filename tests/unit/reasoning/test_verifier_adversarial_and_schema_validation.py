@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import ModuleContractViolationError, ProvenanceViolationError
-from laris.core.schemas import EvidenceCoordinate
-from laris.orchestration import (
+from core.errors import ModuleContractViolationError, ProvenanceViolationError
+from core.schemas import EvidenceCoordinate
+from orchestration import (
     AgentRole,
     GenericSpecialistAgent,
     SpecialistInputPayload,

@@ -2,7 +2,7 @@
 
 import unittest
 
-from laris.corpus import normalize_scientific_text
+from corpus import normalize_scientific_text
 
 
 class TestScientificNormalizer(unittest.TestCase):

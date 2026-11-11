@@ -14,9 +14,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from laris.core.errors import ModuleContractViolationError
-from laris.corpus.schemas import DatasetSplit
-from laris.corpus.splits import (
+from core.errors import ModuleContractViolationError
+from corpus.schemas import DatasetSplit
+from corpus.splits import (
     PartitionRatios,
     QADatasetPartitioner,
     QuestionPairGraphPartitioner,

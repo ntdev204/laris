@@ -7,7 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from laris.language.training.dataloader import StreamingParquetMultiTaskDataLoader
+from language.training.dataloader import StreamingParquetMultiTaskDataLoader
 
 
 class _Tok:

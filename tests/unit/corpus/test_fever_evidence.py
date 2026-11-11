@@ -5,7 +5,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from laris.corpus.acquisition.fever_evidence import (
+from corpus.acquisition.fever_evidence import (
     build_evidence_table,
     collect_needed_sentences,
     detokenize,

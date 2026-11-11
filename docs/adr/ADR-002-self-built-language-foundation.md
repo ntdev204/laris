@@ -71,6 +71,6 @@ Modern RAG systems typically wrap off-the-shelf open-source pretrained foundatio
 | High training time on single-workstation hardware | Medium | Target compact specialist architectures (<350M parameters) and domain-specific contrastive learning objectives rather than general autoregressive pretraining. |
 
 ## 6. Validation and Acceptance Criteria
-- [ ] Tokenizer, sentence encoder, and NLI model codebases reside natively in `src/laris/` with zero third-party pretrained weights loaded.
+- [ ] Tokenizer, sentence encoder, and NLI model codebases reside natively in `src/` with zero third-party pretrained weights loaded.
 - [ ] Every model checkpoint in `artifacts/checkpoints/` has an associated provenance manifest referencing Layer 0 dataset versions.
 - [ ] Models demonstrate superior or comparable performance on in-domain scientific NLI and claim extraction against established baselines.

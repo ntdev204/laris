@@ -10,15 +10,15 @@ Verifies:
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     DataLeakageError,
     EmbeddingDimensionMismatchError,
     ModuleContractViolationError,
     SequenceLengthExceededError,
     VocabularyMismatchError,
 )
-from laris.corpus.schemas import DatasetSplit
-from laris.language.schemas import (
+from corpus.schemas import DatasetSplit
+from language.schemas import (
     CANONICAL_SPECIAL_TOKENS,
     CLS_TOKEN,
     GREEK_TOKEN,

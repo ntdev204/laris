@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from laris.config.loader import load_config
-from laris.config.schemas import LarisConfig
-from laris.core.errors import ModuleContractViolationError
+from config.loader import load_config
+from config.schemas import LarisConfig
+from core.errors import ModuleContractViolationError
 
 CONFIGS_DIR = Path("configs")
 
@@ -42,7 +42,7 @@ class TestConfigContracts:
         yaml_files = [
             f
             for f in CONFIGS_DIR.rglob("*.yaml")
-            if "evaluation" not in f.relative_to(CONFIGS_DIR).parts
+            if not {"evaluation", "prompts"} & set(f.relative_to(CONFIGS_DIR).parts)
         ]
         assert len(yaml_files) >= 4, "Expected at least 4 canonical YAML configs"
 

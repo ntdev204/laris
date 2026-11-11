@@ -12,10 +12,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 class _Acq:
     """Facade exposing the acquisition package modules as one namespace for the tests."""
 
-    from laris.corpus.acquisition import common as _common
-    from laris.corpus.acquisition import registry as _registry
-    from laris.corpus.acquisition.sources import cc100 as _cc100
-    from laris.corpus.acquisition.sources import expansion as _expansion
+    from corpus.acquisition import common as _common
+    from corpus.acquisition import registry as _registry
+    from corpus.acquisition.sources import cc100 as _cc100
+    from corpus.acquisition.sources import expansion as _expansion
 
     REPO_ROOT = _common.REPO_ROOT
     urllib = _common.urllib

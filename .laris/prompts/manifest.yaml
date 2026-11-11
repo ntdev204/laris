@@ -1,0 +1,43 @@
+# Prompt manifest: which modules form the system prompt and in what order.
+# Modules are plain Markdown with {{variable}} placeholders; unknown variables are an error.
+# `internal_policy` is the only section not read from this folder: the composer fills it from the
+# LARIS.md instruction files. Sections whose content is empty (skills, memory, user_preferences) are
+# omitted.
+version: "1.1.0"
+variables:
+  - assistant_name
+  - reply_language
+  - date
+  - skills_index
+  - memory
+  - workflow
+  - extra_instructions
+  - session_id
+  - integrity_token
+modules:
+  identity: system/10_identity.md
+  principles: system/20_principles.md
+  confidentiality: system/30_confidentiality.md
+  untrusted_content: system/40_untrusted_content.md
+  tools_protocol: system/50_tools_protocol.md
+  skills: system/55_skills_header.md
+  memory: system/56_memory_header.md
+  workflow: system/58_workflow_header.md
+  output_format: system/60_output_format.md
+  user_preferences: system/70_user_preferences.md
+  environment: system/90_environment.md
+  session: system/95_session.md
+order:
+  - identity
+  - principles
+  - internal_policy
+  - confidentiality
+  - untrusted_content
+  - tools_protocol
+  - skills
+  - memory
+  - workflow
+  - output_format
+  - user_preferences
+  - environment
+  - session

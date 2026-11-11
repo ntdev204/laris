@@ -48,22 +48,22 @@ The conceptual layers below define responsibilities, interfaces and invariants. 
 
 ## 2. Conceptual Layers vs Canonical Domain Packages
 
-All parallel numbered layer directories (`src/laris/layers/layerX_*`) are retired. Each layer maps to one authoritative domain package:
+All parallel numbered layer directories (`src/layers/layerX_*`) are retired. Each layer maps to one authoritative domain package:
 
 | Conceptual Layer | Cognitive Role | Physical Domain Package | Implementation Examples |
 | :--- | :--- | :--- | :--- |
-| **Layer 0** | Corpus & Data Governance | `laris.corpus` | `CorpusIngestionPipeline`, `normalize_scientific_text`, `DeduplicationEngine`, `DatasetPartitionEngine` |
-| **Layer 1** | Language Foundation | `laris.language` | `ScientificTokenizer`, `PyTorchTransformerEncoder`, `CompactSentenceEncoder` |
-| **Layer 2** | Semantic Relations & Calibration | `laris.reasoning` | `DeterministicScientificNLIEngine`, NLI calibration functions and relation schemas |
-| **Layer 3** | Scientific NLP & Discourse | `laris.scientific` | `ScientificDiscourseExtractor`, `HeadingIndependentLimitationDetector`, `STEMUnitNormalizer` |
-| **Layer 5** | Heterogeneous Evidence Graph | `laris.graph` | `SQLiteGraphPersistenceAdapter`, `EvidenceNode`, `EvidenceEdge` |
-| **Layer 6** | Hybrid Hierarchical Retrieval | `laris.retrieval` | `HybridRetrievalEngine`, `ReciprocalRankFusion`, `DenseVectorAdapter` |
-| **Layer 7** | Research Gap Discovery Engine | `laris.reasoning` | `ComparativeMatrixEngine`, `RuleBasedGapClassifier`, `AdversarialCounterEvidenceEngine` |
-| **Layer 8** | Multi-Agent Orchestration | `laris.orchestration`| `DAGScheduler`, `BaseSpecialistAgent`, `BudgetGovernor` |
-| **Layer 9** | Adaptive Local Execution | `laris.execution` | `TaskRouter`, `HardwareTelemetryEngine`, `HeadroomBudgetGovernor`, `SpecialistLRUCache` |
-| **Layer 10** | Feedback & Policy Learning | `laris.evaluation` | `BenchmarkRunner`, `ScientificErrorTaxonomy`, `FeedbackMiningRepository` |
-| **Layer 11** | Epistemic Reporting & Packaging | `laris.reporting` | `StructuredReportGenerator`, `EvidenceInspector`, `ManuscriptComposer` |
-| **Shared** | Universal Schemas & Errors | `laris.core` | `EvidenceCoordinate`, `LarisError`, `ModuleContractViolationError` |
+| **Layer 0** | Corpus & Data Governance | `corpus` | `CorpusIngestionPipeline`, `normalize_scientific_text`, `DeduplicationEngine`, `DatasetPartitionEngine` |
+| **Layer 1** | Language Foundation | `language` | `ScientificTokenizer`, `PyTorchTransformerEncoder`, `CompactSentenceEncoder` |
+| **Layer 2** | Semantic Relations & Calibration | `reasoning` | `DeterministicScientificNLIEngine`, NLI calibration functions and relation schemas |
+| **Layer 3** | Scientific NLP & Discourse | `scientific` | `ScientificDiscourseExtractor`, `HeadingIndependentLimitationDetector`, `STEMUnitNormalizer` |
+| **Layer 5** | Heterogeneous Evidence Graph | `graph` | `SQLiteGraphPersistenceAdapter`, `EvidenceNode`, `EvidenceEdge` |
+| **Layer 6** | Hybrid Hierarchical Retrieval | `retrieval` | `HybridRetrievalEngine`, `ReciprocalRankFusion`, `DenseVectorAdapter` |
+| **Layer 7** | Research Gap Discovery Engine | `reasoning` | `ComparativeMatrixEngine`, `RuleBasedGapClassifier`, `AdversarialCounterEvidenceEngine` |
+| **Layer 8** | Multi-Agent Orchestration | `orchestration`| `DAGScheduler`, `BaseSpecialistAgent`, `BudgetGovernor` |
+| **Layer 9** | Adaptive Local Execution | `execution` | `TaskRouter`, `HardwareTelemetryEngine`, `HeadroomBudgetGovernor`, `SpecialistLRUCache` |
+| **Layer 10** | Feedback & Policy Learning | `evaluation` | `BenchmarkRunner`, `ScientificErrorTaxonomy`, `FeedbackMiningRepository` |
+| **Layer 11** | Epistemic Reporting & Packaging | `reporting` | `StructuredReportGenerator`, `EvidenceInspector`, `ManuscriptComposer` |
+| **Shared** | Universal Schemas & Errors | `core` | `EvidenceCoordinate`, `LarisError`, `ModuleContractViolationError` |
 
 
 The table maps existing components to conceptual layers; it does not certify learned capability. Layer 4 has no production scientific-document parser yet. The earlier PDF pilot is diagnostic. Several listed NLP/reasoning components are deterministic or heuristic, and default orchestration/staging paths include simulation.

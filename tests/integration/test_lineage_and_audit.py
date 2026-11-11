@@ -16,12 +16,12 @@ from typing import Dict, List, Tuple
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     AuditIntegrityError,
     CoordinateResolutionError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reporting import (
+from core.schemas import EvidenceCoordinate
+from reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     CorpusVersionRecord,

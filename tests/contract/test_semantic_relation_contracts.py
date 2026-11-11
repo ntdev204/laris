@@ -6,14 +6,14 @@ Governed by: docs/specifications/MODULE_CONTRACTS.md, ADR-002, ADR-004, ADR-008
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EpistemicOverreachError,
     InvalidNLIInputError,
     ModuleContractViolationError,
     UncertaintyCeilingExceededError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reasoning import (
+from core.schemas import EvidenceCoordinate
+from reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,

@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     BenchmarkContaminationError,
     ModuleContractViolationError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.evaluation.benchmark_runner import BenchmarkRunner
-from laris.evaluation.feedback_mining import (
+from core.schemas import EvidenceCoordinate
+from evaluation.benchmark_runner import BenchmarkRunner
+from evaluation.feedback_mining import (
     ExpertFeedbackRecord,
     FeedbackMiningRepository,
     FeedbackSource,
@@ -25,7 +25,7 @@ from laris.evaluation.feedback_mining import (
     HardNegativeStrategy,
     ReviewerDecision,
 )
-from laris.evaluation.schemas import (
+from evaluation.schemas import (
     BenchmarkSuiteType,
     ScientificErrorCategory,
 )

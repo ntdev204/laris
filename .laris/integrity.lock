@@ -1,0 +1,32 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    ".laris/prompts/manifest.yaml": "9b97e8186e5048110733f79d09915619e3139fcf7580a8622a237e3f9f297e0b",
+    ".laris/prompts/strings.yaml": "7a2d2735d947812d974ce0a80664b3aaf93e4f699ba275a5e9747cae92c05e36",
+    ".laris/prompts/system/10_identity.md": "d919f1c624b84a2d5cff5e1e5c50b1cdcd83a81ca606a6650f1cbaf661764750",
+    ".laris/prompts/system/20_principles.md": "ec7594c977511b98af86c88c1bc80dc614b03c4f967cbc9078cbd05a182d7455",
+    ".laris/prompts/system/30_confidentiality.md": "c2401c758c3a42798c54176ec137f0336e4740cded3f1fef7536f890d232a454",
+    ".laris/prompts/system/40_untrusted_content.md": "f9f31c9cc6ba8d1e6197e92627918766fbf5af88ca5668b9d2f8e15259469e17",
+    ".laris/prompts/system/50_tools_protocol.md": "0963f308f2f3fe6f1745944c55bed4b7bd77cea52603158f8923bb4ad2d7baff",
+    ".laris/prompts/system/55_skills_header.md": "003708fa813339e952c3a785b678ee460e8a85782b54ef1a9d787305c6e34360",
+    ".laris/prompts/system/56_memory_header.md": "50195d799c47a23d6d944842b24deb5eda218bba7de58a35b37ca1977678efb4",
+    ".laris/prompts/system/58_workflow_header.md": "46cfddc90d27373c63e123825ba9018a85f1fde9e148f0e04c6cd5e366c62063",
+    ".laris/prompts/system/60_output_format.md": "b5ec4d7246bd6306c8c16bc41d45cf67d262e504302b1b942ee7376c62df1ba1",
+    ".laris/prompts/system/70_user_preferences.md": "dc314f20b2164b63077f5f75bfaa62d80abcdba0a8b94daa89d616424cd17bd9",
+    ".laris/prompts/system/90_environment.md": "6193ab53a8e7a2bce544ee351779e4ca31331ad766d6f70cf5d953aeeba7b061",
+    ".laris/prompts/system/95_session.md": "5e0ed0356c28abece9dad725d85ee2bb572c8c09a5fc65952806dbb87beaed90",
+    ".laris/prompts/templates/knowledge_skill.md": "44c6210f9dc2f05897356e7db020d46638daaa768605123ec8659a4dbcbfafad",
+    ".laris/rules/10_confidentiality.md": "673f4d98632aee0f8eab9a63dad8c9f7e5dc100b891e97c66bf94ff2262fe6b0",
+    ".laris/rules/20_untrusted_content.md": "fb73d97a8df03f6f0046a481ddc9eac9fec0e7f1c6d185d7c12f1697e8aae88c",
+    ".laris/rules/30_evidence.md": "d02c0e8510a98ea69de9e39c4d45f01ec093a5d4d57ffac1a0866ffb942037b8",
+    ".laris/rules/40_tools_autonomy.md": "440f09b68e1686784c9dd57062a1809c8635142aad5c9b67889401d450c3713c",
+    ".laris/rules/50_output.md": "9106c1e4c0f86d6b1fb728cbbf80c2d82845ea635b53d2beef30ee4de9f9ef63",
+    ".laris/rules/60_memory_context.md": "8dde10f7c86763188beaed350669a21ffc4f2d7ebbcd7223415a69456131c5c3",
+    ".laris/rules/70_limits.md": "319a0a1400d3ee103748e5c35d86cff1cd02a6a84fda3e2efd389a2eae514860",
+    ".laris/workflows/document-intake.yaml": "dd120ece8f1d2f50cdbbd8a38fe2edf4a37fba83a5fee9ce24281cec495317b5",
+    ".laris/workflows/evidence-review.yaml": "5584f6cba7092a0d6c9e8e4dba220cac3d7540ac63159cd3dccfea738ec9ea84",
+    ".laris/workflows/grounded-qa.yaml": "28abcd1cc12b99b45b4c763a0d8309ac01a9611c0154a03b86bd9d021de21710",
+    ".laris/workflows/research-brief.yaml": "fa9a8ae4a75d97665421e430ac073117023e05c202dc7675d3ff9b87fbaef77c",
+    "LARIS.md": "cab8e77604bc46c6939c846d518c0fea2b6482f668fa4fd1568d70ea9e441484"
+  }
+}

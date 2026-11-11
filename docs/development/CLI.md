@@ -20,7 +20,7 @@ change_summary: "Adds offline formal readiness, links the owner-only runbook and
 
 # LARIS Command-Line Interface Reference
 
-The `laris` entry point (`src/laris/cli/main.py`) exposes one module per command under `src/laris/cli/commands/`. Each module defines `add_arguments(parser)` and `run(args)`. Scripts under `scripts/` are thin wrappers over the same functions. Run `laris <group> <command> --help` for the full option list.
+The `laris` entry point (`src/cli/main.py`) exposes one module per command under `src/cli/commands/`. Each module defines `add_arguments(parser)` and `run(args)`. Scripts under `scripts/` are thin wrappers over the same functions. Run `laris <group> <command> --help` for the full option list.
 
 ## Commands
 
@@ -69,3 +69,92 @@ assertion statements joined by blank lines. Empty sections are allowed, but repo
 without assertions are rejected. Sources, hashes, coordinate IDs and character spans
 are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
 semantic support or establish research-gap novelty.
+
+## Local application (`laris app`)
+
+An end-to-end local workflow that needs no extra dependency and never trains or fits.
+
+```bash
+laris app ingest path/to/docs data/raw/scifact/corpus__corpus-00000-of-00001.parquet
+laris app search --query "..."            # BM25, works without a model
+laris app index  --checkpoint <run>/best --tokenizer-model <model>   # dense embeddings
+laris app ask    --checkpoint <run>/best --tokenizer-model <model> --query "..."
+laris app serve  --checkpoint <run>/best --tokenizer-model <model>   # web UI on 127.0.0.1:8765
+```
+
+Accepted inputs are txt, md, pdf (needs `pypdf`), and BEIR corpus `.jsonl` or `.parquet`. The
+workspace (`artifacts/app/workspace` by default) holds `chunks.jsonl` and, after `index`,
+`embeddings.npy`; adding a document invalidates the dense index. The server binds to localhost,
+rejects non-JSON POSTs and exposes `/api/status`, `/api/ingest`, `/api/search`, `/api/answer` and
+`/api/index`. Until the foundation model is qualified the UI shows a research-preview notice;
+BM25 is the reliable channel and extractive answers are quoted from passages without entailment checks.
+
+### Chat, agent and model API
+
+Three processes mirror a hosted assistant, but everything runs locally:
+
+```bash
+laris model serve --port 8000                         # model API (OpenAI-compatible)
+laris app serve --model-api-url http://127.0.0.1:8000/v1 --model-name laris-core   # chat web UI :8765
+laris agent chat                                       # terminal session (also -p "prompt", --resume)
+```
+
+The **web UI** has conversation history, streaming answers, tool-call cards, file attach and drag-drop
+(PDF, text, scans and images through OCR), a document-corpus panel and a settings panel for the model
+API address. The **terminal** session streams text, prints each tool call with a one-line result, asks
+before write tools (`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`.
+Both share conversations and settings under `artifacts/chat` (config `app.chat_dir`).
+
+Nothing here is hardcoded: ports, workspace, model API, limits, approval policy, prompts and
+security patterns come from `configs/default.yaml`, `~/.laris/config.yaml`,
+`<project>/.laris/config.yaml`, saved preferences, `LARIS_*` environment variables (nesting with
+`__`, JSON for lists; see `.env.example`) and finally the flags, in that order. Credentials are
+referenced by environment-variable name only. The prompt, loop, guards and leak policy are described
+in `docs/architecture/AGENT_HARNESS.md`; `LARIS.md` is internal policy and is never shown to users.
+
+Tools (JSON-schema arguments, 30 s default timeout, typed errors): `list_files`, `read_file` (txt, md,
+pdf, images; scans use tesseract `eng+vie`), `write_file` and `ingest_path` (need approval; writes land
+only in `artifacts/chat/output`), `search_corpus`, `answer_question`, `extract_discourse`,
+`corpus_status`. Reads are limited to the working folder and uploads. A message stops after 10 steps,
+on an identical repeated call, or after the time budget; every session is logged as JSONL.
+
+The client runs the tools and the **model server decides**: it receives `messages` and `tools` at
+`POST /v1/chat/completions` (JSON or `stream: true` SSE) and answers with text or `tool_calls`;
+`GET /v1/models`, `GET /health` and `POST /v1/embeddings` are also served. Today the backend is a
+scripted placeholder that quotes passages (`laris-placeholder`). The trained core model plugs in as a
+`ChatProvider` subclass: `laris model serve --backend package.module:ClassName --model-name laris-core`,
+with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
+the client settings; keys are never stored in files.
+
+#### Policy folder, workflows and integrity
+
+`.laris/` holds the protected prompts, rules and workflows (see `.laris/README.md`).
+`laris workflows list|show|check` inspects workflows, run one in chat with `/workflow <name> <request>`;
+`laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
+refreshes the lock after an owner-approved change. A tampered policy stops every session.
+
+#### Learning: skills from new knowledge and fine-tune data
+
+Ingesting documents creates or refreshes a generated `corpus-*` skill (`laris skills sync` rebuilds
+them all); `laris skills lint|add` checks and installs a hand-written one, and the agent can save one
+with `save_skill` after approval. Good answers are kept locally under `artifacts/finetune`
+(`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
+
+#### Instructions, skills and automatic context compaction
+
+- **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the
+  system prompt as confidential, after the optional user-level `~/.laris/LARIS.md` and before
+  `.laris/LARIS.md` and the git-ignored `LARIS.local.md` (`prompts.instruction_files`). Edits apply on
+  the next message; the files cannot be read through the agent's tools.
+- **Skills** live in `.laris/skills/<name>/SKILL.md` (YAML `name` and `description`, Markdown body,
+  optional `references/`). Only name and description are in the prompt; the model loads a skill with the
+  `use_skill` tool, or the user runs `/<skill-name> request` (terminal and web `/` menu). `laris skills
+  list|show|check` inspects and validates them. Project skills override `~/.laris/skills`.
+- **Memory** is `.laris/memory/*.md` (short dated notes the skills read first); `save_memory` writes it
+  after approval.
+- **Autocompact is on by default** (`auto_compact`, `context_window` 32768 tokens, `compact_threshold`
+  0.8, all in settings). Before each model call the session estimates its size; above the threshold it
+  trims old tool outputs, then replaces older turns with a summary (model-written when a model API is
+  connected, otherwise extracted) while keeping recent turns and every tool-call/result pair intact. A
+  context-length error from the model triggers one forced compaction and a retry. The original messages
+  are archived in `artifacts/chat/archive/`. `/compact [note]` compacts now; `/context` shows usage.

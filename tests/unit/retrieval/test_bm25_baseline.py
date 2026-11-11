@@ -2,11 +2,11 @@
 
 import pytest
 
-from laris.core.errors import ModuleContractViolationError
-from laris.language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from laris.language.schemas import VocabularyContract
-from laris.language.tokenization.tokenizer import ScientificTokenizer
-from laris.retrieval.bm25 import (
+from core.errors import ModuleContractViolationError
+from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
+from language.schemas import VocabularyContract
+from language.tokenization.tokenizer import ScientificTokenizer
+from retrieval.bm25 import (
     BM25Document,
     BM25RetrievalBaseline,
 )

@@ -1,0 +1,27 @@
+name: grounded-qa
+version: "1.0.0"
+description: Answer a question strictly from the user's corpus with citations and stated uncertainty.
+triggers: ["question about the corpus", "what does the corpus say"]
+allowed_tools: [corpus_status, search_corpus, read_file, answer_question]
+max_steps: 5
+require_citations: true
+approval: inherit
+phases:
+  - id: scope
+    goal: Check that the corpus has documents and restate the question in search terms.
+    instructions: Call corpus_status once when the corpus size is unknown. Do not guess an answer first.
+    exit: The corpus is not empty, or the user has been told it is empty.
+  - id: retrieve
+    goal: Search the corpus with one to three distinct queries.
+    instructions: Prefer BM25 results. Never repeat an identical query. Vary terms, not wording.
+    exit: At least one relevant passage, or two queries without a relevant passage.
+  - id: verify
+    goal: Read the surrounding text of the strongest passage when the excerpt is ambiguous.
+    exit: Each claim to be made is supported by a cited passage.
+  - id: answer
+    goal: Write the answer with citations in the form [source #rank].
+    instructions: Separate excerpt, supported claim and hypothesis. Mark unsupported statements Assumed.
+stop_conditions:
+  - the corpus is empty
+  - no relevant passage after two distinct queries (state corpus scope and what was searched)
+output_sections: [Assumptions, Uncertainties, Next step, Sources]

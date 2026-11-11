@@ -202,11 +202,11 @@ further choice. `<CHECKPOINT>` and `<TOKENIZER>` are the F06-R1 candidate and it
 the same flag); the fit corpus for the leakage scan is the one the tokenizer was fitted on.
 
 ```bash
-.venv/bin/python -m laris.language.benchmarks.fertility \
+.venv/bin/python -m language.benchmarks.fertility \
   --tokenizer-model <TOKENIZER> --normalize-input \
   --fit-corpus artifacts/tokenizer/foundation-r1-super/fit-actual.txt \
   --output reports/tokenizer/foundation-f07.json
-.venv/bin/python -m laris.language.benchmarks.retrieval run \
+.venv/bin/python -m language.benchmarks.retrieval run \
   --checkpoint <CHECKPOINT> --tokenizer-model <TOKENIZER> \
   --output reports/retrieval/foundation-f07.json
 ```

@@ -144,7 +144,7 @@ UNK trên văn bản thô là 0,7 đến 0,8% ở Wikipedia EN và CC-100 VI, c�
 đã chuẩn hóa (ngoặc kép cong, gạch ngang, dấu ba chấm được đưa về ASCII) nên từ vựng không chứa các ký tự này,
 trong khi dataloader và suy luận đưa văn bản thô vào SentencePiece. Chữ Việt viết hoa có dấu **không** bị UNK
 (đọc ban đầu của tôi sai). Sửa bằng `NormalizedSentencePiece`
-(`src/laris/language/tokenization/normalized.py`): cùng phép chuẩn hóa với corpus fit, ở một ranh giới mã hóa.
+(`src/language/tokenization/normalized.py`): cùng phép chuẩn hóa với corpus fit, ở một ranh giới mã hóa.
 
 - Bật khi train bằng `--normalize-input`; checkpoint ghi `text_normalization` trong provenance và bộ nạp suy
   luận tự bao tokenizer khi thấy khóa này, nên checkpoint cũ không đổi hành vi.

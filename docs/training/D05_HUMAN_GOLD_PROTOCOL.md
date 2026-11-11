@@ -145,7 +145,7 @@ chạy training; chỉ dùng embedding suy luận.
 
 > **DRAFT chưa đóng băng.** Owner duyệt, chạy pilot, sửa, rồi băm SHA-256 của bản cuối trước
 > khi gán thật. Quy trình tổng thể: các mục 1–9 phía trên.
-> Công cụ: `src/laris/evaluation/human_gold.py`.
+> Công cụ: `src/evaluation/human_gold.py`.
 
 ### 1. Nhiệm vụ
 

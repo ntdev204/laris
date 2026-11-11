@@ -1,0 +1,22 @@
+name: document-intake
+version: "1.0.0"
+description: Add user documents (text, PDF, scans) to the corpus after approval and report what was added.
+triggers: ["add documents", "ingest folder", "index these files"]
+allowed_tools: [list_files, read_file, ingest_path, corpus_status]
+max_steps: 6
+require_citations: false
+approval: ask
+phases:
+  - id: inspect
+    goal: List the given folder or file and read a short sample of each distinct file type.
+    instructions: Do not ingest files that look like credentials or internal configuration; report them instead.
+    exit: Every candidate file is classified as accept or skip with a reason.
+  - id: ingest
+    goal: Ingest accepted files with ingest_path, one approved call per path.
+    exit: Every accepted path was ingested or refused by the user.
+  - id: report
+    goal: Report the corpus size before and after with corpus_status.
+stop_conditions:
+  - the user declines an ingest call
+  - a file fails OCR or decoding twice
+output_sections: [Ingested, Skipped, Next step]

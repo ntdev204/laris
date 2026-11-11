@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from laris.core.schemas import EvidenceCoordinate
-from laris.reasoning import (
+from core.schemas import EvidenceCoordinate
+from reasoning import (
     AdversarialBenchmarkCase,
     AdversarialBenchmarkSuite,
     CandidateGapStatus,

@@ -2,12 +2,12 @@
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     DataLeakageError,
     HardwareBudgetExceededError,
     ModuleContractViolationError,
 )
-from laris.language.schemas import (
+from language.schemas import (
     EncoderCheckpointMetadata,
     LanguageTrainingRunManifest,
 )

@@ -14,13 +14,13 @@ import math
 
 import pytest
 
-from laris.core.errors import (
+from core.errors import (
     EpistemicOverreachError,
     ModuleContractViolationError,
     ProvenanceViolationError,
 )
-from laris.core.schemas import EvidenceCoordinate
-from laris.reasoning import (
+from core.schemas import EvidenceCoordinate
+from reasoning import (
     CalibratedGapScores,
     CalibratedGapScoringEngine,
     CaveatSeverity,
