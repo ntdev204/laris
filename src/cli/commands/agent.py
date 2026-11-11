@@ -199,7 +199,8 @@ class _Chat:
         if name == "/help":
             print(
                 "/new /sessions /resume ID /tools /skills /<skill> <yêu cầu> /compact [ghi chú] "
-                "/context /status /model [URL [NAME]] /write on|off /exit"
+                "/context /workflows /workflow NAME <yêu cầu> /status /model [URL [NAME]] "
+                "/write on|off /exit"
             )
         elif name == "/new":
             conversation = dict(chat.conversations.create())
@@ -237,6 +238,12 @@ class _Chat:
                 print(f"  /{skill_name}: {library.skills[skill_name].summary(110)}")
             for problem in library.problems:
                 print(_paint(_ERR, f"  skill problem: {problem}"))
+        elif name == "/workflows":
+            for item in chat.runtime.workflows().summary():
+                print(f"  /workflow {item['name']}: {item['description']}")
+        elif name == "/workflow":
+            _turn(chat, conversation["id"], line, always)
+            conversation = dict(chat.conversations.get(conversation["id"]))
         elif name == "/compact":
             events = list(chat.compact(conversation["id"], rest))
             shown = [e for e in events if e["type"] == "compact"]

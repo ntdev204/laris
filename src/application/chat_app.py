@@ -21,6 +21,7 @@ from application.workspace import IngestError, chunks_from_bytes
 from harness.policy import egress_allowed
 from harness.prefs import UserPrefs, effective
 from harness.runtime import HarnessRuntime
+from harness.workflows import WorkflowError, WorkflowSpec
 from skills import SkillLibrary
 
 
@@ -199,6 +200,19 @@ class ChatApp:
             audit_dir=self.root / "audit",
         )
 
+    def parse_workflow_command(
+        self, text: str, runtime: HarnessRuntime
+    ) -> Optional[Tuple[WorkflowSpec, str]]:
+        """`/workflow name request` -> (spec, request) for a known workflow."""
+        if not text.startswith("/workflow "):
+            return None
+        name, _, rest = text[len("/workflow ") :].strip().partition(" ")
+        library = runtime.workflows()
+        try:
+            return library.get(name), rest.strip()
+        except WorkflowError:
+            return None
+
     def tool_specs(self) -> List[ToolSpec]:
         """Tools the agent has right now (for listings); nothing is executed."""
         session = self._session({"id": "tools", "messages": []})
@@ -224,7 +238,9 @@ class ChatApp:
             return
         try:
             yield from session.send(
-                text, self.parse_skill_command(text, session.skills or SkillLibrary([]))
+                text,
+                self.parse_skill_command(text, session.skills or SkillLibrary([])),
+                self.parse_workflow_command(text, self.runtime),
             )
         finally:  # keep what happened even if the client disconnects mid-stream
             conversation["messages"] = session.history

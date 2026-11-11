@@ -28,6 +28,10 @@ verify:
   nudge: >-
     Câu trả lời trước chưa dẫn nguồn. Hãy viết lại, dẫn nguồn dạng [nguồn #hạng] cho mọi khẳng định lấy
     từ công cụ, hoặc nói rõ rằng không có bằng chứng.
+  sections_nudge: >-
+    Câu trả lời còn thiếu các mục bắt buộc của quy trình: {missing}. Viết lại đầy đủ các mục này,
+    giữ nguyên bằng chứng và trích dẫn.
+  sections_warning: "Lưu ý: câu trả lời thiếu các mục bắt buộc của quy trình ({missing})."
   uncited_warning: "Lưu ý: câu trả lời này chưa dẫn nguồn đầy đủ; hãy kiểm tra trước khi dùng."
 planner:
   task: "Nhiệm vụ: {task}"
@@ -57,6 +61,7 @@ tools:
   no_skills: "No skills are configured."
   no_memory: "The memory folder is not configured."
 loop:
+  tool_not_allowed: "This tool is not allowed in the active workflow."
   cyclic: "Đã dừng: cùng một lệnh gọi công cụ bị lặp lại."
   max_steps: "Đã dừng: hết số bước cho phép trước khi có câu trả lời cuối. Hãy cho biết có muốn tiếp tục không."
   timeout: "Đã dừng: hết thời gian cho một lượt xử lý."

@@ -94,6 +94,9 @@ def _chat_routes(
             conversation["title"] = str(body.get("title") or conversation["title"])[:120]
             chat.conversations.save(conversation)
             return 200, conversation
+    if path == "/api/workflows" and method == "GET":
+        flows = chat.runtime.workflows()
+        return 200, {"workflows": flows.summary(), "problems": flows.problems}
     if path == "/api/skills" and method == "GET":
         library = chat.skills_for(chat.runtime)
         return 200, {

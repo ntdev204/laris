@@ -16,6 +16,7 @@ from config.loader import assert_no_literal_secrets, load_dotenv, load_runtime_c
 from core.errors import ModuleContractViolationError
 from harness.audit import AuditLog
 from harness.guard import InjectionScanner, LeakDetector
+from harness.integrity import write_lock
 from harness.policy import ApprovalPolicy, egress_allowed, is_loopback_url
 from harness.prefs import PrefsError, UserPrefs
 from harness.prompts import PromptError
@@ -23,6 +24,10 @@ from harness.runtime import HarnessRuntime
 from harness.verifier import AnswerVerifier
 
 REPO = Path(__file__).resolve().parents[3]
+
+
+def relock(project):
+    write_lock(project, load_runtime_config(project).prompts)
 
 
 @pytest.fixture(autouse=True)
@@ -35,7 +40,7 @@ def isolated_home(tmp_path, monkeypatch):
 # -- configuration ----------------------------------------------------------------------------
 def test_precedence_defaults_yaml_project_user_env_cli(project, monkeypatch):
     assert load_runtime_config(project).app.port == 8765
-    (project / ".laris").mkdir()
+    (project / ".laris").mkdir(exist_ok=True)
     (project / ".laris" / "config.yaml").write_text("app:\n  port: 9001\n", encoding="utf-8")
     assert load_runtime_config(project).app.port == 9001
     layer = {"app": {"port": 9002}}
@@ -58,7 +63,7 @@ def test_yaml_with_literal_secret_is_rejected(project):
     with pytest.raises(ModuleContractViolationError):
         assert_no_literal_secrets({"model_api": {"api_key": "sk-123"}}, "x.yaml")
     assert_no_literal_secrets({"model_api": {"api_key_env": "LARIS_API_KEY"}}, "x.yaml")
-    (project / ".laris").mkdir()
+    (project / ".laris").mkdir(exist_ok=True)
     (project / ".laris" / "config.yaml").write_text("model_api:\n  api_key: abc\n")
     with pytest.raises(ModuleContractViolationError):
         load_runtime_config(project)
@@ -85,15 +90,17 @@ def test_prompt_has_policy_canary_and_is_versioned(project):
     b = rt.composer.compose("s2")
     assert 'classification="internal"' in a.text and 'disclose="never"' in a.text
     assert a.canary in a.text and a.canary != b.canary and a.sha256 != b.sha256
-    assert a.version == "1.0.0" and a.confidential_sources
+    assert a.version == "1.1.0" and a.confidential_sources
 
 
 def test_unknown_placeholder_and_missing_module_fail_loudly(project):
-    module = project / "configs" / "prompts" / "system" / "10_identity.md"
+    module = project / ".laris" / "prompts" / "system" / "10_identity.md"
     module.write_text(module.read_text() + "\n{{not_a_variable}}\n", encoding="utf-8")
+    relock(project)
     with pytest.raises(PromptError):
         HarnessRuntime.load(project).composer.compose("s")
     module.unlink()
+    relock(project)
     with pytest.raises((PromptError, FileNotFoundError)):
         HarnessRuntime.load(project).composer.compose("s")
 
@@ -172,7 +179,10 @@ def test_path_policy_denies_internal_and_secret_files(project):
     for rel in (
         "LARIS.md",
         ".env",
-        "configs/prompts/system/10_identity.md",
+        ".laris/prompts/system/10_identity.md",
+        ".laris/rules/10_confidentiality.md",
+        ".laris/workflows/grounded-qa.yaml",
+        ".laris/integrity.lock",
         "configs/default.yaml",
         f"{rt.config.app.chat_dir}/conversations/x.json",
         f"{rt.config.app.chat_dir}/settings.json",
@@ -190,7 +200,7 @@ def test_sandbox_applies_policy_and_hides_paths(project, tmp_path):
     sandbox = Sandbox([project], tmp_path / "o", policy=rt.paths, base=project)
     registry = build_registry(service, sandbox, rt)
     assert registry.call("read_file", {"path": "docs/a.txt"})["text"] == "hello"
-    for secret in ("LARIS.md", ".env", "configs/prompts/strings.yaml"):
+    for secret in ("LARIS.md", ".env", ".laris/prompts/strings.yaml"):
         with pytest.raises(ToolExecutionError) as exc:
             registry.call("read_file", {"path": secret})
         assert exc.value.code in ("denied", "not_found")

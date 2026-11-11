@@ -126,6 +126,13 @@ scripted placeholder that quotes passages (`laris-placeholder`). The trained cor
 with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
 the client settings; keys are never stored in files.
 
+#### Policy folder, workflows and integrity
+
+`.laris/` holds the protected prompts, rules and workflows (see `.laris/README.md`).
+`laris workflows list|show|check` inspects workflows, run one in chat with `/workflow <name> <request>`;
+`laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
+refreshes the lock after an owner-approved change. A tampered policy stops every session.
+
 #### Instructions, skills and automatic context compaction
 
 - **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the

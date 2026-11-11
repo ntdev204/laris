@@ -7,12 +7,14 @@ from typing import Any, Dict, Mapping, Optional
 
 from config.loader import load_runtime_config
 from config.schemas import LarisConfig
+from harness import integrity
 from harness.audit import AuditLog
 from harness.guard import Guard, InjectionScanner, LeakDetector, SecretRedactor
 from harness.policy import ApprovalPolicy, PathPolicy
 from harness.prompts import ComposedPrompt, PromptComposer
 from harness.strings import StringCatalogue
 from harness.verifier import AnswerVerifier
+from harness.workflows import WorkflowLibrary
 from skills import SkillLibrary
 
 
@@ -35,6 +37,7 @@ class HarnessRuntime:
         self.config = config or LarisConfig()
         self.root = Path(project_root or Path.cwd()).resolve()
         self.environ = os.environ if environ is None else environ
+        self.integrity_problems = self._check_integrity()
         prompts_dir = Path(self.config.prompts.dir)
         folder = prompts_dir if prompts_dir.is_absolute() else self.root / prompts_dir
         self.strings = StringCatalogue.load(folder / "strings.yaml")
@@ -48,6 +51,21 @@ class HarnessRuntime:
             self.paths.add_deny(f"{chat_dir}/{private}/**")
         self.paths.add_deny(f"{chat_dir}/settings.json")
         self.verifier = AnswerVerifier(self.config.agent.verify)
+
+    def _check_integrity(self) -> list:
+        mode = self.config.prompts.integrity
+        if mode == "off":
+            return []
+        problems = integrity.verify(self.root, self.config.prompts)
+        if problems and mode == "enforce":
+            raise integrity.IntegrityError(
+                "protected policy files do not match the integrity lock: " + "; ".join(problems[:5])
+            )
+        return problems
+
+    def workflows(self) -> WorkflowLibrary:
+        folder = Path(self.config.prompts.workflows_dir)
+        return WorkflowLibrary(folder if folder.is_absolute() else self.root / folder)
 
     @classmethod
     def load(
@@ -66,8 +84,11 @@ class HarnessRuntime:
         skills: Optional[SkillLibrary] = None,
         extra_instructions: str = "",
         audit_dir: Optional[Path] = None,
+        workflow_text: str = "",
     ) -> SessionHarness:
-        prompt = self.composer.compose(session_id, skills, extra_instructions)
+        prompt = self.composer.compose(
+            session_id, skills, extra_instructions, workflow_text=workflow_text
+        )
         leak = LeakDetector(self.config.security, prompt.confidential_sources, prompt.canary)
         guard = Guard(self.config.security, self.strings, self.redactor, leak, self.injection)
         audit = AuditLog(audit_dir, session_id, self.redactor, enabled=audit_dir is not None)

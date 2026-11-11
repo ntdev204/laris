@@ -112,7 +112,10 @@ security:
   - LARIS.local.md
   - .laris/LARIS.md
   - .laris/config*.yaml
-  - configs/prompts/**
+  - .laris/prompts/**
+  - .laris/rules/**
+  - .laris/workflows/**
+  - .laris/integrity.lock
   - configs/default.yaml
   - .git/**
   - '**/settings.json'
@@ -175,7 +178,12 @@ app:
 
 # Prompt assembly: modules live under dir, assembled by the manifest.
 prompts:
-  dir: configs/prompts
+  dir: .laris/prompts
+  rules_dir: .laris/rules
+  workflows_dir: .laris/workflows
+  integrity_lock: .laris/integrity.lock
+  integrity: enforce
+  workflow_max_chars: 6000
   manifest: manifest.yaml
   assistant_name: LARIS
   reply_language: Vietnamese

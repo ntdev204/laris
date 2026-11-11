@@ -9,8 +9,6 @@ Declarative configuration files, organised by function.
 | `language_encoder/large.yaml` | Large (~513M parameter) language encoder architecture and training |
 | `evaluation/language_encoder.yaml` | Acceptance thresholds for `laris evaluate language-encoder` (not a `LarisConfig`) |
 | `data/partition.yaml` | Train/val/test ratios, partition seed and leakage settings |
-| `prompts/manifest.yaml`, `prompts/system/*.md` | Versioned system-prompt modules (not a `LarisConfig`); changes need a version bump and owner approval |
-| `prompts/strings.yaml` | Message catalogue for text the runtime itself produces (not a `LarisConfig`) |
 
 ## Guidelines
 - Name files by function and size preset, never by version or training stage.

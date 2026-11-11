@@ -1,6 +1,6 @@
 """System prompt composition from versioned modules, instruction files and runtime state.
 
-Modules live under `prompts.dir` (default `configs/prompts`), are listed in `manifest.yaml` and use
+Modules live under `prompts.dir` (default `.laris/prompts`), are listed in `manifest.yaml` and use
 `{{variable}}` placeholders; unknown placeholders are an error so a typo can never ship silently.
 The composed prompt is hashed so every session can record *which* prompt ran without storing it.
 """
@@ -69,9 +69,16 @@ class PromptComposer:
                     raise PromptError(f"module '{name}' uses undeclared variable '{var}'")
 
     # -- instruction files -----------------------------------------------------------------
+    def rule_files(self) -> List[Path]:
+        folder = Path(self.cfg.rules_dir)
+        folder = folder if folder.is_absolute() else self.root / folder
+        return sorted(folder.glob("*.md")) if folder.is_dir() else []
+
     def instruction_files(self) -> List[Path]:
-        files = [expand(Path(self.cfg.user_instruction_file))]
-        files += [self.root / rel for rel in self.cfg.instruction_files]
+        """User file, then `LARIS.md`, then every rules file, then the remaining local files."""
+        listed = [self.root / rel for rel in self.cfg.instruction_files]
+        files = [expand(Path(self.cfg.user_instruction_file)), *listed[:1], *self.rule_files()]
+        files += listed[1:]
         return [p for p in files if p.is_file()]
 
     def load_policy(self) -> List[Tuple[str, str]]:
@@ -79,10 +86,11 @@ class PromptComposer:
         budget = self.cfg.max_instruction_chars
         for path in self.instruction_files():
             text = path.read_text(encoding="utf-8").strip()
-            if not text or budget <= 0:
+            if not text:
                 continue
-            text = text[:budget]
             budget -= len(text)
+            if budget < 0:  # a truncated rule would silently weaken the policy: fail closed
+                raise PromptError("instruction files exceed prompts.max_instruction_chars")
             try:
                 label = str(path.relative_to(self.root))
             except ValueError:
@@ -111,6 +119,7 @@ class PromptComposer:
         extra_instructions: str = "",
         today: Optional[datetime.date] = None,
         extra_variables: Optional[Dict[str, Any]] = None,
+        workflow_text: str = "",
     ) -> ComposedPrompt:
         canary = f"LARIS-CANARY-{secrets.token_hex(8)}" if self.canary_enabled else "disabled"
         policy = self.load_policy()
@@ -121,6 +130,7 @@ class PromptComposer:
             "skills_index": skills.index_text(self.cfg.skills_index_chars) if skills else "",
             "memory": self._memory(),
             "extra_instructions": extra_instructions.strip()[: self.cfg.user_preferences_max_chars],
+            "workflow": workflow_text,
             "session_id": session_id,
             "integrity_token": canary,
         }
@@ -139,7 +149,7 @@ class PromptComposer:
                 confidential += [text for _, text in policy]
             else:
                 needs = _PLACEHOLDER.findall(self.modules[name])
-                if name in ("skills", "memory", "user_preferences") and not all(
+                if name in ("skills", "memory", "workflow", "user_preferences") and not all(
                     variables.get(v) for v in needs
                 ):
                     continue

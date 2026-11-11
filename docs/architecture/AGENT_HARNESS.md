@@ -26,7 +26,7 @@ The harness is the single runtime that every front end (command line, web UI, mo
 
 ## 1. Design rules
 
-1. **No hardcoded tunables.** Every limit, path, endpoint, pattern and message lives in `configs/default.yaml`, `configs/prompts/` or the environment. Source code holds only schemas with safe defaults (ADR-001, ADR-013).
+1. **No hardcoded tunables.** Every limit, path, endpoint, pattern and message lives in `configs/default.yaml`, `.laris/` or the environment. Source code holds only schemas with safe defaults (ADR-001, ADR-013).
 2. **Internal policy is confidential.** `LARIS.md`, the prompt modules, configuration, credentials, internal paths and other conversations are never disclosed in any form.
 3. **Fail closed.** A missing prompt module, an unknown placeholder, a literal secret in YAML, a non-loopback model API or a leak in output stops the action instead of degrading silently.
 4. **Evidence first.** Answers grounded in tool results must cite `[source #rank]` (ADR-004); the verifier asks for one rewrite, then marks the answer uncited.
@@ -49,10 +49,10 @@ YAML may name an environment variable (`api_key_env`) but never contain a creden
 
 ## 3. System prompt
 
-`configs/prompts/manifest.yaml` (version, variables, module order) and `configs/prompts/system/*.md` form the prompt. The composer:
+`.laris/prompts/manifest.yaml` (version, variables, module order) and `.laris/prompts/system/*.md` form the prompt. The composer:
 
 1. Loads every module and substitutes `{{variable}}` strictly (unknown variable = error).
-2. Inserts `LARIS.md` and the optional `LARIS.local.md` as `<internal_policy classification="internal" disclose="never">` right after the principles, so policy outranks everything below it.
+2. Inserts `LARIS.md`, then every `.laris/rules/*.md` in file order, then the optional `.laris/LARIS.md` and `LARIS.local.md` as `<internal_policy classification="internal" disclose="never">` right after the principles, so policy outranks everything below it.
 3. Adds the skills index, memory index, user extra instructions (length-capped, always after policy), date, session id and a per-session canary token.
 4. Returns the text with a SHA-256 and version. Audit logs record the hash, never the text.
 
@@ -87,10 +87,18 @@ Statuses: `completed`, `max_steps`, `cyclic`, `timeout`, `provider_error`, `bloc
 
 These controls reduce risk; they do not make disclosure impossible for a model that is not trusted, which is why the policy is also enforced outside the model.
 
-## 6. Skills and memory
+## 6. The `.laris/` folder, workflows and integrity
+
+`.laris/` holds everything that steers RAG and the agent (see `.laris/README.md`). `prompts/`, `rules/`, `workflows/`, `integrity.lock` and `config*.yaml` are on the read deny-list, so no tool can read, list or describe them.
+
+**Integrity (G-3).** `integrity.lock` stores a SHA-256 for `LARIS.md` and every file under `prompts/`, `rules/` and `workflows/`. Each runtime start compares them: a changed, added, removed or missing file stops the session (`prompts.integrity: enforce`, default; `warn` and `off` are owner-only configuration). `laris harness verify` also composes the prompt and cross-checks workflows against the real tool registry; `laris harness lock` refreshes the lock after an approved change. A policy that exceeds `prompts.max_instruction_chars` fails instead of being truncated.
+
+**Workflows (W-1..W-4).** `.laris/workflows/<name>.yaml` defines ordered phases and limits the harness enforces: `allowed_tools` (other tools are hidden from the model and blocked), `max_steps` (at most the global ceiling of 10), `approval` (`ask` or `deny` can only tighten the user's mode), `require_citations`, and `output_sections` (missing sections trigger one rewrite, then a warning). A user starts one with `/workflow <name> <request>`; the model cannot start or widen a workflow. Shipped: `grounded-qa`, `document-intake`, `evidence-review`, `research-brief`. Audit records name the workflow, not the task.
+
+## 7. Skills and memory
 
 Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `description`); roots come from `prompts.skill_roots`. The model loads one with `use_skill`; users type `/<skill> request`. Memory notes in `.laris/memory/` are written through `save_memory` after approval, are redacted and listed by name in the prompt.
 
-## 7. Change control
+## 8. Change control
 
-`LARIS.md` and `configs/prompts/` are versioned in Git. A change needs owner approval, a manifest `version` bump and a passing run of `tests/unit/harness`. Prompt behaviour is tested, not trusted: tests cover precedence, strict placeholders, shingle and canary leaks, stream splitting, redaction, deny globs, egress, verifier retry, audit content and the absence of hardcoded endpoints.
+`LARIS.md` and the protected parts of `.laris/` (`prompts/`, `rules/`, `workflows/`) are versioned in Git. A change needs owner approval, a manifest `version` bump, `laris harness lock` and a passing run of `tests/unit/harness`. Prompt behaviour is tested, not trusted: tests cover precedence, strict placeholders, shingle and canary leaks, stream splitting, redaction, deny globs, egress, verifier retry, audit content and the absence of hardcoded endpoints.

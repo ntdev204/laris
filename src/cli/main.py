@@ -12,6 +12,8 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
     laris agent tools|run|chat       tool-using assistant (offline planner or model API)
     laris skills list|show|check     inspect and validate .laris/skills
+    laris workflows list|show|check  inspect and validate .laris/workflows
+    laris harness verify|lock        policy integrity (LARIS.md, prompts, rules, workflows)
     laris model serve                OpenAI-compatible model API (placeholder backend for now)
     laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
 """
@@ -30,6 +32,7 @@ from cli.commands import (
     language_encoder,
     model,
     partition,
+    policy,
     readiness,
     skills,
     tokenizer,
@@ -71,6 +74,21 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "show": ("Print one skill's instructions", skills.COMMANDS["show"]),
         "check": ("Validate every SKILL.md", skills.COMMANDS["check"]),
     },
+    "workflows": {
+        "list": ("List workflows", policy.WORKFLOW_COMMANDS["list"]),
+        "show": ("Print one workflow's phases and limits", policy.WORKFLOW_COMMANDS["show"]),
+        "check": ("Validate workflows against tools and limits", policy.WORKFLOW_COMMANDS["check"]),
+    },
+    "harness": {
+        "verify": (
+            "Verify policy integrity, prompts and workflows",
+            policy.HARNESS_COMMANDS["verify"],
+        ),
+        "lock": (
+            "Refresh integrity.lock after an approved policy change",
+            policy.HARNESS_COMMANDS["lock"],
+        ),
+    },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
     },
@@ -94,7 +112,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     handler: Handler = args.handler
-    return handler(args)
+    from harness.integrity import IntegrityError
+    from harness.prompts import PromptError
+
+    try:
+        return handler(args)
+    except (IntegrityError, PromptError) as exc:  # policy problems are reported, not traced
+        print(f"[ERROR] {exc}")
+        return 2
 
 
 if __name__ == "__main__":

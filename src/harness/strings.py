@@ -1,4 +1,4 @@
-"""Message catalogue: runtime text loaded from `configs/prompts/strings.yaml`."""
+"""Message catalogue: runtime text loaded from `.laris/prompts/strings.yaml`."""
 
 from pathlib import Path
 from typing import Any, Dict

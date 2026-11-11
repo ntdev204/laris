@@ -25,6 +25,8 @@ from agent.context import CompactionResult, ContextManager, TokenEstimator
 from agent.provider import AssistantTurn, ChatProvider, Message, ProviderError
 from agent.tools import ToolExecutionError, ToolRegistry, dumps
 from harness.runtime import HarnessRuntime, SessionHarness
+from harness.verifier import AnswerVerifier, Verdict
+from harness.workflows import WorkflowSpec
 from skills import SkillLibrary
 
 Approver = Callable[[str, Dict[str, Any]], bool]
@@ -73,6 +75,7 @@ class AgentSession:
         self.estimate = context.estimate if context else TokenEstimator(self.harness.config.context)
         self.messages: List[Message] = [{"role": "system", "content": ""}, *(messages or [])]
         self.sh: Optional[SessionHarness] = None
+        self.workflow: Optional[WorkflowSpec] = None
 
     @property
     def history(self) -> List[Message]:
@@ -80,26 +83,51 @@ class AgentSession:
         return self.messages[1:]
 
     # -- conversation ----------------------------------------------------------------------
-    def _begin(self) -> SessionHarness:
+    def _begin(self, workflow_text: str = "") -> SessionHarness:
         sh = self.harness.begin(
-            self.session_id, self.skills, self.extra_instructions, self.audit_dir
+            self.session_id, self.skills, self.extra_instructions, self.audit_dir, workflow_text
         )
         self.messages[0] = {"role": "system", "content": sh.prompt.text}  # re-read every turn
         self.sh = sh
         return sh
 
-    def send(self, user_text: str, skill: Optional[Tuple[str, str]] = None) -> Iterator[Event]:
+    def send(
+        self,
+        user_text: str,
+        skill: Optional[Tuple[str, str]] = None,
+        workflow: Optional[Tuple[WorkflowSpec, str]] = None,
+    ) -> Iterator[Event]:
         """Append a user message and stream events until a final answer.
 
         Events: text(delta), tool_call, tool_result, compact, verify, usage, done(status, answer).
         """
-        sh = self._begin()
+        wf = workflow[0] if workflow else None
+        sh = self._begin(
+            wf.render(workflow[1], self.harness.config.prompts.workflow_max_chars)
+            if wf and workflow
+            else ""
+        )
+        self.workflow = wf
+        max_steps = min(self.cfg.max_steps, wf.max_steps) if wf else self.cfg.max_steps
+        verifier = self.harness.verifier
+        if wf and wf.require_citations:
+            stricter = self.harness.config.agent.verify.model_copy(
+                update={"require_citations": True}
+            )
+            verifier = AnswerVerifier(stricter)
+        allowed = set(wf.allowed_tools) if wf else None
+        tools = [
+            f
+            for f in self.registry.functions()
+            if allowed is None or f["function"]["name"] in allowed
+        ]
         guard, audit, strings = sh.guard, sh.audit, self.harness.strings
         audit.event(
             "turn_start",
             prompt_sha256=sh.prompt.sha256,
             prompt_version=sh.prompt.version,
             provider=self.provider.name,
+            workflow=wf.name if wf else "",
         )
         self.messages.append({"role": "user", "content": user_text})
         seen: set = set()
@@ -109,7 +137,7 @@ class AgentSession:
         retries, overflow_retried, steps = 0, False, 0
         if skill is not None:
             yield from self._preload_skill(skill[0], skill[1], seen, turn_results)
-        for steps in range(1, self.cfg.max_steps + 1):
+        for steps in range(1, max_steps + 1):
             if time.monotonic() - started > self.cfg.time_budget_s:
                 status = "timeout"
                 break
@@ -119,7 +147,7 @@ class AgentSession:
             pieces: List[str] = []
             turn: Optional[AssistantTurn] = None
             try:
-                for event in self.provider.stream(self.messages, self.registry.functions()):
+                for event in self.provider.stream(self.messages, tools):
                     if event["type"] == "turn":
                         turn = event["turn"]
                     else:
@@ -145,7 +173,11 @@ class AgentSession:
             assert turn is not None
             content = "".join(pieces)
             if not turn.tool_calls:
-                verdict = self.harness.verifier.check(content, turn_results)
+                verdict = verifier.check(content, turn_results)
+                if verdict.ok and wf and wf.output_sections:
+                    missing = [s for s in wf.output_sections if s.lower() not in content.lower()]
+                    if missing:
+                        verdict = Verdict(False, "sections:" + ", ".join(missing))
                 audit.event("verify", ok=verdict.ok, reason=verdict.reason, retries=retries)
                 if not verdict.ok and retries < self.harness.config.agent.verify.max_retries:
                     retries += 1
@@ -153,12 +185,16 @@ class AgentSession:
                         {"role": "assistant", "content": content, "superseded": True}
                     )
                     self.messages.append(
-                        {"role": "user", "content": strings.get("verify.nudge"), "harness": True}
+                        {
+                            "role": "user",
+                            "content": self._nudge(verdict.reason, strings),
+                            "harness": True,
+                        }
                     )
                     yield {"type": "verify", "ok": False, "retry": True}
                     continue
                 if not verdict.ok:
-                    warning = "\n\n" + strings.get("verify.uncited_warning")
+                    warning = "\n\n" + self._warning(verdict.reason, strings)
                     content += warning
                     yield {"type": "text", "delta": warning}
                 self.messages.append({"role": "assistant", "content": content})
@@ -187,6 +223,11 @@ class AgentSession:
                     output: Any = ToolExecutionError(
                         "too_many_calls", "too many calls in a step"
                     ).to_dict()
+                elif allowed is not None and call.name not in allowed:
+                    output = ToolExecutionError(
+                        "tool_not_allowed", strings.get("loop.tool_not_allowed")
+                    ).to_dict()
+                    audit.event("guard_block", rule="W-3", tool=call.name)
                 elif guard.leak.leaked(json.dumps(call.arguments, ensure_ascii=False)):
                     output = ToolExecutionError(
                         "blocked", "arguments contain internal data"
@@ -276,6 +317,18 @@ class AgentSession:
         yield result.event()
 
     # -- tools -----------------------------------------------------------------------------
+    @staticmethod
+    def _nudge(reason: str, strings: Any) -> str:
+        if reason.startswith("sections:"):
+            return str(strings.get("verify.sections_nudge", missing=reason[9:].strip()))
+        return str(strings.get("verify.nudge"))
+
+    @staticmethod
+    def _warning(reason: str, strings: Any) -> str:
+        if reason.startswith("sections:"):
+            return str(strings.get("verify.sections_warning", missing=reason[9:].strip()))
+        return str(strings.get("verify.uncited_warning"))
+
     def _preload_skill(
         self, name: str, arguments: str, seen: set, turn_results: List[Dict[str, Any]]
     ) -> Iterator[Event]:
@@ -305,7 +358,14 @@ class AgentSession:
 
     def _execute(self, name: str, arguments: Dict[str, Any]) -> Any:
         spec = self.registry.tools.get(name)
-        decision = self.harness.approval.decide(name, bool(spec and spec.writes))
+        writes = bool(spec and spec.writes)
+        decision = self.harness.approval.decide(name, writes)
+        wf = getattr(self, "workflow", None)
+        if wf is not None and writes:  # a workflow can only make approval stricter (W-1)
+            if wf.approval == "deny":
+                decision = "deny"
+            elif wf.approval == "ask" and decision == "allow":
+                decision = "ask"
         if decision == "deny" or (
             decision == "ask" and not (self.approve and self.approve(name, arguments))
         ):

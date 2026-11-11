@@ -13,6 +13,8 @@ from agent.tools import Sandbox
 from application.chat_app import ChatApp
 from application.service import SearchService
 from application.workspace import Workspace, chunks_from_text
+from config.loader import load_runtime_config
+from harness.integrity import write_lock
 from harness.runtime import HarnessRuntime
 from skills import SkillLibrary
 from skills.loader import SkillError
@@ -72,7 +74,7 @@ def test_skill_loading_and_validation(project):
 
 def test_system_prompt_includes_policy_skills_and_memory(project):
     (project / "LARIS.local.md").write_text("Local note.", encoding="utf-8")
-    (project / ".laris" / "memory").mkdir()
+    (project / ".laris" / "memory").mkdir(parents=True, exist_ok=True)
     (project / ".laris" / "memory" / "research-state.md").write_text("RQ1", encoding="utf-8")
     rt = HarnessRuntime.load(project)
     prompt = rt.composer.compose("abc", library(project), "Prefer short answers.")
@@ -86,6 +88,7 @@ def test_system_prompt_includes_policy_skills_and_memory(project):
         assert needle in prompt.text
     assert prompt.text.index("internal_policy") < prompt.text.index("Local note.")
     (project / "LARIS.md").write_text("Changed policy line.", encoding="utf-8")
+    write_lock(project, load_runtime_config(project).prompts)
     again = HarnessRuntime.load(project).composer.compose("abc", library(project))
     assert "Changed policy line." in again.text  # re-read every time
     assert again.sha256 != prompt.sha256

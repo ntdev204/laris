@@ -97,7 +97,10 @@ class SecurityConfig(BaseModel):
             "LARIS.local.md",
             ".laris/LARIS.md",
             ".laris/config*.yaml",
-            "configs/prompts/**",
+            ".laris/prompts/**",
+            ".laris/rules/**",
+            ".laris/workflows/**",
+            ".laris/integrity.lock",
             "configs/default.yaml",
             ".git/**",
             "**/settings.json",
@@ -176,7 +179,12 @@ class AppConfig(BaseModel):
 
 
 class PromptConfig(BaseModel):
-    dir: str = Field(default="configs/prompts")
+    dir: str = Field(default=".laris/prompts")
+    rules_dir: str = Field(default=".laris/rules")
+    workflows_dir: str = Field(default=".laris/workflows")
+    integrity_lock: str = Field(default=".laris/integrity.lock")
+    integrity: Literal["enforce", "warn", "off"] = Field(default="enforce")
+    workflow_max_chars: int = Field(default=6000, ge=500)
     manifest: str = Field(default="manifest.yaml")
     assistant_name: str = Field(default="LARIS")
     reply_language: str = Field(default="Vietnamese")
