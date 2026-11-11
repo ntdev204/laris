@@ -27,6 +27,9 @@ def protected_files(root: Path, cfg: PromptConfig) -> List[Path]:
     files: List[Path] = []
     if (root / ROOT_FILE).is_file():
         files.append(root / ROOT_FILE)
+    helper = _folder(root, cfg.help_file)
+    if helper.is_file():
+        files.append(helper)
     for relative in (cfg.dir, cfg.rules_dir, cfg.workflows_dir):
         folder = _folder(root, relative)
         if folder.is_dir():

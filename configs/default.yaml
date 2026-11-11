@@ -251,6 +251,9 @@ prompts:
   workflows_dir: .laris/workflows
   integrity_lock: .laris/integrity.lock
   integrity: enforce
+  help_file: .laris/help/how-to-use.md
+  help_commands:
+  - /how-to-use
   workflow_max_chars: 6000
   manifest: manifest.yaml
   assistant_name: LARIS

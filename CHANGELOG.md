@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`/how-to-use`:** a detailed Vietnamese user guide prepared in `.laris/help/how-to-use.md` and printed verbatim by `/how-to-use` (web chat, web "Hướng dẫn" button, terminal) and `laris agent guide`, with no model call. The file is covered by `integrity.lock`; the web chat renderer now supports tables, quotes and rules. Help turns are shown in history but never sent to the model, counted in context or collected as training data.
+
 ## [1.3.0] - 2026-11-11
 
 ### Changed

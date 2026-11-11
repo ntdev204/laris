@@ -60,6 +60,8 @@ tools:
   exists: "A file with that name exists; pass overwrite=true to replace it."
   no_skills: "No skills are configured."
   no_memory: "The memory folder is not configured."
+help:
+  missing: "Chưa có tệp hướng dẫn sử dụng."
 loop:
   tool_not_allowed: "This tool is not allowed in the active workflow."
   cyclic: "Đã dừng: cùng một lệnh gọi công cụ bị lặp lại."

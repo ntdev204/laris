@@ -71,6 +71,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "tools": ("List the agent's tools", agent.COMMANDS["tools"]),
         "run": ("Run one task with the agent and print the steps", agent.COMMANDS["run"]),
         "chat": ("Interactive agent session", agent.COMMANDS["chat"]),
+        "guide": ("Print the prepared user guide (same as /how-to-use)", agent.COMMANDS["guide"]),
     },
     "skills": {
         "list": ("List available skills", skills.COMMANDS["list"]),

@@ -60,7 +60,11 @@ _WIRE_KEYS = ("role", "content", "tool_calls", "tool_call_id", "name")
 
 def wire_messages(messages: List[Message]) -> List[Message]:
     """What the model API receives: internal bookkeeping keys and superseded drafts removed."""
-    return [{k: m[k] for k in _WIRE_KEYS if k in m} for m in messages if not m.get("superseded")]
+    return [
+        {k: m[k] for k in _WIRE_KEYS if k in m}
+        for m in messages
+        if not m.get("superseded") and not m.get("ui_only")
+    ]
 
 
 class HttpChatProvider(ChatProvider):

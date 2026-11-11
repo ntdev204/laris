@@ -10,7 +10,8 @@ A special folder: protected from the agent's own tools, checked for integrity be
 | `skills/` | Task knowledge, loaded with `use_skill` or `/<skill>` | Low | Through `use_skill` |
 | `skills/corpus-*` | Generated knowledge skills (one per ingested folder or document; refreshed on ingest) | Low | Through `use_skill` |
 | `memory/` | Short dated notes, written through `save_memory` after approval | Data | Yes |
-| `integrity.lock` | SHA-256 of `LARIS.md`, `prompts/`, `rules/`, `workflows/` | — | No |
+| `help/how-to-use.md` | Prepared user guide printed by `/how-to-use` (no model call) | — | Yes |
+| `integrity.lock` | SHA-256 of `LARIS.md`, `prompts/`, `rules/`, `workflows/`, `help/` | — | No |
 | `config.yaml` | Optional project overrides (never secrets) | Configuration | No |
 
 Change control: owner approval, bump `prompts/manifest.yaml` `version`, `laris harness lock`,

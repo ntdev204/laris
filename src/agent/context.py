@@ -17,6 +17,11 @@ Message = Dict[str, Any]
 Summarizer = Callable[[str, str], Optional[str]]  # (transcript, instructions) -> summary
 
 
+def _local(message: Any) -> bool:
+    """Messages for the user only (such as the how-to-use text); never sent to the model."""
+    return isinstance(message, dict) and bool(message.get("ui_only"))
+
+
 class TokenEstimator:
     """Rough token counts from character length; replace with a real tokenizer when available."""
 
@@ -28,7 +33,7 @@ class TokenEstimator:
         if isinstance(value, str):
             return int(len(value) / self.chars_per_token) + 1
         if isinstance(value, list):
-            return sum(self(m) for m in value)
+            return sum(self(m) for m in value if not _local(m))
         return self.overhead + int(
             len(json.dumps(value, ensure_ascii=False)) / self.chars_per_token
         )
@@ -171,6 +176,8 @@ class ContextManager:
         s = self.strings
         lines: List[str] = []
         for m in messages:
+            if _local(m):
+                continue
             role, content = m.get("role"), m.get("content") or ""
             if role == "tool":
                 lines.append(s.get("compaction.transcript_tool", text=_clip(content, tool_chars)))
@@ -191,7 +198,7 @@ class ContextManager:
         lines: List[str] = []
         for m in messages:
             role, content = m.get("role"), m.get("content") or ""
-            if m.get("harness"):
+            if m.get("harness") or _local(m):
                 continue
             if role == "user" and content.startswith(self.marker):
                 lines.append(content[len(self.marker) :].strip())
