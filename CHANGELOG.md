@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The client is a self-contained program (like Claude Code):** each platform package now carries the frozen client (PyInstaller, built from the compiled wheel), so `npm i -g @ntdev204/laris-cli` needs no Python, no `uv` download, no pip and no internet at first start; the launcher only runs it. Replaces the wheel-plus-private-Python design of 1.5.1, whose Windows package must not be used.
+- **Releases publish themselves:** pushing a `v*` tag builds all five platforms, smoke-tests each program and publishes the six npm packages from CI (repository secret `NPM_TOKEN`); no manual `npm publish`.
+
 ## [1.5.1] - 2026-11-11
 
 ### Changed
