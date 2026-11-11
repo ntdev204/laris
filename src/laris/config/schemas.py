@@ -93,6 +93,9 @@ class TrainingConfig(BaseModel):
     loss_lambda_para: float = Field(default=0.15, gt=0.0)
     loss_lambda_sim: float = Field(default=0.10, gt=0.0)
     loss_lambda_qa: float = Field(default=0.15, gt=0.0)
+    loss_lambda_retrieval: float = Field(default=0.0, ge=0.0, allow_inf_nan=False)
+    retrieval_temperature: float = Field(default=0.07, gt=0.0, allow_inf_nan=False)
+    dataset_sampling_exponents: dict[str, float] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":

@@ -58,6 +58,11 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Maximum articles to extract for tokenizer fitting",
     )
     parser.add_argument(
+        "--no-split-digits",
+        action="store_true",
+        help="Keep multi-digit numbers as ordinary pieces instead of one token per digit",
+    )
+    parser.add_argument(
         "--authorized",
         action="store_true",
         help="Explicitly assert repository owner authorization for tokenizer fitting",
@@ -127,6 +132,7 @@ def run(args: argparse.Namespace) -> int:
         character_coverage=0.9995,
         input_corpus_paths=[args.corpus_text_out],
         output_dir=args.output_dir,
+        split_digits=not args.no_split_digits,
     )
     pipeline = TokenizerTrainingPipeline(cfg)
     try:

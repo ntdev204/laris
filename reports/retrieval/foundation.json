@@ -1,0 +1,303 @@
+{
+ "benchmark_version": "foundation-retrieval-1",
+ "benchmark_id": "foundation_paragraph_retrieval",
+ "split": "test",
+ "datasets": [
+  {
+   "dataset": "paragraph_retrieval",
+   "language": "en",
+   "samples": 7284,
+   "metrics": {
+    "mrr": 0.03417827271981427,
+    "ndcg_at_10": 0.0350248184609612,
+    "recall_at_10": 0.06891817682591983,
+    "hybrid_mrr": 0.2345897880250195
+   },
+   "baseline": {
+    "mrr": 0.7828569466920086,
+    "ndcg_at_10": 0.8146695707622671,
+    "recall_at_10": 0.9225700164744646
+   },
+   "metric_protocols": {
+    "mrr": "held_out_query_relevance"
+   },
+   "protocol_details": {
+    "source": "squad_test_en",
+    "gate_system": "dense",
+    "baseline_system": "bm25",
+    "gate_eligible": false,
+    "gate_ineligible_reason": "general-domain source; G12 needs held-out STEM queries with human relevance"
+   }
+  },
+  {
+   "dataset": "paragraph_retrieval",
+   "language": "vi",
+   "samples": 1429,
+   "metrics": {
+    "mrr": 0.11599386173932791,
+    "ndcg_at_10": 0.1255895144960048,
+    "recall_at_10": 0.2092372288313506,
+    "hybrid_mrr": 0.3335469581760661
+   },
+   "baseline": {
+    "mrr": 0.8132840483295171,
+    "ndcg_at_10": 0.8465173496706898,
+    "recall_at_10": 0.9559132260321903
+   },
+   "metric_protocols": {
+    "mrr": "held_out_query_relevance"
+   },
+   "protocol_details": {
+    "source": "viquad_v2_test_vi",
+    "gate_system": "dense",
+    "baseline_system": "bm25",
+    "gate_eligible": false,
+    "gate_ineligible_reason": "general-domain source; G12 needs held-out STEM queries with human relevance"
+   }
+  }
+ ],
+ "sources": [
+  {
+   "id": "squad_test_en",
+   "language": "en",
+   "domain": "general_encyclopedic",
+   "file": "data/processed/squad/test.parquet",
+   "file_sha256": "255f8a6b77616d07caff39d32d5428c6c56210ccb34ea5d48369cdc85a729a1b",
+   "frozen": {
+    "queries": 7284,
+    "documents": 1338,
+    "digest": "694daaaddba0813b6d0e16e906864782a3eb1fb6dac387884d650b6d36006807"
+   },
+   "isolation": {
+    "train_title_overlap": 0,
+    "train_paragraph_overlap": 0,
+    "titles": 29,
+    "pretraining_text_exposure": {
+     "corpus": "wikipedia_en/train",
+     "matching_titles": 4,
+     "of_titles": 29,
+     "titles": [
+      "Genghis_Khan",
+      "Martin_Luther",
+      "Normans",
+      "Yuan_dynasty"
+     ],
+     "note": "the article text was seen as MLM data; questions and labels were not"
+    }
+   },
+   "systems": {
+    "bm25": {
+     "mrr": 0.7828569466920086,
+     "ndcg_at_10": 0.8146695707622671,
+     "recall_at_1": 0.7016749038989566,
+     "recall_at_5": 0.8839923119165294,
+     "recall_at_10": 0.9225700164744646,
+     "recall_at_50": 0.9751510159253157,
+     "mrr_ci95": [
+      0.7744302664074363,
+      0.7909944439439471
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.8218315121172269,
+      "recall_at_1": 0.7458813838550247
+     }
+    },
+    "dense": {
+     "mrr": 0.03417827271981427,
+     "ndcg_at_10": 0.0350248184609612,
+     "recall_at_1": 0.01043382756727073,
+     "recall_at_5": 0.04228445908841296,
+     "recall_at_10": 0.06891817682591983,
+     "recall_at_50": 0.19975288303130148,
+     "mrr_ci95": [
+      0.03138289468397429,
+      0.03703675863127903
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.16008189321641997,
+      "recall_at_1": 0.061367380560131794
+     }
+    },
+    "hybrid_rrf": {
+     "mrr": 0.2345897880250195,
+     "ndcg_at_10": 0.2753520250226742,
+     "recall_at_1": 0.11367380560131796,
+     "recall_at_5": 0.30724876441515653,
+     "recall_at_10": 0.5074135090609555,
+     "recall_at_50": 0.9638934651290499,
+     "mrr_ci95": [
+      0.2276059559584332,
+      0.2410825178019604
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.4338482820439847,
+      "recall_at_1": 0.2510982976386601
+     }
+    }
+   },
+   "paired_differences": {
+    "dense_minus_bm25_mrr": {
+     "mean": -0.7486786739721942,
+     "ci95": [
+      -0.7569404718054552,
+      -0.740161857260349
+     ]
+    },
+    "hybrid_rrf_minus_bm25_mrr": {
+     "mean": -0.5482671586669892,
+     "ci95": [
+      -0.5579240191682191,
+      -0.5385795834400329
+     ]
+    }
+   },
+   "subsets": {
+    "stem_titled_en": {
+     "queries": 796,
+     "gate_eligible": false,
+     "note": "four science/medicine articles chosen by title before scoring; diagnostic only",
+     "bm25": {
+      "mrr": 0.830883571294366,
+      "ndcg_at_10": 0.8610147043112769,
+      "recall_at_1": 0.7487437185929648,
+      "recall_at_5": 0.9309045226130653,
+      "recall_at_10": 0.9585427135678392,
+      "recall_at_50": 0.992462311557789
+     },
+     "dense": {
+      "mrr": 0.04312350176501283,
+      "ndcg_at_10": 0.04222579586635047,
+      "recall_at_1": 0.017587939698492462,
+      "recall_at_5": 0.05150753768844221,
+      "recall_at_10": 0.07160804020100503,
+      "recall_at_50": 0.20477386934673367
+     },
+     "hybrid_rrf": {
+      "mrr": 0.2515609067087374,
+      "ndcg_at_10": 0.3006443518865849,
+      "recall_at_1": 0.11683417085427136,
+      "recall_at_5": 0.3492462311557789,
+      "recall_at_10": 0.5577889447236181,
+      "recall_at_50": 0.9849246231155779
+     }
+    }
+   }
+  },
+  {
+   "id": "viquad_v2_test_vi",
+   "language": "vi",
+   "domain": "general_encyclopedic",
+   "file": "data/processed/viquad_v2/test.parquet",
+   "file_sha256": "52bf6b9f72c993a1ec38feca29b5e2e74f3c7e85c42dad07c27736ac17566c2f",
+   "frozen": {
+    "queries": 1429,
+    "documents": 288,
+    "digest": "8664e10ac0187251166dcefc19ae4184dfe9871c5d162db3f9d5926164105e45"
+   },
+   "isolation": {
+    "train_title_overlap": 0,
+    "train_paragraph_overlap": 0,
+    "titles": 12,
+    "pretraining_text_exposure": {
+     "corpus": "wikipedia_vi/train",
+     "matching_titles": 12,
+     "of_titles": 12,
+     "titles": [
+      "Canada",
+      "Franklin D. Roosevelt",
+      "François Mitterrand",
+      "Gia cầm",
+      "Montréal",
+      "Mông Cổ",
+      "Nước biển",
+      "Nội chiến Anh",
+      "Puerto Rico",
+      "Thần học",
+      "Uganda",
+      "Đế quốc La Mã Thần thánh"
+     ],
+     "note": "the article text was seen as MLM data; questions and labels were not"
+    }
+   },
+   "systems": {
+    "bm25": {
+     "mrr": 0.8132840483295171,
+     "ndcg_at_10": 0.8465173496706898,
+     "recall_at_1": 0.7298810356892932,
+     "recall_at_5": 0.9153254023792862,
+     "recall_at_10": 0.9559132260321903,
+     "recall_at_50": 0.9923023093072079,
+     "mrr_ci95": [
+      0.7971987724866679,
+      0.8293163947446883
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.851449056449698,
+      "recall_at_1": 0.7746675997200839
+     }
+    },
+    "dense": {
+     "mrr": 0.11599386173932791,
+     "ndcg_at_10": 0.1255895144960048,
+     "recall_at_1": 0.06018194541637509,
+     "recall_at_5": 0.15395381385584325,
+     "recall_at_10": 0.2092372288313506,
+     "recall_at_50": 0.45906228131560534,
+     "mrr_ci95": [
+      0.10452304521947386,
+      0.12851513702879577
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.25653767116229054,
+      "recall_at_1": 0.13016095171448566
+     }
+    },
+    "hybrid_rrf": {
+     "mrr": 0.3335469581760661,
+     "ndcg_at_10": 0.3785793908541705,
+     "recall_at_1": 0.2085374387683695,
+     "recall_at_5": 0.4359692092372288,
+     "recall_at_10": 0.5997200839748076,
+     "recall_at_50": 0.9874037788663401,
+     "mrr_ci95": [
+      0.31554140745830966,
+      0.3530483634259428
+     ],
+     "hard_negative_same_article": {
+      "mrr": 0.4678657145692923,
+      "recall_at_1": 0.298110566829951
+     }
+    }
+   },
+   "paired_differences": {
+    "dense_minus_bm25_mrr": {
+     "mean": -0.6972901865901892,
+     "ci95": [
+      -0.717320486532979,
+      -0.6767220807054604
+     ]
+    },
+    "hybrid_rrf_minus_bm25_mrr": {
+     "mean": -0.47973709015345084,
+     "ci95": [
+      -0.5015674777617477,
+      -0.45653306879994116
+     ]
+    }
+   },
+   "subsets": {}
+  }
+ ],
+ "relevance": "human-written question for its source paragraph (dataset labels); no relevance judgment was generated or edited",
+ "hard_negatives": "other paragraphs of the same article",
+ "tie_policy": "pessimistic: the relevant document ranks below all equal scores",
+ "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+ "split_isolation_checked": true,
+ "seed": 42,
+ "config_sha256": "b630bc93af9da82192c106e26d310ba3398f820c0ab7abe36e12d4c9a35455db",
+ "checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+ "model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+ "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+ "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+ "training_executed": false
+}

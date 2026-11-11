@@ -1,0 +1,32 @@
+# Development (non-gate) retrieval measurement on SciFact *train* claims. The held-out SciFact test
+# claims in foundation_retrieval.yaml are not read here. Diagnostic only: informs the F06-R1
+# decision, never qualifies a model. The encoder has not been trained on SciFact.
+version: "1.0.0"
+benchmark_id: foundation_scifact_dev_retrieval
+protocol: held_out_query_relevance
+gate_dataset: stem_retrieval
+gate_system: dense
+baseline_system: bm25
+systems:
+  bm25: {k1: 1.5, b: 0.75}
+  dense: {embedding: cls_embedding_l2_normalised}
+  hybrid_rrf: {k: 60}
+sources:
+  - id: scifact_train_dev_en
+    language: en
+    kind: qrels
+    raw_dir: scifact
+    corpus_file: corpus__corpus-00000-of-00001.parquet
+    queries_file: queries__queries-00000-of-00001.parquet
+    qrels_file: qrels__train.tsv
+    train_qrels_file: qrels__test.tsv   # isolation check runs against the sealed test claims
+    split: train
+    manifest_id: SCIFACT
+    domain: biomedical_claims
+    gate_eligible: false
+    gate_ineligible_reason: development split; the sealed SciFact test claims gate G12
+frozen:
+  scifact_train_dev_en:
+    queries: 809
+    documents: 5183
+    digest: 05e711842c1ba24cb7e2a4a73e59517649b231bd92937b60f29326e601399438

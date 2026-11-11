@@ -1,0 +1,2302 @@
+{
+  "task": "F06",
+  "status": "completed_validation_diagnostics",
+  "authorization": "Owner explicitly instructed agent to run F06 and continue goal.",
+  "preflight": {
+    "command": ".venv/bin/laris data check --verify-sha256",
+    "exit_code": 0,
+    "datasets": 14
+  },
+  "provenance": {
+    "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+    "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+    "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+    "runbook_sha256": "5c47a1273924e8e45d63f9be3ea17a8f13244c59b7bcfacc0a445f7743e33e78",
+    "local_execution_receipt": "artifacts/profiles/foundation-f06-execution.json",
+    "local_execution_receipt_sha256": "cb0d232c3c4cc033b3007c30b548a1502f588a0ac0191c5115677d6807c08c14",
+    "execution_recovery": "Baseline smoke completed successfully. Corrected the log parser to read the CLI mem=...G format and reused the verified result."
+  },
+  "budget": {
+    "cap_seconds": 7200,
+    "elapsed_seconds": 2246.153,
+    "steps_per_arm": {
+      "baseline": 2000,
+      "sampling": 2000
+    }
+  },
+  "arms": {
+    "baseline": {
+      "smoke": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "120s",
+          ".venv/bin/laris",
+          "train",
+          "language-encoder",
+          "--authorized",
+          "--model-size",
+          "compact",
+          "--max-seq-len",
+          "1024",
+          "--training-config",
+          "configs/language_encoder/compact.yaml",
+          "--init-from",
+          "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+          "--micro-batch-size",
+          "4",
+          "--grad-accum-steps",
+          "16",
+          "--precision",
+          "bf16",
+          "--no-8bit-adam",
+          "--steps",
+          "10",
+          "--learning-rate",
+          "0.00002",
+          "--warmup-steps",
+          "0",
+          "--eval-interval",
+          "500",
+          "--eval-batches",
+          "16",
+          "--save-interval",
+          "500",
+          "--patience",
+          "3",
+          "--seed",
+          "42",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--retrieval-loss-weight",
+          "0",
+          "--run-id",
+          "foundation-f05-baseline-smoke",
+          "--no-evaluate-after"
+        ],
+        "log": "artifacts/profiles/foundation-f05-baseline-smoke.log",
+        "status": "finished",
+        "authorized_training": true,
+        "exit_code": 0,
+        "elapsed_seconds": 9.562,
+        "log_sha256": "0d837cd5cd87bd0c7043554813e496e7f6f42f45f16133d3027da94a06724ae6",
+        "checkpoints": {
+          "best": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-baseline-smoke/best/manifest.json",
+            "manifest_sha256": "710e0a04c31ff4a750b677389797d7d178e4a4e019f5d67fdba4a55d3e9e1f83",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:09:32.511021+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 160,
+                  "optimizer_steps": 10,
+                  "skipped_steps": 0,
+                  "accum_counter": 160
+                },
+                "loop": {
+                  "best_metric": 0.22156351049925432,
+                  "best_step": 10,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 10,
+                      "mlm": 0.6073699537664652,
+                      "nli": 0.16394631564617157,
+                      "paraphrase": 0.0708805881877197,
+                      "qa": 0.2613366642035544,
+                      "similarity": 0.0042840306923608296,
+                      "mean": 0.22156351049925432
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.6073699537664652,
+                "nli": 0.16394631564617157,
+                "paraphrase": 0.0708805881877197,
+                "qa": 0.2613366642035544,
+                "similarity": 0.0042840306923608296,
+                "mean": 0.22156351049925432
+              },
+              "provenance": {
+                "run_id": "foundation-f05-baseline-smoke",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 0,
+                  "max_steps": 10,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {}
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 10,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "5b4541e7cf8bb5c1e260a576b51df5085803c807ecd7638acf49073e14cf1dd5"
+            }
+          },
+          "last": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-baseline-smoke/last/manifest.json",
+            "manifest_sha256": "33a48a98c38e3152e258339179bf1491bc39683d3cd52fcde93da94edd7938b9",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:09:33.268691+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 160,
+                  "optimizer_steps": 10,
+                  "skipped_steps": 0,
+                  "accum_counter": 160
+                },
+                "loop": {
+                  "best_metric": 0.22156351049925432,
+                  "best_step": 10,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 10,
+                      "mlm": 0.6073699537664652,
+                      "nli": 0.16394631564617157,
+                      "paraphrase": 0.0708805881877197,
+                      "qa": 0.2613366642035544,
+                      "similarity": 0.0042840306923608296,
+                      "mean": 0.22156351049925432
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.6073699537664652,
+                "nli": 0.16394631564617157,
+                "paraphrase": 0.0708805881877197,
+                "qa": 0.2613366642035544,
+                "similarity": 0.0042840306923608296,
+                "mean": 0.22156351049925432
+              },
+              "provenance": {
+                "run_id": "foundation-f05-baseline-smoke",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 0,
+                  "max_steps": 10,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {}
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 10,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "5b4541e7cf8bb5c1e260a576b51df5085803c807ecd7638acf49073e14cf1dd5"
+            }
+          }
+        },
+        "reported_peak_gib": 3.9,
+        "steps": 10
+      },
+      "run": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "3180s",
+          ".venv/bin/laris",
+          "train",
+          "language-encoder",
+          "--authorized",
+          "--model-size",
+          "compact",
+          "--max-seq-len",
+          "1024",
+          "--training-config",
+          "configs/language_encoder/compact.yaml",
+          "--init-from",
+          "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+          "--micro-batch-size",
+          "4",
+          "--grad-accum-steps",
+          "16",
+          "--precision",
+          "bf16",
+          "--no-8bit-adam",
+          "--steps",
+          "1990",
+          "--learning-rate",
+          "0.00002",
+          "--warmup-steps",
+          "50",
+          "--eval-interval",
+          "500",
+          "--eval-batches",
+          "16",
+          "--save-interval",
+          "500",
+          "--patience",
+          "3",
+          "--seed",
+          "42",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--retrieval-loss-weight",
+          "0",
+          "--run-id",
+          "foundation-f05-baseline-run",
+          "--no-evaluate-after"
+        ],
+        "log": "artifacts/profiles/foundation-f05-baseline-run.log",
+        "status": "finished",
+        "authorized_training": true,
+        "exit_code": 0,
+        "elapsed_seconds": 941.301,
+        "log_sha256": "0f7b9a7f05bf971bea411db8369d434b04a352a575af3c97a82b2772438db325",
+        "checkpoints": {
+          "best": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-baseline-run/best/manifest.json",
+            "manifest_sha256": "a9f9a4920cab3429bc9bf4647617bb6cfa05866f8e917d8bdc9d55b4e7bc5917",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:25:58.466260+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 31840,
+                  "optimizer_steps": 1990,
+                  "skipped_steps": 0,
+                  "accum_counter": 31840
+                },
+                "loop": {
+                  "best_metric": 0.22203989083463965,
+                  "best_step": 1990,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 500,
+                      "mlm": 0.5976282227784395,
+                      "nli": 0.1694459170103073,
+                      "paraphrase": 0.07650557324814145,
+                      "qa": 0.2790624424815178,
+                      "similarity": 0.002169114690332208,
+                      "mean": 0.22496225404174766
+                    },
+                    {
+                      "step": 1000,
+                      "mlm": 0.5942423287779093,
+                      "nli": 0.16997480392456055,
+                      "paraphrase": 0.07312158681088476,
+                      "qa": 0.2915622079744935,
+                      "similarity": 0.0022843678343633655,
+                      "mean": 0.2262370590644423
+                    },
+                    {
+                      "step": 1500,
+                      "mlm": 0.5902466038241982,
+                      "nli": 0.16680908203125,
+                      "paraphrase": 0.0735217900837597,
+                      "qa": 0.28018775675445795,
+                      "similarity": 0.0021650776616297662,
+                      "mean": 0.22258606207105913
+                    },
+                    {
+                      "step": 1990,
+                      "mlm": 0.5899349423125386,
+                      "nli": 0.16853206977248192,
+                      "paraphrase": 0.07347976578603266,
+                      "qa": 0.27616035286337137,
+                      "similarity": 0.0020923234387737466,
+                      "mean": 0.22203989083463965
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.5899349423125386,
+                "nli": 0.16853206977248192,
+                "paraphrase": 0.07347976578603266,
+                "qa": 0.27616035286337137,
+                "similarity": 0.0020923234387737466,
+                "mean": 0.22203989083463965
+              },
+              "provenance": {
+                "run_id": "foundation-f05-baseline-run",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 50,
+                  "max_steps": 1990,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {}
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 1990,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "563051f8009a9f0ad4f07185d0e9518baff195847f11450de38585bcb804d760"
+            }
+          },
+          "last": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-baseline-run/last/manifest.json",
+            "manifest_sha256": "dec077baf4139905b8dd9e2b1850700ff936fed04cd82fccc0a8a2b5bc92acfa",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:25:59.237735+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 31840,
+                  "optimizer_steps": 1990,
+                  "skipped_steps": 0,
+                  "accum_counter": 31840
+                },
+                "loop": {
+                  "best_metric": 0.22203989083463965,
+                  "best_step": 1990,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 500,
+                      "mlm": 0.5976282227784395,
+                      "nli": 0.1694459170103073,
+                      "paraphrase": 0.07650557324814145,
+                      "qa": 0.2790624424815178,
+                      "similarity": 0.002169114690332208,
+                      "mean": 0.22496225404174766
+                    },
+                    {
+                      "step": 1000,
+                      "mlm": 0.5942423287779093,
+                      "nli": 0.16997480392456055,
+                      "paraphrase": 0.07312158681088476,
+                      "qa": 0.2915622079744935,
+                      "similarity": 0.0022843678343633655,
+                      "mean": 0.2262370590644423
+                    },
+                    {
+                      "step": 1500,
+                      "mlm": 0.5902466038241982,
+                      "nli": 0.16680908203125,
+                      "paraphrase": 0.0735217900837597,
+                      "qa": 0.28018775675445795,
+                      "similarity": 0.0021650776616297662,
+                      "mean": 0.22258606207105913
+                    },
+                    {
+                      "step": 1990,
+                      "mlm": 0.5899349423125386,
+                      "nli": 0.16853206977248192,
+                      "paraphrase": 0.07347976578603266,
+                      "qa": 0.27616035286337137,
+                      "similarity": 0.0020923234387737466,
+                      "mean": 0.22203989083463965
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.5899349423125386,
+                "nli": 0.16853206977248192,
+                "paraphrase": 0.07347976578603266,
+                "qa": 0.27616035286337137,
+                "similarity": 0.0020923234387737466,
+                "mean": 0.22203989083463965
+              },
+              "provenance": {
+                "run_id": "foundation-f05-baseline-run",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 50,
+                  "max_steps": 1990,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {}
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 1990,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "563051f8009a9f0ad4f07185d0e9518baff195847f11450de38585bcb804d760"
+            }
+          }
+        },
+        "reported_peak_gib": 3.9,
+        "steps": 1990
+      },
+      "validation": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "300s",
+          ".venv/bin/laris",
+          "evaluate",
+          "language-encoder",
+          "--checkpoint",
+          "artifacts/checkpoints/language_encoder/foundation-f05-baseline-run/best",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--split",
+          "val",
+          "--max-samples",
+          "512",
+          "--batch-size",
+          "8",
+          "--seed",
+          "42",
+          "--device",
+          "cuda",
+          "--output",
+          "artifacts/evaluations/language_encoder/foundation-f05-baseline-val.json"
+        ],
+        "log": "artifacts/profiles/foundation-f05-baseline-val.log",
+        "status": "finished",
+        "authorized_training": false,
+        "exit_code": 0,
+        "elapsed_seconds": 170.983,
+        "log_sha256": "56cb2466ccf6a224f69f46f2499e4655cfed5da022a2be60e1b619a78fedf879",
+        "validation": {
+          "path": "artifacts/evaluations/language_encoder/foundation-f05-baseline-val.json",
+          "sha256": "c86bb23d6f9435abe4dda1d2ebf5712eba51a53cd825642e45d00edaea825393"
+        },
+        "report": {
+          "split": "val",
+          "passed": true,
+          "groups": [
+            {
+              "task": "mlm",
+              "language": "en",
+              "datasets": [
+                "wikipedia_en"
+              ],
+              "samples": 512,
+              "metric": "masked_accuracy",
+              "value": 0.5834687246141349,
+              "baseline": 0.020850257243433524,
+              "required": 0.040850257243433524,
+              "passed": true
+            },
+            {
+              "task": "mlm",
+              "language": "vi",
+              "datasets": [
+                "wikipedia_vi",
+                "cc100_vi_clean"
+              ],
+              "samples": 1024,
+              "metric": "masked_accuracy",
+              "value": 0.7618549326988445,
+              "baseline": 0.04247952715880353,
+              "required": 0.06247952715880353,
+              "passed": true
+            },
+            {
+              "task": "nli",
+              "language": "en",
+              "datasets": [
+                "all_nli",
+                "anli",
+                "fever"
+              ],
+              "samples": 1536,
+              "metric": "macro_f1",
+              "value": 0.5927910273109643,
+              "baseline": 0.18534228355943608,
+              "required": 0.2353422835594361,
+              "passed": true
+            },
+            {
+              "task": "nli",
+              "language": "vi",
+              "datasets": [
+                "vinli"
+              ],
+              "samples": 512,
+              "metric": "macro_f1",
+              "value": 0.5559563693873525,
+              "baseline": 0.1549225387306347,
+              "required": 0.2049225387306347,
+              "passed": true
+            },
+            {
+              "task": "paraphrase",
+              "language": "en",
+              "datasets": [
+                "paws",
+                "quora_duplicates"
+              ],
+              "samples": 1024,
+              "metric": "auc",
+              "value": 0.8318265897789329,
+              "baseline": 0.5,
+              "required": 0.55,
+              "passed": true
+            },
+            {
+              "task": "qa",
+              "language": "en",
+              "datasets": [
+                "squad",
+                "hotpotqa"
+              ],
+              "samples": 1024,
+              "metric": "f1",
+              "value": 0.6804379206476558,
+              "baseline": 0.0,
+              "required": 0.05,
+              "passed": true
+            },
+            {
+              "task": "qa",
+              "language": "vi",
+              "datasets": [
+                "viquad_v2"
+              ],
+              "samples": 512,
+              "metric": "f1",
+              "value": 0.4321210475306799,
+              "baseline": 0.333984375,
+              "required": 0.383984375,
+              "passed": true
+            },
+            {
+              "task": "similarity",
+              "language": "en",
+              "datasets": [
+                "stsb"
+              ],
+              "samples": 512,
+              "metric": "spearman",
+              "value": 0.8357589137675597,
+              "baseline": 0.5652200293412699,
+              "required": 0.5652200293412699,
+              "passed": true
+            },
+            {
+              "task": "similarity",
+              "language": "vi",
+              "datasets": [
+                "vists"
+              ],
+              "samples": 512,
+              "metric": "spearman",
+              "value": 0.6538963074355437,
+              "baseline": 0.6259035849975362,
+              "required": 0.6259035849975362,
+              "passed": true
+            }
+          ],
+          "datasets": [
+            {
+              "task": "mlm",
+              "dataset": "wikipedia_en",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.5834687246141349,
+                "perplexity": 11.331782975286838,
+                "masked_tokens": 29544.0
+              },
+              "baseline": {
+                "unigram_top1": 0.020850257243433524,
+                "masked_accuracy": 0.020850257243433524,
+                "unigram_perplexity": 4389.222879319111
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "mlm",
+              "dataset": "wikipedia_vi",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.8711949114039074,
+                "perplexity": 1.9615367318165666,
+                "masked_tokens": 4402.0
+              },
+              "baseline": {
+                "unigram_top1": 0.054293502953203086,
+                "masked_accuracy": 0.054293502953203086,
+                "unigram_perplexity": 1277.1176729235412
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "mlm",
+              "dataset": "cc100_vi_clean",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.6525149539937817,
+                "perplexity": 5.422101192174634,
+                "masked_tokens": 63361.0
+              },
+              "baseline": {
+                "unigram_top1": 0.03066555136440397,
+                "masked_accuracy": 0.03066555136440397,
+                "unigram_perplexity": 1658.0662636209956
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "all_nli",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.84375,
+                "macro_f1": 0.8431270561555483
+              },
+              "baseline": {
+                "accuracy": 0.318359375,
+                "macro_f1": 0.16098765432098766,
+                "majority_class": 0.16098765432098766
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "anli",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.376953125,
+                "macro_f1": 0.37098456252806944
+              },
+              "baseline": {
+                "accuracy": 0.318359375,
+                "macro_f1": 0.16098765432098766,
+                "majority_class": 0.16098765432098766
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "vinli",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.564453125,
+                "macro_f1": 0.5559563693873525
+              },
+              "baseline": {
+                "accuracy": 0.302734375,
+                "macro_f1": 0.1549225387306347,
+                "majority_class": 0.1549225387306347
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "fever",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.8515625,
+                "macro_f1": 0.5642614632492756
+              },
+              "baseline": {
+                "accuracy": 0.541015625,
+                "macro_f1": 0.2340515420363329,
+                "majority_class": 0.2340515420363329
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "paraphrase",
+              "dataset": "paws",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "auc": 0.7716518408697801,
+                "macro_f1": 0.7087599544937428,
+                "f1": 0.6666666666666666,
+                "accuracy": 0.71484375
+              },
+              "baseline": {
+                "random": 0.5,
+                "auc": 0.5,
+                "f1": 0.6162162162162163
+              },
+              "metric_protocols": {},
+              "baseline_source": "constant"
+            },
+            {
+              "task": "paraphrase",
+              "dataset": "quora_duplicates",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "auc": 0.8920013386880856,
+                "macro_f1": 0.76708619457141,
+                "f1": 0.6865671641791045,
+                "accuracy": 0.794921875
+              },
+              "baseline": {
+                "random": 0.5,
+                "auc": 0.5,
+                "f1": 0.5202312138728323
+              },
+              "metric_protocols": {},
+              "baseline_source": "constant"
+            },
+            {
+              "task": "similarity",
+              "dataset": "stsb",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "pearson": 0.8440258516957203,
+                "spearman": 0.8357589137675597
+              },
+              "baseline": {
+                "token_jaccard": 0.5652200293412699,
+                "pearson": 0.5455565752215978,
+                "spearman": 0.5652200293412699
+              },
+              "metric_protocols": {},
+              "baseline_source": "lexical"
+            },
+            {
+              "task": "similarity",
+              "dataset": "vists",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "pearson": 0.7549623602057158,
+                "spearman": 0.6538963074355437
+              },
+              "baseline": {
+                "token_jaccard": 0.6259035849975362,
+                "pearson": 0.626267997049818,
+                "spearman": 0.6259035849975362
+              },
+              "metric_protocols": {},
+              "baseline_source": "lexical"
+            },
+            {
+              "task": "qa",
+              "dataset": "squad",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.64453125,
+                "f1": 0.7448642313078049,
+                "has_answer_exact_match": 0.64453125,
+                "has_answer_f1": 0.7448642313078049,
+                "no_answer_exact_match": 0.0,
+                "no_answer_f1": 0.0,
+                "token_span_exact_match": 0.451171875,
+                "token_span_f1": 0.6668948540920456,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.0
+              },
+              "baseline": {
+                "no_answer_or_first": 0.0,
+                "f1": 0.0,
+                "exact_match": 0.0
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 3286,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 512,
+                "no_answer_rows": 0,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 0
+              },
+              "baseline_source": "constant"
+            },
+            {
+              "task": "qa",
+              "dataset": "viquad_v2",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.361328125,
+                "f1": 0.4321210475306799,
+                "has_answer_exact_match": 0.187683284457478,
+                "has_answer_f1": 0.2939764701926925,
+                "no_answer_exact_match": 0.7076023391812866,
+                "no_answer_f1": 0.7076023391812866,
+                "token_span_exact_match": 0.353515625,
+                "token_span_f1": 0.41618912518542983,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.0
+              },
+              "baseline": {
+                "no_answer_or_first": 0.333984375,
+                "f1": 0.333984375,
+                "exact_match": 0.333984375
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 1713,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 341,
+                "no_answer_rows": 171,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 0
+              },
+              "baseline_source": "constant"
+            },
+            {
+              "task": "qa",
+              "dataset": "hotpotqa",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.484375,
+                "f1": 0.6160116099875068,
+                "has_answer_exact_match": 0.484375,
+                "has_answer_f1": 0.6160116099875068,
+                "no_answer_exact_match": 0.0,
+                "no_answer_f1": 0.0,
+                "token_span_exact_match": 0.4609375,
+                "token_span_f1": 0.5702283087282277,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.931640625
+              },
+              "baseline": {
+                "no_answer_or_first": 0.0,
+                "f1": 0.0,
+                "exact_match": 0.0
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 3479,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 512,
+                "no_answer_rows": 0,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 477
+              },
+              "baseline_source": "constant"
+            }
+          ],
+          "checkpoint": "artifacts/checkpoints/language_encoder/foundation-f05-baseline-run/best",
+          "model_sha256": "563051f8009a9f0ad4f07185d0e9518baff195847f11450de38585bcb804d760",
+          "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+          "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+          "thresholds_sha256": "22f7b7326739036a6e0de600aaf3b6cc08d9024dd7e5a53b190dd0afcf239dbf",
+          "max_samples_per_dataset": 512,
+          "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+          "split_isolation_checked": true
+        }
+      },
+      "best_mean_validation_loss": 0.22203989083463965,
+      "learning_curve": [
+        {
+          "step": 500,
+          "mlm": 0.5976282227784395,
+          "nli": 0.1694459170103073,
+          "paraphrase": 0.07650557324814145,
+          "qa": 0.2790624424815178,
+          "similarity": 0.002169114690332208,
+          "mean": 0.22496225404174766
+        },
+        {
+          "step": 1000,
+          "mlm": 0.5942423287779093,
+          "nli": 0.16997480392456055,
+          "paraphrase": 0.07312158681088476,
+          "qa": 0.2915622079744935,
+          "similarity": 0.0022843678343633655,
+          "mean": 0.2262370590644423
+        },
+        {
+          "step": 1500,
+          "mlm": 0.5902466038241982,
+          "nli": 0.16680908203125,
+          "paraphrase": 0.0735217900837597,
+          "qa": 0.28018775675445795,
+          "similarity": 0.0021650776616297662,
+          "mean": 0.22258606207105913
+        },
+        {
+          "step": 1990,
+          "mlm": 0.5899349423125386,
+          "nli": 0.16853206977248192,
+          "paraphrase": 0.07347976578603266,
+          "qa": 0.27616035286337137,
+          "similarity": 0.0020923234387737466,
+          "mean": 0.22203989083463965
+        }
+      ]
+    },
+    "sampling": {
+      "smoke": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "120s",
+          ".venv/bin/laris",
+          "train",
+          "language-encoder",
+          "--authorized",
+          "--model-size",
+          "compact",
+          "--max-seq-len",
+          "1024",
+          "--training-config",
+          "configs/language_encoder/compact.yaml",
+          "--init-from",
+          "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+          "--micro-batch-size",
+          "4",
+          "--grad-accum-steps",
+          "16",
+          "--precision",
+          "bf16",
+          "--no-8bit-adam",
+          "--steps",
+          "10",
+          "--learning-rate",
+          "0.00002",
+          "--warmup-steps",
+          "0",
+          "--eval-interval",
+          "500",
+          "--eval-batches",
+          "16",
+          "--save-interval",
+          "500",
+          "--patience",
+          "3",
+          "--seed",
+          "42",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--retrieval-loss-weight",
+          "0",
+          "--dataset-sampling-ablation",
+          "--run-id",
+          "foundation-f05-sampling-smoke",
+          "--no-evaluate-after"
+        ],
+        "log": "artifacts/profiles/foundation-f05-sampling-smoke.log",
+        "status": "finished",
+        "authorized_training": true,
+        "exit_code": 0,
+        "elapsed_seconds": 9.222,
+        "log_sha256": "d2d163638e0cb55321143b357adce42b7a6d67401317d56c84dad8d6848faebc",
+        "checkpoints": {
+          "best": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-smoke/best/manifest.json",
+            "manifest_sha256": "f245af8f1f9974a4918cc5d16046dd95c274fd743f1cfbb6d02090f4258513eb",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:10:16.822899+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 160,
+                  "optimizer_steps": 10,
+                  "skipped_steps": 0,
+                  "accum_counter": 160
+                },
+                "loop": {
+                  "best_metric": 0.2219157762694522,
+                  "best_step": 10,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 10,
+                      "mlm": 0.6075689345598221,
+                      "nli": 0.16517876088619232,
+                      "paraphrase": 0.07076413240793045,
+                      "qa": 0.26168771041557193,
+                      "similarity": 0.0043793430777441245,
+                      "mean": 0.2219157762694522
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.6075689345598221,
+                "nli": 0.16517876088619232,
+                "paraphrase": 0.07076413240793045,
+                "qa": 0.26168771041557193,
+                "similarity": 0.0043793430777441245,
+                "mean": 0.2219157762694522
+              },
+              "provenance": {
+                "run_id": "foundation-f05-sampling-smoke",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 0,
+                  "max_steps": 10,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {
+                    "nli": 0.7,
+                    "paraphrase": 0.7,
+                    "qa": 0.7
+                  }
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 10,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "70a9d48e4f1c95c5ad99914e10c18a43caa7704fcfa9c583c33aabab7c7c6f32"
+            }
+          },
+          "last": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-smoke/last/manifest.json",
+            "manifest_sha256": "e93e9d7927fdb44de37681395462f20d0eb109f17f00c05dbd4e77634796ba4f",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:10:17.575371+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 160,
+                  "optimizer_steps": 10,
+                  "skipped_steps": 0,
+                  "accum_counter": 160
+                },
+                "loop": {
+                  "best_metric": 0.2219157762694522,
+                  "best_step": 10,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 10,
+                      "mlm": 0.6075689345598221,
+                      "nli": 0.16517876088619232,
+                      "paraphrase": 0.07076413240793045,
+                      "qa": 0.26168771041557193,
+                      "similarity": 0.0043793430777441245,
+                      "mean": 0.2219157762694522
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.6075689345598221,
+                "nli": 0.16517876088619232,
+                "paraphrase": 0.07076413240793045,
+                "qa": 0.26168771041557193,
+                "similarity": 0.0043793430777441245,
+                "mean": 0.2219157762694522
+              },
+              "provenance": {
+                "run_id": "foundation-f05-sampling-smoke",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 0,
+                  "max_steps": 10,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {
+                    "nli": 0.7,
+                    "paraphrase": 0.7,
+                    "qa": 0.7
+                  }
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 10,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "70a9d48e4f1c95c5ad99914e10c18a43caa7704fcfa9c583c33aabab7c7c6f32"
+            }
+          }
+        },
+        "reported_peak_gib": 3.9,
+        "steps": 10
+      },
+      "run": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "3180s",
+          ".venv/bin/laris",
+          "train",
+          "language-encoder",
+          "--authorized",
+          "--model-size",
+          "compact",
+          "--max-seq-len",
+          "1024",
+          "--training-config",
+          "configs/language_encoder/compact.yaml",
+          "--init-from",
+          "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+          "--micro-batch-size",
+          "4",
+          "--grad-accum-steps",
+          "16",
+          "--precision",
+          "bf16",
+          "--no-8bit-adam",
+          "--steps",
+          "1990",
+          "--learning-rate",
+          "0.00002",
+          "--warmup-steps",
+          "50",
+          "--eval-interval",
+          "500",
+          "--eval-batches",
+          "16",
+          "--save-interval",
+          "500",
+          "--patience",
+          "3",
+          "--seed",
+          "42",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--retrieval-loss-weight",
+          "0",
+          "--dataset-sampling-ablation",
+          "--run-id",
+          "foundation-f05-sampling-run",
+          "--no-evaluate-after"
+        ],
+        "log": "artifacts/profiles/foundation-f05-sampling-run.log",
+        "status": "finished",
+        "authorized_training": true,
+        "exit_code": 0,
+        "elapsed_seconds": 941.997,
+        "log_sha256": "b6acf528691da48e25ad6f7035a1a48f43cfd59ce6cb0d358c4284aa013a43da",
+        "checkpoints": {
+          "best": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best/manifest.json",
+            "manifest_sha256": "ebcb4488ef958b14dd1e898c6d0e37e6cec7251d9260d3cc3c102cd783186f8b",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:37:50.374613+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 24000,
+                  "optimizer_steps": 1500,
+                  "skipped_steps": 0,
+                  "accum_counter": 24000
+                },
+                "loop": {
+                  "best_metric": 0.22177923293711502,
+                  "best_step": 1500,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 500,
+                      "mlm": 0.5975982928648591,
+                      "nli": 0.16840850189328194,
+                      "paraphrase": 0.07494555803350522,
+                      "qa": 0.28045475110411644,
+                      "similarity": 0.0021352882104110904,
+                      "mean": 0.22470847842123476
+                    },
+                    {
+                      "step": 1000,
+                      "mlm": 0.5945585928857327,
+                      "nli": 0.16708899289369583,
+                      "paraphrase": 0.0710282674372138,
+                      "qa": 0.3016466931439936,
+                      "similarity": 0.0022959456273383694,
+                      "mean": 0.22732369839759486
+                    },
+                    {
+                      "step": 1500,
+                      "mlm": 0.5908256424590945,
+                      "nli": 0.17184771224856377,
+                      "paraphrase": 0.07182042488784646,
+                      "qa": 0.272214500233531,
+                      "similarity": 0.0021878848565393128,
+                      "mean": 0.22177923293711502
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.5908256424590945,
+                "nli": 0.17184771224856377,
+                "paraphrase": 0.07182042488784646,
+                "qa": 0.272214500233531,
+                "similarity": 0.0021878848565393128,
+                "mean": 0.22177923293711502
+              },
+              "provenance": {
+                "run_id": "foundation-f05-sampling-run",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 50,
+                  "max_steps": 1990,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {
+                    "nli": 0.7,
+                    "paraphrase": 0.7,
+                    "qa": 0.7
+                  }
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 1990,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "c24e9ec81d62966b9a4d824f7f4616705b4ffaef3b4ded7a3088754ba73c1aed"
+            }
+          },
+          "last": {
+            "path": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/last/manifest.json",
+            "manifest_sha256": "d141039c81dcc52abf92748c3312ec4c157169a29b29ae9448532d721c88d13f",
+            "manifest": {
+              "schema_version": "1.0.0",
+              "created_at": "2026-11-10T23:41:41.638029+00:00",
+              "counters": {
+                "trainer": {
+                  "micro_steps": 31840,
+                  "optimizer_steps": 1990,
+                  "skipped_steps": 0,
+                  "accum_counter": 31840
+                },
+                "loop": {
+                  "best_metric": 0.22177923293711502,
+                  "best_step": 1500,
+                  "stale_evals": 0,
+                  "evaluations": [
+                    {
+                      "step": 500,
+                      "mlm": 0.5975982928648591,
+                      "nli": 0.16840850189328194,
+                      "paraphrase": 0.07494555803350522,
+                      "qa": 0.28045475110411644,
+                      "similarity": 0.0021352882104110904,
+                      "mean": 0.22470847842123476
+                    },
+                    {
+                      "step": 1000,
+                      "mlm": 0.5945585928857327,
+                      "nli": 0.16708899289369583,
+                      "paraphrase": 0.0710282674372138,
+                      "qa": 0.3016466931439936,
+                      "similarity": 0.0022959456273383694,
+                      "mean": 0.22732369839759486
+                    },
+                    {
+                      "step": 1500,
+                      "mlm": 0.5908256424590945,
+                      "nli": 0.17184771224856377,
+                      "paraphrase": 0.07182042488784646,
+                      "qa": 0.272214500233531,
+                      "similarity": 0.0021878848565393128,
+                      "mean": 0.22177923293711502
+                    },
+                    {
+                      "step": 1990,
+                      "mlm": 0.5903979986906052,
+                      "nli": 0.17393583431839943,
+                      "paraphrase": 0.0711237572832033,
+                      "qa": 0.27429345762357116,
+                      "similarity": 0.0021455434234667337,
+                      "mean": 0.22237931826784915
+                    }
+                  ]
+                }
+              },
+              "metrics": {
+                "mlm": 0.5903979986906052,
+                "nli": 0.17393583431839943,
+                "paraphrase": 0.0711237572832033,
+                "qa": 0.27429345762357116,
+                "similarity": 0.0021455434234667337,
+                "mean": 0.22237931826784915
+              },
+              "provenance": {
+                "run_id": "foundation-f05-sampling-run",
+                "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+                "seed": 42,
+                "model_size": "compact",
+                "model_config": {
+                  "vocab_size": 32000,
+                  "max_sequence_length": 1024,
+                  "d_model": 768,
+                  "num_layers": 12,
+                  "num_heads": 12,
+                  "d_ff": 3072,
+                  "dropout": 0.1,
+                  "norm_type": "rmsnorm",
+                  "pos_encoding": "rope",
+                  "activation": "gelu",
+                  "tie_embeddings": true,
+                  "precision": "bf16",
+                  "seed": 42,
+                  "gradient_checkpointing": false
+                },
+                "training": {
+                  "batch_size": 64,
+                  "micro_batch_size": 4,
+                  "gradient_accumulation_steps": 16,
+                  "learning_rate": 2e-05,
+                  "warmup_steps": 50,
+                  "max_steps": 1990,
+                  "loss_lambda_mlm": 0.35,
+                  "loss_lambda_nli": 0.25,
+                  "loss_lambda_para": 0.15,
+                  "loss_lambda_sim": 0.1,
+                  "loss_lambda_qa": 0.15,
+                  "loss_lambda_retrieval": 0.0,
+                  "retrieval_temperature": 0.07,
+                  "dataset_sampling_exponents": {
+                    "nli": 0.7,
+                    "paraphrase": 0.7,
+                    "qa": 0.7
+                  }
+                },
+                "precision": "bf16",
+                "use_8bit_adam": false,
+                "tokenizer_model": "artifacts/tokenizer/laris_spm_32k.model",
+                "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+                "initial_checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+                "initial_model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+                "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+                "run_config": {
+                  "total_optimizer_steps": 1990,
+                  "eval_interval": 500,
+                  "eval_batches_per_task": 16,
+                  "save_interval": 500,
+                  "patience": 3,
+                  "min_delta": 0.0001,
+                  "log_interval": 10
+                }
+              },
+              "model_sha256": "ae4eda6d28550fc44a7079062c88ae2807d8469844890ac20697bd79a4354698"
+            }
+          }
+        },
+        "reported_peak_gib": 3.9,
+        "steps": 1990
+      },
+      "validation": {
+        "argv": [
+          "timeout",
+          "-s",
+          "KILL",
+          "300s",
+          ".venv/bin/laris",
+          "evaluate",
+          "language-encoder",
+          "--checkpoint",
+          "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best",
+          "--tokenizer-model",
+          "artifacts/tokenizer/laris_spm_32k.model",
+          "--split",
+          "val",
+          "--max-samples",
+          "512",
+          "--batch-size",
+          "8",
+          "--seed",
+          "42",
+          "--device",
+          "cuda",
+          "--output",
+          "artifacts/evaluations/language_encoder/foundation-f05-sampling-val.json"
+        ],
+        "log": "artifacts/profiles/foundation-f05-sampling-val.log",
+        "status": "finished",
+        "authorized_training": false,
+        "exit_code": 0,
+        "elapsed_seconds": 170.641,
+        "log_sha256": "8fe4ee38aaf1e6ffda6f54ebcb17d38333ca8dd3c2ae3260196ee8914871b07e",
+        "validation": {
+          "path": "artifacts/evaluations/language_encoder/foundation-f05-sampling-val.json",
+          "sha256": "7e9ec9d2f4eafd566a5c3099341081f7a2c82ca3fadf4e25921305e6acb99ce9"
+        },
+        "report": {
+          "split": "val",
+          "passed": true,
+          "groups": [
+            {
+              "task": "mlm",
+              "language": "en",
+              "datasets": [
+                "wikipedia_en"
+              ],
+              "samples": 512,
+              "metric": "masked_accuracy",
+              "value": 0.5837395071757379,
+              "baseline": 0.020850257243433524,
+              "required": 0.040850257243433524,
+              "passed": true
+            },
+            {
+              "task": "mlm",
+              "language": "vi",
+              "datasets": [
+                "wikipedia_vi",
+                "cc100_vi_clean"
+              ],
+              "samples": 1024,
+              "metric": "masked_accuracy",
+              "value": 0.7608594506396107,
+              "baseline": 0.04247952715880353,
+              "required": 0.06247952715880353,
+              "passed": true
+            },
+            {
+              "task": "nli",
+              "language": "en",
+              "datasets": [
+                "all_nli",
+                "anli",
+                "fever"
+              ],
+              "samples": 1536,
+              "metric": "macro_f1",
+              "value": 0.5920007291633035,
+              "baseline": 0.18534228355943608,
+              "required": 0.2353422835594361,
+              "passed": true
+            },
+            {
+              "task": "nli",
+              "language": "vi",
+              "datasets": [
+                "vinli"
+              ],
+              "samples": 512,
+              "metric": "macro_f1",
+              "value": 0.5669000920347917,
+              "baseline": 0.1549225387306347,
+              "required": 0.2049225387306347,
+              "passed": true
+            },
+            {
+              "task": "paraphrase",
+              "language": "en",
+              "datasets": [
+                "paws",
+                "quora_duplicates"
+              ],
+              "samples": 1024,
+              "metric": "auc",
+              "value": 0.826887442282101,
+              "baseline": 0.5,
+              "required": 0.55,
+              "passed": true
+            },
+            {
+              "task": "qa",
+              "language": "en",
+              "datasets": [
+                "squad",
+                "hotpotqa"
+              ],
+              "samples": 1024,
+              "metric": "f1",
+              "value": 0.6785123234481429,
+              "baseline": 0.0,
+              "required": 0.05,
+              "passed": true
+            },
+            {
+              "task": "qa",
+              "language": "vi",
+              "datasets": [
+                "viquad_v2"
+              ],
+              "samples": 512,
+              "metric": "f1",
+              "value": 0.4356076334661696,
+              "baseline": 0.333984375,
+              "required": 0.383984375,
+              "passed": true
+            },
+            {
+              "task": "similarity",
+              "language": "en",
+              "datasets": [
+                "stsb"
+              ],
+              "samples": 512,
+              "metric": "spearman",
+              "value": 0.831661249486701,
+              "baseline": 0.5652200293412699,
+              "required": 0.5652200293412699,
+              "passed": true
+            },
+            {
+              "task": "similarity",
+              "language": "vi",
+              "datasets": [
+                "vists"
+              ],
+              "samples": 512,
+              "metric": "spearman",
+              "value": 0.6559528091979093,
+              "baseline": 0.6259035849975362,
+              "required": 0.6259035849975362,
+              "passed": true
+            }
+          ],
+          "datasets": [
+            {
+              "task": "mlm",
+              "dataset": "wikipedia_en",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.5837395071757379,
+                "perplexity": 11.38970795355347,
+                "masked_tokens": 29544.0
+              },
+              "baseline": {
+                "unigram_top1": 0.020850257243433524,
+                "masked_accuracy": 0.020850257243433524,
+                "unigram_perplexity": 4389.222879319111
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "mlm",
+              "dataset": "wikipedia_vi",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.8693775556565198,
+                "perplexity": 1.9679256341352365,
+                "masked_tokens": 4402.0
+              },
+              "baseline": {
+                "unigram_top1": 0.054293502953203086,
+                "masked_accuracy": 0.054293502953203086,
+                "unigram_perplexity": 1277.1176729235412
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "mlm",
+              "dataset": "cc100_vi_clean",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "masked_accuracy": 0.6523413456227016,
+                "perplexity": 5.440289153921514,
+                "masked_tokens": 63361.0
+              },
+              "baseline": {
+                "unigram_top1": 0.03066555136440397,
+                "masked_accuracy": 0.03066555136440397,
+                "unigram_perplexity": 1658.0662636209956
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "all_nli",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.83203125,
+                "macro_f1": 0.8308526349997659
+              },
+              "baseline": {
+                "accuracy": 0.318359375,
+                "macro_f1": 0.16098765432098766,
+                "majority_class": 0.16098765432098766
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "anli",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.396484375,
+                "macro_f1": 0.38995451319387203
+              },
+              "baseline": {
+                "accuracy": 0.318359375,
+                "macro_f1": 0.16098765432098766,
+                "majority_class": 0.16098765432098766
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "vinli",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.5703125,
+                "macro_f1": 0.5669000920347917
+              },
+              "baseline": {
+                "accuracy": 0.302734375,
+                "macro_f1": 0.1549225387306347,
+                "majority_class": 0.1549225387306347
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "nli",
+              "dataset": "fever",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "accuracy": 0.83984375,
+                "macro_f1": 0.5551950392962722
+              },
+              "baseline": {
+                "accuracy": 0.541015625,
+                "macro_f1": 0.2340515420363329,
+                "majority_class": 0.2340515420363329
+              },
+              "metric_protocols": {},
+              "baseline_source": "train"
+            },
+            {
+              "task": "paraphrase",
+              "dataset": "paws",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "auc": 0.759497776130467,
+                "macro_f1": 0.6873470943551806,
+                "f1": 0.6439909297052154,
+                "accuracy": 0.693359375
+              },
+              "baseline": {
+                "random": 0.5,
+                "auc": 0.5,
+                "f1": 0.6162162162162163
+              },
+              "metric_protocols": {},
+              "baseline_source": "constant"
+            },
+            {
+              "task": "paraphrase",
+              "dataset": "quora_duplicates",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "auc": 0.894277108433735,
+                "macro_f1": 0.7823643319321778,
+                "f1": 0.7096774193548387,
+                "accuracy": 0.806640625
+              },
+              "baseline": {
+                "random": 0.5,
+                "auc": 0.5,
+                "f1": 0.5202312138728323
+              },
+              "metric_protocols": {},
+              "baseline_source": "constant"
+            },
+            {
+              "task": "similarity",
+              "dataset": "stsb",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "pearson": 0.8403514884728369,
+                "spearman": 0.831661249486701
+              },
+              "baseline": {
+                "token_jaccard": 0.5652200293412699,
+                "pearson": 0.5455565752215978,
+                "spearman": 0.5652200293412699
+              },
+              "metric_protocols": {},
+              "baseline_source": "lexical"
+            },
+            {
+              "task": "similarity",
+              "dataset": "vists",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "pearson": 0.7542041310263645,
+                "spearman": 0.6559528091979093
+              },
+              "baseline": {
+                "token_jaccard": 0.6259035849975362,
+                "pearson": 0.626267997049818,
+                "spearman": 0.6259035849975362
+              },
+              "metric_protocols": {},
+              "baseline_source": "lexical"
+            },
+            {
+              "task": "qa",
+              "dataset": "squad",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.625,
+                "f1": 0.7378958958397005,
+                "has_answer_exact_match": 0.625,
+                "has_answer_f1": 0.7378958958397005,
+                "no_answer_exact_match": 0.0,
+                "no_answer_f1": 0.0,
+                "token_span_exact_match": 0.443359375,
+                "token_span_f1": 0.6635427750011609,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.0
+              },
+              "baseline": {
+                "no_answer_or_first": 0.0,
+                "f1": 0.0,
+                "exact_match": 0.0
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 3286,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 512,
+                "no_answer_rows": 0,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 0
+              },
+              "baseline_source": "constant"
+            },
+            {
+              "task": "qa",
+              "dataset": "viquad_v2",
+              "language": "vi",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.365234375,
+                "f1": 0.4356076334661696,
+                "has_answer_exact_match": 0.20527859237536658,
+                "has_answer_f1": 0.3109416666706125,
+                "no_answer_exact_match": 0.6842105263157895,
+                "no_answer_f1": 0.6842105263157895,
+                "token_span_exact_match": 0.357421875,
+                "token_span_f1": 0.4182452224876482,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.0
+              },
+              "baseline": {
+                "no_answer_or_first": 0.333984375,
+                "f1": 0.333984375,
+                "exact_match": 0.333984375
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 1713,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 341,
+                "no_answer_rows": 171,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 0
+              },
+              "baseline_source": "constant"
+            },
+            {
+              "task": "qa",
+              "dataset": "hotpotqa",
+              "language": "en",
+              "samples": 512,
+              "metrics": {
+                "exact_match": 0.470703125,
+                "f1": 0.6191287510565853,
+                "has_answer_exact_match": 0.470703125,
+                "has_answer_f1": 0.6191287510565853,
+                "no_answer_exact_match": 0.0,
+                "no_answer_f1": 0.0,
+                "token_span_exact_match": 0.447265625,
+                "token_span_f1": 0.5667333568664761,
+                "answer_outside_window_rate": 0.0,
+                "context_truncated_rate": 0.931640625
+              },
+              "baseline": {
+                "no_answer_or_first": 0.0,
+                "f1": 0.0,
+                "exact_match": 0.0
+              },
+              "metric_protocols": {
+                "exact_match": "normalized_answer_text",
+                "f1": "normalized_answer_text",
+                "token_span_exact_match": "token_span",
+                "token_span_f1": "token_span"
+              },
+              "protocol_details": {
+                "qa_protocol_version": "answer-text-1",
+                "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+                "span_decoding": {
+                  "restricted_to_context": true,
+                  "max_answer_tokens": 64,
+                  "null_threshold": 0.0,
+                  "prediction_text": "tokenizer_decode_of_predicted_span"
+                },
+                "gold_answers": "all_acceptable_texts_best_score",
+                "no_answer_rule": "correct_only_if_prediction_empty",
+                "truncation_policy": "kept_and_scored_without_sliding_window",
+                "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+                "split_rows": 3479,
+                "scored_rows": 512,
+                "complete_split": false,
+                "has_answer_rows": 512,
+                "no_answer_rows": 0,
+                "answer_outside_window_rows": 0,
+                "context_truncated_rows": 477
+              },
+              "baseline_source": "constant"
+            }
+          ],
+          "checkpoint": "artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best",
+          "model_sha256": "c24e9ec81d62966b9a4d824f7f4616705b4ffaef3b4ded7a3088754ba73c1aed",
+          "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+          "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+          "thresholds_sha256": "22f7b7326739036a6e0de600aaf3b6cc08d9024dd7e5a53b190dd0afcf239dbf",
+          "max_samples_per_dataset": 512,
+          "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+          "split_isolation_checked": true
+        }
+      },
+      "best_mean_validation_loss": 0.22177923293711502,
+      "learning_curve": [
+        {
+          "step": 500,
+          "mlm": 0.5975982928648591,
+          "nli": 0.16840850189328194,
+          "paraphrase": 0.07494555803350522,
+          "qa": 0.28045475110411644,
+          "similarity": 0.0021352882104110904,
+          "mean": 0.22470847842123476
+        },
+        {
+          "step": 1000,
+          "mlm": 0.5945585928857327,
+          "nli": 0.16708899289369583,
+          "paraphrase": 0.0710282674372138,
+          "qa": 0.3016466931439936,
+          "similarity": 0.0022959456273383694,
+          "mean": 0.22732369839759486
+        },
+        {
+          "step": 1500,
+          "mlm": 0.5908256424590945,
+          "nli": 0.17184771224856377,
+          "paraphrase": 0.07182042488784646,
+          "qa": 0.272214500233531,
+          "similarity": 0.0021878848565393128,
+          "mean": 0.22177923293711502
+        },
+        {
+          "step": 1990,
+          "mlm": 0.5903979986906052,
+          "nli": 0.17393583431839943,
+          "paraphrase": 0.0711237572832033,
+          "qa": 0.27429345762357116,
+          "similarity": 0.0021455434234667337,
+          "mean": 0.22237931826784915
+        }
+      ]
+    }
+  },
+  "matched_step_validation_mean": [
+    {
+      "step": 500,
+      "baseline": 0.22496225404174766,
+      "sampling": 0.22470847842123476,
+      "sampling_minus_baseline": -0.0002537756205129027
+    },
+    {
+      "step": 1000,
+      "baseline": 0.2262370590644423,
+      "sampling": 0.22732369839759486,
+      "sampling_minus_baseline": 0.0010866393331525614
+    },
+    {
+      "step": 1500,
+      "baseline": 0.22258606207105913,
+      "sampling": 0.22177923293711502,
+      "sampling_minus_baseline": -0.0008068291339441147
+    },
+    {
+      "step": 1990,
+      "baseline": 0.22203989083463965,
+      "sampling": 0.22237931826784915,
+      "sampling_minus_baseline": 0.0003394274332094993
+    }
+  ],
+  "diagnostic_candidate": "sampling",
+  "selection_rule": "Lower best mean validation loss using the common validation loader and loss.",
+  "test_split_scored": false,
+  "qualified": false
+}

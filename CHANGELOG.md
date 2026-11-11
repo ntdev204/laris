@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-11
+
+### Added
+- **Foundation tokenizer remediation F06-R1:** 48k SentencePiece BPE without digit splitting passes fertility (EN 1.286, VI 1.193 against a 1.35 limit), a shared scientific-text normalization (`--normalize-input`) applied at training and inference, `--vocab-size` and `--no-split-digits` options, and a first from-scratch 10,000-step round (best validation mean loss 0.3827). Dense retrieval is still untrained (SciFact dev MRR 0.007 against BM25 0.636) because the contrastive stage has not run; the model is NOT QUALIFIED.
+- **Retrieval benchmark and human-gold workflow:** frozen SHA-256 retrieval benchmark (BM25, dense, hybrid RRF) with SciFact expert relevance and a Vietnamese cross-lingual diagnostic, pooling, blind sheets, weighted kappa and adjudication for human relevance gold (no agent-created labels), plus the D05 protocol and owner prerequisites documents.
+
+### Changed
+- Documentation consolidated (research strategy, templates, archive) and the owner runbook gained the F07 held-out measurement commands.
+
+### Changed
+- **System-level project documents (Issue #316):** replaces the completed preparation ledger with `.agents/spec.md`, `.agents/plan.md` and `.agents/task.md`: twelve system requirements, eight ordered phases and 32 project tasks. Generalizes three-way validation for multi-task requirements, owner-only training, stage gates and completion evidence. The next implementation task remains unstarted.
+- **Owner-only training preparation (Issue #315):** adds cross-checked `.agents/spec.md`, `.agents/plan.md` and `.agents/task.md`, preserves functional source packages, moves diagnostics to `experiments/` and measurements to `reports/`, and removes conflicting/historical training claims. Model 01 qualification precedes model 02. Agent/CI preparation checks explicitly exclude optimizer-bearing tests.
+
+### Added
+- **Formal offline readiness (Issue #315):** `laris evaluate readiness` audits all twelve foundation gates, protocols, split and artifact identities without loading a model. Current validation remains NOT QUALIFIED. Future model evaluation reports include PAWS macro F1, explicit QA token-span protocols and split-manifest provenance. An owner runbook provides parsed profiling/training commands without executing them.
+
+- **Empirical readiness (Issue #313):** records validation of the compact checkpoint on 27,213 samples and a reproducible 20-paper scientific-NLP pilot, including weak dense retrieval and manual extraction failures. Adds bounded experiment scripts, measured evidence, and current-readiness links; training and thresholds are unchanged.
+
+### Fixed
+- **Benchmark certification (Issue #309):** evaluation now requires an evaluator or explicit measured metrics, rejects empty/non-finite measurements, and fails runs with incomplete or failed benchmark items instead of returning fixed passing scores.
+
+### Fixed
+- **Source-backed reports (Issue #311):** `SourceEvidenceGate` validates actual source hashes, citation identities, offsets and verbatim excerpts, rejects unsupported synthesis and unregistered prose, and refuses zero-assertion reports. The existing gate labels its verification scope as citation IDs only.
+
 ## [1.1.7] - 2026-10-30
 
 ### Fixed

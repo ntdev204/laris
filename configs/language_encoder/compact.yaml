@@ -31,6 +31,12 @@ training:
   loss_lambda_para: 0.15
   loss_lambda_sim: 0.10
   loss_lambda_qa: 0.15
+  loss_lambda_retrieval: 0.0
+  retrieval_temperature: 0.07
+  dataset_sampling_exponents:
+    nli: 0.7
+    paraphrase: 0.7
+    qa: 0.7
 
 hardware:
   max_vram_gb: 14.5

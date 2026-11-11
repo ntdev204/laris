@@ -100,7 +100,7 @@ def test_mandatory_stop_condition_no_trained_weights() -> None:
 
 
 def test_readiness_gate_taxonomy_and_contract() -> None:
-    """Verifies that the training specification specifies all 11 gates with canonical statuses."""
+    """Require readiness checks and formal gates without asserting a historical PASS snapshot."""
     spec_path = (
         REPO_ROOT
         / "docs"
@@ -110,17 +110,12 @@ def test_readiness_gate_taxonomy_and_contract() -> None:
     assert spec_path.exists(), "LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md must exist"
 
     content = spec_path.read_text(encoding="utf-8")
-    valid_statuses = ["PASS", "FAIL", "BLOCKED", "READY", "NOT VERIFIED"]
-
-    # All 11 gates must be present with one of the valid statuses
     for gate_idx in range(1, 12):
-        gate_marker = f"**{gate_idx}**"
-        assert gate_marker in content, f"Gate {gate_idx} missing from readiness gates table"
-
-    # Status tokens must be present in the document
-    for status in valid_statuses:
-        if status in {"PASS", "BLOCKED", "READY"}:
-            assert f"**{status}**" in content, f"Expected active gate status {status} in spec"
-
-    # Mandatory stop statement must be present
-    assert "NO MODEL TRAINING WAS RUN." in content
+        assert f"**{gate_idx}**" in content
+    for gate_idx in range(1, 13):
+        assert f"| G{gate_idx:02d} |" in content
+    assert "baseline-floor" in content
+    assert "not qualified" in content
+    assert "agents MUST NOT" in content
+    assert "not a snapshot claiming all" in content
+    assert "5,106,491 records acquired" not in content

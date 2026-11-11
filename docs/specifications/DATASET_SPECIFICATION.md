@@ -11,7 +11,7 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
-  - "docs/research/S2ORC_SUBSET_SELECTION.md"
+  - "docs/archive/S2ORC_SUBSET_SELECTION.md"
   - "docs/specifications/LARIS_GOLD_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:

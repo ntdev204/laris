@@ -1,0 +1,125 @@
+{
+ "split": "val",
+ "passed": false,
+ "groups": [],
+ "datasets": [
+  {
+   "task": "qa",
+   "dataset": "squad",
+   "language": "en",
+   "samples": 300,
+   "metrics": {
+    "exact_match": 0.67,
+    "f1": 0.7609483504512915,
+    "has_answer_exact_match": 0.67,
+    "has_answer_f1": 0.7609483504512915,
+    "no_answer_exact_match": 0.0,
+    "no_answer_f1": 0.0,
+    "token_span_exact_match": 0.47,
+    "token_span_f1": 0.6937379630650348,
+    "answer_outside_window_rate": 0.0,
+    "context_truncated_rate": 0.0
+   },
+   "baseline": {
+    "no_answer_or_first": 0.0,
+    "f1": 0.0,
+    "exact_match": 0.0
+   },
+   "metric_protocols": {
+    "exact_match": "normalized_answer_text",
+    "f1": "normalized_answer_text",
+    "token_span_exact_match": "token_span",
+    "token_span_f1": "token_span"
+   },
+   "protocol_details": {
+    "qa_protocol_version": "answer-text-1",
+    "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+    "span_decoding": {
+     "restricted_to_context": true,
+     "max_answer_tokens": 64,
+     "null_threshold": 0.0,
+     "prediction_text": "tokenizer_decode_of_predicted_span"
+    },
+    "gold_answers": "all_acceptable_texts_best_score",
+    "no_answer_rule": "correct_only_if_prediction_empty",
+    "truncation_policy": "kept_and_scored_without_sliding_window",
+    "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+    "split_rows": 3286,
+    "scored_rows": 300,
+    "complete_split": false,
+    "has_answer_rows": 300,
+    "no_answer_rows": 0,
+    "answer_outside_window_rows": 0,
+    "context_truncated_rows": 0
+   },
+   "baseline_source": "constant"
+  },
+  {
+   "task": "qa",
+   "dataset": "viquad_v2",
+   "language": "vi",
+   "samples": 300,
+   "metrics": {
+    "exact_match": 0.37,
+    "f1": 0.3859259259259259,
+    "has_answer_exact_match": 0.1507537688442211,
+    "has_answer_f1": 0.17476270240089337,
+    "no_answer_exact_match": 0.801980198019802,
+    "no_answer_f1": 0.801980198019802,
+    "token_span_exact_match": 0.36,
+    "token_span_f1": 0.37368764287324124,
+    "answer_outside_window_rate": 0.0,
+    "context_truncated_rate": 0.0
+   },
+   "baseline": {
+    "no_answer_or_first": 0.33666666666666667,
+    "f1": 0.33666666666666667,
+    "exact_match": 0.33666666666666667
+   },
+   "metric_protocols": {
+    "exact_match": "normalized_answer_text",
+    "f1": "normalized_answer_text",
+    "token_span_exact_match": "token_span",
+    "token_span_f1": "token_span"
+   },
+   "protocol_details": {
+    "qa_protocol_version": "answer-text-1",
+    "answer_normalization": "nfc_lowercase_strip_punctuation",
+    "span_decoding": {
+     "restricted_to_context": true,
+     "max_answer_tokens": 64,
+     "null_threshold": 0.0,
+     "prediction_text": "tokenizer_decode_of_predicted_span"
+    },
+    "gold_answers": "all_acceptable_texts_best_score",
+    "no_answer_rule": "correct_only_if_prediction_empty",
+    "truncation_policy": "kept_and_scored_without_sliding_window",
+    "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+    "split_rows": 1713,
+    "scored_rows": 300,
+    "complete_split": false,
+    "has_answer_rows": 199,
+    "no_answer_rows": 101,
+    "answer_outside_window_rows": 0,
+    "context_truncated_rows": 0
+   },
+   "baseline_source": "constant"
+  }
+ ],
+ "purpose": "F01 pipeline check of normalised answer-text QA on the existing checkpoint; NOT qualification evidence",
+ "caveats": [
+  "validation split, first 300 rows per dataset only",
+  "not held-out test; no manifest identity or split isolation recorded; cannot satisfy G06-G09",
+  "token-span values are diagnostics for comparison with older reports only"
+ ],
+ "checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+ "model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+ "tokenizer_sha256": null,
+ "git_commit": "5954f53",
+ "torch": "2.14.1+cu130",
+ "device": "cuda",
+ "seed": 42,
+ "training_executed": false,
+ "date": "2026-11-11",
+ "command": "inference-only call of LanguageEncoderEvaluator._score_qa(files, [], 300, dataset=...)"
+}

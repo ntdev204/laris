@@ -3,27 +3,33 @@ document_id: "DOC-RES-LANG-001"
 title: "Research Strategy: Language Foundation, Local Models and Semantic Intelligence"
 document_type: "research"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-29"
+updated_at: "2026-11-11"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/SELECTIVE_COMPUTATION.md"
-  - "docs/research/SCIENTIFIC_NLP.md"
+  - "docs/research/RESEARCH_STRATEGY.md"
 decision_references:
   - "ADR-002"
   - "ADR-003"
   - "ADR-001"
   - "ADR-005"
-change_summary: "Consolidates the language foundation, local model strategy and semantic intelligence research notes."
+change_summary: "Aligns fertility with canonical gates and labels historical architecture/compute proposals as unmeasured research alternatives."
 ---
 
 # Research Strategy: Language Foundation, Local Models and Semantic Intelligence
 
 Research direction for the self-built language foundation, local training under the hardware envelope, and relational semantics.
+
+The alternatives and compute figures below are historical research proposals,
+not measurements or approved run budgets. The current architecture and 32,000-subword
+vocabulary are defined in the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md)
+and shipped configuration. `.agents/plan.md` governs execution: foundation qualification
+precedes scientific language; the owner decides compute/tokenizer changes at F04A.
 
 ## 1. Self-Built Language Foundation and Encoders
 
@@ -56,7 +62,7 @@ Standard tokenizers trained on generic web corpora (e.g. GPT-2/4, standard BERT)
 ---
 
 ### 4. Evaluation Protocol & Milestones
-- **Fertility Benchmark:** Average number of subwords generated per technical term across IEEE and arXiv abstracts (target: $\le 1.4$ tokens/word).
+- **Fertility Benchmark:** Canonical foundation G10/G11 require $\le 1.35$ tokens/word separately on unseen EN and VI text. Scientific-term/abstract fixtures may diagnose fragmentation but do not replace independent text manifests and the frozen protocol.
 - **Paraphrase Retrieval MRR:** Mean Reciprocal Rank on scientific statement retrieval.
 
 ---
@@ -72,7 +78,7 @@ Target Hardware:
 
 #### Pretraining Realism:
 - Training a 7B general foundation LLM from scratch requires $\sim 2\times 10^{23}$ FLOPs ($\sim 100,000$ GPU-hours on an RTX 5070 Ti), which is physically intractable.
-- Conversely, training **compact specialist models (50M–150M parameters)** on curated scientific domain corpora (1B–5B tokens) requires only $30 - 100$ GPU hours, completely feasible on the local workstation.
+- The historical $30 - 100$ GPU-hour estimate for **compact specialist models (50M–150M parameters)** on 1B–5B tokens is unverified. Feasibility and stopping budgets require owner-run throughput/VRAM measurements and measured learning curves; this estimate does not authorize a run or promise the formal gates are attainable.
 
 ---
 
@@ -84,6 +90,10 @@ Target Hardware:
 | Core STEM Encoder | 60M–110M | RoPE Transformer, Masked Language Modeling + Contrastive. | $\sim 48 - 72$ hours GPU |
 | Scientific NLI Head | 15M (on encoder) | 3-way classification on scientific claim pairs. | $\sim 6 - 12$ hours GPU |
 | Claim/Discourse Extractor | 20M (on encoder) | Token sequence labeling & boundary span classification. | $\sim 8 - 16$ hours GPU |
+
+These table entries are alternative research targets and unmeasured estimates.
+In particular, the proposed 40k vocabulary is not the existing 32k tokenizer;
+changing it requires an owner decision and checkpoint-lineage review.
 
 ---
 

@@ -1,0 +1,365 @@
+{
+  "split": "val",
+  "passed": true,
+  "groups": [
+    {
+      "task": "mlm",
+      "language": "en",
+      "datasets": [
+        "wikipedia_en"
+      ],
+      "samples": 2000,
+      "metric": "masked_accuracy",
+      "value": 0.5780067821862851,
+      "baseline": 0.03432220816811131,
+      "required": 0.05432220816811131,
+      "passed": true
+    },
+    {
+      "task": "mlm",
+      "language": "vi",
+      "datasets": [
+        "wikipedia_vi",
+        "cc100_vi_clean"
+      ],
+      "samples": 4000,
+      "metric": "masked_accuracy",
+      "value": 0.71883007134316,
+      "baseline": 0.04031759086718095,
+      "required": 0.060317590867180956,
+      "passed": true
+    },
+    {
+      "task": "nli",
+      "language": "en",
+      "datasets": [
+        "all_nli",
+        "anli",
+        "fever"
+      ],
+      "samples": 6000,
+      "metric": "macro_f1",
+      "value": 0.5966059306267972,
+      "baseline": 0.1878663411631007,
+      "required": 0.23786634116310068,
+      "passed": true
+    },
+    {
+      "task": "nli",
+      "language": "vi",
+      "datasets": [
+        "vinli"
+      ],
+      "samples": 2000,
+      "metric": "macro_f1",
+      "value": 0.538469495929854,
+      "baseline": 0.1646586345381526,
+      "required": 0.2146586345381526,
+      "passed": true
+    },
+    {
+      "task": "paraphrase",
+      "language": "en",
+      "datasets": [
+        "paws",
+        "quora_duplicates"
+      ],
+      "samples": 4000,
+      "metric": "auc",
+      "value": 0.8274492950605769,
+      "baseline": 0.5,
+      "required": 0.55,
+      "passed": true
+    },
+    {
+      "task": "qa",
+      "language": "en",
+      "datasets": [
+        "squad",
+        "hotpotqa"
+      ],
+      "samples": 4000,
+      "metric": "f1",
+      "value": 0.6114936209645309,
+      "baseline": 0.0,
+      "required": 0.05,
+      "passed": true
+    },
+    {
+      "task": "qa",
+      "language": "vi",
+      "datasets": [
+        "viquad_v2"
+      ],
+      "samples": 1713,
+      "metric": "f1",
+      "value": 0.4190124612894531,
+      "baseline": 0.29305312317571514,
+      "required": 0.3430531231757151,
+      "passed": true
+    },
+    {
+      "task": "similarity",
+      "language": "en",
+      "datasets": [
+        "stsb"
+      ],
+      "samples": 1500,
+      "metric": "spearman",
+      "value": 0.7704709608144864,
+      "baseline": 0.6124381019353017,
+      "required": 0.6124381019353017,
+      "passed": true
+    },
+    {
+      "task": "similarity",
+      "language": "vi",
+      "datasets": [
+        "vists"
+      ],
+      "samples": 2000,
+      "metric": "spearman",
+      "value": 0.6865720292511135,
+      "baseline": 0.5669867358894908,
+      "required": 0.5669867358894908,
+      "passed": true
+    }
+  ],
+  "datasets": [
+    {
+      "task": "mlm",
+      "dataset": "wikipedia_en",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "masked_accuracy": 0.5780067821862851,
+        "perplexity": 11.499382767006665,
+        "masked_tokens": 128867.0
+      },
+      "baseline": {
+        "unigram_top1": 0.03432220816811131,
+        "masked_accuracy": 0.03432220816811131,
+        "unigram_perplexity": 2074.6424925362435
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "mlm",
+      "dataset": "wikipedia_vi",
+      "language": "vi",
+      "samples": 2000,
+      "metrics": {
+        "masked_accuracy": 0.7847306112587582,
+        "perplexity": 3.404836881720182,
+        "masked_tokens": 20695.0
+      },
+      "baseline": {
+        "unigram_top1": 0.048804058951437544,
+        "masked_accuracy": 0.048804058951437544,
+        "unigram_perplexity": 947.4042515072966
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "mlm",
+      "dataset": "cc100_vi_clean",
+      "language": "vi",
+      "samples": 2000,
+      "metrics": {
+        "masked_accuracy": 0.6529295314275618,
+        "perplexity": 5.485246272801721,
+        "masked_tokens": 249033.0
+      },
+      "baseline": {
+        "unigram_top1": 0.031831122782924354,
+        "masked_accuracy": 0.031831122782924354,
+        "unigram_perplexity": 1270.8149545915282
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "nli",
+      "dataset": "all_nli",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "accuracy": 0.8295,
+        "macro_f1": 0.8294087492708919
+      },
+      "baseline": {
+        "accuracy": 0.3315,
+        "macro_f1": 0.1659782200525723,
+        "majority_class": 0.1659782200525723
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "nli",
+      "dataset": "anli",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "accuracy": 0.414,
+        "macro_f1": 0.4041940209702362
+      },
+      "baseline": {
+        "accuracy": 0.333,
+        "macro_f1": 0.16654163540885222,
+        "majority_class": 0.16654163540885222
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "nli",
+      "dataset": "vinli",
+      "language": "vi",
+      "samples": 2000,
+      "metrics": {
+        "accuracy": 0.546,
+        "macro_f1": 0.538469495929854
+      },
+      "baseline": {
+        "accuracy": 0.328,
+        "macro_f1": 0.1646586345381526,
+        "majority_class": 0.1646586345381526
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "nli",
+      "dataset": "fever",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "accuracy": 0.836,
+        "macro_f1": 0.5562150216392637
+      },
+      "baseline": {
+        "accuracy": 0.5305,
+        "macro_f1": 0.23107916802787762,
+        "majority_class": 0.23107916802787762
+      },
+      "baseline_source": "train"
+    },
+    {
+      "task": "paraphrase",
+      "dataset": "paws",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "auc": 0.7544938692909011,
+        "f1": 0.6067270375161707,
+        "accuracy": 0.696
+      },
+      "baseline": {
+        "random": 0.5,
+        "auc": 0.5,
+        "f1": 0.6057859881491809
+      },
+      "baseline_source": "constant"
+    },
+    {
+      "task": "paraphrase",
+      "dataset": "quora_duplicates",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "auc": 0.9004047208302527,
+        "f1": 0.7371428571428571,
+        "accuracy": 0.816
+      },
+      "baseline": {
+        "random": 0.5,
+        "auc": 0.5,
+        "f1": 0.5212569316081331
+      },
+      "baseline_source": "constant"
+    },
+    {
+      "task": "similarity",
+      "dataset": "stsb",
+      "language": "en",
+      "samples": 1500,
+      "metrics": {
+        "pearson": 0.774539827298707,
+        "spearman": 0.7704709608144864
+      },
+      "baseline": {
+        "token_jaccard": 0.6124381019353017,
+        "pearson": 0.6058761505012861,
+        "spearman": 0.6124381019353017
+      },
+      "baseline_source": "lexical"
+    },
+    {
+      "task": "similarity",
+      "dataset": "vists",
+      "language": "vi",
+      "samples": 2000,
+      "metrics": {
+        "pearson": 0.6769340273712929,
+        "spearman": 0.6865720292511135
+      },
+      "baseline": {
+        "token_jaccard": 0.5669867358894908,
+        "pearson": 0.5522023561432293,
+        "spearman": 0.5669867358894908
+      },
+      "baseline_source": "lexical"
+    },
+    {
+      "task": "qa",
+      "dataset": "squad",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "exact_match": 0.4755,
+        "f1": 0.6705057418965864
+      },
+      "baseline": {
+        "no_answer_or_first": 0.0,
+        "f1": 0.0,
+        "exact_match": 0.0
+      },
+      "baseline_source": "constant"
+    },
+    {
+      "task": "qa",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "samples": 1713,
+      "metrics": {
+        "exact_match": 0.3525977816695855,
+        "f1": 0.4190124612894531
+      },
+      "baseline": {
+        "no_answer_or_first": 0.29305312317571514,
+        "f1": 0.29305312317571514,
+        "exact_match": 0.29305312317571514
+      },
+      "baseline_source": "constant"
+    },
+    {
+      "task": "qa",
+      "dataset": "hotpotqa",
+      "language": "en",
+      "samples": 2000,
+      "metrics": {
+        "exact_match": 0.442,
+        "f1": 0.5524815000324752
+      },
+      "baseline": {
+        "no_answer_or_first": 0.0,
+        "f1": 0.0,
+        "exact_match": 0.0
+      },
+      "baseline_source": "constant"
+    }
+  ],
+  "checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+  "model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+  "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+  "git_commit": "dde23d8195742eb43fc30fd10a316f74d6e64814",
+  "thresholds_sha256": "447453ff7a6e5c5f5624f5c4ddb3275b22305f01d62a103ff671eb1ae803db24",
+  "max_samples_per_dataset": 2000
+}

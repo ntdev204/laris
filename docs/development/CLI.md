@@ -3,9 +3,9 @@ document_id: "DOC-DEV-CLI-001"
 title: "LARIS Command-Line Interface Reference"
 document_type: "specification"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-10-29"
-updated_at: "2026-10-29"
+updated_at: "2026-11-10"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -15,7 +15,7 @@ related_documents:
   - "docs/adr/ADR-013-functional-package-layout-and-cli.md"
 decision_references:
   - "ADR-013"
-change_summary: "Reference for the laris command-line interface, including the server runbook."
+change_summary: "Adds offline formal readiness, links the owner-only runbook and documents citation-ID verification versus source-backed extractive certification."
 ---
 
 # LARIS Command-Line Interface Reference
@@ -32,66 +32,40 @@ The `laris` entry point (`src/laris/cli/main.py`) exposes one module per command
 | `laris train tokenizer [--extract-only] [--authorized]` | Extract train-only text and fit the SentencePiece 32k BPE tokenizer. | `--authorized` |
 | `laris train language-encoder --model-size {compact,large} [--profile-only] --tokenizer-model FILE` | `--profile-only` measures real GPU memory on real tokenized train batches (forward only; with training authorized, backward plus a real optimizer step on a discarded model). Otherwise trains, validates, checkpoints and evaluates the encoder. | training needs `--authorized` and `LARIS_TRAINING_AUTHORIZED=1` |
 | `laris evaluate language-encoder --checkpoint DIR --tokenizer-model FILE [--split val\|test]` | Score a checkpoint against baselines and thresholds. Exit codes: 0 passed, 1 below threshold, 2 usage or integrity error. | none |
+| `laris evaluate readiness --reports REPORT...` | Offline formal foundation audit; requires matching test evidence and protocols. No model loaded. Exit 0 qualified, 1 not qualified, 2 invalid input. | none |
 | `laris evaluate calibrate --reports VAL_REPORT...` | Ratchet `configs/evaluation/language_encoder.yaml` up from passing `val` reports; never lowers, refuses `test` reports. | none |
 | `laris infer {nli,...} --checkpoint DIR --tokenizer-model FILE` | Run a single prediction from a checkpoint. | none |
 
-## Server Runbook
+## Owner training and evaluation
 
-Run from the repository root with the virtual environment active. Steps 1-5 train nothing. Step 5b and steps 6-8 are frozen until the owner sets `LARIS_TRAINING_AUTHORIZED=1` ([ADR-008](../adr/ADR-008-evaluation-before-capability-claims.md)).
+The [owner runbook](../training/OWNER_RUNBOOK.md) is the execution reference.
+Agents must not execute training, tokenizer fitting, backward/optimizer steps or
+optimizer-bearing profiling/tests under the current instruction. `--profile-only`
+can run real optimizer steps when `LARIS_TRAINING_AUTHORIZED=1`; its name alone
+is not a no-training guarantee.
 
-```bash
-# 1. Environment (adds sentencepiece, torch, bitsandbytes)
-pip install -e '.[training,dev]'
-bash scripts/verify_target_server.sh
+Baseline-relative `evaluate language-encoder` results do not qualify model 01.
+`evaluate readiness` reads existing report files against
+`configs/evaluation/foundation.yaml` without running a model. Missing official
+metrics, incompatible QA protocols, mixed artifact identities or validation-only
+reports block qualification. Model 02 remains unimplemented and must follow the
+foundation exit gate.
 
-# 2. Data: acquire (resumable), then partition ALL datasets in one run
-laris data acquire
-laris data partition --num-workers 14
+Training progress and checkpoints remain under
+`artifacts/checkpoints/language_encoder/<run-id>/{best,last}`. Resuming requires
+matching recorded settings and does not restore the exact streaming data position.
 
-# 3. Gate: every task needs train, val and test; exit 0 means ready
-laris data check --verify-sha256
+## Report verification scope
 
-# 4. Tokenizer text extraction (no fitting), then fitting
-laris train tokenizer --extract-only
-export LARIS_TOKENIZER_TRAINING_AUTHORIZED=1
-laris train tokenizer --authorized
+`EvidenceGate` checks registered assertion citation IDs only. Its `verification_scope`
+metadata is `citation_ids_only`; a passing coverage ratio is not evidence of source
+integrity or entailment.
 
-# 5. Measured GPU memory: real model, real tokenized train batches (needs the step 4 tokenizer).
-#    Forward only, no authorization needed. Prints [PARTIAL]: training memory is NOT certified.
-laris train language-encoder --model-size large --profile-only \
-  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model
-
-# 5b. Steady-state training peak: forward, backward and a real optimizer step on the randomly
-#     initialised model (discarded, nothing saved), then a second measured window with the
-#     optimizer state resident. Gradients and the optimizer step count as training, so the
-#     owner must set the variable. Exit 0 only if the peak is within 14.5 GB; otherwise lower
-#     --micro-batch-size and raise --grad-accum-steps.
-LARIS_TRAINING_AUTHORIZED=1 laris train language-encoder --model-size large --profile-only \
-  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model
-
-# 6. Training (owner authorization required)
-export LARIS_TRAINING_AUTHORIZED=1
-laris train language-encoder --model-size large --authorized --no-evaluate-after \
-  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model --run-id <run-id>
-
-# 7. Validate on val, then ratchet the thresholds
-RUN=artifacts/checkpoints/language_encoder/<run-id>
-laris evaluate language-encoder --checkpoint $RUN/best --split val \
-  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model --output $RUN/evaluation-val.json
-laris evaluate calibrate --reports $RUN/evaluation-val.json --output configs/evaluation/language_encoder.yaml
-
-# 8. Test split: score once, after the thresholds are final
-laris evaluate language-encoder --checkpoint $RUN/best --split test \
-  --tokenizer-model artifacts/tokenizer/laris_spm_32k.model --output $RUN/evaluation-test.json
-```
-
-Notes:
-
-- `laris data partition --datasets ...` merges into the existing manifest, but the first run must cover every dataset. A dataset missing from `data/processed` silently drops out of its task; `laris data check` is the gate that catches it.
-- Pass `--no-evaluate-after` to training: the default scores the `test` split immediately, before thresholds are calibrated on `val`.
-- Add `--tokenizer-model` and `--data-dir` to `infer` and `evaluate` calls when the defaults differ.
-- Resume an interrupted run with `--resume <run-dir>/last`; keep the same `--run-id`.
-
-Training shows a live progress bar with running per-task losses, learning rate, gradient norm, GPU memory and ETA when run in a terminal; when output is redirected (`nohup ... > train.log`) it prints one plain line every `--log-interval` steps instead.
-
-Checkpoints are written atomically to `artifacts/checkpoints/language_encoder/<run-id>/{best,last}` with a provenance manifest and SHA-256. Resume with `--resume <run-id>/last`.
+For source-backed extractive reports, use `SourceEvidenceGate(source_documents)`
+with `StructuredReportGenerator(evidence_gate=gate)`. Supply canonical UTF-8 source
+texts keyed by document ID, and corpus hashes computed from those texts. Every
+assertion must equal its cited excerpt; each section's Markdown must equal its
+assertion statements joined by blank lines. Empty sections are allowed, but reports
+without assertions are rejected. Sources, hashes, coordinate IDs and character spans
+are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
+semantic support or establish research-gap novelty.

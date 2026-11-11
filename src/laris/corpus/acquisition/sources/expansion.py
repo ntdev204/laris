@@ -227,3 +227,54 @@ def acquire_viquad_v2() -> DatasetEntry:
         ),
     )
 
+
+def _count_tsv_data_rows(file_path: Path) -> int:
+    """Counts non-empty lines of a TSV file excluding its header."""
+    return max(count_jsonl_lines(file_path) - 1, 0)
+
+
+def acquire_scifact() -> DatasetEntry:
+    """Acquires SciFact in BEIR form: STEM retrieval with expert-written relevance judgements."""
+    print("\n--- Acquiring SciFact retrieval (BeIR/scifact + BeIR/scifact-qrels) ---")
+    dest_dir = RAW_DIR / "scifact"
+    corpus_repo, qrels_repo = "BeIR/scifact", "BeIR/scifact-qrels"
+    parquet = [
+        (HF_RESOLVE.format(repo=corpus_repo, rev="main", path=n), n.replace("/", "__"))
+        for n in ("corpus/corpus-00000-of-00001.parquet", "queries/queries-00000-of-00001.parquet")
+    ]
+    qrels = [
+        (HF_RESOLVE.format(repo=qrels_repo, rev="main", path=f"{s}.tsv"), f"qrels__{s}.tsv")
+        for s in ("train", "test")
+    ]
+    ok = True
+    records: List = []
+    size = rows = 0
+    for group, counter in ((parquet, count_parquet_rows), (qrels, _count_tsv_data_rows)):
+        r, b, n, complete = _acquire_remote_files(dest_dir, group, counter)
+        records += r
+        size += b
+        rows += n
+        ok = ok and complete
+    return _finalize_entry(
+        dataset_id="SCIFACT",
+        name="SciFact scientific claim retrieval (BEIR form)",
+        version="HF BeIR/scifact + BeIR/scifact-qrels",
+        source_url="https://github.com/allenai/scifact",
+        license_name="CC-BY-NC (upstream SciFact; BEIR mirrors declare CC-BY-SA-4.0, conflicting)",
+        license_approved=False,
+        language="English",
+        sample_unit="Claim query, abstract passage and relevance judgement (qrels)",
+        expected="5,183 abstracts, 1,109 claims, train/test qrels",
+        dest_dir=dest_dir,
+        records=records,
+        size=size,
+        rows=rows,
+        complete=ok,
+        min_rows=5000,
+        notes=(
+            "Relevance is the SciFact expert annotation of which abstracts support or contradict "
+            "a claim. Sources disagree on the license; the most restrictive (non-commercial) "
+            "applies. No owner use approval is recorded, so the entry stays DOWNLOADED, not "
+            "VERIFIED. Evaluation use only; no redistribution."
+        ),
+    )

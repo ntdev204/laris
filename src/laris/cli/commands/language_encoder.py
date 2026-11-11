@@ -1,12 +1,14 @@
 """`laris train language-encoder`: multi-task language encoder training and bounded profiling.
 
-Supports compact and large model sizes, 8-bit AdamW, FlashAttention SDPA, activation
-checkpointing, a --profile-only mode without weight updates, and the strict authorization gate."""
+Supports compact/large models and memory profiling. Authorized --profile-only
+includes real optimizer steps on a discarded model; it is not a no-training mode."""
 
 import argparse
 import random
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -24,7 +26,16 @@ from laris.language.encoder.transformer import (
     PyTorchTransformerEncoder,
 )
 from laris.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
-from laris.language.training.checkpoint import current_git_commit, file_sha256
+from laris.language.tokenization.normalized import (
+    NORMALIZATION_ID,
+    NormalizedSentencePiece,
+)
+from laris.language.training.checkpoint import (
+    MODEL_FILE,
+    current_git_commit,
+    file_sha256,
+    read_manifest,
+)
 from laris.language.training.dataloader import (
     TASK_DATASET_DIRS,
     StreamingParquetMultiTaskDataLoader,
@@ -93,7 +104,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--profile-only",
         action="store_true",
-        help="Execute bounded non-training memory and latency profiling without weight updates",
+        help="Measure forward memory; with LARIS_TRAINING_AUTHORIZED=1 runs real optimizer steps",
     )
     parser.add_argument(
         "--authorized",
@@ -113,6 +124,18 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Path to the fitted SentencePiece .model file (required for training)",
     )
     parser.add_argument(
+        "--vocab-size",
+        type=int,
+        default=None,
+        help="Model vocabulary size; must equal the tokenizer's (default: 32000)",
+    )
+    parser.add_argument(
+        "--normalize-input",
+        action="store_true",
+        help="Apply the tokenizer-fitting text normalisation before encoding, so training sees "
+        "the same text as the fit corpus (recorded in the checkpoint provenance)",
+    )
+    parser.add_argument(
         "--training-config",
         type=str,
         default=None,
@@ -127,6 +150,15 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--learning-rate", type=float, default=None, help="Peak learning rate")
     parser.add_argument("--warmup-steps", type=int, default=None, help="LR warmup optimizer steps")
+    parser.add_argument(
+        "--dataset-sampling-ablation",
+        action="store_true",
+        help="Apply the YAML dataset count exponents to the train loader",
+    )
+    parser.add_argument(
+        "--retrieval-loss-weight", type=float, default=None,
+        help="Weight of the train QA query-to-passage contrastive auxiliary loss",
+    )
     parser.add_argument("--eval-interval", type=int, default=200, help="Validate every N steps")
     parser.add_argument(
         "--eval-batches", type=int, default=16, help="Validation batches per task (default: 16)"
@@ -151,11 +183,16 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--run-id", type=str, default=None, help="Run directory name")
-    parser.add_argument(
+    initialization = parser.add_mutually_exclusive_group()
+    initialization.add_argument(
         "--resume",
         type=str,
         default=None,
         help="Checkpoint directory (e.g. <run>/last) to resume from",
+    )
+    initialization.add_argument(
+        "--init-from",
+        help="Load checkpoint weights with a fresh optimizer, scheduler and counters",
     )
     parser.add_argument(
         "--log-interval",
@@ -181,12 +218,40 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
         "learning_rate": args.learning_rate,
         "warmup_steps": args.warmup_steps,
         "max_steps": args.steps,
+        "loss_lambda_retrieval": args.retrieval_loss_weight,
     }
     merged = {**training.model_dump(), **{k: v for k, v in overrides.items() if v is not None}}
     merged["batch_size"] = max(
         merged["batch_size"], merged["micro_batch_size"] * merged["gradient_accumulation_steps"]
     )
+    if not args.dataset_sampling_ablation:
+        merged["dataset_sampling_exponents"] = {}
+    elif not merged["dataset_sampling_exponents"]:
+        raise ValueError("--dataset-sampling-ablation requires dataset exponents in the YAML")
     return TrainingConfig(**merged)
+
+
+def _load_initial_weights(
+    model: PyTorchTransformerEncoder,
+    checkpoint: Path,
+    tokenizer_sha256: str,
+    config: LanguageEncoderConfig,
+) -> str:
+    """Verify initialization lineage and load weights independently of training state."""
+    import torch
+
+    manifest = read_manifest(checkpoint)
+    provenance = manifest["provenance"]
+    if provenance.get("tokenizer_sha256") != tokenizer_sha256:
+        raise ValueError("initial checkpoint tokenizer differs from the supplied tokenizer")
+    if provenance.get("model_config") != asdict(config):
+        raise ValueError("initial checkpoint model config differs from the requested config")
+    weights = checkpoint / MODEL_FILE
+    digest = file_sha256(weights)
+    if manifest.get("model_sha256") != digest:
+        raise ValueError("initial checkpoint weights failed the manifest SHA-256 check")
+    model.load_state_dict(torch.load(weights, map_location="cpu", weights_only=True))
+    return digest
 
 
 def _run_memory_profile(
@@ -213,7 +278,9 @@ def _run_memory_profile(
     except ImportError:
         print("[ERROR] sentencepiece is required: pip install -e '.[training]'")
         return 1
-    tokenizer = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    tokenizer: Any = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    if args.normalize_input:
+        tokenizer = NormalizedSentencePiece(tokenizer)
     if tokenizer.get_piece_size() != config.vocab_size:
         print(f"[ERROR] Tokenizer vocab {tokenizer.get_piece_size()} != model {config.vocab_size}")
         return 1
@@ -229,6 +296,8 @@ def _run_memory_profile(
         seed=args.seed,
         split="train",
         require_real_data=True,
+        dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
     )
     missing = sorted(set(TASK_DATASET_DIRS) - set(loader.task_paths))
     if missing:
@@ -247,6 +316,8 @@ def _run_memory_profile(
         grad_accum_steps=hyper.gradient_accumulation_steps,
         device="cuda",
         precision=args.precision,
+        retrieval_loss_weight=hyper.loss_lambda_retrieval,
+        retrieval_temperature=hyper.retrieval_temperature,
     )
     profile = profile_training_memory(trainer, loader, MAX_VRAM_GB, with_training_step=with_step)
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
@@ -286,7 +357,11 @@ def _run_memory_profile(
 
 
 def run(args: argparse.Namespace) -> int:
-    hyper = _resolve_hyperparameters(args)
+    try:
+        hyper = _resolve_hyperparameters(args)
+    except ValueError as exc:
+        print(f"[ERROR] {exc}")
+        return 1
     args.micro_batch_size = hyper.micro_batch_size
     args.grad_accum_steps = hyper.gradient_accumulation_steps
 
@@ -295,14 +370,17 @@ def run(args: argparse.Namespace) -> int:
 
     # 1. Instantiate Configuration
     config: LanguageEncoderConfig
+    vocab_override = {"vocab_size": args.vocab_size} if args.vocab_size else {}
     if args.model_size == "large":
         config = LargeLanguageEncoderConfig(
+            **vocab_override,
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=True,
         )
     else:
         config = LanguageEncoderConfig(
+            **vocab_override,
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=False,
@@ -357,7 +435,9 @@ def run(args: argparse.Namespace) -> int:
     except ImportError:
         print("[ERROR] sentencepiece is required: pip install -e '.[training]'")
         return 1
-    tokenizer = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    tokenizer: Any = spm.SentencePieceProcessor(model_file=args.tokenizer_model)
+    if args.normalize_input:
+        tokenizer = NormalizedSentencePiece(tokenizer)
     if tokenizer.get_piece_size() != config.vocab_size:
         print(
             f"[ERROR] Tokenizer vocab {tokenizer.get_piece_size()} != "
@@ -380,7 +460,12 @@ def run(args: argparse.Namespace) -> int:
     # train split only; validation uses the held-out val split, never test
     # training and validation drop padding and group similar lengths (results are unchanged)
     common.update(trim_padding=True, length_pool_batches=8)
-    loader = StreamingParquetMultiTaskDataLoader(split="train", **common)  # type: ignore[arg-type]
+    loader = StreamingParquetMultiTaskDataLoader(
+        split="train",
+        dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
+        **common,  # type: ignore[arg-type]
+    )
     eval_loader = StreamingParquetMultiTaskDataLoader(split="val", **common)  # type: ignore[arg-type]
 
     for task_name, shard_paths in sorted(loader.task_paths.items()):
@@ -398,7 +483,23 @@ def run(args: argparse.Namespace) -> int:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Target Compute Device:     {device.upper()}")
-    model = PyTorchTransformerEncoder(config).to(device)
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%SZ")
+    run_dir = Path(args.output_dir) / run_id
+    if args.init_from and run_dir.exists():
+        print(f"[ERROR] Choose an unused run directory for --init-from: {run_dir}")
+        return 1
+    tokenizer_digest = file_sha256(Path(args.tokenizer_model))
+    model = PyTorchTransformerEncoder(config)
+    initialization_sha256 = None
+    if args.init_from:
+        try:
+            initialization_sha256 = _load_initial_weights(
+                model, Path(args.init_from), tokenizer_digest, config
+            )
+        except (OSError, ValueError, KeyError, RuntimeError) as exc:
+            print(f"[ERROR] Cannot initialize from {args.init_from}: {exc}")
+            return 1
+    model.to(device)
 
     trainer = LanguageEncoderTrainer(
         model=model,
@@ -411,6 +512,8 @@ def run(args: argparse.Namespace) -> int:
         precision=args.precision,
         warmup_steps=hyper.warmup_steps,
         total_optimizer_steps=hyper.max_steps,
+        retrieval_loss_weight=hyper.loss_lambda_retrieval,
+        retrieval_temperature=hyper.retrieval_temperature,
     )
     trainer.loss_calculator = MultiTaskLossCalculator(
         MultiTaskLossWeights(
@@ -422,8 +525,6 @@ def run(args: argparse.Namespace) -> int:
         )
     )
 
-    run_id = args.run_id or datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%SZ")
-    run_dir = Path(args.output_dir) / run_id
     dataset_manifest = Path(args.data_dir) / "task_splits_manifest.json"
     provenance = {
         "run_id": run_id,
@@ -435,7 +536,10 @@ def run(args: argparse.Namespace) -> int:
         "precision": args.precision,
         "use_8bit_adam": use_8bit_adam,
         "tokenizer_model": str(args.tokenizer_model),
-        "tokenizer_sha256": file_sha256(Path(args.tokenizer_model)),
+        "tokenizer_sha256": tokenizer_digest,
+        "text_normalization": NORMALIZATION_ID if args.normalize_input else None,
+        "initial_checkpoint": args.init_from,
+        "initial_model_sha256": initialization_sha256,
         "dataset_manifest_sha256": (
             file_sha256(dataset_manifest) if dataset_manifest.is_file() else None
         ),

@@ -1,6 +1,6 @@
 PY ?= laris-env/bin/python
 
-.PHONY: lint typecheck docs test check clean
+.PHONY: lint typecheck docs workflow test test-no-training check check-no-training clean
 
 lint:
 	$(PY) -m ruff check .
@@ -10,6 +10,17 @@ typecheck:
 
 docs:
 	$(PY) scripts/validate_docs.py
+
+workflow:
+	$(PY) scripts/validate_work_plan.py
+
+# Explicit preparation allowlist: none of these tests trains/fits or invokes optimization.
+test-no-training:
+	$(PY) -m pytest -p no:cacheprovider tests/documentation \
+		tests/contract/test_work_plan.py tests/contract/test_training_readiness_contracts.py \
+		tests/unit/language/test_readiness.py tests/cli/test_owner_runbook.py
+
+check-no-training: lint typecheck docs workflow test-no-training
 
 test:
 	$(PY) -m pytest -p no:cacheprovider
