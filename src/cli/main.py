@@ -128,10 +128,50 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="laris", description="LARIS command-line interface")
-    groups = parser.add_subparsers(dest="group", required=True)
+# What the downloadable client contains. Everything else (model serving, policy and brain tools,
+# data, training, evaluation) belongs to the server/operator side and is not in the client.
+CLIENT_COMMANDS: Dict[str, Optional[frozenset]] = {
+    "agent": None,
+    "account": None,
+    "vault": None,
+    "skills": None,
+    "learn": None,
+    "app": frozenset({"ingest", "search", "status"}),
+}
+
+
+def commands_for(role: str) -> Dict[str, Dict[str, Tuple[str, Any]]]:
+    """`client`: the user tool; `server`: operator tools; `all`: both (development)."""
+    if role == "all":
+        return COMMANDS
+    chosen: Dict[str, Dict[str, Tuple[str, Any]]] = {}
     for group, commands in COMMANDS.items():
+        in_client = group in CLIENT_COMMANDS
+        allowed = CLIENT_COMMANDS.get(group)  # None = the whole group
+        if role == "client" and in_client:
+            chosen[group] = (
+                commands if allowed is None else {n: c for n, c in commands.items() if n in allowed}
+            )
+        elif role == "server":
+            rest = (
+                commands
+                if not in_client
+                else (
+                    {}
+                    if allowed is None
+                    else {n: c for n, c in commands.items() if n not in allowed}
+                )
+            )
+            if rest:
+                chosen[group] = rest
+    return chosen
+
+
+def build_parser(role: str = "all") -> argparse.ArgumentParser:
+    prog = "laris-server" if role == "server" else "laris"
+    parser = argparse.ArgumentParser(prog=prog, description=f"{prog} command-line interface")
+    groups = parser.add_subparsers(dest="group", required=True)
+    for group, commands in commands_for(role).items():
         group_parser = groups.add_parser(group, help=f"{group} commands")
         leaves = group_parser.add_subparsers(dest="command", required=True)
         for name, (help_text, module) in commands.items():
@@ -153,8 +193,11 @@ def interactive_default(argv: Sequence[str]) -> List[str]:
     return items
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_parser().parse_args(interactive_default(sys.argv[1:] if argv is None else argv))
+def main(argv: Optional[Sequence[str]] = None, role: str = "all") -> int:
+    items = sys.argv[1:] if argv is None else argv
+    if role != "server":
+        items = interactive_default(items)
+    args = build_parser(role).parse_args(items)
     handler: Handler = args.handler
     from cli.credentials import CredentialError
     from harness.integrity import IntegrityError

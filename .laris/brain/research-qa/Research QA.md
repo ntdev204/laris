@@ -19,6 +19,16 @@ keywords:
 - according to
 - evidence for
 - research question
+- câu hỏi
+- trả lời
+- giải thích
+- tại sao
+- vì sao
+- theo tài liệu
+- bằng chứng
+- nói gì
+- như thế nào
+- có đúng không
 ---
 
 # Research QA

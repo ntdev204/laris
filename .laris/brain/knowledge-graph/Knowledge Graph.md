@@ -20,6 +20,13 @@ keywords:
 - triples
 - link analysis
 - concept map
+- đồ thị tri thức
+- đồ thị
+- thực thể
+- quan hệ
+- bản thể
+- sơ đồ khái niệm
+- đường đi
 ---
 
 # Knowledge Graph

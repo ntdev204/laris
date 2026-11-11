@@ -54,7 +54,8 @@ training = [
 ]
 
 [project.scripts]
-laris = "cli.main:main"
+laris = "cli.client:main"
+laris-server = "cli.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

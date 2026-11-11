@@ -89,6 +89,10 @@ entailment checks.
 
 ### Chat, agent and model API
 
+Two executables: `laris` is the user client (agent, account, vault, skills, learn, and `app ingest|search|status`)
+and `laris-server` holds the operator side (`model serve`, `harness`, `brain`, `workflows`, data, training,
+evaluation, `app index|ask`); the client does not contain server commands.
+
 The web interface was removed (owner decision, 2026-11-11); LARIS is a terminal client. Two parts:
 
 ```bash

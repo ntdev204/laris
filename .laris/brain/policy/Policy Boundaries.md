@@ -20,6 +20,12 @@ keywords:
 - internal
 - injection
 - qualified
+- bí mật
+- nội bộ
+- prompt hệ thống
+- bỏ qua chỉ dẫn
+- quy tắc nội bộ
+- tiết lộ
 ---
 
 # Policy Boundaries

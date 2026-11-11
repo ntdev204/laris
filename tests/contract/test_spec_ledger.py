@@ -58,6 +58,6 @@ def test_done_task_needs_done_dependencies_and_a_note():
     problems = module.validate(SPEC, PLAN, done)
     assert any("T09: done but dependency T06" in p for p in problems), problems
     no_note = TASK.replace(
-        "- Note: Draft v1 shipped", "- Remark: Draft v1 shipped", 1
+        "- Note: Delivered with tests", "- Remark: Delivered with tests", 1
     )
     assert any("needs a note" in p for p in module.validate(SPEC, PLAN, no_note))

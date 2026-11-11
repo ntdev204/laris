@@ -107,3 +107,20 @@ def test_chat_without_a_key_stops_with_a_clear_message(project, monkeypatch, cap
     monkeypatch.delenv("LARIS_API_KEY", raising=False)
     assert main(["-p", "xin chào"]) == 2
     assert "LARIS_API_KEY" in capsys.readouterr().out
+
+
+def test_client_has_no_server_or_operator_commands():
+    from cli.main import build_parser, commands_for
+
+    client, server = commands_for("client"), commands_for("server")
+    assert set(client) == {"agent", "account", "vault", "skills", "learn", "app"}
+    assert set(client["app"]) == {"ingest", "search", "status"}
+    for group in ("model", "harness", "brain", "data", "train", "evaluate", "infer", "workflows"):
+        assert group not in client and group in server
+    assert set(server["app"]) == {"index", "ask"}
+    with pytest.raises(SystemExit):
+        build_parser("client").parse_args(["model", "serve"])
+    with pytest.raises(SystemExit):
+        build_parser("client").parse_args(["app", "serve"])
+    assert build_parser("server").parse_args(["model", "serve"]).command == "serve"
+    assert build_parser("client").prog == "laris" and build_parser("server").prog == "laris-server"

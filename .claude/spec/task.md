@@ -276,8 +276,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `laris vault check` passes on the brain
   - No-secrets scan passes
   - Owner review recorded
-- Status: blocked
-- Note: Draft v1 shipped: 65 notes, ten domain hubs, six playbooks, passes laris brain check. Owner review of the content is still required and not recorded.
+- Status: in_progress
+- Note: Owner approved the content on 2026-11-11 ("Duyệt brain") after agent review: structure lint clean, all tool names real, Vietnamese routing keywords added (Vietnamese tasks previously matched no hub). Closes when T08 and T18 are done.
 
 ### T22 — Reasoning playbooks and workflow links
 - Requirements: SR-B2, SR-B4, SR-B6

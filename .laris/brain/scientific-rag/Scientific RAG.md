@@ -21,6 +21,20 @@ keywords:
 - embedding
 - grounded
 - cite sources
+- write a brief
+- brief
+- summarise
+- summarize
+- truy xuất
+- tìm kiếm
+- nạp tài liệu
+- đoạn văn
+- kho tài liệu
+- dẫn nguồn
+- trích nguồn
+- viết bản tóm tắt
+- bản tóm tắt
+- chia đoạn
 ---
 
 # Scientific RAG

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Client and server executables:** `laris` (client: agent, account, vault, skills, learn, `app ingest|search|status`) and `laris-server` (operator: `model serve`, `harness`, `brain`, `workflows`, data, training, evaluation, `app index|ask`). The client no longer lists or accepts server commands.
+- **Brain approved by the owner; Vietnamese routing:** domain hubs gained Vietnamese keywords, so Vietnamese tasks reach their hub (they matched none before).
+
 ## [1.4.0] - 2026-11-11
 
 ### Security
