@@ -216,7 +216,7 @@ class TestFreshEnvironmentInstallAndRelease:
 
             project = pyproject_data.get("project", {})
             assert project.get("name") == "laris"
-            assert project.get("version") == "1.3.0"
+            assert project.get("version") == "1.3.1"
             assert project.get("license") == "MIT"
             assert project.get("requires-python") == ">=3.10"
             assert core.__version__ == project.get("version")
