@@ -100,6 +100,7 @@ class SecurityConfig(BaseModel):
             ".laris/prompts/**",
             ".laris/rules/**",
             ".laris/workflows/**",
+            ".laris/brain/**",
             ".laris/integrity.lock",
             "configs/default.yaml",
             ".git/**",
@@ -178,10 +179,44 @@ class AppConfig(BaseModel):
     allow_write_default: bool = Field(default=False)
 
 
+class VaultConfig(BaseModel):
+    """The project vault: an Obsidian-format folder the system keeps in the user's codebase."""
+
+    enabled: bool = Field(default=True)
+    dir: str = Field(default="vault")
+    index_note: str = Field(default="00 Index")
+    auto_record: bool = Field(default=True)  # sources, sessions and answers are written as notes
+    inbox_dir: str = Field(default="_inbox")  # proposals wait here and are not retrieved
+    max_note_chars: int = Field(default=12000, ge=500)
+    index_recent: int = Field(default=20, ge=1, le=200)
+    snippet_chars: int = Field(default=240, ge=40)
+    cache_dir: str = Field(default="artifacts/vault_cache")  # disposable index cache
+
+
+class BrainConfig(BaseModel):
+    """The system brain: a protected hub tree read by dedicated tools only, never as a whole."""
+
+    enabled: bool = Field(default=True)
+    root_note: str = Field(default="Brain Index")
+    consult: Literal["auto", "always", "off"] = Field(default="auto")
+    max_depth: int = Field(default=3, ge=1, le=6)
+    max_children: int = Field(default=10, ge=2, le=30)
+    summary_max_chars: int = Field(default=260, ge=40)
+    root_budget_chars: int = Field(default=2500, ge=500)
+    open_budget_chars: int = Field(default=3500, ge=500)  # one note opened in full
+    turn_budget_chars: int = Field(default=6000, ge=1000)  # all brain text returned in a turn
+    consult_budget_chars: int = Field(default=2200, ge=500)  # the automatic consult brief
+    search_limit: int = Field(default=5, ge=1, le=20)
+    required_properties: List[str] = Field(
+        default_factory=lambda: ["type", "domain", "level", "summary"]
+    )
+
+
 class PromptConfig(BaseModel):
     dir: str = Field(default=".laris/prompts")
     rules_dir: str = Field(default=".laris/rules")
     workflows_dir: str = Field(default=".laris/workflows")
+    brain_dir: str = Field(default=".laris/brain")  # protected, read by brain tools only
     integrity_lock: str = Field(default=".laris/integrity.lock")
     integrity: Literal["enforce", "warn", "off"] = Field(default="enforce")
     help_file: str = Field(default=".laris/help/how-to-use.md")  # printed as-is, no model call

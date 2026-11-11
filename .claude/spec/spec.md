@@ -69,7 +69,7 @@ view, vault creation, Obsidian CLI). These facts shape the design.
 - **Managed block**: a delimited region in a note that LARIS owns and may rewrite; text outside it is the
   user's and is never rewritten.
 
-## 4. Architecture decisions (defaults; the owner may override)
+## 4. Architecture decisions (accepted by the owner's instruction on 2026-11-11, see ADR-014; each remains changeable)
 
 | ID | Decision | Default | Reason |
 |---|---|---|---|

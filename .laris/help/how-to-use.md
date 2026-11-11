@@ -137,7 +137,27 @@ Thứ tự ưu tiên cấu hình (sau thắng): mặc định → `configs/defau
   xóa sạch: `laris learn purge --yes`. Tắt thu thập: ô cài đặt hoặc `/learn off`.
 - Hệ thống **không** tự huấn luyện gì; dữ liệu chỉ để chủ dự án dùng sau.
 
-## 11. Xử lý sự cố
+## 11. Trí nhớ dự án và bộ não hệ thống
+
+**Vault của dự án (`vault/`)** là thư mục Markdown theo định dạng Obsidian, tự tạo ở lần làm việc đầu
+tiên trong codebase của bạn (nạp tài liệu hoặc một lượt hỏi đáp), hoặc tạo tay bằng `laris vault init`.
+Sau đó mỗi lần làm việc sẽ thêm ghi chú có liên kết với nhau:
+
+- `Sources/`: mỗi tài liệu đã nạp, kèm khái niệm chính; `Concepts/`: thuật ngữ và nơi nó xuất hiện;
+- `Questions/` và `Sessions/`: câu hỏi, câu trả lời đã được xác minh và buổi làm việc, nối tới nguồn đã dẫn;
+- `_inbox/`: đề xuất đang chờ bạn duyệt (chưa dùng để trả lời).
+
+Mở thư mục `vault/` bằng Obsidian (không bắt buộc) để xem đồ thị liên kết. Bạn có thể sửa ghi chú: hệ
+thống chỉ ghi trong khối `laris:begin ... laris:end`; nếu bạn sửa trong khối đó, hệ thống giữ nguyên phần
+bạn sửa và báo xung đột thay vì ghi đè. Lệnh: `laris vault init|check|status`. Tắt ghi tự động bằng
+`vault.auto_record: false` trong cấu hình.
+
+**Bộ não hệ thống** là cây hướng dẫn suy luận nội bộ (bảo mật, chỉ đọc). Hệ thống không đọc toàn bộ: nó vào
+ở nút gốc, theo liên kết cha → con tới đúng hub rồi mở đúng ghi chú cần. Bạn chỉ thấy tên các ghi chú đã
+dùng (dòng `◈ bộ não: ...`), không thấy nội dung. Kiểm tra cấu trúc: `laris brain check`; xem cây tên:
+`laris brain tree`; xem một tác vụ đi vào hub nào: `laris brain route "câu hỏi"`.
+
+## 12. Xử lý sự cố
 
 | Hiện tượng | Cách xử lý |
 |---|---|
@@ -148,7 +168,7 @@ Thứ tự ưu tiên cấu hình (sau thắng): mặc định → `configs/defau
 | Câu trả lời thiếu mục hoặc cảnh báo chưa dẫn nguồn | Quy trình/kiểm tra nguồn đã yêu cầu viết lại một lần; hỏi lại hẹp hơn hoặc nạp thêm tài liệu |
 | "Đã dừng: hết số bước" | Giới hạn tối đa 10 bước mỗi lượt; chia nhỏ yêu cầu hoặc nói "tiếp tục" |
 
-## 12. Tham khảo nhanh lệnh `laris`
+## 13. Tham khảo nhanh lệnh `laris`
 
 ```text
 laris app ingest|index|search|ask|status|serve     kho tài liệu và giao diện web
@@ -158,6 +178,8 @@ laris skills list|show|check|lint|add|sync         skill
 laris workflows list|show|check                    quy trình
 laris harness verify|lock                          toàn vẹn chính sách (chủ dự án)
 laris learn stats|export|purge                     dữ liệu fine-tune cục bộ
+laris vault init|check|status                      vault Obsidian của dự án
+laris brain check|tree|route                       bộ não hệ thống (chủ dự án)
 ```
 
 Tài liệu kỹ thuật: `docs/development/CLI.md`, `docs/architecture/AGENT_HARNESS.md`, `.laris/README.md`.

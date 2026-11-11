@@ -15,6 +15,8 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris skills add|lint|sync       install, lint or build knowledge skills
     laris learn stats|export|purge   locally collected fine-tune data (never trains)
     laris workflows list|show|check  inspect and validate .laris/workflows
+    laris vault init|check|status    project vault (Obsidian-format memory in your codebase)
+    laris brain check|tree|route     inspect the protected system brain (hub tree)
     laris harness verify|lock        policy integrity (LARIS.md, prompts, rules, workflows)
     laris model serve                OpenAI-compatible model API (placeholder backend for now)
     laris infer fill-mask|nli|paraphrase|similarity|qa|embed   single-example predictions
@@ -39,6 +41,7 @@ from cli.commands import (
     readiness,
     skills,
     tokenizer,
+    vault,
 )
 from corpus.acquisition import runner as acquisition
 
@@ -100,6 +103,16 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
             "Refresh integrity.lock after an approved policy change",
             policy.HARNESS_COMMANDS["lock"],
         ),
+    },
+    "vault": {
+        "init": ("Create the project vault in this codebase", vault.VAULT_COMMANDS["init"]),
+        "check": ("Lint the project vault", vault.VAULT_COMMANDS["check"]),
+        "status": ("Counts per folder and link health", vault.VAULT_COMMANDS["status"]),
+    },
+    "brain": {
+        "check": ("Lint the system brain structure", vault.BRAIN_COMMANDS["check"]),
+        "tree": ("Print the brain hub tree (titles only)", vault.BRAIN_COMMANDS["tree"]),
+        "route": ("Show which hub a task routes to", vault.BRAIN_COMMANDS["route"]),
     },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),

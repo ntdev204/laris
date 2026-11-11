@@ -88,6 +88,7 @@ def test_guide_mentions_every_user_command():
         "/how-to-use", "/workflow", "/compact", "/context", "/rate", "/learn", "/skills",
         "laris app ingest", "laris skills sync", "laris learn export", "laris harness verify",
         "grounded-qa", "document-intake", "evidence-review", "research-brief", "save_skill",
+        "laris vault init", "laris brain check", "vault/",
     ):  # fmt: skip
         assert needle in text, needle
     assert json.dumps(text)  # valid text

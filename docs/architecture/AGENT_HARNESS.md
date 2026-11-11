@@ -110,3 +110,18 @@ Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `descriptio
 ## 9. Change control
 
 `LARIS.md` and the protected parts of `.laris/` (`prompts/`, `rules/`, `workflows/`) are versioned in Git. A change needs owner approval, a manifest `version` bump, `laris harness lock` and a passing run of `tests/unit/harness`. Prompt behaviour is tested, not trusted: tests cover precedence, strict placeholders, shingle and canary leaks, stream splitting, redaction, deny globs, egress, verifier retry, audit content and the absence of hardcoded endpoints.
+
+## Project vault and system brain
+
+Two Obsidian-format vaults support the harness (see ADR-014 and `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`).
+
+- **Project vault** (`vault/`, configuration `vault.*`): created on first work, then extended after every
+  ingest and verified chat turn with linked Source, Concept, Question and Session notes. LARIS writes only
+  inside managed blocks and never overwrites a person's edit (conflict is reported). Notes made from
+  documents carry `trust: untrusted` and pass the injection scan.
+- **System brain** (`.laris/brain/`, configuration `brain.*`, `prompts.brain_dir`): a hub tree (root, domain hub, topic
+  hub, leaf) that is never read whole. The loop's consult step routes the task to a domain hub by workflow
+  name or keywords and adds a short hidden brief; the model can navigate further with `brain_open`,
+  `brain_neighbors`, `brain_route`, `brain_search`. Output is marked internal, redacted, and budgeted per turn.
+  The brain is in `integrity.lock`, denied to file tools, counted as confidential by the leak guard, and has
+  no write path at runtime. Threats and tests: `docs/architecture/BRAIN_THREAT_MODEL.md`.

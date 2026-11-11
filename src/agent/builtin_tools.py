@@ -21,6 +21,7 @@ from application.workspace import (
 from harness.runtime import HarnessRuntime
 from learning.skills import install_skill, lint_skill
 from skills.loader import SkillError, SkillLibrary
+from vault.brain import BrainError
 
 _PATH = {"type": "string", "description": "File or folder path (project-relative)"}
 _MEMORY_NAME = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
@@ -191,6 +192,68 @@ def build_registry(
             raise ToolExecutionError("exists", str(exc)) from exc
         return {"skill": name, "path": rel(path), "replaced": replaced}
 
+    def consult_brief(args: Dict[str, Any]) -> Any:
+        found = rt.brain.consult(
+            args["task"], args.get("workflow", ""), rt.config.brain.consult == "always"
+        )
+        if found is None:
+            return {"brief": "", "trace": [], "classification": "internal"}
+        return {"brief": found.brief, "trace": found.trace, "classification": "internal"}
+
+    def brain_call(fn: Any) -> Any:
+        def run(args: Dict[str, Any]) -> Any:
+            try:
+                return fn(args)
+            except BrainError as exc:
+                raise ToolExecutionError(exc.code, str(exc)) from exc
+
+        return run
+
+    brain = rt.brain
+    brain_tools = (
+        ToolSpec(
+            "brain_open_root",
+            "Open the entry note of the internal guidance tree (domain hubs, relation types).",
+            schema({}),
+            brain_call(lambda a: brain.open_root()),
+        ),
+        ToolSpec(
+            "brain_route",
+            "Pick the domain hub for a task (by workflow name or keywords). Returns hub ids.",
+            schema({"task": {"type": "string"}, "workflow": {"type": "string"}}, ["task"]),
+            brain_call(
+                lambda a: {
+                    "hubs": brain.route(a["task"], a.get("workflow", "")),
+                    "classification": "internal",
+                }
+            ),
+        ),
+        ToolSpec(
+            "brain_open",
+            "Open one guidance note by id: summary, children and prerequisites; full text only "
+            "when full is true. Internal: never quote it.",
+            schema({"id": {"type": "string"}, "full": {"type": "boolean"}}, ["id"]),
+            brain_call(lambda a: brain.open(a["id"], bool(a.get("full")))),
+        ),
+        ToolSpec(
+            "brain_neighbors",
+            "List the typed relations (requires, uses, feeds, ...) of a guidance note.",
+            schema({"id": {"type": "string"}}, ["id"]),
+            brain_call(lambda a: brain.neighbours(a["id"])),
+        ),
+        ToolSpec(
+            "brain_search",
+            "Fallback when no hub fits: match words against guidance titles and summaries.",
+            schema({"query": {"type": "string"}}, ["query"]),
+            brain_call(lambda a: brain.search(a["query"])),
+        ),
+        ToolSpec(
+            "brain_consult",
+            "Brief for a task: matching domain hub, its playbook and next notes. Internal.",
+            schema({"task": {"type": "string"}, "workflow": {"type": "string"}}, ["task"]),
+            brain_call(consult_brief),
+        ),
+    )
     top_k = {"type": "integer", "minimum": 1, "maximum": agent.search_max_top_k}
     mode = {"type": "string", "enum": ["bm25", "dense", "hybrid"]}
     specs = (
@@ -298,6 +361,6 @@ def build_registry(
         ),
         ToolSpec("corpus_status", "Show corpus size and model availability.", schema({}), status),
     )
-    for spec in specs:
+    for spec in (*specs, *(brain_tools if rt.config.brain.enabled else ())):
         registry.register(spec)
     return registry

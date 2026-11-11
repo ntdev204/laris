@@ -135,6 +135,8 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
             print(_paint(_USE, f"● {event['name']}") + _paint(_DIM, f" {shown}"))
         elif kind == "tool_result":
             print(_paint(_DIM, "  ⎿ ") + _summarise(event["result"]))
+        elif kind == "brain":
+            print(_paint(_DIM, "  ◈ bộ não: " + " → ".join(event["trace"])))
         elif kind == "compact":
             print(
                 _paint(

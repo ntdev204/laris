@@ -46,18 +46,18 @@ def test_validator_detects_inconsistencies(mutate, expected):
 
 
 def test_done_task_needs_done_dependencies_and_a_note():
-    head, rest = TASK.split("### T05 — ", 1)
-    block, tail = rest.split("### T06 — ", 1)
+    head, rest = TASK.split("### T09 — ", 1)
+    block, tail = rest.split("### T10 — ", 1)
     done = (
         head
-        + "### T05 — "
+        + "### T09 — "
         + block.replace("Status: pending", "Status: done\n- Note: x")
-        + "### T06 — "
+        + "### T10 — "
         + tail
     )
     problems = module.validate(SPEC, PLAN, done)
-    assert any("T05: done but dependency T02" in p for p in problems), problems
+    assert any("T09: done but dependency T06" in p for p in problems), problems
     no_note = TASK.replace(
-        "- Note: Needs the owner's confirmation", "- Remark: Needs the owner's confirmation", 1
+        "- Note: Draft v1 shipped", "- Remark: Draft v1 shipped", 1
     )
     assert any("needs a note" in p for p in module.validate(SPEC, PLAN, no_note))

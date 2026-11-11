@@ -300,6 +300,14 @@ class ChatApp:
         outcome = self.collector(runtime).record(
             conversation_id, history[start:], session.last_turn, session.sh.guard
         )
+        try:
+            from vault.hooks import record_turn
+
+            outcome.update(
+                record_turn(runtime, conversation_id, history[start:], session.last_turn)
+            )
+        except Exception:  # keeping a note must never break a finished turn
+            outcome["vault_status"] = "failed"
         outcome["type"] = "learning"
         return outcome
 

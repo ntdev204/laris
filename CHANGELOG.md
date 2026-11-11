@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Project vault and system brain (Obsidian format):** `src/vault/` reads, indexes, lints and safely writes Obsidian-format vaults (properties, wikilinks, tags, managed blocks with user-edit conflict detection). The first piece of work in a codebase creates `vault/` and every ingest and verified chat turn adds linked Source, Concept, Question and Session notes. The system brain `.laris/brain/` is a protected hub tree (65 notes: root, ten domain hubs, topic hubs, leaves, playbooks for the six scholarly directions) read only through `brain_open_root|route|open|neighbors|search|consult`; a consult step adds a short hidden brief per task and shows only note titles. Brain text is covered by `integrity.lock`, denied to file tools and counted as confidential by the leak guard. New: `laris vault init|check|status`, `laris brain check|tree|route`, ADR-014, `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`, `docs/architecture/BRAIN_THREAT_MODEL.md`, a golden fixture vault. Prompt manifest 1.2.0, rule C-7, workflows 1.1.0.
 - **System ledger for the next phase:** `.claude/spec/spec.md`, `plan.md` and `task.md` define the Obsidian-compatible brain (system brain and project vault), six scholarly application directions, a harness-first plan and 39 tasks; `scripts/validate_spec.py` and a contract test keep the three files consistent. The core model stays paused.
 
 ## [1.3.1] - 2026-11-11

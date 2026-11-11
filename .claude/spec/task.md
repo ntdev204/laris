@@ -33,7 +33,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - `validate_docs` passes
   - Fixture reviewed against the official pages
-- Status: pending
+- Status: done
+- Note: Delivered docs/specifications/OBSIDIAN_VAULT_FORMAT.md, golden fixture tests/fixtures/vault/ with tests/unit/vault/test_fixture.py; unverified behaviours (dot folders, .obsidian keys beyond app.json, JSON Canvas, licence) are listed and avoided.
 
 ### T03 — Threat model for the brain and the vault
 - Requirements: SR-H1, SR-B1, SR-B3
@@ -44,7 +45,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Every threat maps to a control and a task or test id
   - `validate_docs` passes
-- Status: pending
+- Status: done
+- Note: docs/architecture/BRAIN_THREAT_MODEL.md maps threats TH1 to TH12 to controls and tests; local administrator is out of scope; extraction suite is left to T33.
 
 ### T04 — ADR: Obsidian-compatible brain and owner decisions D1 to D9
 - Requirements: SR-V1, SR-B1
@@ -55,8 +57,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - ADR validated by `validate_docs`
   - Owner decision recorded before Phase 1 code merges
-- Status: blocked
-- Note: Needs the owner's confirmation of D1 to D9; defaults in spec section 4 apply meanwhile for design only.
+- Status: done
+- Note: ADR-014 records D1 to D9; the owner instructed the work to proceed on the defaults on 2026-11-11, each remains changeable by a later ADR.
 
 ## Phase 1 — Vault core library
 
@@ -70,7 +72,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Golden fixture parses to expected output
   - Property-based test: parser never raises on random text
   - `ruff`, `mypy`, unit tests pass
-- Status: pending
+- Status: in_progress
+- Note: Parser is src/vault/notes.py: wikilinks, aliases, headings, embeds, Markdown links, tags, properties, code and comment exclusion. Missing: block-id extraction as its own field, property-based never-raises test.
 
 ### T06 — Vault model and incremental index
 - Requirements: SR-V2, SR-H4
@@ -82,7 +85,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Two runs are byte-identical
   - Editing one note changes only its entries
   - Deleting the cache loses nothing
-- Status: pending
+- Status: in_progress
+- Note: src/vault/index.py: shortest-path resolution, ambiguity, backlinks, orphans, incremental reuse. Missing: on-disk disposable cache and byte-identical serialisation.
 
 ### T07 — Safe writer with managed blocks and conflict detection
 - Requirements: SR-V4, SR-V5, SR-H1
@@ -93,7 +97,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Crash during write leaves the old file
   - User text outside managed blocks survives 100 rewrites (property test)
   - Traversal, symlink and forbidden-character tests pass
-- Status: pending
+- Status: in_progress
+- Note: src/vault/writer.py: atomic write, path confinement, symlink escape refusal, managed blocks with hash conflict detection, size cap, injection scan hook. Missing: backup before rewrite, rate limits, crash and 100-rewrite property tests.
 
 ### T08 — Note schema registry
 - Requirements: SR-V5
@@ -104,7 +109,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Failing note is reported with a code
   - Defaults equal the schema defaults (existing test pattern)
-- Status: pending
+- Status: in_progress
+- Note: VaultConfig and BrainConfig exist in LarisConfig and configs/default.yaml. Missing: .laris/vault/schema.yaml and the schema validator.
 
 ### T09 — Vault graph analytics
 - Requirements: SR-V2, SR-A5, SR-B6
@@ -125,7 +131,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Fixture with seeded defects is detected exactly
   - Clean fixture passes
-- Status: pending
+- Status: in_progress
+- Note: Format lint and hierarchy lint (levels, single parent, depth, width, summaries, orphans, relations) plus laris vault check and laris brain check. Missing: secrets, oversize and duplicate-alias checks.
 
 ## Phase 2 — Project vault lifecycle
 
@@ -139,7 +146,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Init twice changes nothing
   - Adopting a user vault rewrites no note
   - Opening in Obsidian shows a connected graph (manual check recorded)
-- Status: pending
+- Status: in_progress
+- Note: ProjectVault.ensure and laris vault init; bootstrap on first ingest or answered turn; .obsidian/app.json and .gitignore. Missing: _templates, vault-in-vault refusal, adoption of an existing vault.
 
 ### T12 — Source notes on ingest
 - Requirements: SR-V4, SR-A1
@@ -150,7 +158,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Re-ingest updates, never duplicates
   - Notes lint clean
   - Hook failure never fails ingestion
-- Status: pending
+- Status: in_progress
+- Note: Ingest hook writes Source and Concept notes (vault/hooks.py), failure never breaks ingestion. Missing: content hash and passage-level metadata.
 
 ### T13 — Session and question-answer notes
 - Requirements: SR-V4, SR-A2
@@ -161,7 +170,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Every answer note links all cited sources
   - Turns blocked by guards write nothing
   - Secrets never reach notes
-- Status: pending
+- Status: in_progress
+- Note: Verified turns write Question and Session notes linked to cited sources; blocked or failed turns write nothing; secrets redacted. Missing: per-user opt-out in settings.
 
 ### T14 — Unified memory in the vault
 - Requirements: SR-V6
@@ -203,7 +213,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Guide-coverage test lists every new command
   - Web script passes `node --check`
-- Status: pending
+- Status: in_progress
+- Note: laris vault and laris brain commands, guide section 11 and coverage test. Missing: chat /vault and web panel.
 
 ## Phase 3 — System brain
 
@@ -215,7 +226,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - `read_file`, `list_files`, `ingest_path`, `save_skill` and path tricks are denied
   - Tampered brain note stops the session
-- Status: pending
+- Status: in_progress
+- Note: Brain folder is in integrity.lock, denied to file tools (folder and contents, symlink and dot-dot tricks tested), read-only class. Waits on T06 and T04 deps to be done before closing.
 
 ### T19 — Brain tools
 - Requirements: SR-B1, SR-B3, SR-B6
@@ -227,7 +239,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Tools respect budgets
   - No path or absolute location in results
   - Workflow allow-lists can include or exclude them
-- Status: pending
+- Status: in_progress
+- Note: brain_open_root, brain_route, brain_open, brain_neighbors, brain_search, brain_consult with budgets, internal marking and no paths; workflow allow-lists include or exclude them. Closes after T18.
 
 ### T20 — Leak guard for brain content
 - Requirements: SR-B3
@@ -237,7 +250,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - Adversarial extraction cases produce no shingles above the limit
   - Detector memory stays under budget
-- Status: pending
+- Status: in_progress
+- Note: Brain text feeds the leak detector (shingles) and audit logs store titles only. Missing: adversarial extraction suite and memory budget measurement (T33).
 
 ### T21 — Brain content v1: ontology, vocabulary, concept maps
 - Requirements: SR-B2, SR-B6
@@ -250,7 +264,7 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - No-secrets scan passes
   - Owner review recorded
 - Status: blocked
-- Note: Content needs owner review and approval; a draft can be prepared by the agent.
+- Note: Draft v1 shipped: 65 notes, ten domain hubs, six playbooks, passes laris brain check. Owner review of the content is still required and not recorded.
 
 ### T22 — Reasoning playbooks and workflow links
 - Requirements: SR-B2, SR-B4, SR-B6
@@ -260,7 +274,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - `laris workflows check` passes
   - Each playbook is reachable from the brain index
-- Status: pending
+- Status: in_progress
+- Note: Six playbooks (Decide, Verify, Stop) reachable from the root in two steps; workflows routed through the root table and allowed brain tools (workflows 1.1.0). Closes after owner review of T21.
 
 ### T23 — Proposals inbox and owner review
 - Requirements: SR-B5
@@ -270,7 +285,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Validation:
   - No runtime write path to the system brain (test)
   - Proposals are excluded from retrieval until accepted
-- Status: pending
+- Status: in_progress
+- Note: ProjectVault.propose writes to _inbox/ outside retrieval. Missing: laris brain propose|review|accept|reject.
 
 ## Phase 4 — Brain-assisted reasoning
 
@@ -295,7 +311,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Trace never contains internal text
   - Disabled toggle restores previous behaviour
   - Prompt version bumped and lock refreshed
-- Status: pending
+- Status: in_progress
+- Note: Consult step in the loop with config toggle (brain.consult), audit of titles, hidden brief and visible title trace; prompt 1.2.0 and lock refreshed. Closes after T24.
 
 ### T26 — Reasoning trace and explainable answers
 - Requirements: SR-B4, SR-A2

@@ -60,9 +60,17 @@ def make_ingest_hook(
     get_runtime: Callable[[], HarnessRuntime],
 ) -> Callable[[List[Chunk], List[Chunk]], Dict[str, Any]]:
     def hook(new_chunks: List[Chunk], all_chunks: List[Chunk]) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
         try:
-            return knowledge_skill_for(get_runtime(), new_chunks, all_chunks)
+            result.update(knowledge_skill_for(get_runtime(), new_chunks, all_chunks))
         except Exception:  # ingestion must never fail because a skill could not be written
-            return {"skill_skipped": ["skill generation failed"]}
+            result["skill_skipped"] = ["skill generation failed"]
+        try:
+            from vault.hooks import record_ingest
+
+            result.update(record_ingest(get_runtime(), new_chunks))
+        except Exception:  # nor because a note could not be written
+            result["vault_skipped"] = 1
+        return result
 
     return hook

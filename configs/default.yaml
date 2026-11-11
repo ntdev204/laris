@@ -116,6 +116,7 @@ security:
   - .laris/prompts/**
   - .laris/rules/**
   - .laris/workflows/**
+  - .laris/brain/**
   - .laris/integrity.lock
   - configs/default.yaml
   - .git/**
@@ -176,6 +177,37 @@ app:
   ocr_lang: eng+vie
   ocr_max_pages: 50
   allow_write_default: false
+
+# Project vault: an Obsidian-format folder kept in the user's codebase as the project memory.
+vault:
+  enabled: true
+  dir: vault
+  index_note: 00 Index
+  auto_record: true
+  inbox_dir: _inbox
+  max_note_chars: 12000
+  index_recent: 20
+  snippet_chars: 240
+  cache_dir: artifacts/vault_cache
+
+# System brain: a protected hub tree (root -> domain hub -> topic hub -> leaf) read by brain tools only.
+brain:
+  enabled: true
+  root_note: Brain Index
+  consult: auto
+  max_depth: 3
+  max_children: 10
+  summary_max_chars: 260
+  root_budget_chars: 2500
+  open_budget_chars: 3500
+  turn_budget_chars: 6000
+  consult_budget_chars: 2200
+  search_limit: 5
+  required_properties:
+  - type
+  - domain
+  - level
+  - summary
 
 # Learning: fine-tune data collected locally and RAG skills built when knowledge is added.
 learning:
@@ -249,6 +281,7 @@ prompts:
   dir: .laris/prompts
   rules_dir: .laris/rules
   workflows_dir: .laris/workflows
+  brain_dir: .laris/brain
   integrity_lock: .laris/integrity.lock
   integrity: enforce
   help_file: .laris/help/how-to-use.md

@@ -1,8 +1,8 @@
 name: document-intake
-version: "1.0.0"
+version: "1.1.0"
 description: Add user documents (text, PDF, scans) to the corpus after approval and report what was added.
 triggers: ["add documents", "ingest folder", "index these files"]
-allowed_tools: [list_files, read_file, ingest_path, corpus_status]
+allowed_tools: [list_files, read_file, ingest_path, corpus_status, brain_consult, brain_open, brain_neighbors]
 max_steps: 6
 require_citations: false
 approval: ask

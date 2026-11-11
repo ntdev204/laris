@@ -16,6 +16,7 @@ from harness.strings import StringCatalogue
 from harness.verifier import AnswerVerifier
 from harness.workflows import WorkflowLibrary
 from skills import SkillLibrary
+from vault.brain import Brain
 
 
 @dataclass
@@ -51,7 +52,11 @@ class HarnessRuntime:
             self.paths.add_deny(f"{chat_dir}/{private}/**")
         self.paths.add_deny(f"{chat_dir}/settings.json")
         self.paths.add_deny(f"{self.config.learning.dir.strip('/')}/**")  # collected training data
+        brain_dir = self.config.prompts.brain_dir.strip("/")
+        self.paths.add_deny(brain_dir)  # the system brain, folder and contents
+        self.paths.add_deny(f"{brain_dir}/**")
         self.verifier = AnswerVerifier(self.config.agent.verify)
+        self._brain: Optional[Brain] = None
 
     def _check_integrity(self) -> list:
         mode = self.config.prompts.integrity
@@ -63,6 +68,18 @@ class HarnessRuntime:
                 "protected policy files do not match the integrity lock: " + "; ".join(problems[:5])
             )
         return problems
+
+    @property
+    def brain(self) -> Brain:
+        """The system brain (read-only, protected). Built on first use."""
+        if self._brain is None:
+            folder = Path(self.config.prompts.brain_dir)
+            self._brain = Brain(
+                folder if folder.is_absolute() else self.root / folder,
+                self.config.brain,
+                self.redactor.redact,
+            )
+        return self._brain
 
     def workflows(self) -> WorkflowLibrary:
         folder = Path(self.config.prompts.workflows_dir)
@@ -90,7 +107,10 @@ class HarnessRuntime:
         prompt = self.composer.compose(
             session_id, skills, extra_instructions, workflow_text=workflow_text
         )
-        leak = LeakDetector(self.config.security, prompt.confidential_sources, prompt.canary)
+        sources = list(prompt.confidential_sources)
+        if self.config.brain.enabled:
+            sources += self.brain.texts()  # brain text counts as confidential for leak detection
+        leak = LeakDetector(self.config.security, sources, prompt.canary)
         guard = Guard(self.config.security, self.strings, self.redactor, leak, self.injection)
         audit = AuditLog(audit_dir, session_id, self.redactor, enabled=audit_dir is not None)
         return SessionHarness(prompt, guard, audit)
