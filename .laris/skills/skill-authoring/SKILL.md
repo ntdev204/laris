@@ -10,8 +10,8 @@ description: >-
 
 ## When to use
 - The user describes a new procedure, domain method or recurring task and wants it kept.
-- New documents arrived and the generated `corpus-*` skill needs a hand-written companion
-  (for example a domain method that uses that corpus).
+- The user explicitly asks for a skill (a repeatable procedure). New facts or definitions are knowledge,
+  not a skill: save them with `save_knowledge` instead.
 
 ## Steps
 1. Ask only for what is missing: the goal, when it should trigger, inputs, the expected output and

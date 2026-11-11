@@ -100,6 +100,7 @@ class SecurityConfig(BaseModel):
             ".laris/prompts/**",
             ".laris/rules/**",
             ".laris/workflows/**",
+            ".laris/brain/**",
             ".laris/integrity.lock",
             "configs/default.yaml",
             ".git/**",
@@ -158,7 +159,9 @@ class ServingConfig(BaseModel):
     max_body_bytes: int = Field(default=32 * 1024 * 1024, ge=1024)
     model_name: str = Field(default="laris-core")
     placeholder_name: str = Field(default="laris-placeholder")
-    api_key_env: str = Field(default="")
+    api_key_env: str = Field(default="LARIS_SERVER_KEYS")  # env var with the accepted keys
+    allowed_file: str = Field(default="")  # optional file, one key per line
+    require_auth: bool = Field(default=True)  # the server refuses to start without keys
 
 
 class AppConfig(BaseModel):
@@ -176,12 +179,55 @@ class AppConfig(BaseModel):
     ocr_lang: str = Field(default="eng+vie")
     ocr_max_pages: int = Field(default=50, ge=1)
     allow_write_default: bool = Field(default=False)
+    key_env: str = Field(default="LARIS_API_KEY")  # environment variable holding the user API key
+    account_file: str = Field(default="~/.laris/credentials.json")  # saved by `laris login`
+    users_dir: str = Field(default="users")  # per-key state below app.chat_dir
+
+
+class VaultConfig(BaseModel):
+    """The project vault: an Obsidian-format folder the system keeps in the user's codebase."""
+
+    enabled: bool = Field(default=True)
+    dir: str = Field(default="vault")
+    index_note: str = Field(default="00 Index")
+    auto_record: bool = Field(default=True)  # sources, sessions and answers are written as notes
+    inbox_dir: str = Field(default="_inbox")  # proposals wait here and are not retrieved
+    max_note_chars: int = Field(default=12000, ge=500)
+    index_recent: int = Field(default=20, ge=1, le=200)
+    snippet_chars: int = Field(default=240, ge=40)
+    cache_dir: str = Field(default="artifacts/vault_cache")  # disposable index cache
+    knowledge_dir: str = Field(default="Knowledge")  # user knowledge by domain, inside the vault
+
+
+class BrainConfig(BaseModel):
+    """The system brain: a protected hub tree read by dedicated tools only, never as a whole."""
+
+    enabled: bool = Field(default=True)
+    root_note: str = Field(default="Brain Index")
+    consult: Literal["auto", "always", "off"] = Field(default="auto")
+    max_depth: int = Field(default=3, ge=1, le=6)
+    max_children: int = Field(default=10, ge=2, le=30)
+    summary_max_chars: int = Field(default=260, ge=40)
+    root_budget_chars: int = Field(default=2500, ge=500)
+    open_budget_chars: int = Field(default=3500, ge=500)  # one note opened in full
+    turn_budget_chars: int = Field(default=6000, ge=1000)  # all brain text returned in a turn
+    consult_budget_chars: int = Field(default=2200, ge=500)  # the automatic consult brief
+    search_limit: int = Field(default=5, ge=1, le=20)
+    knowledge: bool = Field(default=True)  # user knowledge notes join the domain hubs
+    knowledge_per_hub: int = Field(default=5, ge=1, le=30)
+    knowledge_extract_chars: int = Field(default=20000, ge=1000)
+    knowledge_max_claims: int = Field(default=5, ge=0, le=20)
+    general_hub: str = Field(default="General")  # folder for knowledge no domain hub matches
+    required_properties: List[str] = Field(
+        default_factory=lambda: ["type", "domain", "level", "summary"]
+    )
 
 
 class PromptConfig(BaseModel):
     dir: str = Field(default=".laris/prompts")
     rules_dir: str = Field(default=".laris/rules")
     workflows_dir: str = Field(default=".laris/workflows")
+    brain_dir: str = Field(default=".laris/brain")  # protected, read by brain tools only
     integrity_lock: str = Field(default=".laris/integrity.lock")
     integrity: Literal["enforce", "warn", "off"] = Field(default="enforce")
     help_file: str = Field(default=".laris/help/how-to-use.md")  # printed as-is, no model call
@@ -219,7 +265,7 @@ class LearningConfig(BaseModel):
     max_tool_result_chars: int = Field(default=3000, ge=200)
     store_passage_text: bool = Field(default=True)  # false keeps only chunk ids and hashes
     export_min_rating: Literal["none", "up"] = Field(default="none")
-    skill_on_ingest: bool = Field(default=True)  # new knowledge -> a complete RAG skill
+    skill_on_ingest: bool = Field(default=False)  # skills only on request
     skill_dir: str = Field(default=".laris/skills")
     knowledge_template: str = Field(default="templates/knowledge_skill.md")  # under prompts.dir
     max_generated_skills: int = Field(default=40, ge=1)

@@ -79,31 +79,37 @@ laris app ingest path/to/docs data/raw/scifact/corpus__corpus-00000-of-00001.par
 laris app search --query "..."            # BM25, works without a model
 laris app index  --checkpoint <run>/best --tokenizer-model <model>   # dense embeddings
 laris app ask    --checkpoint <run>/best --tokenizer-model <model> --query "..."
-laris app serve  --checkpoint <run>/best --tokenizer-model <model>   # web UI on 127.0.0.1:8765
 ```
 
 Accepted inputs are txt, md, pdf (needs `pypdf`), and BEIR corpus `.jsonl` or `.parquet`. The
 workspace (`artifacts/app/workspace` by default) holds `chunks.jsonl` and, after `index`,
-`embeddings.npy`; adding a document invalidates the dense index. The server binds to localhost,
-rejects non-JSON POSTs and exposes `/api/status`, `/api/ingest`, `/api/search`, `/api/answer` and
-`/api/index`. Until the foundation model is qualified the UI shows a research-preview notice;
-BM25 is the reliable channel and extractive answers are quoted from passages without entailment checks.
+`embeddings.npy`; adding a document invalidates the dense index. Until the foundation model is
+qualified, BM25 is the reliable channel and extractive answers are quoted from passages without
+entailment checks.
 
 ### Chat, agent and model API
 
-Three processes mirror a hosted assistant, but everything runs locally:
+The web interface was removed (owner decision, 2026-11-11); LARIS is a terminal client. Two parts:
 
 ```bash
-laris model serve --port 8000                         # model API (OpenAI-compatible)
-laris app serve --model-api-url http://127.0.0.1:8000/v1 --model-name laris-core   # chat web UI :8765
-laris agent chat                                       # terminal session (also -p "prompt", --resume)
+LARIS_SERVER_KEYS="key1,key2" laris model serve --port 8000   # operator: authenticated model API
+laris login                       # user: enter the API key once (hidden input, saved with mode 0600)
+laris                             # terminal chat; also -p "prompt", --resume, --resume <id>
 ```
 
-The **web UI** has conversation history, streaming answers, tool-call cards, file attach and drag-drop
-(PDF, text, scans and images through OCR), a document-corpus panel and a settings panel for the model
-API address. The **terminal** session streams text, prints each tool call with a one-line result, asks
-before write tools (`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`.
-Both share conversations and settings under `artifacts/chat` (config `app.chat_dir`).
+The server refuses to start without keys (`serving.api_key_env`, `serving.allowed_file`; digests only in
+memory), answers 401 to any other key, and stores nothing about users (ADR-015: the user's disk is the
+database and the user's machine is the sandbox). `laris login` and each session check the key against
+the server (`model_api.base_url`; remote hosts need `model_api.allow_remote: true`).
+
+Each API key opens its own private space: conversations, settings, uploads, archive, audit and
+collected sessions live under `artifacts/chat/users/<fingerprint>/` (`app.users_dir`), where the
+fingerprint is a one-way hash of the key. The key itself is read from `LARIS_API_KEY`
+(`app.key_env`), else the credentials file (`app.account_file`), else a hidden prompt, and is sent to the
+model API as the bearer token; keys typed into a message are masked before storage. The terminal
+streams text, prints each tool call with a one-line result, asks before write tools
+(`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`. `laris --resume`
+lists the saved sessions of the signed-in key.
 
 Nothing here is hardcoded: ports, workspace, model API, limits, approval policy, prompts and
 security patterns come from `configs/default.yaml`, `~/.laris/config.yaml`,
@@ -123,14 +129,13 @@ The client runs the tools and the **model server decides**: it receives `message
 `GET /v1/models`, `GET /health` and `POST /v1/embeddings` are also served. Today the backend is a
 scripted placeholder that quotes passages (`laris-placeholder`). The trained core model plugs in as a
 `ChatProvider` subclass: `laris model serve --backend package.module:ClassName --model-name laris-core`,
-with no client change. Set an API key through `--api-key-env` on the server and the same variable name in
-the client settings; keys are never stored in files.
+with no client change. Set the server's key variable with `--api-key-env`; clients send their own
+key as the bearer token. Keys never appear in configuration files.
 
 #### User guide (`/how-to-use`)
 
 `/how-to-use` prints `.laris/help/how-to-use.md` exactly as written (`prompts.help_file`,
-`prompts.help_commands`), with no model call. It works in the web chat (also the "Hướng dẫn" button),
-the terminal chat and as `laris agent guide`. Edit the file, then run `laris harness lock` after the
+`prompts.help_commands`), with no model call. It works in the terminal chat and as `laris agent guide`. Edit the file, then run `laris harness lock` after the
 owner approves the change.
 
 #### Policy folder, workflows and integrity
@@ -140,11 +145,12 @@ owner approves the change.
 `laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
 refreshes the lock after an owner-approved change. A tampered policy stops every session.
 
-#### Learning: skills from new knowledge and fine-tune data
+#### Learning: knowledge by domain, skills on request and fine-tune data
 
-Ingesting documents creates or refreshes a generated `corpus-*` skill (`laris skills sync` rebuilds
-them all); `laris skills lint|add` checks and installs a hand-written one, and the agent can save one
-with `save_skill` after approval. Good answers are kept locally under `artifacts/finetune`
+Ingesting documents adds knowledge notes by domain under `vault/Knowledge/<domain hub>/`, shown next to
+the matching brain hub (`save_knowledge` adds taught knowledge). Skills are made only on request:
+`laris skills lint|add` checks and installs a hand-written one, the agent saves one with `save_skill`
+after approval, and `laris skills sync` (or `learning.skill_on_ingest: true`) builds optional corpus skills. Good answers are kept locally under `artifacts/finetune`
 (`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
 
 #### Instructions, skills and automatic context compaction

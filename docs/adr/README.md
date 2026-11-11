@@ -44,6 +44,8 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 | [ADR-011](ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Refactoring | ACCEPTED | see file | System-Wide |
 | [ADR-012](ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies | ACCEPTED | see file | System-Wide |
 | [ADR-013](ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI | ACCEPTED | 2026-10-29 | System-Wide |
+| [ADR-014](ADR-014-obsidian-compatible-brain.md) | Obsidian-Compatible Project Vault and Protected System Brain | ACCEPTED | 2026-11-11 | System-Wide |
+| [ADR-015](ADR-015-local-data-plane-and-authenticated-server.md) | Local Data Plane (User Disk = Database, User Machine = Sandbox) and Authenticated Server | ACCEPTED | 2026-11-11 | System-Wide |
 
 ## Freeze Register
 

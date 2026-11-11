@@ -7,16 +7,15 @@ is the scripted offline planner, a placeholder until the core model is trained. 
 plugs in as another `ChatProvider` (`--backend package.module:ClassName`) with no client changes.
 """
 
-import hmac
 import importlib
 import json
-import os
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable, Dict, List, Optional
 
 from agent.provider import AssistantTurn, ChatProvider, OfflinePlanner, ProviderError
+from serving.auth import KeyRing
 
 
 def load_backend(spec: Optional[str], strings: Any = None) -> ChatProvider:
@@ -52,12 +51,12 @@ class ModelService:
         backend: ChatProvider,
         model_name: str,
         embedder: Optional[Callable[[List[str]], List[List[float]]]] = None,
-        api_key: Optional[str] = None,
+        keys: Optional[KeyRing] = None,
     ) -> None:
         self.backend = backend
         self.model_name = model_name
         self.embedder = embedder
-        self.api_key = api_key
+        self.keys = keys  # None = no authentication (tests only; `laris model serve` refuses it)
 
     def models(self) -> Dict[str, Any]:
         return {
@@ -132,14 +131,14 @@ def make_handler(service: ModelService, max_body_bytes: int) -> type:
             self.wfile.write(data)
 
         def _authorized(self) -> bool:
-            if not service.api_key:
+            if service.keys is None:
                 return True
             supplied = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
-            return hmac.compare_digest(supplied, service.api_key)
+            return service.keys.check(supplied)
 
         def do_GET(self) -> None:  # noqa: N802
             if self.path == "/health":
-                self._json(200, {"status": "ok", "model": service.model_name})
+                self._json(200, {"status": "ok"})
             elif self.path == "/v1/models" and self._authorized():
                 self._json(200, service.models())
             else:
@@ -196,8 +195,3 @@ def build_server(
     service: ModelService, host: str, port: int, max_body_bytes: int
 ) -> ThreadingHTTPServer:
     return ThreadingHTTPServer((host, port), make_handler(service, max_body_bytes))
-
-
-def api_key_from_env(name: Optional[str], environ: Optional[Any] = None) -> Optional[str]:
-    env = os.environ if environ is None else environ
-    return env.get(name) if name else None

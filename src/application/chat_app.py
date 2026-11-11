@@ -38,13 +38,17 @@ class ChatApp:
         project_root: Optional[Path] = None,
         chat_dir: Optional[Path] = None,
         overrides: Optional[Dict[str, Any]] = None,
+        user: Optional[str] = None,
     ) -> None:
         self.service = service
+        self.user = user
         self.project_root = Path(project_root or Path.cwd()).resolve()
         self.overrides = overrides
         base = HarnessRuntime.load(self.project_root, overrides)
         chosen = Path(chat_dir) if chat_dir else Path(base.config.app.chat_dir)
         self.root = chosen if chosen.is_absolute() else self.project_root / chosen
+        if user:  # one private conversation space per API key
+            self.root = self.root / base.config.app.users_dir / user
         self.conversations = ConversationStore(self.root / "conversations")
         self.prefs = UserPrefs(
             self.root / "settings.json", base.config.prompts.user_preferences_max_chars
@@ -244,9 +248,10 @@ class ChatApp:
         self, conversation_id: str, text: str, approve: Optional[Approver] = None
     ) -> Generator[Dict[str, Any], None, None]:
         conversation = self.conversations.get(conversation_id)
+        runtime = self.runtime
+        text = runtime.redactor.redact_secrets(text)[0]  # a typed key is never stored
         if not conversation["messages"]:
             conversation["title"] = title_from(text)
-        runtime = self.runtime
         if self.is_help_command(text, runtime):
             guide = self.how_to_use(runtime)
             conversation["messages"] += [
@@ -300,6 +305,14 @@ class ChatApp:
         outcome = self.collector(runtime).record(
             conversation_id, history[start:], session.last_turn, session.sh.guard
         )
+        try:
+            from vault.hooks import record_turn
+
+            outcome.update(
+                record_turn(runtime, conversation_id, history[start:], session.last_turn)
+            )
+        except Exception:  # keeping a note must never break a finished turn
+            outcome["vault_status"] = "failed"
         outcome["type"] = "learning"
         return outcome
 

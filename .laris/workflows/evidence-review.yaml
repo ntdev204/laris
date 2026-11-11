@@ -1,8 +1,8 @@
 name: evidence-review
-version: "1.0.0"
+version: "1.1.0"
 description: Extract claims, methods, results and limitations from corpus sources and compare them across sources.
 triggers: ["review the evidence", "compare sources", "claims and limitations"]
-allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse]
+allowed_tools: [corpus_status, search_corpus, read_file, extract_discourse, brain_consult, brain_open, brain_neighbors]
 max_steps: 7
 require_citations: true
 approval: inherit

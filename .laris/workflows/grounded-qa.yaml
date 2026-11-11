@@ -1,8 +1,8 @@
 name: grounded-qa
-version: "1.0.0"
+version: "1.1.0"
 description: Answer a question strictly from the user's corpus with citations and stated uncertainty.
 triggers: ["question about the corpus", "what does the corpus say"]
-allowed_tools: [corpus_status, search_corpus, read_file, answer_question]
+allowed_tools: [corpus_status, search_corpus, read_file, answer_question, brain_consult, brain_open, brain_neighbors]
 max_steps: 5
 require_citations: true
 approval: inherit

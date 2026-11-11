@@ -7,8 +7,9 @@ only override it. Conversations and preferences are shared with the web UI.
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from application.chat_app import ChatApp
 from cli.common import load_runtime, make_service, model_flags
@@ -32,11 +33,30 @@ def _common(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def make_chat(args: argparse.Namespace) -> ChatApp:
+def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
+    """The chat for the signed-in user: the API key picks a private conversation space and is
+    the credential sent to the model API."""
+    import os
+
+    from cli import credentials
     from cli.common import cli_overrides
 
     runtime = load_runtime(args)
-    return ChatApp(make_service(args, runtime), runtime.root, overrides=cli_overrides(args))
+    app = runtime.config.app
+    key = credentials.resolve(app, interactive=interactive and sys.stdin.isatty())
+    os.environ[app.key_env] = key  # the redactor hides it; the model client reads it
+    if credentials.verify_with_server(runtime.config.model_api, key) == "rejected":
+        raise credentials.CredentialError(
+            "máy chủ từ chối API key; chạy `laris login` để nhập khóa đúng"
+        )
+    overrides = cli_overrides(args)
+    overrides.setdefault("model_api.api_key_env", app.key_env)
+    return ChatApp(
+        make_service(args, runtime),
+        runtime.root,
+        overrides=overrides,
+        user=credentials.fingerprint(key),
+    )
 
 
 class _Tools:
@@ -135,6 +155,8 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
             print(_paint(_USE, f"● {event['name']}") + _paint(_DIM, f" {shown}"))
         elif kind == "tool_result":
             print(_paint(_DIM, "  ⎿ ") + _summarise(event["result"]))
+        elif kind == "brain":
+            print(_paint(_DIM, "  ◈ bộ não: " + " → ".join(event["trace"])))
         elif kind == "compact":
             print(
                 _paint(
@@ -170,7 +192,10 @@ class _Chat:
         _common(parser)
         parser.add_argument("-p", "--print", dest="print_text", help="Run one prompt and exit")
         parser.add_argument(
-            "--resume", nargs="?", const="last", help="Resume a conversation id (or the last)"
+            "--resume",
+            nargs="?",
+            const="pick",
+            help="Resume a session by id (or unique prefix); without an id, choose from a list",
         )
 
     def run(self, args: argparse.Namespace) -> int:
@@ -201,14 +226,40 @@ class _Chat:
             _turn(chat, conversation["id"], line, always)
 
     @staticmethod
+    def _pick(rows: List[Dict[str, Any]]) -> Optional[str]:
+        """Numbered list of saved sessions; Enter takes the newest, `n` starts a new one."""
+        if not rows:
+            print("Chưa có phiên nào; bắt đầu phiên mới.")
+            return None
+        shown = rows[:20]
+        for number, row in enumerate(shown, 1):
+            when = time.strftime("%Y-%m-%d %H:%M", time.localtime(row["updated"]))
+            print(f"  {number:>2}. {row['id']}  {when}  {row['messages']:>3} tin  {row['title']}")
+        try:
+            choice = input("Chọn số hoặc id (Enter = mới nhất, n = phiên mới): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            choice = ""
+        if choice.lower() == "n":
+            return None
+        if choice.isdigit() and 1 <= int(choice) <= len(shown):
+            return str(shown[int(choice) - 1]["id"])
+        return choice or str(shown[0]["id"])
+
+    @staticmethod
     def _start(chat: Any, resume: Optional[str]) -> Dict[str, Any]:
         if resume:
             rows = chat.conversations.list()
-            target = rows[0]["id"] if resume == "last" and rows else resume
-            try:
-                return dict(chat.conversations.get(target))
-            except KeyError:
-                print(f"No conversation {resume}; starting a new one.")
+            target: Optional[str] = _Chat._pick(rows) if resume == "pick" else resume
+            if target == "last" and rows:
+                target = rows[0]["id"]
+            if target:
+                matches = [r["id"] for r in rows if str(r["id"]).startswith(target)]
+                if len(matches) == 1:
+                    target = matches[0]
+                try:
+                    return dict(chat.conversations.get(target))
+                except KeyError:
+                    print(f"Không có phiên {target}; bắt đầu phiên mới.")
         return dict(chat.conversations.create())
 
     @staticmethod

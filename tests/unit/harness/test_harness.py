@@ -90,7 +90,7 @@ def test_prompt_has_policy_canary_and_is_versioned(project):
     b = rt.composer.compose("s2")
     assert 'classification="internal"' in a.text and 'disclose="never"' in a.text
     assert a.canary in a.text and a.canary != b.canary and a.sha256 != b.sha256
-    assert a.version == "1.1.0" and a.confidential_sources
+    assert a.version == "1.2.0" and a.confidential_sources
 
 
 def test_unknown_placeholder_and_missing_module_fail_loudly(project):
