@@ -13,7 +13,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List
 
 HERE = Path(__file__).resolve().parent
 NPM = HERE / "npm"
@@ -29,20 +29,22 @@ PLATFORMS: Dict[str, tuple] = {
 }
 
 
-def platform_of(wheel: str) -> Optional[str]:
-    """Maps a wheel's platform tag to a package platform; None when it is not one we ship."""
+def platforms_of(wheel: str) -> List[str]:
+    """Package platforms a wheel serves; empty when it is not one we ship."""
     tag = wheel[:-4].split("-")[-1]
     if tag == "win_amd64":
-        return "win32-x64"
+        return ["win32-x64"]
     if tag in ("linux_x86_64", "manylinux_2_17_x86_64", "manylinux2014_x86_64"):
-        return "linux-x64"
+        return ["linux-x64"]
     if tag in ("linux_aarch64", "manylinux_2_17_aarch64", "manylinux2014_aarch64"):
-        return "linux-arm64"
+        return ["linux-arm64"]
+    if re.fullmatch(r"macosx_\d+_\d+_universal2", tag):
+        return ["darwin-x64", "darwin-arm64"]  # one fat binary serves both
     if re.fullmatch(r"macosx_\d+_\d+_x86_64", tag):
-        return "darwin-x64"
+        return ["darwin-x64"]
     if re.fullmatch(r"macosx_\d+_\d+_arm64", tag):
-        return "darwin-arm64"
-    return None
+        return ["darwin-arm64"]
+    return []
 
 
 def main(wheels: Path, out: Path) -> None:
@@ -55,12 +57,13 @@ def main(wheels: Path, out: Path) -> None:
     shutil.rmtree(out, ignore_errors=True)
     found: Dict[str, list] = {}
     for wheel in sorted(wheels.rglob("*.whl")):
-        platform = platform_of(wheel.name)
-        if platform is None:
+        platforms = platforms_of(wheel.name)
+        if not platforms:
             raise SystemExit(f"unexpected wheel platform: {wheel.name}")
         if wheel.name.split("-")[1] != version:
             raise SystemExit(f"{wheel.name} does not match package version {version}")
-        found.setdefault(platform, []).append(wheel)
+        for platform in platforms:
+            found.setdefault(platform, []).append(wheel)
 
     missing = sorted(set(PLATFORMS) - set(found))
     if missing:

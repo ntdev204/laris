@@ -1,21 +1,25 @@
 name: Client package (all platforms)
 
-# Builds the compiled client wheel for every supported OS and Python, then assembles one npm
+# Runs on release branches and by hand. Builds the compiled client wheel for every supported OS and Python, then assembles one npm
 # set of npm packages: one per platform plus the launcher. It never publishes: download the
 # artifact, inspect it, then publish the five platform packages first and the launcher last, yourself,
 # with the owner's authorisation (OWNER_RUNBOOK.md).
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["release/**"]
 
 jobs:
   wheels:
     name: Wheel ${{ matrix.os }} / py${{ matrix.python }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-latest, windows-latest]
+        # macOS wheels are universal2 (Apple Silicon and Intel in one file), so one macOS runner is enough
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
         python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +57,7 @@ jobs:
           merge-multiple: true
       - name: Split wheels into per-platform packages plus the launcher
         run: |
-          test "$(ls wheels/*.whl | wc -l)" -ge 20
+          test "$(ls wheels/*.whl | wc -l)" -ge 16
           python packaging/assemble_npm.py wheels npm-out
       - name: Pack every package (nothing is published)
         run: |
