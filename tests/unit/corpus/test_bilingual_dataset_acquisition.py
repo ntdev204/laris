@@ -61,6 +61,9 @@ def test_expansion_registry_covers_all_six_datasets(acq):
         "HOTPOTQA",
         "FEVER",
         "UIT-VIQUAD-V2",
+        "SCIFACT",
+        "S2ORC-GENERAL-LM",
+        "S2ORC-STEM",
     }
 
 

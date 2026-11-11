@@ -9,6 +9,7 @@ from corpus.acquisition.sources.expansion import (
     acquire_viquad_v2,
     acquire_vists,
 )
+from corpus.acquisition.sources.s2orc import acquire_s2orc
 
 EXPANSION_ACQUIRERS = {
     "VINLI": acquire_vinli,
@@ -18,4 +19,6 @@ EXPANSION_ACQUIRERS = {
     "FEVER": acquire_fever,
     "UIT-VIQUAD-V2": acquire_viquad_v2,
     "SCIFACT": acquire_scifact,
+    "S2ORC-GENERAL-LM": lambda: acquire_s2orc("01"),
+    "S2ORC-STEM": lambda: acquire_s2orc("02"),
 }
