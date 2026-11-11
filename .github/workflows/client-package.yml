@@ -110,7 +110,7 @@ jobs:
             if npm view "$name@$ver" version >/dev/null 2>&1; then
               echo "$name@$ver already published, skipping"
             else
-              npm publish "$1" --access public
+              npm publish "./$1" --access public
             fi
           }
           for f in tarballs/ntdev204-laris-cli-*-*.tgz; do publish "$f"; done
