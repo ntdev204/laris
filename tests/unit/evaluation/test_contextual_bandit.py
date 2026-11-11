@@ -499,4 +499,3 @@ class TestOfflineContextualBanditEvaluator:
 
         with pytest.raises(PolicyRewardValidationError, match="Invalid reward signal"):
             evaluator.evaluate_against_baseline("EVAL-BASE-FAIL", [ctx], mock_oracle)
-

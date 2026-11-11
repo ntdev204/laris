@@ -30,7 +30,7 @@ def protected_files(root: Path, cfg: PromptConfig) -> List[Path]:
     helper = _folder(root, cfg.help_file)
     if helper.is_file():
         files.append(helper)
-    for relative in (cfg.dir, cfg.rules_dir, cfg.workflows_dir, cfg.brain_dir):
+    for relative in (cfg.dir, cfg.rules_dir, cfg.workflows_dir, cfg.brain_dir, cfg.vault_dir):
         folder = _folder(root, relative)
         if folder.is_dir():
             files += [p for p in folder.rglob("*") if p.is_file() and "__pycache__" not in p.parts]

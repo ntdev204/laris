@@ -22,7 +22,16 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from agent.context import CompactionResult, ContextManager, TokenEstimator
-from agent.provider import AssistantTurn, AuthError, ChatProvider, Message, ProviderError
+from agent.plan import PLAN_TOOL, Plan, PlanError
+from agent.provider import (
+    AssistantTurn,
+    AuthError,
+    ChatProvider,
+    Message,
+    ProviderError,
+    QuotaError,
+)
+from agent.reflect import assess, describe
 from agent.tools import ToolExecutionError, ToolRegistry, dumps
 from harness.runtime import HarnessRuntime, SessionHarness
 from harness.verifier import AnswerVerifier, Verdict
@@ -59,6 +68,7 @@ class AgentSession:
         on_compact: Optional[Callable[[CompactionResult], None]] = None,
         log_dir: Optional[Path] = None,
         audit_dir: Optional[Path] = None,
+        plan: Optional[List[Dict[str, str]]] = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -77,6 +87,10 @@ class AgentSession:
         self.sh: Optional[SessionHarness] = None
         self.workflow: Optional[WorkflowSpec] = None
         self.last_turn: Dict[str, Any] = {}
+        self._remote_workflow: Optional[Dict[str, str]] = None
+        self.brain_trace: List[str] = []  # titles of the brain notes this turn used
+        self.vault_used: List[str] = []  # project notes the brief pointed to
+        self.plan = Plan(plan)  # the visible plan; kept in the conversation between turns
 
     @property
     def history(self) -> List[Message]:
@@ -84,11 +98,48 @@ class AgentSession:
         return self.messages[1:]
 
     # -- conversation ----------------------------------------------------------------------
+    # -- agentic planning ------------------------------------------------------------------
+    def _plan_required(self, text: str, wf: Optional[WorkflowSpec]) -> bool:
+        cfg = self.cfg.plan
+        if cfg.mode == "off":
+            return False
+        if cfg.mode == "always" or wf is not None:
+            return True
+        return len(text.split()) >= cfg.min_request_words
+
+    def _plan_event(self, source: str) -> Event:
+        return {"type": "plan", "source": source, "steps": self.plan.to_list()}
+
+    def _model_view(self, required: bool, leftover: bool) -> List[Message]:
+        """What the model sees: the conversation plus, for this call only, the current plan."""
+        if self.cfg.plan.mode == "off" or not (self.plan or required):
+            return self.messages
+        strings = self.harness.strings
+        lines = [strings.get("plan.header")]
+        if self.plan:
+            lines.append(self.plan.render())
+            if leftover and self.plan.open_steps():
+                lines.append(strings.get("plan.resumed"))
+        else:
+            lines.append(strings.get("plan.required"))
+        return [*self.messages, {"role": "user", "content": "\n".join(lines), "harness": True}]
+
+    def _update_plan(self, arguments: Dict[str, Any]) -> Any:
+        try:
+            self.plan.update(arguments, self.cfg.plan)
+        except PlanError as exc:
+            reason = self.harness.strings.get("plan.invalid", reason=str(exc))
+            return ToolExecutionError("invalid_plan", reason).to_dict()
+        return {"plan": self.plan.to_list()}
+
     def _begin(self, workflow_text: str = "") -> SessionHarness:
         sh = self.harness.begin(
             self.session_id, self.skills, self.extra_instructions, self.audit_dir, workflow_text
         )
-        self.messages[0] = {"role": "system", "content": sh.prompt.text}  # re-read every turn
+        system: Message = {"role": "system", "content": sh.prompt.text}  # re-read every turn
+        if sh.prompt.remote is not None:  # policy server: it composes the prompt from these layers
+            system["laris"] = {**sh.prompt.remote, "workflow": self._remote_workflow}
+        self.messages[0] = system
         self.sh = sh
         return sh
 
@@ -103,9 +154,14 @@ class AgentSession:
         Events: text(delta), tool_call, tool_result, compact, verify, usage, done(status, answer).
         """
         wf = workflow[0] if workflow else None
+        self._remote_workflow = (
+            {"name": wf.name, "request": self.harness.redactor.redact_secrets(workflow[1])[0]}
+            if wf and workflow and self.harness.remote
+            else None
+        )
         sh = self._begin(
             wf.render(workflow[1], self.harness.config.prompts.workflow_max_chars)
-            if wf and workflow
+            if wf and workflow and not self.harness.remote
             else ""
         )
         self.workflow = wf
@@ -117,10 +173,14 @@ class AgentSession:
             )
             verifier = AnswerVerifier(stricter)
         allowed = set(wf.allowed_tools) if wf else None
+        planning = self.cfg.plan.mode != "off"
+        if allowed is not None and planning:
+            allowed.add(PLAN_TOOL)  # planning is part of the harness, not of a workflow's toolset
         tools = [
             f
             for f in self.registry.functions()
-            if allowed is None or f["function"]["name"] in allowed
+            if (allowed is None or f["function"]["name"] in allowed)
+            and (planning or f["function"]["name"] != PLAN_TOOL)
         ]
         guard, audit, strings = sh.guard, sh.audit, self.harness.strings
         audit.event(
@@ -132,12 +192,22 @@ class AgentSession:
         )
         verified = True
         user_text = self.harness.redactor.redact_secrets(user_text)[0]  # never store a typed key
+        if sh.prompt.remote is not None:
+            self.messages[0]["laris"]["task"] = user_text[:2000]
         self.messages.append({"role": "user", "content": user_text})
         seen: set = set()
         turn_results: List[Dict[str, Any]] = []
         started = time.monotonic()
         status, answer = "max_steps", ""
         retries, overflow_retried, steps = 0, False, 0
+        plan_required = self._plan_required(user_text, wf)
+        leftover = bool(self.plan.open_steps())  # a plan carried over from an earlier turn
+        replans = completion_nudges = 0
+        budget_told = False
+        goal_open: List[str] = []
+        auto_steps: Dict[str, int] = {}
+        if leftover and planning:
+            yield self._plan_event("resumed")
         if skill is not None:
             yield from self._preload_skill(skill[0], skill[1], seen, turn_results)
         yield from self._consult_brain(user_text, wf, allowed)
@@ -151,9 +221,14 @@ class AgentSession:
             pieces: List[str] = []
             turn: Optional[AssistantTurn] = None
             try:
-                for event in self.provider.stream(self.messages, tools):
+                for event in self.provider.stream(self._model_view(plan_required, leftover), tools):
                     if event["type"] == "turn":
                         turn = event["turn"]
+                    elif event["type"] == "reasoning":
+                        continue  # a model's private reasoning is never shown, kept or logged here
+                    elif event["type"] == "brain":
+                        self.brain_trace = [str(t) for t in event.get("trace", [])]
+                        yield event
                     else:
                         for piece in stream.feed(event["delta"]):
                             pieces.append(piece)
@@ -165,9 +240,7 @@ class AgentSession:
                     continue
                 audit.event("provider_error", detail=str(exc))
                 status = "provider_error"
-                answer = strings.get(
-                    "loop.auth_error" if isinstance(exc, AuthError) else "loop.provider_error"
-                )
+                answer = self._provider_failure_text(exc, strings)
                 break
             for piece in stream.finish():
                 pieces.append(piece)
@@ -200,6 +273,23 @@ class AgentSession:
                     )
                     yield {"type": "verify", "ok": False, "retry": True}
                     continue
+                goal_open = self.plan.open_steps() if planning and self.plan else []
+                if goal_open and self.cfg.reflect.enabled:
+                    if completion_nudges < self.cfg.reflect.completion_retries:
+                        completion_nudges += 1  # the goal is not done: ask for the rest
+                        self.messages.append(
+                            {"role": "assistant", "content": content, "superseded": True}
+                        )
+                        text = strings.get("plan.incomplete", open="; ".join(goal_open))
+                        self.messages.append({"role": "user", "content": text, "harness": True})
+                        audit.event("goal_open", open=len(goal_open), nudges=completion_nudges)
+                        yield {"type": "goal", "complete": False, "open": goal_open, "retry": True}
+                        continue
+                    warning = "\n\n" + strings.get(
+                        "plan.incomplete_warning", open="; ".join(goal_open)
+                    )
+                    content += warning
+                    yield {"type": "text", "delta": warning}
                 if not verdict.ok:
                     verified = False
                     warning = "\n\n" + self._warning(verdict.reason, strings)
@@ -223,12 +313,23 @@ class AgentSession:
                 }
             )
             cyclic = False
+            issues: List[str] = []
+            acting = [c for c in turn.tool_calls if c.name != PLAN_TOOL]
+            if planning and plan_required and not self.plan and acting:
+                # the model started acting without a plan: the harness records one, visibly
+                for call in acting:
+                    text = strings.get("plan.auto_step", tool=call.name)
+                    auto_steps[call.id] = self.plan.add_auto(text, self.cfg.plan)
+                yield self._plan_event("auto")
             for index, call in enumerate(turn.tool_calls):
                 yield {"type": "tool_call", "name": call.name, "arguments": call.arguments}
                 key = (call.name, json.dumps(call.arguments, sort_keys=True))
                 began = time.monotonic()
-                if index >= self.cfg.max_tool_calls_per_step:
-                    output: Any = ToolExecutionError(
+                if call.name == PLAN_TOOL and planning:
+                    output: Any = self._update_plan(call.arguments)
+                    leftover = False
+                elif index >= self.cfg.max_tool_calls_per_step:
+                    output = ToolExecutionError(
                         "too_many_calls", "too many calls in a step"
                     ).to_dict()
                 elif allowed is not None and call.name not in allowed:
@@ -264,8 +365,35 @@ class AgentSession:
                 self.messages.append(
                     {"role": "tool", "tool_call_id": call.id, "content": dumps(output)}
                 )
+                if call.name == PLAN_TOOL:
+                    if "error" not in output:
+                        yield self._plan_event("model")
+                else:
+                    problem = assess(call.name, output, self.cfg.reflect.empty_keys)
+                    if call.id in auto_steps:
+                        self.plan.mark(auto_steps[call.id], "failed" if problem else "done")
+                    if problem:
+                        issues.append(describe(problem[0], problem[1], call.name, strings))
                 if cyclic:
                     break
+            if issues and self.cfg.reflect.enabled and not cyclic:
+                # reflect: the step did not get anywhere; allow a bounded change of approach
+                if replans < self.cfg.reflect.max_replans:
+                    replans += 1
+                    text = strings.get(
+                        "reflect.step_failed",
+                        issues="; ".join(issues),
+                        left=self.cfg.reflect.max_replans - replans,
+                    )
+                    self.messages.append({"role": "user", "content": text, "harness": True})
+                    audit.event("reflect", issues=len(issues), replans=replans)
+                    yield {"type": "reflect", "issues": issues, "replans": replans}
+                elif not budget_told:
+                    budget_told = True
+                    text = strings.get("reflect.budget_out")
+                    self.messages.append({"role": "user", "content": text, "harness": True})
+                    audit.event("reflect", issues=len(issues), budget_out=True)
+                    yield {"type": "reflect", "issues": issues, "budget_out": True}
             if cyclic:
                 status, answer = "cyclic", strings.get("loop.cyclic")
                 break
@@ -279,11 +407,36 @@ class AgentSession:
             "guard_hits": dict(guard.hits),
             "workflow": wf.name if wf else "",
             "prompt_version": sh.prompt.version,
+            "goal": (
+                "none" if not (planning and self.plan) else "complete" if not goal_open else "open"
+            ),
+            "replans": replans,
+            "brain_trace": list(self.brain_trace),
+            "vault_notes": list(self.vault_used),
         }
         audit.event("turn_end", status=status, steps=steps, guard=json.dumps(guard.hits))
         self._log()
+        if planning and self.plan:
+            open_now = self.plan.open_steps()
+            yield {
+                "type": "goal",
+                "complete": not open_now,
+                "open": open_now,
+                "failed": self.plan.failed_steps(),
+            }
         yield self.usage_event()
         yield {"type": "done", "status": status, "answer": answer}
+
+    @staticmethod
+    def _provider_failure_text(exc: ProviderError, strings: Any) -> str:
+        if isinstance(exc, QuotaError):
+            try:
+                return str(strings.get("loop.quota_exceeded"))
+            except KeyError:
+                return str(exc)
+        return str(
+            strings.get("loop.auth_error" if isinstance(exc, AuthError) else "loop.provider_error")
+        )
 
     def run(self, task: str) -> AgentResult:
         """Blocking one-shot form used by `laris agent run` and tests."""
@@ -380,6 +533,7 @@ class AgentSession:
         the notes used (never their text). Skipped when disabled or when the workflow excludes it.
         """
         assert self.sh is not None
+        self.brain_trace, self.vault_used = [], []
         cfg = self.harness.config.brain
         brain = self.harness.brain
         brain.begin_turn()
@@ -396,6 +550,7 @@ class AgentSession:
         header = self.harness.strings.get("brain.brief_header")
         self.messages.append({"role": "user", "content": f"{header}\n{text}", "harness": True})
         self.sh.audit.event("brain_consult", notes=json.dumps(found.trace))
+        self.brain_trace, self.vault_used = list(found.trace), list(found.vault_notes)
         yield {"type": "brain", "trace": found.trace}
 
     def _execute(self, name: str, arguments: Dict[str, Any]) -> Any:

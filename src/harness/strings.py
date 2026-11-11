@@ -19,6 +19,18 @@ class StringCatalogue:
             raise ValueError(f"{path}: expected a mapping")
         return cls(loaded)
 
+    def merged_over(self, base: "StringCatalogue") -> "StringCatalogue":
+        """This catalogue's entries win; anything missing comes from `base` (packaged defaults)."""
+        data: Dict[str, Any] = {
+            k: dict(v) if isinstance(v, dict) else v for k, v in base._data.items()
+        }
+        for group, items in self._data.items():
+            if isinstance(items, dict) and isinstance(data.get(group), dict):
+                data[group].update(items)
+            else:
+                data[group] = items
+        return StringCatalogue(data)
+
     def get(self, key: str, **values: Any) -> str:
         node: Any = self._data
         for part in key.split("."):

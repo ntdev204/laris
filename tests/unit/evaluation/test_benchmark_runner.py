@@ -490,14 +490,16 @@ class TestBenchmarkRunnerExecution:
             runner.run_evaluation(req)
         assert runner.get_run_history() == []
 
-    @pytest.mark.parametrize("metrics", [{}, {"nli_accuracy": float("nan")},
-                                         {"nli_accuracy": float("inf")}])
+    @pytest.mark.parametrize(
+        "metrics", [{}, {"nli_accuracy": float("nan")}, {"nli_accuracy": float("inf")}]
+    )
     def test_invalid_measurements_cannot_pass(self, metrics) -> None:
         runner = BenchmarkRunner()
         manifest = runner.create_synthetic_manifest("INVALID", BenchmarkSuiteType.NLI_CONTRADICTION)
         runner.register_manifest(manifest)
-        req = EvaluationRunRequest(run_id="invalid", benchmark_suite_id="INVALID",
-                                   target_checkpoint_id="checkpoint")
+        req = EvaluationRunRequest(
+            run_id="invalid", benchmark_suite_id="INVALID", target_checkpoint_id="checkpoint"
+        )
         with pytest.raises(ModuleContractViolationError, match="finite metrics"):
             runner.run_evaluation(req, custom_metrics=metrics)
 
@@ -507,8 +509,9 @@ class TestBenchmarkRunnerExecution:
             "PARTIAL", BenchmarkSuiteType.NLI_CONTRADICTION, num_items=3
         )
         runner.register_manifest(manifest)
-        req = EvaluationRunRequest(run_id="partial", benchmark_suite_id="PARTIAL",
-                                   target_checkpoint_id="checkpoint")
+        req = EvaluationRunRequest(
+            run_id="partial", benchmark_suite_id="PARTIAL", target_checkpoint_id="checkpoint"
+        )
 
         def incomplete(item):
             return {"nli_accuracy": 0.99} if "item_000" in item.item_id else {}
@@ -670,9 +673,7 @@ class TestBenchmarkRunnerExecution:
         ):
             BenchmarkRunReport(**{**valid_args, "target_checkpoint_id": ""})
 
-        with pytest.raises(
-            ModuleContractViolationError, match="timestamp_iso cannot be empty"
-        ):
+        with pytest.raises(ModuleContractViolationError, match="timestamp_iso cannot be empty"):
             BenchmarkRunReport(**{**valid_args, "timestamp_iso": ""})
 
     def test_manifest_contamination_in_runner_and_unregistered_metric(self) -> None:
@@ -725,5 +726,3 @@ class TestBenchmarkRunnerExecution:
             "Metric 'soft_metric' failed minimum threshold" in r
             for r in report.regressions_detected
         )
-
-

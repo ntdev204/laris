@@ -23,6 +23,15 @@ keywords:
 - formulas
 - units
 - evidence review
+- khẳng định
+- phương pháp
+- tập dữ liệu
+- chỉ số
+- kết quả
+- hạn chế
+- công thức
+- đơn vị
+- trích xuất
 ---
 
 # Scientific NLP

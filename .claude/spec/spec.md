@@ -1,6 +1,6 @@
 # LARIS — System specification: Obsidian brain and scholarly harness
 
-Version 0.1.0 · 2026-11-11 · Status: DRAFT for owner review · Replaces the retired `.agents/` ledger.
+Version 0.1.0 · 2026-11-11 · Status: IMPLEMENTED for the harness; owner gates open (T38 review, T39 decision) · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.
@@ -263,9 +263,28 @@ server refuses to start without accepted keys, rejects any other key with HTTP 4
 its key at login and at start. Everything sent to the server (system prompt, brain brief, tool results)
 is internal data sent to the owner's own server, so remote use is an explicit configuration
 (`model_api.allow_remote`).
+ADR-016 amends this: the system policy (prompt, rules, workflows, brain) is held and applied by the server's
+policy gateway and never reaches the client; the client keeps tools and user data. The gateway imports no
+user-data code and writes no files (contract test).
 Acceptance: the serving package cannot import tools, vault, learning or application code and writes no
 files (contract test); wrong, missing or empty keys get 401; the server does not start with no keys; a
 rejected key is never saved by `laris login` and stops a chat session with a clear message.
+
+### SR-H9 — Managed keys, quotas and private reasoning
+The server keeps a database of API keys (digest only) with roles, permissions, token quotas (or unlimited),
+expiry and revocation, meters token use, and stores the model's reasoning for the operator only. No route
+returns reasoning to a client or to an admin key unless `serving.reasoning_http` is enabled, and chat routes
+never do. A new key is accepted by the running server at once.
+Acceptance: tests/unit/serverdata (lifecycle, 401/403/429, unlimited, reasoning absent from every chat body,
+digest-only storage).
+
+### SR-H8 — Layers and the Agentic requirement
+The runtime is layered loop -> harness -> prompt (the loop runs inside the harness; the harness composes the
+prompt; the prompt layer knows neither) and the system climbs LLM -> RAG -> Agent -> Agentic (ADR-017). The
+system must reach Agentic: visible plan, tracked and resumable progress, reflection with bounded replanning,
+a completion check, memory in the vault, and bounded autonomy, all demonstrated on scripted scenarios that
+need no trained model. The model stays NOT QUALIFIED; no capability claim exceeds what was measured.
+Acceptance: the layer contract test passes (T42); the scripted Agentic scenario suite passes (T46).
 
 ### SR-H6 — Model boundary
 The harness depends on the model only through `ChatProvider`, the embedder callable and configuration; the
@@ -331,5 +350,5 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 ## 10. Task progress index
 
-The authoritative status of every task is in task.md. Phase 0: T01-T40. Phase 1: T05-T10. Phase 2:
+The authoritative status of every task is in task.md. Phase 0: T01-T47 (T01-T04, T40, T41, T47). Phase 8 (Agentic): T42-T46. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.

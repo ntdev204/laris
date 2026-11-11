@@ -20,6 +20,11 @@ keywords:
 - how to use
 - approval
 - step limit
+- công cụ
+- quy trình
+- kỹ năng
+- phê duyệt
+- giới hạn bước
 ---
 
 # Tools and Workflows

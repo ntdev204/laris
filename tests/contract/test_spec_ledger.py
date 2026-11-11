@@ -1,6 +1,7 @@
 """The spec, plan and task files under `.claude/spec/` must stay consistent."""
 
 import importlib.util
+import re
 from pathlib import Path
 
 import pytest
@@ -33,7 +34,7 @@ def test_repository_ledger_is_consistent():
             "unknown dependency",
         ),
         (
-            lambda s, p, t: (s, p, t.replace("Status: pending", "Status: maybe", 1)),
+            lambda s, p, t: (s, p, t.replace("Status: done", "Status: maybe", 1)),
             "invalid status",
         ),
         (lambda s, p, t: (s, p.replace("T05, ", "", 1), t), "plan.md"),
@@ -45,19 +46,14 @@ def test_validator_detects_inconsistencies(mutate, expected):
     assert any(expected in p for p in problems), problems
 
 
+def _set_status(task: str, tid: str, status: str) -> str:
+    pattern = re.compile(rf"(### {tid} — .*?- Status: )\w+", re.S)
+    return pattern.sub(rf"\g<1>{status}", task, count=1)
+
+
 def test_done_task_needs_done_dependencies_and_a_note():
-    head, rest = TASK.split("### T09 — ", 1)
-    block, tail = rest.split("### T10 — ", 1)
-    done = (
-        head
-        + "### T09 — "
-        + block.replace("Status: pending", "Status: done\n- Note: x")
-        + "### T10 — "
-        + tail
-    )
-    problems = module.validate(SPEC, PLAN, done)
+    seeded = _set_status(_set_status(TASK, "T06", "pending"), "T09", "done")
+    problems = module.validate(SPEC, PLAN, seeded)
     assert any("T09: done but dependency T06" in p for p in problems), problems
-    no_note = TASK.replace(
-        "- Note: Draft v1 shipped", "- Remark: Draft v1 shipped", 1
-    )
+    no_note = TASK.replace("- Note: Delivered with tests", "- Remark: Delivered with tests", 1)
     assert any("needs a note" in p for p in module.validate(SPEC, PLAN, no_note))

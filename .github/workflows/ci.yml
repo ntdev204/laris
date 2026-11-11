@@ -58,7 +58,7 @@ jobs:
       - name: Create virtualenv and install dependencies
         run: |
           uv venv --python ${{ matrix.python-version }}
-          uv pip install -e ".[dev]"
+          uv pip install -e ".[dev,server]"
           uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Run ruff lint check

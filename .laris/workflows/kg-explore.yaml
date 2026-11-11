@@ -1,0 +1,21 @@
+name: kg-explore
+version: "1.0.0"
+description: Explore the scholarly knowledge graph of the user's vault and corpus - how concepts, methods, datasets, claims and papers connect - always showing where each link comes from.
+triggers: ["knowledge graph", "how are these connected", "path between", "explore the graph", "export the graph", "đồ thị tri thức", "kết nối giữa"]
+allowed_tools: [corpus_status, kg_query, citation_graph, search_corpus, brain_consult, brain_open, brain_neighbors]
+max_steps: 8
+require_citations: true
+approval: ask
+phases:
+  - id: orient
+    goal: Call kg_query with action stats to learn the size and the kinds of nodes and relations.
+    exit: Nodes, edges and relation counts are written down.
+  - id: explore
+    goal: Use find, neighbours, path or subgraph to answer the question.
+    instructions: Quote the provenance of every edge you rely on (the note, the character span or the reference line). Say when two things are not connected instead of inferring a link.
+    exit: Each statement about a connection has an edge with provenance.
+  - id: deliver
+    goal: Summarise the connections; if the user wants a file, call kg_query with action export and the format asked (json, graphml or canvas).
+output_sections: [Graph size, Connections found, Provenance, Gaps]
+stop_conditions:
+  - the graph has no nodes

@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from agent.plan import PLAN_TOOL, STATUSES
 from agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
 from application.service import SearchService, ServiceError
 from application.workspace import (
@@ -25,6 +26,13 @@ from vault.brain import BrainError
 
 _PATH = {"type": "string", "description": "File or folder path (project-relative)"}
 _MEMORY_NAME = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
+
+
+def _enabled_brain_tools(rt: HarnessRuntime, tools: tuple) -> tuple:
+    """All brain tools locally; with a policy server only `save_knowledge` (the brain is theirs)."""
+    if not rt.config.brain.enabled:
+        return ()
+    return tools[:1] if rt.remote else tools
 
 
 def build_registry(
@@ -160,10 +168,20 @@ def build_registry(
         name = args["name"].strip().removesuffix(".md")
         if not _MEMORY_NAME.fullmatch(name):
             raise ToolExecutionError("invalid_arguments", "name: lowercase letters, digits, - or _")
+        content = rt.redactor.redact(args["content"].strip())[0]
+        if rt.config.vault.enabled:  # the vault is the one memory store
+            from vault.hooks import project_vault
+            from vault.memory import write_memory
+
+            vault = project_vault(rt)
+            try:
+                mode, note = write_memory(vault, name, content, bool(args.get("append", True)))
+                return {"path": rel(vault.root / note), "mode": mode}
+            except ValueError:
+                pass  # refused (for example a vault inside another vault): use the legacy folder
         memory_dir.mkdir(parents=True, exist_ok=True)
         path = memory_dir / f"{name}.md"
         mode = "a" if args.get("append", True) and path.exists() else "w"
-        content = rt.redactor.redact(args["content"].strip())[0]
         with open(path, mode, encoding="utf-8") as handle:
             handle.write(("\n" if mode == "a" else "") + content + "\n")
         return {"path": rel(path), "mode": "appended" if mode == "a" else "created"}
@@ -191,6 +209,10 @@ def build_registry(
         except SkillError as exc:
             raise ToolExecutionError("exists", str(exc)) from exc
         return {"skill": name, "path": rel(path), "replaced": replaced}
+
+    def plan_unavailable(args: Dict[str, Any]) -> Any:
+        # the loop handles update_plan itself; reaching this means no loop is running
+        raise ToolExecutionError("no_session", "the plan belongs to an agent session")
 
     def consult_brief(args: Dict[str, Any]) -> Any:
         found = rt.brain.consult(
@@ -392,7 +414,31 @@ def build_registry(
             writes=True,
         ),
         ToolSpec("corpus_status", "Show corpus size and model availability.", schema({}), status),
+        ToolSpec(
+            PLAN_TOOL,
+            "Write or update the plan for a multi-step goal. Send the whole list each time: "
+            "steps with a status (pending, in_progress, done, failed, skipped). The user sees it.",
+            schema(
+                {
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {"type": "string"},
+                                "status": {"type": "string", "enum": list(STATUSES)},
+                            },
+                            "required": ["text"],
+                        },
+                    }
+                },
+                ["steps"],
+            ),
+            plan_unavailable,
+        ),
     )
-    for spec in (*specs, *(brain_tools if rt.config.brain.enabled else ())):
+    from agent.scholarly_tools import scholarly_specs
+
+    for spec in (*specs, *scholarly_specs(service, rt), *_enabled_brain_tools(rt, brain_tools)):
         registry.register(spec)
     return registry

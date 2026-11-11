@@ -18,11 +18,13 @@ EDITABLE: Dict[str, Tuple[Tuple[str, ...], type]] = {
     "base_url": (("model_api", "base_url"), str),
     "model": (("model_api", "model"), str),
     "api_key_env": (("model_api", "api_key_env"), str),
+    "ca_file": (("model_api", "ca_file"), str),
     "auto_compact": (("context", "enabled"), bool),
     "context_window": (("context", "window_tokens"), int),
     "compact_threshold": (("context", "threshold"), float),
     "allow_write": (("agent", "approval", "mode"), bool),
     "learning_enabled": (("learning", "enabled"), bool),
+    "vault_record": (("vault", "auto_record"), bool),
 }
 EXTRA_KEY = "extra_instructions"
 
@@ -92,6 +94,8 @@ class UserPrefs:
             raise PrefsError(str(exc).splitlines()[0]) from exc
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        if "api_key" in data:  # the settings file may hold the API key: owner-only
+            self.path.chmod(0o600)
         return data
 
 
@@ -101,10 +105,12 @@ def effective(config: LarisConfig, extra_instructions: str = "") -> Dict[str, An
         "base_url": config.model_api.base_url,
         "model": config.model_api.model,
         "api_key_env": config.model_api.api_key_env,
+        "ca_file": config.model_api.ca_file,
         "auto_compact": config.context.enabled,
         "context_window": config.context.window_tokens,
         "compact_threshold": config.context.threshold,
         "allow_write": config.agent.approval.mode == "auto",
         "learning_enabled": config.learning.enabled,
+        "vault_record": config.vault.auto_record,
         EXTRA_KEY: extra_instructions,
     }

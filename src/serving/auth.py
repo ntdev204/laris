@@ -9,7 +9,10 @@ import hashlib
 import hmac
 import re
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional
+from typing import TYPE_CHECKING, Iterable, List, Mapping, Optional
+
+if TYPE_CHECKING:
+    from serving.ports import Principal
 
 MIN_KEY_CHARS = 8
 _SPLIT = re.compile(r"[,\s]+")
@@ -55,3 +58,18 @@ class KeyRing:
                     if line:
                         keys.append(line)
         return cls(keys)
+
+
+class StaticAuthenticator:
+    """Fixed keys from `KeyRing` (testing): role `user`, no token limit, never revoked."""
+
+    def __init__(self, ring: "KeyRing", permissions: Iterable[str]) -> None:
+        from serving.ports import Principal
+
+        self._ring = ring
+        self._principal = Principal("static", "user", frozenset(permissions))
+
+    def authenticate(
+        self, supplied: Optional[str], client_ip: Optional[str] = None
+    ) -> "Optional[Principal]":
+        return self._principal if self._ring.check(supplied) else None

@@ -1,0 +1,16 @@
+{
+  "budgets": {
+    "full_index_s": 2.612,
+    "incremental_s": 0.523,
+    "peak_rss_mb": 181.8,
+    "search_p95_ms": 17.8
+  },
+  "note": "measured on the development workstation; a figure more than 20 percent above its budget fails --check",
+  "notes": 10000,
+  "targets": {
+    "full_index_s": 30.0,
+    "incremental_s": 1.0,
+    "peak_rss_mb": 500.0,
+    "search_p95_ms": 300.0
+  }
+}

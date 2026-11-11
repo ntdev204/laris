@@ -86,6 +86,7 @@ def test_guide_mentions_every_user_command():
         "/how-to-use", "/workflow", "/compact", "/context", "/rate", "/learn", "/skills",
         "laris --resume", "/sessions", "laris login",
         "grounded-qa", "document-intake", "evidence-review", "research-brief", "save_skill",
+        "literature-map", "citation-analysis", "kg-explore",
         "vault/",
     ):  # fmt: skip
         assert needle in text, needle

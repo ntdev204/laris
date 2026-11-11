@@ -26,7 +26,7 @@ Command tree (each leaf maps to a module in `cli.commands`):
 
 import argparse
 import sys
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from cli.commands import (
     account,
@@ -36,6 +36,7 @@ from cli.commands import (
     check,
     evaluate,
     infer,
+    keys,
     language_encoder,
     learn,
     model,
@@ -43,9 +44,11 @@ from cli.commands import (
     policy,
     readiness,
     skills,
+    suite,
     tokenizer,
     vault,
 )
+from cli.parser import build_parser_for, interactive_default, run  # noqa: F401
 from corpus.acquisition import runner as acquisition
 
 Handler = Callable[[argparse.Namespace], int]
@@ -64,6 +67,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
         "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
         "calibrate": ("Tighten thresholds from measured val reports", calibrate),
+        "suite": ("Model-free suites (retrieval, citation, extraction, leak, ...)", suite),
     },
     "app": {
         "ingest": ("Add documents to the local workspace", app.COMMANDS["ingest"]),
@@ -110,16 +114,56 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "login": ("Enter and save your API key", account.COMMANDS["login"]),
         "logout": ("Forget the saved API key", account.COMMANDS["logout"]),
         "whoami": ("Show which private space the key opens", account.COMMANDS["whoami"]),
+        "init": ("Create this project's .laris/ folder", account.COMMANDS["init"]),
     },
     "vault": {
         "init": ("Create the project vault in this codebase", vault.VAULT_COMMANDS["init"]),
         "check": ("Lint the project vault", vault.VAULT_COMMANDS["check"]),
         "status": ("Counts per folder and link health", vault.VAULT_COMMANDS["status"]),
+        "search": ("Search the notes of the vault (BM25)", vault.VAULT_COMMANDS["search"]),
+        "show": ("Print one note with its links", vault.VAULT_COMMANDS["show"]),
+        "graph": ("Link graph: statistics or JSON export", vault.VAULT_COMMANDS["graph"]),
+        "sync": ("List and adopt hand edits in managed blocks", vault.VAULT_COMMANDS["sync"]),
+        "repair": ("Repair the vault, or restore a note", vault.VAULT_COMMANDS["repair"]),
+        "propose": ("Queue a learning for review", vault.PROPOSAL_COMMANDS["propose"]),
+        "review": ("List pending proposals", vault.PROPOSAL_COMMANDS["review"]),
+        "accept": ("Accept a proposal into the vault", vault.PROPOSAL_COMMANDS["accept"]),
+        "reject": ("Reject a proposal", vault.PROPOSAL_COMMANDS["reject"]),
+        "migrate-memory": (
+            "Copy .laris/memory into the vault (reversible)",
+            vault.VAULT_COMMANDS["migrate-memory"],
+        ),
     },
     "brain": {
         "check": ("Lint the system brain structure", vault.BRAIN_COMMANDS["check"]),
         "tree": ("Print the brain hub tree (titles only)", vault.BRAIN_COMMANDS["tree"]),
         "route": ("Show which hub a task routes to", vault.BRAIN_COMMANDS["route"]),
+        "propose": ("Queue a learning for review", vault.PROPOSAL_COMMANDS["propose"]),
+        "review": ("List pending proposals", vault.PROPOSAL_COMMANDS["review"]),
+        "accept": ("Accept a proposal into the project vault", vault.PROPOSAL_COMMANDS["accept"]),
+        "reject": ("Reject a proposal", vault.PROPOSAL_COMMANDS["reject"]),
+    },
+    "keys": {
+        "create": (
+            "Create an API key (role, token quota or unlimited)",
+            keys.KEYS_COMMANDS["create"],
+        ),
+        "list": ("List keys with status and token use", keys.KEYS_COMMANDS["list"]),
+        "show": ("Show one key", keys.KEYS_COMMANDS["show"]),
+        "revoke": ("Revoke a key", keys.KEYS_COMMANDS["revoke"]),
+        "limit": ("Change or add to a key's token quota", keys.KEYS_COMMANDS["limit"]),
+        "roles": ("List roles and their permissions", keys.KEYS_COMMANDS["roles"]),
+        "reveal": ("Decrypt and print a stored key (or `default`)", keys.KEYS_COMMANDS["reveal"]),
+        "ip": ("Restrict which addresses may use a key", keys.KEYS_COMMANDS["ip"]),
+    },
+    "tls": {
+        "init": ("Create a self-signed TLS certificate for the server", keys.TLS_COMMANDS["init"])
+    },
+    "usage": {"summary": ("Token use per key", keys.USAGE_COMMANDS["summary"])},
+    "reasoning": {
+        "list": ("List stored model reasoning (operator only)", keys.REASONING_COMMANDS["list"]),
+        "show": ("Print one reasoning trace", keys.REASONING_COMMANDS["show"]),
+        "purge": ("Delete old reasoning traces", keys.REASONING_COMMANDS["purge"]),
     },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
@@ -128,43 +172,53 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="laris", description="LARIS command-line interface")
-    groups = parser.add_subparsers(dest="group", required=True)
+# What the downloadable client contains. Everything else (model serving, policy and brain tools,
+# data, training, evaluation) belongs to the server/operator side and is not in the client.
+CLIENT_COMMANDS: Dict[str, Optional[frozenset]] = {
+    "agent": None,
+    "account": None,
+    "vault": None,
+    "skills": None,
+    "learn": None,
+    "app": frozenset({"ingest", "search", "status"}),
+}
+
+
+def commands_for(role: str) -> Dict[str, Dict[str, Tuple[str, Any]]]:
+    """`client`: the user tool; `server`: operator tools; `all`: both (development)."""
+    if role == "all":
+        return COMMANDS
+    chosen: Dict[str, Dict[str, Tuple[str, Any]]] = {}
     for group, commands in COMMANDS.items():
-        group_parser = groups.add_parser(group, help=f"{group} commands")
-        leaves = group_parser.add_subparsers(dest="command", required=True)
-        for name, (help_text, module) in commands.items():
-            leaf = leaves.add_parser(name, help=help_text, description=help_text)
-            module.add_arguments(leaf)
-            leaf.set_defaults(handler=module.run)
-    return parser
+        in_client = group in CLIENT_COMMANDS
+        allowed = CLIENT_COMMANDS.get(group)  # None = the whole group
+        if role == "client" and in_client:
+            chosen[group] = (
+                commands if allowed is None else {n: c for n, c in commands.items() if n in allowed}
+            )
+        elif role == "server":
+            rest = (
+                commands
+                if not in_client
+                else (
+                    {}
+                    if allowed is None
+                    else {n: c for n, c in commands.items() if n not in allowed}
+                )
+            )
+            if rest:
+                chosen[group] = rest
+    return chosen
 
 
-def interactive_default(argv: Sequence[str]) -> List[str]:
-    """`laris` and `laris --resume [id]` open the terminal chat; named commands are unchanged."""
-    items = list(argv)
-    if items and items[0] in ("-h", "--help"):
-        return items
-    if items and items[0] in ("login", "logout", "whoami"):
-        return ["account", *items]
-    if not items or items[0].startswith("-"):
-        return ["agent", "chat", *items]
-    return items
+def build_parser(role: str = "all") -> argparse.ArgumentParser:
+    prog = "laris-server" if role == "server" else "laris"
+    return build_parser_for(commands_for(role), prog)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_parser().parse_args(interactive_default(sys.argv[1:] if argv is None else argv))
-    handler: Handler = args.handler
-    from cli.credentials import CredentialError
-    from harness.integrity import IntegrityError
-    from harness.prompts import PromptError
-
-    try:
-        return handler(args)
-    except (IntegrityError, PromptError, CredentialError) as exc:  # reported, not traced
-        print(f"[ERROR] {exc}")
-        return 2
+def main(argv: Optional[Sequence[str]] = None, role: str = "all") -> int:
+    prog = "laris-server" if role == "server" else "laris"
+    return run(commands_for(role), prog, argv, interactive=role != "server")
 
 
 if __name__ == "__main__":

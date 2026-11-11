@@ -96,10 +96,19 @@ class LeakDetector:
         self.enabled = cfg.leak_detection
         self.canary = canary if cfg.canary_enabled else ""
         self._shingles: Set[int] = set()
+        self.truncated = False  # the budget was reached: later sources are only partly covered
+        budget = cfg.leak_max_shingles
         for text in sources:
             words = tuple(w.lower() for w in _WORD.findall(text))
             for i in range(len(words) - self.n + 1):
+                if len(self._shingles) >= budget:
+                    self.truncated = True
+                    break
                 self._shingles.add(_hash(words[i : i + self.n]))
+
+    @property
+    def size(self) -> int:
+        return len(self._shingles)
 
     def leaked(self, text: str) -> bool:
         if self.canary and self.canary in text:
