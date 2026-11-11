@@ -139,7 +139,7 @@ class Collector:
         out: List[Dict[str, Any]] = []
         limit = self.cfg.max_tool_result_chars
         for message in messages:
-            if message.get("superseded") or message.get("harness"):
+            if message.get("superseded") or message.get("harness") or message.get("ui_only"):
                 continue
             row = {k: message[k] for k in _KEEP if k in message}
             if row.get("role") == "tool":

@@ -228,12 +228,35 @@ class ChatApp:
         name, _, rest = text[1:].partition(" ")
         return (name.lower(), rest.strip()) if name.lower() in skills.skills else None
 
+    def how_to_use(self, runtime: Optional[HarnessRuntime] = None) -> str:
+        """The prepared user guide, printed as written (no model call, no inference)."""
+        rt = runtime or self.runtime
+        path = Path(rt.config.prompts.help_file).expanduser()
+        path = path if path.is_absolute() else self.project_root / path
+        if path.is_file():
+            return path.read_text(encoding="utf-8").strip()
+        return rt.strings.get("help.missing")
+
+    def is_help_command(self, text: str, runtime: HarnessRuntime) -> bool:
+        return text.strip().lower() in {c.lower() for c in runtime.config.prompts.help_commands}
+
     def send(
         self, conversation_id: str, text: str, approve: Optional[Approver] = None
     ) -> Generator[Dict[str, Any], None, None]:
         conversation = self.conversations.get(conversation_id)
         if not conversation["messages"]:
             conversation["title"] = title_from(text)
+        runtime = self.runtime
+        if self.is_help_command(text, runtime):
+            guide = self.how_to_use(runtime)
+            conversation["messages"] += [
+                {"role": "user", "content": text.strip(), "ui_only": True},
+                {"role": "assistant", "content": guide, "ui_only": True},
+            ]
+            self.conversations.save(conversation)
+            yield {"type": "text", "delta": guide}
+            yield {"type": "done", "status": "completed", "answer": guide}
+            return
         try:
             session = self._session(conversation, approve)
         except PolicyError as exc:

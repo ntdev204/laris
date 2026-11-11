@@ -122,7 +122,6 @@ chạy training; chỉ dùng embedding suy luận.
 - Bộ xuất tệp gán nhãn mù cho A1/A2 và bộ nhập lại.
 - Máy tính agreement: weighted κ, κ, span F1, CER, IoU, Kendall τ; có test đơn vị.
 - Bộ kiểm nguồn (khớp ký tự, SHA-256), bộ băm/niêm phong split, bộ xác thực manifest.
-- Tích hợp vào `scripts/validate_work_plan.py` chỉ khi owner yêu cầu.
 
 ## 8. Việc owner cần quyết định
 
@@ -133,13 +132,11 @@ chạy training; chỉ dùng embedding suy luận.
 - [ ] Thời gian khả dụng của annotator (ảnh hưởng quy mô thực tế).
 - [ ] Nếu **không** mở lại: xác nhận chấp nhận rằng G12 giữ MISSING và model 01 không thể qualify.
 
-## 9. Khi owner duyệt, đồng bộ ba file kế hoạch
+## 9. Khi owner duyệt
 
 1. Ghi quyết định owner vào `PROJECT_PREREQUISITES.md` §7–§8 (D05: chuyển khỏi
    `SKIPPED_BY_OWNER`).
-2. Cập nhật note G03/D05 giống hệt nhau trong `.agents/spec.md`, `plan.md`, `task.md`.
-3. Chuyển S01A/O01A/M01A từ `blocked` về `pending` theo giai đoạn đã duyệt.
-4. Chạy `python scripts/validate_work_plan.py` trước khi bắt đầu task kế tiếp.
+2. Chạy lại các kiểm tra (`make check-no-training`) trước khi dùng bộ gold cho đánh giá.
 
 ## Phụ lục A — Guideline gán relevance retrieval STEM (DRAFT v0.1)
 

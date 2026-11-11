@@ -92,6 +92,8 @@ def _chat_routes(
             conversation["title"] = str(body.get("title") or conversation["title"])[:120]
             chat.conversations.save(conversation)
             return 200, conversation
+    if path == "/api/how-to-use" and method == "GET":
+        return 200, {"markdown": chat.how_to_use()}
     if path == "/api/feedback" and method == "POST":
         try:
             return 200, chat.rate(str(body.get("example_id", "")), str(body.get("rating", "")))

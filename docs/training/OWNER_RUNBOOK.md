@@ -32,7 +32,6 @@ Preserve the existing checkpoints and split manifest. Stop CARLA or other GPU
 workloads before the owner starts GPU work.
 
 ```bash
-.venv/bin/python scripts/validate_work_plan.py
 .venv/bin/laris data check --verify-sha256
 .venv/bin/laris evaluate readiness \
   --reports reports/language_encoder/compact-1024-04-best-val.json \

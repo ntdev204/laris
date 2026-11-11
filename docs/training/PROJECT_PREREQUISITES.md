@@ -106,7 +106,7 @@ pretrained ngoài ADR-002 hoặc bỏ qua thứ tự stage.
 
 | Mục | Trạng thái | Evidence quyết định owner |
 | --- | --- | --- |
-| Giữ 12 gate và ADR-002 | EFFECTIVE_EXISTING_POLICY | `.agents/plan.md`, canonical config, ADR-002 |
+| Giữ 12 gate và ADR-002 | EFFECTIVE_EXISTING_POLICY | canonical config, ADR-002 |
 | Use approval VINLI/ViQuAD/CC100 | RECORDED_EXISTING_APPROVAL | Notes manifest: 2026-10-29; không mở rộng phạm vi |
 | Redistribution ba nguồn trên | BLOCKED_UNVERIFIED | Không có căn cứ phê duyệt mới |
 | D01 SciFact | DOWNLOADED_NEEDS_LICENSE_REVIEW | Ban đầu owner bỏ qua; sau đó agent tải bản BEIR làm nguồn G12 EN (`acquire_scifact`, `data/raw/scifact`); license mâu thuẫn, áp điều kiện phi thương mại, chờ owner ghi nhận |

@@ -42,6 +42,7 @@ footer{padding:10px 18px 16px}.composer{max-width:820px;margin:0 auto;background
 .panel{background:var(--card);border-radius:12px;padding:18px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
 .panel h2{margin:0 0 10px;font-size:18px}.panel label{display:block;margin:10px 0 3px;font-size:13.5px;color:var(--mute)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .hit{border-top:1px solid var(--line);padding:8px 0}.hit h3{margin:0;font-size:14.5px}.meta{color:var(--mute);font-size:13px}.hit p{margin:3px 0;white-space:pre-wrap;font-size:14px}mark{background:#ffe97a55;color:inherit}
+table{border-collapse:collapse;margin:8px 0;font-size:13px}th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}th{background:var(--code)}blockquote{margin:8px 0;padding:4px 12px;border-left:3px solid var(--accent);color:var(--mute)}hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 #slash{position:absolute;bottom:100%;left:0;right:0;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;max-height:260px;overflow:auto;box-shadow:0 6px 20px #0003}
 #slash div{padding:7px 12px;cursor:pointer;font-size:14px}#slash div b{color:var(--accent)}#slash div.on,#slash div:hover{background:var(--code)}#slash small{color:var(--mute);display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .composer{position:relative}.note{margin:10px 0;font-size:13px;color:var(--mute);border-left:3px solid var(--accent);padding-left:10px}
@@ -50,7 +51,7 @@ footer{padding:10px 18px 16px}.composer{max-width:820px;margin:0 auto;background
 </style></head><body>
 <aside id="side"><h1>LARIS<small>trợ lý nghiên cứu cục bộ</small></h1>
 <button id="new">+ Cuộc trò chuyện mới</button><div id="list"></div>
-<button class="ghost" id="bskills">Skills</button><button class="ghost" id="bcorpus">Kho tài liệu</button><button class="ghost" id="bset">Cài đặt</button>
+<button class="ghost" id="bhelp">Hướng dẫn</button><button class="ghost" id="bskills">Skills</button><button class="ghost" id="bcorpus">Kho tài liệu</button><button class="ghost" id="bset">Cài đặt</button>
 <div class="meta" id="health"><span class="dot"></span>đang kiểm tra…</div></aside>
 <main><header><button class="ghost" id="menu">☰</button><b id="title">Cuộc trò chuyện mới</b></header>
 <div id="msgs"><div class="wrap" id="chat"></div></div>
@@ -100,8 +101,11 @@ if(l.startsWith('```')){const buf=[];i++;while(i<lines.length&&!lines[i].startsW
 const h=l.match(/^(#{1,4})\s+(.*)/);if(h){const e=el(h[1].length<=2?'h3':'h4');inline(e,h[2]);root.append(e);i++;continue}
 if(/^\s*[-*]\s+/.test(l)){const ul=el('ul');while(i<lines.length&&/^\s*[-*]\s+/.test(lines[i])){const li=el('li');inline(li,lines[i].replace(/^\s*[-*]\s+/,''));ul.append(li);i++}root.append(ul);continue}
 if(/^\s*\d+\.\s+/.test(l)){const ol=el('ol');while(i<lines.length&&/^\s*\d+\.\s+/.test(lines[i])){const li=el('li');inline(li,lines[i].replace(/^\s*\d+\.\s+/,''));ol.append(li);i++}root.append(ol);continue}
+if(/^-{3,}\s*$/.test(l)){root.append(el('hr'));i++;continue}
+if(/^>/.test(l)){const bq=el('blockquote');const bb=[];while(i<lines.length&&/^>/.test(lines[i])){bb.push(lines[i].replace(/^>\s?/,''));i++}bb.forEach((b,k)=>{if(k)bq.append(el('br'));inline(bq,b)});root.append(bq);continue}
+if(/^\|/.test(l)){const rows=[];while(i<lines.length&&/^\|/.test(lines[i])){rows.push(lines[i]);i++}const t=el('table');rows.filter(r=>!/^\|[\s:|-]+\|?\s*$/.test(r)).forEach((r,k)=>{const tr=el('tr');r.replace(/^\||\|\s*$/g,'').split(/(?<!\\)\|/).forEach(c=>{const cell=el(k===0?'th':'td');inline(cell,c.trim().replace(/\\\|/g,'|'));tr.append(cell)});t.append(tr)});root.append(t);continue}
 if(!l.trim()){i++;continue}
-const buf=[l];i++;while(i<lines.length&&lines[i].trim()&&!/^(```|#{1,4}\s|\s*[-*]\s|\s*\d+\.\s)/.test(lines[i])){buf.push(lines[i]);i++}
+const buf=[l];i++;while(i<lines.length&&lines[i].trim()&&!/^(```|#{1,4}\s|\s*[-*]\s|\s*\d+\.\s|\||>|-{3,}\s*$)/.test(lines[i])){buf.push(lines[i]);i++}
 const p=el('p');buf.forEach((b,k)=>{if(k)p.append(el('br'));inline(p,b)});root.append(p)}
 return root}
 
@@ -172,7 +176,7 @@ let skills=[];async function loadSkills(){try{const r=await api('/api/skills');s
 let slashIndex=0,slashItems=[];
 function slashMenu(){const v=$('input').value;const menu=$('slash');
 if(!v.startsWith('/')||v.includes(' ')||v.includes('\n')){menu.hidden=true;slashItems=[];return}
-const q=v.slice(1).toLowerCase();slashItems=[{name:'compact',description:'Nén ngữ cảnh ngay (tùy chọn: ghi chú ưu tiên)'},...skills].filter(s=>s.name.includes(q)).slice(0,8);
+const q=v.slice(1).toLowerCase();slashItems=[{name:'how-to-use',description:'Hướng dẫn sử dụng chi tiết (in sẵn, không gọi mô hình)'},{name:'compact',description:'Nén ngữ cảnh ngay (tùy chọn: ghi chú ưu tiên)'},...skills].filter(s=>s.name.includes(q)).slice(0,8);
 menu.textContent='';if(!slashItems.length){menu.hidden=true;return}slashIndex=Math.min(slashIndex,slashItems.length-1);
 slashItems.forEach((s,i)=>{const d=el('div',i===slashIndex?'on':'');const b=el('b',null,'/'+s.name);d.append(b,el('small',null,s.description));d.onmousedown=e=>{e.preventDefault();pickSlash(i)};menu.append(d)});menu.hidden=false}
 function pickSlash(i){const s=slashItems[i];if(!s)return;$('input').value='/'+s.name+' ';$('slash').hidden=true;$('input').focus();grow()}
@@ -195,6 +199,7 @@ $('new').onclick=()=>open(null);$('menu').onclick=()=>$('side').classList.toggle
 /* ---------- modals ---------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
 document.querySelectorAll('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('on')});
+$('bhelp').onclick=()=>{$('input').value='/how-to-use';send()};
 $('bset').onclick=async()=>{const s=await api('/api/settings');$('s_url').value=s.base_url;$('s_model').value=s.model;$('s_key').value=s.api_key_env;$('s_prompt').value=s.extra_instructions||'';$('s_write').checked=s.allow_write;$('s_compact').checked=s.auto_compact;$('s_learn').checked=s.learning_enabled;$('s_window').value=s.context_window;$('s_thr').value=s.compact_threshold;$('s_msg').textContent='';$('mset').classList.add('on')};
 $('s_save').onclick=async()=>{await api('/api/settings',{base_url:$('s_url').value.trim(),model:$('s_model').value.trim()||'laris-core',api_key_env:$('s_key').value.trim(),extra_instructions:$('s_prompt').value,allow_write:$('s_write').checked,auto_compact:$('s_compact').checked,learning_enabled:$('s_learn').checked,context_window:parseInt($('s_window').value)||32768,compact_threshold:parseFloat($('s_thr').value)||0.8});
 const h=await api('/api/model-health');$('s_msg').textContent=(h.ok?'✓ ':'✗ ')+h.detail;health()};
