@@ -1,0 +1,83 @@
+# Independent foundation retrieval benchmark (gate G12 and diagnostics). Pre-registered before any
+# model is scored: query sets, relevance and corpora are frozen by the digests under `frozen`.
+version: "1.0.0"
+benchmark_id: foundation_paragraph_retrieval
+protocol: held_out_query_relevance
+gate_dataset: stem_retrieval
+gate_system: dense        # the encoder's own embedding is what G12 judges
+baseline_system: bm25     # G12 requires beating this measured baseline
+systems:
+  bm25: {k1: 1.5, b: 0.75}
+  dense: {embedding: cls_embedding_l2_normalised}
+  hybrid_rrf: {k: 60}
+sources:
+  - id: squad_test_en
+    language: en
+    dataset_dir: squad
+    manifest_id: SQUAD
+    split: test
+    query_filter: answerable
+    domain: general_encyclopedic
+    pretraining_corpus: wikipedia_en
+    gate_eligible: false
+    gate_ineligible_reason: general-domain source; G12 needs held-out STEM queries with human relevance
+  - id: viquad_v2_test_vi
+    language: vi
+    dataset_dir: viquad_v2
+    manifest_id: UIT-VIQUAD-V2
+    split: test
+    query_filter: answerable
+    domain: general_encyclopedic
+    pretraining_corpus: wikipedia_vi
+    gate_eligible: false
+    gate_ineligible_reason: general-domain source; G12 needs held-out STEM queries with human relevance
+  - id: scifact_test_en
+    language: en
+    kind: qrels
+    raw_dir: scifact
+    corpus_file: corpus__corpus-00000-of-00001.parquet
+    queries_file: queries__queries-00000-of-00001.parquet
+    qrels_file: qrels__test.tsv
+    train_qrels_file: qrels__train.tsv
+    split: test
+    manifest_id: SCIFACT
+    domain: biomedical_claims
+    gate_eligible: true
+    relevance: SciFact expert annotation of abstracts that support or contradict each claim
+  - id: stem_vi_crosslingual_en_to_vi
+    language: vi
+    query_language: en
+    kind: parallel
+    parquet: raw/vi_pubmed_candidate/pubmed22-00000-of-00089-5cd8ea7c3541d46a.parquet
+    manifest_file: raw/vi_pubmed_candidate/manifest.json
+    manifest_id: VIPUBMED
+    query_column: en
+    doc_column: vi
+    sample_size: 2000
+    sample_seed: 42
+    min_chars: 200
+    domain: biomedical_machine_translated
+    gate_eligible: false
+    gate_ineligible_reason: machine-translated pairs with relevance by construction; G12 needs human relevance
+subsets:
+  - id: stem_titled_en
+    source: squad_test_en
+    titles: [Ctenophora, Immune_system, Oxygen, Pharmacy]
+    note: four science/medicine articles chosen by title before scoring; diagnostic only
+frozen:
+  squad_test_en:
+    queries: 7284
+    documents: 1338
+    digest: 694daaaddba0813b6d0e16e906864782a3eb1fb6dac387884d650b6d36006807
+  viquad_v2_test_vi:
+    queries: 1429
+    documents: 288
+    digest: 8664e10ac0187251166dcefc19ae4184dfe9871c5d162db3f9d5926164105e45
+  scifact_test_en:
+    queries: 300
+    documents: 5183
+    digest: ddfcb0d592d7888c93c92f4e11a59e97350449b8c62902f9f6e1e857fcbda425
+  stem_vi_crosslingual_en_to_vi:
+    queries: 2000
+    documents: 2000
+    digest: 76830f498103eaa148b46d147343726056a4672d0c04564e3ceb41b59ce67590

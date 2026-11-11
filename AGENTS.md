@@ -18,5 +18,7 @@ They define the system specification, remaining project plan and project task le
   local model weights/datasets outside Git.
 - Preserve measured evidence and existing changes. Merge/release only within explicit
   owner authorization. The prior preparation PR #314 is merged into develop.
-- The current request is to write and validate the three Markdown documents, then
-  report back. Do not start the next project implementation task (G02, then F01) until asked.
+- The owner has requested execution in plan order. Advance agent-owned tasks after
+  cross-checking all three files. At an owner/joint decision boundary, prepare the
+  agent deliverables and hand off for owner input; never invent approvals.
+- Do not install new dependencies without owner approval recorded in the task.

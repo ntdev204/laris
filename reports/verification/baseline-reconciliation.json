@@ -1,0 +1,763 @@
+{
+  "task": "G02",
+  "github": {
+    "pr310": {
+      "number": 310,
+      "url": "https://github.com/ntdev204/laris/pull/310",
+      "title": "fix(eval): reject unmeasured and invalid benchmark results",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "merge_commit_sha": null,
+      "head": "feature/309-measured-benchmark-gates",
+      "base": "develop"
+    },
+    "pr312": {
+      "number": 312,
+      "url": "https://github.com/ntdev204/laris/pull/312",
+      "title": "fix(reporting): verify source-backed extractive report coverage",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "merge_commit_sha": null,
+      "head": "feature/311-source-backed-reports",
+      "base": "develop"
+    },
+    "pr314": {
+      "number": 314,
+      "url": "https://github.com/ntdev204/laris/pull/314",
+      "title": "chore: organize staged readiness and cross-checked owner-only workflow",
+      "state": "closed",
+      "draft": false,
+      "merged": true,
+      "merge_commit_sha": "873dd9119c0423895ee62c20871c17604b67174f",
+      "head": "feature/313-empirical-readiness",
+      "base": "develop"
+    },
+    "pr317": {
+      "number": 317,
+      "url": "https://github.com/ntdev204/laris/pull/317",
+      "title": "docs: define system specification and owner-gated project roadmap",
+      "state": "closed",
+      "draft": false,
+      "merged": true,
+      "merge_commit_sha": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+      "head": "feature/316-system-spec-plan-task",
+      "base": "develop"
+    },
+    "issue311": {
+      "number": 311,
+      "url": "https://github.com/ntdev204/laris/issues/311",
+      "title": "fix(reporting): verify source spans and extractive report coverage",
+      "state": "open"
+    },
+    "issue313": {
+      "number": 313,
+      "url": "https://github.com/ntdev204/laris/issues/313",
+      "title": "docs(eval): record checkpoint validation and scientific NLP pilot findings",
+      "state": "open"
+    }
+  },
+  "scope": "Baseline reconciliation only; no installation, model execution, training or gate changes.",
+  "verification": {
+    "training_executed": false,
+    "optimizer_steps_executed": 0,
+    "model_executed": false,
+    "new_dependencies_installed": [],
+    "system_packages_installed": [],
+    "model_promoted": false
+  },
+  "checked_at_utc": "2026-11-10T19:34:25.304086+00:00",
+  "git": {
+    "audited_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+    "branch": "feature/318-baseline-reconciliation",
+    "remote_heads": {
+      "command": [
+        "git",
+        "ls-remote",
+        "--heads",
+        "origin",
+        "develop",
+        "main",
+        "feature/309-measured-benchmark-gates",
+        "feature/311-source-backed-reports",
+        "feature/313-empirical-readiness",
+        "feature/316-system-spec-plan-task"
+      ],
+      "exit_code": 0,
+      "stdout": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd\trefs/heads/develop\n587d14b684c7df0354d0a62545915c5588395b03\trefs/heads/feature/309-measured-benchmark-gates\n612c212570eb333572a72cb46cd4125c3465d071\trefs/heads/feature/311-source-backed-reports\n6db1775603c7c6543c2b6f89fc0dce140fafc9b3\trefs/heads/feature/313-empirical-readiness\n61ca325a778bf923520efa5e163fb8dc2ed96948\trefs/heads/feature/316-system-spec-plan-task\ndde23d8195742eb43fc30fd10a316f74d6e64814\trefs/heads/main",
+      "stderr": ""
+    },
+    "delivery_state": "Local G02 changes and preparatory G03 draft on feature/318-baseline-reconciliation from develop 5954f53; no new commit, push or merge performed."
+  },
+  "environment": {
+    "scope": "Current project .venv; missing packages are not claimed absent from every system interpreter. Metadata/version probes only; no torch model or OCR model was loaded.",
+    "python": "3.10.22 (main, Oct  9 2026, 15:21:30) [Clang 22.1.3 ]",
+    "executable": "/home/vth/ws/laris/.venv/bin/python",
+    "prefix": "/home/vth/ws/laris/.venv",
+    "base_prefix": "/home/vth/.local/share/uv/python/cpython-3.10-linux-x86_64-gnu",
+    "platform": "linux",
+    "machine": "x86_64",
+    "project_venv_exists": true,
+    "packages": {
+      "torch": {
+        "present": true,
+        "version": "2.14.1"
+      },
+      "sentencepiece": {
+        "present": true,
+        "version": "0.2.3"
+      },
+      "numpy": {
+        "present": true,
+        "version": "2.2.6"
+      },
+      "pyarrow": {
+        "present": true,
+        "version": "25.0.1"
+      },
+      "pydantic": {
+        "present": true,
+        "version": "2.14.3"
+      },
+      "PyYAML": {
+        "present": true,
+        "version": "6.0.3"
+      },
+      "pytest": {
+        "present": true,
+        "version": "9.2.0"
+      },
+      "ruff": {
+        "present": true,
+        "version": "0.17.4"
+      },
+      "mypy": {
+        "present": true,
+        "version": "2.4.1"
+      },
+      "tqdm": {
+        "present": true,
+        "version": "4.70.1"
+      },
+      "bitsandbytes": {
+        "present": false,
+        "version": null
+      },
+      "pypdf": {
+        "present": false,
+        "version": null
+      },
+      "pdfplumber": {
+        "present": false,
+        "version": null
+      },
+      "PyMuPDF": {
+        "present": false,
+        "version": null
+      },
+      "Pillow": {
+        "present": false,
+        "version": null
+      },
+      "opencv-python": {
+        "present": false,
+        "version": null
+      },
+      "pytesseract": {
+        "present": false,
+        "version": null
+      },
+      "tesserocr": {
+        "present": false,
+        "version": null
+      },
+      "easyocr": {
+        "present": false,
+        "version": null
+      },
+      "paddleocr": {
+        "present": false,
+        "version": null
+      },
+      "rapidocr-onnxruntime": {
+        "present": false,
+        "version": null
+      }
+    },
+    "native_tools": {
+      "git": {
+        "present": true,
+        "path": "/usr/bin/git",
+        "version_probe": {
+          "command": [
+            "/usr/bin/git",
+            "--version"
+          ],
+          "exit_code": 0,
+          "stdout": "git version 2.43.0",
+          "stderr": ""
+        }
+      },
+      "uv": {
+        "present": true,
+        "path": "/home/vth/.local/bin/uv",
+        "version_probe": {
+          "command": [
+            "/home/vth/.local/bin/uv",
+            "--version"
+          ],
+          "exit_code": 0,
+          "stdout": "uv 0.13.1 (x86_64-unknown-linux-gnu)",
+          "stderr": ""
+        }
+      },
+      "pdftotext": {
+        "present": true,
+        "path": "/usr/bin/pdftotext",
+        "version_probe": {
+          "command": [
+            "/usr/bin/pdftotext",
+            "-v"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "pdftotext version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+        }
+      },
+      "pdftoppm": {
+        "present": true,
+        "path": "/usr/bin/pdftoppm",
+        "version_probe": {
+          "command": [
+            "/usr/bin/pdftoppm",
+            "-v"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+        }
+      },
+      "pdfinfo": {
+        "present": true,
+        "path": "/usr/bin/pdfinfo",
+        "version_probe": {
+          "command": [
+            "/usr/bin/pdfinfo",
+            "-v"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "pdfinfo version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+        }
+      },
+      "tesseract": {
+        "present": false,
+        "path": null
+      },
+      "mutool": {
+        "present": true,
+        "path": "/usr/bin/mutool",
+        "version_probe": {
+          "command": [
+            "/usr/bin/mutool",
+            "-v"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "mutool version 1.23.10"
+        }
+      },
+      "gs": {
+        "present": true,
+        "path": "/usr/bin/gs",
+        "version_probe": {
+          "command": [
+            "/usr/bin/gs",
+            "--version"
+          ],
+          "exit_code": 0,
+          "stdout": "10.02.1",
+          "stderr": ""
+        }
+      }
+    },
+    "dependency_selection": "Candidates only; none newly installed or approved by this report. OCR/PDF choices await G03.",
+    "gpu_execution": "Not tested; metadata does not certify GPU/driver/optimizer compatibility."
+  },
+  "module_inventory": {
+    "method": "AST/source inspection only, no imports or benchmark execution. synthetic_text_present is a search observation, not dataset certification.",
+    "modules": [
+      {
+        "path": "src/laris/evaluation/benchmark_runner.py",
+        "sha256": "4b67ae84f2ed17507d3b450ab2b1ac2ffabc9aa2addc5fe7d103e840b146f8d9",
+        "classes": [
+          "BenchmarkRunner"
+        ],
+        "functions": [],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/language/evaluation/evaluator.py",
+        "sha256": "35aeb9cee59327dc88316a7d0e95829d37658e9cd8c75a46271397721a282e2f",
+        "classes": [
+          "DatasetResult",
+          "EvaluationReport",
+          "LanguageEncoderEvaluator"
+        ],
+        "functions": [
+          "_spans",
+          "_jaccard",
+          "_mean",
+          "load_thresholds",
+          "assert_leakage_verified",
+          "report_to_dict"
+        ],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/language/evaluation/runner.py",
+        "sha256": "5b82b591fc3c06f4deb5f77a53eaa2c6f403f0a3dfdfbf7d71be02d0c6c804cc",
+        "classes": [],
+        "functions": [
+          "evaluate_checkpoint"
+        ],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/language/evaluation/metrics.py",
+        "sha256": "8c77ce0ec9f4f618b97dee2641c5987b47a0438d9f4228228eb94be4a3cc98d3",
+        "classes": [],
+        "functions": [
+          "accuracy",
+          "f1_binary",
+          "macro_f1",
+          "_average_ranks",
+          "auc",
+          "pearson",
+          "spearman",
+          "span_f1"
+        ],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/language/evaluation/readiness.py",
+        "sha256": "37ed5115aecc8548534f2f6e9b293cf083dc898678af2e27cbc67f7d0bde15bb",
+        "classes": [],
+        "functions": [
+          "_finite",
+          "_valid_metric",
+          "assess_readiness"
+        ],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/language/tokenization/tokenizer.py",
+        "sha256": "f5e7695903742fe5e5323bc3c0da2498a22bec945f37300fe100182e829e0a67",
+        "classes": [
+          "ScientificTokenizer",
+          "StemFertilityReport"
+        ],
+        "functions": [
+          "compute_token_fertility",
+          "evaluate_stem_fertility"
+        ],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/language/tokenization/trainer.py",
+        "sha256": "32cc6f4d26f1f3aa7a7eb42d74b8e8859f3571699c2fcf773c665975b391c250",
+        "classes": [
+          "TokenizerReadinessState",
+          "TokenizerTrainerConfig",
+          "TokenizerTrainingPipeline"
+        ],
+        "functions": [
+          "extract_clean_wikipedia_corpus"
+        ],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/language/benchmarks/stem_benchmark.py",
+        "sha256": "c9d2589eea5eb8e61d9fa1a7d894cad61c0ed096c933399af495acf4323c4674",
+        "classes": [
+          "StemBenchmarkSample"
+        ],
+        "functions": [
+          "get_stem_vocabulary_tokens"
+        ],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/language/inference/predictor.py",
+        "sha256": "50152655293029e4d56bc8af2474fbcfdebab8b829ffccd2ed4d2e1e533229f3",
+        "classes": [
+          "LanguageEncoderPredictor"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/bm25.py",
+        "sha256": "e25c54c40474e9f34461eadc3650d2052ab98bfd5f0fd772af7503078fe3db88",
+        "classes": [
+          "BM25Document",
+          "BM25SearchResult",
+          "BM25RetrievalBaseline"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/lexical_adapter.py",
+        "sha256": "b88e4395874771dd27b754c6f886759d69f3c4573390ec5f5ab3800912418160",
+        "classes": [
+          "LexicalDocument",
+          "LexicalBM25Adapter"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/baseline_comparison.py",
+        "sha256": "030ac7a03d85562d215addd66a6c49d61d0892c0b03a6cab564b9e1fcc23c524",
+        "classes": [
+          "RetrievalBenchmarkItem",
+          "RetrievalComparisonReport"
+        ],
+        "functions": [
+          "_compute_cosine_similarity",
+          "evaluate_retrieval_comparison"
+        ],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/benchmark.py",
+        "sha256": "14d08eb38dd990e804b95d18594bbe33407dbe785672f20b9ec7e5cc41574aea",
+        "classes": [
+          "RetrievalModalityResult",
+          "DeterministicRankingResult",
+          "DepthBoundBenchmarkResult",
+          "FilterAccuracyResult",
+          "FallbackRobustnessResult",
+          "RetrievalBenchmarkReport",
+          "RetrievalEvaluationBenchmark"
+        ],
+        "functions": [],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/retrieval/dense_adapter.py",
+        "sha256": "660e0a964f8fb862c2e6212ab563c7bd0996081a396914ee3423241e3504bf80",
+        "classes": [
+          "DenseVectorItem",
+          "DenseVectorAdapter"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/fusion.py",
+        "sha256": "657a0026533021b32d89bcb25c848997c71be163e813f2ce6a7987aa45d8f107",
+        "classes": [
+          "ReciprocalRankFusion"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/engine.py",
+        "sha256": "82bed9feb2917e3bf2a967c5fdc965c14a5bc0d59b61d8720159e5f0072c2683",
+        "classes": [
+          "HybridRetrievalEngine"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/retrieval/provenance.py",
+        "sha256": "80bae679c5f5b566d2fb4bf9e3a22d61567d9a883f717681e3d44544a6861756",
+        "classes": [
+          "DocumentProvenanceRecord",
+          "ProvenanceViolationDetail",
+          "ProvenanceAuditReport",
+          "EvidenceCoordinateValidator"
+        ],
+        "functions": [],
+        "synthetic_text_present": false
+      },
+      {
+        "path": "src/laris/graph/benchmark.py",
+        "sha256": "88681ab06535c85fc716579952804e1c7ae5dcf8a20b17dd0666c3062fa8c815",
+        "classes": [
+          "ProvenancePreservationResult",
+          "ConflationBenchmarkResult",
+          "PersistenceLatencyResult",
+          "GraphBenchmarkReport",
+          "GraphProvenanceBenchmark"
+        ],
+        "functions": [
+          "_synthetic_coordinate"
+        ],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/scientific/benchmark.py",
+        "sha256": "b6ce8ba1eabbb071d68dbd993a802db764ad0be23fbd940871e46ceb81bc8b9b",
+        "classes": [
+          "StrippedHeadingBenchmarkSample",
+          "StrippedHeadingBenchmarkMetrics",
+          "StrippedHeadingBenchmarkReport",
+          "StrippedHeadingBenchmark"
+        ],
+        "functions": [
+          "get_default_synthetic_benchmark_corpus"
+        ],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/reasoning/benchmark.py",
+        "sha256": "44270ffad89a64b487cefa232c0feaa14f4616faf36ed38b9d5ba7d5e7a2104a",
+        "classes": [
+          "ContradictionBenchmarkCase",
+          "ConflictBenchmarkReport",
+          "ConflictEvaluationBenchmark"
+        ],
+        "functions": [],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/reasoning/gap_evaluation.py",
+        "sha256": "1f1c6383d5f8ade9de70bf6a974719dec08221f0c16cb0dc45161492f62d5366",
+        "classes": [
+          "GapTypologyGoldCase",
+          "GapEvaluationReport",
+          "GapTypologyEvaluationSuite"
+        ],
+        "functions": [],
+        "synthetic_text_present": true
+      },
+      {
+        "path": "src/laris/reasoning/adversarial_evaluation.py",
+        "sha256": "2ebe0320a022e3dfcc7cde9939b9d1c3740ecf0dc12e72c53b98d29d34b2916f",
+        "classes": [
+          "AdversarialBenchmarkCase",
+          "AdversarialEvaluationReport",
+          "AdversarialBenchmarkSuite"
+        ],
+        "functions": [],
+        "synthetic_text_present": true
+      }
+    ],
+    "overlap_groups": [
+      {
+        "name": "Lexical BM25 implementations",
+        "paths": [
+          "src/laris/retrieval/bm25.py",
+          "src/laris/retrieval/lexical_adapter.py"
+        ],
+        "finding": "Both implement Okapi BM25 with their own index/scoring. The adapter adds metadata filters and evidence coordinates.",
+        "reuse_decision": "For F03 prefer the production LexicalBM25Adapter/HybridRetrievalEngine boundary; extend or wrap legacy comparison code after parity review, do not create a third BM25 implementation."
+      },
+      {
+        "name": "Retrieval scoring and fixture runners",
+        "paths": [
+          "src/laris/retrieval/baseline_comparison.py",
+          "src/laris/retrieval/benchmark.py",
+          "experiments/scientific_nlp/pilot.py"
+        ],
+        "finding": "MRR/ranked relevance comparisons recur. Existing suites use synthetic fixtures or six curated paper queries; their JSON protocols do not establish independent held-out relevance gold.",
+        "reuse_decision": "F03 should reuse existing ranking/adapters and comparison report structures, add frozen human relevance/split/provenance and required nDCG/readiness fields; do not accept toy queries as the formal gate."
+      },
+      {
+        "name": "Tokenizer fertility",
+        "paths": [
+          "src/laris/language/tokenization/tokenizer.py",
+          "src/laris/language/benchmarks/stem_benchmark.py"
+        ],
+        "finding": "compute_token_fertility/evaluate_stem_fertility and a STEM fixture suite already exist. They use a ScientificTokenizer and whitespace word counts, not an attested independent EN/VI SentencePiece evaluation corpus.",
+        "reuse_decision": "F02 should reuse counting/report contracts where exact semantics match, add fitted-tokenizer compatibility and unseen EN/VI manifests/leakage checks; do not fit or fabricate unseen/gold data."
+      },
+      {
+        "name": "QA span decoding",
+        "paths": [
+          "src/laris/language/evaluation/evaluator.py",
+          "src/laris/language/inference/predictor.py",
+          "src/laris/language/evaluation/metrics.py"
+        ],
+        "finding": "Evaluator _spans and predictor.qa separately decode spans; span_f1 is positional overlap, not normalized answer-text F1.",
+        "reuse_decision": "F01 must inspect/reuse these paths and gold/offset handling, add answer-text protocols/multiple-answer/no-answer/truncation tests without calling span scores official answer scores."
+      },
+      {
+        "name": "Evaluation runner versus readiness and domain fixture suites",
+        "paths": [
+          "src/laris/evaluation/benchmark_runner.py",
+          "src/laris/language/evaluation/runner.py",
+          "src/laris/language/evaluation/readiness.py",
+          "src/laris/graph/benchmark.py",
+          "src/laris/scientific/benchmark.py",
+          "src/laris/reasoning/benchmark.py",
+          "src/laris/reasoning/gap_evaluation.py",
+          "src/laris/reasoning/adversarial_evaluation.py"
+        ],
+        "finding": "Shared benchmark/report terminology covers distinct infrastructure, trained-checkpoint evaluation, offline qualification and domain synthetic diagnostics. Generic BenchmarkRunner on develop still returns fixed metrics without an evaluator; the fix is only in draft PR #310.",
+        "reuse_decision": "Preserve explicit roles. Reuse language evaluation runner/metrics and readiness for foundation evidence; domain fixtures are diagnostic. Do not certify fixed scores or add another general benchmark runner."
+      }
+    ]
+  },
+  "data_prerequisite_observations": {
+    "source": "data/acquisition_manifest.json",
+    "source_sha256": "4953103dd4729010213acaaa0d4d7c7f0164104cd81aa53ad9dfe12968234f83",
+    "tracked_datasets": 17,
+    "selected_rows": [
+      {
+        "dataset_id": "S2ORC-STEM",
+        "acquisition_status": "SKIPPED_TEMPORARILY",
+        "license_name": "ODC-BY-1.0",
+        "license_status": "APPROVED_FOR_ACQUISITION",
+        "notes": "SKIPPED_TEMPORARILY: Official Semantic Scholar dataset API requires an authenticated API key (HTTP 401 Unauthorized for anonymous download). Full unpartitioned dataset is 30 x 4 GB (120 GB) or 30 x 6 GB (180 GB), exceeding the 20 GB hard cap. In strict accordance with Section 7 of the execution mandate, full-corpus download is prohibited. Acquisition will resume once an authorized Semantic Scholar API key is configured or a compliant pre-filtered STEM subset is provisioned.",
+        "storage_path": "data/raw/s2orc_stem",
+        "actual_sample_count": 0
+      },
+      {
+        "dataset_id": "LARIS-GOLD",
+        "acquisition_status": "PROPOSED",
+        "license_name": "CC-BY-4.0",
+        "license_status": "APPROVED_FOR_ACQUISITION",
+        "notes": "LARIS-GOLD is the project's internal gold-standard evaluation benchmark. As verified during audit, no pre-existing annotations exist in the repository. In accordance with Section 6.5, synthetic annotations are not fabricated. A formal project specification (DOC-SPEC-DATA-002) governs annotation schema, double-blind verification, and splits.",
+        "storage_path": "data/raw/laris_gold",
+        "actual_sample_count": 0
+      },
+      {
+        "dataset_id": "VINLI",
+        "acquisition_status": "VERIFIED",
+        "license_name": "Not declared by uploader (research use only pending review)",
+        "license_status": "APPROVED_BY_OWNER",
+        "notes": "Spec URL github.com/vnlp/vinli returns 404; community mirror used. Uploader declares no license: NEEDS_LICENSE_REVIEW before any redistribution. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
+        "storage_path": "data/raw/vinli",
+        "actual_sample_count": 30376
+      },
+      {
+        "dataset_id": "CC100-VI-CLEAN",
+        "acquisition_status": "VERIFIED",
+        "license_name": "Common Crawl Terms of Use (CC-100 declares no dataset license)",
+        "license_status": "APPROVED_BY_OWNER",
+        "notes": "Prefix of the CC-100 stream, not a random sample: topical bias is possible. License is NOT CC-BY-SA as earlier spec stated; NEEDS_LICENSE_REVIEW before redistribution. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
+        "storage_path": "data/raw/cc100_vi_clean",
+        "actual_sample_count": 2700000
+      },
+      {
+        "dataset_id": "UIT-VIQUAD-V2",
+        "acquisition_status": "VERIFIED",
+        "license_name": "Academic research use (UIT-NLP; HF card declares no SPDX license)",
+        "license_status": "APPROVED_BY_OWNER",
+        "notes": "Upstream license is non-commercial academic; the mirror declares no license, so NEEDS_LICENSE_REVIEW. v1.1 answerable items in UIT-VIQUAD overlap: dedupe at partition time. License not declared by the publisher; use approved by the project owner on 2026-10-29 (owner decision, not a legal clearance).",
+        "storage_path": "data/raw/viquad_v2",
+        "actual_sample_count": 39569
+      }
+    ],
+    "scifact_registry_present": false,
+    "source_access_policy": "No network acquisition or credential inspection. S2ORC access failures are historical manifest notes, not a freshly attempted request.",
+    "license_discrepancy": "The plan calls VINLI/UIT-VIQUAD-V2/CC100-VI-CLEAN NEEDS_LICENSE_REVIEW; structured manifest status is APPROVED_BY_OWNER with 2026-10-29 use approval, while notes still reserve redistribution review. Preserve that existing use decision; do not fabricate a declared license or new redistribution approval."
+  },
+  "unmerged_code_observations": {
+    "source_gate_on_develop": false,
+    "pilot_requires_pr312": true,
+    "benchmark_default_scores_on_develop": true,
+    "old_issues_may_remain_open": "Issue #313 is open even though the empirical documentation PR #314 is merged; record the mismatch rather than claiming automatic issue closure."
+  },
+  "gate_identity": {
+    "canonical_config": "configs/evaluation/foundation.yaml",
+    "baseline_config": "configs/evaluation/language_encoder.yaml",
+    "before_canonical_sha256": "b8b18094111f84327307164807d48f155e3c6fcac93e91ebeeea48255ff8d941",
+    "after_canonical_sha256": "b8b18094111f84327307164807d48f155e3c6fcac93e91ebeeea48255ff8d941",
+    "before_baseline_sha256": "22f7b7326739036a6e0de600aaf3b6cc08d9024dd7e5a53b190dd0afcf239dbf",
+    "after_baseline_sha256": "22f7b7326739036a6e0de600aaf3b6cc08d9024dd7e5a53b190dd0afcf239dbf"
+  },
+  "documentation_reconciliation": {
+    "authority": [
+      "docs/adr/ADR-002-self-built-language-foundation.md",
+      "docs/adr/ADR-008-evaluation-before-capability-claims.md",
+      "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md",
+      "configs/evaluation/foundation.yaml",
+      ".agents/plan.md"
+    ],
+    "changed_documents": [
+      "docs/plans/ROADMAP.md",
+      "docs/testing/BENCHMARK_PROTOCOL.md",
+      "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md",
+      "docs/research/EMPIRICAL_STATUS.md"
+    ],
+    "fertility": "Corrected lower-level summaries from 1.4/1.40 to canonical <=1.35 separately on unseen EN/VI; no configuration or canonical specification gate edited.",
+    "milestones": "M0-M11 are historical engineering labels, not a training-stage sequence. M11 applies before learning. Execution follows governance -> foundation -> scientific language -> OCR -> manuscript -> integration -> specialists -> product, with model qualification/owner boundaries.",
+    "report_storage": "Versioned measured summaries live in reports/; raw local artifacts stay outside Git.",
+    "measurement_caveats": "Historical compute estimates are unverified; valid citation coordinates are not evidence of entailment. Historical combined-worktree tests do not prove draft code is merged.",
+    "changed_document_sha256": {
+      "docs/plans/ROADMAP.md": "744eae1a27ced9f191bf8584e3a098de729861d85d4c2d686474bf4631e9a495",
+      "docs/testing/BENCHMARK_PROTOCOL.md": "cef409fde53c72070a30da763ee6338e0ec3be8107e27e72358e02c8843d5289",
+      "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md": "efbd2570b617707fc310a0624434bc8947a9aa1d21072b7be001aeee34b88db2",
+      "docs/research/EMPIRICAL_STATUS.md": "e4309b3ddc10be4c7cc177ed4e268d8092463d2ff6ec1e34e240be165230fba0"
+    }
+  },
+  "validation": [
+    {
+      "command": "make PY=.venv/bin/python check-no-training",
+      "exit_code": 0,
+      "pytest_passed": 49,
+      "ruff": "All checks passed",
+      "mypy_source_files": 147,
+      "documentation_files": 53,
+      "work_plan": "PASS"
+    },
+    {
+      "command": ".venv/bin/python scripts/validate_work_plan.py",
+      "exit_code": 0,
+      "result": "PASS after closing G02, before starting G03"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/contract/test_work_plan.py -q",
+      "exit_code": 0,
+      "pytest_passed": 17,
+      "scope": "After closing G02, before starting G03; 17 progress dots, exit 0."
+    }
+  ],
+  "handoff_validation": [
+    {
+      "command": "make PY=.venv/bin/python check-no-training",
+      "exit_code": 0,
+      "pytest_passed": 49,
+      "duration_seconds": 2.78,
+      "ruff": "All checks passed",
+      "mypy_source_files": 147,
+      "documentation_files": 54,
+      "work_plan": "PASS",
+      "scope": "After G03 draft and reconciled blocked status"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/contract/test_work_plan.py -q -o addopts=''",
+      "exit_code": 0,
+      "pytest_passed": 17,
+      "duration_seconds": 1.81
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "handoff": {
+    "next_task": "G03",
+    "status": "blocked",
+    "owner": "joint",
+    "owner_decisions_required": [
+      "D01 SciFact source preparation or explicit blocked",
+      "D02 S2ORC local key/subset availability or explicit blocked",
+      "D03 licensed STEM-VI sources or explicit blocked",
+      "D04 OCR/layout gold sources or explicit blocked",
+      "D05 human annotators, adjudicator and per-type agreement protocol or explicit blocked",
+      "D06 dependency selection/constraints and installation timing or explicit blocked"
+    ],
+    "agent_draft": "docs/training/PROJECT_PREREQUISITES.md",
+    "F01_started": false,
+    "goal_complete": false
+  }
+}

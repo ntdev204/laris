@@ -161,9 +161,11 @@ ViNLI supplies Vietnamese NLI; a QA dataset is not an NLI benchmark.
 | G11 | unseen_text | vi | fertility | <= 1.35 | unseen text, tokens/word |
 | G12 | stem_retrieval | all | mrr | >= 0.82 and > BM25 | held-out query relevance |
 
-The current evaluator reports token-position QA scores, not normalized answer-text
-scores. Older reports omit PAWS macro F1, tokenizer fertility and the required
-retrieval benchmark. These omissions block qualification; they must not be filled
+The evaluator now reports normalized answer-text QA scores (`exact_match`, `f1`, protocol
+`normalized_answer_text`) and keeps token-position scores separately as
+`token_span_exact_match`/`token_span_f1`. Older reports contain only token-position QA
+scores and still do not satisfy G06-G09. They also omit PAWS macro F1, tokenizer fertility
+and the required retrieval benchmark. These omissions block qualification; they must not be filled
 with invented values. The 6-query paper pilot is not the required benchmark.
 
 ## 6. Execution-readiness checklist

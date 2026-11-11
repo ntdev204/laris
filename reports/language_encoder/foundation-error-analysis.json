@@ -1,0 +1,674 @@
+{
+  "task": "F04",
+  "split": "val",
+  "cap_per_dataset": 512,
+  "seed": 42,
+  "batch_size": 8,
+  "sampling": "existing evaluator streaming order; QA first rows; descriptive nonrandom sample",
+  "checkpoint": "artifacts/checkpoints/language_encoder/compact-1024-04/best",
+  "model_sha256": "ab099187730de76df01654091250f0482c50984142e0afbe2b47a3bd3d0b8dab",
+  "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+  "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+  "evaluator_sha256": "261207a1a02f19d7b24f66ab531ff7952b0793c792def88d1caeb81196c18772",
+  "torch_version": "2.14.1+cu130",
+  "validation": {
+    "anli": {
+      "language": "en",
+      "samples": 512,
+      "split_rows": 3200,
+      "metrics": {
+        "accuracy": 0.44921875,
+        "macro_f1": 0.44729684483848375
+      },
+      "confusion_gold_rows_prediction_columns": [
+        [
+          90,
+          37,
+          32
+        ],
+        [
+          57,
+          82,
+          24
+        ],
+        [
+          89,
+          43,
+          58
+        ]
+      ]
+    },
+    "vinli": {
+      "language": "vi",
+      "samples": 512,
+      "split_rows": 2249,
+      "metrics": {
+        "accuracy": 0.556640625,
+        "macro_f1": 0.5464368252386685
+      },
+      "confusion_gold_rows_prediction_columns": [
+        [
+          80,
+          47,
+          28
+        ],
+        [
+          24,
+          135,
+          26
+        ],
+        [
+          35,
+          67,
+          70
+        ]
+      ]
+    },
+    "paws": {
+      "language": "en",
+      "samples": 512,
+      "split_rows": 8000,
+      "metrics": {
+        "accuracy": 0.69921875,
+        "macro_f1": 0.6791666666666667
+      },
+      "confusion_gold_rows_prediction_columns": [
+        [
+          243,
+          41
+        ],
+        [
+          113,
+          115
+        ]
+      ]
+    },
+    "stsb": {
+      "language": "en",
+      "samples": 512,
+      "split_rows": 1500,
+      "metrics": {
+        "spearman": 0.8254551265843656,
+        "mae": 0.14390926217311062
+      },
+      "score_bands": [
+        {
+          "low": 0.0,
+          "high": 0.2,
+          "samples": 137,
+          "mean_error": 0.10838715987701486
+        },
+        {
+          "low": 0.2,
+          "high": 0.4,
+          "samples": 73,
+          "mean_error": -0.0014857156840089249
+        },
+        {
+          "low": 0.4,
+          "high": 0.6,
+          "samples": 84,
+          "mean_error": -0.038305659556672686
+        },
+        {
+          "low": 0.6,
+          "high": 0.8,
+          "samples": 105,
+          "mean_error": -0.09957426601932162
+        },
+        {
+          "low": 0.8,
+          "high": 1.0,
+          "samples": 113,
+          "mean_error": -0.1583634295822245
+        }
+      ]
+    },
+    "squad": {
+      "language": "en",
+      "samples": 512,
+      "split_rows": 3286,
+      "metrics": {
+        "exact_match": 0.64453125,
+        "f1": 0.7378363350548552,
+        "has_answer_exact_match": 0.64453125,
+        "has_answer_f1": 0.7378363350548552,
+        "no_answer_exact_match": 0.0,
+        "no_answer_f1": 0.0,
+        "token_span_exact_match": 0.45703125,
+        "token_span_f1": 0.6535664387869546,
+        "answer_outside_window_rate": 0.0,
+        "context_truncated_rate": 0.0
+      },
+      "details": {
+        "qa_protocol_version": "answer-text-1",
+        "answer_normalization": "nfc_lowercase_strip_punctuation_drop_en_articles",
+        "span_decoding": {
+          "restricted_to_context": true,
+          "max_answer_tokens": 64,
+          "null_threshold": 0.0,
+          "prediction_text": "tokenizer_decode_of_predicted_span"
+        },
+        "gold_answers": "all_acceptable_texts_best_score",
+        "no_answer_rule": "correct_only_if_prediction_empty",
+        "truncation_policy": "kept_and_scored_without_sliding_window",
+        "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+        "split_rows": 3286,
+        "scored_rows": 512,
+        "complete_split": false,
+        "has_answer_rows": 512,
+        "no_answer_rows": 0,
+        "answer_outside_window_rows": 0,
+        "context_truncated_rows": 0
+      }
+    },
+    "viquad_v2": {
+      "language": "vi",
+      "samples": 512,
+      "split_rows": 1713,
+      "metrics": {
+        "exact_match": 0.3828125,
+        "f1": 0.4143953773536414,
+        "has_answer_exact_match": 0.19941348973607037,
+        "has_answer_f1": 0.2468341149708633,
+        "no_answer_exact_match": 0.7485380116959064,
+        "no_answer_f1": 0.7485380116959064,
+        "token_span_exact_match": 0.3671875,
+        "token_span_f1": 0.3993762852940457,
+        "answer_outside_window_rate": 0.0,
+        "context_truncated_rate": 0.0
+      },
+      "details": {
+        "qa_protocol_version": "answer-text-1",
+        "answer_normalization": "nfc_lowercase_strip_punctuation",
+        "span_decoding": {
+          "restricted_to_context": true,
+          "max_answer_tokens": 64,
+          "null_threshold": 0.0,
+          "prediction_text": "tokenizer_decode_of_predicted_span"
+        },
+        "gold_answers": "all_acceptable_texts_best_score",
+        "no_answer_rule": "correct_only_if_prediction_empty",
+        "truncation_policy": "kept_and_scored_without_sliding_window",
+        "sample_selection": "first_rows_in_sorted_file_order_no_shuffle",
+        "split_rows": 1713,
+        "scored_rows": 512,
+        "complete_split": false,
+        "has_answer_rows": 341,
+        "no_answer_rows": 171,
+        "answer_outside_window_rows": 0,
+        "context_truncated_rows": 0
+      }
+    }
+  },
+  "data_audit": {
+    "anli": {
+      "splits": {
+        "train": {
+          "path": "data/processed/anli/train.parquet",
+          "sha256": "a8808aaedc9901bec74292c174bb5aa5d169470d0c7ccd0127b5b0c75047f234",
+          "rows": 162864,
+          "distribution": {
+            "entailment": 52110,
+            "neutral": 68789,
+            "contradiction": 41965
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 189
+        },
+        "val": {
+          "path": "data/processed/anli/val.parquet",
+          "sha256": "262bbbc06d5b1f0922f93c48b9ad92d284900d0b4962d5de5ab94f0b86ccca9e",
+          "rows": 3200,
+          "distribution": {
+            "contradiction": 1062,
+            "entailment": 1070,
+            "neutral": 1068
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 0
+        },
+        "test": {
+          "path": "data/processed/anli/test.parquet",
+          "sha256": "5bfb80771b4af7f86ab6136bbca7488233b9009283a8b0347b26d30f1476500f",
+          "rows": 3200,
+          "distribution": {
+            "entailment": 1070,
+            "neutral": 1068,
+            "contradiction": 1062
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 0
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      },
+      "normalized_context_overlap": null
+    },
+    "vinli": {
+      "splits": {
+        "train": {
+          "path": "data/processed/vinli/train.parquet",
+          "sha256": "39a2029c31ce36d6cb38090a1ab67e559b7312e7525de132a377a27215de081e",
+          "rows": 18282,
+          "distribution": {
+            "entailment": 6094,
+            "contradiction": 6094,
+            "neutral": 6094
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 7
+        },
+        "val": {
+          "path": "data/processed/vinli/val.parquet",
+          "sha256": "08cf566c06a623809b7326a15abacf651f757d3c1c85e4fc890a623e432b25fb",
+          "rows": 2249,
+          "distribution": {
+            "contradiction": 762,
+            "neutral": 750,
+            "entailment": 737
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 0
+        },
+        "test": {
+          "path": "data/processed/vinli/test.parquet",
+          "sha256": "2643712dea9a769ad3600a33021598ceb4f4dd43dbe447350060fb1a8e265077",
+          "rows": 2264,
+          "distribution": {
+            "neutral": 777,
+            "entailment": 750,
+            "contradiction": 737
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 0
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      },
+      "normalized_context_overlap": null
+    },
+    "paws": {
+      "splits": {
+        "train": {
+          "path": "data/processed/paws/train.parquet",
+          "sha256": "753b6db51d21d51f2a59a216a08bccd0ab95ebed19a9d1a3c226feadb0914643",
+          "rows": 49401,
+          "distribution": {
+            "0": 27572,
+            "1": 21829
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 112
+        },
+        "val": {
+          "path": "data/processed/paws/val.parquet",
+          "sha256": "231425f77af4dab086b6e2a8be7fe7298483b960541b6d3628faf951a2a72176",
+          "rows": 8000,
+          "distribution": {
+            "0": 4461,
+            "1": 3539
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 17
+        },
+        "test": {
+          "path": "data/processed/paws/test.parquet",
+          "sha256": "8ef996c2a102d4c91b1b1b2ba3578725a9ca2b627860f87f5e36fa1e02e41281",
+          "rows": 8000,
+          "distribution": {
+            "0": 4464,
+            "1": 3536
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 28
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      },
+      "normalized_context_overlap": null
+    },
+    "stsb": {
+      "splits": {
+        "train": {
+          "path": "data/processed/stsb/train.parquet",
+          "sha256": "03b07537aa68633e22700e7ae57421823c6bb29c4ebc3328ee5ce97f8db1fff5",
+          "rows": 5734,
+          "distribution": {
+            "0.8_to_1.0": 1397,
+            "0.6_to_0.8": 1587,
+            "0.4_to_0.6": 978,
+            "0.0_to_0.2": 891,
+            "0.2_to_0.4": 881
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 56
+        },
+        "val": {
+          "path": "data/processed/stsb/val.parquet",
+          "sha256": "d3f42f4c91747bd94998fa7c7bca4dda8ef1de5a8b8eab3e71cae098c79d55b9",
+          "rows": 1500,
+          "distribution": {
+            "0.8_to_1.0": 264,
+            "0.4_to_0.6": 273,
+            "0.6_to_0.8": 365,
+            "0.2_to_0.4": 254,
+            "0.0_to_0.2": 344
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 3
+        },
+        "test": {
+          "path": "data/processed/stsb/test.parquet",
+          "sha256": "dffc4e27ff02dfea5aed270ee67486fa82784cbda8c0bdd80678c433e1a36268",
+          "rows": 1379,
+          "distribution": {
+            "0.4_to_0.6": 265,
+            "0.6_to_0.8": 335,
+            "0.8_to_1.0": 338,
+            "0.2_to_0.4": 198,
+            "0.0_to_0.2": 243
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 2
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 2,
+        "train_test": 5,
+        "val_test": 3
+      },
+      "normalized_context_overlap": null
+    },
+    "squad": {
+      "splits": {
+        "train": {
+          "path": "data/processed/squad/train.parquet",
+          "sha256": "1a46e03b96fd2659a350dc1233eae222c94983377c9c69efc02ac9f72e7cbdfe",
+          "rows": 87599,
+          "distribution": {
+            "answerable": 87599
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 193
+        },
+        "val": {
+          "path": "data/processed/squad/val.parquet",
+          "sha256": "4431f743a51654d38f9896a99a8744a9e374c9bba7123a8f548641a86c31f8f0",
+          "rows": 3286,
+          "distribution": {
+            "answerable": 3286
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 7
+        },
+        "test": {
+          "path": "data/processed/squad/test.parquet",
+          "sha256": "255f8a6b77616d07caff39d32d5428c6c56210ccb34ea5d48369cdc85a729a1b",
+          "rows": 7284,
+          "distribution": {
+            "answerable": 7284
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 32
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      },
+      "normalized_context_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      }
+    },
+    "viquad_v2": {
+      "splits": {
+        "train": {
+          "path": "data/processed/viquad_v2/train.parquet",
+          "sha256": "e20c6521d27656b82b4fc83390e35d3c0eb2546eea3905dbe2fa9e853958cf6d",
+          "rows": 28300,
+          "distribution": {
+            "answerable": 19084,
+            "unanswerable": 9216
+          },
+          "invalid": {},
+          "repeated_normalized_inputs": 0
+        },
+        "val": {
+          "path": "data/processed/viquad_v2/val.parquet",
+          "sha256": "265dd84cea868b1b36319cf9857e3f6c9765618e7bb6e6040f71084e62aa5402",
+          "rows": 1713,
+          "distribution": {
+            "answerable": 1211,
+            "unanswerable": 502
+          },
+          "invalid": {
+            "invalid_answer_offsets": 5
+          },
+          "repeated_normalized_inputs": 0
+        },
+        "test": {
+          "path": "data/processed/viquad_v2/test.parquet",
+          "sha256": "52bf6b9f72c993a1ec38feca29b5e2e74f3c7e85c42dad07c27736ac17566c2f",
+          "rows": 2088,
+          "distribution": {
+            "answerable": 1429,
+            "unanswerable": 659
+          },
+          "invalid": {
+            "invalid_answer_offsets": 4
+          },
+          "repeated_normalized_inputs": 0
+        }
+      },
+      "manifest_leakage_verified": true,
+      "normalized_input_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      },
+      "normalized_context_overlap": {
+        "train_val": 0,
+        "train_test": 0,
+        "val_test": 0
+      }
+    }
+  },
+  "data_audit_scope": "Exact normalized pair and context overlap within each target dataset. The test split was scanned for label and split integrity. Cross-dataset, near-duplicate and pretraining overlap were outside scope.",
+  "source_artifacts": {
+    "reports/tokenizer/fertility.json": "79c994ca43f32121f15b0a907aa915ffc700134a280792315c0fb6567ef2b962",
+    "reports/retrieval/foundation.json": "bd8a3725f274f95ca277c2da9cf19847bc62ee606c1fdf4bf893c689cffbb550",
+    "configs/evaluation/foundation.yaml": "b8b18094111f84327307164807d48f155e3c6fcac93e91ebeeea48255ff8d941",
+    "/home/vth/ws/laris/experiments/language_encoder/foundation_error_analysis.py": "6f416d32b0d8e848b34786336779c2a6146c67d2f5183819778d4e3848ee3ee0"
+  },
+  "validation_sequence_length": 1024,
+  "class_order": {
+    "nli": [
+      "entailment",
+      "neutral",
+      "contradiction"
+    ],
+    "paraphrase": [
+      "not_paraphrase",
+      "paraphrase"
+    ]
+  },
+  "gate_assessment": [
+    {
+      "id": "G01",
+      "dataset": "anli",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.85,
+      "observed": 0.44729684483848375,
+      "margin": -0.4027031551615162,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G02",
+      "dataset": "vinli",
+      "language": "vi",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "observed": 0.5464368252386685,
+      "margin": -0.23356317476133148,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G03",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "accuracy",
+      "operator": "ge",
+      "threshold": 0.88,
+      "observed": 0.69921875,
+      "margin": -0.18078125,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G04",
+      "dataset": "paws",
+      "language": "en",
+      "metric": "macro_f1",
+      "operator": "ge",
+      "threshold": 0.88,
+      "observed": 0.6791666666666667,
+      "margin": -0.2008333333333333,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G05",
+      "dataset": "stsb",
+      "language": "en",
+      "metric": "spearman",
+      "operator": "ge",
+      "threshold": 0.82,
+      "observed": 0.8254551265843656,
+      "margin": 0.005455126584365644,
+      "assessment": "Validation sample meets the numeric target. Held-out qualification and training feasibility remain unverified.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G06",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.72,
+      "protocol": "normalized_answer_text",
+      "observed": 0.64453125,
+      "margin": -0.07546874999999997,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G07",
+      "dataset": "squad",
+      "language": "en",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.83,
+      "protocol": "normalized_answer_text",
+      "observed": 0.7378363350548552,
+      "margin": -0.09216366494514472,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G08",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "exact_match",
+      "operator": "ge",
+      "threshold": 0.65,
+      "protocol": "normalized_answer_text",
+      "observed": 0.3828125,
+      "margin": -0.2671875,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G09",
+      "dataset": "viquad_v2",
+      "language": "vi",
+      "metric": "f1",
+      "operator": "ge",
+      "threshold": 0.78,
+      "protocol": "normalized_answer_text",
+      "observed": 0.4143953773536414,
+      "margin": -0.3656046226463586,
+      "assessment": "Validation gap observed. Training feasibility is unmeasured.",
+      "evidence_split": "val"
+    },
+    {
+      "id": "G10",
+      "dataset": "unseen_text",
+      "language": "en",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "observed": 1.4199381203924717,
+      "margin": -0.0699381203924716,
+      "assessment": "Fertility is fixed by the tokenizer and the evaluation text. Recheck with the same protocol after any tokenizer change.",
+      "evidence_split": "test"
+    },
+    {
+      "id": "G11",
+      "dataset": "unseen_text",
+      "language": "vi",
+      "metric": "fertility",
+      "operator": "le",
+      "threshold": 1.35,
+      "protocol": "unseen_text_tokens_per_word",
+      "observed": 1.3630681557000428,
+      "margin": -0.013068155700042716,
+      "assessment": "Fertility is fixed by the tokenizer and the evaluation text. Recheck with the same protocol after any tokenizer change.",
+      "evidence_split": "test"
+    },
+    {
+      "id": "G12",
+      "dataset": "stem_retrieval",
+      "language": "all",
+      "metric": "mrr",
+      "operator": "ge",
+      "threshold": 0.82,
+      "protocol": "held_out_query_relevance",
+      "must_beat_baseline": true,
+      "observed": null,
+      "margin": null,
+      "assessment": "Missing independent STEM relevance judgments.",
+      "evidence_split": null
+    }
+  ],
+  "training_executed": false,
+  "weights_or_splits_modified": false,
+  "sampling_proposal": {
+    "path": "configs/data/foundation_sampling.yaml",
+    "sha256": "25b90b79ada2395eae96a4264b13a3ad267ab951ae0446912043be5b39360c2d",
+    "all_train_shard_hashes_verified": true
+  }
+}

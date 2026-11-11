@@ -1,0 +1,202 @@
+{
+ "report_version": "fertility-1",
+ "split": "test",
+ "datasets": [
+  {
+   "dataset": "unseen_text",
+   "language": "en",
+   "samples": 5621,
+   "metrics": {
+    "fertility": 1.2857012864633792,
+    "fertility_pooled": 1.3411768592129314,
+    "fertility_worst_source": 1.3470597945341587,
+    "unknown_token_rate": 0.0007037612717910402,
+    "fertility_ci95_low": 1.2800971351774246,
+    "fertility_ci95_high": 1.2917013750096782
+   },
+   "baseline": {},
+   "metric_protocols": {
+    "fertility": "unseen_text_tokens_per_word"
+   },
+   "protocol_details": {
+    "aggregation": "macro_mean_over_sources",
+    "sources": [
+     "wikipedia_en_test",
+     "all_nli_test"
+    ]
+   }
+  },
+  {
+   "dataset": "unseen_text",
+   "language": "vi",
+   "samples": 3999,
+   "metrics": {
+    "fertility": 1.1930423380434005,
+    "fertility_pooled": 1.1597949707798367,
+    "fertility_worst_source": 1.2400614736058395,
+    "unknown_token_rate": 0.0015225992066720262,
+    "fertility_ci95_low": 1.1824781193417426,
+    "fertility_ci95_high": 1.2048173349824325
+   },
+   "baseline": {},
+   "metric_protocols": {
+    "fertility": "unseen_text_tokens_per_word"
+   },
+   "protocol_details": {
+    "aggregation": "macro_mean_over_sources",
+    "sources": [
+     "wikipedia_vi_test",
+     "cc100_vi_test"
+    ]
+   }
+  }
+ ],
+ "sources": [
+  {
+   "texts_scored": 2000,
+   "texts_sampled": 2000,
+   "excluded_exact_fit_corpus_matches": 0,
+   "prefix_overlap_texts": 0,
+   "words": 951107,
+   "tokens": 1281198,
+   "fertility": 1.3470597945341587,
+   "unknown_token_rate": 0.0007594454565180401,
+   "chars_per_token": 4.665151678351044,
+   "text_fertility": {
+    "p50": 1.3315717457170382,
+    "p95": 1.7567567567567568
+   },
+   "fertility_excluding_prefix_overlap": 1.3470597945341587,
+   "fertility_ci95": [
+    1.3379644155852888,
+    1.3573771585788736
+   ],
+   "source_id": "wikipedia_en_test",
+   "language": "en",
+   "domain": "wiki",
+   "file": "data/processed/wikipedia_en/test.parquet",
+   "file_sha256": "b515fb6337b81dbac6c2702a73e020cb3ef4e96ef713161fea6c4f58932b3b5b",
+   "file_sha256_verified": true,
+   "split_rows": 20255,
+   "rows_sampled": 2000,
+   "row_index_digest": "4876624c8113cd2a2aad65d20860aa0e56b4ef98047d01f3340b3d81f639d92a"
+  },
+  {
+   "texts_scored": 3621,
+   "texts_sampled": 3811,
+   "excluded_exact_fit_corpus_matches": 190,
+   "prefix_overlap_texts": 0,
+   "words": 47891,
+   "tokens": 58635,
+   "fertility": 1.2243427783926,
+   "unknown_token_rate": 0.0006480770870640403,
+   "chars_per_token": 4.51643216508911,
+   "text_fertility": {
+    "p50": 1.1666666666666667,
+    "p95": 1.588235294117647
+   },
+   "fertility_excluding_prefix_overlap": 1.2243427783926,
+   "fertility_ci95": [
+    1.2179153976690995,
+    1.2305182564114894
+   ],
+   "source_id": "all_nli_test",
+   "language": "en",
+   "domain": "sentences",
+   "file": "data/processed/all_nli/test.parquet",
+   "file_sha256": "1b8bd9a804bb9aaa8c2916f2e789f0fdde938fc8c9042365e0b92d3849f279f8",
+   "file_sha256_verified": true,
+   "split_rows": 19656,
+   "rows_sampled": 2000,
+   "row_index_digest": "0a1e7cbb3697fc6c1e2f49e776281b14df556a1b9fbf07038c4c7b1d020a5aa7"
+  },
+  {
+   "texts_scored": 1999,
+   "texts_sampled": 2000,
+   "excluded_exact_fit_corpus_matches": 1,
+   "prefix_overlap_texts": 0,
+   "words": 397569,
+   "tokens": 493010,
+   "fertility": 1.2400614736058395,
+   "unknown_token_rate": 0.0019614206608385225,
+   "chars_per_token": 3.9684164621407274,
+   "text_fertility": {
+    "p50": 1.2692307692307692,
+    "p95": 1.6458333333333333
+   },
+   "fertility_excluding_prefix_overlap": 1.2400614736058395,
+   "fertility_ci95": [
+    1.2189322390991144,
+    1.2647747376955565
+   ],
+   "source_id": "wikipedia_vi_test",
+   "language": "vi",
+   "domain": "wiki",
+   "file": "data/processed/wikipedia_vi/test.parquet",
+   "file_sha256": "ed458285c9ec5efa87fc294e6bd40b1c19cbf2657773588a1fe9b076485fb79c",
+   "file_sha256_verified": true,
+   "split_rows": 12854,
+   "rows_sampled": 2000,
+   "row_index_digest": "9b417d7eab6b4a771ce7fc6151bb38d5f46d8d83052bcb5469847371e2418b5c"
+  },
+  {
+   "texts_scored": 2000,
+   "texts_sampled": 2000,
+   "excluded_exact_fit_corpus_matches": 0,
+   "prefix_overlap_texts": 89,
+   "words": 2317166,
+   "tokens": 2655526,
+   "fertility": 1.1460232024809616,
+   "unknown_token_rate": 0.00108377775250553,
+   "chars_per_token": 3.9416126974467582,
+   "text_fertility": {
+    "p50": 1.1358246622855055,
+    "p95": 1.2589641434262948
+   },
+   "fertility_excluding_prefix_overlap": 1.1454539491783895,
+   "fertility_ci95": [
+    1.1429159272848572,
+    1.1491331204127075
+   ],
+   "source_id": "cc100_vi_test",
+   "language": "vi",
+   "domain": "web",
+   "file": "data/processed/cc100_vi_clean/test.parquet",
+   "file_sha256": "3f24761207e5c8550900515123a1ec6ba965b2504cf5daf5ec21b6e109bf8dc7",
+   "file_sha256_verified": true,
+   "split_rows": 269878,
+   "rows_sampled": 2000,
+   "row_index_digest": "2eccbcac62cea0b0d0359f4512a40e4307d64404a70a9748ab34bd5f6dbb725c"
+  }
+ ],
+ "definitions": {
+  "word": "whitespace-delimited item of the text (str.split); Vietnamese items are syllables, so values are tokens per syllable",
+  "token": "SentencePiece piece of the raw text, no special tokens; [UNK] counted",
+  "fertility": "tokens / words",
+  "primary_aggregation": "macro mean of per-source fertility; pooled and worst source are reported beside it",
+  "sampling": "seeded sample of rows without replacement from each test split",
+  "confidence": "95% percentile bootstrap over texts, 1000 resamples, fixed seed; the gate is judged on the point estimate, the interval is context only"
+ },
+ "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+ "split_isolation_checked": true,
+ "docs_per_source": 2000,
+ "seed": 42,
+ "tokenizer_model": "artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model",
+ "tokenizer_sha256": "36181adf89d9f6547245d358923135289029453d2956afb207052b1881205047",
+ "text_normalization": "normalize_scientific_text+collapse_whitespace",
+ "model_sha256": null,
+ "checkpoint": null,
+ "identity_scope": "fertility depends on the tokenizer only; model_sha256 records the checkpoint named above and must be regenerated for the final candidate",
+ "fit_corpus": {
+  "path": "artifacts/tokenizer/foundation-r1-super/fit-actual.txt",
+  "sha256": "10ab4554c059af4655e2b5f65c95a36efee188531f0055512939e7939783b0d2",
+  "bytes": 1055574258,
+  "lines": 2168686,
+  "note": "on-disk corpus; its use for the recorded tokenizer is not itself proven",
+  "lines_match_partition_train_counts": false,
+  "expected_lines_from_manifest": 3254154
+ },
+ "git_commit": "5954f5353df0c7f10aafbd7f343c0f061c47c5bd",
+ "training_executed": false,
+ "tokenizer_fitting_executed": false
+}

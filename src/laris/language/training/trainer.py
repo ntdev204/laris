@@ -17,6 +17,7 @@ import numpy as np
 from laris.core.authorization import (
     assert_training_authorized,
 )
+from laris.language.training.objectives import contrastive_retrieval_loss
 
 try:
     import torch
@@ -163,6 +164,8 @@ class LanguageEncoderTrainer:
         warmup_steps: int = 0,
         total_optimizer_steps: Optional[int] = None,
         min_lr_ratio: float = 0.1,
+        retrieval_loss_weight: float = 0.0,
+        retrieval_temperature: float = 0.07,
     ) -> None:
         if precision not in ("fp32", "bf16", "fp16"):
             raise ValueError(f"precision must be fp32, bf16 or fp16, got '{precision}'")
@@ -179,6 +182,8 @@ class LanguageEncoderTrainer:
         self.max_grad_norm = max_grad_norm
         self.max_vram_ceiling_gb = max_vram_ceiling_gb
         self.loss_calculator = MultiTaskLossCalculator()
+        self.retrieval_loss_weight = retrieval_loss_weight
+        self.retrieval_temperature = retrieval_temperature
         self.step_history: List[TrainingMetricsSnapshot] = []
         self._accum_counter: int = 0
 
@@ -290,6 +295,27 @@ class LanguageEncoderTrainer:
                 targets = torch.as_tensor(labels["mlm_labels"]).to(self.device)
                 kwargs["mlm_positions"] = targets != -100
         outputs: Dict[str, Any] = self.model(token_ids, **kwargs)
+        if (
+            training_pass and task_type == "qa" and self.retrieval_loss_weight > 0
+            and "retrieval_positives" in labels
+        ):
+            embeddings = [
+                self.model(
+                    torch.as_tensor(labels[f"retrieval_{kind}_ids"], device=self.device),
+                    attention_mask=torch.as_tensor(
+                        labels[f"retrieval_{kind}_mask"], device=self.device
+                    ),
+                    task="embedding",
+                    training_pass=True,
+                )["cls_embedding"]
+                for kind in ("query", "passage")
+            ]
+            outputs["retrieval_loss"] = contrastive_retrieval_loss(
+                embeddings[0],
+                embeddings[1],
+                torch.as_tensor(labels["retrieval_positives"], device=self.device),
+                self.retrieval_temperature,
+            )
         return outputs
 
     def _to_device(self, batch: Any) -> Any:
@@ -446,7 +472,10 @@ class LanguageEncoderTrainer:
                 F.cross_entropy(start_logits, start_targets)
                 + F.cross_entropy(end_logits, end_targets)
             ) / 2.0
-            return loss * weights.lambda_qa
+            qa_loss = loss * weights.lambda_qa
+            if "retrieval_loss" in outputs:
+                qa_loss = qa_loss + self.retrieval_loss_weight * outputs["retrieval_loss"]
+            return qa_loss
 
         else:
             raise ValueError(f"Unknown task_type: {task_type}")

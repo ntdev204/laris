@@ -1,0 +1,216 @@
+{
+  "task": "F05-R1",
+  "split": "val",
+  "seed": 42,
+  "selection": {
+    "train_rows_per_source": 80000,
+    "max_words_per_source": 1000000,
+    "max_utf8_bytes_per_line": 4096,
+    "validation_rows_per_source": 2000,
+    "validation_exclusion": "Exact or 200-character-prefix matches to either fit corpus"
+  },
+  "dataset_manifest_sha256": "e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8",
+  "train_sources": [
+    {
+      "dataset_id": "WIKIPEDIA-EN",
+      "language": "en",
+      "split": "train",
+      "path": "data/processed/wikipedia_en/train.parquet",
+      "sha256": "d1f10cc6a690d483e1fa6ea75e0cec116ebca69b361bdb3227be9f91ae82bc96",
+      "rows_sampled": 80000,
+      "row_index_sha256": "c26be362f45e416f7c0f7e24625e73b98573851d638eaeea4711a2617840a467",
+      "texts_written": 4615,
+      "words": 1000000
+    },
+    {
+      "dataset_id": "ALL-NLI",
+      "language": "en",
+      "split": "train",
+      "path": "data/processed/all_nli/train.parquet",
+      "sha256": "eceacb2cf8e99b59fe54592d47134a218f48f95908f941cedc5ed7208b6c3db2",
+      "rows_sampled": 80000,
+      "row_index_sha256": "c9a9ed9f98006d8bfe26287cd6a121204d2428043928a9725392a31f8d609959",
+      "texts_written": 83495,
+      "words": 1000000
+    },
+    {
+      "dataset_id": "WIKIPEDIA-VI",
+      "language": "vi",
+      "split": "train",
+      "path": "data/processed/wikipedia_vi/train.parquet",
+      "sha256": "cfd9488be46258084ae3309f8bda1f375a00c93c38b742b02a490defd822d07d",
+      "rows_sampled": 80000,
+      "row_index_sha256": "a5edfd6554886edc6b1338b3c9fe5084f0242d5560529f2839a5553a087516c4",
+      "texts_written": 13660,
+      "words": 999999
+    },
+    {
+      "dataset_id": "CC100-VI-CLEAN",
+      "language": "vi",
+      "split": "train",
+      "path": "data/processed/cc100_vi_clean/train.parquet",
+      "sha256": "9e0b1612b7624009bf53520d7ff4c051bdccabb3ff6cfdddf59b21d1474f70ad",
+      "rows_sampled": 80000,
+      "row_index_sha256": "0293eba06a6a1b6a078f6683031436f6f449080ef674212f05eb67b77ecb9f48",
+      "texts_written": 2782,
+      "words": 999994
+    }
+  ],
+  "validation_sources": [
+    {
+      "dataset_id": "WIKIPEDIA-EN",
+      "language": "en",
+      "split": "val",
+      "path": "data/processed/wikipedia_en/val.parquet",
+      "sha256": "139d1f90d01f02a2579220cdcf1f03a1f5539183a49ed56cee65c778ffb02e82",
+      "rows_sampled": 2000,
+      "row_index_sha256": "7e089cbbc607dbfe63f3b7372dd94b9ce0b17be16caa0b9a1ec10d4633ed22ca",
+      "texts_scored": 1998,
+      "excluded_exact_or_prefix_overlap": 2
+    },
+    {
+      "dataset_id": "ALL-NLI",
+      "language": "en",
+      "split": "val",
+      "path": "data/processed/all_nli/val.parquet",
+      "sha256": "c9683abf6e257907f7b2241f3b2c4d1a1498138816bc71356e33eaa03da54393",
+      "rows_sampled": 2000,
+      "row_index_sha256": "8f431e77eb16a786c0a92fb62452f179f895bc4f1616442618dffa481ab6f479",
+      "texts_scored": 3778,
+      "excluded_exact_or_prefix_overlap": 30
+    },
+    {
+      "dataset_id": "WIKIPEDIA-VI",
+      "language": "vi",
+      "split": "val",
+      "path": "data/processed/wikipedia_vi/val.parquet",
+      "sha256": "6e03389ec41ad8a919c778568b53c43568805b39e74914a3a3cb3140bebab55c",
+      "rows_sampled": 2000,
+      "row_index_sha256": "d9e54be834eb4e0cb9972cced6e842aa871b5518917f14eb524c0bea51e87621",
+      "texts_scored": 1999,
+      "excluded_exact_or_prefix_overlap": 1
+    },
+    {
+      "dataset_id": "CC100-VI-CLEAN",
+      "language": "vi",
+      "split": "val",
+      "path": "data/processed/cc100_vi_clean/val.parquet",
+      "sha256": "b40fe409e51c4b1cffa987d317183927bbd40870f6c762fc7ccd19b4403a9482",
+      "rows_sampled": 2000,
+      "row_index_sha256": "a3c56b7e38d5444241924a7f6debda33e6686373c488d19c7d46e47a86223392",
+      "texts_scored": 1973,
+      "excluded_exact_or_prefix_overlap": 27
+    }
+  ],
+  "fit_parquet": {
+    "path": "artifacts/tokenizer/foundation-r1/train.parquet",
+    "sha256": "53cb4297f11268958c94a54cefcf91c46c033d5f54459012bbb9dd3019e55531"
+  },
+  "fit_text": {
+    "path": "artifacts/tokenizer/foundation-r1/train.txt",
+    "sha256": "d75768b1ccc73b306b5585911b725a538df77f94bd709569c134cc7585834309"
+  },
+  "fixed_development_sample": {
+    "path": "artifacts/tokenizer/foundation-r1/development.json",
+    "sha256": "1e396ce556b91d2e229bd29cd2da44ecec2878aed3865940fe6cd7a2495ed969"
+  },
+  "baseline_fit_corpus_sha256": "534abf2f5ff3d565223497cdf0a08e1d920a9453443f02a004406552ffbdf1e6",
+  "baseline": {
+    "tokenizer_path": "artifacts/tokenizer/laris_spm_32k.model",
+    "tokenizer_sha256": "203a85cf497778b8b02f09d2521909d342b9d7c3cc80c185d56bf25b3c2854ce",
+    "vocab_size": 32000,
+    "macro_fertility": {
+      "en": 1.4417492697271432,
+      "vi": 1.3442201153345685
+    },
+    "sources": [
+      {
+        "source": "en/WIKIPEDIA-EN",
+        "texts_scored": 1998,
+        "texts_sampled": 1998,
+        "excluded_exact_fit_corpus_matches": 0,
+        "prefix_overlap_texts": 0,
+        "words": 937390,
+        "tokens": 1483646,
+        "fertility": 1.5827414416624883,
+        "unknown_token_rate": 0.006039176461231318,
+        "chars_per_token": 4.010156061486366,
+        "text_fertility": {
+          "p50": 1.543849816321321,
+          "p95": 2.152173913043478
+        },
+        "fertility_excluding_prefix_overlap": 1.5827414416624883,
+        "fertility_ci95": [
+          1.5603249673567934,
+          1.6091167833915712
+        ]
+      },
+      {
+        "source": "en/ALL-NLI",
+        "texts_scored": 3778,
+        "texts_sampled": 3778,
+        "excluded_exact_fit_corpus_matches": 0,
+        "prefix_overlap_texts": 0,
+        "words": 47550,
+        "tokens": 61851,
+        "fertility": 1.3007570977917982,
+        "unknown_token_rate": 4.8503662026483e-05,
+        "chars_per_token": 4.2073208193885305,
+        "text_fertility": {
+          "p50": 1.25,
+          "p95": 1.7692307692307692
+        },
+        "fertility_excluding_prefix_overlap": 1.3007570977917982,
+        "fertility_ci95": [
+          1.2933833744706382,
+          1.3086193994634323
+        ]
+      },
+      {
+        "source": "vi/WIKIPEDIA-VI",
+        "texts_scored": 1999,
+        "texts_sampled": 1999,
+        "excluded_exact_fit_corpus_matches": 0,
+        "prefix_overlap_texts": 0,
+        "words": 381661,
+        "tokens": 526440,
+        "fertility": 1.3793392565653813,
+        "unknown_token_rate": 0.0026555732847048097,
+        "chars_per_token": 3.5445653825697137,
+        "text_fertility": {
+          "p50": 1.4838709677419355,
+          "p95": 1.8620689655172413
+        },
+        "fertility_excluding_prefix_overlap": 1.3793392565653813,
+        "fertility_ci95": [
+          1.3476170161728647,
+          1.4190436416471204
+        ]
+      },
+      {
+        "source": "vi/CC100-VI-CLEAN",
+        "texts_scored": 1973,
+        "texts_sampled": 1973,
+        "excluded_exact_fit_corpus_matches": 0,
+        "prefix_overlap_texts": 0,
+        "words": 2216499,
+        "tokens": 2901621,
+        "fertility": 1.3091009741037556,
+        "unknown_token_rate": 0.013016861954059471,
+        "chars_per_token": 3.4549874018695066,
+        "text_fertility": {
+          "p50": 1.2985633978763274,
+          "p95": 1.5862068965517242
+        },
+        "fertility_excluding_prefix_overlap": 1.3091009741037556,
+        "fertility_ci95": [
+          1.3022001353628483,
+          1.3155212447148616
+        ]
+      }
+    ]
+  },
+  "tokenizer_fitting_executed": false,
+  "training_executed": false,
+  "preparation_script_sha256": "6a26d0df360750d60dfe09310433e135b8d96126d3b790ad1405de0bdaf86e8a"
+}

@@ -38,10 +38,10 @@ Start with the repository [README](../README.md), then the sections below. Super
 | | [LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md](specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md) | Training readiness gates and staged pipeline |
 | | [DATASET_SPECIFICATION.md](specifications/DATASET_SPECIFICATION.md), [CONFIGURATION_SPECIFICATION.md](specifications/CONFIGURATION_SPECIFICATION.md), [LARIS_GOLD_SPECIFICATION.md](specifications/LARIS_GOLD_SPECIFICATION.md), [REPORT_SPECIFICATION.md](specifications/REPORT_SPECIFICATION.md) | Datasets, configuration, gold set, reports |
 | Research | [LANGUAGE_AND_MODEL_STRATEGY.md](research/LANGUAGE_AND_MODEL_STRATEGY.md) | Language foundation, semantics, local model budgets |
-| | [SCIENTIFIC_NLP.md](research/SCIENTIFIC_NLP.md), [HYBRID_RAG.md](research/HYBRID_RAG.md), [RESEARCH_GAP_DISCOVERY.md](research/RESEARCH_GAP_DISCOVERY.md), [EVALUATION_STRATEGY.md](research/EVALUATION_STRATEGY.md), [S2ORC_SUBSET_SELECTION.md](research/S2ORC_SUBSET_SELECTION.md) | Scientific NLP, retrieval, gaps, evaluation, corpus subset |
+| | [RESEARCH_STRATEGY.md](research/RESEARCH_STRATEGY.md) | Evaluation, scientific NLP, hybrid retrieval and gap discovery |
 | Training order | [Training index](training/README.md) | Model 01 qualification precedes model 02; owner alone trains |
 | Measured status | [EMPIRICAL_STATUS.md](research/EMPIRICAL_STATUS.md) | Checkpoint validation, real-paper pilot failures and next experiment gates |
 | Plans | [ROADMAP.md](plans/ROADMAP.md) | Milestones and status; open work is tracked in GitHub issues |
 | Testing | [TEST_STRATEGY.md](testing/TEST_STRATEGY.md), [BENCHMARK_PROTOCOL.md](testing/BENCHMARK_PROTOCOL.md), [ACCEPTANCE_CRITERIA.md](testing/ACCEPTANCE_CRITERIA.md) | Verification scope and benchmarks |
 | ADRs | [ADR index](adr/README.md) | ADR-001 to ADR-013 |
-| Templates | [templates/](templates/) | Document, ADR, spec, experiment, benchmark templates |
+| Templates | [TEMPLATES.md](templates/TEMPLATES.md) | Document, ADR, spec, experiment, benchmark templates |

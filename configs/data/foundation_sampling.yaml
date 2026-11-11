@@ -1,0 +1,137 @@
+version: 1
+status: proposal_for_F04A
+runtime: Planning artifact. F05 wires any approved sampler into the trainer.
+split: train
+split_manifest: data/processed/task_splits_manifest.json
+split_manifest_sha256: e356124dd4ff5f5b6d1d812fe2a2b44182e412d83b38b40ce2f0d773899e08a8
+error_analysis: reports/language_encoder/foundation-error-analysis.json
+baseline:
+  task_count_exponent: 0.7
+  dataset_count_exponent: 1.0
+ablation:
+  task_count_exponent: 0.7
+  seed: 42
+  rule: Within each task, draw datasets proportional to train rows raised to the listed
+    exponent.
+  rationale: Test whether tempering the dominant source improves ANLI, ViNLI, PAWS
+    and ViQuAD validation while holding task probabilities, tokenizer, optimizer and
+    budget fixed.
+  evaluation: Compare source-level validation metrics and sampled row counts at equal
+    steps.
+data_preconditions:
+  stsb: Resolve normalized train/val/test pair collisions and freeze a new audited
+    manifest before G05.
+  viquad_v2: Audit flagged answer offsets against the source before freezing qualification
+    data.
+  preservation: Current shards and checkpoints are retained. Record any future correction
+    with a new revision, counts and SHA-256.
+tasks:
+  mlm:
+    train_rows: 5414554
+    candidate_dataset_count_exponent: 1.0
+    sources:
+      wikipedia_en:
+        path: data/processed/wikipedia_en/train.parquet
+        rows: 1991346
+        sha256: d1f10cc6a690d483e1fa6ea75e0cec116ebca69b361bdb3227be9f91ae82bc96
+        baseline_share: 0.36777655
+        candidate_share: 0.36777655
+      wikipedia_vi:
+        path: data/processed/wikipedia_vi/train.parquet
+        rows: 1262808
+        sha256: cfd9488be46258084ae3309f8bda1f375a00c93c38b742b02a490defd822d07d
+        baseline_share: 0.23322475
+        candidate_share: 0.23322475
+      cc100_vi_clean:
+        path: data/processed/cc100_vi_clean/train.parquet
+        rows: 2160400
+        sha256: 9e0b1612b7624009bf53520d7ff4c051bdccabb3ff6cfdddf59b21d1474f70ad
+        baseline_share: 0.3989987
+        candidate_share: 0.3989987
+    baseline_task_share: 0.61520163
+  nli:
+    train_rows: 1200353
+    candidate_dataset_count_exponent: 0.7
+    sources:
+      all_nli:
+        path: data/processed/all_nli/train.parquet
+        rows: 942068
+        sha256: eceacb2cf8e99b59fe54592d47134a218f48f95908f941cedc5ed7208b6c3db2
+        baseline_share: 0.7848258
+        candidate_share: 0.65381069
+      anli:
+        path: data/processed/anli/train.parquet
+        rows: 162864
+        sha256: a8808aaedc9901bec74292c174bb5aa5d169470d0c7ccd0127b5b0c75047f234
+        baseline_share: 0.13568009
+        candidate_share: 0.19136918
+      vinli:
+        path: data/processed/vinli/train.parquet
+        rows: 18282
+        sha256: 39a2029c31ce36d6cb38090a1ab67e559b7312e7525de132a377a27215de081e
+        baseline_share: 0.01523052
+        candidate_share: 0.04140102
+      fever:
+        path: data/processed/fever/train.parquet
+        rows: 77139
+        sha256: ae8d64933cdb69fdb03fb924fef6b08877b4eb82cab41acc6225e864500b25b2
+        baseline_share: 0.0642636
+        candidate_share: 0.11341911
+    baseline_task_share: 0.21430874
+  paraphrase:
+    train_rows: 379753
+    candidate_dataset_count_exponent: 0.7
+    sources:
+      paws:
+        path: data/processed/paws/train.parquet
+        rows: 49401
+        sha256: 753b6db51d21d51f2a59a216a08bccd0ab95ebed19a9d1a3c226feadb0914643
+        baseline_share: 0.13008719
+        candidate_share: 0.20913759
+      quora_duplicates:
+        path: data/processed/quora_duplicates/train.parquet
+        rows: 330352
+        sha256: e24490603dfce903e0ead86bb40016224dc70b46a7041706d5d33ff3e92ec33b
+        baseline_share: 0.86991281
+        candidate_share: 0.79086241
+    baseline_task_share: 0.09575786
+  similarity:
+    train_rows: 25174
+    candidate_dataset_count_exponent: 1.0
+    sources:
+      stsb:
+        path: data/processed/stsb/train.parquet
+        rows: 5734
+        sha256: 03b07537aa68633e22700e7ae57421823c6bb29c4ebc3328ee5ce97f8db1fff5
+        baseline_share: 0.22777469
+        candidate_share: 0.22777469
+      vists:
+        path: data/processed/vists/train.parquet
+        rows: 19440
+        sha256: 4fb924a431a4de0f2ba2c68230ec758ae22140a1b5d27092b6c4631989b34030
+        baseline_share: 0.77222531
+        candidate_share: 0.77222531
+    baseline_task_share: 0.01432815
+  qa:
+    train_rows: 196620
+    candidate_dataset_count_exponent: 0.7
+    sources:
+      squad:
+        path: data/processed/squad/train.parquet
+        rows: 87599
+        sha256: 1a46e03b96fd2659a350dc1233eae222c94983377c9c69efc02ac9f72e7cbdfe
+        baseline_share: 0.44552436
+        candidate_share: 0.41705101
+      viquad_v2:
+        path: data/processed/viquad_v2/train.parquet
+        rows: 28300
+        sha256: e20c6521d27656b82b4fc83390e35d3c0eb2546eea3905dbe2fa9e853958cf6d
+        baseline_share: 0.14393246
+        candidate_share: 0.18909945
+      hotpotqa:
+        path: data/processed/hotpotqa/train.parquet
+        rows: 80721
+        sha256: 86e6a98c19eb3b8bcc1247f4d79243f457de30b561b3cea17082bf7430f31d4f
+        baseline_share: 0.41054318
+        candidate_share: 0.39384954
+    baseline_task_share: 0.06040362

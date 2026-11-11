@@ -1,0 +1,325 @@
+{
+ "task": "F06-R1",
+ "stage": "tokenizer candidate search (CPU only, split train, validation sample only)",
+ "authorization": "Owner authorised direct tokenizer fitting on 2026-11-11.",
+ "test_split_read": false,
+ "training_executed": false,
+ "tokenizer_fitting_executed": true,
+ "development_sample": {
+  "path": "artifacts/tokenizer/foundation-r1-super/development.json",
+  "sha256": "b54137b4b2f847aa9e469addf90af3548173fbd8c497ea41fa4a2f0fed079657",
+  "texts_per_source": {
+   "en/WIKIPEDIA-EN": 1998,
+   "en/ALL-NLI": 3594,
+   "vi/WIKIPEDIA-VI": 1999,
+   "vi/CC100-VI-CLEAN": 1901
+  }
+ },
+ "superset_corpus": {
+  "path": "artifacts/tokenizer/foundation-r1-super/train.parquet",
+  "sha256": "3e00a5658f8c35bd94845eafc926962d0af819795df6f33aba084fa7518bf702",
+  "sources": [
+   {
+    "dataset_id": "WIKIPEDIA-EN",
+    "texts_written": 368191,
+    "words": 80000000
+   },
+   {
+    "dataset_id": "ALL-NLI",
+    "texts_written": 1147269,
+    "words": 11996097
+   },
+   {
+    "dataset_id": "WIKIPEDIA-VI",
+    "texts_written": 542454,
+    "words": 39999999
+   },
+   {
+    "dataset_id": "CC100-VI-CLEAN",
+    "texts_written": 110772,
+    "words": 39999992
+   }
+  ]
+ },
+ "baseline_macro_fertility": {
+  "en": 1.4410785130390362,
+  "vi": 1.3440990860362578
+ },
+ "gate": {
+  "max_macro_fertility": 1.35
+ },
+ "baseline_corpus_4M_words_candidate": {
+  "macro_fertility": {
+   "en": 1.4298,
+   "vi": 1.2819
+  },
+  "note": "first large-corpus fit (74M words), artifacts/tokenizer/foundation-r1-large"
+ },
+ "variants_32k_split_digits_true": {
+  "A_en80_vi20": {
+   "words": {
+    "WIKIPEDIA-EN": 80000000,
+    "ALL-NLI": 11996097,
+    "WIKIPEDIA-VI": 19999866,
+    "CC100-VI-CLEAN": 19999845
+   },
+   "macro_fertility": {
+    "en": 1.4220784482002597,
+    "vi": 1.297836253563439
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.58954650679013,
+    "en/ALL-NLI": 1.2546103896103895,
+    "vi/WIKIPEDIA-VI": 1.3638595507531552,
+    "vi/CC100-VI-CLEAN": 1.2318129563737226
+   },
+   "seconds": 92
+  },
+  "B_en80_vi40": {
+   "words": {
+    "WIKIPEDIA-EN": 80000000,
+    "ALL-NLI": 11996097,
+    "WIKIPEDIA-VI": 39999999,
+    "CC100-VI-CLEAN": 39999992
+   },
+   "macro_fertility": {
+    "en": 1.4301471302214324,
+    "vi": 1.2869029055271342
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.5973938275424318,
+    "en/ALL-NLI": 1.262900432900433,
+    "vi/WIKIPEDIA-VI": 1.354102200644027,
+    "vi/CC100-VI-CLEAN": 1.2197036104102414
+   },
+   "seconds": 120
+  },
+  "C_en60_vi15": {
+   "words": {
+    "WIKIPEDIA-EN": 59999964,
+    "ALL-NLI": 11996097,
+    "WIKIPEDIA-VI": 14999953,
+    "CC100-VI-CLEAN": 14999938
+   },
+   "macro_fertility": {
+    "en": 1.4191561849750545,
+    "vi": 1.2987921081523912
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.5898708115085503,
+    "en/ALL-NLI": 1.2484415584415585,
+    "vi/WIKIPEDIA-VI": 1.3645407835749526,
+    "vi/CC100-VI-CLEAN": 1.2330434327298296
+   },
+   "seconds": 73
+  }
+ },
+ "levers_on_variant_A": {
+  "D_32k_nosplit": {
+   "vocab": 32000,
+   "split_digits": false,
+   "macro_fertility": {
+    "en": 1.339537538926934,
+    "vi": 1.2187122158178567
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.4337,
+    "en/ALL-NLI": 1.2453,
+    "vi/WIKIPEDIA-VI": 1.2552,
+    "vi/CC100-VI-CLEAN": 1.1822
+   },
+   "seconds": 9
+  },
+  "E_48k_split": {
+   "vocab": 48000,
+   "split_digits": true,
+   "macro_fertility": {
+    "en": 1.3785372783018373,
+    "vi": 1.275322845744691
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.5369,
+    "en/ALL-NLI": 1.2202,
+    "vi/WIKIPEDIA-VI": 1.3364,
+    "vi/CC100-VI-CLEAN": 1.2143
+   },
+   "seconds": 9
+  },
+  "F_64k_split": {
+   "vocab": 64000,
+   "split_digits": true,
+   "macro_fertility": {
+    "en": 1.355436523715175,
+    "vi": 1.2627247994763589
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.5079,
+    "en/ALL-NLI": 1.203,
+    "vi/WIKIPEDIA-VI": 1.3198,
+    "vi/CC100-VI-CLEAN": 1.2057
+   },
+   "seconds": 10
+  },
+  "G_48k_nosplit": {
+   "vocab": 48000,
+   "split_digits": false,
+   "macro_fertility": {
+    "en": 1.292799334169495,
+    "vi": 1.193198481642074
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.3763,
+    "en/ALL-NLI": 1.2093,
+    "vi/WIKIPEDIA-VI": 1.2244,
+    "vi/CC100-VI-CLEAN": 1.162
+   },
+   "seconds": 10
+  }
+ },
+ "nosplit_32k_by_corpus": {
+  "H_32k_nosplit_A": {
+   "vocab": 32000,
+   "split_digits": false,
+   "macro_fertility": {
+    "en": 1.339537538926934,
+    "vi": 1.2187122158178567
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.4337,
+    "en/ALL-NLI": 1.2453,
+    "vi/WIKIPEDIA-VI": 1.2552,
+    "vi/CC100-VI-CLEAN": 1.1822
+   },
+   "seconds": 9
+  },
+  "H_32k_nosplit_B": {
+   "vocab": 32000,
+   "split_digits": false,
+   "macro_fertility": {
+    "en": 1.3480961261648061,
+    "vi": 1.2067656337553236
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.4431,
+    "en/ALL-NLI": 1.2531,
+    "vi/WIKIPEDIA-VI": 1.2449,
+    "vi/CC100-VI-CLEAN": 1.1687
+   },
+   "seconds": 11
+  },
+  "H_32k_nosplit_C": {
+   "vocab": 32000,
+   "split_digits": false,
+   "macro_fertility": {
+    "en": 1.3369325531021037,
+    "vi": 1.220088288485945
+   },
+   "sources": {
+    "en/WIKIPEDIA-EN": 1.4341,
+    "en/ALL-NLI": 1.2398,
+    "vi/WIKIPEDIA-VI": 1.2566,
+    "vi/CC100-VI-CLEAN": 1.1836
+   },
+   "seconds": 7
+  }
+ },
+ "finding": "With split_digits=true no 32k corpus mix reaches EN <= 1.35 (floor about 1.42). With split_digits=false at 32k, EN 1.337-1.348 and VI 1.207-1.220 pass on all three corpus mixes; 48k/64k with split digits do not clear EN (1.379, 1.355).",
+ "decision_needed": "Owner must choose whether the tokenizer stops splitting digits (affects numeric tokens in scientific text) or raises the vocabulary; the fit CLI cannot yet set split_digits.",
+ "selected_candidate": {
+  "owner_choice": "B: 48k vocabulary, digits not split (owner, 2026-11-11)",
+  "model": "artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model",
+  "model_sha256": "36181adf89d9f6547245d358923135289029453d2956afb207052b1881205047",
+  "vocab_sha256": "61ddbcf905d30cfa31ce7852dc29c3d4d3364752bf3449a8561192a135ac4a8c",
+  "contract_sha256": "84a4623424765f23da7fc05208861692d5672862013aaf312aa9dec50ebf9d11",
+  "fit": {
+   "command": "laris train tokenizer --authorized --vocab-size 48000 --no-split-digits (train split only)",
+   "corpus_sha256": "10ab4554c059af4655e2b5f65c95a36efee188531f0055512939e7939783b0d2",
+   "words": {
+    "WIKIPEDIA-EN": 80000000,
+    "ALL-NLI": 11996097,
+    "WIKIPEDIA-VI": 39999999,
+    "CC100-VI-CLEAN": 39999992
+   },
+   "seconds": 112,
+   "peak_rss_kib": 5987560
+  },
+  "development_macro_fertility": {
+   "en": 1.2995690282205232,
+   "vi": 1.184820420691953
+  },
+  "development_sources": {
+   "en/WIKIPEDIA-EN": 1.3832,
+   "en/ALL-NLI": 1.2159,
+   "vi/WIKIPEDIA-VI": 1.2166,
+   "vi/CC100-VI-CLEAN": 1.153
+  },
+  "unk_on_development_sample": {
+   "en/WIKIPEDIA-EN": {
+    "tokens": 1296625,
+    "unk": 8886,
+    "unk_rate": 0.006853176515954883
+   },
+   "en/ALL-NLI": {
+    "tokens": 56175,
+    "unk": 2,
+    "unk_rate": 3.560302625723187e-05
+   },
+   "vi/WIKIPEDIA-VI": {
+    "tokens": 464343,
+    "unk": 1272,
+    "unk_rate": 0.0027393543135139325
+   },
+   "vi/CC100-VI-CLEAN": {
+    "tokens": 2466285,
+    "unk": 20522,
+    "unk_rate": 0.008321017238478116
+   }
+  },
+  "special_ids_unchanged": true,
+  "gate_margin_en": 0.0504,
+  "gate_margin_vi": 0.1652,
+  "comparison_json_sha256": "ed7df8177883319c88ad49736dbeb5c5411318667b10b385ab2923e9e4c97b65",
+  "note": "Development sample only; the held-out test fertility (F07) has not been measured. The encoder must be re-initialised: token IDs and vocabulary size changed.",
+  "unk_old_32k_for_comparison": {
+   "en/WIKIPEDIA-EN": 0.00604,
+   "en/ALL-NLI": 3e-05,
+   "vi/WIKIPEDIA-VI": 0.00266,
+   "vi/CC100-VI-CLEAN": 0.01297
+  },
+  "preexisting_unk_finding": "CORRECTED: the first reading (capital Vietnamese letters are UNK) was wrong; they encode as a dummy-prefix piece plus the letter. The real cause is typographic punctuation (curly quotes, en/em dash, ellipsis): the fit corpus is normalised so the vocabulary never contains them, while training and inference fed raw text to SentencePiece.",
+  "input_normalisation_fix": {
+   "module": "src/laris/language/tokenization/normalized.py",
+   "flag": "--normalize-input on laris train language-encoder",
+   "provenance_key": "text_normalization",
+   "unk_on_processed_train_text_first_6000_rows": {
+    "wikipedia_en": {
+     "raw": 0.00758,
+     "normalized": 0.00086
+    },
+    "cc100_vi_clean": {
+     "raw": 0.00732,
+     "normalized": 0.00108
+    },
+    "wikipedia_vi": {
+     "raw": 0.0001,
+     "normalized": 4e-05
+    },
+    "squad": {
+     "raw": 0.00318,
+     "normalized": 0.00108
+    },
+    "viquad_v2": {
+     "raw": 0.00165,
+     "normalized": 0.0009
+    }
+   },
+   "residual_unk": "rare symbols only (registered sign, guillemets, private-use code points)"
+  },
+  "unk_development_sample_normalized": {
+   "en/WIKIPEDIA-EN": 0.00069,
+   "en/ALL-NLI": 0.0,
+   "vi/WIKIPEDIA-VI": 0.00133,
+   "vi/CC100-VI-CLEAN": 0.00112
+  }
+ }
+}
