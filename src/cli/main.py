@@ -12,6 +12,8 @@ Command tree (each leaf maps to a module in `cli.commands`):
     laris app ingest|index|search|ask|status|serve   local end-to-end application and web UI
     laris agent tools|run|chat       tool-using assistant (offline planner or model API)
     laris skills list|show|check     inspect and validate .laris/skills
+    laris skills add|lint|sync       install, lint or build knowledge skills
+    laris learn stats|export|purge   locally collected fine-tune data (never trains)
     laris workflows list|show|check  inspect and validate .laris/workflows
     laris harness verify|lock        policy integrity (LARIS.md, prompts, rules, workflows)
     laris model serve                OpenAI-compatible model API (placeholder backend for now)
@@ -30,6 +32,7 @@ from cli.commands import (
     evaluate,
     infer,
     language_encoder,
+    learn,
     model,
     partition,
     policy,
@@ -73,6 +76,14 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, Any]]] = {
         "list": ("List available skills", skills.COMMANDS["list"]),
         "show": ("Print one skill's instructions", skills.COMMANDS["show"]),
         "check": ("Validate every SKILL.md", skills.COMMANDS["check"]),
+        "lint": ("Completeness and safety lint of one skill", skills.COMMANDS["lint"]),
+        "add": ("Install a hand-written skill after lint", skills.COMMANDS["add"]),
+        "sync": ("Build knowledge skills for the whole corpus", skills.COMMANDS["sync"]),
+    },
+    "learn": {
+        "stats": ("Show collected fine-tune data counts", learn.COMMANDS["stats"]),
+        "export": ("Export collected data as JSONL (no training)", learn.COMMANDS["export"]),
+        "purge": ("Delete collected data", learn.COMMANDS["purge"]),
     },
     "workflows": {
         "list": ("List workflows", policy.WORKFLOW_COMMANDS["list"]),

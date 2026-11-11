@@ -40,9 +40,7 @@ def handle_api(
                 body.get("data_base64"),
                 chat.runtime.config.app if chat else None,
             )
-            with service._lock:
-                counts = service.workspace.add(chunks)
-            return 200, counts
+            return 200, service.ingest(chunks)
         if method == "POST" and path == "/api/search":
             return 200, service.search(
                 body.get("query", ""), body.get("mode", "bm25"), int(body.get("top_k", 5))
@@ -94,6 +92,13 @@ def _chat_routes(
             conversation["title"] = str(body.get("title") or conversation["title"])[:120]
             chat.conversations.save(conversation)
             return 200, conversation
+    if path == "/api/feedback" and method == "POST":
+        try:
+            return 200, chat.rate(str(body.get("example_id", "")), str(body.get("rating", "")))
+        except (KeyError, ValueError) as exc:
+            return 400, {"error": str(exc)}
+    if path == "/api/learning" and method == "GET":
+        return 200, chat.learning_stats()
     if path == "/api/workflows" and method == "GET":
         flows = chat.runtime.workflows()
         return 200, {"workflows": flows.summary(), "problems": flows.problems}

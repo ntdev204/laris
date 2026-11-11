@@ -65,6 +65,7 @@ agent:
     - write_file
     - ingest_path
     - save_memory
+    - save_skill
   verify:
     require_citations: true
     max_retries: 1
@@ -175,6 +176,73 @@ app:
   ocr_lang: eng+vie
   ocr_max_pages: 50
   allow_write_default: false
+
+# Learning: fine-tune data collected locally and RAG skills built when knowledge is added.
+learning:
+  enabled: true
+  dir: artifacts/finetune
+  min_answer_chars: 40
+  store_tool_results: true
+  max_tool_result_chars: 3000
+  store_passage_text: true
+  export_min_rating: none
+  skill_on_ingest: true
+  skill_dir: .laris/skills
+  knowledge_template: templates/knowledge_skill.md
+  max_generated_skills: 40
+  skill_top_terms: 12
+  skill_max_sources: 15
+  skill_min_term_chars: 4
+  skill_min_df: 2
+  skill_max_df_ratio: 0.6
+  skill_stopwords:
+  - the
+  - and
+  - for
+  - that
+  - with
+  - this
+  - from
+  - are
+  - was
+  - were
+  - have
+  - has
+  - not
+  - but
+  - can
+  - which
+  - their
+  - also
+  - such
+  - than
+  - these
+  - those
+  - into
+  - một
+  - những
+  - của
+  - và
+  - là
+  - có
+  - được
+  - trong
+  - cho
+  - các
+  - này
+  - khi
+  - với
+  skill_required_sections:
+  - When to use
+  - Steps
+  - Output
+  - Limits
+  skill_min_body_chars: 200
+  skill_protected_patterns:
+  - LARIS\.md
+  - \.laris/(rules|prompts|workflows)
+  - integrity\.lock
+  - (^|[\s`/])\.env\b
 
 # Prompt assembly: modules live under dir, assembled by the manifest.
 prompts:

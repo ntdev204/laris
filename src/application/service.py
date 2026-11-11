@@ -5,7 +5,7 @@ import json
 import re
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
@@ -38,6 +38,7 @@ class SearchService:
         rrf_k: int = 60,
         max_top_k: int = 50,
     ) -> None:
+        self.on_ingest: Optional[Callable[[List[Chunk], List[Chunk]], Dict[str, Any]]] = None
         self.notice = notice
         self.rrf_k = rrf_k
         self.max_top_k = max_top_k
@@ -99,6 +100,16 @@ class SearchService:
         if meta.get("chunks_sha256") != _ids_digest(self._chunks):
             return None
         return np.asarray(np.load(vec_path))
+
+    def ingest(self, chunks: List[Chunk]) -> Dict[str, Any]:
+        """Add documents, then let the learning hook build the RAG skill for them."""
+        incoming = list(chunks)
+        with self._lock:
+            counts: Dict[str, Any] = dict(self.workspace.add(incoming))
+            everything = self.workspace.load() if self.on_ingest else []
+        if self.on_ingest:
+            counts.update(self.on_ingest(incoming, everything))
+        return counts
 
     def status(self) -> Dict[str, Any]:
         with self._lock:

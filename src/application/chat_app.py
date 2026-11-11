@@ -22,6 +22,8 @@ from harness.policy import egress_allowed
 from harness.prefs import UserPrefs, effective
 from harness.runtime import HarnessRuntime
 from harness.workflows import WorkflowError, WorkflowSpec
+from learning.collector import Collector
+from learning.hooks import make_ingest_hook
 from skills import SkillLibrary
 
 
@@ -51,6 +53,7 @@ class ChatApp:
         self.output = self.root / "output"
         self.uploads.mkdir(parents=True, exist_ok=True)
         self.memory_dir = self.project_root / base.config.prompts.memory_dir
+        self.service.on_ingest = make_ingest_hook(lambda: self.runtime)
 
     # -- runtime ---------------------------------------------------------------------------
     @property
@@ -134,7 +137,7 @@ class ChatApp:
             "bytes": len(data),
         }
         if ingest:
-            result["ingested"] = self.service.workspace.add(chunks_from_bytes(safe, data, cfg))
+            result["ingested"] = self.service.ingest(chunks_from_bytes(safe, data, cfg))
         return result
 
     # -- context ---------------------------------------------------------------------------
@@ -237,14 +240,51 @@ class ChatApp:
             yield {"type": "done", "status": "blocked", "answer": str(exc)}
             return
         try:
-            yield from session.send(
+            for event in session.send(
                 text,
                 self.parse_skill_command(text, session.skills or SkillLibrary([])),
                 self.parse_workflow_command(text, self.runtime),
-            )
+            ):
+                if event["type"] == "done":
+                    yield self._learn(conversation_id, session)
+                yield event
         finally:  # keep what happened even if the client disconnects mid-stream
             conversation["messages"] = session.history
             self.conversations.save(conversation)
+
+    # -- learning --------------------------------------------------------------------------
+    def collector(self, runtime: Optional[HarnessRuntime] = None) -> Collector:
+        rt = runtime or self.runtime
+        folder = Path(rt.config.learning.dir)
+        return Collector(
+            rt.config.learning, folder if folder.is_absolute() else self.project_root / folder
+        )
+
+    def _learn(self, conversation_id: str, session: AgentSession) -> Dict[str, Any]:
+        """Keep the finished turn for later fine-tuning when it passes the quality gate."""
+        runtime = self.runtime
+        history = session.history
+        start = max(
+            (
+                i
+                for i, m in enumerate(history)
+                if m.get("role") == "user" and not m.get("compacted") and not m.get("harness")
+            ),
+            default=0,
+        )
+        if session.sh is None:
+            return {"type": "learning", "stored": False, "reason": "no_session"}
+        outcome = self.collector(runtime).record(
+            conversation_id, history[start:], session.last_turn, session.sh.guard
+        )
+        outcome["type"] = "learning"
+        return outcome
+
+    def rate(self, example_id: str, rating: str) -> Dict[str, Any]:
+        return self.collector().rate(example_id, rating)
+
+    def learning_stats(self) -> Dict[str, Any]:
+        return self.collector().stats()
 
     def compact(
         self, conversation_id: str, instructions: str = ""

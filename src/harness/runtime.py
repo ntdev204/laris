@@ -50,6 +50,7 @@ class HarnessRuntime:
         for private in ("conversations", "archive", "sessions", "audit"):  # other users' data
             self.paths.add_deny(f"{chat_dir}/{private}/**")
         self.paths.add_deny(f"{chat_dir}/settings.json")
+        self.paths.add_deny(f"{self.config.learning.dir.strip('/')}/**")  # collected training data
         self.verifier = AnswerVerifier(self.config.agent.verify)
 
     def _check_integrity(self) -> list:

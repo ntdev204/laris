@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class ApprovalConfig(BaseModel):
     mode: Literal["ask", "auto", "deny"] = Field(default="ask")
     always_ask: List[str] = Field(
-        default_factory=lambda: ["write_file", "ingest_path", "save_memory"]
+        default_factory=lambda: ["write_file", "ingest_path", "save_memory", "save_skill"]
     )
 
 
@@ -198,3 +198,44 @@ class PromptConfig(BaseModel):
     skills_index_chars: int = Field(default=8000, ge=500)
     memory_dir: str = Field(default=".laris/memory")
     user_preferences_max_chars: int = Field(default=1200, ge=0)
+
+
+_STOPWORDS = [
+    "the", "and", "for", "that", "with", "this", "from", "are", "was", "were", "have", "has",
+    "not", "but", "can", "which", "their", "also", "such", "than", "these", "those", "into",
+    "một", "những", "của", "và", "là", "có", "được", "trong", "cho", "các", "này", "khi", "với",
+]  # fmt: skip
+
+
+class LearningConfig(BaseModel):
+    """What the system learns from use: fine-tune data (local only) and RAG skills."""
+
+    enabled: bool = Field(default=True)  # collect useful interactions for later fine-tuning
+    dir: str = Field(default="artifacts/finetune")  # local, git-ignored, never read by tools
+    min_answer_chars: int = Field(default=40, ge=1)
+    store_tool_results: bool = Field(default=True)
+    max_tool_result_chars: int = Field(default=3000, ge=200)
+    store_passage_text: bool = Field(default=True)  # false keeps only chunk ids and hashes
+    export_min_rating: Literal["none", "up"] = Field(default="none")
+    skill_on_ingest: bool = Field(default=True)  # new knowledge -> a complete RAG skill
+    skill_dir: str = Field(default=".laris/skills")
+    knowledge_template: str = Field(default="templates/knowledge_skill.md")  # under prompts.dir
+    max_generated_skills: int = Field(default=40, ge=1)
+    skill_top_terms: int = Field(default=12, ge=3, le=40)
+    skill_max_sources: int = Field(default=15, ge=1, le=100)
+    skill_min_term_chars: int = Field(default=4, ge=2)
+    skill_min_df: int = Field(default=2, ge=1)
+    skill_max_df_ratio: float = Field(default=0.6, gt=0.0, le=1.0)
+    skill_stopwords: List[str] = Field(default_factory=lambda: list(_STOPWORDS))
+    skill_required_sections: List[str] = Field(
+        default_factory=lambda: ["When to use", "Steps", "Output", "Limits"]
+    )
+    skill_min_body_chars: int = Field(default=200, ge=1)
+    skill_protected_patterns: List[str] = Field(
+        default_factory=lambda: [
+            r"LARIS\.md",
+            r"\.laris/(rules|prompts|workflows)",
+            r"integrity\.lock",
+            r"(^|[\s`/])\.env\b",
+        ]
+    )

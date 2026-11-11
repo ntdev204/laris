@@ -44,16 +44,23 @@ class _Command:
         return 0
 
 
-def _ingest(service: SearchService, args: argparse.Namespace, rt: Any) -> Optional[Dict[str, int]]:
-    total = {"documents": 0, "passages": 0}
+def _ingest(service: SearchService, args: argparse.Namespace, rt: Any) -> Optional[Dict[str, Any]]:
+    total: Dict[str, Any] = {"documents": 0, "passages": 0}
+    skills_made: list = []
     for raw in args.paths:
         chunks = chunks_from_path(
             Path(raw), args.limit, rt.config.app, rt.root, skip=rt.paths.denied
         )
-        counts = service.workspace.add(chunks)
+        counts = service.ingest(chunks)
         total["documents"] += counts["documents"]
         total["passages"] += counts["passages"]
+        if counts.get("skill"):
+            skills_made.append(counts["skill"])
+        elif counts.get("skill_skipped"):
+            print(f"[skill skipped] {'; '.join(counts['skill_skipped'])}")
     total["total_passages"] = len(service.workspace.load())
+    if skills_made:
+        total["skills"] = sorted(set(skills_made))
     return total
 
 

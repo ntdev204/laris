@@ -133,6 +133,13 @@ the client settings; keys are never stored in files.
 `laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
 refreshes the lock after an owner-approved change. A tampered policy stops every session.
 
+#### Learning: skills from new knowledge and fine-tune data
+
+Ingesting documents creates or refreshes a generated `corpus-*` skill (`laris skills sync` rebuilds
+them all); `laris skills lint|add` checks and installs a hand-written one, and the agent can save one
+with `save_skill` after approval. Good answers are kept locally under `artifacts/finetune`
+(`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
+
 #### Instructions, skills and automatic context compaction
 
 - **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the

@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import yaml
+
 from agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
 from application.service import SearchService, ServiceError
 from application.workspace import (
@@ -17,6 +19,7 @@ from application.workspace import (
     read_text_from_bytes,
 )
 from harness.runtime import HarnessRuntime
+from learning.skills import install_skill, lint_skill
 from skills.loader import SkillError, SkillLibrary
 
 _PATH = {"type": "string", "description": "File or folder path (project-relative)"}
@@ -88,7 +91,7 @@ def build_registry(
             chunks = chunks_from_path(path, cfg=app, base=rt.root, skip=rt.paths.denied)
         except IngestError as exc:
             raise ToolExecutionError("unreadable", str(exc)) from exc
-        return service.workspace.add(chunks)
+        return service.ingest(chunks)
 
     def search(args: Dict[str, Any]) -> Any:
         top_k = min(int(args.get("top_k", app.search_default_top_k)), agent.search_max_top_k)
@@ -163,6 +166,30 @@ def build_registry(
         with open(path, mode, encoding="utf-8") as handle:
             handle.write(("\n" if mode == "a" else "") + content + "\n")
         return {"path": rel(path), "mode": "appended" if mode == "a" else "created"}
+
+    def save_skill(args: Dict[str, Any]) -> Any:
+        learning = rt.config.learning
+        name = args["name"].strip()
+        description = " ".join(args["description"].split())
+        front = yaml.safe_dump(
+            {"name": name, "description": description, "authored": "user"},
+            sort_keys=False,
+            allow_unicode=True,
+            width=1000,
+        ).strip()
+        text = f"---\n{front}\n---\n\n{args['body'].strip()}\n"
+        problems = lint_skill(
+            text, learning, rt.injection, rt.redactor, agent.skill_max_chars, name
+        )
+        if problems:
+            raise ToolExecutionError("invalid_skill", "; ".join(problems))
+        folder = Path(learning.skill_dir).expanduser()
+        folder = folder if folder.is_absolute() else rt.root / folder
+        try:
+            path, replaced = install_skill(folder, name, text, bool(args.get("overwrite")))
+        except SkillError as exc:
+            raise ToolExecutionError("exists", str(exc)) from exc
+        return {"skill": name, "path": rel(path), "replaced": replaced}
 
     top_k = {"type": "integer", "minimum": 1, "maximum": agent.search_max_top_k}
     mode = {"type": "string", "enum": ["bm25", "dense", "hybrid"]}
@@ -251,6 +278,22 @@ def build_registry(
                 ["name", "content"],
             ),
             save_memory,
+            writes=True,
+        ),
+        ToolSpec(
+            "save_skill",
+            "Save a complete skill (front matter plus When to use, Steps, Output, Limits) after "
+            "approval. Use it when the user teaches a new capability.",
+            schema(
+                {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "body": {"type": "string"},
+                    "overwrite": {"type": "boolean"},
+                },
+                ["name", "description", "body"],
+            ),
+            save_skill,
             writes=True,
         ),
         ToolSpec("corpus_status", "Show corpus size and model availability.", schema({}), status),

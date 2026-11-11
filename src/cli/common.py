@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 from application.service import SearchService
 from application.workspace import Workspace
 from harness.runtime import HarnessRuntime
+from learning.hooks import make_ingest_hook
 
 
 def model_flags(parser: argparse.ArgumentParser) -> None:
@@ -46,7 +47,7 @@ def load_runtime(args: Optional[argparse.Namespace] = None) -> HarnessRuntime:
 
 def make_service(args: argparse.Namespace, runtime: HarnessRuntime) -> SearchService:
     cfg = runtime.config.app
-    return SearchService(
+    service = SearchService(
         Workspace(Path(cfg.workspace)),
         Path(args.checkpoint) if getattr(args, "checkpoint", None) else None,
         Path(args.tokenizer_model) if getattr(args, "tokenizer_model", None) else None,
@@ -55,3 +56,5 @@ def make_service(args: argparse.Namespace, runtime: HarnessRuntime) -> SearchSer
         rrf_k=cfg.rrf_k,
         max_top_k=cfg.search_max_top_k,
     )
+    service.on_ingest = make_ingest_hook(lambda: runtime)
+    return service

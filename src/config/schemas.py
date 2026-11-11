@@ -16,6 +16,7 @@ from config.runtime_schemas import (
     AgentConfig,
     AppConfig,
     ContextConfig,
+    LearningConfig,
     ModelApiConfig,
     PromptConfig,
     SecurityConfig,
@@ -167,4 +168,5 @@ class LarisConfig(BaseModel):
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     serving: ServingConfig = Field(default_factory=ServingConfig)
     app: AppConfig = Field(default_factory=AppConfig)
+    learning: LearningConfig = Field(default_factory=LearningConfig)
     prompts: PromptConfig = Field(default_factory=PromptConfig)

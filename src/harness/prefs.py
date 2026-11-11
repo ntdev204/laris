@@ -22,6 +22,7 @@ EDITABLE: Dict[str, Tuple[Tuple[str, ...], type]] = {
     "context_window": (("context", "window_tokens"), int),
     "compact_threshold": (("context", "threshold"), float),
     "allow_write": (("agent", "approval", "mode"), bool),
+    "learning_enabled": (("learning", "enabled"), bool),
 }
 EXTRA_KEY = "extra_instructions"
 
@@ -104,5 +105,6 @@ def effective(config: LarisConfig, extra_instructions: str = "") -> Dict[str, An
         "context_window": config.context.window_tokens,
         "compact_threshold": config.context.threshold,
         "allow_write": config.agent.approval.mode == "auto",
+        "learning_enabled": config.learning.enabled,
         EXTRA_KEY: extra_instructions,
     }

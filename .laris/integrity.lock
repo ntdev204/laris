@@ -15,6 +15,7 @@
     ".laris/prompts/system/70_user_preferences.md": "dc314f20b2164b63077f5f75bfaa62d80abcdba0a8b94daa89d616424cd17bd9",
     ".laris/prompts/system/90_environment.md": "6193ab53a8e7a2bce544ee351779e4ca31331ad766d6f70cf5d953aeeba7b061",
     ".laris/prompts/system/95_session.md": "5e0ed0356c28abece9dad725d85ee2bb572c8c09a5fc65952806dbb87beaed90",
+    ".laris/prompts/templates/knowledge_skill.md": "44c6210f9dc2f05897356e7db020d46638daaa768605123ec8659a4dbcbfafad",
     ".laris/rules/10_confidentiality.md": "673f4d98632aee0f8eab9a63dad8c9f7e5dc100b891e97c66bf94ff2262fe6b0",
     ".laris/rules/20_untrusted_content.md": "fb73d97a8df03f6f0046a481ddc9eac9fec0e7f1c6d185d7c12f1697e8aae88c",
     ".laris/rules/30_evidence.md": "d02c0e8510a98ea69de9e39c4d45f01ec093a5d4d57ffac1a0866ffb942037b8",

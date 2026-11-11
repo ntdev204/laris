@@ -76,6 +76,7 @@ class AgentSession:
         self.messages: List[Message] = [{"role": "system", "content": ""}, *(messages or [])]
         self.sh: Optional[SessionHarness] = None
         self.workflow: Optional[WorkflowSpec] = None
+        self.last_turn: Dict[str, Any] = {}
 
     @property
     def history(self) -> List[Message]:
@@ -129,6 +130,7 @@ class AgentSession:
             provider=self.provider.name,
             workflow=wf.name if wf else "",
         )
+        verified = True
         self.messages.append({"role": "user", "content": user_text})
         seen: set = set()
         turn_results: List[Dict[str, Any]] = []
@@ -194,6 +196,7 @@ class AgentSession:
                     yield {"type": "verify", "ok": False, "retry": True}
                     continue
                 if not verdict.ok:
+                    verified = False
                     warning = "\n\n" + self._warning(verdict.reason, strings)
                     content += warning
                     yield {"type": "text", "delta": warning}
@@ -265,6 +268,13 @@ class AgentSession:
             answer = strings.get(f"loop.{status}")
         if status in ("cyclic", "max_steps", "timeout", "provider_error"):
             self.messages.append({"role": "assistant", "content": answer})
+        self.last_turn = {
+            "status": status,
+            "verified": verified,
+            "guard_hits": dict(guard.hits),
+            "workflow": wf.name if wf else "",
+            "prompt_version": sh.prompt.version,
+        }
         audit.event("turn_end", status=status, steps=steps, guard=json.dumps(guard.hits))
         self._log()
         yield self.usage_event()

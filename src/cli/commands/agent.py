@@ -61,6 +61,7 @@ class _Run:
         return _turn(chat, conversation["id"], args.task, always, interactive=False)
 
 
+_LAST: Dict[str, str] = {}  # id of the latest stored example, for /rate
 _USE = "\033[1m"
 _DIM = "\033[2m"
 _ERR = "\033[31m"
@@ -125,6 +126,9 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
             )
         elif kind == "verify":
             print(_paint(_DIM, "  ↻ kiểm tra trích dẫn, đang viết lại"))
+        elif kind == "learning":
+            if event.get("stored"):
+                _LAST["example"] = event["example_id"]
         elif kind == "usage" and event["window"]:
             if streaming:
                 print()
@@ -200,7 +204,7 @@ class _Chat:
             print(
                 "/new /sessions /resume ID /tools /skills /<skill> <yêu cầu> /compact [ghi chú] "
                 "/context /workflows /workflow NAME <yêu cầu> /status /model [URL [NAME]] "
-                "/write on|off /exit"
+                "/write on|off /learn on|off /rate up|down /exit"
             )
         elif name == "/new":
             conversation = dict(chat.conversations.create())
@@ -238,6 +242,15 @@ class _Chat:
                 print(f"  /{skill_name}: {library.skills[skill_name].summary(110)}")
             for problem in library.problems:
                 print(_paint(_ERR, f"  skill problem: {problem}"))
+        elif name == "/rate":
+            try:
+                chat.rate(_LAST.get("example", ""), rest)
+                print(f"đã ghi đánh giá: {rest}")
+            except (KeyError, ValueError):
+                print("dùng: /rate up|down sau một câu trả lời đã được lưu")
+        elif name == "/learn":
+            chat.update_settings({"learning_enabled": rest == "on"})
+            print(f"lưu dữ liệu fine-tune cục bộ: {'bật' if rest == 'on' else 'tắt'}")
         elif name == "/workflows":
             for item in chat.runtime.workflows().summary():
                 print(f"  /workflow {item['name']}: {item['description']}")

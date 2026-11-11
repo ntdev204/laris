@@ -66,6 +66,7 @@ footer{padding:10px 18px 16px}.composer{max-width:820px;margin:0 auto;background
 <label>Địa chỉ API mô hình</label><input id="s_url">
 <label>Tên mô hình</label><input id="s_model"><label>Biến môi trường chứa API key (tùy chọn, không lưu khóa)</label><input id="s_key" placeholder="LARIS_API_KEY">
 <label>Hướng dẫn bổ sung của bạn (không thay thế quy tắc hệ thống)</label><textarea id="s_prompt" rows="3"></textarea>
+<label><input type="checkbox" id="s_learn" style="width:auto"> Lưu các lượt trả lời tốt để fine-tune sau (chỉ trên máy này, đã che thông tin nhạy cảm)</label>
 <label><input type="checkbox" id="s_compact" style="width:auto"> Tự động nén ngữ cảnh khi gần đầy (khuyến nghị, mặc định bật)</label>
 <div class="row"><div style="flex:1"><label>Cửa sổ ngữ cảnh (token)</label><input id="s_window" type="number" min="2048" step="1024"></div><div style="flex:1"><label>Ngưỡng nén (0.3 – 0.95)</label><input id="s_thr" type="number" min="0.3" max="0.95" step="0.05"></div></div>
 <label><input type="checkbox" id="s_write" style="width:auto"> Cho phép trợ lý ghi file (vào artifacts/chat/output) và nạp tài liệu</label>
@@ -113,7 +114,7 @@ function fillResult(card,result){const failed=result&&result.error;if(failed)car
 card.querySelector('summary').textContent=(failed?'⚠ ':'✓ ')+card.querySelector('summary').textContent.slice(2);
 card.append(el('pre',null,JSON.stringify(result,null,2).slice(0,6000)))}
 function setText(bot,raw){bot.raw=raw;bot.box.querySelectorAll('.txt').forEach(n=>n.remove());const t=markdown(raw);t.className='txt';bot.box.append(t);bot.text=t}
-function addActions(bot){if(!bot.raw)return;const a=el('div','actions');const c=el('button','ghost','Sao chép');c.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(bot.raw);c.textContent='Đã chép'};a.append(c);bot.root.append(a)}
+function addActions(bot){if(!bot.raw)return;const a=el('div','actions');const c=el('button','ghost','Sao chép');c.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(bot.raw);c.textContent='Đã chép'};a.append(c);if(bot.example){[['up','👍','Câu trả lời tốt'],['down','👎','Câu trả lời chưa tốt']].forEach(([r,ic,t])=>{const b=el('button','ghost',ic);b.title=t;b.onclick=async()=>{try{await api('/api/feedback',{example_id:bot.example,rating:r});a.querySelectorAll('.rate').forEach(x=>x.disabled=true);b.textContent=ic+' ✓'}catch(e){b.title=e.message}};b.classList.add('rate');a.append(b)})}bot.root.append(a)}
 function renderHistory(messages){$('chat').textContent='';const cards={};let bot=null;
 messages.forEach(m=>{if(m.compacted){const d=el('details','tool');d.append(el('summary',null,'⟳ Ngữ cảnh trước đó đã được nén (xem tóm tắt)'));d.append(el('pre',null,m.content));$('chat').append(d);bot=null}
 else if(m.compacted_ack||m.superseded||m.harness){}
@@ -151,6 +152,7 @@ if(ev.type==='text'){raw2+=ev.delta;setText(bot,raw2)}
 else if(ev.type==='tool_call'){const c=toolCard(ev.name,ev.arguments);cards.push(c);bot.box.insertBefore(c,bot.text);if(!bot.text)bot.box.append(c)}
 else if(ev.type==='tool_result'){const c=cards.find(x=>!x.dataset.done&&x.querySelector('summary').textContent.includes(ev.name));if(c){c.dataset.done=1;fillResult(c,ev.result)}}
 else if(ev.type==='compact'){bot.root.before(el('div','note','⟳ Đã tự động nén ngữ cảnh ('+ev.method+'): '+ev.before+' → '+ev.after+' token, '+ev.summarized+' tin nhắn được tóm tắt.'))}
+else if(ev.type==='learning'){if(ev.stored)bot.example=ev.example_id}
 else if(ev.type==='verify'){raw2='';setText(bot,'')}
 else if(ev.type==='usage'){showUsage(ev)}
 else if(ev.type==='done'){if(ev.status!=='completed'){raw2=(raw2?raw2+'\n\n':'')+'⚠ '+ev.answer;setText(bot,raw2)}else if(!bot.raw){setText(bot,ev.answer)}}
@@ -193,8 +195,8 @@ $('new').onclick=()=>open(null);$('menu').onclick=()=>$('side').classList.toggle
 /* ---------- modals ---------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
 document.querySelectorAll('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('on')});
-$('bset').onclick=async()=>{const s=await api('/api/settings');$('s_url').value=s.base_url;$('s_model').value=s.model;$('s_key').value=s.api_key_env;$('s_prompt').value=s.extra_instructions||'';$('s_write').checked=s.allow_write;$('s_compact').checked=s.auto_compact;$('s_window').value=s.context_window;$('s_thr').value=s.compact_threshold;$('s_msg').textContent='';$('mset').classList.add('on')};
-$('s_save').onclick=async()=>{await api('/api/settings',{base_url:$('s_url').value.trim(),model:$('s_model').value.trim()||'laris-core',api_key_env:$('s_key').value.trim(),extra_instructions:$('s_prompt').value,allow_write:$('s_write').checked,auto_compact:$('s_compact').checked,context_window:parseInt($('s_window').value)||32768,compact_threshold:parseFloat($('s_thr').value)||0.8});
+$('bset').onclick=async()=>{const s=await api('/api/settings');$('s_url').value=s.base_url;$('s_model').value=s.model;$('s_key').value=s.api_key_env;$('s_prompt').value=s.extra_instructions||'';$('s_write').checked=s.allow_write;$('s_compact').checked=s.auto_compact;$('s_learn').checked=s.learning_enabled;$('s_window').value=s.context_window;$('s_thr').value=s.compact_threshold;$('s_msg').textContent='';$('mset').classList.add('on')};
+$('s_save').onclick=async()=>{await api('/api/settings',{base_url:$('s_url').value.trim(),model:$('s_model').value.trim()||'laris-core',api_key_env:$('s_key').value.trim(),extra_instructions:$('s_prompt').value,allow_write:$('s_write').checked,auto_compact:$('s_compact').checked,learning_enabled:$('s_learn').checked,context_window:parseInt($('s_window').value)||32768,compact_threshold:parseFloat($('s_thr').value)||0.8});
 const h=await api('/api/model-health');$('s_msg').textContent=(h.ok?'✓ ':'✗ ')+h.detail;health()};
 async function health(){try{const h=await api('/api/model-health');$('health').textContent='';const d=el('span','dot '+(h.ok?'ok':'bad'));$('health').append(d,document.createTextNode(h.mode==='api'?(h.ok?'API mô hình: kết nối':'API mô hình: lỗi'):'Trợ lý tích hợp (chưa có mô hình)'));$('health').title=h.detail}catch(e){$('health').textContent=e.message}}
 async function corpusStatus(){const s=await api('/api/status');$('c_status').textContent='Đoạn: '+s.passages+' · BM25: '+(s.bm25_ready?'sẵn sàng':'chưa')+' · Dense: '+(s.dense_ready?'sẵn sàng':'chưa lập chỉ mục')+' · Mô hình cục bộ: '+(s.model_configured?'đã nạp':'chưa')}
@@ -203,7 +205,7 @@ $('k_info').textContent='Chính sách nội bộ: '+(info.count?'đang áp dụn
 const l=$('k_list');l.textContent='';r.skills.forEach(k=>{const d=el('div','hit');d.append(el('h3',null,'/'+k.name),el('div','meta',k.scope+' · '+k.references+' tệp tham chiếu'),el('p',null,k.description));d.style.cursor='pointer';d.onclick=()=>{$('mskills').classList.remove('on');$('input').value='/'+k.name+' ';$('input').focus()};l.append(d)});
 r.problems.forEach(p=>l.append(el('p','err',p)));$('mskills').classList.add('on')};
 $('bcorpus').onclick=()=>{corpusStatus();$('mcorpus').classList.add('on')};
-$('c_up').onclick=async()=>{const fs=$('c_file').files;if(!fs.length)return;$('c_msg').textContent='Đang nạp…';try{const r=await upload([...fs],true);$('c_msg').textContent='Đã nạp '+r.map(x=>x.name).join(', ');corpusStatus()}catch(e){$('c_msg').textContent=e.message}};
+$('c_up').onclick=async()=>{const fs=$('c_file').files;if(!fs.length)return;$('c_msg').textContent='Đang nạp…';try{const r=await upload([...fs],true);const sk=r.map(x=>x.ingested&&x.ingested.skill).filter(Boolean);$('c_msg').textContent='Đã nạp '+r.map(x=>x.name).join(', ')+(sk.length?' · đã tạo/cập nhật skill: '+[...new Set(sk)].join(', '):'');corpusStatus()}catch(e){$('c_msg').textContent=e.message}};
 $('c_idx').onclick=async()=>{$('c_msg').textContent='Đang lập chỉ mục…';try{const r=await api('/api/index',{});$('c_msg').textContent='Đã lập chỉ mục '+r.count+' đoạn';corpusStatus()}catch(e){$('c_msg').textContent=e.message}};
 $('c_form').onsubmit=async e=>{e.preventDefault();const out=$('c_out');out.textContent='Đang tìm…';try{const r=await api('/api/search',{query:$('c_q').value,mode:$('c_mode').value});out.textContent='';
 if(!r.hits.length)out.append(el('p','meta','Không có kết quả.'));r.hits.forEach(h=>{const d=el('div','hit');d.append(el('h3',null,h.rank+'. '+h.title),el('div','meta',h.source));d.append(el('p',null,h.text.slice(0,500)));out.append(d)})}catch(err){out.textContent=err.message}};
