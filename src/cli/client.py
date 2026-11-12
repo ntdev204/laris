@@ -10,6 +10,7 @@ from cli.parser import Table, run
 COMMANDS: Table = {
     "app": {
         "ingest": ("Add documents to the local workspace", app.COMMANDS["ingest"]),
+        "index": ("Embed passages through the server for dense search", app.COMMANDS["index"]),
         "search": ("Search the workspace", app.COMMANDS["search"]),
         "status": ("Show workspace and model status", app.COMMANDS["status"]),
     },

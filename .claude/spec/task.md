@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T57 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T58 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -687,7 +687,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `POST /v1/laris/embed` (permission `embed`, metered, text never stored); client dense search embeds through it; the client no longer loads an encoder
 - Validation:
   - Dense search works end to end with a scripted encoder; a test shows no request text in the database
-- Status: pending
+- Status: done
+- Note: `POST /v1/laris/embed` (P1; permission `embed`, protocol header required, body checked with `EmbedRequest`, answer shaped as `EmbedResponse`, metered through `bill(..., "embed")`) forwards to the model block over P2 (`HttpEmbedder`). The client embeds only through it: `SearchService` now takes an `embedder` callable instead of checkpoint, tokenizer and device; `cli.common.make_service` builds a `ServerEmbedder` (new, in shared/http_provider.py: P1 path plus the protocol header, key from `model_api.api_key_env`) whenever `model_api.base_url` is set. The client never imports `laris.model`: the KNOWN edge of the block test is gone (KNOWN is now empty) and the wheel test refuses any import of server, model or research code. CLI: `laris app index` moved to the client table; the `--checkpoint`, `--tokenizer-model` and `--device` flags are removed from the client commands (they stay on `laris-model serve` and `laris-model infer`); `laris-server app index|ask` no longer exist. Tests (tests/unit/gateway/test_embed_route.py, 4 tests, a scripted bag-of-words encoder): the route follows the P1 rules (200, 426, 401, 403 for a role without `embed`, 400), quota decreases, a unique secret sentence appears nowhere in the server's data folder (database, WAL, logs), and dense and hybrid search find the right document end to end through a live server. Dense index metadata now records `embedder: server` instead of a model digest. Limits: extractive question answering (`answer_question` tool, `laris app ask`) needed the local encoder's QA head, so it now raises a clear `ServiceError` until a QA route exists on the model block; the plan does not schedule one, so the OfflinePlanner's use of `answer_question` is unreachable with a real server. The embedding vectors are sent in JSON, not compressed. Verification: ruff, mypy (277 files), `make check-no-training`, full pytest leaves only the two failures described in T50.
 
 ### T59 — Default key handling
 - Requirements: SR-S4

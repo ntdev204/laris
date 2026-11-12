@@ -120,11 +120,11 @@ def test_each_program_has_only_its_own_commands():
 
     client, server, model = client_cli.COMMANDS, server_cli.COMMANDS, model_cli.COMMANDS
     assert set(client) == {"agent", "account", "vault", "skills", "learn", "app"}
-    assert set(client["app"]) == {"ingest", "search", "status"}
+    assert set(client["app"]) == {"ingest", "index", "search", "status"}
     for group in ("model", "harness", "brain", "data", "train", "evaluate", "workflows"):
         assert group not in client and group in server
     assert "infer" not in client and "infer" not in server and set(model) == {"infer"}
-    assert set(server["app"]) == {"index", "ask"}
+    assert "app" not in server  # embedding goes through the server, answers need a QA model
     with pytest.raises(SystemExit):
         build_parser_for(client, "laris").parse_args(["model", "serve"])
     with pytest.raises(SystemExit):

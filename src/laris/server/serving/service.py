@@ -84,6 +84,6 @@ class ModelService:
 
     def embeddings(self, body: Dict[str, Any]) -> Dict[str, Any]:
         if self.embedder is None:
-            raise ValueError("no embedding model loaded (start with --checkpoint)")
+            raise ValueError("this server has no embedding model")
         vectors = self.embedder(texts_of(body.get("input", [])))
         return embeddings_response(vectors, self.model_name)

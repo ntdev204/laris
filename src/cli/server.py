@@ -5,7 +5,6 @@ import sys
 from typing import Optional, Sequence
 
 from cli.commands import (
-    app,
     calibrate,
     check,
     evaluate,
@@ -86,10 +85,6 @@ COMMANDS: Table = {
     },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
-    },
-    "app": {
-        "index": ("Embed passages with a checkpoint (inference only)", app.COMMANDS["index"]),
-        "ask": ("Extractive answer with source passages", app.COMMANDS["ask"]),
     },
 }
 

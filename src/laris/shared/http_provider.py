@@ -11,6 +11,8 @@ import urllib.request
 from typing import Any, Dict, Iterator, List, Optional
 
 from laris.protocol import (
+    PROTOCOL_HEADER,
+    PROTOCOL_VERSION,
     AssistantTurn,
     ChatProvider,
     Message,
@@ -143,7 +145,10 @@ class HttpChatProvider(ChatProvider):
 
 
 class HttpEmbedder:
-    """`POST {base_url}/embeddings`: the vectors of a list of texts."""
+    """`POST {base_url}/embeddings` (P2): the vectors of a list of texts."""
+
+    path = "/embeddings"
+    extra_headers: Dict[str, str] = {}
 
     def __init__(
         self,
@@ -152,13 +157,13 @@ class HttpEmbedder:
         api_key_env: Optional[str] = None,
         timeout_s: float = 120.0,
     ) -> None:
-        self.url = base_url.rstrip("/") + "/embeddings"
+        self.url = base_url.rstrip("/") + self.path
         self.model = model
         self.api_key = os.environ.get(api_key_env) if api_key_env else None
         self.timeout_s = timeout_s
 
     def __call__(self, texts: List[str]) -> List[List[float]]:
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", **self.extra_headers}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         body = json.dumps({"input": texts, "model": self.model}).encode("utf-8")
@@ -174,3 +179,10 @@ class HttpEmbedder:
             raise ProviderError(f"model API unreachable: {exc}") from exc
         except (KeyError, TypeError, ValueError) as exc:
             raise ProviderError(f"model API returned an invalid response: {exc}") from exc
+
+
+class ServerEmbedder(HttpEmbedder):
+    """`POST {server}/laris/embed` (P1): the client embeds through the server, never locally."""
+
+    path = "/laris/embed"
+    extra_headers = {PROTOCOL_HEADER: PROTOCOL_VERSION}

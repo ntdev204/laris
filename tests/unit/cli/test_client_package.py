@@ -45,7 +45,7 @@ def test_client_wheel_holds_only_the_client_blocks():
     assert not [n for n in names if n.startswith(build.NOT_SHIPPED)]
     assert not [f for f in files if ".laris" in f.parts]
     assert {"laris.client.agent.loop", "laris.shared.vault.index", "cli.client"} <= names
-    # every module the client imports is shipped (the one lazy import of the model is guarded)
+    # every module the client imports is shipped, and none comes from server, model or research
     for file in files:
         for node in ast.walk(ast.parse(file.read_text(encoding="utf-8"))):
             found = []
@@ -54,9 +54,8 @@ def test_client_wheel_holds_only_the_client_blocks():
             elif isinstance(node, ast.Import):
                 found = [a.name for a in node.names]
             for name in found:
-                if name.startswith(build.NOT_SHIPPED):  # only the guarded lazy import (T58)
-                    assert file.name == "service.py" and name.startswith("laris.model.inference")
-                elif name.startswith(("laris.", "cli.")):
+                assert not name.startswith(build.NOT_SHIPPED), (file.name, name)
+                if name.startswith(("laris.", "cli.")):
                     assert name in names or name.rsplit(".", 1)[0] in names, (file.name, name)
 
 

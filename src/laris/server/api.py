@@ -210,12 +210,13 @@ def create_app(
     @app.post("/{path:path}", response_model=None)
     async def post(path: str, request: Request) -> Any:
         full = "/" + path
-        known = {"/v1/laris/chat", "/v1/chat/completions", "/v1/embeddings"}
+        known = {"/v1/laris/chat", "/v1/chat/completions", "/v1/embeddings", "/v1/laris/embed"}
         if full not in known:
             raise HTTPException(401 if principal_of(request) is None else 404, "not found")
         if full.startswith("/v1/laris/"):
             check_protocol(request)
-        permission = EMBED if full == "/v1/embeddings" else CHAT
+        embedding = full in ("/v1/embeddings", "/v1/laris/embed")
+        permission = EMBED if embedding else CHAT
         principal = await run_in_threadpool(allow, request, permission)
         body, length = await read_json(request)
         try:
@@ -224,7 +225,7 @@ def create_app(
                     ChatRequest(**body)
                 except (ValidationError, TypeError) as exc:
                     raise HTTPException(400, f"invalid request: {_first_error(exc)}") from None
-            elif full == "/v1/embeddings":
+            elif embedding:
                 try:
                     EmbedRequest(**body)
                 except (ValidationError, TypeError) as exc:

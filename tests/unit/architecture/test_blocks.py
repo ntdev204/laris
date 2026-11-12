@@ -15,10 +15,7 @@ BLOCKS = ("protocol", "shared", "client", "server", "model", "research")
 BLOCK_PEERS = {"client", "server", "model"}
 
 # (importing module, imported module prefix) -> task that removes the edge
-KNOWN: Dict[Tuple[str, str], str] = {
-    # the client still embeds locally; T58 moves embedding behind POST /v1/laris/embed
-    ("laris.client.application.service", "laris.model.inference"): "T58",
-}
+KNOWN: Dict[Tuple[str, str], str] = {}
 
 
 def block_of(module: str) -> str:

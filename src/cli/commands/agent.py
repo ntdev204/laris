@@ -11,12 +11,11 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from cli.common import load_runtime, make_service, model_flags
+from cli.common import load_runtime, make_service
 from laris.client.application.chat_app import ChatApp
 
 
 def _common(parser: argparse.ArgumentParser) -> None:
-    model_flags(parser)
     parser.add_argument(
         "--workspace", default=None, help="Workspace folder (config: app.workspace)"
     )

@@ -4,7 +4,6 @@ import hashlib
 import json
 import re
 import threading
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
@@ -31,9 +30,7 @@ class SearchService:
     def __init__(
         self,
         workspace: Workspace,
-        checkpoint: Optional[Path] = None,
-        tokenizer_model: Optional[Path] = None,
-        device: Optional[str] = None,
+        embedder: Optional[Callable[[List[str]], List[List[float]]]] = None,
         notice: str = "",
         rrf_k: int = 60,
         max_top_k: int = 50,
@@ -43,11 +40,8 @@ class SearchService:
         self.rrf_k = rrf_k
         self.max_top_k = max_top_k
         self.workspace = workspace
-        self.checkpoint = Path(checkpoint) if checkpoint else None
-        self.tokenizer_model = Path(tokenizer_model) if tokenizer_model else None
-        self.device = device
+        self.embedder = embedder  # embeds through the server (POST /v1/laris/embed)
         self._lock = threading.RLock()
-        self._predictor: Any = None
         self._chunks: List[Chunk] = []
         self._bm25: Optional[BM25RetrievalBaseline] = None
         self._matrix: Optional[np.ndarray] = None
@@ -56,23 +50,12 @@ class SearchService:
     # -- state -----------------------------------------------------------------------------
     @property
     def has_model(self) -> bool:
-        return self.checkpoint is not None and self.tokenizer_model is not None
+        return self.embedder is not None
 
-    def _predictor_or_raise(self) -> Any:
-        if not self.has_model:
-            raise ServiceError("No model configured: start with --checkpoint and --tokenizer-model")
-        if self._predictor is None:
-            try:
-                from laris.model.inference.loader import load_encoder
-                from laris.model.inference.predictor import LanguageEncoderPredictor
-            except ImportError as exc:  # the packaged client carries no model code
-                message = "this program has no local model; embed through the server"
-                raise ServiceError(message) from exc
-
-            assert self.checkpoint is not None and self.tokenizer_model is not None
-            encoder = load_encoder(self.checkpoint, self.tokenizer_model, device=self.device)
-            self._predictor = LanguageEncoderPredictor(encoder)
-        return self._predictor
+    def _embed(self, texts: List[str]) -> np.ndarray:
+        if self.embedder is None:
+            raise ServiceError("No server configured: dense search embeds through the server")
+        return np.asarray(self.embedder(texts), dtype=np.float32)
 
     def _refresh(self) -> None:
         """Reload passages, BM25 and the dense matrix when the workspace changed."""
@@ -125,28 +108,21 @@ class SearchService:
                 "bm25_ready": self._bm25 is not None,
                 "dense_ready": self._matrix is not None,
                 "model_configured": self.has_model,
-                "checkpoint": str(self.checkpoint) if self.checkpoint else None,
                 "notice": self.notice,
             }
-            if self.checkpoint:
-                manifest = self.checkpoint / "manifest.json"
-                if manifest.exists():
-                    data = json.loads(manifest.read_text(encoding="utf-8"))
-                    info["model_sha256"] = data.get("model_sha256")
             return info
 
     # -- indexing --------------------------------------------------------------------------
     def build_dense_index(self, batch_log: Optional[Any] = None) -> Dict[str, Any]:
-        """Embed every passage with the checkpoint (inference only) and save the matrix."""
+        """Embed every passage through the server and save the matrix."""
         with self._lock:
             self._refresh()
             if not self._chunks:
                 raise ServiceError("Nothing to index: ingest documents first")
-            predictor = self._predictor_or_raise()
             rows = []
             for start in range(0, len(self._chunks), 32):
                 batch = self._chunks[start : start + 32]
-                rows.append(predictor.embed([f"{c.title}. {c.text}" for c in batch]))
+                rows.append(self._embed([f"{c.title}. {c.text}" for c in batch]))
                 if batch_log:
                     batch_log(min(start + 32, len(self._chunks)), len(self._chunks))
             matrix = np.concatenate(rows).astype(np.float32)
@@ -154,7 +130,7 @@ class SearchService:
             meta = {
                 "chunks_sha256": _ids_digest(self._chunks),
                 "count": len(self._chunks),
-                "model_sha256": predictor.encoder.manifest.get("model_sha256"),
+                "embedder": "server",
             }
             (self.workspace.root / "embeddings.json").write_text(
                 json.dumps(meta, indent=2), encoding="utf-8"
@@ -171,8 +147,8 @@ class SearchService:
 
     def _dense_rank(self, query: str, top_k: int) -> List[int]:
         if self._matrix is None:
-            raise ServiceError("Dense index not built: run `laris app index` (needs a checkpoint)")
-        vec = self._predictor_or_raise().embed([query])[0]
+            raise ServiceError("Dense index not built: run `laris app index` (needs the server)")
+        vec = self._embed([query])[0]
         scores = self._matrix @ vec
         return [int(i) for i in np.argsort(-scores)[:top_k]]
 
@@ -214,26 +190,8 @@ class SearchService:
 
     # -- answer ----------------------------------------------------------------------------
     def answer(self, question: str, mode: str = "bm25", top_k: int = 3) -> Dict[str, Any]:
-        """Extractive answers from the top passages; each is checked to be quoted verbatim."""
-        found = self.search(question, mode=mode, top_k=top_k)
-        with self._lock:
-            predictor = self._predictor_or_raise()
-            answers = []
-            for hit in found["hits"]:
-                result = predictor.qa(hit["text"], question)
-                text = (result.get("answer") or "").strip()
-                offset = hit["text"].lower().find(text.lower()) if text else -1
-                answers.append(
-                    {
-                        "chunk_id": hit["chunk_id"],
-                        "source": hit["source"],
-                        "answer": text or None,
-                        "no_answer": bool(result.get("no_answer")) or not text,
-                        "verbatim_in_passage": offset >= 0,
-                        "answer_span_in_passage": [offset, offset + len(text)]
-                        if offset >= 0
-                        else None,
-                    }
-                )
-        primary = next((a for a in answers if a["answer"] and a["verbatim_in_passage"]), None)
-        return {**found, "answers": answers, "primary": primary}
+        """Extractive question answering needs a QA model; the client holds none (D16)."""
+        raise ServiceError(
+            "extractive answers need a QA model on the server, which is not available yet; "
+            "use search and read the passages"
+        )
