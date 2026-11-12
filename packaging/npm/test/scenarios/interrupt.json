@@ -1,0 +1,6 @@
+{"name":"Esc interrupts a running turn","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}]},
+ {"expect":{"type":"user_message","text":"think hard"},"emit":[{"type":"text","delta":"Let me think"}]},
+ {"expect":{"type":"interrupt"},"emit":[{"type":"done","status":"interrupted","answer":""}]},
+ {"expect":{"type":"user_message","text":"again"},"emit":[{"type":"text","delta":"Second answer.\n"},{"type":"done","status":"completed","answer":""}]}
+]}

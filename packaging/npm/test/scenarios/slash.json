@@ -1,0 +1,6 @@
+{"name":"slash commands and an unknown one","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}]},
+ {"expect":{"type":"command","name":"help","args":""},"emit":[{"type":"text","delta":"Commands: /help /exit\n"},{"type":"done","status":"completed","answer":""}]},
+ {"expect":{"type":"command","name":"nope","args":"x y"},"emit":[{"type":"error","code":"unknown_command","message":"unknown command /nope"}]},
+ {"expect":{"type":"user_message","text":"still alive"},"emit":[{"type":"text","delta":"yes\n"},{"type":"done","status":"completed","answer":""}]}
+]}

@@ -1,0 +1,10 @@
+{"name":"a streamed answer with a tool call","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"},{"type":"status","kind":"line","data":{"model":"laris-base","mode":"default","context":{"tokens":1200,"window":8000,"percent":15},"tokens_left":750,"tokens_used":250,"token_limit":1000,"unlimited":false,"branch":"develop","sandbox":"ready","queued":0}}]},
+ {"expect":{"type":"user_message","text":"hello"},"emit":[
+   {"type":"text","delta":"Hi, "},{"type":"text","delta":"this is **bold** and `code`.\n\n"},
+   {"type":"tool_call","id":"call_1","name":"search_papers","arguments":{"query":"graphs"}},
+   {"type":"tool_result","id":"call_1","name":"search_papers","result":{"hits":[{"id":1},{"id":2}]}},
+   {"type":"text","delta":"Found 2 passages.\n\n```python\nfor i in range(3):\n    print(i)  # count\n```\n"},
+   {"type":"status","kind":"line","data":{"model":"laris-base","mode":"default","context":{"tokens":1500,"window":8000,"percent":19},"tokens_left":500,"branch":"develop","sandbox":"ready","queued":0}},
+   {"type":"done","status":"completed","answer":""}]}
+]}

@@ -63,7 +63,12 @@ jobs:
           python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+      - name: Build the Ink front end the launcher ships
+        working-directory: packaging/npm
+        run: |
+          npm ci
+          npm test
       - uses: actions/download-artifact@v4
         with:
           pattern: binary-*

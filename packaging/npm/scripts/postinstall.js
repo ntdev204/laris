@@ -3,8 +3,9 @@
 // Windows: adds it to the user's PATH (HKCU only, no admin). Linux/macOS: prints the line to add.
 // Opt out with LARIS_NO_PATH_EDIT=1. This script never fails the install.
 "use strict";
-const { spawnSync } = require("child_process");
-const path = require("path");
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 function globalBinDir(env, platform) {
   const prefix = env.npm_config_prefix;
@@ -52,11 +53,11 @@ function main(env = process.env, platform = process.platform) {
   return 0;
 }
 
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     main();
   } catch (_) {
     /* never block the install */
   }
 }
-module.exports = { globalBinDir, onPath, main };
+export { globalBinDir, onPath, main };

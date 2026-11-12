@@ -84,3 +84,4 @@ LARIS.local.md
 .laris/memory/
 packaging/npm/vendor/
 docker/secrets/
+packaging/npm/node_modules/
