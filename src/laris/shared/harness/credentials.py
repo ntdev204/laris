@@ -1,8 +1,8 @@
 """The user's API key: where it comes from, how it is stored, and which private space it names.
 
 The key is read from the environment variable `app.key_env`, else from the `api_key` field of
-the global settings.json written by `laris login` (mode 0600), else typed at a hidden prompt. Each
-key owns a separate conversation space: its folder name is a one-way fingerprint, so the key is
+`~/.laris/.credentials.json` written by `laris login` (mode 0600), else typed at a hidden prompt.
+Each key owns a separate conversation space: its folder name is a one-way fingerprint, so the key is
 never written to state folders, logs or audit records.
 """
 
@@ -40,17 +40,10 @@ def _read(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def _legacy(cfg: AppConfig) -> Path:
-    return _path(cfg).with_name("credentials.json")
-
-
 def load_saved(cfg: AppConfig) -> Optional[str]:
-    """`api_key` in the global settings.json (older installs: ~/.laris/credentials.json)."""
-    for path in (_path(cfg), _legacy(cfg)):
-        value = _read(path).get("api_key")
-        if isinstance(value, str) and value:
-            return value
-    return None
+    """`api_key` in `~/.laris/.credentials.json` (mode 0600)."""
+    value = _read(_path(cfg)).get("api_key")
+    return value if isinstance(value, str) and value else None
 
 
 def _write(path: Path, data: dict) -> None:
@@ -62,7 +55,7 @@ def _write(path: Path, data: dict) -> None:
 
 
 def save(cfg: AppConfig, key: str) -> Path:
-    """Store the key in settings.json next to the other settings (mode 0600)."""
+    """Store the key in `.credentials.json` (mode 0600), never in settings.json."""
     path = _path(cfg)
     data = _read(path)
     data["api_key"] = key
@@ -76,10 +69,6 @@ def forget(cfg: AppConfig) -> bool:
     data = _read(path)
     if data.pop("api_key", None) is not None:
         _write(path, data)
-        removed = True
-    legacy = _legacy(cfg)
-    if legacy != path and legacy.exists():
-        legacy.unlink()
         removed = True
     return removed
 

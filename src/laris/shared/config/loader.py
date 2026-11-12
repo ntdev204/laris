@@ -14,7 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import yaml
 
@@ -234,6 +234,24 @@ def load_config(
     return LarisConfig(**merged)
 
 
+_PROJECT_CONFIG = True
+
+
+def ignore_project_config(ignore: bool = True) -> None:
+    """The client calls this at start: no file inside a project contributes configuration
+    (SR-C2, SR-C5); only `~/.laris/settings.json`, the environment and flags do."""
+    global _PROJECT_CONFIG
+    _PROJECT_CONFIG = not ignore
+
+
+PROJECT_CONFIG_FILES = ("config.yaml", "config.yml", "settings.json", "settings.local.json")
+
+
+def ignored_project_files(root: Path) -> List[Path]:
+    """Configuration-looking files in `<root>/.laris/` that the client ignores."""
+    return [root / ".laris" / n for n in PROJECT_CONFIG_FILES if (root / ".laris" / n).is_file()]
+
+
 def load_runtime_config(
     project_root: Optional[Union[str, Path]] = None,
     overrides: Optional[Dict[str, Any]] = None,
@@ -243,8 +261,8 @@ def load_runtime_config(
     """Resolve the runtime configuration for a project.
 
     Order (later wins): schema defaults, `configs/default.yaml`, `~/.laris/config.yaml`,
-    `<project>/.laris/config.yaml`, the user's saved preferences (`~/.laris/settings.json`, where
-    `base_url` names the server), `LARIS_*` environment (after
+    `<project>/.laris/config.yaml` (not on the client), the user's saved settings
+    (`~/.laris/settings.json`, where `server.url` names the server), `LARIS_*` environment (after
     loading `<project>/.env`), then explicit overrides.
     """
     root = Path(project_root or Path.cwd())
@@ -252,10 +270,11 @@ def load_runtime_config(
     if user_layer is None:  # the global settings.json (server address, model) applies everywhere
         user_layer = layer_from(read_settings(Path.home() / ".laris" / "settings.json")) or None
     default = root / "configs" / "default.yaml"
+    project_files = [root / ".laris" / "config.yaml"] if _PROJECT_CONFIG else []
     return load_config(
         default if default.is_file() else None,
         env_prefix=env_prefix,
         overrides=overrides,
-        extra_files=[Path.home() / ".laris" / "config.yaml", root / ".laris" / "config.yaml"],
+        extra_files=[Path.home() / ".laris" / "config.yaml", *project_files],
         extra_layers=[user_layer] if user_layer else None,
     )

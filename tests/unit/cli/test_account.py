@@ -95,6 +95,10 @@ def test_login_commands_and_bare_laris_routes(project, tmp_path, monkeypatch, ca
     monkeypatch.delenv("LARIS_API_KEY", raising=False)
     assert main(["whoami"]) == 1
     monkeypatch.setattr("getpass.getpass", lambda _="": KEY_A)
+    monkeypatch.delenv("LARIS_MODEL_API__BASE_URL", raising=False)
+    assert main(["login"]) == 2 and not cred.exists()  # no server.url: refused, nothing saved
+    assert "server.url" in capsys.readouterr().out
+    monkeypatch.setenv("LARIS_MODEL_API__BASE_URL", "http://127.0.0.1:9/v1")
     assert main(["login"]) == 0 and json.loads(cred.read_text())["api_key"] == KEY_A
     capsys.readouterr()
     assert main(["whoami"]) == 0
@@ -119,7 +123,7 @@ def test_each_program_has_only_its_own_commands():
     from cli.parser import build_parser_for
 
     client, server, model = client_cli.COMMANDS, server_cli.COMMANDS, model_cli.COMMANDS
-    assert set(client) == {"agent", "account", "vault", "skills", "learn", "app"}
+    assert set(client) == {"agent", "account", "vault", "skills", "learn", "app", "config"}
     assert set(client["app"]) == {"ingest", "index", "search", "status"}
     for group in ("model", "harness", "brain", "data", "train", "evaluate", "workflows"):
         assert group not in client and group in server

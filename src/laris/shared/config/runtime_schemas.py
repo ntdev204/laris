@@ -274,7 +274,7 @@ class AppConfig(BaseModel):
     ocr_max_pages: int = Field(default=50, ge=1)
     allow_write_default: bool = Field(default=False)
     key_env: str = Field(default="LARIS_API_KEY")  # environment variable holding the user API key
-    account_file: str = Field(default="~/.laris/settings.json")  # `api_key` saved by `laris login`
+    account_file: str = Field(default="~/.laris/.credentials.json")  # key from `laris login`
     users_dir: str = Field(default="users")  # per-key state below app.chat_dir
     # Where the system policy (prompts, rules, workflows, brain) lives: `server` = the model server
     # holds it and the client never has it; `local` = this folder (development and the server

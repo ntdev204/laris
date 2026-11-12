@@ -18,6 +18,16 @@ def _fresh_url_opener():
     trust.reset()
 
 
+@pytest.fixture(autouse=True)
+def _project_config_enabled():
+    """`laris` switches project configuration off for its process; a test must not inherit that."""
+    from laris.shared.config.loader import ignore_project_config
+
+    ignore_project_config(False)
+    yield
+    ignore_project_config(False)
+
+
 @pytest.fixture
 def project(tmp_path):
     """A throwaway project root with configs/ and LARIS.md copied from the repository."""

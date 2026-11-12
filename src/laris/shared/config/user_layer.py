@@ -1,48 +1,44 @@
-"""The user's saved preferences (`~/.laris/settings.json`) as a configuration layer.
+"""The user's saved settings (`~/.laris/settings.json`) as a configuration layer.
 
-Lives in `config` so that configuration loading needs nothing from `harness`.
+Lives in `config` so that configuration loading needs nothing from `harness`. The file format is in
+`laris.shared.config.settings`; this module keeps the names the loader and the panel use.
 """
 
-import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-# flat key -> (config path, python type)
-EDITABLE: Dict[str, Tuple[Tuple[str, ...], type]] = {
-    "base_url": (("model_api", "base_url"), str),
-    "model": (("model_api", "model"), str),
-    "api_key_env": (("model_api", "api_key_env"), str),
-    "ca_file": (("model_api", "ca_file"), str),
-    "auto_compact": (("context", "enabled"), bool),
-    "context_window": (("context", "window_tokens"), int),
-    "compact_threshold": (("context", "threshold"), float),
-    "allow_write": (("agent", "approval", "mode"), bool),
-    "learning_enabled": (("learning", "enabled"), bool),
-    "vault_record": (("vault", "auto_record"), bool),
+import laris.shared.config.settings as settings
+from laris.shared.config.settings import layer_from, read_raw
+
+# flat key shown in the chat settings panel -> (dotted path in settings.json, python type)
+EDITABLE: Dict[str, Tuple[str, type]] = {
+    "base_url": ("server.url", str),
+    "model": ("model", str),
+    "auto_compact": ("context.autoCompact", bool),
+    "context_window": ("context.windowTokens", int),
+    "compact_threshold": ("context.compactThreshold", float),
+    "allow_write": ("permissions.defaultMode", bool),  # True = acceptEdits, False = default
+    "learning_enabled": ("learning.collect", bool),
+    "vault_record": ("vault.autoRecord", bool),
 }
 
 
 def read_settings(path: Path) -> Dict[str, Any]:
-    if not Path(path).exists():
-        return {}
-    try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    return data if isinstance(data, dict) else {}
+    return read_raw(path)
 
 
-def layer_from(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Nested configuration dict for `load_config(extra_layers=[...])`."""
+def flat_view(data: Dict[str, Any]) -> Dict[str, Any]:
+    """The settings panel's flat keys, for the values the file sets."""
     out: Dict[str, Any] = {}
-    for key, (path, _) in EDITABLE.items():
-        if key not in data:
+    for key, (dotted, _) in EDITABLE.items():
+        try:
+            value = settings.get_path(data, dotted)
+        except KeyError:
             continue
-        value: Any = data[key]
-        if key == "allow_write":
-            value = "auto" if value else "ask"
-        node = out
-        for part in path[:-1]:
-            node = node.setdefault(part, {})
-        node[path[-1]] = value
+        out[key] = value == "acceptEdits" if key == "allow_write" else value
+    if "extraInstructions" in data:
+        out["extra_instructions"] = data["extraInstructions"]
     return out
+
+
+__all__ = ["EDITABLE", "flat_view", "layer_from", "read_settings"]

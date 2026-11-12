@@ -58,8 +58,8 @@ def is_trusted(host: str, port: int, ca_file: str = "", timeout: float = 5.0) ->
         return True  # unreachable is a different problem; do not offer to trust anything
 
 
-def save(pem: str, host: str, port: int, folder: str = TRUST_DIR) -> Path:
-    target = Path(folder).expanduser()
+def save(pem: str, host: str, port: int, folder: Optional[str] = None) -> Path:
+    target = Path(folder or TRUST_DIR).expanduser()
     target.mkdir(parents=True, exist_ok=True)
     path = target / f"{host}_{port}.pem".replace("/", "_")
     path.write_text(pem, encoding="utf-8")

@@ -4,7 +4,7 @@ imports none of that code, so the downloadable package can leave it out."""
 import sys
 from typing import Optional, Sequence
 
-from cli.commands import account, agent, app, engine, learn, skills, vault
+from cli.commands import account, agent, app, config, engine, learn, skills, vault
 from cli.parser import Table, run
 
 COMMANDS: Table = {
@@ -31,6 +31,11 @@ COMMANDS: Table = {
         "lint": ("Completeness and safety lint of one skill", skills.COMMANDS["lint"]),
         "add": ("Install a hand-written skill after lint", skills.COMMANDS["add"]),
         "sync": ("Build knowledge skills for the whole corpus", skills.COMMANDS["sync"]),
+    },
+    "config": {
+        "get": ("Show settings (all, or one dotted path)", config.COMMANDS["get"]),
+        "set": ("Change a setting in ~/.laris/settings.json", config.COMMANDS["set"]),
+        "schema": ("Print the JSON Schema of settings.json", config.COMMANDS["schema"]),
     },
     "learn": {
         "stats": ("Show collected fine-tune data counts", learn.COMMANDS["stats"]),
@@ -73,6 +78,21 @@ def _version() -> str:
         return "unknown"
 
 
+def _ignore_project_settings() -> None:
+    """No project file contributes settings; say so when one is there (SR-C2, SR-C5)."""
+    from pathlib import Path
+
+    from laris.shared.config.loader import ignore_project_config, ignored_project_files
+
+    ignore_project_config(True)
+    for path in ignored_project_files(Path.cwd()):
+        print(
+            f"[warning] {path} is ignored: settings live only in ~/.laris/settings.json "
+            "(`laris config set`)",
+            file=sys.stderr,
+        )
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if args in (["--version"], ["-V"]):
@@ -82,6 +102,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     from cli.bootstrap import ensure_global_home
 
     ensure_global_home()
+    _ignore_project_settings()
     return run(COMMANDS, "laris", argv, interactive=True)
 
 

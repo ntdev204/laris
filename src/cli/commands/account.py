@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from cli import credentials
 from cli.common import load_runtime
+from laris.shared.config import settings
 from laris.shared.harness import trust
 from laris.shared.harness.prefs import UserPrefs
 
@@ -25,7 +26,7 @@ def _set_server(url: str) -> Path:
     if not url.startswith(("http://", "https://")):
         raise ValueError("server address must start with http:// or https://")
     path = GLOBAL_DIR.expanduser() / "settings.json"
-    UserPrefs(path).update({"base_url": url.rstrip("/")})
+    UserPrefs(path).update({"base_url": url.rstrip("/")})  # validated, written as server.url
     return path
 
 
@@ -74,7 +75,13 @@ def _ensure_trust(url: str, expected: str, ca_file: str) -> int:
             )
             return 2
     path = trust.save(pem, host, port)
-    UserPrefs(GLOBAL_DIR.expanduser() / "settings.json").update({"ca_file": str(path)})
+    path_in_settings = GLOBAL_DIR.expanduser() / "settings.json"
+    pinned = settings.set_path(
+        settings.read_raw(path_in_settings),
+        "server.caFingerprint",
+        settings.fingerprint_of_file(path),
+    )
+    settings.write(path_in_settings, pinned)
     trust.install(str(path))
     print(f"Đã ghi nhớ chứng chỉ (chỉ cho máy chủ này) tại {path}")
     return 0
@@ -101,7 +108,13 @@ class _Login:
         runtime = load_runtime()
         cfg = runtime.config.app
         url = runtime.config.model_api.base_url
-        if url and _ensure_trust(url, args.trust_fingerprint, runtime.config.model_api.ca_file):
+        if not url:
+            print(
+                "[ERROR] no server address is set. Run `laris config set server.url ADDRESS` "
+                "(or `laris login --server ADDRESS`), then `laris login` again."
+            )
+            return 2
+        if _ensure_trust(url, args.trust_fingerprint, runtime.config.model_api.ca_file):
             return 2
         runtime = load_runtime()  # picks up the pinned certificate
         key = credentials.validate(getpass.getpass("API key: "))
@@ -150,12 +163,15 @@ class _Init:
 
     def run(self, args: argparse.Namespace) -> int:
         root = Path.cwd() / ".laris"
-        for sub in ("skills", "memory"):
+        for sub in ("skills", "commands", "memory"):
             (root / sub).mkdir(parents=True, exist_ok=True)
         note = root / "LARIS.md"
         if not note.exists():
             note.write_text(PROJECT_TEMPLATE, encoding="utf-8")
-        print(f"Đã tạo {root} (LARIS.md, skills/, memory/). Cấu hình chung của bạn: {GLOBAL_DIR}")
+        print(
+            f"Đã tạo {root} (LARIS.md, skills/, commands/, memory/). "
+            f"Cấu hình chung của bạn: {GLOBAL_DIR}"
+        )
         return 0
 
 

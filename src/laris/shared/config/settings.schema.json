@@ -1,0 +1,344 @@
+{
+  "$defs": {
+    "Context": {
+      "additionalProperties": false,
+      "properties": {
+        "autoCompact": {
+          "default": true,
+          "title": "Autocompact",
+          "type": "boolean"
+        },
+        "compactThreshold": {
+          "default": 0.8,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Compactthreshold",
+          "type": "number"
+        },
+        "windowTokens": {
+          "default": 32768,
+          "minimum": 1024,
+          "title": "Windowtokens",
+          "type": "integer"
+        }
+      },
+      "title": "Context",
+      "type": "object"
+    },
+    "HookCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "minLength": 1,
+          "title": "Command",
+          "type": "string"
+        },
+        "timeout": {
+          "default": 30.0,
+          "exclusiveMinimum": 0,
+          "maximum": 600,
+          "title": "Timeout",
+          "type": "number"
+        },
+        "type": {
+          "const": "command",
+          "default": "command",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "HookCommand",
+      "type": "object"
+    },
+    "HookMatcher": {
+      "additionalProperties": false,
+      "properties": {
+        "hooks": {
+          "items": {
+            "$ref": "#/$defs/HookCommand"
+          },
+          "title": "Hooks",
+          "type": "array"
+        },
+        "matcher": {
+          "default": "",
+          "title": "Matcher",
+          "type": "string"
+        }
+      },
+      "title": "HookMatcher",
+      "type": "object"
+    },
+    "Learning": {
+      "additionalProperties": false,
+      "properties": {
+        "collect": {
+          "default": true,
+          "title": "Collect",
+          "type": "boolean"
+        }
+      },
+      "title": "Learning",
+      "type": "object"
+    },
+    "Permissions": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalDirectories": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Additionaldirectories",
+          "type": "array"
+        },
+        "allow": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow",
+          "type": "array"
+        },
+        "ask": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ask",
+          "type": "array"
+        },
+        "defaultMode": {
+          "default": "default",
+          "enum": [
+            "default",
+            "acceptEdits",
+            "plan",
+            "bypass"
+          ],
+          "title": "Defaultmode",
+          "type": "string"
+        },
+        "deny": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Deny",
+          "type": "array"
+        }
+      },
+      "title": "Permissions",
+      "type": "object"
+    },
+    "Sandbox": {
+      "additionalProperties": false,
+      "properties": {
+        "indexUrl": {
+          "default": "",
+          "title": "Indexurl",
+          "type": "string"
+        },
+        "inheritEnv": {
+          "default": false,
+          "title": "Inheritenv",
+          "type": "boolean"
+        },
+        "packages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Packages",
+          "type": "array"
+        },
+        "python": {
+          "default": "3.12",
+          "title": "Python",
+          "type": "string"
+        },
+        "pythonSource": {
+          "default": "",
+          "title": "Pythonsource",
+          "type": "string"
+        }
+      },
+      "title": "Sandbox",
+      "type": "object"
+    },
+    "Server": {
+      "additionalProperties": false,
+      "properties": {
+        "caFingerprint": {
+          "default": "",
+          "title": "Cafingerprint",
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "default": 120.0,
+          "exclusiveMinimum": 0,
+          "title": "Timeoutseconds",
+          "type": "number"
+        },
+        "url": {
+          "default": "",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "title": "Server",
+      "type": "object"
+    },
+    "StatusLine": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "minLength": 1,
+          "title": "Command",
+          "type": "string"
+        },
+        "type": {
+          "const": "command",
+          "default": "command",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "StatusLine",
+      "type": "object"
+    },
+    "Ui": {
+      "additionalProperties": false,
+      "properties": {
+        "markdown": {
+          "default": true,
+          "title": "Markdown",
+          "type": "boolean"
+        },
+        "showStatusLine": {
+          "default": true,
+          "title": "Showstatusline",
+          "type": "boolean"
+        },
+        "spinner": {
+          "default": true,
+          "title": "Spinner",
+          "type": "boolean"
+        },
+        "theme": {
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "title": "Theme",
+          "type": "string"
+        }
+      },
+      "title": "Ui",
+      "type": "object"
+    },
+    "Vault": {
+      "additionalProperties": false,
+      "properties": {
+        "autoRecord": {
+          "default": true,
+          "title": "Autorecord",
+          "type": "boolean"
+        }
+      },
+      "title": "Vault",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "$Schema"
+    },
+    "autoUpdates": {
+      "default": true,
+      "title": "Autoupdates",
+      "type": "boolean"
+    },
+    "cleanupPeriodDays": {
+      "default": 30,
+      "minimum": 0,
+      "title": "Cleanupperioddays",
+      "type": "integer"
+    },
+    "context": {
+      "$ref": "#/$defs/Context"
+    },
+    "env": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Env",
+      "type": "object"
+    },
+    "extraInstructions": {
+      "default": "",
+      "title": "Extrainstructions",
+      "type": "string"
+    },
+    "hooks": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/HookMatcher"
+        },
+        "type": "array"
+      },
+      "title": "Hooks",
+      "type": "object"
+    },
+    "learning": {
+      "$ref": "#/$defs/Learning"
+    },
+    "model": {
+      "default": "",
+      "title": "Model",
+      "type": "string"
+    },
+    "permissions": {
+      "$ref": "#/$defs/Permissions"
+    },
+    "sandbox": {
+      "$ref": "#/$defs/Sandbox"
+    },
+    "server": {
+      "$ref": "#/$defs/Server"
+    },
+    "statusLine": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StatusLine"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ui": {
+      "$ref": "#/$defs/Ui"
+    },
+    "vault": {
+      "$ref": "#/$defs/Vault"
+    }
+  },
+  "title": "LARIS client settings (~/.laris/settings.json)",
+  "type": "object"
+}
