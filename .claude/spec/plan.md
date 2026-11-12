@@ -1,6 +1,6 @@
 # LARIS — Plan: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.0 · 2026-11-12 (second programme in section 8) · Implements [spec.md](spec.md); task detail in [task.md](task.md).
+Version 0.2.1 · 2026-11-13 (second programme in section 8) · Implements [spec.md](spec.md); task detail in [task.md](task.md).
 
 ## 1. Order of work
 
@@ -158,7 +158,7 @@ Exit criteria:
 ### Phase 10 — Three blocks
 Goal: move the code into `src/laris/{protocol,shared,client,server,model,research}` without changing behaviour.
 Tasks: T49, T50, T51, T52
-Progress: [x] T49, [x] T50, [x] T51, [x] T52 (2026-11-12). Phase complete except the npm smoke test in CI.
+Progress: [x] T49, [x] T50, [x] T51, [x] T52 (2026-11-12). Phase complete; the pty smoke test of the Ink front end runs in CI (T81).
 Exit criteria:
 - No import cycle between blocks; the block-boundary test passes.
 - Three entry points (`laris`, `laris-server`, `laris-model`); the client wheel is built from its blocks only.
