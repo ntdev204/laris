@@ -130,6 +130,8 @@ def test_dsn_may_come_from_a_secret_file_and_a_docker_secret_master_is_accepted(
     from laris.server.storage import StorageError
     from laris.shared.config.runtime_schemas import ServingConfig
 
+    if not os.environ.get("LARIS_TEST_PG_DSN"):
+        pytest.skip("LARIS_TEST_PG_DSN is not set")
     cfg = ServingConfig(database_engine="postgres", database_url_file=str(tmp_path / "dsn"))
     with pytest.raises(StorageError, match="cannot read"):
         open_database(cfg, tmp_path, {})

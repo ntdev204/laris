@@ -56,7 +56,7 @@ def _chat(project, tmp_path, key):
     return ChatApp(service, project, user=credentials.fingerprint(key))
 
 
-def test_each_key_has_its_own_conversations_settings_and_folder(project, tmp_path):
+def test_each_key_has_its_own_conversations_and_folder(project, tmp_path):
     alice, bob = _chat(project, tmp_path, KEY_A), _chat(project, tmp_path, KEY_B)
     mine = alice.conversations.create("Của Alice")
     list(alice.send(mine["id"], "perovskite"))
@@ -65,7 +65,7 @@ def test_each_key_has_its_own_conversations_settings_and_folder(project, tmp_pat
     assert bob.conversations.list() == []
     with pytest.raises(KeyError):
         bob.conversations.get(mine["id"])
-    assert bob.settings().get("model") != "alice-model"
+    assert bob.settings().get("model") == "alice-model"  # one machine, one set of preferences (T71)
     assert alice.root != bob.root and credentials.fingerprint(KEY_A) in alice.root.parts
     again = _chat(project, tmp_path, KEY_A)  # the same key later sees its own history
     assert again.conversations.get(mine["id"])["id"] == mine["id"]
