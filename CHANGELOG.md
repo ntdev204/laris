@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Client acceptance suite (T82):** scripted sessions through the engine, headless `stream-json`, plain mode and the Ink front end (recorded from the engine and kept equal by a test), `make test-client` in CI, and a draft user-guide section for owner approval (`docs/development/CLIENT_GUIDE_DRAFT.md`).
 - **Three blocks (ADR-019):** `client`, `server` and `model` programs over shared `protocol` and `shared` packages, with import-boundary tests; protocols P1 (client-server, HTTPS and SSE), P2 (server-model, internal) and E1 (engine protocol over stdio, `laris engine --stdio`).
 - **Server storage on PostgreSQL:** numbered migrations, atomic token quota (reserve, settle, release), monthly partitions, retention worker, SQLite importer, `laris-server db migrate|import-sqlite`.
 - **Docker deployment:** API and model images (CPU and CUDA), Compose stack behind Caddy with Docker secrets and read-only policy, backup and restore scripts, image scanner, end-to-end smoke test, deployment runbook.
