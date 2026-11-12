@@ -31,6 +31,11 @@ MODES = ("default", "acceptEdits", "plan", "bypass")
 EDIT_TOOLS = frozenset({"write", "edit", "write_file"})  # `write_file` is the output-folder tool
 PATH_KEYS = ("path", "file_path")
 _RULE = re.compile(r"^\s*([A-Za-z_*][\w*]*)\s*(?:\((.*)\))?\s*$", re.S)
+# A shell command line is several commands when it holds these. A rule written for one command
+# must never let a second one through: `Bash(git status:*)` is not a licence for
+# `git status && rm -rf ~`.
+_PARTS = re.compile(r"&&|\|\||[;|&\n\r]|\$\(|`|<\(|>\(|[(){}]")
+_REDIRECT_OR_SUBST = re.compile(r"\$\(|`|<\(|>\(|[<>]|\n|\r")
 
 
 @dataclass
@@ -88,13 +93,39 @@ def _subject(arguments: Dict[str, Any]) -> Tuple[str, str]:
     return "text", ""
 
 
-def pattern_matches(pattern: str, arguments: Dict[str, Any], root: Optional[Path] = None) -> bool:
+def _command_matches(pattern: str, value: str) -> bool:
+    if pattern.endswith(":*"):  # a command prefix on a word boundary: `git status:*`
+        prefix = pattern[:-2]
+        return value == prefix or value.startswith(prefix + " ")
+    return fnmatch.fnmatchcase(value, pattern)
+
+
+def _command_parts(value: str) -> List[str]:
+    return [part.strip() for part in _PARTS.split(value) if part.strip()]
+
+
+def _command_pattern_matches(pattern: str, value: str, any_part: bool) -> bool:
+    """`allow` rules (`any_part` False) match a command line only when every command in it
+    matches and it holds no redirection or substitution; `deny` and `ask` rules (`any_part` True)
+    match when any command in it does, so they cannot be dodged by chaining."""
+    parts = _command_parts(value)
+    if not _PARTS.search(value) and not _REDIRECT_OR_SUBST.search(value):
+        return _command_matches(pattern, value)
+    if any_part:
+        return _command_matches(pattern, value) or any(_command_matches(pattern, p) for p in parts)
+    if pattern == "*":
+        return True
+    if _REDIRECT_OR_SUBST.search(value):
+        return value == pattern  # only a rule that spells the whole line out
+    return all(_command_matches(pattern, part) for part in parts)
+
+
+def pattern_matches(
+    pattern: str, arguments: Dict[str, Any], root: Optional[Path] = None, any_part: bool = False
+) -> bool:
     kind, value = _subject(arguments)
     if kind == "command":
-        if pattern.endswith(":*"):  # a command prefix on a word boundary: `git status:*`
-            prefix = pattern[:-2]
-            return value == prefix or value.startswith(prefix + " ")
-        return fnmatch.fnmatchcase(value, pattern)
+        return _command_pattern_matches(pattern, value, any_part)
     if kind == "path":
         # match the resolved path, never the spelling: `src/../secret.py` is not inside `src/`
         base = (root or Path.cwd()).resolve()
@@ -114,7 +145,11 @@ def pattern_matches(pattern: str, arguments: Dict[str, Any], root: Optional[Path
 
 
 def rule_matches(
-    rule: str, tool: str, arguments: Dict[str, Any], root: Optional[Path] = None
+    rule: str,
+    tool: str,
+    arguments: Dict[str, Any],
+    root: Optional[Path] = None,
+    any_part: bool = False,
 ) -> bool:
     parsed = parse_rule(rule)
     if parsed is None:
@@ -122,7 +157,7 @@ def rule_matches(
     name, pattern = parsed
     if name != "*" and name != canonical(tool):
         return False
-    return pattern is None or pattern_matches(pattern, arguments, root)
+    return pattern is None or pattern_matches(pattern, arguments, root, any_part)
 
 
 def next_mode(mode: str, allow_bypass: bool = False) -> str:
@@ -200,9 +235,20 @@ class PermissionEngine:
         return rules
 
     def _first(self, kind: str, tool: str, arguments: Dict[str, Any]) -> Optional[str]:
-        for rule in self.rules(kind):
-            if rule_matches(rule, tool, arguments, self.project_root):
+        rules = self.rules(kind)
+        for rule in rules:
+            if rule_matches(rule, tool, arguments, self.project_root, kind != "allow"):
                 return rule
+        command = arguments.get("command")
+        if kind == "allow" and isinstance(command, str) and not _REDIRECT_OR_SUBST.search(command):
+            parts = _command_parts(command)  # `a && b` runs unasked when a rule allows each part
+            if len(parts) > 1:
+                chosen = [
+                    next((r for r in rules if rule_matches(r, tool, {"command": part})), None)
+                    for part in parts
+                ]
+                if all(chosen):
+                    return chosen[0]
         return None
 
     # -- the decision ----------------------------------------------------------------------

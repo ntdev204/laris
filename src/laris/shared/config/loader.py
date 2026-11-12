@@ -248,8 +248,19 @@ PROJECT_CONFIG_FILES = ("config.yaml", "config.yml", "settings.json", "settings.
 
 
 def ignored_project_files(root: Path) -> List[Path]:
-    """Configuration-looking files in `<root>/.laris/` that the client ignores."""
-    return [root / ".laris" / n for n in PROJECT_CONFIG_FILES if (root / ".laris" / n).is_file()]
+    """Configuration-looking files in `<root>/.laris/` (and a `.env` that sets `LARIS_*`) that the
+    client ignores."""
+    found = [root / ".laris" / n for n in PROJECT_CONFIG_FILES if (root / ".laris" / n).is_file()]
+    dotenv = root / ".env"
+    try:
+        if dotenv.is_file() and any(
+            line.strip().removeprefix("export ").lstrip().startswith("LARIS_")
+            for line in dotenv.read_text(encoding="utf-8").splitlines()
+        ):
+            found.append(dotenv)
+    except (OSError, UnicodeDecodeError):
+        pass
+    return found
 
 
 def load_runtime_config(
@@ -266,7 +277,8 @@ def load_runtime_config(
     loading `<project>/.env`), then explicit overrides.
     """
     root = Path(project_root or Path.cwd())
-    load_dotenv(root / ".env")
+    if _PROJECT_CONFIG:  # the client never lets a folder it opened set LARIS_* variables
+        load_dotenv(root / ".env")
     if user_layer is None:  # the global settings.json (server address, model) applies everywhere
         user_layer = layer_from(read_settings(Path.home() / ".laris" / "settings.json")) or None
     default = root / "configs" / "default.yaml"
