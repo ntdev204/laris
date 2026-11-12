@@ -207,7 +207,7 @@ Exit criteria:
 Goal: `laris` offers the interface and flow of Claude Code: one engine, the Ink + React front end,
 a dependency-free plain mode, global settings and an automatic sandbox.
 Tasks: T70, T71, T72, T73, T74, T75, T76, T77, T78, T79, T80, T81, T82
-Progress: [x] T70, [x] T71, [x] T72, [x] T73, [x] T74, [x] T75, [x] T76, [x] T77, [x] T78, [x] T79, [x] T80, [x] T81 (2026-11-12). Remaining: T82.
+Progress: [x] T70, [x] T71, [x] T72, [x] T73, [x] T74, [x] T75, [x] T76, [x] T77, [x] T78, [x] T79, [x] T80, [x] T81, [x] T82 (2026-11-12). Phase complete.
 Exit criteria:
 - E1 contract tests pass; the Ink front end passes the scenario set; plain mode and headless `stream-json` (equal to E1) pass where they apply.
 - Global home with Claude-Code-style settings, login without flags, sandbox built and repaired without user action.

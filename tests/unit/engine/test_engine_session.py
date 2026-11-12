@@ -324,7 +324,10 @@ def test_continue_and_resume_take_an_id_or_a_unique_prefix(chat, monkeypatch, ca
         monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
         code = client.main(["engine", "--stdio", *flags])
         out = capsys.readouterr()
-        return code, (json.loads(out.out.splitlines()[0])["session"] if out.out else None), out.err
+        # a late status line of the previous engine's sandbox check can reach the capture first
+        events = [json.loads(line) for line in out.out.splitlines() if line.strip()]
+        ready = next((e for e in events if e["type"] == "ready"), None)
+        return code, (ready["session"] if ready else None), out.err
 
     assert session("--continue", ids[0])[1] == ids[0]
     assert session("--continue", ids[1][:8])[1] == ids[1]

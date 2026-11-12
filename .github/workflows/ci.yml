@@ -85,6 +85,9 @@ jobs:
       - name: Run the PostgreSQL storage tests (real database service)
         run: uv run pytest tests/unit/storage -q
 
+      - name: Run the client acceptance suite (scripted sessions, no model)
+        run: make PY='uv run python' test-client
+
       - name: Run owner-authorized preparation checks (no training tests)
         run: make PY='uv run python' check-no-training
 
