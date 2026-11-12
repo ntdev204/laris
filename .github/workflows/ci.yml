@@ -88,6 +88,9 @@ jobs:
       - name: Run the client acceptance suite (scripted sessions, no model)
         run: make PY='uv run python' test-client
 
+      - name: Run the security suite (hostile clients, folders, hooks, installs; Docker tests skip when caddy:2 is not local)
+        run: make PY='uv run python' test-security
+
       - name: Run owner-authorized preparation checks (no training tests)
         run: make PY='uv run python' check-no-training
 

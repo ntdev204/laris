@@ -24,6 +24,7 @@ import re
 import shutil
 import signal
 import subprocess
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -34,6 +35,28 @@ from laris.shared.config import settings as settings_mod
 EVENTS = settings_mod.HOOK_EVENTS
 TOOL_EVENTS = ("PreToolUse", "PostToolUse")
 OUTPUT_CAP = 64_000
+_CONTROL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f]")  # all but tab and new line
+
+
+def clean(text: str) -> str:
+    """Text a hook wrote, made safe to show: no escape sequence can move the cursor, retitle the
+    window, write to the clipboard or hide text on the user's terminal."""
+    return _CONTROL.sub("", text)
+
+
+def _drain(stream: Any, sink: bytearray, limit: int) -> None:
+    """Read a pipe to its end, keeping the first `limit` bytes: a hook that floods its output
+    cannot fill memory, and never blocks on a full pipe."""
+    try:
+        while True:
+            chunk = stream.read(65536)
+            if not chunk:
+                return
+            room = limit - len(sink)
+            if room > 0:
+                sink += chunk[:room]
+    except (OSError, ValueError):
+        return
 
 
 @dataclass
@@ -110,25 +133,49 @@ class HookRunner:
         try:
             proc = subprocess.Popen(
                 [shell, "-c", command], cwd=self.project_root, env=self._environment(event),
-                text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 start_new_session=True,
             )  # fmt: skip
         except OSError as exc:
             outcome.warnings.append(f"hook could not start: {exc.strerror or exc}")
             return outcome
+        out, err = bytearray(), bytearray()
+        readers = [
+            threading.Thread(target=_drain, args=(proc.stdout, out, OUTPUT_CAP * 4), daemon=True),
+            threading.Thread(target=_drain, args=(proc.stderr, err, OUTPUT_CAP * 4), daemon=True),
+        ]
+
+        def feed() -> None:
+            try:
+                assert proc.stdin is not None
+                proc.stdin.write(payload.encode("utf-8", errors="replace"))
+                proc.stdin.close()
+            except (OSError, ValueError):
+                pass  # the hook did not read its input: fine
+
+        readers.append(threading.Thread(target=feed, daemon=True))
+        for thread in readers:
+            thread.start()
         try:
-            stdout, stderr = proc.communicate(payload, timeout=timeout)
+            proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            proc.communicate()
-            outcome.warnings.append(f"hook timed out after {timeout:g}s: {command[:80]}")
+            proc.wait()
+            outcome.warnings.append(f"hook timed out after {timeout:g}s: {clean(command)[:80]}")
             return outcome
-        except BrokenPipeError:
-            stdout, stderr = "", ""
-        stdout, stderr = stdout[:OUTPUT_CAP].strip(), stderr[:OUTPUT_CAP].strip()
+        finally:
+            for thread in readers:  # a detached grandchild may hold a pipe open: do not wait on it
+                thread.join(timeout=2)
+            for stream in (proc.stdout, proc.stderr):
+                try:
+                    stream.close()  # type: ignore[union-attr]
+                except (OSError, ValueError):
+                    pass
+        stdout = clean(bytes(out).decode("utf-8", errors="replace"))[:OUTPUT_CAP].strip()
+        stderr = clean(bytes(err).decode("utf-8", errors="replace"))[:OUTPUT_CAP].strip()
         if proc.returncode == 2:
             outcome.blocked, outcome.reason = True, stderr or stdout or "blocked by a hook"
             return outcome
@@ -152,11 +199,13 @@ class HookRunner:
         extra = (special or {}).get("additionalContext") if isinstance(special, dict) else None
         context = data.get("additionalContext", extra)
         if isinstance(context, str) and context.strip():
-            outcome.context.append(context.strip())
+            outcome.context.append(clean(context).strip())
         if data.get("decision") == "block":
             reason = data.get("reason")
             outcome.blocked = True
-            outcome.reason = reason if isinstance(reason, str) and reason else "blocked by a hook"
+            outcome.reason = (
+                clean(reason) if isinstance(reason, str) and reason else "blocked by a hook"
+            )
         return outcome
 
     def run(
