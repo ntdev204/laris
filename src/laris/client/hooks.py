@@ -22,13 +22,13 @@ import json
 import os
 import re
 import shutil
-import signal
 import subprocess
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from laris.client.proc import kill_tree, new_group_options
 from laris.client.sandbox import SandboxManager, command_env
 from laris.shared.config import settings as settings_mod
 
@@ -134,7 +134,7 @@ class HookRunner:
             proc = subprocess.Popen(
                 [shell, "-c", command], cwd=self.project_root, env=self._environment(event),
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                start_new_session=True,
+                **new_group_options(),
             )  # fmt: skip
         except OSError as exc:
             outcome.warnings.append(f"hook could not start: {exc.strerror or exc}")
@@ -159,10 +159,7 @@ class HookRunner:
         try:
             proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            kill_tree(proc)
             proc.wait()
             outcome.warnings.append(f"hook timed out after {timeout:g}s: {clean(command)[:80]}")
             return outcome

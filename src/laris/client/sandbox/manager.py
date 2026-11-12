@@ -7,7 +7,6 @@ crash never leaves a half-built sandbox). A failure is a state with a plain mess
 exception: the rest of `laris` keeps working.
 """
 
-import fcntl
 import hashlib
 import json
 import os
@@ -33,6 +32,31 @@ SAFE_ENV = (
     "SHELL",
     "TZ",
 )
+
+
+def _lock(handle: Any) -> None:
+    """Exclusive lock on an open file, blocking: flock on POSIX, msvcrt on Windows."""
+    if sys.platform == "win32":
+        import msvcrt
+
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)  # retries for about 10 s, then raises
+    else:
+        import fcntl
+
+        fcntl.flock(handle, fcntl.LOCK_EX)
+
+
+def _unlock(handle: Any) -> None:
+    if sys.platform == "win32":
+        import msvcrt
+
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 @dataclass
@@ -156,7 +180,7 @@ class SandboxManager:
             self._building.set()
             try:
                 with open(self.lock_path, "a+") as handle:  # … and across processes
-                    fcntl.flock(handle, fcntl.LOCK_EX)
+                    _lock(handle)
                     try:
                         self._building.clear()
                         state = self.check()  # another session may have built it meanwhile
@@ -165,7 +189,7 @@ class SandboxManager:
                         self._building.set()
                         return self._build()
                     finally:
-                        fcntl.flock(handle, fcntl.LOCK_UN)
+                        _unlock(handle)
             finally:
                 self._building.clear()
 
