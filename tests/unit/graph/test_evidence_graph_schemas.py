@@ -4,13 +4,13 @@ and persistence interface.
 
 import unittest
 
-from core.errors import (
+from laris.shared.core.errors import (
     GraphIntegrityError,
     InferredEdgeConflationError,
     SchemaMigrationError,
 )
-from core.schemas import EpistemicStatus, EvidenceCoordinate
-from graph import (
+from laris.shared.core.schemas import EpistemicStatus, EvidenceCoordinate
+from laris.shared.graph import (
     AuthorNode,
     ClaimNode,
     DatasetNode,
@@ -577,7 +577,7 @@ class TestGraphDomainExports(unittest.TestCase):
     """Test suite ensuring graph exports graph interfaces and persistence."""
 
     def test_graph_imports(self) -> None:
-        import graph as g
+        import laris.shared.graph as g
 
         self.assertIsNotNone(g.EvidenceGraph)
         self.assertIsNotNone(g.NodeType)

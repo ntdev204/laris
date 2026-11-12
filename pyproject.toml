@@ -41,7 +41,15 @@ dev = [
     "types-PyYAML>=6.0.12",
 ]
 server = [
+    "fastapi>=0.162,<1",  # ADR-019: P1 API
+    "uvicorn>=0.54,<1",
+    "psycopg[binary]>=3.3,<4",  # ADR-019: PostgreSQL driver
+    "psycopg_pool>=3.3,<4",
     "cryptography>=42,<51",  # AES-GCM for API keys stored by the model server (not in the client)
+]
+model = [
+    "fastapi>=0.162,<1",  # ADR-019: P2 model service
+    "uvicorn>=0.54,<1",
 ]
 build = [
     "cython>=3.0,<4",  # build time only: compiles the client wheel so it ships no readable source
@@ -62,12 +70,16 @@ training = [
 [project.scripts]
 laris = "cli.client:main"
 laris-server = "cli.server:main"
+laris-model = "cli.model:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-harness = ["public_strings.yaml"]
+"laris.shared.harness" = ["public_strings.yaml"]
+"laris.server.storage" = ["migrations/*.sql"]
+"laris.protocol" = ["e1.schema.json"]
+"laris.shared.config" = ["settings.schema.json"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

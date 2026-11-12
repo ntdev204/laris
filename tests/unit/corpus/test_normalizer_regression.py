@@ -14,7 +14,7 @@ Validates normalization invariance across:
 
 import unittest
 
-from corpus.normalizer import normalize_scientific_text
+from laris.shared.corpus.normalizer import normalize_scientific_text
 
 
 class TestNormalizerRegression(unittest.TestCase):

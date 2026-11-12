@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import ModuleContractViolationError
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     AdversarialCounterEvidenceEngine,
     AdversarialRefutationResult,
     CalibratedGapScores,
@@ -23,6 +21,8 @@ from reasoning import (
     ValidationPlan,
     ValidationPlanGenerator,
 )
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 @pytest.fixture

@@ -13,8 +13,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import pytest
 
-from core.errors import CycleDetectedError, ModuleContractViolationError
-from orchestration import (
+from laris.research.orchestration import (
     AgentRole,
     BudgetLimits,
     DAGScheduler,
@@ -22,6 +21,7 @@ from orchestration import (
     TaskNode,
     TaskNodeStatus,
 )
+from laris.shared.core.errors import CycleDetectedError, ModuleContractViolationError
 
 
 @pytest.fixture

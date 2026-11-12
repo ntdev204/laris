@@ -16,8 +16,8 @@ import json
 
 import pytest
 
-from core.errors import ModuleContractViolationError
-from scientific import (
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.scientific import (
     HeadingIndependentLimitationDetector,
     LimitationCategory,
     StrippedHeadingBenchmark,

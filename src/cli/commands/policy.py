@@ -4,15 +4,15 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from agent.builtin_tools import build_registry
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace
-from config.loader import load_runtime_config
-from harness import integrity
-from harness.prompts import PromptComposer
-from harness.runtime import HarnessRuntime
-from harness.workflows import WorkflowError, WorkflowLibrary
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness import integrity
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.policy.prompts import PromptComposer
+from laris.shared.policy.workflows import WorkflowError, WorkflowLibrary
 
 
 def _root(parser: argparse.ArgumentParser) -> None:

@@ -8,12 +8,7 @@ import math
 
 import pytest
 
-from core.errors import (
-    InvalidNLIInputError,
-    ProbabilityValidationError,
-    UncertaintyCeilingExceededError,
-)
-from reasoning import (
+from laris.research.reasoning import (
     NLIEngineContract,
     NLILabel,
     NLIOutput,
@@ -21,6 +16,11 @@ from reasoning import (
     NLIPairBatch,
     NLIProbabilities,
     SentencePairInput,
+)
+from laris.shared.core.errors import (
+    InvalidNLIInputError,
+    ProbabilityValidationError,
+    UncertaintyCeilingExceededError,
 )
 
 

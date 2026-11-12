@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from cli.main import main
-from evaluation import suite
+from laris.research.evaluation import suite
 
 REPO = Path(__file__).resolve().parents[3]
 FIX = REPO / "tests" / "fixtures"

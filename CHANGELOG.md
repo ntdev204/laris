@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Three blocks (ADR-019):** `client`, `server` and `model` programs over shared `protocol` and `shared` packages, with import-boundary tests; protocols P1 (client-server, HTTPS and SSE), P2 (server-model, internal) and E1 (engine protocol over stdio, `laris engine --stdio`).
+- **Server storage on PostgreSQL:** numbered migrations, atomic token quota (reserve, settle, release), monthly partitions, retention worker, SQLite importer, `laris-server db migrate|import-sqlite`.
+- **Docker deployment:** API and model images (CPU and CUDA), Compose stack behind Caddy with Docker secrets and read-only policy, backup and restore scripts, image scanner, end-to-end smoke test, deployment runbook.
+- **Client storage:** one SQLite file per project and key under `~/.laris/projects/<slug>/`, with idempotent import of older data.
+- **Settings:** schema-validated `~/.laris/settings.json`, `laris config get|set|schema`, `.credentials.json` (0600), certificate pinning by `server.caFingerprint`, global-home migration from 1.x; project files no longer contribute settings.
+- **Automatic sandbox:** `~/.laris/.venv` built and repaired with `uv` under a file lock; installs outside the sandbox are denied by a built-in rule.
+- **Slash-command registry** with custom commands (`~/.laris/commands`, `./.laris/commands`, `$ARGUMENTS`), per-project trust state and completion through E1.
+- **Permission modes and rules:** `default`, `acceptEdits`, `plan`, policy-gated `bypass`; `allow`/`ask`/`deny` rules; "always allow" kept per session, project or everywhere.
+- **Coding tools:** `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash` with diffs in permission requests, a checkpoint per edit and `/rewind`.
+- **Input forms:** `@path` mentions, `!command`, `# note`, long pasted text and pasted images (local OCR).
+- **Headless mode:** `laris -p` with `--output-format text|json|stream-json`, `--continue`, `--resume`, `--max-turns`, `--permission-mode`, `--allowed-tools`, `--disallowed-tools` and documented exit codes.
+
+### Changed
+- Diagnostics of `laris -p` go to standard error; tests no longer read or write the real `~/.laris`.
+
 ## [1.5.2] - 2026-11-12
 
 ### Changed

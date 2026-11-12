@@ -5,7 +5,7 @@ document_type: "adr"
 status: "ACCEPTED"
 version: "1.0.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-12"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -14,6 +14,7 @@ related_documents:
   - "docs/architecture/AGENT_HARNESS.md"
   - "docs/architecture/BRAIN_THREAT_MODEL.md"
 decision_references:
+  - "ADR-019"
   - "ADR-015"
 change_summary: "The system prompt, rules, workflows and brain move to the server; the downloadable client (npm i -g @ntdev204/laris-cli) never contains them. Client state lives in a global and a project .laris/."
 ---
@@ -53,6 +54,22 @@ change_summary: "The system prompt, rules, workflows and brain move to the serve
    operator commands, no `.laris/` policy). It creates a private virtualenv under
    `~/.laris/runtime/<version>` on first run, and the client creates `~/.laris/` (`settings.json`,
    `config.yaml`, `LARIS.md`, `skills/`, `memory/`) on first start without overwriting anything.
+
+## 1b. Amendment by ADR-019 (2026-11-12)
+
+- **No offline mode.** The client always uses the server policy; `app.policy_source` no longer has an
+  offline value (D16).
+- **Protocol version.** Every P1 request carries `X-Laris-Protocol`; a mismatch is refused with a clear
+  message (D12).
+- **Global home and runtime.** `~/.laris/` holds every client setting and credential (`settings.json`,
+  `.credentials.json`, `projects/<slug>/`); the program is a sealed binary and commands run in the
+  sandbox `~/.laris/.venv/`. The per-version `~/.laris/runtime/<version>/` virtualenv of item 6 is removed
+  (D18, D19).
+- **Project `.laris/`.** It holds only `LARIS.md`, `skills/`, `commands/` and `memory/`; `settings.json`,
+  `settings.local.json` and `config.yaml` there are ignored with a warning (D20). This replaces the
+  project `config.yaml` of item 4.
+- **Login.** `laris login` takes no `--server` flag; the address is `server.url` in `~/.laris/settings.json`
+  and the key goes to `~/.laris/.credentials.json` (0600) (D21).
 
 ## 2. Consequences
 

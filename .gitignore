@@ -83,3 +83,4 @@ LARIS.local.md
 .laris/skills/corpus-*/
 .laris/memory/
 packaging/npm/vendor/
+docker/secrets/

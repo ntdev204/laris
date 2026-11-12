@@ -15,19 +15,19 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from core.authorization import (
+from laris.shared.core.authorization import (
     assert_tokenizer_training_authorized,
     assert_training_authorized,
     is_tokenizer_training_authorized,
     is_training_authorized,
     temporary_training_authorization,
 )
-from core.errors import (
+from laris.shared.core.errors import (
     DataLeakageError,
     ModuleContractViolationError,
     TrainingExecutionProhibitedError,
 )
-from language.tokenization.trainer import (
+from laris.shared.language.tokenization.trainer import (
     TokenizerReadinessState,
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,

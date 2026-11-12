@@ -16,13 +16,13 @@ import hashlib
 
 import pytest
 
-from core.errors import (
+from laris.shared.core.errors import (
     ExtractionConfidenceBelowThresholdError,
     MalformedDiscourseSpanError,
     ModuleContractViolationError,
 )
-from core.schemas import EvidenceCoordinate
-from scientific import (
+from laris.shared.core.schemas import EvidenceCoordinate
+from laris.shared.scientific import (
     DiscourseExtractionSet,
     DiscourseExtractorContract,
     ScientificDiscourseExtractor,
@@ -366,7 +366,7 @@ def test_serialization_roundtrip_integrity(synthetic_scientific_paper: str):
 
 def test_latex_syntax_delimiter_mismatches():
     """Verify delimiter mismatch detection in LaTeX formulas."""
-    from scientific.extractor import _validate_latex_syntax
+    from laris.shared.scientific.extractor import _validate_latex_syntax
 
     # Negative brace, bracket, paren depth
     assert not _validate_latex_syntax("}")

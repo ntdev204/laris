@@ -1,6 +1,6 @@
-"""The user's API key helpers live in `harness.credentials`; this keeps the CLI import path."""
+"""The user's API key helpers live in `laris.shared.harness.credentials` (CLI import path)."""
 
-from harness.credentials import (  # noqa: F401
+from laris.shared.harness.credentials import (  # noqa: F401
     FINGERPRINT_CHARS,
     MIN_KEY_CHARS,
     CredentialError,

@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import ModuleContractViolationError, ProvenanceViolationError
-from core.schemas import EvidenceCoordinate
-from orchestration import (
+from laris.research.orchestration import (
     AgentRole,
     BaseSpecialistAgent,
     GenericSpecialistAgent,
@@ -22,6 +20,8 @@ from orchestration import (
     TaskNodeStatus,
     VerifierGate,
 )
+from laris.shared.core.errors import ModuleContractViolationError, ProvenanceViolationError
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 @pytest.fixture

@@ -8,11 +8,11 @@ import os
 import sys
 from pathlib import Path
 
-from core.authorization import (
+from laris.shared.core.authorization import (
     is_tokenizer_training_authorized,
 )
-from language.schemas import DEFAULT_TARGET_VOCAB_SIZE
-from language.tokenization.trainer import (
+from laris.shared.language.schemas import DEFAULT_TARGET_VOCAB_SIZE
+from laris.shared.language.tokenization.trainer import (
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
     extract_clean_wikipedia_corpus,

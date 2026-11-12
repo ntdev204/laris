@@ -4,12 +4,12 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from application.workspace import Workspace
 from cli.common import load_runtime
-from learning.hooks import knowledge_skill_for
-from learning.skills import install_skill, lint_skill, skill_meta, sync_chunks
-from skills import SkillLibrary
-from skills.loader import SkillError
+from laris.client.application.workspace import Workspace
+from laris.client.learning.hooks import knowledge_skill_for
+from laris.client.learning.skills import install_skill, lint_skill, skill_meta, sync_chunks
+from laris.shared.skills import SkillLibrary
+from laris.shared.skills.loader import SkillError
 
 
 def _library(args: argparse.Namespace) -> SkillLibrary:

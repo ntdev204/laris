@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from scholarly.biblio import extract
-from scholarly.citations import (
+from laris.shared.scholarly.biblio import extract
+from laris.shared.scholarly.citations import (
     analyse,
     in_text_citations,
     link_in_text,
@@ -11,7 +11,7 @@ from scholarly.citations import (
     split_references,
     summary,
 )
-from scholarly.mining import Doc
+from laris.shared.scholarly.mining import Doc
 
 FIXTURE = json.loads(
     (Path(__file__).resolve().parents[2] / "fixtures" / "scholarly" / "citations.json").read_text(

@@ -23,7 +23,7 @@ test-no-training:
 # Vault, brain, scholarly analytics, server and security suites. None trains or fits anything.
 test-model-free:
 	$(PY) -m pytest -p no:cacheprovider tests/unit/vault tests/unit/scholarly tests/unit/security \
-		tests/unit/gateway tests/unit/serverdata tests/unit/architecture \
+		tests/unit/gateway tests/unit/serverdata tests/unit/architecture tests/unit/model \
 		tests/unit/evaluation/test_model_free_suite.py tests/unit/cli/test_tls_init.py \
 		tests/unit/cli/test_server_url_in_settings.py tests/unit/cli/test_server_auth.py
 

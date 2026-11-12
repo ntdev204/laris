@@ -9,15 +9,15 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from language.encoder.transformer import (  # noqa: E402
+from laris.research.language.training.trainer import LanguageEncoderTrainer  # noqa: E402
+from laris.shared.language.encoder.transformer import (  # noqa: E402
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from language.training.dataloader import (  # noqa: E402
+from laris.shared.language.loading.dataloader import (  # noqa: E402
     StreamingParquetMultiTaskDataLoader,
     _text_length,
 )
-from language.training.trainer import LanguageEncoderTrainer  # noqa: E402
 
 
 class _Tok:

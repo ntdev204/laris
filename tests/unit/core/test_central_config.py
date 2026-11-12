@@ -15,22 +15,22 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from config.loader import (
+from laris.research.corpus.splits import WikipediaArticlePartitioner
+from laris.shared.config.loader import (
     compute_config_hash,
     inspect_config,
     load_config,
 )
-from config.schemas import (
+from laris.shared.config.schemas import (
     DataConfig,
     HardwareConfig,
     LarisConfig,
     ModelConfig,
     TrainingConfig,
 )
-from core.errors import HardwareBudgetExceededError
-from corpus.splits import WikipediaArticlePartitioner
-from language.encoder.transformer import LanguageEncoderConfig
-from language.tokenization.trainer import TokenizerTrainerConfig
+from laris.shared.core.errors import HardwareBudgetExceededError
+from laris.shared.language.encoder.transformer import LanguageEncoderConfig
+from laris.shared.language.tokenization.trainer import TokenizerTrainerConfig
 
 
 class TestConfigSchemas:

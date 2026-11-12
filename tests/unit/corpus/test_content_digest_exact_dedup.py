@@ -12,8 +12,7 @@ Validates:
 import hashlib
 import unittest
 
-from core.errors import DuplicateCorpusError
-from corpus.dedup import (
+from laris.research.corpus.dedup import (
     DIGEST_ALGORITHM,
     DIGEST_ENCODING,
     DIGEST_SPEC_VERSION,
@@ -22,7 +21,8 @@ from corpus.dedup import (
     compute_canonical_content_digest,
     verify_content_digest,
 )
-from corpus.schemas import (
+from laris.shared.core.errors import DuplicateCorpusError
+from laris.shared.corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
     LicenseType,

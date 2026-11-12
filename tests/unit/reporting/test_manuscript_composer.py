@@ -12,12 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import (
-    ModuleContractViolationError,
-    ReportSchemaValidationError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting import (
+from laris.research.reporting import (
     AcademicManuscript,
     AssertionStatus,
     CorpusManifestEntry,
@@ -28,6 +23,11 @@ from reporting import (
     ReportSectionType,
     StructuredResearchReport,
 )
+from laris.shared.core.errors import (
+    ModuleContractViolationError,
+    ReportSchemaValidationError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _make_test_coordinate(cid: str = "COORD-TEST-01") -> EvidenceCoordinate:

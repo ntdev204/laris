@@ -1,0 +1,1 @@
+ALTER TABLE keys ADD COLUMN tokens_reserved BIGINT NOT NULL DEFAULT 0;

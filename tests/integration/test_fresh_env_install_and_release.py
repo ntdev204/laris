@@ -24,13 +24,8 @@ except ModuleNotFoundError:
 
 import pytest
 
-import core
-from core.errors import (
-    ModuleContractViolationError,
-    UnanchoredAssertionError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting import (
+import laris.shared.core as core
+from laris.research.reporting import (
     AcademicManuscript,
     AssertionStatus,
     CorpusManifestEntry,
@@ -49,6 +44,11 @@ from reporting import (
     RunVersionRecord,
     StructuredResearchReport,
 )
+from laris.shared.core.errors import (
+    ModuleContractViolationError,
+    UnanchoredAssertionError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _build_test_coordinate(

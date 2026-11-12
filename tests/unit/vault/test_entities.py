@@ -1,9 +1,9 @@
-from application.workspace import Chunk
-from harness.runtime import HarnessRuntime
-from vault.entities import document_text, stable_id
-from vault.hooks import record_ingest
-from vault.index import VaultIndex
-from vault.schema import lint_schema
+from laris.client.application.workspace import Chunk
+from laris.client.vault.hooks import record_ingest
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.entities import document_text, stable_id
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.schema import lint_schema
 
 DOC1 = (
     "We propose a novel perovskite design. We trained a Transformer with AdamW on the SQuAD "

@@ -18,23 +18,23 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from core.authorization import (
+from laris.research.language.training.trainer import (
+    LanguageEncoderTrainer,
+)
+from laris.shared.core.authorization import (
     temporary_training_authorization,
 )
-from core.errors import (
+from laris.shared.core.errors import (
     TrainingExecutionProhibitedError,
 )
-from language.encoder.transformer import (
+from laris.shared.language.encoder.transformer import (
     TORCH_AVAILABLE,
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from language.training.dataloader import (
+from laris.shared.language.loading.dataloader import (
     StreamingParquetMultiTaskDataLoader,
     SyntheticMultiTaskDataLoader,
-)
-from language.training.trainer import (
-    LanguageEncoderTrainer,
 )
 
 if TORCH_AVAILABLE:

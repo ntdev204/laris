@@ -4,19 +4,19 @@ import json
 
 import pytest
 
-from core.errors import ModuleContractViolationError
-from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from language.encoder.sentence_encoder import CompactSentenceEncoder
-from language.schemas import VocabularyContract
-from language.tokenization.tokenizer import ScientificTokenizer
-from retrieval.baseline_comparison import (
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.language.encoder.sentence_encoder import CompactSentenceEncoder
+from laris.shared.language.schemas import VocabularyContract
+from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
+from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
+from laris.shared.retrieval.baseline_comparison import (
     RETRIEVAL_BENCHMARK_VERSION,
     STEM_RETRIEVAL_CORPUS,
     STEM_RETRIEVAL_QUERIES,
     RetrievalBenchmarkItem,
     evaluate_retrieval_comparison,
 )
-from retrieval.bm25 import BM25Document, BM25RetrievalBaseline
+from laris.shared.retrieval.bm25 import BM25Document, BM25RetrievalBaseline
 
 
 @pytest.fixture

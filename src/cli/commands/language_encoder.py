@@ -12,41 +12,41 @@ from typing import Any
 
 import numpy as np
 
-from config.loader import load_config
-from config.schemas import TrainingConfig
-from core.authorization import (
+from laris.research.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
+from laris.research.language.training.loop import TrainingRunConfig, run_training
+from laris.research.language.training.memory_profile import profile_training_memory
+from laris.research.language.training.progress import TrainingProgress
+from laris.research.language.training.trainer import (
+    LanguageEncoderTrainer,
+    MultiTaskLossCalculator,
+    MultiTaskLossWeights,
+)
+from laris.shared.config.loader import load_config
+from laris.shared.config.schemas import TrainingConfig
+from laris.shared.core.authorization import (
     assert_training_authorized,
     is_training_authorized,
 )
-from core.errors import TrainingExecutionProhibitedError
-from language.encoder.transformer import (
+from laris.shared.core.errors import TrainingExecutionProhibitedError
+from laris.shared.language.encoder.transformer import (
     TORCH_AVAILABLE,
     LanguageEncoderConfig,
     LargeLanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
-from language.tokenization.normalized import (
-    NORMALIZATION_ID,
-    NormalizedSentencePiece,
-)
-from language.training.checkpoint import (
+from laris.shared.language.loading.checkpoint import (
     MODEL_FILE,
     current_git_commit,
     file_sha256,
     read_manifest,
 )
-from language.training.dataloader import (
+from laris.shared.language.loading.dataloader import (
     TASK_DATASET_DIRS,
     StreamingParquetMultiTaskDataLoader,
 )
-from language.training.loop import TrainingRunConfig, run_training
-from language.training.memory_profile import profile_training_memory
-from language.training.progress import TrainingProgress
-from language.training.trainer import (
-    LanguageEncoderTrainer,
-    MultiTaskLossCalculator,
-    MultiTaskLossWeights,
+from laris.shared.language.tokenization.normalized import (
+    NORMALIZATION_ID,
+    NormalizedSentencePiece,
 )
 
 MAX_VRAM_GB = 14.5

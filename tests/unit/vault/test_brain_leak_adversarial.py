@@ -7,9 +7,9 @@ import re
 import sys
 from pathlib import Path
 
-from config.loader import load_runtime_config
-from harness.guard import Guard, InjectionScanner, LeakDetector, SecretRedactor
-from harness.strings import StringCatalogue
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.guard import Guard, InjectionScanner, LeakDetector, SecretRedactor
+from laris.shared.harness.strings import StringCatalogue
 
 REPO = Path(__file__).resolve().parents[3]
 BRAIN = sorted((REPO / ".laris" / "brain").rglob("*.md"))
@@ -69,7 +69,8 @@ def test_unrelated_text_is_not_flagged():
 
 
 def test_streamed_leak_is_blocked_even_when_split_into_tiny_chunks():
-    strings = StringCatalogue.load(REPO / "src" / "harness" / "public_strings.yaml")
+    path = REPO / "src" / "laris" / "shared" / "harness" / "public_strings.yaml"
+    strings = StringCatalogue.load(path)
     guard = Guard(
         CFG,
         strings,

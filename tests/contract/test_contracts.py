@@ -2,7 +2,7 @@
 
 import unittest
 
-from core.schemas import EpistemicStatus, EvidenceCoordinate, ScientificClaim
+from laris.shared.core.schemas import EpistemicStatus, EvidenceCoordinate, ScientificClaim
 
 
 class TestModuleContracts(unittest.TestCase):

@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from evaluation import suite
+from laris.research.evaluation import suite
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:

@@ -14,13 +14,7 @@ import math
 
 import pytest
 
-from core.errors import (
-    EpistemicOverreachError,
-    ModuleContractViolationError,
-    ProvenanceViolationError,
-)
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     CalibratedGapScores,
     CalibratedGapScoringEngine,
     CaveatSeverity,
@@ -33,6 +27,12 @@ from reasoning import (
     RuleBasedGapClassifier,
     ValidationPlan,
 )
+from laris.shared.core.errors import (
+    EpistemicOverreachError,
+    ModuleContractViolationError,
+    ProvenanceViolationError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 @pytest.fixture

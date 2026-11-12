@@ -6,9 +6,9 @@ from pathlib import Path
 
 import yaml
 
-from language.evaluation.calibration import DEFAULT_HEADROOM, calibrate_thresholds
-from language.evaluation.evaluator import load_thresholds
-from language.evaluation.runner import EXIT_USAGE
+from laris.research.language.evaluation.calibration import DEFAULT_HEADROOM, calibrate_thresholds
+from laris.research.language.evaluation.evaluator import load_thresholds
+from laris.research.language.evaluation.runner import EXIT_USAGE
 
 HEADER = (
     "# Acceptance thresholds for `laris evaluate language-encoder` (ADR-008).\n"

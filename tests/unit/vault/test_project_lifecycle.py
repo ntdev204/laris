@@ -1,14 +1,14 @@
 import hashlib
 from pathlib import Path
 
-from application.workspace import Chunk
-from config.runtime_schemas import VaultConfig
-from harness.runtime import HarnessRuntime
-from vault.hooks import record_ingest
-from vault.index import VaultIndex
-from vault.memory import migrate, read_memory, undo_migration, write_memory
-from vault.project import ProjectVault
-from vault.schema import lint_schema
+from laris.client.application.workspace import Chunk
+from laris.client.vault.hooks import record_ingest
+from laris.shared.config.runtime_schemas import VaultConfig
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.memory import migrate, read_memory, undo_migration, write_memory
+from laris.shared.vault.project import ProjectVault
+from laris.shared.vault.schema import lint_schema
 
 
 def snapshot(root: Path) -> dict:
@@ -102,7 +102,7 @@ def test_ingest_never_fails_when_the_vault_refuses(tmp_path, project):
 
 # -- T13 ---------------------------------------------------------------------------------------
 def test_per_user_opt_out_in_settings(project, tmp_path):
-    from harness.prefs import UserPrefs
+    from laris.shared.harness.prefs import UserPrefs
 
     prefs = UserPrefs(tmp_path / "settings.json")
     prefs.update({"vault_record": False})
@@ -146,7 +146,7 @@ def test_memory_migration_is_idempotent_lossless_and_reversible(tmp_path):
 
 # -- T26 ---------------------------------------------------------------------------------------
 def test_answer_note_stores_the_brain_path_and_links_only_notes_that_exist(project):
-    from vault.hooks import record_turn
+    from laris.client.vault.hooks import record_turn
 
     runtime = HarnessRuntime.load(project)
     vault = ProjectVault(project, runtime.config.vault)

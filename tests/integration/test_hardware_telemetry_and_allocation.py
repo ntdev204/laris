@@ -17,20 +17,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from core.errors import HardwareBudgetExceededError
-from execution.headroom_governor import (
+from laris.model.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from execution.schemas import (
+from laris.model.execution.schemas import (
     HardwareTarget,
     SpecialistExecutionRequest,
     TelemetryStatus,
 )
-from execution.telemetry import (
+from laris.model.execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
     PyTorchCudaSampler,
 )
+from laris.shared.core.errors import HardwareBudgetExceededError
 
 
 class TestMultiModelSequentialAllocation:

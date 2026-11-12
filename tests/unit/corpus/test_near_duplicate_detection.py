@@ -12,13 +12,13 @@ Validates:
 
 import unittest
 
-from corpus.dedup import (
+from laris.research.corpus.dedup import (
     DeduplicationEngine,
     DeduplicationPolicy,
     compute_jaccard_similarity,
     generate_word_shingles,
 )
-from corpus.schemas import (
+from laris.shared.corpus.schemas import (
     DatasetSplit,
     LicenseAuthorizationProvenance,
     LicenseType,

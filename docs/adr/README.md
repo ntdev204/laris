@@ -49,6 +49,7 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 | [ADR-016](ADR-016-policy-server-and-thin-client.md) | Policy Server and Thin Client (system .laris stays on the server) | ACCEPTED | 2026-11-11 | System-Wide |
 | [ADR-017](ADR-017-layers-and-capability-ladder.md) | Runtime Layers and Capability Ladder (Agentic required) | ACCEPTED | 2026-11-11 | System-Wide |
 | [ADR-018](ADR-018-server-database-keys-and-reasoning.md) | Server Database, Managed API Keys and Private Reasoning | ACCEPTED | 2026-11-11 | System-Wide |
+| [ADR-019](ADR-019-three-blocks-two-protocols-two-sql-engines.md) | Three Blocks, Two Protocols, Two SQL Engines, Docker, Terminal Client | ACCEPTED | 2026-11-12 | System-Wide |
 
 ## Freeze Register
 

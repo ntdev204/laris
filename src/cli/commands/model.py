@@ -6,26 +6,16 @@ Host, port, model name, body limit and API-key variable come from the `serving` 
 import argparse
 import ssl
 from pathlib import Path
-from typing import Any, Callable, List, Optional
+from typing import Any
 
-from cli.common import cli_overrides, model_flags
-from gateway import PolicyGateway
-from harness.runtime import HarnessRuntime
-from serverdata import ServerData, tls
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server, enable_tls, load_backend
-
-
-def _embedder(args: argparse.Namespace) -> Optional[Callable[[List[str]], List[List[float]]]]:
-    if not (args.checkpoint and args.tokenizer_model):
-        return None
-    from language.inference.loader import load_encoder
-    from language.inference.predictor import LanguageEncoderPredictor
-
-    predictor = LanguageEncoderPredictor(
-        load_encoder(Path(args.checkpoint), Path(args.tokenizer_model), device=args.device)
-    )
-    return lambda texts: [[float(x) for x in row] for row in predictor.embed(texts)]
+from cli.common import cli_overrides
+from laris.server.gateway import PolicyGateway
+from laris.server.serverdata import ServerData, tls
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.limits import LimitedProvider
+from laris.server.serving.model_server import ModelService, build_server, enable_tls
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.http_provider import HttpChatProvider, HttpEmbedder
 
 
 class _Serve:
@@ -33,8 +23,9 @@ class _Serve:
         parser.add_argument("--host", default=None, help="Bind address (config: serving.host)")
         parser.add_argument("--port", type=int, default=None, help="Port (config: serving.port)")
         parser.add_argument("--model-name", default=None, help="Name reported by /v1/models")
-        parser.add_argument("--backend", default=None, help="package.module:ClassName ChatProvider")
-        model_flags(parser)
+        parser.add_argument(
+            "--model-url", default=None, help="Model block URL (config: model_api.internal_url)"
+        )
         parser.add_argument(
             "--policy-root", default=None, help="Folder holding the system .laris/ (default: cwd)"
         )
@@ -55,8 +46,16 @@ class _Serve:
             return 2
         cfg = runtime.config.serving
         host, port = args.host or cfg.host, args.port or cfg.port
-        backend = load_backend(args.backend, runtime.strings)
-        name = args.model_name or (cfg.model_name if args.backend else cfg.placeholder_name)
+        api = runtime.config.model_api
+        model_url = args.model_url or api.internal_url
+        if not model_url:
+            print("[ERROR] no model block: set model_api.internal_url or pass --model-url")
+            return 2
+        name = args.model_name or cfg.model_name
+        backend = LimitedProvider(
+            HttpChatProvider(model_url, name, None, api.timeout_s, api.temperature),
+            cfg.model_concurrency,
+        )
         key_env = args.api_key_env or cfg.api_key_env
         ring = KeyRing.load(key_env, args.allowed_file or cfg.allowed_file, runtime.environ)
         cert, identity = (
@@ -86,11 +85,13 @@ class _Serve:
             return 2
         created = data.ensure_default_key() if cfg.require_auth else None
         if created:
+            where = data.deliver_default_key(created)
             print(
-                "Default key created (every permission, no limit, usable from this machine only):"
+                "Default key created (every permission, no limit, usable from this machine only)."
             )
-            print(f"  {created}", flush=True)
-            print("It is stored encrypted; print it again with `laris-server keys reveal default`.")
+            if where:
+                print(f"It was written to {where} (mode 0600).")
+            print("Print it with `laris-server keys reveal default`; it is never shown here.")
         gateway = PolicyGateway(
             runtime,
             backend,
@@ -103,7 +104,7 @@ class _Serve:
         service = ModelService(
             backend,
             name,
-            _embedder(args),
+            HttpEmbedder(model_url, name, None, api.timeout_s),
             None,
             gateway,
             auth=data.auth if cfg.require_auth else None,
@@ -119,7 +120,15 @@ class _Serve:
             if cfg.require_auth
             else "AUTHENTICATION IS OFF"
         )
-        server = build_server(service, host, port, cfg.max_body_bytes)
+        server = build_server(service, host, port, cfg.max_body_bytes, cfg.trusted_proxies)
+        retention = None
+        if cfg.database_engine == "postgres":  # partitions, daily summary, expiry (T62)
+            from laris.server.storage.maintenance import Maintenance, RetentionWorker
+
+            retention = RetentionWorker(
+                Maintenance(data.db, cfg.usage_retention_days, cfg.trace_retention_days),
+                cfg.retention_interval_s,
+            ).start()
         if cert:
             try:
                 enable_tls(server, cert, identity)
@@ -127,7 +136,7 @@ class _Serve:
                 print(f"[ERROR] cannot load the TLS certificate or key: {exc}")
                 server.server_close()
                 return 2
-        kind = "custom backend" if args.backend else "PLACEHOLDER backend (no trained core model)"
+        kind = f"model block {model_url}"
         scheme = "https" if cert else "http"
         if cert:
             print(f"certificate fingerprint {tls.fingerprint(cert)}")
@@ -137,6 +146,8 @@ class _Serve:
         except KeyboardInterrupt:
             print("\nstopped")
         finally:
+            if retention is not None:
+                retention.stop()
             server.server_close()
         return 0
 

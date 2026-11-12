@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import yaml
 
-from language.evaluation import metrics as M
+from laris.research.language.evaluation import metrics as M
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -78,13 +78,13 @@ torch = pytest.importorskip("torch")
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
 
-from language.evaluation.evaluator import (  # noqa: E402
+from laris.research.language.evaluation.evaluator import (  # noqa: E402
     DatasetResult,
     EvaluationReport,
     LanguageEncoderEvaluator,
     report_to_dict,
 )
-from language.training.dataloader import SEP_ID  # noqa: E402
+from laris.shared.language.loading.dataloader import SEP_ID  # noqa: E402
 
 SCHEMA = pa.schema(
     [

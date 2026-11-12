@@ -5,19 +5,21 @@ from pathlib import Path
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.context import ContextManager, is_overflow_error
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, OfflinePlanner, ProviderError
-from agent.tools import Sandbox
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from config.loader import load_runtime_config
-from harness.integrity import write_lock
-from harness.runtime import HarnessRuntime
-from skills import SkillLibrary
-from skills.loader import SkillError
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.context import ContextManager, is_overflow_error
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, OfflinePlanner, ProviderError
+from laris.client.agent.tools import Sandbox
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.integrity import write_lock
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.skills import SkillLibrary
+from laris.shared.skills.loader import SkillError
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 SKILL = """---
 name: demo-skill

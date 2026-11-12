@@ -8,16 +8,11 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from application.service import SearchService
-from application.workspace import Workspace
-from harness.runtime import HarnessRuntime
-from learning.hooks import make_ingest_hook
-
-
-def model_flags(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--checkpoint", help="Local checkpoint for dense search and QA tools")
-    parser.add_argument("--tokenizer-model", help="SentencePiece .model for the checkpoint")
-    parser.add_argument("--device", default=None, help="cuda or cpu (default: auto)")
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.client.learning.hooks import make_ingest_hook
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.http_provider import ServerEmbedder
 
 
 def cli_overrides(args: argparse.Namespace) -> Dict[str, Any]:
@@ -47,11 +42,20 @@ def load_runtime(args: Optional[argparse.Namespace] = None) -> HarnessRuntime:
 
 def make_service(args: argparse.Namespace, runtime: HarnessRuntime) -> SearchService:
     cfg = runtime.config.app
+    api = runtime.config.model_api
+    key = None
+    if api.base_url:  # the key `laris login` saved, unless the environment names another
+        from laris.shared.harness.credentials import load_saved
+
+        key = runtime.environ.get(cfg.key_env) or load_saved(cfg)
+    embedder = (
+        ServerEmbedder(api.base_url, "", api.api_key_env or None, api.timeout_s, key)
+        if api.base_url
+        else None
+    )
     service = SearchService(
         Workspace(Path(cfg.workspace)),
-        Path(args.checkpoint) if getattr(args, "checkpoint", None) else None,
-        Path(args.tokenizer_model) if getattr(args, "tokenizer_model", None) else None,
-        getattr(args, "device", None),
+        embedder,
         notice=runtime.strings.get("service.qualification_notice"),
         rrf_k=cfg.rrf_k,
         max_top_k=cfg.search_max_top_k,

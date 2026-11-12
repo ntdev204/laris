@@ -1,18 +1,17 @@
-import json
 import random
 import string
 from pathlib import Path
 
 import pytest
 
-from config.runtime_schemas import PromptConfig
-from harness import integrity
-from vault.graph import VaultGraph
-from vault.index import VaultIndex
-from vault.lint import lint_content
-from vault.notes import parse_note
-from vault.schema import Schema, as_dict, lint_schema
-from vault.writer import VaultWriteError, VaultWriter
+from laris.shared.config.runtime_schemas import PromptConfig
+from laris.shared.harness import integrity
+from laris.shared.vault.graph import VaultGraph
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_content
+from laris.shared.vault.notes import parse_note
+from laris.shared.vault.schema import Schema, as_dict, lint_schema
+from laris.shared.vault.writer import VaultWriteError, VaultWriter
 
 
 def make(root: Path, files: dict) -> VaultIndex:
@@ -47,22 +46,28 @@ def test_index_serialisation_is_byte_identical_and_cache_is_disposable(tmp_path)
     first = make(vault, files)
     second = VaultIndex.build(vault)
     assert first.dumps() == second.dumps()
-    cache = tmp_path / "cache" / "index.json"
+    cache = tmp_path / "cache" / "index.sqlite"
     built = VaultIndex.build(vault, cache_file=cache)
-    assert cache.exists() and json.loads(cache.read_text())["version"] == 1
+    import sqlite3
+
+    with sqlite3.connect(cache) as conn:
+        assert conn.execute("SELECT data FROM vault_index WHERE path='__version__'").fetchone() == (
+            "1",
+        )
+        assert conn.execute("SELECT COUNT(*) FROM vault_index").fetchone()[0] == 3
     from_cache = VaultIndex.build(vault, cache_file=cache)
     assert from_cache.dumps() == built.dumps()
     assert from_cache.notes["A.md"].props["created"] == first.notes["A.md"].props["created"]
     cache.unlink()  # deleting the cache loses nothing
     assert VaultIndex.build(vault, cache_file=cache).dumps() == built.dumps()
-    cache.write_text("{broken", encoding="utf-8")  # a corrupt cache is ignored
+    cache.write_text("{broken", encoding="utf-8")  # a corrupt cache is ignored, then replaced
     assert VaultIndex.build(vault, cache_file=cache).dumps() == built.dumps()
 
 
 def test_editing_one_note_changes_only_its_entries(tmp_path):
     vault = tmp_path / "v"
     index = make(vault, {"A.md": "one", "B.md": "two"})
-    cache = tmp_path / "c.json"
+    cache = tmp_path / "c.sqlite"
     VaultIndex.build(vault, cache_file=cache)
     (vault / "A.md").write_text("one changed", encoding="utf-8")
     again = VaultIndex.build(vault, cache_file=cache)
@@ -95,7 +100,7 @@ def test_crash_during_write_leaves_the_old_file(tmp_path, monkeypatch):
     def boom(*_a, **_k):
         raise OSError("disk full")
 
-    monkeypatch.setattr("vault.writer.os.replace", boom)
+    monkeypatch.setattr("laris.shared.vault.writer.os.replace", boom)
     with pytest.raises(OSError):
         writer.write_note("N.md", {}, {"b": "new"})
     assert (vault / "N.md").read_text() == before

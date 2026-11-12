@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from corpus.splits import execute_physical_partitioning
+from laris.research.corpus.splits import execute_physical_partitioning
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:

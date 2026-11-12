@@ -4,12 +4,14 @@ import json
 
 import pytest
 
-from agent.provider import ChatProvider, wire_messages
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace
-from config.loader import load_runtime_config
-from harness.integrity import protected_files, verify
+from laris.client.agent.provider import ChatProvider, wire_messages
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.integrity import protected_files, verify
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 
 class Exploding(ChatProvider):

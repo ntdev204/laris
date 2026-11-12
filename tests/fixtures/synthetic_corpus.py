@@ -11,8 +11,8 @@ Provides deterministic, synthetic scientific documents with varied characteristi
 
 from typing import Dict, List
 
-from corpus.pipeline import RawDocumentInput
-from corpus.schemas import LicenseType
+from laris.research.corpus.pipeline import RawDocumentInput
+from laris.shared.corpus.schemas import LicenseType
 
 
 def get_standard_synthetic_corpus() -> List[RawDocumentInput]:

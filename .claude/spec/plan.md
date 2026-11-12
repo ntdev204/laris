@@ -152,12 +152,13 @@ Release 2.0.0 (protocol and server storage change) needs the owner's authorisati
 Goal: record the decisions and dependency approvals before code.
 Tasks: T48
 Exit criteria:
-- ADR-019 accepted; ADR-015, ADR-016 and ADR-018 amended; D10 to D21 recorded.
-- Approved dependencies listed in `pyproject.toml` extras; `ink`, `react` and `uv` pinned; `prompt_toolkit` and `rich` recorded as dropped.
+- [x] ADR-019 accepted; ADR-015, ADR-016 and ADR-018 amended; D10 to D23 recorded (T48, 2026-11-12).
+- [x] Approved dependencies listed in `pyproject.toml` extras `server` and `model`; `ink` 8.0.0, `react` 19.3.1 and `uv` 0.13.1 pinned in ADR-019; `prompt_toolkit` and `rich` recorded as dropped.
 
 ### Phase 10 — Three blocks
 Goal: move the code into `src/laris/{protocol,shared,client,server,model,research}` without changing behaviour.
 Tasks: T49, T50, T51, T52
+Progress: [x] T49, [x] T50, [x] T51, [x] T52 (2026-11-12). Phase complete except the npm smoke test in CI.
 Exit criteria:
 - No import cycle between blocks; the block-boundary test passes.
 - Three entry points (`laris`, `laris-server`, `laris-model`); the client wheel is built from its blocks only.
@@ -166,6 +167,7 @@ Exit criteria:
 ### Phase 11 — Model service
 Goal: a separate inference process that alone loads weights and manages VRAM.
 Tasks: T53, T54, T55
+Progress: [x] T53, [x] T54, [x] T55 (2026-11-12). Phase complete.
 Exit criteria:
 - `laris-model serve` speaks P2; the boundary tests pass over HTTP; the GPU queue respects the VRAM budget.
 - The server reaches the model only through P2.
@@ -173,6 +175,7 @@ Exit criteria:
 ### Phase 12 — Server API
 Goal: replace `http.server` with FastAPI and close the reliability and safety findings.
 Tasks: T56, T57, T58, T59
+Progress: [x] T56, [x] T57, [x] T58, [x] T59 (2026-11-12). Phase complete.
 Exit criteria:
 - Body validation, SSE error events, bounded model concurrency and the narrowed brain lock are tested.
 - Address rules hold behind a trusted proxy; `/v1/laris/embed` serves the client; the default key is never printed.
@@ -180,6 +183,7 @@ Exit criteria:
 ### Phase 13 — Server storage on PostgreSQL
 Goal: keys, usage and traces in PostgreSQL with atomic quota and running retention.
 Tasks: T60, T61, T62, T63
+Progress: [x] T60, [x] T61, [x] T62, [x] T63 (2026-11-12). Phase complete.
 Exit criteria:
 - Migrations apply on an empty database; the concurrency test never passes a limit.
 - Partitions and background retention work; the SQLite import is lossless on a fixture.
@@ -187,12 +191,14 @@ Exit criteria:
 ### Phase 14 — Client storage on SQLite
 Goal: the user's data in one SQLite file per private space, vault notes unchanged.
 Tasks: T64, T65, T66
+Progress: [x] T64, [x] T65, [x] T66 (2026-11-12). Phase complete.
 Exit criteria:
 - Automatic, idempotent migration with backups; BM25 rankings identical; no lost update under two writers.
 
 ### Phase 15 — Deployment with Docker
 Goal: the whole server side runs with `docker compose` on one machine.
 Tasks: T67, T68, T69
+Progress: [x] T67, [x] T68, [x] T69 (2026-11-12). Phase complete.
 Exit criteria:
 - Images build; only Caddy publishes ports; policy and weights are read-only mounts; secrets are Docker secrets.
 - The end-to-end smoke test passes (or its commands are prepared for the owner when no Docker or GPU is available).
@@ -201,6 +207,7 @@ Exit criteria:
 Goal: `laris` offers the interface and flow of Claude Code: one engine, the Ink + React front end,
 a dependency-free plain mode, global settings and an automatic sandbox.
 Tasks: T70, T71, T72, T73, T74, T75, T76, T77, T78, T79, T80, T81, T82
+Progress: [x] T70, [x] T71, [x] T72, [x] T73, [x] T74, [x] T75, [x] T76, [x] T77 (2026-11-12). Remaining: T78, T79, T80, T81, T82.
 Exit criteria:
 - E1 contract tests pass; the Ink front end passes the scenario set; plain mode and headless `stream-json` (equal to E1) pass where they apply.
 - Global home with Claude-Code-style settings, login without flags, sandbox built and repaired without user action.

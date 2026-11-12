@@ -5,18 +5,18 @@ from pathlib import Path
 
 import pytest
 
-from core.errors import DataIntegrityError
-from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from language.encoder.sentence_encoder import CompactSentenceEncoder
-from language.schemas import (
-    LanguageTrainingRunManifest,
-    VocabularyContract,
-)
-from language.tokenization.tokenizer import ScientificTokenizer
-from language.training.artifacts import (
+from laris.research.language.training.artifacts import (
     LanguageArtifactBundle,
     LanguageArtifactManager,
 )
+from laris.shared.core.errors import DataIntegrityError
+from laris.shared.language.encoder.sentence_encoder import CompactSentenceEncoder
+from laris.shared.language.schemas import (
+    LanguageTrainingRunManifest,
+    VocabularyContract,
+)
+from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
+from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
 
 
 @pytest.fixture

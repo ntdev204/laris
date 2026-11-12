@@ -1,0 +1,115 @@
+# The whole server side on one machine (ADR-019). Run from the repository root:
+#   docker/init-secrets.sh                      # once: creates docker/secrets/* (git-ignored)
+#   docker compose -f docker/compose.yaml up -d --build
+# Only Caddy publishes ports. api, model and postgres sit on an internal network with no route out.
+# Policy (.laris/, LARIS.md) is mounted read-only and checked against integrity.lock when the API
+# starts; weights are a read-only volume; every secret is a Docker secret (a file, never an env).
+name: laris
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+
+services:
+  caddy:
+    <<: *hardening
+    image: caddy:2
+    ports:
+      - "${LARIS_HTTP_PORT:-80}:80"
+      - "${LARIS_HTTPS_PORT:-443}:443"
+    cap_add: [NET_BIND_SERVICE]
+    environment:
+      LARIS_DOMAIN: ${LARIS_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    tmpfs: [/tmp]
+    networks: [edge, backend]
+    depends_on:
+      api: {condition: service_healthy}
+
+  api:
+    <<: *hardening
+    build: {context: .., dockerfile: docker/api.Dockerfile}
+    image: laris-api:${LARIS_VERSION:-dev}
+    environment:
+      LARIS_SERVING__ALLOW_PLAIN_HTTP: "true"         # TLS ends at Caddy; the API is internal
+      LARIS_SERVING__DATABASE_ENGINE: postgres
+      LARIS_SERVING__DATABASE_URL_FILE: /run/secrets/laris_database_url
+      LARIS_SERVING__MASTER_FILE: /run/secrets/laris_master
+      LARIS_SERVING__FIRST_ADMIN_FILE: /data/first-admin.key
+      LARIS_SERVING__DATA_DIR: /data
+      LARIS_SERVING__TRUSTED_PROXIES: '["172.31.0.0/24"]'  # Caddy, on the backend network
+      LARIS_MODEL_API__INTERNAL_URL: http://model:8001/v1
+      LARIS_PROMPTS__INTEGRITY: enforce                # refuse to start if policy was altered
+    secrets: [laris_master, laris_database_url]
+    volumes:
+      - ../.laris:/app/.laris:ro
+      - ../LARIS.md:/app/LARIS.md:ro
+      - api_data:/data
+    tmpfs: [/tmp]
+    networks: [backend]
+    depends_on:
+      postgres: {condition: service_healthy}
+      model: {condition: service_healthy}
+
+  model:
+    <<: *hardening
+    build: {context: .., dockerfile: docker/model.Dockerfile}
+    image: laris-model:${LARIS_VERSION:-dev}
+    environment:
+      LARIS_MODEL_SERVICE__CHECKPOINT: ${LARIS_MODEL_CHECKPOINT:-}
+      LARIS_MODEL_SERVICE__TOKENIZER_MODEL: ${LARIS_MODEL_TOKENIZER:-}
+    volumes:
+      - ${LARIS_MODELS_DIR:-./models}:/models:ro
+    tmpfs: [/tmp]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - {driver: nvidia, count: 1, capabilities: [gpu]}
+    networks: [backend]
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      POSTGRES_DB: laris
+      POSTGRES_USER: laris
+      POSTGRES_PASSWORD_FILE: /run/secrets/laris_postgres_password
+    secrets: [laris_postgres_password]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laris -d laris"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks: [backend]
+
+networks:
+  edge: {}
+  backend:
+    internal: true            # no route to the outside: api, model and postgres cannot reach out
+    ipam:
+      config: [{subnet: 172.31.0.0/24}]
+
+volumes:
+  pgdata: {}
+  api_data: {}
+  caddy_data: {}
+  caddy_config: {}
+
+secrets:
+  laris_master:
+    file: ./secrets/master.secret
+  laris_database_url:
+    file: ./secrets/database_url
+  laris_postgres_password:
+    file: ./secrets/postgres_password

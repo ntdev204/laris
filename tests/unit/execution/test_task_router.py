@@ -15,19 +15,14 @@ from typing import Optional
 
 import pytest
 
-from core.errors import (
-    ModuleContractViolationError,
-    TaskRoutingError,
-    UncertaintyCeilingExceededError,
-)
-from execution.headroom_governor import (
+from laris.model.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from execution.schemas import (
+from laris.model.execution.schemas import (
     HardwareTarget,
     TelemetryStatus,
 )
-from execution.task_router import (
+from laris.model.execution.task_router import (
     ExecutionTier,
     HardwareBenchmarkReport,
     HardwareStressProtocol,
@@ -37,16 +32,21 @@ from execution.task_router import (
     TaskRouter,
     TaskRoutingRequest,
 )
-from execution.telemetry import (
+from laris.model.execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
 )
-from execution.weight_staging import (
+from laris.model.execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,
     StagingState,
     StorageTier,
+)
+from laris.shared.core.errors import (
+    ModuleContractViolationError,
+    TaskRoutingError,
+    UncertaintyCeilingExceededError,
 )
 
 

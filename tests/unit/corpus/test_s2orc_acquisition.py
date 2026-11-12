@@ -1,6 +1,6 @@
 """Offline tests for the S2ORC filter and shard selection (no network, no training)."""
 
-from corpus.acquisition.sources.s2orc import STAGES, filter_record, select_shards
+from laris.research.corpus.acquisition.sources.s2orc import STAGES, filter_record, select_shards
 
 TEXT = "x" * 2500
 

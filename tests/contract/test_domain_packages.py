@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 
 DOMAINS = [
-    "core",
-    "corpus",
-    "language",
-    "scientific",
-    "graph",
-    "retrieval",
-    "reasoning",
-    "orchestration",
-    "execution",
-    "evaluation",
-    "reporting",
+    "laris.shared.core",
+    "laris.research.corpus",
+    "laris.shared.language",
+    "laris.shared.scientific",
+    "laris.shared.graph",
+    "laris.shared.retrieval",
+    "laris.research.reasoning",
+    "laris.research.orchestration",
+    "laris.model.execution",
+    "laris.research.evaluation",
+    "laris.research.reporting",
 ]
 
 
@@ -42,7 +42,7 @@ def test_no_numbered_layer_directories_exist() -> None:
 
 def test_core_domain_exports():
     """Verifies core contracts."""
-    from core import EvidenceCoordinate, LarisError, ModuleContractViolationError
+    from laris.shared.core import EvidenceCoordinate, LarisError, ModuleContractViolationError
     assert EvidenceCoordinate is not None
     assert LarisError is not None
     assert ModuleContractViolationError is not None
@@ -50,7 +50,7 @@ def test_core_domain_exports():
 
 def test_corpus_domain_exports():
     """Verifies corpus contracts."""
-    from corpus import (
+    from laris.research.corpus import (
         CorpusIngestionPipeline,
         CorpusManifest,
         DatasetPartitionEngine,
@@ -66,11 +66,11 @@ def test_corpus_domain_exports():
 
 def test_language_domain_exports():
     """Verifies language contracts."""
-    from language import (
+    from laris.shared.language import (
         CompactSentenceEncoder,
         STEMSubwordTokenizer,
     )
-    from retrieval.bm25 import BM25RetrievalBaseline
+    from laris.shared.retrieval.bm25 import BM25RetrievalBaseline
 
     assert STEMSubwordTokenizer is not None
     assert CompactSentenceEncoder is not None
@@ -80,18 +80,18 @@ def test_language_domain_exports():
 @pytest.mark.parametrize(
     "module",
     [
-        "language.tokenization.tokenizer",
-        "language.tokenization.trainer",
-        "language.encoder.transformer",
-        "language.encoder.sentence_encoder",
-        "language.encoder.config_handoff",
-        "language.training.dataloader",
-        "language.training.trainer",
-        "language.training.profiling",
-        "language.training.artifacts",
-        "language.benchmarks.stem_benchmark",
-        "retrieval.bm25",
-        "retrieval.baseline_comparison",
+        "laris.shared.language.tokenization.tokenizer",
+        "laris.shared.language.tokenization.trainer",
+        "laris.shared.language.encoder.transformer",
+        "laris.shared.language.encoder.sentence_encoder",
+        "laris.shared.language.encoder.config_handoff",
+        "laris.shared.language.loading.dataloader",
+        "laris.research.language.training.trainer",
+        "laris.research.language.training.profiling",
+        "laris.research.language.training.artifacts",
+        "laris.shared.language.tokenization.stem_benchmark",
+        "laris.shared.retrieval.bm25",
+        "laris.shared.retrieval.baseline_comparison",
     ],
 )
 def test_language_functional_subpackages_importable(module: str) -> None:
@@ -105,13 +105,13 @@ def test_language_functional_subpackages_importable(module: str) -> None:
 )
 def test_legacy_flat_language_modules_are_gone(legacy: str) -> None:
     """Flat modules moved into sub-packages must not linger beside them."""
-    language_dir = Path(__file__).resolve().parents[2] / "src" / "language"
+    language_dir = Path(__file__).resolve().parents[2] / "src" / "laris" / "shared" / "language"
     assert not (language_dir / f"{legacy}.py").exists()
 
 
 def test_scientific_domain_exports():
     """Verifies scientific contracts."""
-    from scientific import (
+    from laris.shared.scientific import (
         HeadingIndependentLimitationDetector,
         ScientificDiscourseExtractor,
         STEMUnitNormalizer,
@@ -123,7 +123,7 @@ def test_scientific_domain_exports():
 
 def test_graph_domain_exports():
     """Verifies graph contracts."""
-    from graph import (
+    from laris.shared.graph import (
         BaseGraphPersistenceAdapter,
         EvidenceEdge,
         EvidenceGraph,
@@ -139,7 +139,7 @@ def test_graph_domain_exports():
 
 def test_retrieval_domain_exports():
     """Verifies retrieval contracts."""
-    from retrieval import (
+    from laris.shared.retrieval import (
         DenseVectorAdapter,
         GraphRetrievalAdapter,
         HybridRetrievalEngine,
@@ -155,7 +155,7 @@ def test_retrieval_domain_exports():
 
 def test_reasoning_domain_exports():
     """Verifies reasoning contracts covering both NLI and gap reasoning."""
-    from reasoning import (
+    from laris.research.reasoning import (
         AdversarialCounterEvidenceEngine,
         CalibratedGapScoringEngine,
         ComparativeMatrixEngine,
@@ -177,7 +177,7 @@ def test_reasoning_domain_exports():
 
 def test_orchestration_domain_exports():
     """Verifies orchestration contracts."""
-    from orchestration import (
+    from laris.research.orchestration import (
         BudgetGovernor,
         CycleDetector,
         DAGScheduler,
@@ -193,7 +193,7 @@ def test_orchestration_domain_exports():
 
 def test_execution_domain_exports():
     """Verifies execution contracts."""
-    from execution import (
+    from laris.model.execution import (
         HardwareTelemetryEngine,
         HeadroomBudgetGovernor,
         SpecialistLRUCache,
@@ -207,7 +207,7 @@ def test_execution_domain_exports():
 
 def test_evaluation_domain_exports():
     """Verifies evaluation contracts."""
-    from evaluation import (
+    from laris.research.evaluation import (
         BenchmarkRunner,
         DeterministicBaselineRouter,
         FeedbackMiningRepository,
@@ -221,7 +221,7 @@ def test_evaluation_domain_exports():
 
 def test_reporting_domain_exports():
     """Verifies reporting contracts."""
-    from reporting import (
+    from laris.research.reporting import (
         EvidenceInspector,
         ManuscriptComposer,
         StructuredReportGenerator,

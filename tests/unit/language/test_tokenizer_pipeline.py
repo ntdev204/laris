@@ -12,13 +12,13 @@ Validates:
 
 import unittest
 
-from core.errors import (
+from laris.shared.core.errors import (
     DataLeakageError,
     ModuleContractViolationError,
     TrainingExecutionProhibitedError,
 )
-from corpus.schemas import DatasetSplit
-from language.tokenization.trainer import (
+from laris.shared.corpus.schemas import DatasetSplit
+from laris.shared.language.tokenization.trainer import (
     TokenizerTrainerConfig,
     TokenizerTrainingPipeline,
 )
@@ -112,7 +112,7 @@ class TestTokenizerTrainingPipeline(unittest.TestCase):
 
     def test_tokenizer_readiness_state_and_report(self) -> None:
         """Pipeline must explicitly report PIPELINE_IMPLEMENTED and zero training."""
-        from language.tokenization.trainer import TokenizerReadinessState
+        from laris.shared.language.tokenization.trainer import TokenizerReadinessState
 
         self.assertEqual(
             self.pipeline.readiness_state, TokenizerReadinessState.PIPELINE_IMPLEMENTED

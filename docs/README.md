@@ -26,6 +26,7 @@ Start with the repository [README](../README.md), then the sections below. Super
 | | [GIT_FLOW.md](development/GIT_FLOW.md) | Branching, PR gates, review lifecycle |
 | | [CODING_STANDARDS.md](development/CODING_STANDARDS.md) | Code conventions and layout rules |
 | | [CLI.md](development/CLI.md) | `laris` command reference |
+| | [SERVER_DEPLOYMENT_RUNBOOK.md](development/SERVER_DEPLOYMENT_RUNBOOK.md) | Docker Compose stack, secrets, backup, smoke test |
 | | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md), [GLOSSARY.md](GLOSSARY.md), [CHANGELOG.md](../CHANGELOG.md) | Open items, terms, release history |
 | Architecture | [SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) | Topology and memory hierarchy |
 | | [LAYER_ARCHITECTURE.md](architecture/LAYER_ARCHITECTURE.md) | The 12 layers |

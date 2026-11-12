@@ -6,14 +6,14 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ProviderError, ToolCall
-from agent.tools import Sandbox
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.runtime import HarnessRuntime
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ProviderError, ToolCall
+from laris.client.agent.tools import Sandbox
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.shared.harness.runtime import HarnessRuntime
 
 CITED = "Perovskite cells reach 25% efficiency [nguồn #1]."
 LONG_GOAL = "Find the efficiency of perovskite solar cells then compare it with silicon and report"

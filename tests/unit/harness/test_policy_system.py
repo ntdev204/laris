@@ -4,18 +4,18 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from config.loader import load_runtime_config
-from harness import integrity
-from harness.integrity import IntegrityError
-from harness.prompts import PromptError
-from harness.runtime import HarnessRuntime
-from harness.workflows import WorkflowError, WorkflowLibrary
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness import integrity
+from laris.shared.harness.integrity import IntegrityError
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.policy.prompts import PromptError
+from laris.shared.policy.workflows import WorkflowError, WorkflowLibrary
 
 from .test_harness import REPO, relock  # noqa: F401  (shared fixtures/helpers)
 
@@ -218,7 +218,7 @@ def test_workflow_audit_names_the_workflow_not_the_task(project, tmp_path):
 
 
 def test_chat_command_selects_a_workflow(project, tmp_path):
-    from application.chat_app import ChatApp
+    from laris.client.application.chat_app import ChatApp
 
     service = SearchService(Workspace(tmp_path / "ws"))
     chat = ChatApp(service, project, project / "chat")

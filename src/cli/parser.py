@@ -28,6 +28,8 @@ def interactive_default(argv: Sequence[str]) -> List[str]:
         return items
     if items and items[0] in ("login", "logout", "whoami", "init"):
         return ["account", *items]
+    if items and items[0] == "engine":
+        return ["agent", *items]
     if not items or items[0].startswith("-"):
         return ["agent", "chat", *items]
     return items
@@ -40,8 +42,8 @@ def run(table: Table, prog: str, argv: Optional[Sequence[str]], interactive: boo
     args = build_parser_for(table, prog).parse_args(items)
     handler: Handler = args.handler
     from cli.credentials import CredentialError
-    from harness.integrity import IntegrityError
-    from harness.prompts import PromptError
+    from laris.shared.harness.integrity import IntegrityError
+    from laris.shared.policy.prompts import PromptError
 
     try:
         return handler(args)

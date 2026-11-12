@@ -5,8 +5,7 @@ Module ID: MOD-SEM-001 (Boundary C)
 Governed by: ADR-002, ADR-004, and ADR-008.
 """
 
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,
@@ -17,6 +16,7 @@ from reasoning import (
     MentionSpan,
     ScientificDiscourseParser,
 )
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 class TestDiscourseGraphAndProvenance:

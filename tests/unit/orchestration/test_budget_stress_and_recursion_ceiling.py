@@ -15,8 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
-from core.errors import CycleDetectedError, ModuleContractViolationError
-from orchestration import (
+from laris.research.orchestration import (
     AgentRole,
     BudgetGovernor,
     BudgetLimits,
@@ -26,6 +25,7 @@ from orchestration import (
     TaskNode,
     TaskNodeStatus,
 )
+from laris.shared.core.errors import CycleDetectedError, ModuleContractViolationError
 
 # ---------------------------------------------------------------------------
 # 1. Hard Recursion Ceiling Stress Tests (N <= 10)
