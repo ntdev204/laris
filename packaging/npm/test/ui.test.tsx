@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { cleanup } from "ink-testing-library";
 import { EngineClient } from "../src/engine-client.js";
-import { FakeTransport, KEYS, open, scenarioClient, sleep, until } from "./helpers.js";
+import { FakeTransport, KEYS, open, scenarioClient, sleep, stopAll, until } from "./helpers.js";
 
-afterEach(() => cleanup());
+afterEach(async () => {
+  cleanup();
+  await stopAll();
+});
 
 describe("scenarios through a recorded engine", () => {
   it("draws a streamed answer with Markdown, highlighting, a tool call and the status line", async () => {
@@ -32,6 +35,7 @@ describe("scenarios through a recorded engine", () => {
     await s.waitFor("Permission: write_file");
     assert.match(s.frame(), /\+hello/);
     assert.match(s.frame(), /Yes, and don't ask again in this project/);
+    await s.settle();
     await s.type("p");
     await s.waitFor("Done.");
     assert.equal(s.client.exited, false); // the scripted engine accepted the project-scoped answer
@@ -44,6 +48,7 @@ describe("scenarios through a recorded engine", () => {
     await s.type("write a note");
     await s.type(KEYS.enter);
     await s.waitFor("Permission: write_file");
+    await s.settle();
     await s.type("n");
     await s.waitFor("I did not write it.");
     await s.client.stop();
@@ -56,6 +61,7 @@ describe("scenarios through a recorded engine", () => {
     await s.type(KEYS.enter);
     await s.waitFor("Let me think");
     await s.waitFor("esc to interrupt"); // the spinner
+    await s.settle();
     await s.type(KEYS.esc);
     await s.waitFor("interrupted");
     await s.gone("esc to interrupt");

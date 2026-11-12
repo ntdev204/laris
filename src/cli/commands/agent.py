@@ -41,6 +41,13 @@ def _common(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def wanted_session(args: argparse.Namespace) -> Optional[str]:
+    """`--resume [ID]` picks from a list (or opens ID); `--continue [ID]` takes the newest session
+    (or ID). Returns "pick", "last", an id or None."""
+    wanted: Optional[str] = args.resume or args.continue_session
+    return wanted
+
+
 def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
     """The chat for the signed-in user: the API key picks a private conversation space and is
     the credential sent to the model API."""
@@ -267,8 +274,9 @@ class _Chat:
         )
         parser.epilog = EXIT_CODES_HELP
         parser.add_argument(
-            "-c", "--continue", dest="continue_last", action="store_true",
-            help="Continue the most recent session",
+            "-c", "--continue", dest="continue_session", nargs="?", const="last", default=None,
+            metavar="SESSION_ID",
+            help="Continue the most recent session, or the one named by id (or unique prefix)",
         )  # fmt: skip
         parser.add_argument(
             "--max-turns", type=int, default=None, help="With -p: agent steps (1-10)"
@@ -299,7 +307,7 @@ class _Chat:
             return self._headless(args)
         chat = make_chat(args)
         conversation = self._start(
-            chat, "last" if args.continue_last and not args.resume else args.resume
+            chat, wanted_session(args)
         )
         from importlib import metadata
 
@@ -335,8 +343,10 @@ class _Chat:
             prompt=args.print_text,
             stdin_text=_piped_input(),
             output_format=args.output_format,
-            continue_last=args.continue_last,
-            resume=None if args.resume in (None, "pick") else args.resume,
+            continue_last=args.continue_session == "last" and not args.resume,
+            resume=None if args.resume in (None, "pick") else (
+                args.resume or (None if args.continue_session == "last" else args.continue_session)
+            ),
             max_turns=args.max_turns,
             permission_mode=args.permission_mode,
             allowed_tools=allowed,

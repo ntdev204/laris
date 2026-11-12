@@ -303,3 +303,31 @@ def test_the_recorded_scenarios_of_the_node_front_end_are_valid_e1():
             if "expect" in step:
                 want = step["expect"]
                 assert want["type"] in e1.COMMANDS, (file.name, want)
+
+
+def test_continue_and_resume_take_an_id_or_a_unique_prefix(chat, monkeypatch, capsys):
+    import io
+    import json
+    import sys
+
+    from cli import client
+
+    ids = []
+    for title in ("one", "two"):
+        made = chat.conversations.create(title)
+        chat.conversations.save({**made, "messages": [{"role": "user", "content": title}]})
+        ids.append(made["id"])
+    monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
+
+    def session(*flags):
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
+        code = client.main(["engine", "--stdio", *flags])
+        out = capsys.readouterr()
+        return code, (json.loads(out.out.splitlines()[0])["session"] if out.out else None), out.err
+
+    assert session("--continue", ids[0])[1] == ids[0]
+    assert session("--continue", ids[1][:8])[1] == ids[1]
+    assert session("--resume", ids[0])[1] == ids[0]
+    code, _, err = session("--continue", "zzzzzz")
+    assert code == 2 and "no session zzzzzz" in err
