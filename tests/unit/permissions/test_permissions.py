@@ -33,13 +33,13 @@ def put(engine, **permissions):
 @pytest.mark.parametrize(
     "rule,tool,args,expected",
     [
-        ("Edit(src/**)", "edit_file", {"path": "src/a/b.py"}, True),
-        ("Edit(src/**)", "edit_file", {"path": "tests/a.py"}, False),
-        ("Edit(src/**)", "write_file", {"path": "src/a.py"}, False),  # another tool
-        ("Write(*.md)", "write_file", {"path": "README.md"}, True),
-        ("Write(*.md)", "write_file", {"path": "docs/README.md"}, False),  # `*` stays in a folder
-        ("Write(**/*.md)", "write_file", {"path": "docs/README.md"}, True),
-        ("Write(./notes.txt)", "write_file", {"path": "notes.txt"}, True),
+        ("Edit(src/**)", "Edit", {"path": "src/a/b.py"}, True),
+        ("Edit(src/**)", "Edit", {"path": "tests/a.py"}, False),
+        ("Edit(src/**)", "Write", {"path": "src/a.py"}, False),  # another tool
+        ("Write(*.md)", "Write", {"path": "README.md"}, True),
+        ("Write(*.md)", "Write", {"path": "docs/README.md"}, False),  # `*` stays in a folder
+        ("Write(**/*.md)", "Write", {"path": "docs/README.md"}, True),
+        ("Write(./notes.txt)", "Write", {"path": "notes.txt"}, True),
         ("Bash(git status:*)", "bash", {"command": "git status"}, True),
         ("Bash(git status:*)", "bash", {"command": "git status -s"}, True),
         ("Bash(git status:*)", "bash", {"command": "git statusx"}, False),
@@ -47,7 +47,7 @@ def put(engine, **permissions):
         ("Bash(ls)", "bash", {"command": "ls"}, True),
         ("Bash", "bash", {"command": "anything"}, True),
         ("*", "search_corpus", {"query": "x"}, True),
-        ("read_file", "Read", {"path": "a"}, True),
+        ("read", "Read", {"path": "a"}, True),
         ("not a rule(", "bash", {"command": "ls"}, False),
     ],
 )
@@ -57,9 +57,9 @@ def test_rule_matching(rule, tool, args, expected, tmp_path):
 
 def test_path_rules_follow_the_resolved_path(tmp_path):
     (tmp_path / "src").mkdir()
-    assert rule_matches("Write(src/**)", "write_file", {"path": "src/../src/a.py"}, tmp_path)
-    assert not rule_matches("Write(src/**)", "write_file", {"path": "src/../secret.py"}, tmp_path)
-    assert parse_rule("Edit(src/**)") == ("edit_file", "src/**") and parse_rule("Bash") == (
+    assert rule_matches("Write(src/**)", "Write", {"path": "src/../src/a.py"}, tmp_path)
+    assert not rule_matches("Write(src/**)", "Write", {"path": "src/../secret.py"}, tmp_path)
+    assert parse_rule("Edit(src/**)") == ("edit", "src/**") and parse_rule("Bash") == (
         "bash",
         None,
     )
@@ -67,26 +67,26 @@ def test_path_rules_follow_the_resolved_path(tmp_path):
 
 
 def test_default_mode_asks_for_writes_and_listed_tools_only(engine):
-    assert engine.decide("write_file", WRITE, True).action == "ask"
+    assert engine.decide("Write", WRITE, True).action == "ask"
     assert engine.decide("ingest_path", {"path": "a"}, False).action == "ask"  # always-ask list
     assert engine.decide("search_corpus", {"query": "q"}, False).action == "allow"
 
 
 def test_accept_edits_allows_edits_but_still_asks_for_the_rest(engine):
     engine.mode = "acceptEdits"
-    assert engine.decide("write_file", WRITE, True).action == "allow"
-    assert engine.decide("edit_file", WRITE, True).action == "allow"
+    assert engine.decide("Write", WRITE, True).action == "allow"
+    assert engine.decide("Edit", WRITE, True).action == "allow"
     assert engine.decide("bash", {"command": "make"}, True).action == "ask"
     assert engine.decide("save_memory", {"text": "x"}, True).action == "ask"
 
 
 def test_plan_mode_is_read_only(engine):
     engine.mode = "plan"
-    assert engine.decide("write_file", WRITE, True).action == "deny"
+    assert engine.decide("Write", WRITE, True).action == "deny"
     assert engine.decide("bash", {"command": "ls"}, True).action == "deny"
     assert engine.decide("read_file", {"path": "a"}, False).action == "allow"
     put(engine, allow=["Write"])  # no rule makes a plan writable
-    assert engine.decide("write_file", WRITE, True).action == "deny"
+    assert engine.decide("Write", WRITE, True).action == "deny"
 
 
 def test_bypass_needs_policy_and_never_beats_deny_or_ask(engine, tmp_path):
@@ -94,28 +94,28 @@ def test_bypass_needs_policy_and_never_beats_deny_or_ask(engine, tmp_path):
         engine.mode = "bypass"
     engine.allow_bypass = True
     engine.mode = "bypass"
-    assert engine.decide("write_file", WRITE, True).action == "allow"
+    assert engine.decide("Write", WRITE, True).action == "allow"
     put(engine, deny=["Write(src/**)"], ask=["Bash(rm:*)"])
-    assert engine.decide("write_file", WRITE, True).action == "deny"
+    assert engine.decide("Write", WRITE, True).action == "deny"
     assert engine.decide("bash", {"command": "rm -rf x"}, True).action == "ask"
     assert engine.decide("bash", {"command": "ls"}, True).action == "allow"
 
 
 def test_deny_wins_over_allow_and_ask(engine):
     put(engine, allow=["Write"], ask=["Write(src/**)"], deny=["Write(src/secret/**)"])
-    assert engine.decide("write_file", {"path": "src/secret/k"}, True).action == "deny"
-    assert engine.decide("write_file", {"path": "src/a.py"}, True).action == "ask"
-    assert engine.decide("write_file", {"path": "docs/a.md"}, True).action == "allow"
-    decision = engine.decide("write_file", {"path": "src/secret/k"}, True)
+    assert engine.decide("Write", {"path": "src/secret/k"}, True).action == "deny"
+    assert engine.decide("Write", {"path": "src/a.py"}, True).action == "ask"
+    assert engine.decide("Write", {"path": "docs/a.md"}, True).action == "allow"
+    decision = engine.decide("Write", {"path": "src/secret/k"}, True)
     assert decision.rule == "Write(src/secret/**)" and "denied by rule" in decision.reason
 
 
 def test_project_state_rules_apply_and_a_damaged_file_is_ignored(engine):
     engine.state.update(permissions={"allow": ["Write(docs/**)"], "deny": ["Write(docs/x/**)"]})
-    assert engine.decide("write_file", {"path": "docs/a.md"}, True).action == "allow"
-    assert engine.decide("write_file", {"path": "docs/x/a.md"}, True).action == "deny"
+    assert engine.decide("Write", {"path": "docs/a.md"}, True).action == "allow"
+    assert engine.decide("Write", {"path": "docs/x/a.md"}, True).action == "deny"
     engine.state.path.write_text("{not json", encoding="utf-8")
-    assert engine.decide("write_file", {"path": "docs/a.md"}, True).action == "ask"
+    assert engine.decide("Write", {"path": "docs/a.md"}, True).action == "ask"
 
 
 def test_mode_follows_saved_settings_until_set(engine):
@@ -162,35 +162,35 @@ def test_sandbox_installs_run_without_a_prompt_and_a_user_rule_restores_it(engin
 def test_suggested_rules(engine):
     assert engine.suggest("bash", {"command": "git status -s"}) == "bash(git status:*)"
     assert engine.suggest("bash", {"command": "make"}) == "bash(make:*)"
-    assert engine.suggest("write_file", {"path": "a.txt"}) == "write_file(a.txt)"
+    assert engine.suggest("Write", {"path": "a.txt"}) == "write(a.txt)"
     assert engine.suggest("save_memory", {"text": "x"}) == "save_memory"
 
 
 def test_answers_are_kept_per_scope(engine):
-    engine.remember("write_file(a.txt)", "session")
-    engine.remember("write_file(b.txt)", "project")
-    engine.remember("write_file(b.txt)", "project")  # no duplicate
-    engine.remember("write_file(c.txt)", "everywhere")
+    engine.remember("Write(a.txt)", "session")
+    engine.remember("Write(b.txt)", "project")
+    engine.remember("Write(b.txt)", "project")  # no duplicate
+    engine.remember("Write(c.txt)", "everywhere")
     assert json.loads(engine.state.path.read_text())["permissions"]["allow"] == [
-        "write_file(b.txt)"
+        "Write(b.txt)"
     ]
-    assert settings.read_raw(engine.settings_file)["permissions"]["allow"] == ["write_file(c.txt)"]
+    assert settings.read_raw(engine.settings_file)["permissions"]["allow"] == ["Write(c.txt)"]
     for name in "abc":
-        assert engine.decide("write_file", {"path": f"{name}.txt"}, True).action == "allow"
-    assert engine.decide("write_file", {"path": "d.txt"}, True).action == "ask"
+        assert engine.decide("Write", {"path": f"{name}.txt"}, True).action == "allow"
+    assert engine.decide("Write", {"path": "d.txt"}, True).action == "ask"
     fresh = PermissionEngine(engine.settings_file, engine.state, engine.project_root)
-    assert fresh.decide("write_file", {"path": "a.txt"}, True).action == "ask"  # session only
-    assert fresh.decide("write_file", {"path": "b.txt"}, True).action == "allow"
+    assert fresh.decide("Write", {"path": "a.txt"}, True).action == "ask"  # session only
+    assert fresh.decide("Write", {"path": "b.txt"}, True).action == "allow"
     with pytest.raises(ValueError):
         engine.remember("((", "project")
     with pytest.raises(ValueError):
-        engine.remember("write_file", "forever")
+        engine.remember("Write", "forever")
 
 
 def test_a_broken_settings_file_means_no_rules_not_a_crash(engine):
     engine.settings_file.parent.mkdir(parents=True, exist_ok=True)
     engine.settings_file.write_text('{"permissions": {"allow": 5}}', encoding="utf-8")
-    assert engine.decide("write_file", WRITE, True).action == "ask"
+    assert engine.decide("Write", WRITE, True).action == "ask"
     assert engine.mode == "default"
 
 
@@ -206,15 +206,15 @@ def test_the_agent_loop_obeys_the_engine(tmp_path, project):
         {"id": "s1", "messages": []}, lambda name, args: asked.append(name) or True
     )
     chat.permissions.mode = "plan"
-    denied = session._execute("write_file", {"path": "a.txt", "content": "x"})
+    denied = session._execute("Write", {"path": "a.txt", "content": "x"})
     assert denied["error"]["code"] == "approval_denied" and not asked
     chat.permissions.mode = "default"
-    session._execute("write_file", {"path": "a.txt", "content": "x"})
-    assert asked == ["write_file"]  # default mode asks
+    session._execute("Write", {"path": "a.txt", "content": "x"})
+    assert asked == ["Write"]  # default mode asks
     chat.permissions.mode = "acceptEdits"
-    session._execute("write_file", {"path": "b.txt", "content": "x"})
-    assert asked == ["write_file"]  # acceptEdits does not
+    session._execute("Write", {"path": "b.txt", "content": "x"})
+    assert asked == ["Write"]  # acceptEdits does not
     settings.write(chat.permissions.settings_file, {"permissions": {"deny": ["Write(c.txt)"]}})
-    refused = session._execute("write_file", {"path": "c.txt", "content": "x"})
+    refused = session._execute("Write", {"path": "c.txt", "content": "x"})
     assert refused["error"]["code"] == "approval_denied"
     assert not any(p.name == "c.txt" for p in tmp_path.rglob("c.txt"))

@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from laris.client.agent.coding_tools import CodingContext, build_coding_tools
 from laris.client.agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
 from laris.client.application.service import SearchService, ServiceError
 from laris.client.application.workspace import (
@@ -41,6 +42,7 @@ def build_registry(
     runtime: Optional[HarnessRuntime] = None,
     skills: Optional[SkillLibrary] = None,
     memory_dir: Optional[Path] = None,
+    coding: Optional[CodingContext] = None,
 ) -> ToolRegistry:
     rt = runtime or HarnessRuntime()
     agent, app, strings = rt.config.agent, rt.config.app, rt.strings
@@ -439,6 +441,12 @@ def build_registry(
     )
     from laris.client.agent.scholarly_tools import scholarly_specs
 
-    for spec in (*specs, *scholarly_specs(service, rt), *_enabled_brain_tools(rt, brain_tools)):
+    coding_specs = build_coding_tools(coding, sandbox) if coding is not None else ()
+    for spec in (
+        *specs,
+        *coding_specs,
+        *scholarly_specs(service, rt),
+        *_enabled_brain_tools(rt, brain_tools),
+    ):
         registry.register(spec)
     return registry

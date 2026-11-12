@@ -31,7 +31,7 @@ def run(ctx, line):
 def test_every_spec_command_is_registered():
     required = (
         "help clear compact resume continue model status cost context config permissions memory "
-        "init login logout doctor vault skills workflows hooks sandbox exit"
+        "init login logout doctor vault skills workflows hooks sandbox rewind exit"
     ).split()
     assert not [n for n in required if n not in BUILTIN.commands]
 
@@ -145,3 +145,19 @@ def test_bad_custom_files_are_skipped(ctx):
     (ctx.home / "commands" / "Bad Name.md").write_text("x", encoding="utf-8")
     (ctx.home / "commands" / "empty.md").write_text("---\ndescription: d\n---\n", encoding="utf-8")
     assert run(ctx, "/empty").error and run(ctx, "/Bad Name").error
+
+
+def test_rewind_lists_and_restores_what_the_coding_tools_changed(ctx):
+    project = ctx.chat.project_root
+    assert "nothing to rewind" in run(ctx, "/rewind").text
+    session = ctx.chat._session(ctx.conversation)
+    assert {"Read", "Write", "Edit", "Glob", "Grep", "Bash"} <= set(session.registry.tools)
+    (project / "f.py").write_text("old\n", encoding="utf-8")
+    session.registry.call("Edit", {"path": "f.py", "old_string": "old", "new_string": "new"})
+    session.registry.call("Write", {"path": "g.py", "content": "g\n"})
+    listing = run(ctx, "/rewind").text
+    assert "Edit" in listing and "f.py" in listing and "g.py" in listing and "(new file)" in listing
+    assert "removed: g.py" in run(ctx, "/rewind 1").text and not (project / "g.py").exists()
+    assert "restored: f.py" in run(ctx, "/rewind all").text
+    assert (project / "f.py").read_text() == "old\n"
+    assert run(ctx, "/rewind banana").error

@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.coding_tools import (
+    Checkpoints,
+    CodingContext,
+    preview_change,
+)
 from laris.client.agent.context import CompactionResult, ContextManager, Summarizer
 from laris.client.agent.conversations import ConversationStore, title_from
 from laris.client.agent.loop import AgentSession, Approver
@@ -28,6 +33,7 @@ from laris.client.learning.collector import Collector
 from laris.client.learning.hooks import make_ingest_hook
 from laris.client.permissions import PermissionEngine
 from laris.client.project_state import ProjectState
+from laris.shared.config import settings as settings_mod
 from laris.shared.harness.prefs import UserPrefs, effective
 from laris.shared.harness.runtime import HarnessRuntime
 from laris.shared.policy.policy import egress_allowed
@@ -78,6 +84,7 @@ class ChatApp:
         self.memory_dir = self.project_root / base.config.prompts.memory_dir
         self.service.on_ingest = make_ingest_hook(lambda: self.runtime)
         home = settings.parent
+        self.sandbox_manager: Optional[Any] = None  # set by the front end that owns the sandbox
         self.permissions = PermissionEngine(
             settings,
             ProjectState(home, self.project_root),
@@ -237,7 +244,10 @@ class ChatApp:
             denied_message=runtime.strings.get("guard.read_denied"),
             base=self.project_root,
         )
-        registry = build_registry(self.service, sandbox, runtime, skills, self.memory_dir)
+        coding = self.coding(conversation["id"], runtime)
+        registry = build_registry(
+            self.service, sandbox, runtime, skills, self.memory_dir, coding=coding
+        )
         return AgentSession(
             provider,
             registry,
@@ -256,6 +266,34 @@ class ChatApp:
             plan=conversation.get("plan"),
             permissions=self.permissions,
         )
+
+    def coding(self, session_id: str, runtime: Optional[HarnessRuntime] = None) -> CodingContext:
+        """What the coding tools of one session may touch, and where their checkpoints go."""
+        rt = runtime or self.runtime
+        home = Path(self.prefs.path).parent
+        try:
+            saved = settings_mod.validate(settings_mod.read_raw(self.prefs.path))
+            extra = [Path(p).expanduser() for p in saved.permissions.additionalDirectories]
+            env, inherit = dict(saved.env), saved.sandbox.inheritEnv
+        except settings_mod.SettingsError:
+            extra, env, inherit = [], {}, False
+        cfg = rt.config.agent.coding
+        folder = ProjectState(home, self.project_root).path.parent / "checkpoints" / session_id
+        return CodingContext(
+            root=self.project_root,
+            cfg=cfg,
+            policy=rt.paths,
+            redact=lambda text: rt.redactor.redact(text)[0],
+            checkpoints=Checkpoints(folder, cfg.checkpoint_keep),
+            extra_roots=extra,
+            sandbox=self.sandbox_manager,
+            env=env,
+            inherit_env=inherit,
+        )
+
+    def preview(self, tool: str, arguments: Dict[str, Any]) -> str:
+        """The diff shown with an approval request for `Write` and `Edit`."""
+        return preview_change(self.coding("preview"), tool, arguments)
 
     def parse_workflow_command(
         self, text: str, runtime: HarnessRuntime

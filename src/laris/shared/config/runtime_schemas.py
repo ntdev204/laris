@@ -48,6 +48,21 @@ class ReflectConfig(BaseModel):
     )
 
 
+class CodingConfig(BaseModel):
+    """Limits of the coding tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`)."""
+
+    bash_default_timeout_s: float = Field(default=120.0, gt=0.0)
+    bash_max_timeout_s: float = Field(default=600.0, gt=0.0)
+    bash_output_max_chars: int = Field(default=30000, ge=1000)
+    read_max_lines: int = Field(default=2000, ge=1)
+    glob_max_results: int = Field(default=500, ge=1)
+    grep_max_results: int = Field(default=200, ge=1)
+    grep_max_file_bytes: int = Field(default=2_000_000, ge=1000)
+    edit_max_bytes: int = Field(default=2_000_000, ge=1000)
+    diff_max_chars: int = Field(default=20000, ge=500)
+    checkpoint_keep: int = Field(default=200, ge=1)
+
+
 class AgentConfig(BaseModel):
     """Loop limits. `max_steps` is capped at the orchestration specification ceiling of 10."""
 
@@ -72,6 +87,7 @@ class AgentConfig(BaseModel):
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
     plan: PlanConfig = Field(default_factory=PlanConfig)
     reflect: ReflectConfig = Field(default_factory=ReflectConfig)
+    coding: CodingConfig = Field(default_factory=CodingConfig)
 
 
 class ContextConfig(BaseModel):

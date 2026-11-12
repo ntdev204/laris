@@ -236,6 +236,7 @@ class _Chat:
         home = Path("~/.laris").expanduser()
         manager = make_sandbox(home, chat.prefs.path, "plain")
         manager.start_background(lambda state: None)
+        chat.sandbox_manager = manager
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
         if args.print_text:
             return _turn(chat, conversation["id"], args.print_text, always)

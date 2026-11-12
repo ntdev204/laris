@@ -388,6 +388,11 @@
             "title": "Arguments",
             "type": "object"
           },
+          "diff": {
+            "default": "",
+            "title": "Diff",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "string"

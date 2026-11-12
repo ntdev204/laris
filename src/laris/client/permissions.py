@@ -28,11 +28,7 @@ from laris.client.sandbox.installs import classify_install
 from laris.shared.config import settings as settings_mod
 
 MODES = ("default", "acceptEdits", "plan", "bypass")
-EDIT_TOOLS = frozenset({"write_file", "edit_file"})
-ALIASES = {
-    "read": "read_file", "write": "write_file", "edit": "edit_file", "multiedit": "edit_file",
-    "glob": "glob", "grep": "grep", "bash": "bash",
-}  # fmt: skip
+EDIT_TOOLS = frozenset({"write", "edit", "write_file"})  # `write_file` is the output-folder tool
 PATH_KEYS = ("path", "file_path")
 _RULE = re.compile(r"^\s*([A-Za-z_*][\w*]*)\s*(?:\((.*)\))?\s*$", re.S)
 
@@ -45,12 +41,12 @@ class Decision:
 
 
 def canonical(tool: str) -> str:
-    low = tool.strip().lower()
-    return ALIASES.get(low, low)
+    """Rules and tools are compared case-insensitively: `Edit(src/**)` matches the `Edit` tool."""
+    return tool.strip().lower()
 
 
 def parse_rule(text: str) -> Optional[Tuple[str, Optional[str]]]:
-    """`Edit(src/**)` -> (`edit_file`, `src/**`); `Bash` -> (`bash`, None); junk -> None."""
+    """`Edit(src/**)` -> (`edit`, `src/**`); `Bash` -> (`bash`, None); junk -> None."""
     found = _RULE.match(text or "")
     if not found:
         return None

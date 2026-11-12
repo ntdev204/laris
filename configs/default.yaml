@@ -74,6 +74,17 @@ agent:
     - search_corpus
     - answer_question
     - read_file
+  coding:
+    bash_default_timeout_s: 120.0
+    bash_max_timeout_s: 600.0
+    bash_output_max_chars: 30000
+    read_max_lines: 2000
+    glob_max_results: 500
+    grep_max_results: 200
+    grep_max_file_bytes: 2000000
+    edit_max_bytes: 2000000
+    diff_max_chars: 20000
+    checkpoint_keep: 200
 
 # Context window and automatic compaction (on by default).
 context:

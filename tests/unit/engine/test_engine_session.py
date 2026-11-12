@@ -244,3 +244,19 @@ def test_always_allow_scopes_are_saved_and_mode_cycles(run):
     h.feed.send({"type": "set_mode", "mode": "bypass"})  # policy does not allow it
     assert h.out.wait("error")[-1]["code"] == "bad_mode"
     h.stop()
+
+
+def test_permission_request_carries_the_diff_of_an_edit(run, project):
+    (project / "app.py").write_text("x = 1\n", encoding="utf-8")
+    h = run()
+    h.out.wait("ready")
+    args = {"path": "app.py", "old_string": "x = 1", "new_string": "x = 2"}
+    t = threading.Thread(target=lambda: h.engine._approve("Edit", args))
+    t.start()
+    request = h.out.wait("permission_request")[0]
+    assert "-x = 1" in request["diff"] and "+x = 2" in request["diff"]
+    assert request["rule"] == "edit(app.py)"
+    h.feed.send({"type": "permission_response", "id": request["id"], "decision": "deny"})
+    t.join(5)
+    assert (project / "app.py").read_text() == "x = 1\n"  # the request changed nothing
+    h.stop()

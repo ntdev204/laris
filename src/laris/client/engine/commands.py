@@ -478,6 +478,36 @@ def _sandbox(ctx: Context, rest: str) -> Result:
     return Result(sandbox_command(ctx.sandbox, rest))
 
 
+@cmd("rewind", "restore files changed by Write and Edit", "[N | all]")
+def _rewind(ctx: Context, rest: str) -> Result:
+    coding = ctx.chat.coding(ctx.conversation["id"])
+    marks = coding.checkpoints
+    if marks is None:
+        return Result("no checkpoints", error=True)
+    entries = marks.list()
+    if not rest:
+        if not entries:
+            return Result("nothing to rewind: no file was changed in this session")
+        lines = [
+            f"  {e['seq']:>3}  {e['tool']:<5} {coding.display(Path(e['path']))}"
+            + ("" if e["existed"] else "  (new file)")
+            for e in entries[-20:]
+        ]
+        return Result(
+            "\n".join(lines) + "\n/rewind N undoes the last N edits, /rewind all every one"
+        )
+    if rest.lower() == "all":
+        steps = None
+    elif rest.isdigit() and int(rest) > 0:
+        steps = int(rest)
+    else:
+        return Result("usage: /rewind [N | all]", error=True)
+    done = marks.rewind(steps, coding.editable)
+    if not done:
+        return Result("nothing to rewind")
+    return Result("\n".join(f"  {r['status']}: {coding.display(Path(r['path']))}" for r in done))
+
+
 @cmd("tools", "list the agent's tools")
 def _tools(ctx: Context, rest: str) -> Result:
     return Result(

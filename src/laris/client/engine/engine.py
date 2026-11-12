@@ -89,6 +89,7 @@ class Engine:
         self.conversation = conversation or chat.conversations.create()
         self.home = Path(home or Path.home() / ".laris")
         self.sandbox = sandbox
+        chat.sandbox_manager = sandbox
         self.registry = BUILTIN
         self._out = threading.Lock()
         self._inbox: "queue.Queue[Optional[Dict[str, Any]]]" = queue.Queue()
@@ -162,7 +163,12 @@ class Engine:
             self._pending[request_id] = pending
         self.emit(
             e1.PermissionRequest(
-                id=request_id, tool=name, arguments=arguments, reason=why, rule=rule
+                id=request_id,
+                tool=name,
+                arguments=arguments,
+                reason=why,
+                rule=rule,
+                diff=self.chat.preview(name, arguments),
             )
         )
         pending.done.wait()

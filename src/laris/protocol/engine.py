@@ -66,6 +66,7 @@ class PermissionRequest(_Message):
     arguments: Dict[str, Any] = Field(default_factory=dict)
     reason: str = ""
     rule: str = ""  # the rule an "always allow" answer would save
+    diff: str = ""  # unified diff of the change a `Write` or `Edit` would make
     scopes: List[str] = Field(default_factory=lambda: ["once", "session", "project", "everywhere"])
 
 
