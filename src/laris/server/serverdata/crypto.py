@@ -97,6 +97,9 @@ class SecretBox:
         return hmac.new(self._lookup, plaintext.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
+DOCKER_SECRETS = "/run/secrets"
+
+
 def load_master(
     env_name: str, file_path: str, environ: Optional[Mapping[str, str]] = None
 ) -> bytes:
@@ -111,7 +114,10 @@ def load_master(
     path = Path(file_path).expanduser()
     if path.is_file():
         mode = path.stat().st_mode
-        if mode & (stat.S_IRWXG | stat.S_IRWXO):
+        # a Docker secret is a root-owned tmpfs file only this container can see: its mode is the
+        # runtime's, not ours to demand
+        docker_secret = path.resolve().parent == Path(DOCKER_SECRETS)
+        if mode & (stat.S_IRWXG | stat.S_IRWXO) and not docker_secret:
             raise ValueError(f"{path} must not be readable by group or others (chmod 600)")
         return path.read_text(encoding="utf-8").strip().encode("utf-8")
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)

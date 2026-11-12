@@ -221,6 +221,7 @@ class ServingConfig(BaseModel):
     data_dir: str = Field(default="artifacts/server")  # SQLite file with keys, usage, traces
     database_engine: str = Field(default="sqlite", pattern="^(sqlite|postgres)$")
     database_url_env: str = Field(default="LARIS_DATABASE_URL")  # env var with the PostgreSQL DSN
+    database_url_file: str = Field(default="")  # or a file (a Docker secret) holding the DSN
     database_pool_min: int = Field(default=1, ge=1)
     database_pool_max: int = Field(default=10, ge=1)
     database_timeout_s: float = Field(default=10.0, gt=0.0)

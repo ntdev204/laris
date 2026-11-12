@@ -1,4 +1,5 @@
 import json
+import os
 import threading
 
 import pytest
@@ -119,3 +120,29 @@ def test_db_migrate_command_and_server_data_on_postgres(tmp_path, monkeypatch, p
     assert data.keys.reveal(data.keys.default_key().id) == first
     principal = data.auth.authenticate(first, "127.0.0.1")  # the default key works from here
     assert principal is not None and principal.role == "admin"
+
+
+def test_dsn_may_come_from_a_secret_file_and_a_docker_secret_master_is_accepted(
+    tmp_path, monkeypatch
+):
+    from laris.server.serverdata import crypto
+    from laris.server.serverdata.service import open_database
+    from laris.server.storage import StorageError
+    from laris.shared.config.runtime_schemas import ServingConfig
+
+    cfg = ServingConfig(database_engine="postgres", database_url_file=str(tmp_path / "dsn"))
+    with pytest.raises(StorageError, match="cannot read"):
+        open_database(cfg, tmp_path, {})
+    (tmp_path / "dsn").write_text(os.environ["LARIS_TEST_PG_DSN"] + "\n", encoding="utf-8")
+    db = open_database(cfg, tmp_path, {})
+    try:
+        assert db.session().execute("SELECT 1 AS one").fetchone() == {"one": 1}
+    finally:
+        db.close()
+    secret = tmp_path / "master"
+    secret.write_text("x" * 40, encoding="utf-8")
+    secret.chmod(0o644)
+    with pytest.raises(ValueError, match="chmod 600"):
+        crypto.load_master("NOPE", str(secret), {})
+    monkeypatch.setattr(crypto, "DOCKER_SECRETS", str(tmp_path))  # as if mounted by Docker
+    assert crypto.load_master("NOPE", str(secret), {}) == b"x" * 40

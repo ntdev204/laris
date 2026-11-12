@@ -167,6 +167,7 @@ serving:
   first_admin_file: ~/.laris-server/default.key
   database_engine: sqlite
   database_url_env: LARIS_DATABASE_URL
+  database_url_file: ''
   database_pool_min: 1
   database_pool_max: 10
   database_timeout_s: 10.0

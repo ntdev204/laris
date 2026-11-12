@@ -76,8 +76,16 @@ def open_database(
         from laris.server.storage import PgDatabase, StorageError
 
         dsn = (environ if environ is not None else os.environ).get(cfg.database_url_env, "")
+        if not dsn and cfg.database_url_file:
+            try:
+                dsn = Path(cfg.database_url_file).expanduser().read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                raise StorageError(f"cannot read {cfg.database_url_file}: {exc.strerror}") from exc
         if not dsn:
-            raise StorageError(f"set {cfg.database_url_env} to the PostgreSQL connection string")
+            raise StorageError(
+                f"set {cfg.database_url_env} (or serving.database_url_file) to the PostgreSQL "
+                "connection string"
+            )
         return PgDatabase(
             dsn,
             min_size=cfg.database_pool_min,
