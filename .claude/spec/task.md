@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T66 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T67 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -783,7 +783,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `docker/api.Dockerfile` (slim, non-root, `.[server]`), `docker/model.Dockerfile` (CUDA base, inference only); `.dockerignore` keeps policy, weights and data out
 - Validation:
   - Images build; an image scan shows no `.laris/`, weights or data
-- Status: pending
+- Status: done
+- Note: `docker/api.Dockerfile` (multi-stage, python:3.12-slim, `pip wheel ".[server]"`, non-root uid 10001, health check on /health, entrypoint `laris-server`, no GPU, no weights, no policy) and `docker/model.Dockerfile` (nvidia/cuda 12.4.1 runtime base, `ARG LARIS_EXTRAS=model,gpu`, inference only: never the `training` extra, non-root, entrypoint `laris-model`, weights as a read-only volume at /models); both copy only `pyproject.toml`, `README.md`, `src` and `configs`. `.dockerignore` keeps `.laris/`, `LARIS.md`, `.env*`, `.claude`, data, artifacts, experiments, reports, tests, docs, weights (`*.pt`, `*.ckpt`, `*.safetensors`, `*.gguf`), arrays, databases and key/secret files out of the build context. `scripts/scan_image.py IMAGE...` exports each image's file system and fails on policy, `.env`, weights, datasets, databases, key files or git history outside installed packages. Verified with a real Docker 29.1.3: `laris-api:dev` (769 MB) builds and passes the scan (9816 paths, 0 forbidden), starts with `.laris/` mounted read-only and answers /health; `laris-model:dev-cpu` (same Dockerfile, `LARIS_EXTRAS=model`) builds, passes the scan (12515 paths, 0 forbidden) and serves in the stack of T68. tests/unit/deploy/test_docker_files.py (4 tests, no daemon needed): context exclusions, copy list, non-root user, inference-only extras, scanner behaviour. Fixed on the way: Ubuntu 22.04's pip cannot read this pyproject.toml (it built an `UNKNOWN 0.0.0` wheel), so the model image upgrades pip first. LIMIT, not verified: the full CUDA/torch variant (`LARIS_EXTRAS=model,gpu`) was started but had not finished when this task was closed, because the pip download of torch and the CUDA libraries (several GB) ran at about 150 kB/s on this link; it uses the same Dockerfile as the verified CPU variant, but nobody has run it or scanned it, and this machine's NVIDIA Container Toolkit is not set up, so it could not be run on the GPU here. Build it with `docker build -f docker/model.Dockerfile -t laris-model .` and scan it with `python scripts/scan_image.py laris-model`.
 
 ### T68 — Compose, Caddy and secrets
 - Requirements: SR-S7, SR-S4
