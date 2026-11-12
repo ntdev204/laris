@@ -118,6 +118,9 @@ def run_headless(
     for note in prepared.notes:
         print(f"[notice] {note}", file=err)
 
+    chat.session_start(conversation["id"])
+    for note in chat.hooks.drain():
+        print(f"[hook] {note}", file=err)
     calls: Dict[str, List[str]] = {}
     counter = [0]
     denied: List[str] = []
@@ -139,6 +142,8 @@ def run_headless(
     try:
         for event in stream:
             kind = event["type"]
+            if kind == "hook" and not streaming:
+                print(f"[hook] {event}", file=err)
             if kind == "tool_call":
                 tool_calls += 1
             elif kind == "tool_result":

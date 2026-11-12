@@ -233,6 +233,7 @@ def test_chat_app_runs_skill_command_and_archives_compaction(project, tmp_path):
     service = SearchService(Workspace(tmp_path / "ws"))
     service.workspace.add(chunks_from_text("a.txt", "graphene conducts electricity"))
     chat = ChatApp(service, project, project / "chat")
+    chat.permissions.state.trust()  # a project's skills are used only in a trusted folder (SR-C5)
     conv = chat.conversations.create()
     events = list(chat.send(conv["id"], "/demo-skill make a demo"))
     assert [e["name"] for e in events if e["type"] == "tool_call"] == ["use_skill"]

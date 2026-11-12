@@ -317,6 +317,11 @@ class Engine:
                 server=self.chat.runtime.config.model_api.base_url,
             )
         )
+        started = self.chat.session_start(self.conversation["id"])
+        for note in self.chat.hooks.drain():
+            self.emit(e1.Status(kind="hook", data=note))
+        if started.blocked:  # a SessionStart hook cannot stop a session; it is told to the user
+            self._error("hook_blocked", started.reason)
         threading.Thread(target=self._read, daemon=True, name="e1-reader").start()
         while True:
             command = self._inbox.get()

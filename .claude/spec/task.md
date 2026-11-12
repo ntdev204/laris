@@ -899,7 +899,10 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Hooks `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` declared only in `~/.laris/settings.json`, run inside the sandbox, with JSON input, block decisions and timeouts; `/hooks`; a project's custom commands and skills used only after the folder is trusted (trust in `~/.laris/projects/<slug>/state.json`)
 - Validation:
   - Allow, block, timeout and malformed-output tests; an untrusted folder runs nothing; hooks placed in a project folder are never run
-- Status: pending
+- Status: done
+- Note: `laris.client.hooks.HookRunner` runs the five events (`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`) declared only in `~/.laris/settings.json`, in the sandbox environment, with JSON on stdin, block by exit code 2 or JSON decision, matcher by tool, first block stops the rest, timeouts kill the process group and never block, and malformed output or failures warn without blocking. Wired into the agent loop, chat app, engine (`/hooks` in the slash registry) and headless. A project folder can declare no hooks; an untrusted folder uses no custom commands or skills (trust in the project `state.json`). tests/unit/hooks (10). Merged develop into the branch (it was 5 commits behind). mypy 302 files, ruff, `make check-no-training` pass. The two failures in T50 and the owner's uncommitted s2orc/manifest changes are untouched.
+
+
 
 ### T79 — Status, cost, context, interrupt and queued input
 - Requirements: SR-C1
