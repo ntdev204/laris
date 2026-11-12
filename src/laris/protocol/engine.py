@@ -126,9 +126,18 @@ class Done(_Message):
 
 
 # -- commands (front end -> engine) ------------------------------------------------------------
+class Attachment(_Message):
+    """A pasted image (read by local OCR) or a long pasted text kept by the front end."""
+
+    kind: Literal["image", "text"]
+    name: str = "pasted"
+    data_base64: str
+
+
 class UserMessage(_Message):
     type: Literal["user_message"] = "user_message"
     text: str = Field(min_length=1)
+    attachments: List[Attachment] = Field(default_factory=list)
 
 
 class PermissionResponse(_Message):

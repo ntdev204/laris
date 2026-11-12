@@ -2,6 +2,35 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "commands": {
     "$defs": {
+      "Attachment": {
+        "additionalProperties": false,
+        "description": "A pasted image (read by local OCR) or a long pasted text kept by the front end.",
+        "properties": {
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "image",
+              "text"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "pasted",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "data_base64"
+        ],
+        "title": "Attachment",
+        "type": "object"
+      },
       "Command": {
         "additionalProperties": false,
         "description": "A slash command: `name` without the slash, `args` the rest of the line.",
@@ -165,6 +194,13 @@
       "UserMessage": {
         "additionalProperties": false,
         "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/$defs/Attachment"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
           "text": {
             "minLength": 1,
             "title": "Text",

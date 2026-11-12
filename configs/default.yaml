@@ -217,6 +217,10 @@ app:
   chat_dir: artifacts/chat
   max_body_bytes: 33554432
   upload_max_bytes: 26214400
+  paste_inline_chars: 6000
+  mention_max_chars: 20000
+  mention_max_files: 10
+  note_name: notes
   chunk_words: 140
   min_chunk_words: 20
   search_default_top_k: 5

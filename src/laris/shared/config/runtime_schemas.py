@@ -282,6 +282,10 @@ class AppConfig(BaseModel):
     chat_dir: str = Field(default="artifacts/chat")
     max_body_bytes: int = Field(default=32 * 1024 * 1024, ge=1024)
     upload_max_bytes: int = Field(default=25 * 1024 * 1024, ge=1024)
+    paste_inline_chars: int = Field(default=6000, ge=500)  # longer pasted text is kept in a file
+    mention_max_chars: int = Field(default=20000, ge=500)  # per `@path` attachment
+    mention_max_files: int = Field(default=10, ge=1)
+    note_name: str = Field(default="notes")  # the memory note `# text` appends to
     chunk_words: int = Field(default=140, ge=20)
     min_chunk_words: int = Field(default=20, ge=1)
     search_default_top_k: int = Field(default=5, ge=1)

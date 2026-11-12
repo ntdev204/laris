@@ -11,9 +11,10 @@ import json
 import queue
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, Callable, Dict, List, Optional, TextIO
 
 from laris.client.engine.commands import BUILTIN, Context
+from laris.client.input_forms import InputProcessor, kind_of
 from laris.protocol import engine as e1
 
 
@@ -203,12 +204,50 @@ class Engine:
         self._interrupted.clear()
 
     def _start_turn(self, text: str) -> None:
+        self._start(self._run_turn, text)
+
+    def _start(self, target: Callable[..., None], *args: Any) -> None:
         if self._turn is not None and self._turn.is_alive():
             self._error("busy", "a turn is already running; send `interrupt` first")
             return
         self._interrupted.clear()
-        self._turn = threading.Thread(target=self._run_turn, args=(text,), daemon=True)
+        self._turn = threading.Thread(target=target, args=args, daemon=True)
         self._turn.start()
+
+    # -- input forms: @path, !command, # note, pasted text and images (SR-C2) --------------
+    def _user_message(self, text: str, attachments: List[Dict[str, Any]]) -> None:
+        processor = InputProcessor(self.chat)
+        form = kind_of(text)
+        if form == "shell":
+            self._start(self._run_shell, processor.prepare(text).text)
+        elif form == "note":
+            done = processor.note(processor.prepare(text).text)
+            if "error" in done:
+                self._error("note_failed", done["error"]["message"])
+            else:
+                self.emit(e1.Text(delta=f"noted in {done.get('path', 'memory')}\n"))
+            self.emit(e1.Done(status="completed"))
+        else:
+            prepared = processor.prepare(text, [e1.Attachment(**a) for a in attachments])
+            for note in prepared.notes:
+                self.emit(e1.Status(kind="notice", data={"text": note}))
+            self._start_turn(prepared.text)
+
+    def _run_shell(self, command: str) -> None:
+        try:
+            result = InputProcessor(self.chat).shell(
+                self.conversation["id"], command, self._approve
+            )
+        except Exception as exc:  # reported, and the engine stays up
+            self._error("shell_failed", f"{type(exc).__name__}: {exc}")
+            self.emit(e1.Done(status="error"))
+            return
+        if "error" in result:
+            self._error(result["error"]["code"], result["error"]["message"])
+            self.emit(e1.Done(status="error"))
+            return
+        self.emit(e1.Text(delta=str(result["output"]) + "\n"))
+        self.emit(e1.Done(status="timed_out" if result["timed_out"] else "completed"))
 
     def _join_turn(self) -> None:
         if self._turn is not None:
@@ -248,19 +287,8 @@ class Engine:
             for found in self.registry.complete(text, self._context()):
                 items.append(e1.CompletionItem(value=found.name, description=found.summary))
         else:
-            runtime = self.chat.runtime
-            prefix = text.lower()
-            for path in sorted(self.cwd.rglob("*")):
-                if len(items) >= 20:
-                    break
-                rel = path.relative_to(self.cwd).as_posix()
-                if (
-                    path.is_file()
-                    and rel.lower().startswith(prefix)
-                    and not runtime.paths.denied(path)
-                    and ".git/" not in rel
-                ):
-                    items.append(e1.CompletionItem(value=rel))
+            for value, is_dir in InputProcessor(self.chat).complete_files(text):
+                items.append(e1.CompletionItem(value=value, description="folder" if is_dir else ""))
         self.emit(e1.Completion(id=request["id"], items=items))
 
     @property
@@ -296,7 +324,7 @@ class Engine:
                 break
             kind = command["type"]
             if kind == "user_message":
-                self._start_turn(command["text"])
+                self._user_message(command["text"], command.get("attachments", []))
             elif kind == "command":
                 self._command(command)
             elif kind == "set_mode":

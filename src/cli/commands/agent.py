@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from cli.common import load_runtime, make_service
 from laris.client.application.chat_app import ChatApp
 from laris.client.engine.commands import BUILTIN, Context
+from laris.client.input_forms import InputProcessor, kind_of
 from laris.client.sandbox import make_sandbox
 
 
@@ -217,6 +218,35 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     return code
 
 
+def _input(chat: Any, conversation_id: str, line: str, always: set) -> int:
+    """A typed line: `!command`, `# note`, or a message with `@path` mentions attached."""
+    processor = InputProcessor(chat)
+    form = kind_of(line)
+    if form == "shell":
+        result = processor.shell(
+            conversation_id,
+            processor.prepare(line).text,
+            lambda name, arguments: _ask_permission(chat, name, arguments, always),
+        )
+        if "error" in result:
+            print(_paint(_ERR, result["error"]["message"]))
+            return 1
+        print(result["output"], end="" if str(result["output"]).endswith("\n") else "\n")
+        return 0 if result["exit_code"] == 0 else 1
+    if form == "note":
+        done = processor.note(processor.prepare(line).text)
+        print(
+            _paint(_ERR, done["error"]["message"])
+            if "error" in done
+            else f"noted in {done['path']}"
+        )
+        return 0
+    prepared = processor.prepare(line)
+    for note in prepared.notes:
+        print(_paint(_DIM, note))
+    return _turn(chat, conversation_id, prepared.text, always)
+
+
 class _Chat:
     """Claude-Code-style terminal session; conversations and settings are shared with the web UI."""
 
@@ -239,7 +269,10 @@ class _Chat:
         chat.sandbox_manager = manager
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
         if args.print_text:
-            return _turn(chat, conversation["id"], args.print_text, always)
+            prepared = InputProcessor(chat).prepare(args.print_text)
+            for note in prepared.notes:
+                print(_paint(_DIM, note), file=sys.stderr)
+            return _turn(chat, conversation["id"], prepared.text or args.print_text, always)
         print(
             _paint(_USE, "LARIS")
             + f"  session {conversation['id']}  ·  {chat.model_health()['detail']}"
@@ -259,7 +292,7 @@ class _Chat:
                     return 0
                 conversation = updated
                 continue
-            _turn(chat, conversation["id"], line, always)
+            _input(chat, conversation["id"], line, always)
 
     @staticmethod
     def _pick(rows: List[Dict[str, Any]]) -> Optional[str]:
