@@ -180,6 +180,8 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
             print(_paint(_USE, f"● {event['name']}") + _paint(_DIM, f" {shown}"))
         elif kind == "tool_result":
             print(_paint(_DIM, "  ⎿ ") + _summarise(event["result"]))
+        elif kind == "hook":
+            print(_paint(_DIM, _hook_line(event)))
         elif kind == "brain":
             print(_paint(_DIM, "  ◈ bộ não: " + " → ".join(event["trace"])))
         elif kind == "plan":
@@ -255,6 +257,12 @@ def _input(chat: Any, conversation_id: str, line: str, always: set) -> int:
     return _turn(chat, conversation_id, prepared.text, always)
 
 
+def _hook_line(note: Dict[str, Any]) -> str:
+    if "blocked" in note:
+        return f"  ⛔ hook {note['event']} blocked: {note['blocked']}"
+    return f"  ⚠ hook {note['event']}: {note.get('warning', '')}"
+
+
 def _piped_input() -> str:
     """Text piped on standard input (`cat file | laris -p "explain"`); nothing on a terminal."""
     try:
@@ -323,6 +331,9 @@ class _Chat:
         manager = make_sandbox(home, chat.prefs.path, "plain")
         manager.start_background(lambda state: None)
         chat.sandbox_manager = manager
+        chat.session_start(conversation["id"])
+        for note in chat.hooks.drain():
+            print(_paint(_DIM, _hook_line(note)), file=sys.stderr)
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
         print(
             _paint(_USE, "LARIS")

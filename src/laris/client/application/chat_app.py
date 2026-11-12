@@ -29,6 +29,7 @@ from laris.client.agent.provider import (
 from laris.client.agent.tools import Sandbox, ToolSpec
 from laris.client.application.service import SearchService
 from laris.client.application.workspace import IngestError, chunks_from_bytes
+from laris.client.hooks import HookOutcome, HookRunner
 from laris.client.learning.collector import Collector
 from laris.client.learning.hooks import make_ingest_hook
 from laris.client.permissions import PermissionEngine
@@ -85,6 +86,8 @@ class ChatApp:
         self.service.on_ingest = make_ingest_hook(lambda: self.runtime)
         home = settings.parent
         self.sandbox_manager: Optional[Any] = None  # set by the front end that owns the sandbox
+        self.hook_context: List[str] = []  # what SessionStart hooks asked the model to know
+        self.hooks = HookRunner(settings, self.project_root)
         self.permissions = PermissionEngine(
             settings,
             ProjectState(home, self.project_root),
@@ -102,14 +105,13 @@ class ChatApp:
 
     def skills_for(self, runtime: HarnessRuntime) -> SkillLibrary:
         roots = []
+        trusted = ProjectState(Path(self.prefs.path).parent, self.project_root).trusted
         for entry in runtime.config.prompts.skill_roots:
             path = Path(entry).expanduser()
-            roots.append(
-                (
-                    path if path.is_absolute() else self.project_root / path,
-                    "user" if entry.startswith("~") else "project",
-                )
-            )
+            kind = "user" if entry.startswith("~") else "project"
+            if kind == "project" and not trusted:
+                continue  # an untrusted folder's skills are not used (SR-C5)
+            roots.append((path if path.is_absolute() else self.project_root / path, kind))
         return SkillLibrary(roots)
 
     def settings(self) -> Dict[str, Any]:
@@ -256,7 +258,9 @@ class ChatApp:
             messages=list(conversation["messages"]),
             session_id=conversation["id"],
             skills=skills,
-            extra_instructions=self.prefs.extra_instructions,
+            extra_instructions="\n".join(
+                [t for t in (self.prefs.extra_instructions, *self.hook_context) if t]
+            ),
             context=ContextManager(
                 runtime.config.context, runtime.strings, self._summarizer(provider, runtime)
             ),
@@ -265,6 +269,7 @@ class ChatApp:
             audit_dir=self.root / "audit",
             plan=conversation.get("plan"),
             permissions=self.permissions,
+            hooks=self.hooks,
         )
 
     def coding(self, session_id: str, runtime: Optional[HarnessRuntime] = None) -> CodingContext:
@@ -290,6 +295,14 @@ class ChatApp:
             env=env,
             inherit_env=inherit,
         )
+
+    def session_start(self, conversation_id: str) -> HookOutcome:
+        """Run the `SessionStart` hooks once when a front end opens a session."""
+        self.hooks.session_id = conversation_id
+        self.hooks.sandbox = self.sandbox_manager
+        outcome = self.hooks.run("SessionStart", {"source": "startup"})
+        self.hook_context = list(outcome.context)
+        return outcome
 
     def preview(self, tool: str, arguments: Dict[str, Any]) -> str:
         """The diff shown with an approval request for `Write` and `Edit`."""
@@ -356,20 +369,49 @@ class ChatApp:
             yield {"type": "text", "delta": guide}
             yield {"type": "done", "status": "completed", "answer": guide}
             return
+        self.hooks.session_id = conversation_id
+        submitted = self.hooks.run("UserPromptSubmit", {"prompt": text})
+        for note in self.hooks.drain():
+            yield {"type": "hook", **note}
+        if submitted.blocked:
+            yield {"type": "done", "status": "blocked", "answer": submitted.reason}
+            return
+        if submitted.context:
+            text = text + "\n\n[Context from a hook]\n" + "\n".join(submitted.context)
         try:
             session = self._session(conversation, approve)
         except PolicyError as exc:
             yield {"type": "done", "status": "blocked", "answer": str(exc)}
             return
         try:
-            for event in session.send(
-                text,
-                self.parse_skill_command(text, session.skills or SkillLibrary([])),
-                self.parse_workflow_command(text, self.runtime),
-            ):
-                if event["type"] == "done":
-                    yield self._learn(conversation_id, session)
-                yield event
+            message = text
+            skill = self.parse_skill_command(text, session.skills or SkillLibrary([]))
+            workflow = self.parse_workflow_command(text, self.runtime)
+            stop_rounds = 0
+            while True:
+                final: Optional[Dict[str, Any]] = None
+                for event in session.send(message, skill, workflow):
+                    for note in self.hooks.drain():
+                        yield {"type": "hook", **note}
+                    if event["type"] == "done":
+                        final = event
+                    else:
+                        yield event
+                for note in self.hooks.drain():
+                    yield {"type": "hook", **note}
+                if final is None:
+                    break
+                if final["status"] == "completed" and stop_rounds < 1 and self.hooks.has("Stop"):
+                    stop = self.hooks.run("Stop", {"answer": final.get("answer", "")})
+                    for note in self.hooks.drain():
+                        yield {"type": "hook", **note}
+                    if stop.blocked:  # a Stop hook may ask for one more round of work
+                        stop_rounds += 1
+                        message, skill, workflow = stop.reason, None, None
+                        continue
+                yield self._learn(conversation_id, session)
+                yield final
+                break
         finally:  # keep what happened even if the client disconnects mid-stream
             conversation["messages"] = session.history
             conversation["plan"] = session.plan.to_list()  # an unfinished goal survives --resume
