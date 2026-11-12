@@ -101,6 +101,29 @@ class AgentSession:
         """Messages without the system prompt: what is persisted and shown."""
         return self.messages[1:]
 
+    def seal_interrupted(self) -> int:
+        """Make the conversation valid after a stream was closed early (Esc, SR-C1): every tool
+        call that never got a result receives an `interrupted` one, so the next request to the
+        model is well-formed. Returns how many results were added."""
+        answered = {m.get("tool_call_id") for m in self.messages if m.get("role") == "tool"}
+        added = 0
+        for message in list(self.messages):
+            for call in message.get("tool_calls") or []:
+                if call["id"] in answered:
+                    continue
+                answered.add(call["id"])
+                result = {"error": {"code": "interrupted", "message": "interrupted by the user"}}
+                position = self.messages.index(message) + 1
+                while (
+                    position < len(self.messages) and self.messages[position].get("role") == "tool"
+                ):
+                    position += 1  # keep the results of one assistant message together
+                self.messages.insert(
+                    position, {"role": "tool", "tool_call_id": call["id"], "content": dumps(result)}
+                )
+                added += 1
+        return added
+
     # -- conversation ----------------------------------------------------------------------
     # -- agentic planning ------------------------------------------------------------------
     def _plan_required(self, text: str, wf: Optional[WorkflowSpec]) -> bool:

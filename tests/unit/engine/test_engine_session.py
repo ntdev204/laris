@@ -2,6 +2,7 @@ import threading
 import time
 
 from laris.protocol import engine as e1
+from tests.unit.engine.conftest import wait_status
 
 
 def _valid(events):
@@ -41,8 +42,10 @@ def test_a_scripted_session_replays_to_the_same_transcript(chat, project, use_pl
         h.out.wait("done")
         h.stop()
         events = [
-            e for e in h.out.events() if not (e["type"] == "status" and e["kind"] == "learning")
-        ]  # what was stored (new vs duplicate) depends on earlier runs, not on the protocol
+            e
+            for e in h.out.events()
+            if not (e["type"] == "status" and e["kind"] in ("learning", "line"))
+        ]  # learning depends on earlier runs; the status line is timed by the clock, not the turn
         for event in events:
             event.pop("session", None)
         return events
@@ -90,7 +93,8 @@ def test_bad_lines_and_unknown_commands_do_not_stop_the_engine(run):
     codes = [e["code"] for e in h.out.wait("error", 3)]
     assert codes == ["bad_command", "bad_command", "unknown_command"]
     h.feed.send({"type": "set_mode", "mode": "acceptEdits"})
-    status = h.out.wait("status")[0]
+    wait_status(h.out, "mode")  # other status events (the status line) arrive too (T79)
+    status = next(e for e in h.out.events() if e["type"] == "status" and e["kind"] == "mode")
     assert status["kind"] == "mode" and status["data"] == {"mode": "acceptEdits"}
     h.feed.send({"type": "command", "name": "help"})
     h.out.wait("done")
@@ -115,9 +119,7 @@ def test_completion_for_commands_and_files(run, project):
     h.stop()
 
 
-def test_a_busy_engine_refuses_a_second_message_and_interrupt_ends_the_turn(
-    chat, project, monkeypatch
-):
+def test_a_second_message_is_queued_and_interrupt_ends_the_turn(chat, project, monkeypatch):
     from tests.unit.engine.conftest import Harness
 
     release = threading.Event()
@@ -133,8 +135,8 @@ def test_a_busy_engine_refuses_a_second_message_and_interrupt_ends_the_turn(
     h.out.wait("ready")
     h.feed.send({"type": "user_message", "text": "one"})
     h.out.wait("text")
-    h.feed.send({"type": "user_message", "text": "two"})
-    assert h.out.wait("error")[0]["code"] == "busy"
+    h.feed.send({"type": "user_message", "text": "two"})  # typed while working: queued (T79)
+    wait_status(h.out, "queued")
     h.feed.send({"type": "interrupt"})
     for _ in range(500):  # the reader thread acts on it; only then let the model go on
         if h.engine._interrupted.is_set():
@@ -175,7 +177,8 @@ def test_the_cli_command_speaks_e1_on_stdio(chat, monkeypatch, capsys):
     assert client.main(["engine", "--stdio"]) == 0
     lines = [json.loads(x) for x in capsys.readouterr().out.splitlines()]
     assert lines[0]["type"] == "ready" and lines[0]["version"] == e1.E1_VERSION
-    assert len(lines) == 1
+    assert {x["type"] for x in lines} == {"ready", "status"}  # the start-up status lines (T79)
+    assert {x["kind"] for x in lines[1:]} <= {"line", "sandbox"}
 
 
 def test_custom_commands_complete_and_run_a_turn_through_e1(run):
@@ -240,7 +243,8 @@ def test_always_allow_scopes_are_saved_and_mode_cycles(run):
     assert permissions.decide("write_file", {"path": "p.txt"}, True).action == "allow"
     assert permissions.decide("write_file", {"path": "other.txt"}, True).action == "ask"
     h.feed.send({"type": "set_mode", "mode": "next"})
-    assert h.out.wait("status")[-1]["data"] == {"mode": "acceptEdits"}
+    modes = wait_status(h.out, "mode")
+    assert modes[-1]["data"] == {"mode": "acceptEdits"}
     h.feed.send({"type": "set_mode", "mode": "bypass"})  # policy does not allow it
     assert h.out.wait("error")[-1]["code"] == "bad_mode"
     h.stop()

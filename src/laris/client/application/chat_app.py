@@ -413,6 +413,7 @@ class ChatApp:
                 yield final
                 break
         finally:  # keep what happened even if the client disconnects mid-stream
+            session.seal_interrupted()  # a call without a result would make the history invalid
             conversation["messages"] = session.history
             conversation["plan"] = session.plan.to_list()  # an unfinished goal survives --resume
             self.conversations.save(conversation)
