@@ -39,7 +39,6 @@ class _Engine:
             version = "unknown"
         home = Path("~/.laris").expanduser()
         manager = make_sandbox(home, chat.prefs.path, version)
-        manager.start_background(lambda state: None)  # build or repair quietly while the user types
         return Engine(
             chat,
             sys.stdin,

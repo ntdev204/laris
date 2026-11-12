@@ -71,7 +71,8 @@ class PermissionRequest(_Message):
 
 
 class Status(_Message):
-    """Progress that is not text: `kind` is verify, reflect, brain, learning, mode, notice ..."""
+    """Progress that is not text: `kind` is verify, reflect, brain, learning, mode, notice, line
+    (the status line values), queued (a message waiting for the running turn), sandbox ..."""
 
     type: Literal["status"] = "status"
     kind: str
