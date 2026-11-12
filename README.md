@@ -57,7 +57,7 @@ mypy src
 python3 scripts/validate_docs.py   # or: make check
 ```
 
-Owner-only language-encoder workflow (see [training index](docs/training/README.md) and [CLI reference](docs/development/CLI.md)): `laris data acquire`, `laris data partition`, `laris train tokenizer`, `laris train language-encoder`, `laris evaluate language-encoder`. Training requires explicit owner authorization.
+Owner-only language-encoder workflow (see [training index](docs/training/README.md) and [CLI reference](docs/development/CLI.md)): `laris-server data acquire`, `laris-server data partition`, `laris-server train tokenizer`, `laris-server train language-encoder`, `laris-server evaluate language-encoder`. Training requires explicit owner authorization.
 
 Current agent preparation checks: `make PY=.venv/bin/python check-no-training`. This deliberately excludes optimizer-bearing tests; agents must not run the full `make check` during this task.
 

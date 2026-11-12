@@ -25,12 +25,13 @@ Start with the repository [README](../README.md), then the sections below. Super
 | Governance | [DOCUMENTATION.md](development/DOCUMENTATION.md) | Metadata schema, writing standard, document lifecycle |
 | | [GIT_FLOW.md](development/GIT_FLOW.md) | Branching, PR gates, review lifecycle |
 | | [CODING_STANDARDS.md](development/CODING_STANDARDS.md) | Code conventions and layout rules |
-| | [CLI.md](development/CLI.md) | `laris` command reference |
+| | [CLI.md](development/CLI.md) | `laris`, `laris-server` and `laris-model` reference: terminal client, settings, E1, operator commands |
 | | [SERVER_DEPLOYMENT_RUNBOOK.md](development/SERVER_DEPLOYMENT_RUNBOOK.md) | Docker Compose stack, secrets, backup, smoke test |
+| | [MIGRATION_1X_TO_2_0.md](development/MIGRATION_1X_TO_2_0.md) | Moving users, operators and the owner from 1.x to 2.0 |
 | | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md), [GLOSSARY.md](GLOSSARY.md), [CHANGELOG.md](../CHANGELOG.md) | Open items, terms, release history |
-| Architecture | [SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) | Topology and memory hierarchy |
+| Architecture | [SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) | Three blocks, protocols P1 and P2, trust boundaries, memory hierarchy |
 | | [LAYER_ARCHITECTURE.md](architecture/LAYER_ARCHITECTURE.md) | The 12 layers |
-| | [DATA_FLOW.md](architecture/DATA_FLOW.md) | Ingestion, retrieval, synthesis, reporting |
+| | [DATA_FLOW.md](architecture/DATA_FLOW.md) | One chat turn (release 2.0), ingestion, retrieval, synthesis, reporting |
 | | [MODEL_ROUTING.md](architecture/MODEL_ROUTING.md) | Tiered execution and early exit |
 | | [SELECTIVE_COMPUTATION.md](architecture/SELECTIVE_COMPUTATION.md) | Selective loading, computation, access |
 | | [EVIDENCE_AND_PROVENANCE.md](architecture/EVIDENCE_AND_PROVENANCE.md) | Epistemic taxonomy and anchoring |

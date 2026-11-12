@@ -32,8 +32,8 @@ Preserve the existing checkpoints and split manifest. Stop CARLA or other GPU
 workloads before the owner starts GPU work.
 
 ```bash
-.venv/bin/laris data check --verify-sha256
-.venv/bin/laris evaluate readiness \
+.venv/bin/laris-server data check --verify-sha256
+.venv/bin/laris-server evaluate readiness \
   --reports reports/language_encoder/compact-1024-04-best-val.json \
   --output artifacts/readiness/current-foundation.json
 ```
@@ -68,7 +68,7 @@ not certify training memory; if this exceeds 14.5 GB, lower the micro-batch and
 increase accumulation to preserve the intended effective batch.
 
 ```bash
-LARIS_TRAINING_AUTHORIZED=1 .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 .venv/bin/laris-server train language-encoder \
   --profile-only --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --micro-batch-size 4 --grad-accum-steps 16 --precision bf16 --no-8bit-adam \
@@ -102,7 +102,7 @@ using the command in section 1.
 ```bash
 set -o pipefail
 mkdir -p artifacts/profiles
-LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 120s .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 120s .venv/bin/laris-server train language-encoder \
   --authorized --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --init-from artifacts/checkpoints/language_encoder/compact-1024-04/best \
@@ -113,7 +113,7 @@ LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 120s .venv/bin/laris train language-
   --retrieval-loss-weight 0 --run-id foundation-f05-baseline-smoke --no-evaluate-after \
   2>&1 | tee artifacts/profiles/foundation-f05-baseline-smoke.log
 
-LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 120s .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 120s .venv/bin/laris-server train language-encoder \
   --authorized --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --init-from artifacts/checkpoints/language_encoder/compact-1024-04/best \
@@ -134,7 +134,7 @@ when one round stops early.
 
 ```bash
 set -o pipefail
-LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris-server train language-encoder \
   --authorized --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --init-from artifacts/checkpoints/language_encoder/compact-1024-04/best \
@@ -145,7 +145,7 @@ LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris train language
   --retrieval-loss-weight 0 --run-id foundation-f05-baseline-run --no-evaluate-after \
   2>&1 | tee artifacts/profiles/foundation-f05-baseline-run.log
 
-LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris-server train language-encoder \
   --authorized --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --init-from artifacts/checkpoints/language_encoder/compact-1024-04/best \
@@ -160,13 +160,13 @@ LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 3180s .venv/bin/laris train language
 ## 5. Validation and handoff
 
 ```bash
-timeout -s KILL 300s .venv/bin/laris evaluate language-encoder \
+timeout -s KILL 300s .venv/bin/laris-server evaluate language-encoder \
   --checkpoint artifacts/checkpoints/language_encoder/foundation-f05-baseline-run/best \
   --tokenizer-model artifacts/tokenizer/laris_spm_32k.model \
   --split val --max-samples 512 --batch-size 8 --seed 42 --device cuda \
   --output artifacts/evaluations/language_encoder/foundation-f05-baseline-val.json
 
-timeout -s KILL 300s .venv/bin/laris evaluate language-encoder \
+timeout -s KILL 300s .venv/bin/laris-server evaluate language-encoder \
   --checkpoint artifacts/checkpoints/language_encoder/foundation-f05-sampling-run/best \
   --tokenizer-model artifacts/tokenizer/laris_spm_32k.model \
   --split val --max-samples 512 --batch-size 8 --seed 42 --device cuda \
