@@ -175,7 +175,7 @@ Exit criteria:
 ### Phase 12 — Server API
 Goal: replace `http.server` with FastAPI and close the reliability and safety findings.
 Tasks: T56, T57, T58, T59
-Progress: [x] T56, [x] T57, [x] T58 (2026-11-12). Remaining: T59.
+Progress: [x] T56, [x] T57, [x] T58, [x] T59 (2026-11-12). Phase complete.
 Exit criteria:
 - Body validation, SSE error events, bounded model concurrency and the narrowed brain lock are tested.
 - Address rules hold behind a trusted proxy; `/v1/laris/embed` serves the client; the default key is never printed.

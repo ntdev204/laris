@@ -116,6 +116,22 @@ class ServerData:
         )
         return plaintext
 
+    def deliver_default_key(self, plaintext: str) -> str:
+        """Write the new default key to `serving.first_admin_file` (mode 0600, owner only) and
+        return the path ("" when no file is configured). The key is never printed or logged."""
+        import os
+        from pathlib import Path
+
+        if not self.cfg.first_admin_file:
+            return ""
+        path = Path(self.cfg.first_admin_file).expanduser()
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        path.unlink(missing_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(plaintext + "\n")
+        return str(path)
+
     # -- operator views (duck-typed by the model server's admin routes) ----------------------
     def usage_summary(self) -> Any:
         return self.usage.summary()

@@ -223,6 +223,7 @@ class ServingConfig(BaseModel):
     master_file: str = Field(default="~/.laris-server/master.secret")  # used when the env is unset
     server_ips: List[str] = Field(default_factory=list)  # extra addresses counted as "the server"
     default_key_label: str = Field(default="default (server only)")
+    first_admin_file: str = Field(default="~/.laris-server/default.key")  # 0600; empty: no file
     cache_ttl_s: float = Field(default=5.0, ge=0.0)  # key lookups; a revocation applies within it
     cache_max_entries: int = Field(default=1024, ge=1)
     chars_per_token: float = Field(

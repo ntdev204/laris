@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T58 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T59 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -697,7 +697,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - The default key is no longer printed; `laris-server keys reveal default` or a 0600 secret file delivers it
 - Validation:
   - Start-up output and logs contain no key (test)
-- Status: pending
+- Status: done
+- Note: `laris-server model serve` no longer prints the default key. On the first start it writes the key to `serving.first_admin_file` (default `~/.laris-server/default.key`, created with mode 0600 inside a 0700 folder, replaced if it exists; point it at a Docker secret path in T68, or set it empty to write nothing) and prints only the path and the hint "Print it with `laris-server keys reveal default`". The config field is called `first_admin_file` because the config loader rejects any string value under a key containing "key" as a literal secret. `ServerData.deliver_default_key` does the writing. A second start says nothing about a key. tests/unit/serverdata/test_default_key_delivery.py (3 tests): runs the real `model serve` command with the server stubbed out and captures stdout, stderr and logging at DEBUG: the key (`lk_...`) is in none of them, the file holds it with modes 0600 and 0700, the file's key authenticates and equals `keys reveal`, and no file is written when none is configured. Verification: ruff, mypy (277 files), `make check-no-training`, full pytest leaves only the two failures described in T50. Limit: the key is still stored in a file readable by the operator account (and by root); that is the delivery the task asks for, and the file can be deleted after the key is noted since `keys reveal default` can print it again; on Windows the mode bits are not enforced.
 
 ## Phase 13 — Server storage on PostgreSQL
 

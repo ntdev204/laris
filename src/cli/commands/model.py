@@ -85,11 +85,13 @@ class _Serve:
             return 2
         created = data.ensure_default_key() if cfg.require_auth else None
         if created:
+            where = data.deliver_default_key(created)
             print(
-                "Default key created (every permission, no limit, usable from this machine only):"
+                "Default key created (every permission, no limit, usable from this machine only)."
             )
-            print(f"  {created}", flush=True)
-            print("It is stored encrypted; print it again with `laris-server keys reveal default`.")
+            if where:
+                print(f"It was written to {where} (mode 0600).")
+            print("Print it with `laris-server keys reveal default`; it is never shown here.")
         gateway = PolicyGateway(
             runtime,
             backend,

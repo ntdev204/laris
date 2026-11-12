@@ -164,6 +164,7 @@ serving:
   placeholder_name: laris-placeholder
   model_concurrency: 4
   trusted_proxies: []
+  first_admin_file: ~/.laris-server/default.key
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true
