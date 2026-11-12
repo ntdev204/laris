@@ -25,16 +25,16 @@ class TestEnvironmentSmoke(unittest.TestCase):
     def test_all_canonical_domain_packages_importable(self):
         """Verifies every canonical domain package is importable."""
         domain_packages = [
-            "corpus",
-            "language",
-            "reasoning",
-            "scientific",
-            "graph",
-            "retrieval",
-            "orchestration",
-            "execution",
-            "evaluation",
-            "reporting",
+            "laris.shared.corpus",
+            "laris.shared.language",
+            "laris.research.reasoning",
+            "laris.shared.scientific",
+            "laris.shared.graph",
+            "laris.shared.retrieval",
+            "laris.research.orchestration",
+            "laris.model.execution",
+            "laris.research.evaluation",
+            "laris.research.reporting",
         ]
         for pkg in domain_packages:
             with self.subTest(package=pkg):

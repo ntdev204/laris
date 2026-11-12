@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T64 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T65 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -757,7 +757,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `Workspace` and `SearchService` on the store with the same public interface; vectors cached by passage and model id; BM25 ranking unchanged
 - Validation:
   - Rankings identical before and after on the retrieval fixture; two concurrent ingests lose nothing
-- Status: pending
+- Status: done
+- Note: `Workspace(root, store=None)` keeps its public interface (`load`, `add`, `clear`, `root`) but now reads and writes the SQLite store (`<root>/workspace.sqlite`, or a shared private space passed as `store`); an existing `chunks.jsonl` in `root` is imported once with a backup (T64). `add` is one `BEGIN IMMEDIATE` transaction that replaces the documents it contains and drops the vectors of the replaced passages; `revision()` (a counter in `meta`) replaces the old file mtime as the reload signal. New `save_vectors(model_id, ids, matrix)` and `vectors(model_id, ids)` cache float32 vectors per passage and model id; `SearchService(model_id="server")` builds the dense matrix from the cache, `build_dense_index` embeds only the passages without a cached vector, and the dense index is ready only when every passage has one. `embeddings.npy`/`embeddings.json` and `chunks_path` are gone. BM25 code is untouched and passages load in insertion order, so rankings are unchanged. tests/unit/store/test_workspace_on_store.py (3 tests): rankings equal for a workspace imported from JSONL and one filled with `add`; two threads ingesting 10 documents each lose nothing (20 documents); vectors cached per passage and model (adding one passage embeds one text, another model id is not ready). The old test that checked the deleted npy file now checks the vector cache. Also fixed tests/unit/test_env_smoke.py, which still imported the domain packages by their pre-T49 top-level names (it failed on the committed HEAD, so it was a T49 regression missed earlier); full unit suite now leaves only the two failures described in T50. Environment: Docker 29.1.3 is now installed by the owner; the session is not in the docker group yet, so containers are started with `sg docker -c`; `psycopg` 3.3.8 and `psycopg_pool` 3.3.3 installed with uv under the T48 approval.
 
 ### T66 — Conversations, learning data and vault index cache in SQLite
 - Requirements: SR-S6

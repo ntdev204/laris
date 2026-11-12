@@ -1,7 +1,7 @@
-"""Document workspace: ingestion into passages with character spans, stored as JSONL.
+"""Document workspace: ingestion into passages with character spans, stored in SQLite.
 
-Nothing here trains or scores a model. A workspace is a directory holding `chunks.jsonl`
-(one passage per line) and, once indexed, `embeddings.npy` with its `embeddings.json` identity.
+Nothing here trains or scores a model. A workspace is a SQLite file of passages plus cached
+vectors per passage and model id.
 """
 
 import base64
@@ -9,17 +9,17 @@ import hashlib
 import io
 import json
 import re
-from dataclasses import asdict
+import sqlite3
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple
 
 from laris.client.application.ocr import OcrError, ocr_image_bytes, ocr_pdf_bytes
+from laris.client.store import Store, migrate_legacy
 from laris.protocol import Chunk
 from laris.shared.config.runtime_schemas import AppConfig
 
 TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".text"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}
-CHUNKS_FILE = "chunks.jsonl"
 
 
 class IngestError(ValueError):
@@ -195,35 +195,90 @@ def decode_upload(
 
 
 class Workspace:
-    def __init__(self, root: Path) -> None:
+    """Passages and cached vectors in one SQLite file (`workspace.sqlite` in `root`, or a shared
+    private space `store`). An older `chunks.jsonl` in `root` is imported once, with a backup."""
+
+    def __init__(self, root: Path, store: Optional[Store] = None) -> None:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
+        self.store = store or Store(self.root / "workspace.sqlite")
+        migrate_legacy(self.store, workspace=self.root)
 
-    @property
-    def chunks_path(self) -> Path:
-        return self.root / CHUNKS_FILE
+    def revision(self) -> str:
+        """Changes whenever passages or vectors change; what readers compare to know to reload."""
+        return self.store.get_meta("revision") or "0"
+
+    @staticmethod
+    def _bump(conn: sqlite3.Connection) -> None:
+        conn.execute(
+            "INSERT INTO meta VALUES ('revision','1') ON CONFLICT(key) DO UPDATE "
+            "SET value = CAST(value AS INTEGER) + 1"
+        )
 
     def load(self) -> List[Chunk]:
-        if not self.chunks_path.exists():
-            return []
-        with open(self.chunks_path, encoding="utf-8") as handle:
-            return [Chunk(**json.loads(line)) for line in handle if line.strip()]
+        with self.store.connect() as conn:
+            rows = conn.execute(
+                'SELECT chunk_id, doc_id, source, title, text, start, "end" FROM chunks '
+                "ORDER BY ordinal"
+            ).fetchall()
+        return [Chunk(*tuple(r)) for r in rows]
 
     def add(self, new_chunks: Iterable[Chunk]) -> Dict[str, int]:
-        """Replace every document that appears in `new_chunks`; returns counts."""
+        """Replace every document that appears in `new_chunks`; returns counts. One transaction:
+        two concurrent ingests both land."""
         incoming = list(new_chunks)
-        replaced = {c.doc_id for c in incoming}
-        kept = [c for c in self.load() if c.doc_id not in replaced]
-        merged = kept + incoming
-        tmp = self.chunks_path.with_suffix(".tmp")
-        with open(tmp, "w", encoding="utf-8") as handle:
-            for chunk in merged:
-                handle.write(json.dumps(asdict(chunk), ensure_ascii=False) + "\n")
-        tmp.replace(self.chunks_path)
-        for stale in ("embeddings.npy", "embeddings.json"):  # the dense index no longer matches
-            (self.root / stale).unlink(missing_ok=True)
-        return {"documents": len(replaced), "passages": len(incoming), "total": len(merged)}
+        replaced = sorted({c.doc_id for c in incoming})
+        with self.store.transaction() as conn:
+            marks = ",".join("?" * len(replaced))
+            if replaced:
+                conn.execute(
+                    f"DELETE FROM embeddings WHERE chunk_id IN "
+                    f"(SELECT chunk_id FROM chunks WHERE doc_id IN ({marks}))",
+                    replaced,
+                )
+                conn.execute(f"DELETE FROM chunks WHERE doc_id IN ({marks})", replaced)
+            start = conn.execute("SELECT COALESCE(MAX(ordinal), -1) + 1 FROM chunks").fetchone()[0]
+            conn.executemany(
+                "INSERT OR REPLACE INTO chunks VALUES (?,?,?,?,?,?,?,?)",
+                [
+                    (c.chunk_id, c.doc_id, c.source, c.title, c.text, c.start, c.end, start + n)
+                    for n, c in enumerate(incoming)
+                ],
+            )
+            total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+            self._bump(conn)
+        return {"documents": len(replaced), "passages": len(incoming), "total": int(total)}
 
     def clear(self) -> None:
-        for name in (CHUNKS_FILE, "embeddings.npy", "embeddings.json"):
-            (self.root / name).unlink(missing_ok=True)
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM embeddings")
+            conn.execute("DELETE FROM chunks")
+            self._bump(conn)
+
+    # -- vectors cached by passage and model id ----------------------------------------------
+    def save_vectors(self, model_id: str, chunk_ids: List[str], matrix: Any) -> None:
+        import numpy as np
+
+        rows = []
+        for cid, raw in zip(chunk_ids, matrix):
+            vec = np.asarray(raw, dtype=np.float32)
+            rows.append((cid, model_id, int(vec.shape[0]), vec.tobytes()))
+        with self.store.transaction() as conn:
+            conn.executemany("INSERT OR REPLACE INTO embeddings VALUES (?,?,?,?)", rows)
+            self._bump(conn)
+
+    def vectors(self, model_id: str, chunk_ids: List[str]) -> Dict[str, Any]:
+        """The cached vectors of `model_id` for these passages (missing ones are absent)."""
+        import numpy as np
+
+        found: Dict[str, Any] = {}
+        with self.store.connect() as conn:
+            for n in range(0, len(chunk_ids), 500):
+                part = chunk_ids[n : n + 500]
+                for r in conn.execute(
+                    "SELECT chunk_id, vector FROM embeddings WHERE model_id = ? AND chunk_id IN "
+                    f"({','.join('?' * len(part))})",
+                    [model_id, *part],
+                ):
+                    found[r[0]] = np.frombuffer(r[1], dtype=np.float32)
+        return found

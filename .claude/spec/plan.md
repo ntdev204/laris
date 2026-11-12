@@ -190,7 +190,7 @@ Exit criteria:
 ### Phase 14 — Client storage on SQLite
 Goal: the user's data in one SQLite file per private space, vault notes unchanged.
 Tasks: T64, T65, T66
-Progress: [x] T64 (2026-11-12). Remaining: T65, T66.
+Progress: [x] T64, [x] T65 (2026-11-12). Remaining: T66.
 Exit criteria:
 - Automatic, idempotent migration with backups; BM25 rankings identical; no lost update under two writers.
 

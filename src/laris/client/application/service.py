@@ -1,7 +1,5 @@
 """Search and answer service over a workspace (inference only; never trains or fits)."""
 
-import hashlib
-import json
 import re
 import threading
 from typing import Any, Callable, Dict, List, Optional
@@ -22,10 +20,6 @@ def _tokens(text: str) -> List[str]:
     return [t for t in re.findall(r"\w+", text.lower()) if t]
 
 
-def _ids_digest(chunks: List[Chunk]) -> str:
-    return hashlib.sha256("\n".join(c.chunk_id for c in chunks).encode("utf-8")).hexdigest()
-
-
 class SearchService:
     def __init__(
         self,
@@ -34,7 +28,9 @@ class SearchService:
         notice: str = "",
         rrf_k: int = 60,
         max_top_k: int = 50,
+        model_id: str = "server",
     ) -> None:
+        self.model_id = model_id
         self.on_ingest: Optional[Callable[[List[Chunk], List[Chunk]], Dict[str, Any]]] = None
         self.notice = notice
         self.rrf_k = rrf_k
@@ -59,8 +55,7 @@ class SearchService:
 
     def _refresh(self) -> None:
         """Reload passages, BM25 and the dense matrix when the workspace changed."""
-        chunks_file = self.workspace.chunks_path
-        signature = f"{chunks_file.stat().st_mtime_ns}" if chunks_file.exists() else "none"
+        signature = self.workspace.revision()
         if signature == self._loaded_signature:
             return
         self._chunks = self.workspace.load()
@@ -79,14 +74,13 @@ class SearchService:
         self._loaded_signature = signature
 
     def _load_matrix(self) -> Optional[np.ndarray]:
-        meta_path = self.workspace.root / "embeddings.json"
-        vec_path = self.workspace.root / "embeddings.npy"
-        if not (meta_path.exists() and vec_path.exists()) or not self._chunks:
+        """The dense matrix, only when every passage has a cached vector of this model."""
+        if not self._chunks:
             return None
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        if meta.get("chunks_sha256") != _ids_digest(self._chunks):
+        cached = self.workspace.vectors(self.model_id, [c.chunk_id for c in self._chunks])
+        if len(cached) != len(self._chunks):
             return None
-        return np.asarray(np.load(vec_path))
+        return np.stack([cached[c.chunk_id] for c in self._chunks])
 
     def ingest(self, chunks: List[Chunk]) -> Dict[str, Any]:
         """Add documents, then let the learning hook build the RAG skill for them."""
@@ -119,24 +113,21 @@ class SearchService:
             self._refresh()
             if not self._chunks:
                 raise ServiceError("Nothing to index: ingest documents first")
-            rows = []
-            for start in range(0, len(self._chunks), 32):
-                batch = self._chunks[start : start + 32]
-                rows.append(self._embed([f"{c.title}. {c.text}" for c in batch]))
+            cached = self.workspace.vectors(self.model_id, [c.chunk_id for c in self._chunks])
+            missing = [c for c in self._chunks if c.chunk_id not in cached]
+            for start in range(0, len(missing), 32):
+                batch = missing[start : start + 32]
+                vectors = self._embed([f"{c.title}. {c.text}" for c in batch])
+                cached.update({c.chunk_id: v for c, v in zip(batch, vectors)})
                 if batch_log:
-                    batch_log(min(start + 32, len(self._chunks)), len(self._chunks))
+                    batch_log(min(start + 32, len(missing)), len(missing))
+            rows = [np.stack([cached[c.chunk_id] for c in self._chunks])]
             matrix = np.concatenate(rows).astype(np.float32)
-            np.save(self.workspace.root / "embeddings.npy", matrix)
-            meta = {
-                "chunks_sha256": _ids_digest(self._chunks),
-                "count": len(self._chunks),
-                "embedder": "server",
-            }
-            (self.workspace.root / "embeddings.json").write_text(
-                json.dumps(meta, indent=2), encoding="utf-8"
-            )
+            ids = [c.chunk_id for c in self._chunks]
+            self.workspace.save_vectors(self.model_id, ids, matrix)
+            self._loaded_signature = self.workspace.revision()
             self._matrix = matrix
-            return meta
+            return {"count": len(ids), "embedder": "server", "model_id": self.model_id}
 
     # -- search ----------------------------------------------------------------------------
     def _bm25_rank(self, query: str, top_k: int) -> List[int]:
