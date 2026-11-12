@@ -78,6 +78,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 "laris.shared.harness" = ["public_strings.yaml"]
 "laris.server.storage" = ["migrations/*.sql"]
+"laris.protocol" = ["e1.schema.json"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

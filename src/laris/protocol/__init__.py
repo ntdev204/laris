@@ -4,6 +4,7 @@ Imports nothing from other LARIS packages (ADR-019, D10 to D12).
 """
 
 from laris.protocol.chunk import Chunk
+from laris.protocol.engine import E1_VERSION
 from laris.protocol.keycheck import check_key
 from laris.protocol.schemas import (
     ChatCompletionChunk,
@@ -31,6 +32,7 @@ from laris.protocol.types import (
 from laris.protocol.version import PROTOCOL_HEADER, PROTOCOL_VERSION
 
 __all__ = [
+    "E1_VERSION",
     "AssistantTurn",
     "AuthError",
     "ChatCompletionChunk",

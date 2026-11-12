@@ -28,6 +28,8 @@ def interactive_default(argv: Sequence[str]) -> List[str]:
         return items
     if items and items[0] in ("login", "logout", "whoami", "init"):
         return ["account", *items]
+    if items and items[0] == "engine":
+        return ["agent", *items]
     if not items or items[0].startswith("-"):
         return ["agent", "chat", *items]
     return items

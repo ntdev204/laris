@@ -1,0 +1,655 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "commands": {
+    "$defs": {
+      "Command": {
+        "additionalProperties": false,
+        "description": "A slash command: `name` without the slash, `args` the rest of the line.",
+        "properties": {
+          "args": {
+            "default": "",
+            "title": "Args",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "command",
+            "default": "command",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Command",
+        "type": "object"
+      },
+      "Complete": {
+        "additionalProperties": false,
+        "description": "Ask for completions of `text` typed after `/` (commands) or `@` (files, skills).",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "title": "Text",
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "/",
+              "@"
+            ],
+            "title": "Trigger",
+            "type": "string"
+          },
+          "type": {
+            "const": "complete",
+            "default": "complete",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trigger"
+        ],
+        "title": "Complete",
+        "type": "object"
+      },
+      "Interrupt": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "interrupt",
+            "default": "interrupt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "Interrupt",
+        "type": "object"
+      },
+      "PermissionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "allow",
+              "deny"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "remember": {
+            "default": false,
+            "title": "Remember",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "permission_response",
+            "default": "permission_response",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "decision"
+        ],
+        "title": "PermissionResponse",
+        "type": "object"
+      },
+      "SetMode": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "ask",
+              "auto",
+              "deny"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "type": {
+            "const": "set_mode",
+            "default": "set_mode",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "SetMode",
+        "type": "object"
+      },
+      "Shutdown": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "shutdown",
+            "default": "shutdown",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "Shutdown",
+        "type": "object"
+      },
+      "UserMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "const": "user_message",
+            "default": "user_message",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "UserMessage",
+        "type": "object"
+      }
+    },
+    "anyOf": [
+      {
+        "$ref": "#/$defs/UserMessage"
+      },
+      {
+        "$ref": "#/$defs/PermissionResponse"
+      },
+      {
+        "$ref": "#/$defs/Interrupt"
+      },
+      {
+        "$ref": "#/$defs/Command"
+      },
+      {
+        "$ref": "#/$defs/SetMode"
+      },
+      {
+        "$ref": "#/$defs/Complete"
+      },
+      {
+        "$ref": "#/$defs/Shutdown"
+      }
+    ]
+  },
+  "events": {
+    "$defs": {
+      "Compact": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "minimum": 0,
+            "title": "After",
+            "type": "integer"
+          },
+          "before": {
+            "minimum": 0,
+            "title": "Before",
+            "type": "integer"
+          },
+          "method": {
+            "default": "",
+            "title": "Method",
+            "type": "string"
+          },
+          "summarized": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Summarized",
+            "type": "integer"
+          },
+          "type": {
+            "const": "compact",
+            "default": "compact",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "before",
+          "after"
+        ],
+        "title": "Compact",
+        "type": "object"
+      },
+      "Completion": {
+        "additionalProperties": false,
+        "description": "The answer to a `complete` command.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/CompletionItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "type": {
+            "const": "completion",
+            "default": "completion",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "Completion",
+        "type": "object"
+      },
+      "CompletionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "CompletionItem",
+        "type": "object"
+      },
+      "Done": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "default": "",
+            "title": "Answer",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "const": "done",
+            "default": "done",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "Done",
+        "type": "object"
+      },
+      "ErrorEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "const": "error",
+            "default": "error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorEvent",
+        "type": "object"
+      },
+      "Goal": {
+        "additionalProperties": false,
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "failed": {
+            "items": {},
+            "title": "Failed",
+            "type": "array"
+          },
+          "open": {
+            "items": {},
+            "title": "Open",
+            "type": "array"
+          },
+          "retry": {
+            "default": false,
+            "title": "Retry",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "goal",
+            "default": "goal",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "complete"
+        ],
+        "title": "Goal",
+        "type": "object"
+      },
+      "PermissionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "permission_request",
+            "default": "permission_request",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool"
+        ],
+        "title": "PermissionRequest",
+        "type": "object"
+      },
+      "PlanEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "type": {
+            "const": "plan",
+            "default": "plan",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "PlanEvent",
+        "type": "object"
+      },
+      "Ready": {
+        "additionalProperties": false,
+        "properties": {
+          "cwd": {
+            "title": "Cwd",
+            "type": "string"
+          },
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "server": {
+            "default": "",
+            "title": "Server",
+            "type": "string"
+          },
+          "session": {
+            "title": "Session",
+            "type": "string"
+          },
+          "type": {
+            "const": "ready",
+            "default": "ready",
+            "title": "Type",
+            "type": "string"
+          },
+          "version": {
+            "default": "1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "engine",
+          "session",
+          "cwd",
+          "mode"
+        ],
+        "title": "Ready",
+        "type": "object"
+      },
+      "Status": {
+        "additionalProperties": false,
+        "description": "Progress that is not text: `kind` is verify, reflect, brain, learning, mode, notice ...",
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "type": {
+            "const": "status",
+            "default": "status",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "Status",
+        "type": "object"
+      },
+      "Text": {
+        "additionalProperties": false,
+        "properties": {
+          "delta": {
+            "title": "Delta",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "default": "text",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delta"
+        ],
+        "title": "Text",
+        "type": "object"
+      },
+      "ToolCall": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call",
+            "default": "tool_call",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ToolCall",
+        "type": "object"
+      },
+      "ToolResult": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "result": {
+            "default": null,
+            "title": "Result"
+          },
+          "type": {
+            "const": "tool_result",
+            "default": "tool_result",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ToolResult",
+        "type": "object"
+      },
+      "Usage": {
+        "additionalProperties": false,
+        "properties": {
+          "tokens": {
+            "minimum": 0,
+            "title": "Tokens",
+            "type": "integer"
+          },
+          "type": {
+            "const": "usage",
+            "default": "usage",
+            "title": "Type",
+            "type": "string"
+          },
+          "window": {
+            "minimum": 0,
+            "title": "Window",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tokens",
+          "window"
+        ],
+        "title": "Usage",
+        "type": "object"
+      }
+    },
+    "anyOf": [
+      {
+        "$ref": "#/$defs/Ready"
+      },
+      {
+        "$ref": "#/$defs/Text"
+      },
+      {
+        "$ref": "#/$defs/ToolCall"
+      },
+      {
+        "$ref": "#/$defs/ToolResult"
+      },
+      {
+        "$ref": "#/$defs/PlanEvent"
+      },
+      {
+        "$ref": "#/$defs/PermissionRequest"
+      },
+      {
+        "$ref": "#/$defs/Status"
+      },
+      {
+        "$ref": "#/$defs/Usage"
+      },
+      {
+        "$ref": "#/$defs/Compact"
+      },
+      {
+        "$ref": "#/$defs/Goal"
+      },
+      {
+        "$ref": "#/$defs/Completion"
+      },
+      {
+        "$ref": "#/$defs/ErrorEvent"
+      },
+      {
+        "$ref": "#/$defs/Done"
+      }
+    ]
+  },
+  "title": "LARIS engine protocol E1",
+  "version": "1"
+}

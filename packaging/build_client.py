@@ -29,6 +29,7 @@ CLI_MODULES = (
     "commands/account",
     "commands/agent",
     "commands/app",
+    "commands/engine",
     "commands/learn",
     "commands/skills",
     "commands/vault",

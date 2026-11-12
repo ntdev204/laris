@@ -4,7 +4,7 @@ imports none of that code, so the downloadable package can leave it out."""
 import sys
 from typing import Optional, Sequence
 
-from cli.commands import account, agent, app, learn, skills, vault
+from cli.commands import account, agent, app, engine, learn, skills, vault
 from cli.parser import Table, run
 
 COMMANDS: Table = {
@@ -19,6 +19,10 @@ COMMANDS: Table = {
         "run": ("Run one task with the agent and print the steps", agent.COMMANDS["run"]),
         "chat": ("Interactive agent session", agent.COMMANDS["chat"]),
         "guide": ("Print the prepared user guide (same as /how-to-use)", agent.COMMANDS["guide"]),
+        "engine": (
+            "Run the engine behind a front end (protocol E1 on stdio)",
+            engine.COMMANDS["engine"],
+        ),
     },
     "skills": {
         "list": ("List available skills", skills.COMMANDS["list"]),
