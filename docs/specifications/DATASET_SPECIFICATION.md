@@ -113,7 +113,7 @@ Semantic similarity is explicitly represented and acquired via the **STS-B (Sema
 
 ---
 
-## 4.1 Partition Coverage and Scope (`laris data partition`)
+## 4.1 Partition Coverage and Scope (`laris-server data partition`)
 
 The registry tracks 17 datasets (owner decision, Issue #274). Fourteen feed the five language-encoder tasks and are partitioned into leakage-safe train/val/test splits: WIKIPEDIA-VI, WIKIPEDIA-EN-BOUNDED, CC100-VI-CLEAN (mlm); ALL-NLI, ANLI, VINLI, FEVER (nli); QUORA-DUPLICATES, PAWS-WIKI (paraphrase); STSB, VISTS (similarity); SQUAD, UIT-VIQUAD-V2, HOTPOTQA (qa). The other three are planned for the fine-tuning stage and have no data yet:
 

@@ -3,9 +3,9 @@ document_id: "DOC-DEV-CLI-001"
 title: "LARIS Command-Line Interface Reference"
 document_type: "specification"
 status: "APPROVED"
-version: "1.1.0"
+version: "2.0.0"
 created_at: "2026-10-29"
-updated_at: "2026-11-10"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,30 +13,292 @@ related_documents:
   - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/adr/ADR-013-functional-package-layout-and-cli.md"
+  - "docs/adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md"
+  - "docs/development/SERVER_DEPLOYMENT_RUNBOOK.md"
+  - "docs/development/MIGRATION_1X_TO_2_0.md"
+  - "docs/architecture/AGENT_HARNESS.md"
 decision_references:
   - "ADR-013"
-change_summary: "Adds offline formal readiness, links the owner-only runbook and documents citation-ID verification versus source-backed extractive certification."
+  - "ADR-019"
+change_summary: "Release 2.0: three executables (laris, laris-server, laris-model); the terminal client in its three modes (Ink, plain, headless), the engine protocol E1, the settings schema, slash commands, permissions, hooks and the sandbox; the owner-side data, training and evaluation commands move to laris-server."
 ---
 
 # LARIS Command-Line Interface Reference
 
-The `laris` entry point (`src/cli/main.py`) exposes one module per command under `src/cli/commands/`. Each module defines `add_arguments(parser)` and `run(args)`. Scripts under `scripts/` are thin wrappers over the same functions. Run `laris <group> <command> --help` for the full option list.
+Release 2.0 ships three executables ([ADR-019](../adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md)).
+The foundation model is **not qualified**: nothing in this reference says an answer is correct, only how the
+tools behave. Run `laris <group> <command> --help` for the full option list of any command.
 
-## Commands
+| Executable | For | Entry point | Contains |
+| :--- | :--- | :--- | :--- |
+| `laris` | the user | `src/cli/client.py` | chat (three modes), `login`, `config`, `skills`, `learn`, `vault`, `app ingest\|index\|search\|status`, `agent`, `engine`; no server, policy or training command |
+| `laris-server` | the operator and owner | `src/cli/server.py` | `model serve`, `keys`, `usage`, `reasoning`, `tls`, `db`, `harness`, `workflows`, `brain`, `data`, `train`, `evaluate` |
+| `laris-model` | the model container | `src/cli/model.py` | `serve` (protocol P2), `infer` (one prediction from a checkpoint) |
+
+Each command is a module under `src/cli/commands/` with `add_arguments(parser)` and `run(args)`. Scripts under
+`scripts/` are thin wrappers over the same functions.
+
+## 1. The terminal client (`laris`)
+
+### 1.1 Three ways to run
+
+| Mode | Command | Use it for |
+| :--- | :--- | :--- |
+| Interactive (Ink and React front end) | `laris` | daily work; needs Node 22 or newer |
+| Plain text | `laris --plain` | simple terminals, screen recordings, no Node |
+| Headless | `laris -p "prompt"` | scripts: one task, then exit |
+
+All three drive **one engine** (`laris engine --stdio`), so the same session gives the same tool calls,
+tool results and answer in each. The Ink front end is started by the npm launcher (`bin/laris.js`), which
+hands the arguments straight to the engine program when there is no terminal, `--plain`, `-p`, `--help`,
+`--version`, a subcommand, `LARIS_UI=plain`, or an option only plain mode has. If the interface cannot load, the launcher says so and starts `--plain`. The
+launcher finds the engine through `LARIS_ENGINE_BIN`, then the per-platform npm package, then `dist/`.
+
+Session options (all modes unless noted):
+
+| Option | Meaning |
+| :--- | :--- |
+| `-p`, `--print [TEXT]` | headless; the text may come from standard input |
+| `--output-format text\|json\|stream-json` | with `-p`; `stream-json` writes E1 events, one JSON object per line |
+| `--plain` | plain-text mode |
+| `-c`, `--continue [ID]` | continue the newest session, or the one named by id or unique prefix |
+| `--resume [ID]` | open the session `ID`; without an id, choose from a list |
+| `--max-turns N` | with `-p`: agent steps, 1 to 10 |
+| `--permission-mode default\|acceptEdits\|plan\|bypass` | for this run (`bypass` only when the policy allows it) |
+| `--allowed-tools RULES`, `--disallowed-tools RULES` | permission rules for this run, e.g. `'Read,Bash(git status:*)'` |
+| `--workspace`, `--chat-dir`, `--model-api-url`, `--model-name`, `--api-key-env`, `--allow-write` | overrides of configuration |
+| `--version`, `-V` | print the version |
+
+Sessions are per project, in SQLite files under `~/.laris/projects/<slug>/`; an id is looked up in the
+current project only.
+
+**Headless exit codes:** `0` completed; `1` not completed (model or tool error); `2` bad usage or
+configuration (flag, unknown session, mode not allowed); `3` stopped because a required action was not
+allowed; `130` interrupted (the session is saved). With no one to answer, an action that needs approval and
+has no allow rule is refused and listed in `permission_denials`; the turn still completes (exit 0). `json`
+prints one result object; `text` prints only the answer.
+
+**Interactive keys (Ink).** Enter sends. Backslash then Enter, Shift+Enter or Meta+Enter starts a new line
+(backslash then Enter works everywhere). Up and Down browse history (inside a multi-line text they move the
+cursor first); Ctrl+R searches history; Tab takes the completion the engine sent for `/command` or `@path`.
+Esc interrupts the running turn (it first closes a menu or search). Ctrl+C clears typed text, otherwise
+interrupts, and a second Ctrl+C within 2 seconds exits; Ctrl+D on an empty line exits. Shift+Tab cycles the
+permission mode. Typing while a turn runs queues the message (`⧗ queued:`); it starts after the turn. A paste
+over 6 lines or 1000 characters shows as `[Pasted text #n +L lines]` and is sent in full. At an approval
+dialog (it shows the diff of a `Write` or `Edit`): `y` once, `a` for this session, `p` for this project, `e`
+everywhere, `n` or Esc refuses; the number keys or arrows and Enter also work. Prompt history lives only in
+memory for the session. Plain mode offers the same slash commands and the question `y / a / p / e / N`.
+
+### 1.2 Account, server and settings
+
+```bash
+laris config set server.url https://laris.example.com/v1   # where the server is
+laris login                       # enter the API key once (hidden input, saved with mode 0600)
+laris                             # chat
+```
+
+`laris login` checks the key against the server, shows the certificate fingerprint of a private server for
+the user to confirm (or takes `--trust-fingerprint`) and pins it for that server only, and saves the key in
+`~/.laris/.credentials.json`. It still accepts `--server URL` as a shortcut that writes `server.url`.
+`laris logout` forgets the key; `laris whoami` shows the role and the tokens left. The key can also come from
+`LARIS_API_KEY`. Certificates are always verified. There is no offline mode: the client needs a server.
+
+`laris config get [PATH]`, `laris config set PATH VALUE` and `laris config schema` read, change and describe
+`~/.laris/settings.json` (a dotted path such as `permissions.defaultMode`; the value is JSON or plain text).
+`/config` does the same inside a session.
+
+**The global home `~/.laris/`** (created on first start, never overwritten):
+
+| Path | Content |
+| :--- | :--- |
+| `settings.json` | every client setting, no secrets, validated by the shipped schema |
+| `.credentials.json` | the API key, mode 0600 |
+| `.venv/`, `python/` | the sandbox and its interpreters, built by `uv` |
+| `LARIS.md`, `skills/`, `commands/`, `memory/` | personal instruction layers, skills, slash commands and memory |
+| `projects/<slug>/` | per-project SQLite space, `state.json` (saved permission answers, trust) and checkpoints |
+| `trusted/` | pinned server certificates |
+| `logs/` | local audit (event type, tool name, status, sizes and hashes; never message content) |
+| `backups/` | what the 1.x migration replaced |
+
+A project's `./.laris/` carries **no configuration**: `config.yaml`, `settings.json`, `settings.local.json`
+and a `.env` setting `LARIS_*` are ignored on the client and named in a warning, so a cloned repository cannot
+change permissions, hooks, the server address or the model. `laris init` creates the project's
+`.laris/` folder for instructions, skills and commands only.
+
+**Settings schema** (`laris config schema` prints the JSON Schema; unknown keys are rejected):
+
+| Key | Type, default | Meaning |
+| :--- | :--- | :--- |
+| `server.url` | string, empty | server address (HTTPS, or loopback) |
+| `server.caFingerprint` | string, empty | SHA-256 of the pinned certificate |
+| `server.timeoutSeconds` | number, 120 | request timeout |
+| `model` | string, empty | model name sent to the server |
+| `ui.theme`, `ui.markdown`, `ui.spinner`, `ui.showStatusLine` | `auto`, true, true, true | front-end display |
+| `permissions.defaultMode` | `default`, `acceptEdits`, `plan`, `bypass` | starting mode |
+| `permissions.allow`, `ask`, `deny` | lists of `Tool` or `Tool(pattern)` | permission rules |
+| `permissions.additionalDirectories` | list of paths | extra folders the tools may reach |
+| `env` | object | environment passed to tools and hooks |
+| `hooks` | object: event to a list of `{matcher, hooks: [{type: "command", command, timeout}]}` | see 1.5; timeout default 30 s, at most 600 |
+| `statusLine` | `{type: "command", command}` | status line command |
+| `sandbox.python`, `packages`, `inheritEnv`, `indexUrl`, `pythonSource` | `3.12`, list, false, empty, empty | the sandbox build |
+| `context.autoCompact`, `windowTokens`, `compactThreshold` | true, 32768, 0.8 | automatic compaction |
+| `vault.autoRecord` | true | record notes in the project vault after verified turns |
+| `learning.collect` | true | keep good turns locally as fine-tune data |
+| `extraInstructions` | string | extra user instructions (length-capped, after policy) |
+| `cleanupPeriodDays`, `autoUpdates` | 30, true | housekeeping |
+
+Precedence, highest last: schema defaults, `configs/default.yaml`, `settings.json`, `LARIS_*` environment
+(`__` separates nesting, JSON for lists; credentials are referenced by variable name only), command-line flags.
+See [AGENT_HARNESS](../architecture/AGENT_HARNESS.md) section 2.
+
+### 1.3 Slash commands
+
+`/help` lists them; `/` followed by Tab completes. Built-in commands: `help`, `how-to-use` (the prepared guide,
+printed without a model call), `new` or `clear`, `sessions`, `resume ID`, `continue`, `compact [note]`,
+`model [URL [NAME]]`, `status`, `cost`, `context`, `config [get PATH | set PATH VALUE]`, `permissions [mode
+MODE|next | allow|ask|deny RULE [everywhere]]`, `memory`, `init`, `trust [off]`, `login`, `logout`, `doctor`,
+`vault [words]`, `skills`, `workflows`, `workflow NAME REQUEST`, `hooks`, `sandbox [reset]`, `rewind [N|all]`
+(restore files changed by `Write` and `Edit`), `tools`, `write on|off`, `learn on|off`, `rate up|down`, `exit`
+and `quit`. User commands are Markdown files in `~/.laris/commands/` (`$ARGUMENTS` is replaced by the text after
+the command); a project's own commands and skills load only after `/trust`. `/<skill-name> request` runs a skill.
+Several commands print the same status values as the status line, so they cannot drift apart.
+
+### 1.4 Tools and permissions
+
+Coding tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, with diffs and checkpoints) and the research tools
+(`search_corpus`, `answer_question`, `extract_discourse`, `corpus_status`, `ingest_path`, `read_file`,
+`list_files`, vault and scholarly tools) are shown to the model; `/tools` lists them. Arguments are validated
+against a JSON Schema, each call has a timeout and a cap, and results from documents are marked untrusted.
+Tools reach only the working folder, `permissions.additionalDirectories` and uploads; policy folders, `.git`,
+`.env` and the learning data are denied by glob; planted symlinks, `..`, `~` and `/proc` do not escape.
+
+Permission modes and the order in which rules are decided are in
+[AGENT_HARNESS](../architecture/AGENT_HARNESS.md) section 2. In short: `default` asks before writing;
+`acceptEdits` lets edits through; `plan` is read-only; `bypass` asks nothing and needs the policy to allow it
+(`agent.approval.allow_bypass`). Installing packages outside the sandbox is denied in every mode; installs into
+`~/.laris/.venv` are allowed. An `allow` rule written for one command never admits a chained line
+(`Bash(git status:*)` does not allow `git status && rm -rf ~`); `deny` and `ask` rules match any part of a line.
+
+### 1.5 Hooks
+
+Declared only in `~/.laris/settings.json`. Events: `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+`PostToolUse`, `Stop`. `matcher` selects tools for the two tool events. A hook runs in the project folder with
+the event as JSON on standard input and the sandbox first on `PATH`. Exit 0 with no output continues; exit 2
+blocks and standard error is the reason; a JSON object `{"decision": "block", "reason": "..."}` blocks and
+`{"additionalContext": "..."}` adds text for the model; any other exit code, a timeout or malformed output is a
+warning and the session carries on. A `PreToolUse` hook can only tighten a decision. Output is read with a size
+bound and stripped of control characters. `/hooks` lists them.
+
+### 1.6 Status line and sandbox
+
+The status line shows model, mode, context use, tokens left (asked from the server every 30 s at most), git
+branch and sandbox state; `statusLine.command` can replace it. The sandbox is built, checked and repaired by `uv`
+without action by the user; states are `ready`, `missing`, `broken`, `outdated`, `building` and `failed`
+(`/sandbox`, `/sandbox reset`, `/doctor`). A failed build is a message, not a crash. Pinned versions and the
+node requirement are recorded in ADR-019.
+
+### 1.7 Engine protocol E1 (`laris engine --stdio`)
+
+The engine writes events and reads commands, one JSON object per line, each with a `type`. The `ready` event
+carries `version` (currently `"1"`); a front end that does not know it refuses with a clear message and exit 2.
+The schema ships as `src/laris/protocol/e1.schema.json` and is checked against the code by tests.
+
+| Direction | Types |
+| :--- | :--- |
+| engine to front end (events) | `ready` (version, engine, session, cwd, mode, server), `text` (delta), `tool_call` (id, name, arguments), `tool_result` (id, name, result), `plan` (steps), `permission_request` (id, tool, arguments, reason, rule, diff, scopes), `status` (kind, data: `verify`, `reflect`, `brain`, `learning`, `mode`, `notice`, `line`, `queued`, `sandbox`), `usage` (tokens, window), `compact` (before, after, summarized, method), `goal`, `completion` (id, items), `error` (code, message), `done` (status, answer) |
+| front end to engine (commands) | `user_message` (text, attachments of pasted images or long text), `permission_response` (id, decision `allow`\|`deny`, scope `once`\|`session`\|`project`\|`everywhere`), `interrupt`, `command` (name, args), `set_mode` (`default`, `acceptEdits`, `plan`, `bypass`, `next`), `complete` (id, trigger `/` or `@`, text), `shutdown` |
+
+Headless `--output-format stream-json` writes the same events. The `engine` options are `--stdio`, `--resume ID`,
+`--continue [ID]`, `--workspace`, `--chat-dir`, `--model-api-url`, `--model-name`, `--api-key-env` and
+`--allow-write`. The front end holds no tool, permission or storage logic.
+
+### 1.8 Documents, search and the workspace
+
+```bash
+laris app ingest path/to/docs data/raw/scifact/corpus__corpus-00000-of-00001.parquet
+laris app search --query "..."     # BM25, works without a model
+laris app index                    # embed the passages through the server for dense search
+laris app status
+```
+
+Accepted inputs are txt, md, pdf (needs `pypdf`) and BEIR corpus `.jsonl` or `.parquet`. The workspace is
+SQLite (`chunks`, `embeddings`); adding a document invalidates the dense index. Dense search embeds through the
+server (`POST /v1/laris/embed`) and caches the vectors; the client never loads an encoder. Until the foundation
+model is qualified, BM25 is the reliable channel and extractive answers are quoted from passages without
+entailment checks.
+
+### 1.9 Skills, learning and the project vault
+
+`laris skills list|show|check|lint|add|sync` inspect and install skills (`.laris/skills/<name>/SKILL.md`, YAML
+`name` and `description`, Markdown body; project skills override `~/.laris/skills`). Only name and description
+are in the prompt; the model loads a skill with `use_skill`. Skills are made on request; `skills sync` builds optional corpus
+skills. Good answers are kept locally (`laris learn stats|export --kind K --out FILE|purge --yes`, `/rate`,
+`/learn`); the system never trains. Ingesting documents adds knowledge notes by domain under
+`vault/Knowledge/<domain hub>/`.
+
+`laris vault init|status|check|search|show|graph|sync|repair|migrate-memory|propose|review|accept|reject` manage
+the project vault (see [BRAIN_AND_VAULT](../architecture/BRAIN_AND_VAULT.md)). `check` runs format, schema
+(`.laris/vault/schema.yaml`), secret, oversize and alias lint; `graph --format json|graphml|canvas [--out FILE]`
+exports the link graph; `sync [--accept]` lists or adopts hand edits inside managed blocks; `repair [--restore
+NOTE]` fixes damage or restores a backup.
+
+### 1.10 Instructions and context compaction
+
+- **Instruction layers**, in prompt order: `~/.laris/LARIS.md`, `.laris/LARIS.md` of the project, and the
+  git-ignored `LARIS.local.md`. They apply on the next message. The system policy `LARIS.md` of the server is
+  confidential and is never shown to users.
+- **Autocompact** is on by default (`context.autoCompact`, `windowTokens` 32768, `compactThreshold` 0.8). Above the
+  threshold the session trims old tool output, then replaces older turns by a summary (model-written when a
+  server answers, otherwise extracted), keeping recent turns and every tool-call and result pair. A
+  context-length error triggers one forced compaction and a retry. `/compact [note]` compacts now and
+  `/context` shows use. Originals are archived.
+- A turn stops after 10 steps, an identical repeated call, or the time budget.
+
+## 2. The operator side (`laris-server`)
+
+Run on the server machine, normally inside the Docker stack ([runbook](SERVER_DEPLOYMENT_RUNBOOK.md)).
+
+| Command | Purpose |
+| :--- | :--- |
+| `laris-server model serve [--host --port --model-name --backend --tls-cert --tls-identity ...]` | serve the P1 API in one process (the stack runs it as the `api` container) |
+| `laris-server keys create --label L --role user\|readonly\|auditor\|admin --tokens N\|unlimited [--allow-ip CIDR --expires-days D --permission P]` | make a key; it is printed once |
+| `laris-server keys list\|show ID\|revoke ID\|limit ID --tokens N [--add]\|roles\|reveal ID\|default\|ip ID --allow CIDR` | manage keys; keys are stored encrypted (master secret `LARIS_SERVER_MASTER` or a Docker secret file) |
+| `laris-server usage summary` | token use per key |
+| `laris-server reasoning list\|show ID\|purge` | the model's reasoning; for the operator only, never sent to a client |
+| `laris-server tls init --host NAME` | self-signed certificate for a setup without Caddy |
+| `laris-server db migrate` and `db import-sqlite FILE` | create or update the PostgreSQL schema; copy a 1.x server database in one transaction (repeatable) |
+| `laris-server harness verify\|lock` | check or refresh `integrity.lock` after an owner-approved policy change |
+| `laris-server workflows list\|show\|check` | inspect workflows |
+| `laris-server brain check\|tree\|route\|propose\|review\|accept\|reject` | the system brain |
+| `laris-server data acquire\|partition\|check`, `train ...`, `evaluate ...` | research tooling, in the next section |
+
+The built-in key (`keys reveal default`) works only from the server machine. Roles are `user`, `readonly`,
+`auditor` and `admin`; a request without the route's permission gets 403 and a key without tokens left gets 429.
+The server refuses to start without keys, answers 401 to an unknown key, and refuses plain HTTP on any address
+except loopback unless `serving.allow_plain_http` is set (behind a proxy that ends TLS).
+`laris-model serve [--host --port --model-name --backend --checkpoint --tokenizer-model --device]` runs the
+model service (P2).
+
+## 3. Owner research commands (`laris-server data|train|evaluate`)
+
+Documented below as before. They never run in the client and none of them runs without the owner.
+
+### Command table
 
 | Command | Purpose | Authorization |
 | :--- | :--- | :--- |
-| `laris data acquire [--only IDS] [--cc100-max-docs N]` | Download and verify datasets; `--only` merges into the existing manifest. Resumable. | none |
-| `laris data check [--verify-sha256]` | Verify manifest files, per-task train/val/test coverage and `sentencepiece` before any training step. Exit 0 ready, 1 not ready. | none |
-| `laris data partition [--datasets ...] [--num-workers N] [--include-unreviewed-licenses]` | Leakage-safe train/val/test partitioning. Datasets with `NEEDS_LICENSE_REVIEW` are skipped by default. A subset run merges into the existing manifest by `dataset_id`. | none |
-| `laris train tokenizer [--extract-only] [--authorized]` | Extract train-only text and fit the SentencePiece 32k BPE tokenizer. | `--authorized` |
-| `laris train language-encoder --model-size {compact,large} [--profile-only] --tokenizer-model FILE` | `--profile-only` measures real GPU memory on real tokenized train batches (forward only; with training authorized, backward plus a real optimizer step on a discarded model). Otherwise trains, validates, checkpoints and evaluates the encoder. | training needs `--authorized` and `LARIS_TRAINING_AUTHORIZED=1` |
-| `laris evaluate language-encoder --checkpoint DIR --tokenizer-model FILE [--split val\|test]` | Score a checkpoint against baselines and thresholds. Exit codes: 0 passed, 1 below threshold, 2 usage or integrity error. | none |
-| `laris evaluate readiness --reports REPORT...` | Offline formal foundation audit; requires matching test evidence and protocols. No model loaded. Exit 0 qualified, 1 not qualified, 2 invalid input. | none |
-| `laris evaluate calibrate --reports VAL_REPORT...` | Ratchet `configs/evaluation/language_encoder.yaml` up from passing `val` reports; never lowers, refuses `test` reports. | none |
-| `laris infer {nli,...} --checkpoint DIR --tokenizer-model FILE` | Run a single prediction from a checkpoint. | none |
+| `laris-server data acquire [--only IDS] [--cc100-max-docs N]` | Download and verify datasets; `--only` merges into the existing manifest. Resumable. | none |
+| `laris-server data check [--verify-sha256]` | Verify manifest files, per-task train/val/test coverage and `sentencepiece` before any training step. Exit 0 ready, 1 not ready. | none |
+| `laris-server data partition [--datasets ...] [--num-workers N] [--include-unreviewed-licenses]` | Leakage-safe train/val/test partitioning. Datasets with `NEEDS_LICENSE_REVIEW` are skipped by default. A subset run merges into the existing manifest by `dataset_id`. | none |
+| `laris-server train tokenizer [--extract-only] [--authorized]` | Extract train-only text and fit the SentencePiece 32k BPE tokenizer. | `--authorized` |
+| `laris-server train language-encoder --model-size {compact,large} [--profile-only] --tokenizer-model FILE` | `--profile-only` measures real GPU memory on real tokenized train batches (forward only; with training authorized, backward plus a real optimizer step on a discarded model). Otherwise trains, validates, checkpoints and evaluates the encoder. | training needs `--authorized` and `LARIS_TRAINING_AUTHORIZED=1` |
+| `laris-server evaluate language-encoder --checkpoint DIR --tokenizer-model FILE [--split val\|test]` | Score a checkpoint against baselines and thresholds. Exit codes: 0 passed, 1 below threshold, 2 usage or integrity error. | none |
+| `laris-server evaluate readiness --reports REPORT...` | Offline formal foundation audit; requires matching test evidence and protocols. No model loaded. Exit 0 qualified, 1 not qualified, 2 invalid input. | none |
+| `laris-server evaluate calibrate --reports VAL_REPORT...` | Ratchet `configs/evaluation/language_encoder.yaml` up from passing `val` reports; never lowers, refuses `test` reports. | none |
+| `laris-server evaluate suite [--fast] [--only ...] [--out reports/...]` | Model-free suites (retrieval, citation, extraction, leak, injection, vault round-trip); also `make eval-fast`, `make test-model-free`, `make bench-vault`. | none |
+| `laris-model infer {nli,...} --checkpoint DIR --tokenizer-model FILE` | Run a single prediction from a checkpoint. | none |
 
-## Owner training and evaluation
+### Owner training and evaluation
 
 The [owner runbook](../training/OWNER_RUNBOOK.md) is the execution reference.
 Agents must not execute training, tokenizer fitting, backward/optimizer steps or
@@ -55,7 +317,7 @@ Training progress and checkpoints remain under
 `artifacts/checkpoints/language_encoder/<run-id>/{best,last}`. Resuming requires
 matching recorded settings and does not restore the exact streaming data position.
 
-## Report verification scope
+### Report verification scope
 
 `EvidenceGate` checks registered assertion citation IDs only. Its `verification_scope`
 metadata is `citation_ids_only`; a passing coverage ratio is not evidence of source
@@ -69,163 +331,3 @@ assertion statements joined by blank lines. Empty sections are allowed, but repo
 without assertions are rejected. Sources, hashes, coordinate IDs and character spans
 are checked. Synthesis and paraphrases remain uncertified: this gate does not infer
 semantic support or establish research-gap novelty.
-
-## Local application (`laris app`)
-
-An end-to-end local workflow that needs no extra dependency and never trains or fits.
-
-```bash
-laris app ingest path/to/docs data/raw/scifact/corpus__corpus-00000-of-00001.parquet
-laris app search --query "..."            # BM25, works without a model
-laris app index  --checkpoint <run>/best --tokenizer-model <model>   # dense embeddings
-laris app ask    --checkpoint <run>/best --tokenizer-model <model> --query "..."
-```
-
-Accepted inputs are txt, md, pdf (needs `pypdf`), and BEIR corpus `.jsonl` or `.parquet`. The
-workspace (`artifacts/app/workspace` by default) holds `chunks.jsonl` and, after `index`,
-`embeddings.npy`; adding a document invalidates the dense index. Until the foundation model is
-qualified, BM25 is the reliable channel and extractive answers are quoted from passages without
-entailment checks.
-
-### Chat, agent and model API
-
-Two executables: `laris` is the user client (agent, account, vault, skills, learn, and `app ingest|search|status`)
-and `laris-server` holds the operator side (`model serve`, `harness`, `brain`, `workflows`, data, training,
-evaluation, `app index|ask`); the client does not contain server commands.
-
-The web interface was removed (owner decision, 2026-11-11); LARIS is a terminal client. Two parts:
-
-```bash
-LARIS_SERVER_KEYS="key1,key2" laris model serve --port 8000   # operator: authenticated model API
-laris login                       # user: enter the API key once (hidden input, saved with mode 0600)
-laris                             # terminal chat; also -p "prompt", --resume, --resume <id>
-```
-
-Run `laris-server model serve` in the codebase that holds the system `.laris/` (or pass `--policy-root`);
-the operator does not log in. HTTPS: `laris-server tls init --host name-or-ip` writes a self-signed
-certificate and a 0600 key to `serving.tls_dir` (`~/.laris-server/tls`); `model serve` then uses them
-automatically. Or give a certificate and its private key
-(`--tls-cert cert.pem --tls-identity identity.pem`, or `serving.tls_cert_file` and
-`serving.tls_identity_file`; TLS 1.2 or newer). The server refuses plain HTTP on any address except
-loopback unless `serving.allow_plain_http` is set (for example behind a reverse proxy that terminates TLS).
-Certificates are always verified. For a private or self-signed certificate `laris login --server URL`
-shows its SHA-256 fingerprint and, once the user confirms it (or passes `--trust-fingerprint`), pins it in
-`~/.laris/trusted/` and `settings.json` (`ca_file`) for that server only; `SSL_CERT_FILE` still works. The server address is the `base_url` field of the global `~/.laris/settings.json`, as in
-`{"base_url": "https://host:8000/v1", "model": "laris-core", "api_key": "lk_..."}` (as Claude Code does);
-`laris login --server URL` and `laris login` write `base_url` and `api_key` there (file mode 0600; `api_key`
-can also come from `LARIS_API_KEY`; `credentials.json` of older installs is still read).
-
-Keys are made on the server machine and stored in its database (`serving.data_dir`):
-
-```bash
-laris-server keys create --label "Alice" --role user --tokens 2000000     # a quota
-laris-server keys create --label "Owner" --role admin --tokens unlimited  # no quota
-laris-server keys list | show ID | revoke ID | limit ID --tokens N [--add] | roles
-laris-server usage summary                                                # token use per key
-laris-server reasoning list | show ID | purge                             # the model's reasoning
-```
-
-The new key is printed once and the running server accepts it at once. Keys are stored encrypted
-(master secret: `LARIS_SERVER_MASTER`, or the file `serving.master_file`, kept apart from the database);
-`laris-server keys reveal ID` prints one again. The first start creates a built-in key with every
-permission and no limit that works only from the server machine itself (`laris-server keys reveal
-default`); restrict any key to addresses with `--allow-ip CIDR` or `keys ip ID --allow CIDR`. Roles (`serving.roles`): `user`,
-`readonly`, `auditor`, `admin`; a request without the route's permission gets 403 and a key without tokens
-left gets 429. The model's reasoning is stored for the operator only and is never sent to any client
-(ADR-018); `laris whoami` shows a user's role and tokens left. Fixed keys in `LARIS_SERVER_KEYS` still work
-for testing (role `user`, unlimited).
-
-The server refuses to start without keys (`serving.api_key_env`, `serving.allowed_file`; digests only in
-memory), answers 401 to any other key, and stores nothing about users (ADR-015: the user's disk is the
-database and the user's machine is the sandbox). `laris login` and each session check the key against
-the server (`model_api.base_url`; remote hosts need `model_api.allow_remote: true`).
-
-Preferences (`settings.json`) are global and shared by every key on the machine, in `~/.laris/`
-(`app.settings_file`); `~/.laris/` also holds `config.yaml`, `LARIS.md`, `skills/` and `memory/`, created
-on first start. The project's `./.laris/` (`laris init`) holds the same kinds of files for one project.
-
-Each API key opens its own private space: conversations, uploads, archive, audit and
-collected sessions live under `artifacts/chat/users/<fingerprint>/` (`app.users_dir`), where the
-fingerprint is a one-way hash of the key. The key itself is read from `LARIS_API_KEY`
-(`app.key_env`), else the credentials file (`app.account_file`), else a hidden prompt, and is sent to the
-model API as the bearer token; keys typed into a message are masked before storage. The terminal
-streams text, prints each tool call with a one-line result, asks before write tools
-(`y`/`a`lways/`N`) and has `/new /sessions /resume /tools /status /model /write`. `laris --resume`
-lists the saved sessions of the signed-in key.
-
-Nothing here is hardcoded: ports, workspace, model API, limits, approval policy, prompts and
-security patterns come from `configs/default.yaml`, `~/.laris/config.yaml`,
-`<project>/.laris/config.yaml`, saved preferences, `LARIS_*` environment variables (nesting with
-`__`, JSON for lists; see `.env.example`) and finally the flags, in that order. Credentials are
-referenced by environment-variable name only. The prompt, loop, guards and leak policy are described
-in `docs/architecture/AGENT_HARNESS.md`; `LARIS.md` is internal policy and is never shown to users.
-
-Tools (JSON-schema arguments, 30 s default timeout, typed errors): `list_files`, `read_file` (txt, md,
-pdf, images; scans use tesseract `eng+vie`), `write_file` and `ingest_path` (need approval; writes land
-only in `artifacts/chat/output`), `search_corpus`, `answer_question`, `extract_discourse`,
-`corpus_status`. Reads are limited to the working folder and uploads. A message stops after 10 steps,
-on an identical repeated call, or after the time budget; every session is logged as JSONL.
-
-The client runs the tools and the **model server decides**: it receives `messages` and `tools` at
-`POST /v1/chat/completions` (JSON or `stream: true` SSE) and answers with text or `tool_calls`;
-`GET /v1/models`, `GET /health` and `POST /v1/embeddings` are also served. Today the backend is a
-scripted placeholder that quotes passages (`laris-placeholder`). The trained core model plugs in as a
-`ChatProvider` subclass: `laris model serve --backend package.module:ClassName --model-name laris-core`,
-with no client change. Set the server's key variable with `--api-key-env`; clients send their own
-key as the bearer token. Keys never appear in configuration files.
-
-#### User guide (`/how-to-use`)
-
-`/how-to-use` prints `.laris/help/how-to-use.md` exactly as written (`prompts.help_file`,
-`prompts.help_commands`), with no model call. It works in the terminal chat and as `laris agent guide`. Edit the file, then run `laris harness lock` after the
-owner approves the change.
-
-#### Policy folder, workflows and integrity
-
-`.laris/` holds the protected prompts, rules and workflows (see `.laris/README.md`).
-`laris workflows list|show|check` inspects workflows, run one in chat with `/workflow <name> <request>`;
-`laris harness verify` checks the integrity lock, prompts and workflows and `laris harness lock`
-refreshes the lock after an owner-approved change. A tampered policy stops every session.
-
-#### Learning: knowledge by domain, skills on request and fine-tune data
-
-Ingesting documents adds knowledge notes by domain under `vault/Knowledge/<domain hub>/`, shown next to
-the matching brain hub (`save_knowledge` adds taught knowledge). Skills are made only on request:
-`laris skills lint|add` checks and installs a hand-written one, the agent saves one with `save_skill`
-after approval, and `laris skills sync` (or `learning.skill_on_ingest: true`) builds optional corpus skills. Good answers are kept locally under `artifacts/finetune`
-(`laris learn stats|export|purge`, `/rate up|down`, `/learn on|off`); the system never trains.
-
-#### The project vault and scholarly analytics
-
-`laris vault init|status|check|search|show|graph|sync|repair|migrate-memory|propose|review|accept|reject`
-(see `docs/architecture/BRAIN_AND_VAULT.md`). `check` runs format, schema (`.laris/vault/schema.yaml`),
-secret, oversize and alias lint; `graph --format json|graphml|canvas [--out FILE]` exports the link graph
-or the knowledge graph; `sync [--accept]` lists or adopts hand edits inside managed blocks; `repair
-[--restore NOTE]` fixes damage or restores a backup. In chat: `/vault [words]`. Agent tools:
-`search_vault`, `corpus_overview`, `term_trends`, `find_duplicates`, `group_documents`, `save_analysis`,
-`citation_graph`, `kg_query`; workflows `literature-map`, `citation-analysis`, `kg-explore`.
-
-Operator side: `laris-server evaluate suite [--fast] [--only ...] [--out reports/...]` runs the model-free
-suites (retrieval, citation, extraction, leak, injection, vault round-trip); `make eval-fast`,
-`make test-model-free` and `make bench-vault` are the matching targets. See
-`docs/development/OWNER_RUNBOOK.md`.
-
-#### Instructions, skills and automatic context compaction
-
-- **`LARIS.md`** (project root) is the internal policy: read at the start of every turn and put in the
-  system prompt as confidential, after the optional user-level `~/.laris/LARIS.md` and before
-  `.laris/LARIS.md` and the git-ignored `LARIS.local.md` (`prompts.instruction_files`). Edits apply on
-  the next message; the files cannot be read through the agent's tools.
-- **Skills** live in `.laris/skills/<name>/SKILL.md` (YAML `name` and `description`, Markdown body,
-  optional `references/`). Only name and description are in the prompt; the model loads a skill with the
-  `use_skill` tool, or the user runs `/<skill-name> request` (terminal and web `/` menu). `laris skills
-  list|show|check` inspects and validates them. Project skills override `~/.laris/skills`.
-- **Memory** lives in the project vault, `vault/Memory/` (`save_memory` writes it after approval); files in
-  the older `.laris/memory/` are still read until `laris vault migrate-memory` copies them (`--undo` removes
-  the copies).
-- **Autocompact is on by default** (`auto_compact`, `context_window` 32768 tokens, `compact_threshold`
-  0.8, all in settings). Before each model call the session estimates its size; above the threshold it
-  trims old tool outputs, then replaces older turns with a summary (model-written when a model API is
-  connected, otherwise extracted) while keeping recent turns and every tool-call/result pair intact. A
-  context-length error from the model triggers one forced compaction and a retry. The original messages
-  are archived in `artifacts/chat/archive/`. `/compact [note]` compacts now; `/context` shows usage.

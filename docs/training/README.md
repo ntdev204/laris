@@ -48,4 +48,4 @@ Source packages remain functional under `src/`, as required by ADR-013.
 Experiments live under `experiments/`, measured reports under `reports/`, and
 weights/data remain local under ignored `artifacts/` and `data/` paths.
 
-The [owner runbook](OWNER_RUNBOOK.md) contains the commands and remaining measurement blockers. `laris evaluate readiness --reports ...` is an offline audit; it does not run a model or authorize promotion through missing metrics.
+The [owner runbook](OWNER_RUNBOOK.md) contains the commands and remaining measurement blockers. `laris-server evaluate readiness --reports ...` is an offline audit; it does not run a model or authorize promotion through missing metrics.

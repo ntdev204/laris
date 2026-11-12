@@ -3,9 +3,9 @@ document_id: "DOC-ARCH-HARNESS-001"
 title: "LARIS Agent Harness, System Prompt and Confidentiality Architecture"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,16 +13,30 @@ related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/DATA_FLOW.md"
   - "docs/development/CLI.md"
+  - "docs/adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md"
 decision_references:
   - "ADR-001"
   - "ADR-004"
   - "ADR-013"
-change_summary: "Defines the shared harness: prompt modules, agent loop, guards, policies and configuration precedence."
+  - "ADR-019"
+change_summary: "Release 2.0: states where each part of the harness runs (client engine or server gateway), the client configuration precedence without project files, permission modes and rules, hooks, the sandbox and the engine split; prompt, loop, guards and policy sections are unchanged."
 ---
 
 # LARIS Agent Harness, System Prompt and Confidentiality Architecture
 
-The harness is the single runtime that every front end (the terminal client; the model server only authenticates and infers, see ADR-015) uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
+The harness is the single runtime that every front end uses to run a model with tools. It turns the project policy (`LARIS.md`), the versioned prompt modules and the configuration into one governed session. No component carries its own prompt text, limits or endpoints.
+
+## 0. Where each part runs (release 2.0)
+
+The harness is split by trust, not by feature ([ADR-019](../adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md)). The foundation model is **not qualified**: this split governs a turn, and says nothing about how good an answer is.
+
+| Part | Runs in | Why there |
+| :--- | :--- | :--- |
+| Loop control (steps, repeated call, time budget, interrupt), tools, permission modes and rules, hooks, sandbox, checkpoints, context compaction | client engine (`laris engine --stdio`) | Tools act on the user's files; the user's machine is the sandbox (ADR-015) |
+| System prompt composition, rules, workflows, brain consult, leak and secret guard, reasoning diversion, quota and trace | server gateway (`laris.server.gateway`) | Confidential policy never leaves the server; the model is untrusted |
+| Generation and embeddings | model service | The only holder of weights and VRAM |
+
+The three front ends (Ink, plain, headless `laris -p`) are not part of the harness. They draw events of the engine protocol E1 and send commands; they hold no tool, permission or storage logic, so the same session gives the same tool calls, tool results and answer in all three (checked by `tests/acceptance`). The policy composer, brain loader and harness runtime currently sit in `laris.shared` because the client still composes its own instruction layers locally and the server gateway uses the same runtime; the confidential policy and brain *data* are server-only.
 
 ## 1. Design rules
 
@@ -33,19 +47,30 @@ The harness is the single runtime that every front end (the terminal client; the
 
 ## 2. Configuration precedence
 
-Later layers win:
+Later layers win. The client and the server do not read the same layers, because a project folder must never configure the client (SR-C2, SR-C5).
 
-| # | Layer | Notes |
-|---|-------|-------|
-| 1 | Schema defaults | `config/runtime_schemas.py`, `config/schemas.py` |
-| 2 | `configs/default.yaml` | Checked in; equals the schema defaults |
-| 3 | `~/.laris/config.yaml` | Per user |
-| 4 | `<project>/.laris/config.yaml` | Per project |
-| 5 | User preferences | `<chat_dir>/settings.json`; only a whitelist (model URL/name, API-key variable name, autocompact, window, threshold, write approval, extra instructions) |
-| 6 | `LARIS_*` environment | `__` separates nesting, JSON for lists, e.g. `LARIS_APP__PORT=9000`; `<project>/.env` is loaded first and never overrides real variables |
-| 7 | Command-line flags | `--model-api-url`, `--workspace`, ... |
+| # | Layer | Client | Server |
+|---|-------|--------|--------|
+| 1 | Schema defaults | yes | yes |
+| 2 | `configs/default.yaml` | yes | yes |
+| 3 | `~/.laris/settings.json` (all client settings; `config.yaml` of 1.x is folded into it once) | yes | no |
+| 4 | `<project>/.laris/config.yaml` and `<project>/.env` | **never read**; a warning names the ignored file | yes |
+| 5 | `LARIS_*` environment (`__` separates nesting, JSON for lists) | yes | yes |
+| 6 | Command-line flags (`--model-api-url`, `--permission-mode`, ...) | yes | yes |
 
-YAML may name an environment variable (`api_key_env`) but never contain a credential; the loader rejects literal secrets. `.env.example` lists the supported variables. Security settings (deny globs, secret patterns, `allow_remote`) are not in the preference whitelist.
+`~/.laris/settings.json` is validated against a JSON Schema shipped with the client (`laris config schema`); its keys are listed in the [CLI reference](../development/CLI.md). YAML and settings may name an environment variable (`api_key_env`) but never contain a credential; the loader rejects literal secrets, and the API key lives in `~/.laris/.credentials.json` (mode 0600). Security settings (deny globs, secret patterns, `allow_remote`) are not editable from chat.
+
+### Permissions (client)
+
+Modes: `default` asks before anything that writes, `acceptEdits` lets file edits through, `plan` is read-only, `bypass` asks for nothing and exists only when the policy (`agent.approval.allow_bypass`) allows it. Rules are `Tool` or `Tool(pattern)` in `permissions.allow`, `ask` and `deny`. The first match wins, in this order: a built-in deny (installs outside the sandbox) or a `deny` rule; `plan` refusing every non-read-only call; an `ask` rule, even in `bypass`; an `allow` rule; the mode. An `allow` rule for a shell command applies only when every command of the line is allowed and the line has no redirection or substitution; `deny` and `ask` rules match any part of a chained line. "Always allow" answers are kept per project in `~/.laris/projects/<slug>/state.json` or, for "everywhere", in `permissions.allow`.
+
+### Hooks (client)
+
+`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop`, declared only in `~/.laris/settings.json`. A hook is a command that receives the event as JSON on standard input and runs in the sandbox environment with a timeout. Exit 0 with no output continues; a JSON `{"decision": "block", "reason": "..."}` or exit code 2 blocks; `additionalContext` adds text for the model; anything else is a warning and the session carries on. A `PreToolUse` hook can only make things stricter. Hook output is read with a size bound, decoded leniently and stripped of control characters; session secrets are not in the hook's environment.
+
+### Sandbox (client)
+
+`~/.laris/.venv` is built and repaired by `uv` without user action (states `ready`, `missing`, `broken`, `outdated`, `building`, `failed`), under a file lock, into `.venv.building` and renamed into place. A failure is a state with a message; the rest of `laris` keeps working. Installs run only inside it; an install written any other way is denied by a built-in rule that no setting or mode removes.
 
 ## 3. System prompt
 
@@ -81,7 +106,7 @@ Statuses: `completed`, `max_steps`, `cyclic`, `timeout`, `provider_error`, `bloc
 | Credential disclosure | Environment values whose names contain configured markers, token regexes and absolute paths are redacted from output, tool results, files written, memory and audit |
 | File exfiltration through tools | `security.deny_read_globs` (policy, prompts, `.env`, configs, chat state, `.git`) enforced in the sandbox; reads limited to the project and upload folder; writes only to the output folder or project memory |
 | Indirect prompt injection | Tool results from documents are tagged `_trust: untrusted`, scanned with configurable patterns (English and Vietnamese) and flagged to the model; only the user may authorise actions (U-3) |
-| Remote leakage | The model API must be loopback unless `model_api.allow_remote` is true |
+| Remote leakage | The server address must use HTTPS, or be loopback, unless `model_api.allow_remote` is true; certificates are always verified (a private certificate is pinned by fingerprint for that server only) |
 | Error leakage | Tool errors and statuses carry project-relative paths only; no stack traces |
 | Over-collection | Audit logs hold event type, tool name, status, sizes and hashes, never message content |
 
@@ -97,7 +122,7 @@ These controls reduce risk; they do not make disclosure impossible for a model t
 
 ## 7. Skills and memory
 
-Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `description`); roots come from `prompts.skill_roots`. The model loads one with `use_skill`; users type `/<skill> request`. Memory notes in `.laris/memory/` are written through `save_memory` after approval, are redacted and listed by name in the prompt.
+Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `description`); roots come from `prompts.skill_roots`. The model loads one with `use_skill`; users type `/<skill> request`. Personal skills and memory live in `~/.laris/skills/` and `~/.laris/memory/`; project memory is written to the project vault (`vault/Memory/`) through `save_memory` after approval, is redacted and is listed by name in the prompt.
 
 ## 8. Learning from use: RAG skills and fine-tune data
 
@@ -105,7 +130,7 @@ Skills live in `.laris/skills/<name>/SKILL.md` (front-matter `name`, `descriptio
 
 **New skills from the user.** The `skill-authoring` skill guides the model to gather the missing facts and draft a skill; the `save_skill` tool (approval required) installs it only after the same lint used by `laris skills lint|add`: front matter, "Use when" description, required sections (`learning.skill_required_sections`), size, no instruction-override wording, no credentials and no references to policy or secret files.
 
-**Useful interactions are kept for later fine-tuning.** After each finished turn the collector applies a quality gate and writes local JSONL under `learning.dir` (default `artifacts/finetune`, git-ignored and on the tool deny-list): `sft.jsonl` (chat turns without the system prompt), `retrieval.jsonl` (query with cited positives and uncited negatives, for retrieval training) and `preference.jsonl` (draft rejected by the verifier vs the final answer). A turn is kept only when it completed, passed citation verification, produced no leak or credential and no injection flag, and is long enough; duplicates are skipped. The user can rate an answer (web buttons, `/rate up|down`), disliked turns are excluded from export, and collection can be switched off (`learning.enabled`, the settings checkbox, `/learn on|off`). `laris learn stats|export|purge` manages the data. **Nothing is trained by the system**; export writes JSONL plus a manifest with a hash for the owner to use later.
+**Useful interactions are kept for later fine-tuning.** After each finished turn the collector applies a quality gate and stores it locally in `learning.sqlite` under `learning.dir` (git-ignored, on the tool deny-list; `laris learn export` writes the JSONL files `sft.jsonl`, `retrieval.jsonl` and `preference.jsonl`): `sft.jsonl` (chat turns without the system prompt), `retrieval.jsonl` (query with cited positives and uncited negatives, for retrieval training) and `preference.jsonl` (draft rejected by the verifier vs the final answer). A turn is kept only when it completed, passed citation verification, produced no leak or credential and no injection flag, and is long enough; duplicates are skipped. The user can rate an answer (`/rate up|down`), disliked turns are excluded from export, and collection can be switched off (`learning.collect` in `settings.json`, `/learn on|off`).  `laris learn stats|export|purge` manages the data. **Nothing is trained by the system**; export writes JSONL plus a manifest with a hash for the owner to use later.
 
 ## 9. Change control
 

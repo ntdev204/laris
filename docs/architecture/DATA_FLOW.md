@@ -3,9 +3,9 @@ document_id: "DOC-ARCH-FLOW-001"
 title: "LARIS End-to-End Data Flow and Pipeline Architecture"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-10-15"
-updated_at: "2026-10-15"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -14,16 +14,80 @@ related_documents:
   - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/architecture/LAYER_ARCHITECTURE.md"
   - "docs/specifications/DATA_SCHEMAS.md"
+  - "docs/adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md"
 decision_references:
   - "ADR-003"
   - "ADR-004"
   - "ADR-005"
-change_summary: "Detailed specification of the 4 core end-to-end data pipelines across all 12 layers."
+  - "ADR-015"
+  - "ADR-018"
+  - "ADR-019"
+change_summary: "Adds pipeline 0, the flow of one chat turn through client, proxy, API, model and back (release 2.0), and the embedding and tool-loop paths; pipelines 1 to 4 are unchanged."
 ---
 
 # LARIS End-to-End Data Flow and Pipeline Architecture
 
-This document maps the flow of data through LARIS, tracing data transformations, intermediate schemas, validation checkpoints, and failure recovery pathways across four core operational pipelines.
+This document maps the flow of data through LARIS, tracing data transformations, intermediate schemas, validation checkpoints, and failure recovery pathways across the operational pipelines. Pipeline 0 is the runtime path of the 2.0 system (a chat turn); pipelines 1 to 4 are the research data pipelines.
+
+---
+
+## 0. Pipeline 0: One Chat Turn (release 2.0)
+
+The runtime path from a typed message to a stored trace. The blocks and protocols are described in
+[SYSTEM_OVERVIEW](SYSTEM_OVERVIEW.md) section 1b; the loop that wraps it is in
+[AGENT_HARNESS](AGENT_HARNESS.md). The foundation model is not qualified, so this flow guarantees how
+a turn is governed, not how good the answer is.
+
+```mermaid
+sequenceDiagram
+    participant FE as Front end
+    participant EN as Engine (client)
+    participant CD as Caddy
+    participant API as API (server)
+    participant MD as Model service
+    participant PG as PostgreSQL
+    FE->>EN: user_message (E1)
+    EN->>EN: compose the user's layers, tool schemas, skills index, memory
+    EN->>CD: POST /v1/laris/chat (P1, key, X-Laris-Protocol)
+    CD->>API: forwarded, real peer address set
+    API->>API: trusted-proxy address, key check, role, body validation
+    API->>PG: reserve estimated tokens (quota)
+    API->>API: gateway composes policy prompt, consults the brain (brain budget lock)
+    API->>MD: chat completion stream (P2, bounded concurrency)
+    MD->>MD: GPU queue stages the needed model, generates
+    MD-->>API: token stream (text, reasoning, tool calls)
+    API->>API: leak and secret guard, reasoning diverted, brain tools run here
+    API-->>EN: SSE text and the client's own tool calls
+    API->>PG: settle quota and store the trace (finally)
+    EN->>EN: permission check, hooks, run the tool locally
+    EN->>CD: next request with the tool result
+    EN-->>FE: text, tool_call, tool_result, done (E1)
+```
+
+| Step | Where | Rule |
+| :--- | :--- | :--- |
+| 1. Compose | client | Only what belongs to the user leaves the machine: conversation, tool schemas, the user's instruction files, skills index and memory. Keys typed into a message are masked before storage |
+| 2. Send | client to Caddy | HTTPS; the protocol header is checked by the server (426 on mismatch); a stream that fails is reported as an `error` event |
+| 3. Admit | Caddy, API | Timeouts and the 32 MB limit at the edge; the real address comes from a trusted proxy only; the key is checked (401), the role must allow the route (403), the body is validated (4xx, never 500) and the estimated tokens are reserved (429 when the quota is used up) |
+| 4. Compose policy | API gateway | The gateway adds the system prompt, rules, workflows and a short brain brief. Nothing in `.laris/` is ever sent back to the client; the brain lock covers the brain budget only |
+| 5. Infer | API to model (P2) | Bounded concurrency; chat and embeddings share one GPU queue, which loads the model the job needs and evicts the least recently used idle model when the budget is exceeded |
+| 6. Guard | API gateway | The stream passes the leak detector and secret redaction; reasoning is diverted and kept for the operator only (ADR-018); a leak is replaced by the configured refusal |
+| 7. Return | API to client | SSE: text and the client's own tool calls; brain tool calls are run on the server and are not returned |
+| 8. Settle | API, `finally` | The reservation is settled with real use (or released) and the trace stored, also when the client drops the stream |
+| 9. Act | client | The engine applies permission modes and rules, runs `PreToolUse` hooks, runs the tool in the project folder (installs only in the sandbox), runs `PostToolUse` hooks, and sends the result in the next request. A turn ends at the step ceiling, a repeated call, the time budget, an interrupt or a final answer |
+
+**Embeddings.** Dense search never runs a model on the client. The workspace sends passages to
+`POST /v1/laris/embed`; the API forwards them to the model service over P2 (`/v1/embeddings`), and the
+client caches the vectors in its SQLite `embeddings` table. Without a configured server only BM25 search works.
+
+**Failure paths.** A model failure before the first byte is an HTTP error; after the stream starts it is an
+`error` SSE event followed by the end marker. A client interrupt (Esc) ends the local turn and leaves the saved
+conversation valid: every tool call has a result. The server settles quota in every case.
+
+**What is stored where.** Conversation, uploads, tool results, learning data and the vault index stay in the
+user's SQLite space and folders. The server keeps only `keys`, `usage` (token counts per key and month),
+`traces` (including diverted reasoning, for the operator) and the daily summary; usage rows are dropped after
+`serving.usage_retention_days` (90) and traces after `serving.trace_retention_days` (30).
 
 ---
 

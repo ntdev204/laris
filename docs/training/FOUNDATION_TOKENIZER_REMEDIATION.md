@@ -58,7 +58,7 @@ trong thư mục R1 riêng. Dùng output corpus thực tế để kiểm checksu
 so trên validation.
 
 ```bash
-.venv/bin/laris train tokenizer --authorized --vocab-size 32000 \
+.venv/bin/laris-server train tokenizer --authorized --vocab-size 32000 \
   --train-shards artifacts/tokenizer/foundation-r1/train.parquet \
   --corpus-text-out artifacts/tokenizer/foundation-r1/fit-actual.txt \
   --output-dir artifacts/tokenizer/foundation-r1/candidate \
@@ -117,13 +117,13 @@ Corpus nâng từ 4 triệu lên 74 triệu từ (siêu tập 172 triệu từ).
 Chữ số chiếm khoảng 5% số từ của Wikipedia EN; mỗi chữ số thành một token nên EN không xuống dưới
 khoảng 1,42 bằng cách chỉnh dữ liệu. Biên của cấu hình 32k không tách chữ số rất mỏng (0,002 đến 0,013).
 `split_digits` chỉ là giá trị mặc định trong `TokenizerTrainerConfig`; chưa có spec hay ADR quy định nó,
-và lệnh `laris train tokenizer` chưa có tham số để đổi nó. Owner cần chọn: bỏ tách chữ số (đánh đổi:
+và lệnh `laris-server train tokenizer` chưa có tham số để đổi nó. Owner cần chọn: bỏ tách chữ số (đánh đổi:
 số trong văn bản khoa học thành token dài hơn), hoặc tăng từ vựng.
 
 ### Lựa chọn của owner và tokenizer ứng viên (2026-11-11)
 
 Owner chọn phương án B: từ vựng 48k, không tách chữ số. Đã fit bằng
-`laris train tokenizer --authorized --vocab-size 48000 --no-split-digits` trên siêu tập đầy đủ (172 triệu từ,
+`laris-server train tokenizer --authorized --vocab-size 48000 --no-split-digits` trên siêu tập đầy đủ (172 triệu từ,
 mất 1 phút 52 giây, RSS đỉnh 6 GB). Mô hình: `artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model`.
 
 | Mẫu validation đã khóa | Tokenizer cũ 32k | Ứng viên 48k |
