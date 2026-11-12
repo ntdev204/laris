@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T59 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T64 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -747,7 +747,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `laris.client.store`: one SQLite file per private space at `~/.laris/projects/<slug>/<key-fp>.sqlite` (WAL, busy timeout, numbered migrations); one-time idempotent migration of existing files (including the project's `artifacts/chat/users/<fp>/`) with backups
 - Validation:
   - Migration tests on fixtures; second run changes nothing; backups present
-- Status: pending
+- Status: done
+- Note: `laris.client.store` (store.py, legacy.py): `space_path(home, project_root, key_fp)` gives `<home>/projects/<slug>/<fp>.sqlite` (slug = folder name + 8 hex of the path hash, so two projects with the same folder name do not collide); `Store` opens one short-lived connection per call with WAL, `synchronous=NORMAL`, a busy timeout and `BEGIN IMMEDIATE` transactions that roll back on error; numbered migrations (1: chunks, embeddings by chunk and model id, conversations, learning, vault_index, meta) are recorded in `schema_version` and applied once. `migrate_legacy(store, workspace, conversations)` imports `chunks.jsonl` and `<conversations>/*.json` losslessly, copies each source to `backups/` first, leaves the originals in place, and writes one `meta` marker per source so a second run changes nothing; files that are not conversations are skipped. tests/unit/store/test_client_store.py (5 tests): path rules, WAL and busy timeout, rollback, lossless idempotent migration with backups, 4 threads x 20 writes lose nothing. Wiring of Workspace/ConversationStore/Collector onto the store is T65/T66 (the store is not yet read by the app). Done out of plan order because T60-T63 need PostgreSQL in Docker, which is not installed here and sudo needs the owner's password; T60-T63 stay pending.
 
 ### T65 — Workspace and embedding cache in SQLite
 - Requirements: SR-S6
