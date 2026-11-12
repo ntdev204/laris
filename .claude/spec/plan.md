@@ -1,6 +1,6 @@
-# LARIS — Plan: Obsidian brain and scholarly harness
+# LARIS — Plan: Obsidian brain, scholarly harness and the second programme
 
-Version 0.1.0 · 2026-11-11 · Implements [spec.md](spec.md); task detail in [task.md](task.md).
+Version 0.2.0 · 2026-11-12 (second programme in section 8) · Implements [spec.md](spec.md); task detail in [task.md](task.md).
 
 ## 1. Order of work
 
@@ -124,3 +124,115 @@ measured figures of each). Two tasks wait for the owner and are not engineering 
 contract and tests are written; the owner reviews the resumption criteria) and T39 (the decision to resume
 the core model, which stays paused). The client wheel is built after this closing, then the release under
 the git flow (see docs/development/OWNER_RUNBOOK.md).
+
+## 8. Second programme: three blocks, two databases, Docker, terminal client (2026-11-12)
+
+Owner instruction: restructure the code and the operating flow (spec sections 1, 4b and 5b). Target:
+
+```text
+Client (laris, npm)  --P1 HTTPS/SSE-->  Caddy --> Server API (FastAPI) --P2 internal--> Model service (FastAPI, GPU)
+ SQLite per space                                  PostgreSQL                             weights mounted read-only
+```
+
+Flow of one chat turn after the restructuring: the client composes the user's layers and sends P1 through
+Caddy; the API takes the real address from a trusted proxy, authenticates, validates the body and reserves
+quota; the gateway composes the prompt and consults the brain (lock on the brain budget only) and calls the
+model over P2 with bounded concurrency; the model's GPU queue loads the needed model and streams back; the
+gateway guards the text, diverts reasoning and streams SSE (an `error` event on failure mid-stream), then
+settles quota and stores the trace in `finally`; the client runs tools locally and sends the next request;
+dense search embeds through `POST /v1/laris/embed` and caches vectors in SQLite.
+
+Rules for every task of this programme: one `feature/<id>-<name>` branch from `develop` per task; no
+behaviour change in Phase 10; `ruff`, `mypy`, `validate_docs`, `validate_spec` and
+`make check-no-training` pass; nothing trains or fits a model; PostgreSQL tests run when
+`LARIS_TEST_PG_DSN` is set; the unrelated local change to `data/acquisition_manifest.json` is preserved.
+Release 2.0.0 (protocol and server storage change) needs the owner's authorisation.
+
+### Phase 9 — Decisions of the second programme
+Goal: record the decisions and dependency approvals before code.
+Tasks: T48
+Exit criteria:
+- ADR-019 accepted; ADR-015, ADR-016 and ADR-018 amended; D10 to D21 recorded.
+- Approved dependencies listed in `pyproject.toml` extras; `ink`, `react` and `uv` pinned; `prompt_toolkit` and `rich` recorded as dropped.
+
+### Phase 10 — Three blocks
+Goal: move the code into `src/laris/{protocol,shared,client,server,model,research}` without changing behaviour.
+Tasks: T49, T50, T51, T52
+Exit criteria:
+- No import cycle between blocks; the block-boundary test passes.
+- Three entry points (`laris`, `laris-server`, `laris-model`); the client wheel is built from its blocks only.
+- The no-training suite passes with the same results as before the move.
+
+### Phase 11 — Model service
+Goal: a separate inference process that alone loads weights and manages VRAM.
+Tasks: T53, T54, T55
+Exit criteria:
+- `laris-model serve` speaks P2; the boundary tests pass over HTTP; the GPU queue respects the VRAM budget.
+- The server reaches the model only through P2.
+
+### Phase 12 — Server API
+Goal: replace `http.server` with FastAPI and close the reliability and safety findings.
+Tasks: T56, T57, T58, T59
+Exit criteria:
+- Body validation, SSE error events, bounded model concurrency and the narrowed brain lock are tested.
+- Address rules hold behind a trusted proxy; `/v1/laris/embed` serves the client; the default key is never printed.
+
+### Phase 13 — Server storage on PostgreSQL
+Goal: keys, usage and traces in PostgreSQL with atomic quota and running retention.
+Tasks: T60, T61, T62, T63
+Exit criteria:
+- Migrations apply on an empty database; the concurrency test never passes a limit.
+- Partitions and background retention work; the SQLite import is lossless on a fixture.
+
+### Phase 14 — Client storage on SQLite
+Goal: the user's data in one SQLite file per private space, vault notes unchanged.
+Tasks: T64, T65, T66
+Exit criteria:
+- Automatic, idempotent migration with backups; BM25 rankings identical; no lost update under two writers.
+
+### Phase 15 — Deployment with Docker
+Goal: the whole server side runs with `docker compose` on one machine.
+Tasks: T67, T68, T69
+Exit criteria:
+- Images build; only Caddy publishes ports; policy and weights are read-only mounts; secrets are Docker secrets.
+- The end-to-end smoke test passes (or its commands are prepared for the owner when no Docker or GPU is available).
+
+### Phase 16 — Terminal client like Claude Code
+Goal: `laris` offers the interface and flow of Claude Code: one engine, the Ink + React front end,
+a dependency-free plain mode, global settings and an automatic sandbox.
+Tasks: T70, T71, T72, T73, T74, T75, T76, T77, T78, T79, T80, T81, T82
+Exit criteria:
+- E1 contract tests pass; the Ink front end passes the scenario set; plain mode and headless `stream-json` (equal to E1) pass where they apply.
+- Global home with Claude-Code-style settings, login without flags, sandbox built and repaired without user action.
+- Permission modes and rules, coding tools, input forms, hooks, status line and interrupt pass the client
+  acceptance suite.
+
+### Phase 17 — Hardening and release 2.0.0
+Goal: security, documentation and the release of the restructured system.
+Tasks: T83, T84, T85
+Exit criteria:
+- Security tests for the new surfaces pass; architecture documents and the guide describe the new flow.
+- Release 2.0.0 under the git flow, only with the owner's authorisation.
+
+### Critical path of the second programme
+
+T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55 → T56 → T57 → T68 → T69 → T83 → T84 → T85.
+Phase 13 (T60 to T63) and Phase 14 (T64 to T66) can start after T52; Phase 16 starts after T52 and T48
+(pinned front-end dependencies): T70 (engine) first, then T71 to T79 on the engine, then plain mode T80, the Ink front end
+T81 and the acceptance suite T82; T79 needs T56.
+
+### Risks of the second programme
+
+| Risk | Response |
+|---|---|
+| The package move breaks imports or behaviour | Scripted import rewrite, no behaviour change in Phase 10, full no-training suite before and after |
+| Mixed versions of client and server | `X-Laris-Protocol` header and a clear refusal; npm client and server released together as 2.0.0 |
+| Data loss when migrating storage | Idempotent migrations, backups of the originals, lossless import test, `pg_dump` backups |
+| Quota overshoot under load | Atomic reservation and settlement; concurrency test |
+| One GPU shared by chat and embeddings | Model block queue with VRAM budget; bounded concurrency from the API |
+| Shell tools and hooks run harmful commands | Permission modes and rules, folder trust, confinement, timeouts, security tests (SR-C5) |
+| Address rules broken behind the proxy | Trusted-proxy list; tests with trusted and untrusted proxies |
+| Logic leaks into the Ink front end | All logic in the engine; the front end speaks only E1; the same scenarios run through Ink, plain mode and headless (T82) |
+| Sandbox cannot be built (offline, no Python) | System Python fallback, clear message, the program keeps working; download source is configuration |
+| Agent installs break the program | The program is a sealed binary from npm (D19); the agent works only in the sandbox, which is repaired automatically (D23) |
+| A cloned repository reconfigures the client | Project `./.laris/` carries no configuration (D20); hooks only from the global settings; folder trust |
