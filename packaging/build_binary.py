@@ -52,7 +52,7 @@ def main(wheels: Path, out: Path) -> None:
         args = [
             py, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--name", "laris",
             "--distpath", str(out), "--workpath", str(work / "build"), "--specpath", str(work),
-            "--copy-metadata", "laris", "--collect-data", "harness",
+            "--copy-metadata", "laris", "--collect-data", "laris.shared.harness",
         ]
         for package in top_level_packages(wheel):
             args += ["--collect-submodules", package]
