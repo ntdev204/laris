@@ -61,6 +61,7 @@ agent:
   skill_max_chars: 24000
   approval:
     mode: ask
+    allow_bypass: false
     always_ask:
     - write_file
     - ingest_path
@@ -73,6 +74,17 @@ agent:
     - search_corpus
     - answer_question
     - read_file
+  coding:
+    bash_default_timeout_s: 120.0
+    bash_max_timeout_s: 600.0
+    bash_output_max_chars: 30000
+    read_max_lines: 2000
+    glob_max_results: 500
+    grep_max_results: 200
+    grep_max_file_bytes: 2000000
+    edit_max_bytes: 2000000
+    diff_max_chars: 20000
+    checkpoint_keep: 200
 
 # Context window and automatic compaction (on by default).
 context:
@@ -99,6 +111,7 @@ model_api:
   timeout_s: 120.0
   temperature: 0.0
   allow_remote: false
+  internal_url: ''
 
 # Confidentiality and injection defences. Not editable from the web UI.
 security:
@@ -161,9 +174,40 @@ serving:
   max_body_bytes: 33554432
   model_name: laris-core
   placeholder_name: laris-placeholder
+  model_concurrency: 4
+  trusted_proxies: []
+  first_admin_file: ~/.laris-server/default.key
+  database_engine: sqlite
+  database_url_env: LARIS_DATABASE_URL
+  database_url_file: ''
+  database_pool_min: 1
+  database_pool_max: 10
+  database_timeout_s: 10.0
+  trace_retention_days: 30.0
+  usage_retention_days: 90.0
+  retention_interval_s: 3600.0
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true
+
+# Model block (`laris-model serve`, protocol P2). No keys: it listens on the internal network only.
+model_service:
+  host: 127.0.0.1
+  port: 8001
+  max_body_bytes: 33554432
+  model_name: laris-core
+  placeholder_name: laris-placeholder
+  backend: ''
+  checkpoint: ''
+  tokenizer_model: ''
+  device: ''
+  vram_budget_bytes: 15569256448
+  vram_margin_bytes: 1610612736
+  chat_vram_bytes: 1048576
+  embed_vram_bytes: 1048576
+  gpu_workers: 1
+  queue_max_waiting: 64
+  queue_wait_timeout_s: 60.0
 
 # Chat application and document workspace.
 app:
@@ -173,6 +217,10 @@ app:
   chat_dir: artifacts/chat
   max_body_bytes: 33554432
   upload_max_bytes: 26214400
+  paste_inline_chars: 6000
+  mention_max_chars: 20000
+  mention_max_files: 10
+  note_name: notes
   chunk_words: 140
   min_chunk_words: 20
   search_default_top_k: 5
@@ -182,7 +230,7 @@ app:
   ocr_max_pages: 50
   allow_write_default: false
   key_env: LARIS_API_KEY
-  account_file: ~/.laris/settings.json
+  account_file: ~/.laris/.credentials.json
   users_dir: users
 
 # Project vault: an Obsidian-format folder kept in the user's codebase as the project memory.

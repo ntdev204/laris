@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from config.loader import load_runtime_config
-from harness.runtime import HarnessRuntime
+from laris.shared.brain import Brain, BrainError
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_format, lint_hierarchy
 from tests.unit.conftest import REPO
-from vault.brain import Brain, BrainError
-from vault.index import VaultIndex
-from vault.lint import lint_format, lint_hierarchy
 
 CFG = load_runtime_config(REPO).brain
 BRAIN = REPO / ".laris" / "brain"
@@ -197,10 +197,10 @@ def test_tampering_with_a_brain_note_stops_the_session(project):
 
 
 def _registry(project, tmp_path):
-    from agent.builtin_tools import build_registry
-    from agent.tools import Sandbox
-    from application.service import SearchService
-    from application.workspace import Workspace
+    from laris.client.agent.builtin_tools import build_registry
+    from laris.client.agent.tools import Sandbox
+    from laris.client.application.service import SearchService
+    from laris.client.application.workspace import Workspace
 
     rt = HarnessRuntime.load(project)
     sandbox = Sandbox([project], tmp_path / "out", policy=rt.paths, base=project)
@@ -208,7 +208,7 @@ def _registry(project, tmp_path):
 
 
 def test_ingest_and_symlink_tricks_are_denied_by_policy(project, tmp_path):
-    from agent.tools import ToolExecutionError
+    from laris.client.agent.tools import ToolExecutionError
 
     (project / "alias").symlink_to(project / ".laris" / "brain")
     registry = _registry(project, tmp_path)

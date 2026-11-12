@@ -6,14 +6,7 @@ Governed by: docs/specifications/MODULE_CONTRACTS.md, ADR-002, ADR-004, ADR-008
 
 import pytest
 
-from core.errors import (
-    EpistemicOverreachError,
-    InvalidNLIInputError,
-    ModuleContractViolationError,
-    UncertaintyCeilingExceededError,
-)
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     CoreferenceCluster,
     CoreferenceOutput,
     CoreferenceResolutionStatus,
@@ -23,6 +16,13 @@ from reasoning import (
     MentionSpan,
     SemanticEquivalenceOutput,
 )
+from laris.shared.core.errors import (
+    EpistemicOverreachError,
+    InvalidNLIInputError,
+    ModuleContractViolationError,
+    UncertaintyCeilingExceededError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 class TestSemanticEquivalenceContract:

@@ -13,7 +13,25 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import (
+from laris.research.evaluation.benchmark_runner import (
+    BenchmarkRunner,
+)
+from laris.research.evaluation.error_taxonomy import (
+    ScientificErrorTaxonomy,
+)
+from laris.research.evaluation.schemas import (
+    BenchmarkBaseline,
+    BenchmarkItem,
+    BenchmarkRunReport,
+    BenchmarkSuiteType,
+    ErrorSeverity,
+    EvaluationRunRequest,
+    FrozenBenchmarkManifest,
+    RegressionThreshold,
+    ScientificErrorCategory,
+    ScientificErrorRecord,
+)
+from laris.shared.core.errors import (
     BenchmarkContaminationError,
     CycleDetectedError,
     EpistemicOverreachError,
@@ -29,25 +47,7 @@ from core.errors import (
     UncertaintyCeilingExceededError,
     WeightStagingError,
 )
-from core.schemas import EvidenceCoordinate
-from evaluation.benchmark_runner import (
-    BenchmarkRunner,
-)
-from evaluation.error_taxonomy import (
-    ScientificErrorTaxonomy,
-)
-from evaluation.schemas import (
-    BenchmarkBaseline,
-    BenchmarkItem,
-    BenchmarkRunReport,
-    BenchmarkSuiteType,
-    ErrorSeverity,
-    EvaluationRunRequest,
-    FrozenBenchmarkManifest,
-    RegressionThreshold,
-    ScientificErrorCategory,
-    ScientificErrorRecord,
-)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 class TestBenchmarkSchemasAndContracts:

@@ -5,15 +5,17 @@ import threading
 
 import pytest
 
-from agent.conversations import ConversationStore
-from agent.provider import HttpChatProvider, OfflinePlanner
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.prefs import PrefsError
-from harness.runtime import HarnessRuntime
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server, load_backend
+from laris.client.agent.conversations import ConversationStore
+from laris.client.agent.provider import HttpChatProvider, OfflinePlanner
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.model_server import ModelService, build_server, load_backend
+from laris.shared.harness.prefs import PrefsError
+from laris.shared.harness.runtime import HarnessRuntime
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 
 @pytest.fixture
@@ -67,7 +69,8 @@ def test_chat_settings_and_conversations(chat):
     assert chat.update_settings({"model": "m"})["model"] == "m"
     with pytest.raises(PrefsError):
         chat.update_settings({"nope": 1})
-    assert chat.model_health()["mode"] == "offline"
+    health = chat.model_health()  # no offline mode (D16): without a server there is no model
+    assert health["mode"] == "api" and health["ok"] is False
     chat.conversations.delete(created["id"])
     with pytest.raises(KeyError):
         chat.conversations.get(created["id"])
@@ -91,7 +94,7 @@ def test_model_server_round_trip_with_streaming_and_auth():
     try:
         tools = [{"type": "function", "function": {"name": "search_corpus"}}]
         messages = [{"role": "user", "content": "graphene"}]
-        from agent.provider import ProviderError
+        from laris.client.agent.provider import ProviderError
 
         with pytest.raises(ProviderError):  # wrong key is rejected
             HttpChatProvider(base, "m", timeout_s=3).chat(messages, tools)

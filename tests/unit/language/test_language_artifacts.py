@@ -4,24 +4,24 @@ from pathlib import Path
 
 import pytest
 
-from core.errors import (
-    DataIntegrityError,
-    DataLeakageError,
-    ModuleContractViolationError,
-)
-from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from language.schemas import (
-    EncoderCheckpointMetadata,
-    LanguageTrainingRunManifest,
-    VocabularyContract,
-)
-from language.tokenization.tokenizer import StemFertilityReport
-from language.training.artifacts import (
+from laris.research.language.training.artifacts import (
     BUNDLE_MANIFEST_FILENAME,
     LanguageArtifactBundle,
     LanguageArtifactManager,
 )
-from retrieval.baseline_comparison import RetrievalComparisonReport
+from laris.shared.core.errors import (
+    DataIntegrityError,
+    DataLeakageError,
+    ModuleContractViolationError,
+)
+from laris.shared.language.schemas import (
+    EncoderCheckpointMetadata,
+    LanguageTrainingRunManifest,
+    VocabularyContract,
+)
+from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
+from laris.shared.language.tokenization.tokenizer import StemFertilityReport
+from laris.shared.retrieval.baseline_comparison import RetrievalComparisonReport
 
 
 @pytest.fixture

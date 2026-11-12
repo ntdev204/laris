@@ -4,8 +4,13 @@ import base64
 
 import pytest
 
-from application.service import SearchService
-from application.workspace import IngestError, Workspace, chunks_from_text, decode_upload
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import (
+    IngestError,
+    Workspace,
+    chunks_from_text,
+    decode_upload,
+)
 
 
 def _service(tmp_path):
@@ -31,9 +36,11 @@ def test_empty_and_unsupported_input_rejected():
 def test_reingesting_replaces_document_and_drops_dense_index(tmp_path):
     ws = Workspace(tmp_path / "ws")
     ws.add(chunks_from_text("a.txt", "alpha beta gamma"))
-    (ws.root / "embeddings.npy").write_bytes(b"x")
+    first = [c.chunk_id for c in ws.load()]
+    ws.save_vectors("m", first, [[1.0, 0.0]])
+    assert set(ws.vectors("m", first)) == set(first) and not ws.vectors("other", first)
     counts = ws.add(chunks_from_text("a.txt", "alpha beta gamma delta"))
-    assert counts["total"] == 1 and not (ws.root / "embeddings.npy").exists()
+    assert counts["total"] == 1 and not ws.vectors("m", first)
 
 
 def test_bm25_search_vietnamese_and_english(tmp_path):

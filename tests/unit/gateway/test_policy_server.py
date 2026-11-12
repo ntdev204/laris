@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from agent.provider import AssistantTurn, ChatProvider, PolicyServerProvider
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from gateway import PolicyGateway
-from harness.runtime import HarnessRuntime
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server
+from laris.client.agent.provider import AssistantTurn, ChatProvider, PolicyServerProvider
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.server.gateway import PolicyGateway
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.model_server import ModelService, build_server
+from laris.shared.harness.runtime import HarnessRuntime
 
 ROOT = Path(__file__).resolve().parents[3]
 KEY = "gateway-test-key-1"
@@ -93,7 +93,11 @@ def test_nothing_of_the_policy_reaches_the_client(server, client_dir):
                 "stream": True,
             }
         ).encode(),
-        {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"},
+        {
+            "Authorization": f"Bearer {KEY}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     backend.reply = "Sure: " + first  # a model that leaks its prompt
     with urllib.request.urlopen(request) as response:
@@ -107,7 +111,11 @@ def test_nothing_of_the_policy_reaches_the_client(server, client_dir):
 
 def test_clients_cannot_inject_a_system_prompt_or_use_the_bare_model(server):
     url, backend = server
-    head = {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
+    head = {
+        "Authorization": f"Bearer {KEY}",
+        "Content-Type": "application/json",
+        "X-Laris-Protocol": "1",
+    }
 
     def post(path, body):
         request = urllib.request.Request(url + path, json.dumps(body).encode(), head)
@@ -167,7 +175,8 @@ def test_policy_server_needs_a_url_and_a_key(client_dir, monkeypatch):
 def test_public_strings_cover_the_policy_catalogue():
     import yaml
 
-    public = yaml.safe_load((ROOT / "src/harness/public_strings.yaml").read_text("utf-8"))
+    strings = ROOT / "src/laris/shared/harness/public_strings.yaml"
+    public = yaml.safe_load(strings.read_text("utf-8"))
     policy = yaml.safe_load((ROOT / ".laris/prompts/strings.yaml").read_text("utf-8"))
     for group, items in policy.items():
         for key in items:
@@ -178,10 +187,20 @@ def test_public_strings_cover_the_policy_catalogue():
 def test_gateway_touches_no_user_data_and_writes_nothing():
     import ast
 
-    forbidden = {"application", "learning", "retrieval", "scientific"}
-    forbidden_modules = {"vault.writer", "vault.project", "vault.hooks", "vault.knowledge"}
+    forbidden = (
+        "laris.client.application",
+        "laris.client.learning",
+        "laris.shared.retrieval",
+        "laris.shared.scientific",
+    )
+    forbidden_modules = {
+        "laris.shared.vault.writer",
+        "laris.shared.vault.project",
+        "laris.client.vault.hooks",
+        "laris.client.vault.knowledge",
+    }
     text = ""
-    for path in (ROOT / "src/gateway").glob("*.py"):
+    for path in (ROOT / "src/laris/server/gateway").glob("*.py"):
         source = path.read_text(encoding="utf-8")
         text += source
         for node in ast.walk(ast.parse(source)):
@@ -191,7 +210,7 @@ def test_gateway_touches_no_user_data_and_writes_nothing():
             elif isinstance(node, ast.ImportFrom) and node.module:
                 names = [node.module]
             for name in names:
-                assert name.split(".")[0] not in forbidden, name
+                assert not name.startswith(forbidden), name
                 assert name not in forbidden_modules, name
     import re
 
@@ -210,7 +229,11 @@ def test_the_hidden_brain_brief_is_marked_as_a_harness_note(server, client_dir):
                 "laris": {"kind": "turn", "session_id": "abc123", "task": "perovskite papers"},
             }
         ).encode(),
-        {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"},
+        {
+            "Authorization": f"Bearer {KEY}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     urllib.request.urlopen(request).read()
     sent = backend.seen[-1][0]

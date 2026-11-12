@@ -5,15 +5,15 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.plan import PLAN_TOOL
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.runtime import HarnessRuntime
-from serving.model_server import ModelService, load_backend
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.server.serving.model_server import ModelService, load_backend
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.plan import PLAN_TOOL
 
 QA = "Assumptions: none. Uncertainties: none. Next step: none. Sources: solar.txt."
 

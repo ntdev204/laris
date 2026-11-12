@@ -4,18 +4,18 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from config.loader import load_runtime_config
-from harness.runtime import HarnessRuntime
-from vault.hooks import record_ingest, record_turn
-from vault.index import VaultIndex
-from vault.lint import lint_format
-from vault.project import ProjectVault
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.client.vault.hooks import record_ingest, record_turn
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_format
+from laris.shared.vault.project import ProjectVault
 
 from ..harness.test_harness import relock  # noqa: F401
 

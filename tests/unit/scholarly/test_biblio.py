@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from scholarly.biblio import extract, find_arxiv, find_doi, from_metadata
+from laris.shared.scholarly.biblio import extract, find_arxiv, find_doi, from_metadata
 
 FIX = Path(__file__).resolve().parents[2] / "fixtures" / "scholarly" / "biblio.json"
 CASES = json.loads(FIX.read_text(encoding="utf-8"))

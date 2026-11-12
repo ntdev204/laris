@@ -15,12 +15,8 @@ from typing import List
 
 import pytest
 
-from core.errors import (
-    BenchmarkContaminationError,
-)
-from core.schemas import EvidenceCoordinate
-from evaluation.benchmark_runner import BenchmarkRunner
-from evaluation.feedback_mining import (
+from laris.research.evaluation.benchmark_runner import BenchmarkRunner
+from laris.research.evaluation.feedback_mining import (
     ExpertFeedbackRecord,
     FeedbackMiningRepository,
     FeedbackSource,
@@ -28,11 +24,15 @@ from evaluation.feedback_mining import (
     HardNegativeStrategy,
     ReviewerDecision,
 )
-from evaluation.schemas import (
+from laris.research.evaluation.schemas import (
     BenchmarkSuiteType,
     FrozenBenchmarkManifest,
     ScientificErrorCategory,
 )
+from laris.shared.core.errors import (
+    BenchmarkContaminationError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 class TestFeedbackLineageChains:

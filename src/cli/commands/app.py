@@ -8,9 +8,9 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from application.service import SearchService, ServiceError
-from application.workspace import IngestError, chunks_from_path
-from cli.common import load_runtime, make_service, model_flags
+from cli.common import load_runtime, make_service
+from laris.client.application.service import SearchService, ServiceError
+from laris.client.application.workspace import IngestError, chunks_from_path
 
 
 class _Command:
@@ -26,8 +26,6 @@ class _Command:
         parser.add_argument(
             "--workspace", default=None, help="Workspace directory (config: app.workspace)"
         )
-        if self.model:
-            model_flags(parser)
         for name, kwargs in self.flags.items():
             parser.add_argument(name, **kwargs)
 

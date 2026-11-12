@@ -1,14 +1,14 @@
 """T31: the research workflows run with a scripted provider and use their tools and the brain."""
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.runtime import HarnessRuntime
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.client.vault.hooks import record_ingest
+from laris.shared.harness.runtime import HarnessRuntime
 from tests.unit.scholarly.test_citations import D1, D2, D3
-from vault.hooks import record_ingest
 
 
 class Scripted(ChatProvider):

@@ -1,5 +1,6 @@
-"""Build the client wheel: only the modules `cli.client` can reach, never the server, the gateway,
-the policy files or tests. Usage: python packaging/build_client.py <out_dir>"""
+"""Build the client wheel from the blocks `protocol`, `shared` and `client`, never the server, the
+model, research code, the policy files or tests.
+Usage: python packaging/build_client.py <out_dir>"""
 
 import ast
 import os
@@ -9,13 +10,39 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional, Set
+from typing import List, Optional, Set
 
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "src"
-ENTRY = "cli.client"
-# Never shipped, whatever imports them: server side and operator tooling.
-EXCLUDE = ("gateway", "serving", "cli.main", "cli.server")
+# The client is built from whole blocks (ADR-019): `protocol`, `shared` and `client`, plus the
+# command modules of the `laris` program. Nothing of `server`, `model` or `research` is shipped, and
+# no policy file (`.laris/`) either.
+CLIENT_BLOCKS = ("protocol", "shared", "client")
+CLI_MODULES = (
+    "__init__",
+    "client",
+    "bootstrap",
+    "common",
+    "credentials",
+    "parser",
+    "commands/__init__",
+    "commands/account",
+    "commands/agent",
+    "commands/app",
+    "commands/config",
+    "commands/engine",
+    "commands/learn",
+    "commands/skills",
+    "commands/vault",
+)
+NOT_SHIPPED = (
+    "laris.server",
+    "laris.model",
+    "laris.research",
+    "cli.main",
+    "cli.server",
+    "cli.model",
+)
 
 
 def module_file(name: str) -> Optional[Path]:
@@ -26,26 +53,13 @@ def module_file(name: str) -> Optional[Path]:
     return package if package.is_file() else None
 
 
-def closure(entry: str) -> Set[str]:
-    seen: Set[str] = set()
-    todo = [entry]
-    while todo:
-        name = todo.pop()
-        if name in seen or any(name == e or name.startswith(e + ".") for e in EXCLUDE):
-            continue
-        file = module_file(name)
-        if file is None:
-            continue
-        seen.add(name)
-        parts = name.split(".")
-        todo += [".".join(parts[:i]) for i in range(1, len(parts))]
-        for node in ast.walk(ast.parse(file.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Import):
-                todo += [a.name for a in node.names]
-            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
-                todo.append(node.module)
-                todo += [f"{node.module}.{a.name}" for a in node.names]
-    return seen
+def client_files() -> List[Path]:
+    """Every source file of the client program: the three blocks and its command modules."""
+    files: List[Path] = [SRC / "laris" / "__init__.py"]
+    for block in CLIENT_BLOCKS:
+        files += sorted((SRC / "laris" / block).rglob("*.py"))
+    files += [SRC / "cli" / f"{name}.py" for name in CLI_MODULES]
+    return files
 
 
 SETUP = """\
@@ -66,7 +80,7 @@ extensions = [Extension(dotted(m), [m], extra_compile_args=flags) for m in modul
 setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
-    package_data={"harness": ["public_strings.yaml"]},
+    package_data={"laris.shared.harness": ["public_strings.yaml"]},
     exclude_package_data={"": ["*.c", "*.py"]},  # the C files quote the source: never shipped
     include_package_data=False,
     ext_modules=extensions,
@@ -143,7 +157,7 @@ for m in pkgutil.walk_packages([sys.argv[1]]):
         importlib.import_module(m.name)
     except Exception as exc:
         failed.append(f"{m.name}: {exc!r}"[:160])
-for banned in ("gateway", "serving", "cli.main"):
+for banned in BANNED:
     try:
         importlib.import_module(banned)
         failed.append(f"{banned} must not be in the client")
@@ -180,11 +194,12 @@ def smoke(wheel: Path) -> None:
         if leftovers:
             raise SystemExit(f"readable source left in the wheel: {leftovers[:3]}")
         python = build_python()
-        subprocess.run([str(python), "-I", "-c", SMOKE, tmp], check=True)
+        script = SMOKE.replace("BANNED", repr(NOT_SHIPPED))
+        subprocess.run([str(python), "-I", "-c", script, tmp], check=True)
 
 
 def main(out: Path) -> None:
-    files = sorted({module_file(m) for m in closure(ENTRY)} - {None})
+    files = client_files()
     version = re.search(r'^version = "([^"]+)"', (REPO / "pyproject.toml").read_text(), re.M)
     assert version
     with tempfile.TemporaryDirectory() as tmp:
@@ -193,7 +208,8 @@ def main(out: Path) -> None:
             target = stage / "src" / file.relative_to(SRC)  # type: ignore[union-attr]
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(file, target)  # type: ignore[arg-type]
-        shutil.copy2(SRC / "harness" / "public_strings.yaml", stage / "src/harness/")
+        shared = Path("laris/shared/harness/public_strings.yaml")
+        shutil.copy2(SRC / shared, stage / "src" / shared)
         compile_sources(stage, files)  # type: ignore[arg-type]
         (stage / "pyproject.toml").write_text(
             PYPROJECT.format(version=version.group(1), deps=DEPENDENCIES), encoding="utf-8"

@@ -5,13 +5,13 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from language.encoder.transformer import (  # noqa: E402
+from laris.research.language.training.trainer import LanguageEncoderTrainer  # noqa: E402
+from laris.shared.language.encoder.transformer import (  # noqa: E402
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
     _apply_rope,
     _apply_rope_torch,
 )
-from language.training.trainer import LanguageEncoderTrainer  # noqa: E402
 
 
 def _model() -> "PyTorchTransformerEncoder":

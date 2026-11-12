@@ -1,12 +1,12 @@
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.tools import Sandbox, ToolExecutionError
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.runtime import HarnessRuntime
-from harness.workflows import WorkflowLibrary
-from vault.index import VaultIndex
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.tools import Sandbox, ToolExecutionError
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.policy.workflows import WorkflowLibrary
+from laris.shared.vault.index import VaultIndex
 
 PAPER_A = (
     "Efficient Perovskite Solar Cells with Passivated Interfaces\nMaria Curie\n"

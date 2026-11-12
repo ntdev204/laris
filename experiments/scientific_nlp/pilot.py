@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-
 from core.schemas import EvidenceCoordinate
 from corpus.pipeline import CorpusIngestionPipeline, RawDocumentInput
 from corpus.schemas import LicenseType

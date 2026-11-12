@@ -15,17 +15,17 @@ import time
 
 import pytest
 
-from core.errors import WeightStagingError
-from execution.headroom_governor import (
+from laris.model.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from execution.weight_staging import (
+from laris.model.execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,
     StagingState,
     StorageTier,
 )
+from laris.shared.core.errors import WeightStagingError
 
 
 class TestLRUOrderingAndTimestampCoherence:

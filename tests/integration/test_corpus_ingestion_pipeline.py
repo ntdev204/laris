@@ -11,14 +11,14 @@ Verifies DOC-SPEC-MOD-001 (Boundary A) and ADR-001:
 
 import pytest
 
-from core.errors import LicenseViolationError
-from corpus.dedup import DeduplicationPolicy
-from corpus.partition import (
+from laris.research.corpus.dedup import DeduplicationPolicy
+from laris.research.corpus.partition import (
     SplitRatios,
     verify_split_leakage,
 )
-from corpus.pipeline import CorpusIngestionPipeline
-from corpus.schemas import validate_manifest_consistency
+from laris.research.corpus.pipeline import CorpusIngestionPipeline
+from laris.shared.core.errors import LicenseViolationError
+from laris.shared.corpus.schemas import validate_manifest_consistency
 from tests.fixtures.synthetic_corpus import (
     get_standard_synthetic_corpus,
     get_synthetic_author_map,

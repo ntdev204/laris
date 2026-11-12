@@ -3,10 +3,7 @@
 import hashlib
 import unittest
 
-from core.errors import (
-    ModuleContractViolationError,
-)
-from corpus import (
+from laris.research.corpus import (
     CorpusManifest,
     DatasetSplit,
     LicenseAuthorizationProvenance,
@@ -15,6 +12,9 @@ from corpus import (
     validate_manifest_consistency,
     verify_item_authorization,
     verify_item_content_hash,
+)
+from laris.shared.core.errors import (
+    ModuleContractViolationError,
 )
 
 

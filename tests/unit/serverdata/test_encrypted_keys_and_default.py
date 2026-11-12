@@ -6,10 +6,10 @@ import stat
 
 import pytest
 
-from config.runtime_schemas import ServingConfig
-from serverdata import ServerData, netcheck
-from serverdata.crypto import SecretBox, SecretBoxError, load_master
-from serverdata.keys import KeyError_
+from laris.server.serverdata import ServerData, netcheck
+from laris.server.serverdata.crypto import SecretBox, SecretBoxError, load_master
+from laris.server.serverdata.keys import KeyError_
+from laris.shared.config.runtime_schemas import ServingConfig
 
 MASTER = b"another-master-secret-0123456789"
 

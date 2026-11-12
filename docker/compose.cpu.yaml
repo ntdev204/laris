@@ -1,0 +1,13 @@
+# For a machine without a GPU (CI, a laptop): same stack, the model service built without torch and
+# running on CPU with the placeholder backend. Use it as an override:
+#   docker compose -f docker/compose.yaml -f docker/compose.cpu.yaml up -d --build
+services:
+  model:
+    build:
+      args:
+        LARIS_EXTRAS: model
+    image: laris-model:${LARIS_VERSION:-dev}-cpu
+    deploy:
+      resources:
+        reservations:
+          devices: !reset []

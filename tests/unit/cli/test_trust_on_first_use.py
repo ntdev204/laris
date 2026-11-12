@@ -3,14 +3,14 @@ import threading
 
 import pytest
 
-from agent.provider import check_key
 from cli.commands import account
 from cli.main import main
-from harness import trust
-from harness.runtime import HarnessRuntime
-from serverdata import tls as server_tls
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server, enable_tls, load_backend
+from laris.client.agent.provider import check_key
+from laris.server.serverdata import tls as server_tls
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.model_server import ModelService, build_server, enable_tls, load_backend
+from laris.shared.harness import trust
+from laris.shared.harness.runtime import HarnessRuntime
 
 KEY = "lk_test_trust_key_value"
 
@@ -36,7 +36,7 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path / "home")
     monkeypatch.setattr("getpass.getpass", lambda _="": KEY)
     monkeypatch.setenv(
-        "LARIS_APP__ACCOUNT_FILE", str(tmp_path / "home" / ".laris" / "settings.json")
+        "LARIS_APP__ACCOUNT_FILE", str(tmp_path / "home" / ".laris" / ".credentials.json")
     )
     return tmp_path / "home" / ".laris"
 
@@ -68,8 +68,12 @@ def test_an_untrusted_certificate_is_refused_until_the_fingerprint_matches(
     right = server_tls.fingerprint(str(cert))
     assert main(["login", "--server", url, "--trust-fingerprint", right]) == 0
     settings = json.loads((home / "settings.json").read_text())
-    assert settings["base_url"] == url and settings["ca_file"].endswith(f"{host}_{port}.pem")
-    assert settings["api_key"] == KEY
+    assert settings["server"]["url"] == url
+    assert settings["server"]["caFingerprint"] == "sha256:" + trust.normalise(right)[7:].replace(
+        ":", ""
+    ).lower()
+    assert (home / "trusted" / f"{host}_{port}.pem").is_file() and "api_key" not in settings
+    assert json.loads((home / ".credentials.json").read_text())["api_key"] == KEY
     assert check_key(url, KEY, 3) == "ok"  # pinned: verified from now on
     trust.reset()
     assert check_key(url, KEY, 3) == "unreachable"  # a fresh process installs the pin itself
@@ -82,7 +86,7 @@ def test_interactive_confirmation_pins_the_certificate(https_server, home, monke
     monkeypatch.setattr("sys.stdin.isatty", lambda: True)
     monkeypatch.setattr("builtins.input", lambda _="": "y")
     assert main(["login", "--server", url]) == 0
-    assert json.loads((home / "settings.json").read_text())["ca_file"]
+    assert json.loads((home / "settings.json").read_text())["server"]["caFingerprint"]
 
 
 def test_a_changed_certificate_is_not_accepted_by_the_pin(https_server, home, tmp_path):
@@ -92,5 +96,7 @@ def test_a_changed_certificate_is_not_accepted_by_the_pin(https_server, home, tm
         == 0
     )
     other, _ = server_tls.create_self_signed(str(tmp_path / "other"), ["localhost", "127.0.0.1"])
-    pinned = json.loads((home / "settings.json").read_text())["ca_file"]
-    assert trust.fingerprint_pem(open(pinned).read()) != server_tls.fingerprint(str(other))
+    pin = json.loads((home / "settings.json").read_text())["server"]["caFingerprint"]
+    assert pin != "sha256:" + trust.normalise(server_tls.fingerprint(str(other)))[7:].replace(
+        ":", ""
+    ).lower()

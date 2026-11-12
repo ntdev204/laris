@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from language.encoder.transformer import (  # noqa: E402
+from laris.shared.language.encoder.transformer import (  # noqa: E402
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )

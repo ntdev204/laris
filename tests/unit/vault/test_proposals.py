@@ -4,14 +4,14 @@ from pathlib import Path
 import pytest
 
 from cli.main import main
-from config.runtime_schemas import VaultConfig
-from harness.runtime import HarnessRuntime
-from vault.hooks import project_vault
-from vault.index import VaultIndex
-from vault.memory import read_memory
-from vault.project import ProjectVault
-from vault.proposals import accept, pending, propose, reject
-from vault.search import NoteSearch
+from laris.client.vault.hooks import project_vault
+from laris.client.vault.proposals import accept, pending, propose, reject
+from laris.shared.config.runtime_schemas import VaultConfig
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.memory import read_memory
+from laris.shared.vault.project import ProjectVault
+from laris.shared.vault.search import NoteSearch
 
 REPO = Path(__file__).resolve().parents[3]
 

@@ -12,23 +12,23 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from language.encoder.transformer import (  # noqa: E402
-    LanguageEncoderConfig,
-    PyTorchTransformerEncoder,
-)
-from language.evaluation import metrics as M  # noqa: E402
-from language.evaluation.evaluator import (  # noqa: E402
+from laris.model.inference.loader import load_encoder  # noqa: E402
+from laris.model.inference.predictor import LanguageEncoderPredictor  # noqa: E402
+from laris.research.language.evaluation import metrics as M  # noqa: E402
+from laris.research.language.evaluation.evaluator import (  # noqa: E402
     LanguageEncoderEvaluator,
     load_thresholds,
 )
-from language.evaluation.runner import (  # noqa: E402
+from laris.research.language.evaluation.runner import (  # noqa: E402
     EXIT_BELOW_THRESHOLD,
     EXIT_PASSED,
     evaluate_checkpoint,
 )
-from language.inference.loader import load_encoder  # noqa: E402
-from language.inference.predictor import LanguageEncoderPredictor  # noqa: E402
-from language.training.checkpoint import save_checkpoint  # noqa: E402
+from laris.shared.language.encoder.transformer import (  # noqa: E402
+    LanguageEncoderConfig,
+    PyTorchTransformerEncoder,
+)
+from laris.shared.language.loading.checkpoint import save_checkpoint  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 THRESHOLDS = REPO_ROOT / "configs" / "evaluation" / "language_encoder.yaml"

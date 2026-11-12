@@ -8,7 +8,7 @@ from typing import List
 
 import pyarrow.parquet as pq
 
-from language.training.dataloader import TASK_DATASET_DIRS
+from laris.shared.language.loading.dataloader import TASK_DATASET_DIRS
 
 SPLITS = ("train", "val", "test")
 
@@ -28,7 +28,7 @@ def _manifest_problems(data_dir: Path, verify_sha256: bool) -> List[str]:
     manifest = data_dir / "task_splits_manifest.json"
     if not manifest.is_file():
         return [f"missing {manifest} (run `laris data partition`)"]
-    from corpus.splits.physical import _compute_file_sha256
+    from laris.research.corpus.splits.physical import _compute_file_sha256
 
     problems: List[str] = []
     entries = json.loads(manifest.read_text(encoding="utf-8")).get("partitioned_datasets", [])

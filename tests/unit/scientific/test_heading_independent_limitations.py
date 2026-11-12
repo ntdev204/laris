@@ -15,12 +15,12 @@ Tests:
 
 import pytest
 
-from core.errors import (
+from laris.shared.core.errors import (
     MalformedDiscourseSpanError,
     ModuleContractViolationError,
 )
-from core.schemas import EvidenceCoordinate
-from scientific import (
+from laris.shared.core.schemas import EvidenceCoordinate
+from laris.shared.scientific import (
     HeadingIndependentLimitationDetector,
     LimitationCategory,
     LimitationDetectionResult,
@@ -257,7 +257,7 @@ def test_serialization_roundtrip(synthetic_paper_with_headings: str):
 
 def test_schema_uncertainty_score_bounds():
     """Verify uncertainty_score range validation across schema records."""
-    from scientific.schemas import (
+    from laris.shared.scientific.schemas import (
         AssumptionRecord,
         LimitationRecord,
         NegativeFindingRecord,

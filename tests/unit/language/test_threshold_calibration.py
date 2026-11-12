@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from cli.main import main
-from language.evaluation.calibration import calibrate_thresholds
+from laris.research.language.evaluation.calibration import calibrate_thresholds
 
 THRESHOLDS = {
     "tasks": {

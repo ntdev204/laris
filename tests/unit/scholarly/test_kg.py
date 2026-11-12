@@ -3,19 +3,19 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.tools import Sandbox, ToolExecutionError
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
 from cli.main import main
-from harness.runtime import HarnessRuntime
-from harness.workflows import WorkflowLibrary
-from scholarly import kg
-from scholarly.kg import Graph
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.tools import Sandbox, ToolExecutionError
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.client.vault.hooks import record_ingest
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.policy.workflows import WorkflowLibrary
+from laris.shared.scholarly import kg
+from laris.shared.scholarly.kg import Graph
+from laris.shared.vault.index import VaultIndex
 from tests.unit.scholarly.test_citations import D1, D2, D3
 from tests.unit.vault.test_entities import DOC1
-from vault.hooks import record_ingest
-from vault.index import VaultIndex
 
 
 def populated(project, tmp_path):

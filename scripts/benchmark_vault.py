@@ -24,8 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from vault.index import VaultIndex  # noqa: E402
-from vault.search import NoteSearch  # noqa: E402
+from laris.shared.vault.index import VaultIndex  # noqa: E402
+from laris.shared.vault.search import NoteSearch  # noqa: E402
 
 TARGETS = {"full_index_s": 30.0, "incremental_s": 1.0, "peak_rss_mb": 500.0, "search_p95_ms": 300.0}
 BUDGETS = ROOT / "reports" / "performance" / "budgets.json"

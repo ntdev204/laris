@@ -2,14 +2,14 @@
 
 import pytest
 
-from core.errors import (
+from laris.shared.core.errors import (
     EmbeddingDimensionMismatchError,
     ModuleContractViolationError,
     RetrievalDepthExceededError,
 )
-from core.schemas import EvidenceCoordinate
-from graph.interfaces import InMemoryGraphPersistenceAdapter
-from graph.schemas import (
+from laris.shared.core.schemas import EvidenceCoordinate
+from laris.shared.graph.interfaces import InMemoryGraphPersistenceAdapter
+from laris.shared.graph.schemas import (
     ClaimNode,
     DocumentNode,
     EdgeType,
@@ -17,11 +17,11 @@ from graph.schemas import (
     EvidenceGraph,
     MethodNode,
 )
-from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from language.encoder.sentence_encoder import CompactSentenceEncoder
-from language.schemas import VocabularyContract
-from language.tokenization.tokenizer import ScientificTokenizer
-from retrieval import (
+from laris.shared.language.encoder.sentence_encoder import CompactSentenceEncoder
+from laris.shared.language.schemas import VocabularyContract
+from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
+from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
+from laris.shared.retrieval import (
     DEFAULT_RRF_K,
     MAX_RETRIEVAL_DEPTH,
     DenseVectorAdapter,

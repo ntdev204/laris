@@ -7,8 +7,8 @@ from typing import Any, Callable, Dict
 
 import numpy as np
 
-from language.inference.loader import load_encoder
-from language.inference.predictor import LanguageEncoderPredictor
+from laris.model.inference.loader import load_encoder
+from laris.model.inference.predictor import LanguageEncoderPredictor
 
 
 def _common(parser: argparse.ArgumentParser) -> None:

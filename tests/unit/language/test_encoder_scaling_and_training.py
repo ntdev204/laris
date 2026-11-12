@@ -13,27 +13,27 @@ import unittest
 
 import numpy as np
 
-from core.authorization import (
-    temporary_training_authorization,
-)
-from core.errors import (
-    TrainingExecutionProhibitedError,
-)
-from language.encoder.transformer import (
-    LargeLanguageEncoderConfig,
-)
-from language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
-from language.training.dataloader import (
-    SyntheticMultiTaskDataLoader,
-    TemperatureSamplingScheduler,
-)
-from language.training.profiling import (
+from laris.research.language.training.profiling import (
     compute_analytical_training_memory_gb,
 )
-from language.training.trainer import (
+from laris.research.language.training.trainer import (
     LanguageEncoderTrainer,
     MultiTaskLossCalculator,
 )
+from laris.shared.core.authorization import (
+    temporary_training_authorization,
+)
+from laris.shared.core.errors import (
+    TrainingExecutionProhibitedError,
+)
+from laris.shared.language.encoder.transformer import (
+    LargeLanguageEncoderConfig,
+)
+from laris.shared.language.loading.dataloader import (
+    SyntheticMultiTaskDataLoader,
+    TemperatureSamplingScheduler,
+)
+from laris.shared.language.schemas import ALLOWED_EMBEDDING_DIMENSIONS
 
 
 class TestLargeEncoderScalingAndTraining(unittest.TestCase):

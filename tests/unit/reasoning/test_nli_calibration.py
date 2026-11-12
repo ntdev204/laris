@@ -7,8 +7,7 @@ Boundary C: MOD-SEM-001 (Semantic Intelligence)
 
 import pytest
 
-from core.errors import DataLeakageError, ModuleContractViolationError
-from reasoning import (
+from laris.research.reasoning import (
     BENCHMARK_VERSION,
     EXIT_GATE_MACRO_F1_THRESHOLD,
     SCIENTIFIC_NLI_BENCHMARK_FIXTURES,
@@ -30,7 +29,8 @@ from reasoning import (
     evaluate_nli_calibration,
     verify_nli_split_isolation,
 )
-from reasoning.calibration import _compute_ece
+from laris.research.reasoning.calibration import _compute_ece
+from laris.shared.core.errors import DataLeakageError, ModuleContractViolationError
 
 
 class TestNLICalibrationSuite:

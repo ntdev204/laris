@@ -11,12 +11,22 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from application.chat_app import ChatApp
-from cli.common import load_runtime, make_service, model_flags
+from cli.common import load_runtime, make_service
+from laris.client.application.chat_app import ChatApp
+from laris.client.engine.commands import BUILTIN, Context
+from laris.client.headless import (
+    EXIT_CODES_HELP,
+    EXIT_USAGE,
+    FORMATS,
+    HeadlessOptions,
+    run_headless,
+    split_rules,
+)
+from laris.client.input_forms import InputProcessor, kind_of
+from laris.client.sandbox import make_sandbox
 
 
 def _common(parser: argparse.ArgumentParser) -> None:
-    model_flags(parser)
     parser.add_argument(
         "--workspace", default=None, help="Workspace folder (config: app.workspace)"
     )
@@ -121,13 +131,28 @@ def _summarise(result: Any) -> str:
     return json.dumps(result, ensure_ascii=False)[:160]
 
 
-def _ask_permission(name: str, arguments: Dict[str, Any], always: set) -> bool:
+_SCOPES = {"a": "session", "p": "project", "e": "everywhere"}
+
+
+def _ask_permission(chat: Any, name: str, arguments: Dict[str, Any], always: set) -> bool:
     if name in always:
         return True
     shown = json.dumps(arguments, ensure_ascii=False)[:200]
-    reply = input(f"  Allow {name} {shown}?  [y]es / [a]lways this session / [N]o ").strip().lower()
-    if reply in ("a", "always"):
-        always.add(name)
+    rule = chat.permissions.suggest(name, arguments)
+    reply = (
+        input(
+            f"  Allow {name} {shown}?  [y]es / [a]lways this session / always in this [p]roject / "
+            f"always [e]verywhere ({rule}) / [N]o "
+        )
+        .strip()
+        .lower()
+    )
+    scope = _SCOPES.get(reply[:1]) if reply not in ("y", "yes", "n", "no", "") else None
+    if scope:
+        try:
+            chat.permissions.remember(rule, scope)
+        except (ValueError, OSError) as exc:
+            print(_paint(_ERR, f"could not save the rule: {exc}"))
         return True
     return reply in ("y", "yes")
 
@@ -139,7 +164,7 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     for event in chat.send(
         conversation_id,
         text,
-        (lambda name, arguments: _ask_permission(name, arguments, always))
+        (lambda name, arguments: _ask_permission(chat, name, arguments, always))
         if interactive
         else (lambda name, arguments: name in always),
     ):
@@ -201,24 +226,41 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     return code
 
 
-def _vault_command(chat: Any, query: str) -> None:
-    """`/vault` shows the vault's size; `/vault <words>` searches its notes."""
-    from vault.index import VaultIndex
-    from vault.search import NoteSearch
-
-    cfg = chat.runtime.config.vault
-    folder = chat.project_root / cfg.dir
-    if not folder.is_dir():
-        print("chưa có vault; nó được tạo ở lần nạp tài liệu hoặc hỏi đáp đầu tiên")
-        return
-    index = VaultIndex.build(folder, cache_file=chat.project_root / cfg.cache_dir / "index.json")
-    if not query:
-        print(
-            f"vault {cfg.dir}/: {len(index.notes)} ghi chú, {len(index.unresolved)} liên kết hỏng"
+def _input(chat: Any, conversation_id: str, line: str, always: set) -> int:
+    """A typed line: `!command`, `# note`, or a message with `@path` mentions attached."""
+    processor = InputProcessor(chat)
+    form = kind_of(line)
+    if form == "shell":
+        result = processor.shell(
+            conversation_id,
+            processor.prepare(line).text,
+            lambda name, arguments: _ask_permission(chat, name, arguments, always),
         )
-        return
-    for hit in NoteSearch(index).search(query, 8):
-        print(f"  {hit.score:6.2f}  {hit.path}")
+        if "error" in result:
+            print(_paint(_ERR, result["error"]["message"]))
+            return 1
+        print(result["output"], end="" if str(result["output"]).endswith("\n") else "\n")
+        return 0 if result["exit_code"] == 0 else 1
+    if form == "note":
+        done = processor.note(processor.prepare(line).text)
+        print(
+            _paint(_ERR, done["error"]["message"])
+            if "error" in done
+            else f"noted in {done['path']}"
+        )
+        return 0
+    prepared = processor.prepare(line)
+    for note in prepared.notes:
+        print(_paint(_DIM, note))
+    return _turn(chat, conversation_id, prepared.text, always)
+
+
+def _piped_input() -> str:
+    """Text piped on standard input (`cat file | laris -p "explain"`); nothing on a terminal."""
+    try:
+        return "" if sys.stdin.isatty() else sys.stdin.read()
+    except (OSError, ValueError):  # no usable standard input
+        return ""
 
 
 class _Chat:
@@ -226,7 +268,43 @@ class _Chat:
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         _common(parser)
-        parser.add_argument("-p", "--print", dest="print_text", help="Run one prompt and exit")
+        parser.add_argument(
+            "-p",
+            "--print",
+            dest="print_text",
+            nargs="?",
+            const="",
+            default=None,
+            help="Run one prompt without the interface (text may also come from standard input)",
+        )
+        parser.add_argument(
+            "--output-format",
+            choices=FORMATS,
+            default="text",
+            help="With -p: text, json or stream-json",
+        )
+        parser.epilog = EXIT_CODES_HELP
+        parser.add_argument(
+            "-c", "--continue", dest="continue_last", action="store_true",
+            help="Continue the most recent session",
+        )  # fmt: skip
+        parser.add_argument(
+            "--max-turns", type=int, default=None, help="With -p: agent steps (1-10)"
+        )
+        parser.add_argument(
+            "--permission-mode",
+            choices=["default", "acceptEdits", "plan", "bypass"],
+            default=None,
+            help="Permission mode for this run (bypass only when the policy allows it)",
+        )
+        parser.add_argument(
+            "--allowed-tools", action="append", default=None, metavar="RULES",
+            help="Tool rules allowed without asking, e.g. 'Read,Bash(git status:*)'",
+        )  # fmt: skip
+        parser.add_argument(
+            "--disallowed-tools", action="append", default=None, metavar="RULES",
+            help="Tool rules refused for this run",
+        )  # fmt: skip
         parser.add_argument(
             "--resume",
             nargs="?",
@@ -235,11 +313,17 @@ class _Chat:
         )
 
     def run(self, args: argparse.Namespace) -> int:
+        if args.print_text is not None:
+            return self._headless(args)
         chat = make_chat(args)
-        conversation = self._start(chat, args.resume)
+        conversation = self._start(
+            chat, "last" if args.continue_last and not args.resume else args.resume
+        )
+        home = Path("~/.laris").expanduser()
+        manager = make_sandbox(home, chat.prefs.path, "plain")
+        manager.start_background(lambda state: None)
+        chat.sandbox_manager = manager
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
-        if args.print_text:
-            return _turn(chat, conversation["id"], args.print_text, always)
         print(
             _paint(_USE, "LARIS")
             + f"  session {conversation['id']}  ·  {chat.model_health()['detail']}"
@@ -254,12 +338,43 @@ class _Chat:
             if not line:
                 continue
             if line.startswith("/"):
-                updated = self._command(chat, conversation, line, always)
+                updated = self._command(chat, conversation, line, always, manager)
                 if updated is None:
                     return 0
                 conversation = updated
                 continue
-            _turn(chat, conversation["id"], line, always)
+            _input(chat, conversation["id"], line, always)
+
+    @staticmethod
+    def _headless(args: argparse.Namespace) -> int:
+        """`laris -p`: one task, no interface, documented output formats and exit codes."""
+        from cli.credentials import CredentialError
+        from laris.shared.harness.integrity import IntegrityError
+        from laris.shared.policy.prompts import PromptError
+
+        try:
+            chat = make_chat(args, interactive=False)
+        except (CredentialError, IntegrityError, PromptError) as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return EXIT_USAGE
+        allowed = split_rules(args.allowed_tools)
+        if args.allow_write:
+            allowed += ["write_file", "ingest_path", "save_memory", "Write", "Edit"]
+        options = HeadlessOptions(
+            prompt=args.print_text,
+            stdin_text=_piped_input(),
+            output_format=args.output_format,
+            continue_last=args.continue_last,
+            resume=None if args.resume in (None, "pick") else args.resume,
+            max_turns=args.max_turns,
+            permission_mode=args.permission_mode,
+            allowed_tools=allowed,
+            disallowed_tools=split_rules(args.disallowed_tools),
+        )
+        if args.resume == "pick":
+            print("[ERROR] --resume needs a session id with -p", file=sys.stderr)
+            return EXIT_USAGE
+        return run_headless(chat, options)
 
     @staticmethod
     def _pick(rows: List[Dict[str, Any]]) -> Optional[str]:
@@ -300,96 +415,26 @@ class _Chat:
 
     @staticmethod
     def _command(
-        chat: Any, conversation: Dict[str, Any], line: str, always: set
+        chat: Any, conversation: Dict[str, Any], line: str, always: set, session: Any = None
     ) -> Optional[Dict[str, Any]]:
-        name, _, rest = line.partition(" ")
-        rest = rest.strip()
-        if name in ("/exit", "/quit"):
-            return None
+        """One slash command through the registry shared with the engine (SR-C2)."""
         if line.strip().lower() in chat.runtime.config.prompts.help_commands:
             print(chat.how_to_use())
-        elif name == "/help":
-            print(
-                "/how-to-use /new /sessions /resume ID /tools /skills /<skill> <yêu cầu> "
-                "/compact [ghi chú] "
-                "/context /workflows /workflow NAME <yêu cầu> /status /vault [từ khóa] "
-                "/model [URL [NAME]] "
-                "/write on|off /learn on|off /rate up|down /exit"
-            )
-        elif name == "/new":
-            conversation = dict(chat.conversations.create())
-            print(f"new session {conversation['id']}")
-        elif name == "/sessions":
-            for row in chat.conversations.list()[:15]:
-                print(f"  {row['id']}  {row['messages']:>3} msgs  {row['title']}")
-        elif name == "/resume":
-            try:
-                conversation = dict(chat.conversations.get(rest))
-                print(f"resumed {rest}: {conversation['title']}")
-            except KeyError:
-                print(f"no such session: {rest}")
-        elif name == "/tools":
-            for spec in chat.tool_specs():
-                print(f"  {spec.name}{' (asks)' if spec.writes else ''}: {spec.description}")
-        elif name == "/vault":
-            _vault_command(chat, rest)
-        elif name == "/status":
-            print(json.dumps(chat.service.status(), indent=2, ensure_ascii=False))
-        elif name == "/model":
-            if rest:
-                parts = rest.split()
-                try:
-                    chat.update_settings(
-                        {"base_url": parts[0], **({"model": parts[1]} if len(parts) > 1 else {})}
-                    )
-                except ValueError as exc:
-                    print(_paint(_ERR, str(exc)))
-            print(chat.model_health()["detail"])
-        elif name == "/write":
-            chat.update_settings({"allow_write": rest == "on"})
-            print(f"write tools {'auto-approved' if rest == 'on' else 'ask permission'}")
-        elif name == "/skills":
-            library = chat.skills_for(chat.runtime)
-            for skill_name in library.names():
-                print(f"  /{skill_name}: {library.skills[skill_name].summary(110)}")
-            for problem in library.problems:
-                print(_paint(_ERR, f"  skill problem: {problem}"))
-        elif name == "/rate":
-            try:
-                chat.rate(_LAST.get("example", ""), rest)
-                print(f"đã ghi đánh giá: {rest}")
-            except (KeyError, ValueError):
-                print("dùng: /rate up|down sau một câu trả lời đã được lưu")
-        elif name == "/learn":
-            chat.update_settings({"learning_enabled": rest == "on"})
-            print(f"lưu dữ liệu fine-tune cục bộ: {'bật' if rest == 'on' else 'tắt'}")
-        elif name == "/workflows":
-            for item in chat.runtime.workflows().summary():
-                print(f"  /workflow {item['name']}: {item['description']}")
-        elif name == "/workflow":
-            _turn(chat, conversation["id"], line, always)
+            return conversation
+        context = Context(
+            chat, conversation, Path("~/.laris").expanduser(), Path.cwd(), session, BUILTIN
+        )
+        context.extras["last_example"] = _LAST.get("example", "")
+        result = BUILTIN.dispatch(line, context)
+        if result.exit:
+            return None
+        if result.text:
+            print(_paint(_ERR, result.text) if result.error else result.text)
+        if result.conversation is not None:
+            conversation = result.conversation
+        if result.turn is not None:
+            _turn(chat, conversation["id"], result.turn, always)
             conversation = dict(chat.conversations.get(conversation["id"]))
-        elif name == "/compact":
-            events = list(chat.compact(conversation["id"], rest))
-            shown = [e for e in events if e["type"] == "compact"]
-            for event in shown:
-                print(f"nén {event['before']} → {event['after']} token ({event['method']})")
-            if not shown:
-                print("không có gì để nén")
-            conversation = dict(chat.conversations.get(conversation["id"]))
-        elif name == "/context":
-            usage = chat.usage(conversation["id"])
-            cfg = chat.settings()
-            print(
-                f"≈ {usage['tokens']}/{usage['window']} token; autocompact "
-                f"{'bật' if cfg['auto_compact'] else 'tắt'} ở "
-                f"{int(cfg['compact_threshold'] * 100)}%"
-            )
-        elif name[1:] in chat.skills_for(chat.runtime).skills:
-            _turn(chat, conversation["id"], line, always)
-            conversation = dict(chat.conversations.get(conversation["id"]))
-        else:
-            print(f"unknown command {name}; try /help")
         return conversation
 
 

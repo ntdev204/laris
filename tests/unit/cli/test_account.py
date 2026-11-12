@@ -6,12 +6,14 @@ import stat
 
 import pytest
 
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace
 from cli import credentials
 from cli.main import build_parser, interactive_default, main
-from config.loader import load_runtime_config
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.shared.config.loader import load_runtime_config
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 KEY_A = "key-alice-0123456789"
 KEY_B = "key-bob-9876543210"
@@ -54,7 +56,7 @@ def _chat(project, tmp_path, key):
     return ChatApp(service, project, user=credentials.fingerprint(key))
 
 
-def test_each_key_has_its_own_conversations_settings_and_folder(project, tmp_path):
+def test_each_key_has_its_own_conversations_and_folder(project, tmp_path):
     alice, bob = _chat(project, tmp_path, KEY_A), _chat(project, tmp_path, KEY_B)
     mine = alice.conversations.create("Của Alice")
     list(alice.send(mine["id"], "perovskite"))
@@ -63,7 +65,7 @@ def test_each_key_has_its_own_conversations_settings_and_folder(project, tmp_pat
     assert bob.conversations.list() == []
     with pytest.raises(KeyError):
         bob.conversations.get(mine["id"])
-    assert bob.settings().get("model") != "alice-model"
+    assert bob.settings().get("model") == "alice-model"  # one machine, one set of preferences (T71)
     assert alice.root != bob.root and credentials.fingerprint(KEY_A) in alice.root.parts
     again = _chat(project, tmp_path, KEY_A)  # the same key later sees its own history
     assert again.conversations.get(mine["id"])["id"] == mine["id"]
@@ -93,6 +95,10 @@ def test_login_commands_and_bare_laris_routes(project, tmp_path, monkeypatch, ca
     monkeypatch.delenv("LARIS_API_KEY", raising=False)
     assert main(["whoami"]) == 1
     monkeypatch.setattr("getpass.getpass", lambda _="": KEY_A)
+    monkeypatch.delenv("LARIS_MODEL_API__BASE_URL", raising=False)
+    assert main(["login"]) == 2 and not cred.exists()  # no server.url: refused, nothing saved
+    assert "server.url" in capsys.readouterr().out
+    monkeypatch.setenv("LARIS_MODEL_API__BASE_URL", "http://127.0.0.1:9/v1")
     assert main(["login"]) == 0 and json.loads(cred.read_text())["api_key"] == KEY_A
     capsys.readouterr()
     assert main(["whoami"]) == 0
@@ -106,21 +112,28 @@ def test_chat_without_a_key_stops_with_a_clear_message(project, monkeypatch, cap
     monkeypatch.setenv("LARIS_APP__ACCOUNT_FILE", str(tmp_path / "none.json"))
     monkeypatch.delenv("LARIS_API_KEY", raising=False)
     assert main(["-p", "xin chào"]) == 2
-    assert "LARIS_API_KEY" in capsys.readouterr().out
+    assert "LARIS_API_KEY" in capsys.readouterr().err
 
 
-def test_client_has_no_server_or_operator_commands():
-    from cli.main import build_parser, commands_for
+def test_each_program_has_only_its_own_commands():
+    from cli import client as client_cli
+    from cli import model as model_cli
+    from cli import server as server_cli
+    from cli.main import COMMANDS as everything
+    from cli.parser import build_parser_for
 
-    client, server = commands_for("client"), commands_for("server")
-    assert set(client) == {"agent", "account", "vault", "skills", "learn", "app"}
-    assert set(client["app"]) == {"ingest", "search", "status"}
-    for group in ("model", "harness", "brain", "data", "train", "evaluate", "infer", "workflows"):
+    client, server, model = client_cli.COMMANDS, server_cli.COMMANDS, model_cli.COMMANDS
+    assert set(client) == {"agent", "account", "vault", "skills", "learn", "app", "config"}
+    assert set(client["app"]) == {"ingest", "index", "search", "status"}
+    for group in ("model", "harness", "brain", "data", "train", "evaluate", "workflows"):
         assert group not in client and group in server
-    assert set(server["app"]) == {"index", "ask"}
+    assert "infer" not in client and "infer" not in server and set(model) == {"infer"}
+    assert "app" not in server  # embedding goes through the server, answers need a QA model
     with pytest.raises(SystemExit):
-        build_parser("client").parse_args(["model", "serve"])
+        build_parser_for(client, "laris").parse_args(["model", "serve"])
     with pytest.raises(SystemExit):
-        build_parser("client").parse_args(["app", "serve"])
-    assert build_parser("server").parse_args(["model", "serve"]).command == "serve"
-    assert build_parser("client").prog == "laris" and build_parser("server").prog == "laris-server"
+        build_parser_for(client, "laris").parse_args(["app", "serve"])
+    assert (
+        build_parser_for(server, "laris-server").parse_args(["model", "serve"]).command == "serve"
+    )
+    assert set(everything) == set(client) | set(server) | set(model)  # development entry only

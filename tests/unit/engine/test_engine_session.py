@@ -1,0 +1,262 @@
+import threading
+import time
+
+from laris.protocol import engine as e1
+
+
+def _valid(events):
+    for event in events:
+        e1.parse_event(event)  # every line the engine wrote is a valid E1 event
+    return events
+
+
+def _kinds(events):
+    return [e["type"] for e in events]
+
+
+def test_ready_carries_the_version_and_a_turn_streams_valid_events(run):
+    h = run()
+    ready = h.out.wait("ready")[0]
+    assert ready["version"] == e1.E1_VERSION and ready["engine"] == "2.0.0-test"
+    assert e1.check_version(ready) is None
+    h.feed.send({"type": "user_message", "text": "perovskite efficiency"})
+    h.out.wait("done")
+    events = _valid(h.out.events())
+    kinds = _kinds(events)
+    assert kinds[0] == "ready" and kinds[-1] == "done" and "tool_call" in kinds
+    call = next(e for e in events if e["type"] == "tool_call")
+    result = next(e for e in events if e["type"] == "tool_result")
+    assert call["id"] == result["id"] == "call_1" and call["name"] == "search_corpus"
+    assert "usage" in kinds
+    assert h.stop() == 0
+
+
+def test_a_scripted_session_replays_to_the_same_transcript(chat, project, use_placeholder_model):
+    from tests.unit.engine.conftest import Harness
+
+    def transcript():
+        h = Harness(chat, project)
+        h.out.wait("ready")
+        h.feed.send({"type": "user_message", "text": "perovskite efficiency"})
+        h.out.wait("done")
+        h.stop()
+        events = [
+            e for e in h.out.events() if not (e["type"] == "status" and e["kind"] == "learning")
+        ]  # what was stored (new vs duplicate) depends on earlier runs, not on the protocol
+        for event in events:
+            event.pop("session", None)
+        return events
+
+    first, second = transcript(), transcript()
+    assert first == second and len(first) > 4
+
+
+def test_permission_round_trip_remember_and_interrupt(run):
+    h = run()
+    h.out.wait("ready")
+    answers = []
+
+    def ask(name):
+        answers.append((name, h.engine._approve(name, {"path": "a.txt"})))
+
+    t = threading.Thread(target=ask, args=("write_file",))
+    t.start()
+    request = h.out.wait("permission_request")[0]
+    assert request["tool"] == "write_file" and request["id"] == "perm_1"
+    h.feed.send(
+        {"type": "permission_response", "id": "perm_1", "decision": "allow", "remember": True}
+    )
+    t.join(5)
+    assert answers == [("write_file", True)]
+    permissions = h.engine.chat.permissions  # `remember` became a session rule
+    assert permissions.decide("write_file", {"path": "a.txt"}, True).action == "allow"
+    t2 = threading.Thread(target=ask, args=("save_memory",))
+    t2.start()
+    h.out.wait("permission_request", 2)
+    h.feed.send({"type": "interrupt"})  # nobody can answer now: it is a refusal
+    t2.join(5)
+    assert answers[-1] == ("save_memory", False)
+    h.feed.send({"type": "permission_response", "id": "perm_9", "decision": "allow"})
+    assert h.out.wait("error")[-1]["code"] == "unknown_permission"
+    h.stop()
+
+
+def test_bad_lines_and_unknown_commands_do_not_stop_the_engine(run):
+    h = run()
+    h.out.wait("ready")
+    h.feed.raw("this is not json\n")
+    h.feed.send({"type": "bogus"})
+    h.feed.send({"type": "command", "name": "nope"})
+    codes = [e["code"] for e in h.out.wait("error", 3)]
+    assert codes == ["bad_command", "bad_command", "unknown_command"]
+    h.feed.send({"type": "set_mode", "mode": "acceptEdits"})
+    status = h.out.wait("status")[0]
+    assert status["kind"] == "mode" and status["data"] == {"mode": "acceptEdits"}
+    h.feed.send({"type": "command", "name": "help"})
+    h.out.wait("done")
+    assert h.stop() == 0
+
+
+def test_completion_for_commands_and_files(run, project):
+    (project / "notes.md").write_text("x", encoding="utf-8")
+    h = run()
+    h.out.wait("ready")
+    h.feed.send({"type": "complete", "id": "c1", "trigger": "/", "text": "co"})
+    h.feed.send({"type": "complete", "id": "c2", "trigger": "@", "text": "notes"})
+    got = {c["id"]: c for c in h.out.wait("completion", 2)}
+    assert [i["value"] for i in got["c1"]["items"]] == [
+        "compact",
+        "config",
+        "context",
+        "continue",
+        "cost",
+    ]
+    assert [i["value"] for i in got["c2"]["items"]] == ["notes.md"]
+    h.stop()
+
+
+def test_a_busy_engine_refuses_a_second_message_and_interrupt_ends_the_turn(
+    chat, project, monkeypatch
+):
+    from tests.unit.engine.conftest import Harness
+
+    release = threading.Event()
+
+    def slow_send(conversation_id, text, approve=None):
+        yield {"type": "text", "delta": "start "}
+        release.wait(10)
+        yield {"type": "text", "delta": "never shown"}
+        yield {"type": "done", "status": "completed", "answer": "x"}
+
+    monkeypatch.setattr(chat, "send", slow_send)
+    h = Harness(chat, project)
+    h.out.wait("ready")
+    h.feed.send({"type": "user_message", "text": "one"})
+    h.out.wait("text")
+    h.feed.send({"type": "user_message", "text": "two"})
+    assert h.out.wait("error")[0]["code"] == "busy"
+    h.feed.send({"type": "interrupt"})
+    for _ in range(500):  # the reader thread acts on it; only then let the model go on
+        if h.engine._interrupted.is_set():
+            break
+        time.sleep(0.01)
+    release.set()
+    done = h.out.wait("done")[0]
+    assert done["status"] == "interrupted"
+    assert all(e.get("delta") != "never shown" for e in h.out.events())
+    h.stop()
+
+
+def test_killing_the_front_end_still_saves_the_conversation(chat, project):
+    from tests.unit.engine.conftest import Harness
+
+    h = Harness(chat, project)
+    h.out.wait("ready")
+    h.feed.send({"type": "user_message", "text": "perovskite efficiency"})
+    h.out.wait("done")
+    session_id = h.out.events()[0]["session"]
+    h.feed.close()  # the front end died: end of input
+    h.thread.join(10)
+    assert h.code == [0]
+    saved = chat.conversations.get(session_id)
+    assert [m["role"] for m in saved["messages"]][0] == "user" and len(saved["messages"]) >= 2
+
+
+def test_the_cli_command_speaks_e1_on_stdio(chat, monkeypatch, capsys):
+    import io
+    import json
+    import sys
+
+    from cli import client
+
+    monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
+    assert client.main(["engine", "--stdio"]) == 0
+    lines = [json.loads(x) for x in capsys.readouterr().out.splitlines()]
+    assert lines[0]["type"] == "ready" and lines[0]["version"] == e1.E1_VERSION
+    assert len(lines) == 1
+
+
+def test_custom_commands_complete_and_run_a_turn_through_e1(run):
+    from pathlib import Path
+
+    folder = Path.home() / ".laris" / "commands"
+    folder.mkdir(parents=True)
+    (folder / "greet.md").write_text(
+        "---\ndescription: Say hello\n---\nGreet $ARGUMENTS", encoding="utf-8"
+    )
+    h = run()
+    h.out.wait("ready")
+    h.feed.send({"type": "complete", "id": "k1", "trigger": "/", "text": "gre"})
+    items = h.out.wait("completion")[0]["items"]
+    assert items == [{"value": "greet", "description": "Say hello"}]
+    h.feed.send({"type": "command", "name": "greet", "args": "world"})
+    done = h.out.wait("done")[0]
+    assert done["status"]  # the expanded text ran as an agent turn
+    h.feed.send({"type": "command", "name": "clear"})
+    h.out.wait("done", 2)
+    assert "session" in [e.get("kind") for e in h.out.events() if e["type"] == "status"]
+    h.feed.send({"type": "command", "name": "exit"})
+    h.thread.join(timeout=10)
+    assert h.code == [0]
+
+
+def test_always_allow_scopes_are_saved_and_mode_cycles(run):
+    import json
+    from pathlib import Path
+
+    h = run()
+    h.out.wait("ready")
+    permissions = h.engine.chat.permissions
+
+    def ask(path, scope):
+        results = []
+        t = threading.Thread(
+            target=lambda: results.append(h.engine._approve("write_file", {"path": path}))
+        )
+        t.start()
+        count = len(h.out.wait("permission_request", len(asked) + 1))
+        asked.append(count)
+        request = h.out.wait("permission_request", count)[-1]
+        assert request["rule"] == f"write_file({path})" and "project" in request["scopes"]
+        h.feed.send(
+            {
+                "type": "permission_response",
+                "id": request["id"],
+                "decision": "allow",
+                "scope": scope,
+            }
+        )
+        t.join(5)
+        return results == [True]
+
+    asked: list = []
+    assert ask("p.txt", "project") and ask("e.txt", "everywhere")
+    state = json.loads(permissions.state.path.read_text())
+    assert state["permissions"]["allow"] == ["write_file(p.txt)"]
+    saved = json.loads((Path.home() / ".laris" / "settings.json").read_text())
+    assert saved["permissions"]["allow"] == ["write_file(e.txt)"]
+    assert permissions.decide("write_file", {"path": "p.txt"}, True).action == "allow"
+    assert permissions.decide("write_file", {"path": "other.txt"}, True).action == "ask"
+    h.feed.send({"type": "set_mode", "mode": "next"})
+    assert h.out.wait("status")[-1]["data"] == {"mode": "acceptEdits"}
+    h.feed.send({"type": "set_mode", "mode": "bypass"})  # policy does not allow it
+    assert h.out.wait("error")[-1]["code"] == "bad_mode"
+    h.stop()
+
+
+def test_permission_request_carries_the_diff_of_an_edit(run, project):
+    (project / "app.py").write_text("x = 1\n", encoding="utf-8")
+    h = run()
+    h.out.wait("ready")
+    args = {"path": "app.py", "old_string": "x = 1", "new_string": "x = 2"}
+    t = threading.Thread(target=lambda: h.engine._approve("Edit", args))
+    t.start()
+    request = h.out.wait("permission_request")[0]
+    assert "-x = 1" in request["diff"] and "+x = 2" in request["diff"]
+    assert request["rule"] == "edit(app.py)"
+    h.feed.send({"type": "permission_response", "id": request["id"], "decision": "deny"})
+    t.join(5)
+    assert (project / "app.py").read_text() == "x = 1\n"  # the request changed nothing
+    h.stop()

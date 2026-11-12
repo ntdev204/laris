@@ -14,21 +14,21 @@ from typing import Dict, List
 
 import pytest
 
-from core.errors import (
-    ReportSchemaValidationError,
-    UnanchoredAssertionError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting.report_generator import (
+from laris.research.reporting.report_generator import (
     StructuredReportGenerator,
 )
-from reporting.report_schema import (
+from laris.research.reporting.report_schema import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,
     ReportAssertion,
     ReportSectionType,
 )
+from laris.shared.core.errors import (
+    ReportSchemaValidationError,
+    UnanchoredAssertionError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _build_synthetic_corpus_and_coordinates() -> tuple[

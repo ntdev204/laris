@@ -9,15 +9,15 @@ from pathlib import Path
 
 import pytest
 
-from agent.provider import AssistantTurn, ChatProvider
-from config.runtime_schemas import ServingConfig
-from gateway import PolicyGateway
-from gateway.reasoning import ThinkSplitter
-from harness.runtime import HarnessRuntime
-from serverdata import ServerData
-from serverdata.cache import TTLCache
-from serverdata.keys import KeyError_
-from serving.model_server import ModelService, build_server
+from laris.client.agent.provider import AssistantTurn, ChatProvider
+from laris.server.gateway import PolicyGateway
+from laris.server.gateway.reasoning import ThinkSplitter
+from laris.server.serverdata import ServerData
+from laris.server.serverdata.cache import TTLCache
+from laris.server.serverdata.keys import KeyError_
+from laris.server.serving.model_server import ModelService, build_server
+from laris.shared.config.runtime_schemas import ServingConfig
+from laris.shared.harness.runtime import HarnessRuntime
 
 ROOT = Path(__file__).resolve().parents[3]
 SECRET_THOUGHT = "PRIVATE-REASONING-7f3a: compare the abstracts, then pick the third"
@@ -75,7 +75,13 @@ def stack(tmp_path):
 def call(base, key, path="/laris/chat", body=None, method=None):
     data = None if body is None and method != "POST" else json.dumps(body or {}).encode()
     request = urllib.request.Request(
-        base + path, data, {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        base + path,
+        data,
+        {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=10) as response:

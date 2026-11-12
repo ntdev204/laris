@@ -1,5 +1,5 @@
-from scholarly.biblio import Bibliography
-from scholarly.mining import (
+from laris.shared.scholarly.biblio import Bibliography
+from laris.shared.scholarly.mining import (
     Doc,
     exact_duplicates,
     group_documents,

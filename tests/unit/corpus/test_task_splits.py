@@ -14,9 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from core.errors import ModuleContractViolationError
-from corpus.schemas import DatasetSplit
-from corpus.splits import (
+from laris.research.corpus.splits import (
     PartitionRatios,
     QADatasetPartitioner,
     QuestionPairGraphPartitioner,
@@ -26,6 +24,8 @@ from corpus.splits import (
     validate_record_quality,
     validate_split_isolation,
 )
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.corpus.schemas import DatasetSplit
 
 
 class TestWikipediaArticlePartitioner(unittest.TestCase):

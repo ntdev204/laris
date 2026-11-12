@@ -5,15 +5,15 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.tools import Sandbox
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.runtime import HarnessRuntime
-from learning.hooks import make_ingest_hook
-from vault.hooks import record_ingest
-from vault.index import VaultIndex
-from vault.lint import lint_format
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.tools import Sandbox
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.client.learning.hooks import make_ingest_hook
+from laris.client.vault.hooks import record_ingest
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_format
 
 CITATION = (
     "We analyse citation networks. Citation counts and co-citation links between papers show how "
@@ -85,7 +85,7 @@ def test_injection_text_in_a_document_title_or_summary_is_not_passed_to_the_mode
 
 
 def test_knowledge_can_be_turned_off(project):
-    from config.loader import load_runtime_config
+    from laris.shared.config.loader import load_runtime_config
 
     cfg = load_runtime_config(project, overrides={"brain": {"knowledge": False}})
     rt = HarnessRuntime(cfg, project)
@@ -126,7 +126,7 @@ def test_save_knowledge_tool_adds_user_taught_knowledge_not_a_skill(project, tmp
 
 
 def test_save_knowledge_refuses_injection_and_unknown_domain_falls_back(project, tmp_path):
-    from agent.tools import ToolExecutionError
+    from laris.client.agent.tools import ToolExecutionError
 
     registry, _ = _registry(project, tmp_path)
     with pytest.raises(ToolExecutionError):

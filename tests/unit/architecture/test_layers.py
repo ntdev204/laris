@@ -4,7 +4,7 @@ knows neither the loop nor the tools, and the loop carries no policy path or pro
 import ast
 from pathlib import Path
 
-SRC = Path(__file__).resolve().parents[3] / "src"
+SRC = Path(__file__).resolve().parents[3] / "src" / "laris"
 
 
 def _imports(path: Path) -> set:
@@ -18,19 +18,22 @@ def _imports(path: Path) -> set:
 
 
 def test_prompt_layer_knows_neither_the_loop_nor_the_tools():
-    names = _imports(SRC / "harness/prompts.py")
-    assert not {n for n in names if n.split(".")[0] in {"agent", "application", "gateway"}}
-    assert not {n for n in names if n.startswith("harness.runtime")}
+    names = _imports(SRC / "shared/policy/prompts.py")
+    front = ("laris.client.agent", "laris.client.application", "laris.server.gateway")
+    assert not {n for n in names if n.startswith(front)}
+    assert not {n for n in names if n.startswith("laris.shared.harness.runtime")}
 
 
 def test_loop_carries_no_policy_path_or_prompt_text():
     for name in ("loop.py", "context.py", "tools.py"):
-        text = (SRC / "agent" / name).read_text(encoding="utf-8")
+        text = (SRC / "client/agent" / name).read_text(encoding="utf-8")
         for needle in (".laris", "manifest.yaml", "integrity.lock", "internal_policy"):
             assert needle not in text, (name, needle)
 
 
 def test_harness_does_not_depend_on_a_front_end():
-    for path in (SRC / "harness").glob("*.py"):
-        names = _imports(path)
-        assert not {n for n in names if n.split(".")[0] in {"application", "cli", "gateway"}}, path
+    front = ("laris.client.application", "cli", "laris.server.gateway")
+    for folder in ("client/harness", "shared/harness", "shared/policy"):
+        for path in (SRC / folder).glob("*.py"):
+            names = _imports(path)
+            assert not {n for n in names if n == "cli" or n.startswith(front)}, path

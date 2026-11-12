@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-from vault.brain import Brain
-from vault.index import VaultIndex
-from vault.retrieval import (
+from laris.shared.brain import Brain
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.retrieval import (
     GraphRetriever,
     evaluate,
     fuse_with_corpus,
@@ -13,7 +13,7 @@ from vault.retrieval import (
     recall_at_k,
     tokens_of,
 )
-from vault.search import NoteSearch
+from laris.shared.vault.search import NoteSearch
 
 REPO = Path(__file__).resolve().parents[3]
 FIX = REPO / "tests" / "fixtures" / "retrieval"
@@ -69,7 +69,7 @@ def test_fusion_with_the_corpus_search_joins_sources_and_reports_corpus_only_hit
 
 
 def test_navigation_first_on_the_real_brain_and_search_as_fallback(project):
-    from config.loader import load_runtime_config
+    from laris.shared.config.loader import load_runtime_config
 
     cfg = load_runtime_config(project).brain
     brain = Brain(project / ".laris" / "brain", cfg)
