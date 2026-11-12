@@ -14,9 +14,17 @@ export const KEYS = {
   up: "\x1b[A", down: "\x1b[B", left: "\x1b[D", right: "\x1b[C", backspace: "\x7f", ctrlU: "\x15",
 } as const;
 
+const opened: EngineClient[] = [];
+/** End every engine a test started, so a failed test cannot keep the run alive. */
+export async function stopAll(): Promise<void> {
+  await Promise.all(opened.splice(0).map((c) => c.stop(300)));
+}
+
 export function scenarioClient(name: string): EngineClient {
   const transport = spawnTransport(process.execPath, [path.join(FIXTURES, "fake-engine.mjs"), path.join(FIXTURES, "scenarios", `${name}.json`)]);
-  return new EngineClient(transport);
+  const client = new EngineClient(transport);
+  opened.push(client);
+  return client;
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -32,6 +40,7 @@ export async function until(check: () => boolean, what: string, timeoutMs = 4000
 export interface Session {
   frame: () => string;
   type: (text: string) => Promise<void>;
+  settle: () => Promise<void>;
   waitFor: (text: string, timeoutMs?: number) => Promise<void>;
   gone: (text: string) => Promise<void>;
   final: () => State | null;
@@ -52,6 +61,8 @@ export function open(client: EngineClient, props: { exitWindowMs?: number; initi
     unmount: r.unmount,
     client,
     type: async (text) => { r.stdin.write(text); await sleep(40); },
+    // a dialog is on screen one frame before its key handler is attached: let it settle
+    settle: async () => { await sleep(150); },
     waitFor: (text, timeoutMs) => until(() => r.frames.some((f) => f.includes(text)) || frame().includes(text), `"${text}" on screen; last frame:\n${frame()}`, timeoutMs),
     gone: (text) => until(() => !frame().includes(text), `"${text}" to leave the screen`),
   };
