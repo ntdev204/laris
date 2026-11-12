@@ -152,12 +152,13 @@ Release 2.0.0 (protocol and server storage change) needs the owner's authorisati
 Goal: record the decisions and dependency approvals before code.
 Tasks: T48
 Exit criteria:
-- ADR-019 accepted; ADR-015, ADR-016 and ADR-018 amended; D10 to D21 recorded.
-- Approved dependencies listed in `pyproject.toml` extras; `ink`, `react` and `uv` pinned; `prompt_toolkit` and `rich` recorded as dropped.
+- [x] ADR-019 accepted; ADR-015, ADR-016 and ADR-018 amended; D10 to D23 recorded (T48, 2026-11-12).
+- [x] Approved dependencies listed in `pyproject.toml` extras `server` and `model`; `ink` 8.0.0, `react` 19.3.1 and `uv` 0.13.1 pinned in ADR-019; `prompt_toolkit` and `rich` recorded as dropped.
 
 ### Phase 10 — Three blocks
 Goal: move the code into `src/laris/{protocol,shared,client,server,model,research}` without changing behaviour.
 Tasks: T49, T50, T51, T52
+Progress: [x] T49, [x] T50, [x] T51, [x] T52 (2026-11-12). Phase complete except the npm smoke test in CI.
 Exit criteria:
 - No import cycle between blocks; the block-boundary test passes.
 - Three entry points (`laris`, `laris-server`, `laris-model`); the client wheel is built from its blocks only.
@@ -166,6 +167,7 @@ Exit criteria:
 ### Phase 11 — Model service
 Goal: a separate inference process that alone loads weights and manages VRAM.
 Tasks: T53, T54, T55
+Progress: [x] T53, [x] T54, [x] T55 (2026-11-12). Phase complete.
 Exit criteria:
 - `laris-model serve` speaks P2; the boundary tests pass over HTTP; the GPU queue respects the VRAM budget.
 - The server reaches the model only through P2.

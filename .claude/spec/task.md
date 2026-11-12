@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.0 · 2026-11-12 (T48-T85: second programme) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T55 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -577,7 +577,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `pyproject.toml` extras: `server` (fastapi, uvicorn, psycopg[binary], psycopg_pool, cryptography), `model` (fastapi, uvicorn); `ink`, `react` recorded as approved (2026-11-12) with pinned versions; `prompt_toolkit` and `rich` recorded as approved then dropped (D22); `uv` recorded as approved (2026-11-12) for sandbox provisioning, its binary pinned per platform
 - Validation:
   - `validate_docs` and `validate_spec` pass; ADR index lists ADR-019
-- Status: pending
+- Status: done
+- Note: ADR-019 (docs/adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md) records D10 to D23 and a dependency table; amendment sections 1b added to ADR-015, ADR-016, ADR-018 and the ADR index. pyproject extras `server` (fastapi, uvicorn, psycopg[binary], psycopg_pool, cryptography) and `model` (fastapi, uvicorn) added as ranges from PyPI versions checked 2026-11-12; nothing installed. Pins: ink 8.0.0, react 19.3.1 (Ink 8 needs react >= 19.3.0), uv 0.13.1 per platform (checked against npm and the local binary, not yet used in a build). Caddy and PostgreSQL image tags are left to T68. The task text names D10 to D21; the ADR also covers D22 and D23 because spec 4b records them. No further Ink component package approved.
 
 ## Phase 10 — Three blocks
 
@@ -589,7 +590,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Cycles removed: `Chunk` out of `application/workspace.py`, provider types out of `agent/provider.py`, `check_key` out of `harness/credentials.py`, `config/loader.py` no longer imports `harness.prefs`
 - Validation:
   - No cycle among `agent`, `harness`, `vault`, `application`, `learning`; the no-training suite passes unchanged
-- Status: pending
+- Status: done
+- Note: src/laris/protocol/ (version, types, chunk, sse, schemas, keycheck) holds Message, ToolCall, AssistantTurn, ChatProvider, the provider errors, wire_messages, Chunk, SSE encode/decode, P1/P2 pydantic schemas, PROTOCOL_VERSION "1" and `check_key`. Old import paths (`agent.provider`, `application.workspace`) re-export the same objects, so no importer changed. Cycles: Chunk and provider types out of their old modules; `check_key` now in the protocol package and `harness/credentials.py` no longer imports `agent`; `config/loader.py` reads settings through the new `config/user_layer.py` instead of `harness.prefs`; `harness/runtime.py` no longer imports its own package (a real harness to harness.runtime cycle found while checking). SSE helpers are used by the model server and `HttpChatProvider.stream`. tests/unit/architecture/test_import_cycles.py proves no MODULE-level cycle (lazy imports included) among the five packages and that protocol imports no other package. Limit: at PACKAGE level agent, application, vault, harness and learning still depend on each other in both directions (e.g. application.chat_app uses agent, agent.builtin_tools uses application.workspace); that is not a module cycle and is left to T50/T51 block moves. P1/P2 schemas are not yet used by the server (T55/T56); the P1 chat request is checked only in tests/unit/architecture/test_protocol.py. Verification: ruff, mypy (255 files), `make check-no-training` (211 passed) and unit suites for agent, harness, cli, application, learning, gateway, serverdata, vault, security pass with a clean HOME. test_chat_and_model_api.py::test_chat_settings_and_conversations fails when run against the real ~/.laris of this machine (base_url set there) and passes with a clean HOME; the failure depends on the machine settings, not on this change.
 
 ### T50 — Move packages into blocks
 - Requirements: SR-S1
@@ -599,7 +601,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Tests, configuration, `pyproject.toml`, Makefile and CI paths updated
 - Validation:
   - `ruff`, `mypy`, `validate_docs`, `make check-no-training` pass with the same results as before the move
-- Status: pending
+- Status: done
+- Note: scripts/move_to_blocks.py (one-off, kept for the record) moved 255 modules with `git mv` and rewrote imports and dotted strings in src, tests, scripts and packaging; map confirmed by the owner and recorded in ADR-019 section 2b (shared, client, server, model, research; `cli` stays top-level until T52). Fixed by hand: `public_strings.yaml` path (now laris/shared/harness), `REPO_ROOT` depth in corpus/acquisition/common.py, config-key strings the script wrongly rewrote (`agent.plan.mode`), the `serverdata` self-import cycle, packaging/build_client.py (EXCLUDE, package_data, yaml copy), pyproject package-data, CODEOWNERS, tests that read `src/...` paths. Results: ruff clean, mypy 264 files clean, validate_docs and validate_spec pass, `make check-no-training` 211 passed + eval suites pass, full `pytest tests` leaves 2 failures that are not caused by the move: test_task_splits::test_audit_dataset_inventory_from_manifest (fails on a clean HEAD checkout too) and test_dataset_acquisition::test_s2orc_cap_and_skip_status (reads the owner's uncommitted data/acquisition_manifest.json; passes on HEAD). Run with a clean HOME; the real ~/.laris makes test_chat_and_model_api fail (see T49). The uncommitted s2orc.py change moved with the file (now src/laris/research/corpus/acquisition/sources/s2orc.py). Not done: the client wheel was not rebuilt (needs the `build` extra, and T52 reworks it); its closure is 169 modules vs 160 before (block package markers and protocol modules) and still reaches research.corpus and server.policy modules, which T51 will list; docs outside ADR-019 still quote the old src paths (T84).
 
 ### T51 — Block-boundary contract test
 - Requirements: SR-S1
@@ -608,7 +611,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `tests/unit/architecture/test_blocks.py`: blocks import only `protocol` and `shared`; nothing imports `research`; `shared` and `protocol` import no block
 - Validation:
   - Test passes and fails on a planted violation
-- Status: pending
+- Status: done
+- Note: tests/unit/architecture/test_blocks.py checks the whole `laris` tree: client, server and model import only protocol and shared; nothing imports research (research itself may use every block, as owner tooling); shared imports only protocol; protocol imports no block. Planted-violation tests cover each rule and a temporary file. To reach zero violations without changing behaviour, 15 modules moved by a second scripted pass: policy (prompts, policy, workflows, verifier), brain, harness runtime/remote/credentials, `plan`, project vault/entities/memory, corpus schemas and normalizer, language checkpoint/dataloader (now under `shared/language/loading`) and `stem_benchmark`, plus `OfflinePlanner` split into `laris/shared/offline.py`; the language package no longer re-exports training classes. Gateway and model server import protocol types instead of the client provider. Deliberate deviation from the SR-S1 map: policy composer, brain code and harness runtime sit in `shared` (client still composes policy locally; server gateway reuses the runtime); only their data stay server-side. Recorded in ADR-019 section 2b. One edge remains and is listed in KNOWN with its owner task: client.application.service uses laris.model.inference (T58 moves embedding behind the server); the test also fails if a listed edge disappears. Verification: ruff, mypy (267 files), validate_docs, validate_spec, `make check-no-training` (216 passed); full `pytest tests` leaves only the two failures explained in T50 (clean HOME).
 
 ### T52 — Entry points and the client wheel by block
 - Requirements: SR-S1
@@ -618,7 +622,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `packaging/build_client.py` builds from `client`, `protocol`, `shared` instead of an import closure; `client-package.yml` updated
 - Validation:
   - Built wheel contains no server, model, research module and no `.laris/` policy; npm smoke test in an empty folder passes
-- Status: pending
+- Status: done
+- Note: Entry points: `laris` (cli.client), `laris-server` (cli.server, now with its own table: policy and brain checks, keys, tls, usage, reasoning, the server process, owner-only data/train/evaluate), `laris-model` (cli.model: `infer` only; `serve` arrives with T53) declared in pyproject. `cli/main.py` has no role switch any more: it only merges the three tables for tests and `python -m cli`. packaging/build_client.py builds from whole blocks (`protocol`, `shared`, `client` plus 13 cli command modules; 133 files) instead of the import closure, and its smoke test bans laris.server, laris.model, laris.research and the server/model entry modules. Verified by an actual build here: 133 modules compiled with Cython, the smoke import of every module passed, and the wheel (139 entries, about 6.9 MB) contains no laris/server, laris/model, laris/research, cli server/model/main module or `.laris` file; tests/unit/cli/test_client_package.py checks the same file set and that every import in shipped files resolves. The only import of model code in the client (client.application.service, T58) is now guarded: without model code it raises a ServiceError telling the user to embed through the server. Not done: the npm smoke test in an empty folder (needs the PyInstaller binary and the npm packages; `client-package.yml` still calls the same build command, and CI will run it), the wheel entry point list still declares only `laris`. Tests need a fresh HOME: a HOME polluted by earlier runs made test_account fail once.
 
 ## Phase 11 — Model service
 
@@ -630,7 +635,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - The client loses its offline mode (D16)
 - Validation:
   - Model boundary tests (SR-H6) pass over HTTP with the scripted backend; P2 contract tests pass
-- Status: pending
+- Status: done
+- Note: `laris-model serve` (cli/model.py, uvicorn) runs the FastAPI app in src/laris/model/app.py over the core in src/laris/model/service.py: `GET /health`, `GET /v1/models`, `POST /v1/chat/completions` (JSON, or SSE with tools and `reasoning_content`) and `POST /v1/embeddings` (encoder from `laris.model.inference` through `build_embedder`). No keys, no files, no docs routes; backend calls run in a thread pool; a failure before the first chunk is HTTP 502, after it an `error` event then `[DONE]`. New config section `model_service` (host, port, body limit, names, backend, checkpoint, tokenizer, device; defaults equal configs/default.yaml). The P2 wire format moved to `laris.protocol.openai` with response schemas `ChatCompletionResponse`, `ChatCompletionChunk`, `StreamError`; `load_backend` to `laris.shared.backend` (placeholder uses the public string catalogue); the server's reference service reuses them (it now also forwards `reasoning_content` on its bare stream). The client lost its offline mode: `ChatApp.provider` raises `server.not_configured` and `model_health` reports `api`/not ok without a server URL (tests that need a scripted model use the `use_placeholder_model` fixture in tests/conftest.py). tests/unit/model/test_model_service.py (9 tests, real uvicorn on an ephemeral port, urllib client): schema checks of real responses and chunks, error cases, 413/400, statelessness, plus the boundary checks (tool validation, plan tool, wire keys, reasoning never persisted) through `HttpChatProvider`. Verification: ruff, mypy (272 files), validate_docs, `make check-no-training` (225 passed, the model tests joined `test-model-free`); full pytest leaves only the two failures described in T50. Deviations: `OfflinePlanner` sits in `laris.shared.offline` (the client tests and server fixtures also use it), not in `laris.model`; the model block does not yet queue GPU work (T54); the old combined `laris-server model serve` (gateway plus model in one process) stays until T55 and T56 replace it. `fastapi` 0.162.5 and `uvicorn` 0.54.0 were installed into the local .venv under the approval recorded in ADR-019; `httpx` (needed by Starlette's TestClient) is not approved, so tests use a real server.
 
 ### T54 — GPU queue from the execution package
 - Requirements: SR-S3
@@ -639,7 +645,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Task router, weight staging and headroom governor wired into the model service: one queue, load and release by VRAM budget (configuration only)
 - Validation:
   - Scripted backends with declared sizes never exceed the configured budget; queue order and timeouts tested
-- Status: pending
+- Status: done
+- Note: src/laris/model/gpu_queue.py: one priority queue (FIFO inside a priority) feeding `gpu_workers` workers; before a job runs, `SpecialistLRUCache` plus `HeadroomBudgetGovernor` stage the model it needs and evict the least recently used idle model when the budget would be exceeded; the model stays pinned (reference counted) while any job uses it; streams hold the model until they end or the reader leaves. When the budget is full of models other jobs are using, a job waits for one to be released instead of failing (found by the 3-worker test); it fails only if nothing is in use. Overload gives HTTP 503 (`queue_max_waiting`), a job that waited longer than `queue_wait_timeout_s` gives 504. All figures are configuration (`model_service.vram_budget_bytes`, `vram_margin_bytes`, `chat_vram_bytes`, `embed_vram_bytes`, `gpu_workers`, ...), defaults equal configs/default.yaml. The encoder now loads lazily through the queue (`Encoder.load/unload`, cache emptied on release); `/health` reports resident models, bytes, waiting jobs, peak and evictions. tests/unit/model/test_gpu_queue.py (10 tests: sizes vs budget over a mixed sequence, co-residency, oversize model refused, priority and arrival order, timeout and full queue with a fake clock, failing job and failing loader, stream residency, stream errors, three concurrent workers) and two service tests over HTTP (health, 503); repeated runs are stable. Verification: ruff, mypy (273 files), validate_docs, `make check-no-training` (the model tests are in `test-model-free`); full pytest leaves only the two failures described in T50. Limits: sizes are declared, not measured, and no real GPU was used (a CPU or scripted backend only), so the real peak VRAM of a trained model is unmeasured; the `TaskRouter` (specialist tiers, uncertainty ceilings) is NOT wired in: it routes research tasks between specialists, while this service serves two fixed models, so the queue uses the weight-staging cache and the governor only. The existing `execution` modules are unchanged apart from import order.
 
 ### T55 — Server calls the model over P2
 - Requirements: SR-S3
@@ -648,7 +655,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Gateway backend is an `HttpChatProvider` to `model_api.internal_url`; bounded concurrency `serving.model_concurrency`; no model code in the server process
 - Validation:
   - Gateway tests pass against a model service; pointing the URL at another OpenAI-compatible server needs no code change
-- Status: pending
+- Status: done
+- Note: `laris-server model serve` no longer loads a backend or encoder: it builds `HttpChatProvider(model_api.internal_url)` wrapped in `LimitedProvider` (`serving.model_concurrency`, a stream holds its slot until it ends or closes) and `HttpEmbedder` for `/v1/embeddings`; it refuses to start without a model URL (`--model-url` overrides). `HttpChatProvider` moved to `laris.shared.http_provider` (the client re-exports it) because both the server and the client's policy provider need it. New config: `model_api.internal_url`, `serving.model_concurrency` (defaults equal configs/default.yaml). The old `--backend`, `--checkpoint`, `--tokenizer-model`, `--device` flags of the server are gone (they live on `laris-model`). tests/unit/gateway/test_model_over_p2.py: the gateway answers a chat through a stub that speaks only OpenAI-compatible JSON (no LARIS code), embeddings go through P2, six calls with a limit of two never run more than two at once, and a subprocess check that importing the server modules loads no `laris.model` module. Limits: the gateway test uses a stub, not the real model block with the gateway in one run (the two halves are each tested over HTTP in T53 and here); importing the server still pulls `torch` in through `laris.shared.language`, which imports the encoder eagerly (not model code, but a weight for the server image to be fixed with T67). `serving.placeholder_name` is now unused by the server. Verification: ruff, mypy (275 files), full pytest leaves only the two failures described in T50.
 
 ## Phase 12 — Server API
 
