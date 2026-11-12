@@ -1,6 +1,6 @@
 # LARIS — System specification: Obsidian brain, scholarly harness, three-block system and terminal client
 
-Version 0.2.0 · 2026-11-12 · Status: phases 0-6 and 8 IMPLEMENTED; owner gates open (T38 review, T39 decision); phases 9-17 (restructuring, sections 4b and 5b) PLANNED · Replaces the retired `.agents/` ledger.
+Version 0.2.1 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 up to T84 IMPLEMENTED; owner gates open (T38 review, T39 decision); T85 (release 2.0.0) in progress · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.

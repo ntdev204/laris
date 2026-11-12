@@ -2,7 +2,7 @@
 document_id: "DOC-DEV-CLIENT-GUIDE-DRAFT-001"
 title: "Draft: user guide section for the terminal client"
 document_type: "plan"
-status: "DRAFT"
+status: "APPROVED"
 version: "0.1.0"
 created_at: "2026-11-12"
 updated_at: "2026-11-12"
@@ -18,7 +18,7 @@ change_summary: "Draft of the Ink, plain and headless guide section for the owne
 
 # Draft: user guide section for the terminal client (T82)
 
-Status: **draft for owner approval.** The user guide `.laris/help/how-to-use.md` is locked policy
+Status: **applied 2026-11-13 with the owner's approval** (section 1b of the guide, lock regenerated). Original note: The user guide `.laris/help/how-to-use.md` is locked policy
 (covered by `integrity.lock`). Nothing here has been applied to it. After approval the owner (or a task
 with the owner's approval) merges the section below into the guide, then runs `laris harness verify`
 and `laris harness lock`.
