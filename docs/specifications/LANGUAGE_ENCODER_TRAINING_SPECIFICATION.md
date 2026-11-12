@@ -189,7 +189,7 @@ checks have passed. They do not replace the capability exit gates above.
 
 ## 7. Evaluation and promotion
 
-`laris evaluate language-encoder` produces per-dataset metrics and sample-weighted
+`laris-server evaluate language-encoder` produces per-dataset metrics and sample-weighted
 per-task/language groups. `configs/evaluation/language_encoder.yaml` defines
 baseline-relative regression floors; those floors do not encode section 5.
 Never ratchet those floors using test data. Do not repeatedly tune against test.

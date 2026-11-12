@@ -70,7 +70,7 @@ hiện thiếu bitsandbytes. Nếu đổi cấu hình ứng viên thì đo lại
 ```bash
 mkdir -p artifacts/profiles
 set -o pipefail
-LARIS_TRAINING_AUTHORIZED=1 .venv/bin/laris train language-encoder \
+LARIS_TRAINING_AUTHORIZED=1 .venv/bin/laris-server train language-encoder \
   --profile-only --model-size compact --max-seq-len 1024 \
   --training-config configs/language_encoder/compact.yaml \
   --micro-batch-size 4 --grad-accum-steps 16 --precision bf16 \

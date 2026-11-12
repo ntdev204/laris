@@ -3,18 +3,20 @@ document_id: "DOC-DEV-SERVER-DEPLOYMENT-001"
 title: "Server Deployment Runbook: Docker Compose, Secrets, Backup and Smoke Test"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-12"
-updated_at: "2026-11-12"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/development/OWNER_RUNBOOK.md"
+  - "docs/development/MIGRATION_1X_TO_2_0.md"
+  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/adr/ADR-019-three-blocks-two-protocols-two-sql-engines.md"
 decision_references:
   - "ADR-019"
-change_summary: "Operator steps for the Docker Compose stack: first start, secrets, keys, policy changes, PostgreSQL backup and restore, retention, and the end-to-end smoke test."
+change_summary: "Operator steps for the Docker Compose stack: first start, secrets, keys, policy changes, PostgreSQL backup and restore, retention, the end-to-end smoke test, the edge limits set by Caddy and the security checks (T83)."
 ---
 
 # Server Deployment Runbook
@@ -137,7 +139,34 @@ python scripts/scan_image.py laris-api laris-model   # fails on policy, weights,
 `.dockerignore` keeps `.laris/`, `LARIS.md`, weights, datasets, databases and secrets out of the
 build context, and the scan verifies the built images.
 
-## 10. Troubleshooting
+## 10. Edge limits and security checks
+
+Caddy is the only service that publishes ports (80 and 443). `docker/Caddyfile` sets, for every client:
+
+| Setting | Value | Effect |
+| :--- | :--- | :--- |
+| `read_header` | 10 s | a connection that never finishes its TLS handshake or request headers is closed |
+| `read_body` | 30 s | a body sent too slowly is cut (also bounds the handshake) |
+| `idle` | 2 min | idle connections are closed |
+| `request_body max_size` | 32 MB | a larger body is refused with 413 at the edge, without asking the API |
+| write timeout | none | streamed answers are never cut |
+| forwarding headers | replaced by the real peer | a forged `X-Forwarded-For` never reaches the API |
+
+The API repeats its own limits (body size and deadline, header size, key check) so each control still holds if
+the proxy is bypassed. `docker compose ... config` must keep showing no `ports` or `expose` on `api`, `model` or
+`postgres`, no privileged mode, host network or Docker socket, read-only mounts for policy and weights, and
+secrets only as Docker secrets. These properties are tested without a running stack:
+
+```sh
+make test-security      # tests/security: network, container, project, hook, shell and sandbox attacks
+```
+
+The tests that start the real `caddy:2` image are skipped when Docker or the image is missing. After editing
+`docker/Caddyfile` or `docker/compose.yaml`, run them and `docker run --rm -v "$PWD/docker/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile`.
+Limits of the tests: TLS handshake timing is tested on Caddy only, and the whole stack is not started by them
+(the smoke test in section 8 does that).
+
+## 11. Troubleshooting
 
 | Symptom | Look at |
 | :--- | :--- |
