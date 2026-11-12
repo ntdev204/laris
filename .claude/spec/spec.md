@@ -1,6 +1,6 @@
-# LARIS — System specification: Obsidian brain and scholarly harness
+# LARIS — System specification: Obsidian brain, scholarly harness, three-block system and terminal client
 
-Version 0.1.0 · 2026-11-11 · Status: IMPLEMENTED for the harness; owner gates open (T38 review, T39 decision) · Replaces the retired `.agents/` ledger.
+Version 0.2.0 · 2026-11-12 · Status: phases 0-6 and 8 IMPLEMENTED; owner gates open (T38 review, T39 decision); phases 9-17 (restructuring, sections 4b and 5b) PLANNED · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.
@@ -30,6 +30,17 @@ then return to the core reasoning model.** The model stays paused (section 9). T
 Out of scope for this specification: training or fitting any model, changing weights, claiming model
 qualification, cloud services, Obsidian Sync or Publish, and any dependency on the Obsidian desktop
 application.
+
+**Second programme (owner instruction, 2026-11-12).** An analysis of the running system found client,
+server and model code mixed together (cyclic packages `agent`, `harness`, `vault`, `application`,
+`learning`; the gateway importing the agent; the encoder loaded on both sides; `execution/` wired nowhere;
+the client wheel cut by an exclusion list), a server on `http.server` with blocking TLS handshakes, an
+unchecked negative `Content-Length` and broken error replies mid-stream, a non-atomic quota and
+start-only trace retention, and client storage that rewrites whole JSON/JSONL files without locks. The
+owner authorised a restructuring of the code and of the operating flow: three blocks (client, server,
+model) with two versioned protocols, PostgreSQL on the server and SQLite on the client, Docker on one
+server machine, and a terminal client that works like Claude Code. Sections 4b and 5b specify it; phases
+9 to 17 of plan.md implement it. The core model stays paused and NOT QUALIFIED.
 
 ## 2. Findings from the Obsidian documentation
 
@@ -82,6 +93,25 @@ view, vault creation, Obsidian CLI). These facts shape the design.
 | D7 | Language | Note text follows the reply language; property names and types are English | Stable schema, Vietnamese content |
 | D8 | Existing memory | `.laris/memory/*.md` migrates into `vault/Memory/`; `save_memory` keeps its API | One memory, no duplication |
 | D9 | Runtime self-modification | Never changes the system brain; learnings go to the project vault and a proposals inbox for owner review | Prevents poisoning of the brain |
+
+## 4b. Architecture decisions of the second programme (owner instruction, 2026-11-12; recorded in ADR-019 by T48)
+
+| ID | Decision | Choice | Reason |
+|---|---|---|---|
+| D10 | System blocks | Three blocks: **client** (user machine), **server** (API, policy, brain, keys), **model** (inference on the GPU); plus `protocol` and `shared` libraries and owner-only `research` tooling | Boundaries become structure instead of a build-time exclusion list |
+| D11 | Package layout | Packages grouped by block under `src/laris/{protocol,shared,client,server,model,research}`; blocks import only `protocol` and `shared`; nothing imports `research` | Chosen by the owner over an ownership map; enforced by a contract test |
+| D12 | Protocols | P1 client-server (public, HTTPS + SSE, versioned by `X-Laris-Protocol`); P2 server-model (internal Docker network, OpenAI-compatible chat completions and embeddings) | Client and model can change independently; an external inference runtime can replace the model block |
+| D13 | Storage | PostgreSQL for the server (keys, usage, traces); SQLite for the client (conversations, workspace, embedding cache, learning data, vault index cache); vault notes stay Markdown files | Concurrency, atomic quota and retention on the server; locking and incremental writes on the user's disk |
+| D14 | Deployment | One server machine; `docker compose` with Caddy (TLS, timeouts, body limit, rate limit), API, model (GPU) and PostgreSQL; the client is not containerised and still ships through npm | The owner has one server; the client must run where the user's files are |
+| D15 | Dependencies approved | Server and model: `fastapi`, `uvicorn`, `psycopg`, `psycopg_pool`; Caddy and PostgreSQL as container images. Client (approved 2026-11-12): `ink`, `react` (Node front end; exact versions pinned in T48); `prompt_toolkit` and `rich` were approved and then dropped with the Python front end (D22). Sandbox provisioning (approved 2026-11-12): the `uv` single binary, shipped in each per-platform npm package, fetches the standalone Python and builds the sandbox. **To confirm in T48:** any further Ink component package | Rule: no dependency without recorded approval |
+| D16 | Model placement | No offline mode in the client; `OfflinePlanner` moves to the model block as the placeholder backend and a test fixture; embeddings are computed only by the model block and reached through `POST /v1/laris/embed`; the client never holds weights | One place loads weights and manages VRAM; the thin client stays thin |
+| D17 | Terminal client | `laris` works like Claude Code: full terminal interface, slash commands, one global settings file, permission modes and rules, coding tools with diffs and checkpoints, headless mode, hooks, status line, interrupt, automatic sandbox. One engine and the Ink front end (D22). Subagents, MCP and IDE integration are later work | Owner instruction |
+| D18 | Global client home | `~/.laris/` holds **every** client configuration, setting, credential and per-project state (`settings.json`, `.credentials.json`, `projects/<slug>/`), plus personal `LARIS.md`, `skills/`, `commands/`, `memory/` | One place for system configuration; nothing configurable leaks into users' repositories |
+| D19 | Program and sandbox kept apart | **Program**: the `laris` engine is the self-contained PyInstaller binary shipped in the per-platform npm package `@ntdev204/laris-cli-<platform>` (no Python needed on the machine; extras such as OCR are bundled at build time; nothing installs into it at run time); the Ink front end is JavaScript in the main npm package. **Sandbox** `~/.laris/.venv/`: where every command the agent runs on the user's behalf executes (`Bash`, `!command`, hooks, scripts it writes) and the only place packages are installed. Nothing is installed into the system or user Python. The legacy `~/.laris/runtime/<version>/` of 1.x is removed | Work in the sandbox can never break the program; the client machine stays unaffected |
+| D20 | Project folder | `./.laris/` in a project holds only what the user adds: `LARIS.md`, `skills/`, `commands/`, `memory/`. It holds no `settings.json`, `settings.local.json` or `config.yaml`; such files are ignored with a warning | A cloned repository cannot change permissions, hooks, server or model |
+| D21 | Server address and login | The server address lives in `~/.laris/settings.json` (`server.url`); `laris login` takes no `--server` flag, only asks for the key and checks it against `server.url`; the key goes to `~/.laris/.credentials.json` (0600), never into `settings.json` | Same model as Claude Code: settings declare, login authenticates |
+| D22 | Engine and one front end | One engine (`laris engine --stdio`, Python, in the binary) owns the loop, tools, permissions, settings, commands, sandbox and storage; the front end only renders and collects input over the versioned engine protocol E1 (JSON lines both ways; the same stream as headless `stream-json`). The front end is **Ink + React**, started by the npm `laris` command. The prompt_toolkit + rich front end was dropped (owner, 2026-11-12): every install has Node, so a second interface is not worth its cost. Fallbacks need no dependency: headless `laris -p` for scripts and CI, and `laris --plain`, a minimal plain-text mode of the engine (`input`/`print` over E1) for debugging when the Ink front end fails | The prettiest interface without rewriting the core; one interface to build and test |
+| D23 | Automatic sandbox | The user never creates or manages the sandbox. The engine prepares it in the background at start and checks it before every sandbox use; when it is missing or broken it builds or repairs it silently (standalone Python per `sandbox.python`, else a suitable system Python, both through the bundled `uv`), installs the packages the agent needs there without asking (default `allow`; installs elsewhere stay denied), and reports only a short status-line hint while doing so | Owner instruction: the user only enjoys the result |
 
 ## 5. Requirements
 
@@ -293,6 +323,218 @@ fits or optimises anything.
 Acceptance: contract tests use a scripted provider; resume criteria document exists; the training
 prohibition stays in `AGENTS.md`.
 
+## 5b. Requirements of the second programme
+
+These requirements amend SR-H7 and SR-H9 where they conflict: the server keeps keys, usage and reasoning
+traces in PostgreSQL (never user documents, vault, skills, memory or conversations), and document text sent
+for embedding is processed in memory and never stored.
+
+### SR-S1 — Three blocks with structural boundaries
+Code is grouped by block under `src/laris/`: `protocol` (wire types and schemas), `shared` (core types,
+configuration loading, redaction and guard primitives, string catalogue, vault note parser and index),
+`client`, `server`, `model`, and `research` (corpus, training, benchmarks, evaluation; owner-only, shipped in
+no image or wheel). `client`, `server` and `model` import only `protocol` and `shared`; no block imports
+`research`; the cycles between `agent`, `harness`, `vault`, `application` and `learning` are removed
+(`Chunk` and the provider types move to `protocol`). Each block has its own entry point (`laris`,
+`laris-server`, `laris-model`); the client wheel is built from `client`, `protocol` and `shared` only.
+Acceptance: a block-boundary contract test passes next to the layer test (T42); the client wheel contains no
+server, model or research module and no `.laris/` policy; behaviour is unchanged (the no-training suite passes
+before and after the move).
+
+### SR-S2 — Versioned protocols P1 and P2
+P1 (client to server, public): `POST /v1/laris/chat` (SSE), `POST /v1/laris/embed`, `GET /v1/laris/workflows`,
+`/help`, `/account` and the `admin` routes, described by pydantic schemas in `protocol` and versioned by the
+header `X-Laris-Protocol`; a server answers an unsupported version with a clear error. P2 (server to model,
+internal network only): OpenAI-compatible `/v1/chat/completions` (stream, tools, reasoning) and
+`/v1/embeddings`. A failure after a stream has started is sent as an `error` event followed by `[DONE]`,
+never as a second response.
+Acceptance: contract tests validate real SSE chunks of P1 and P2 against the schemas; version mismatch, error
+mid-stream and closed bare endpoints are tested.
+
+### SR-S3 — Model service
+The model block runs as its own process (`laris-model serve`, FastAPI and uvicorn) and is the only place that
+loads weights: the chat backend (`package.module:ClassName`, default the `OfflinePlanner` placeholder) and the
+language encoder. A GPU queue built on `execution` (task router, weight staging, headroom governor) loads and
+releases models within the VRAM budget of one machine. It stores nothing and knows nothing about keys, users or
+policy. The server calls it through `HttpChatProvider` with a bounded concurrency.
+Acceptance: model boundary tests (SR-H6) pass against the service over HTTP; a scripted backend shows the queue
+never exceeds the configured VRAM budget; the server works unchanged when the model URL points to another
+OpenAI-compatible runtime.
+
+### SR-S4 — Hardened server API
+The server API runs on FastAPI and uvicorn behind a reverse proxy. Request bodies are validated (size, a
+negative or missing `Content-Length`, JSON shape) before any work; permissions, quota and the policy gateway
+behave as in SR-H9; the brain lock covers only the brain's per-turn budget, never a model call; the real client
+address is taken from `X-Forwarded-For` only when the request comes from `serving.trusted_proxies`, so key
+address rules (`@server`, CIDR) still hold behind the proxy; the default key is never printed to standard output
+or logs.
+Acceptance: tests for 400/401/403/411/413/429, error mid-stream, a slow client not blocking others, address
+rules behind a trusted and an untrusted proxy, and the policy-confidentiality tests of
+`tests/unit/gateway/test_policy_server.py`.
+
+### SR-S5 — Server storage on PostgreSQL
+Keys, usage and traces live in PostgreSQL through the ports of `serving/ports.py`, with numbered SQL migrations
+and a connection pool. Quota is reserved atomically before a model call and settled in one transaction after it
+(also on disconnect), so parallel requests cannot exceed a limit by more than one request's reservation error.
+`usage` and `traces` are partitioned by month; retention runs in a background task on a configured interval;
+a daily usage summary exists. `laris-server db migrate` applies migrations and `laris-server db import-sqlite`
+moves an existing `laris-server.db`. The DSN and secrets come from the environment or Docker secrets; the key
+master secret stays outside the database.
+Acceptance: storage tests run when `LARIS_TEST_PG_DSN` is set (CI uses a PostgreSQL service); a concurrency test
+shows N parallel requests never pass the limit; retention removes expired partitions; the import is lossless on a
+fixture database.
+
+### SR-S6 — Client storage on SQLite (in the global home, D18)
+Each private space (per project and key fingerprint) has one SQLite file in the global home,
+`~/.laris/projects/<project-slug>/<key-fingerprint>.sqlite` (WAL, busy timeout, numbered migrations), holding
+conversations with their plan, workspace passages, the embedding cache (vectors keyed by passage and model id),
+collected learning examples and the vault index cache. Vault notes stay Markdown files and remain the source of
+truth. Ranking keeps the measured BM25 channel; only storage changes. Existing JSON, JSONL and NumPy files
+migrate automatically once, idempotently, with the originals kept in a backup folder. `laris learn export`
+still writes JSONL; collected data stays outside Git.
+Acceptance: migration from fixtures is idempotent and keeps backups; BM25 rankings are identical before and after;
+two processes writing at once lose no update.
+
+### SR-S7 — Deployment on one machine with Docker
+`docker/` holds an API image (slim Python, non-root), a model image (CUDA base, inference only), a Caddyfile and
+`compose.yaml` with `caddy`, `api`, `model` (GPU reservation) and `postgres`. Only Caddy publishes ports; `api`,
+`model` and `postgres` share an internal network. The system `.laris/` policy is mounted read-only into `api`
+and its integrity lock is checked at start; weights are mounted read-only into `model`; PostgreSQL has its own
+volume; secrets come from Docker secrets. Caddy terminates TLS, flushes SSE immediately and enforces body size
+and timeouts. A backup script and an operator runbook exist. Nothing confidential is baked into an image.
+Acceptance: `docker compose config` validates; a smoke test (empty folder, fresh home) logs in, chats with the
+placeholder and runs a dense search through the stack; images contain no `.laris/` policy and no weights.
+
+### SR-C1 — Interactive terminal (Ink front end)
+The Ink front end (D22) offers: multi-line input, history and history search, streamed Markdown rendering with code
+highlighting, a spinner while working, approval dialogs with diffs, a status line (model, permission mode, context
+use, tokens left from `/v1/laris/account`, git branch, sandbox state), Esc to interrupt a running turn (the engine
+closes the stream; the server still bills in `finally`), Ctrl+C twice to exit, and typing the next message while the
+agent works. `laris --plain` starts the dependency-free plain-text mode of the engine instead (D22).
+Acceptance: the scripted scenarios (input, interrupt, approval, status line, slash commands) pass through the Ink
+front end against a recorded engine, and the same scenarios pass in plain mode and headless where they apply; an interrupted turn leaves a consistent saved conversation.
+
+### SR-C2 — Commands, settings and input
+A slash-command registry provides the built-in commands (`/help /clear /compact /resume /continue /model
+/status /cost /context /config /permissions /memory /init /login /logout /doctor /vault /skills /workflows
+/hooks /sandbox /exit`) and custom commands from `~/.laris/commands/*.md` and `./.laris/commands/*.md` with
+`$ARGUMENTS`. Settings come from one file, `~/.laris/settings.json` (SR-C6), overridden for one run by
+environment variables and command-line flags; no project file contributes settings. `laris config get|set` and
+`/config` edit it. Input supports `@path` mentions with completion, `!command` (shell, approved), `#
+note` (quick memory) and pasted long text or images (local OCR).
+Acceptance: unit tests for the registry, custom commands, settings precedence and each input form.
+
+### SR-C3 — Permission modes, rules and coding tools
+Permission modes `default` (ask), `acceptEdits` and `plan` (read-only); `bypass` only when the policy allows it.
+Rules `allow`, `ask`, `deny` match a tool and a pattern (`Edit(src/**)`, `Bash(git status:*)`); deny wins; an
+"always allow" answer is written to the project's state `~/.laris/projects/<slug>/state.json` (or, when the user
+chooses "everywhere", to `permissions.allow` in `~/.laris/settings.json`); Shift+Tab cycles modes. Coding tools: `Read` (line
+range), `Write`, `Edit` (exact unique replacement), `Glob`, `Grep`, `Bash` (approval, timeout, working directory
+confined to the project). Edits show a diff in the approval dialog; every edit is checkpointed and `/rewind`
+restores files. Existing guards (path policy, secret redaction, leak guard, untrusted tool output) apply to every
+new tool.
+Acceptance: tests for each mode and rule precedence, a denied path never written, `Edit` uniqueness, `Bash`
+timeout and confinement, checkpoint and rewind.
+
+### SR-C4 — Headless mode and hooks
+`laris -p` runs one task without the interface, reads standard input, and supports `--output-format
+text|json|stream-json`, `--continue`, `--resume ID`, `--max-turns`, `--permission-mode`, `--allowed-tools`,
+`--disallowed-tools`, with documented exit codes. Hooks (`SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+`PostToolUse`, `Stop`) are declared only in `~/.laris/settings.json`, run local commands inside the isolated
+runtime, receive JSON on standard input, may block with a reason, and have timeouts; `/hooks` lists them.
+Acceptance: headless tests with a scripted provider for every output format and exit code; hook tests for allow,
+block, timeout and malformed output.
+
+### SR-C5 — Safety of local execution
+Running commands on the user's machine (`Bash`, `!command`, hooks, custom commands) never happens silently: a
+project's custom commands and skills are used only after the user trusts that folder (trust kept in
+`~/.laris/projects/<slug>/state.json`); shell tools respect permission rules and the path policy and run inside the
+sandbox `~/.laris/.venv` (its `bin/` first on `PATH`, `VIRTUAL_ENV` set, `PIP_REQUIRE_VIRTUALENV=1`); installing a
+package anywhere but the sandbox (system Python, `pip --user`, the program's files, another interpreter) is denied by
+a built-in rule that settings cannot widen; output is treated as untrusted and redacted
+before it reaches the model or the server.
+Acceptance: security tests for an untrusted folder, a planted `./.laris/settings.json` or `config.yaml` (ignored),
+hostile hook output, a prompt-injected request to run a command or install outside the sandbox or into the program's files, and secrets in
+command output.
+
+### SR-C6 — Global home and Claude-Code-style settings
+The client keeps everything configurable in the global home:
+
+```text
+~/.laris/
+  settings.json          all client settings (schema below); no secrets
+  .credentials.json      API key, mode 0600
+  .venv/                 sandbox (SR-C8): agent commands, hooks and their packages run and install here only
+  python/                standalone interpreters downloaded for the sandbox (cache)
+  LARIS.md  skills/  commands/  memory/        personal layers
+  projects/<slug>/       per project: state.json (trust, approvals, last session), <key-fp>.sqlite (SR-S6), checkpoints/
+  logs/                  local audit
+./.laris/                (project, optional, may be committed) LARIS.md  skills/  commands/  memory/  - nothing else
+```
+
+The program itself is not in the home: the engine binary lives in the per-platform npm package and the Ink front
+end in the main npm package (D19); updates come through npm. `settings.json` follows the shape of Claude Code's
+settings and is validated by a JSON Schema shipped with the client:
+
+```json
+{
+  "server": { "url": "https://host:8443", "caFingerprint": "sha256:...", "timeoutSeconds": 120 },
+  "model": "",
+  "permissions": { "defaultMode": "default", "allow": [], "ask": [], "deny": [], "additionalDirectories": [] },
+  "env": {},
+  "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [ { "type": "command", "command": "...", "timeout": 30 } ] } ] },
+  "statusLine": { "type": "command", "command": "..." },
+  "sandbox": { "python": "3.12", "packages": [], "inheritEnv": false, "indexUrl": "", "pythonSource": "" },
+  "vault": { "autoRecord": true },
+  "learning": { "collect": true },
+  "cleanupPeriodDays": 30,
+  "autoUpdates": true
+}
+```
+
+On first start the client creates the layout without overwriting anything and migrates a 1.x home once, keeping
+backups: `config.yaml` into `settings.json`, the `api_key` field into `.credentials.json`, and the legacy
+`runtime/<version>/` removed. `laris login` reads `server.url` (set with `laris config set server.url ...` or
+`/config`), asks for the key with hidden input, checks it, pins a private certificate on first use into
+`server.caFingerprint`, and saves the key only when accepted; without `server.url` it explains how to set it.
+`laris init` creates only the project folder layout above. The server's system policy root (`.laris/` in the
+server codebase, mounted read-only into the `api` container) is a different folder and never exists on a client.
+Acceptance: schema validation tests (unknown key, wrong type reported with the JSON path); first start in an empty
+home creates the layout; migration from a 1.x home is idempotent and keeps backups; `laris login` works without flags
+and refuses without `server.url`; project folders with configuration files are ignored with a warning.
+
+### SR-C7 — Engine and engine protocol E1
+The engine (`laris engine --stdio`) is the only owner of client behaviour: agent loop, tools, permissions,
+settings, slash commands, sandbox, storage, server connection. It reads commands and writes events as JSON lines.
+Events out: `ready`, `text`, `tool_call`, `tool_result`, `plan`, `permission_request`, `status`, `usage`,
+`compact`, `goal`, `error`, `done`. Commands in: `user_message`, `permission_response`, `interrupt`, `command`
+(slash command with arguments), `set_mode`, `complete` (completion request for `/` and `@`), `shutdown`. E1 is
+described by JSON Schema in `laris.protocol` with a version exchanged in `ready`; the Node front end checks the
+version and refuses a mismatch with a clear message. Headless `--output-format stream-json` writes the same events.
+The Node front end holds no tool, permission or storage logic.
+Acceptance: E1 contract tests validate every event and command against the schema; a scripted engine session
+replays identically through the Ink front end, plain mode and headless `stream-json`; a version mismatch is reported; killing a front end leaves the engine
+state consistent.
+
+### SR-C8 — Automatic sandbox
+The sandbox `~/.laris/.venv/` needs no action from the user. The engine starts a background check at start-up and
+checks again before every sandbox use (marker with engine version and settings digest, interpreter probe, `pip`
+present). When the sandbox is missing, broken or out of date it is built or repaired silently by the bundled `uv`
+binary: a standalone Python for `sandbox.python` is fetched into `~/.laris/python/` (source from configuration,
+checksums verified), else a suitable system Python is used; the environment is created and `sandbox.packages` are
+installed. A file lock prevents two sessions from
+building at once. While it works the status line shows a short hint; a tool call waiting for it is delayed, not
+failed. If it cannot be built (offline and no suitable Python) the tool result and the status line say why and the
+rest of `laris` keeps working. Commands the agent runs see the sandbox first on `PATH`, `VIRTUAL_ENV` set and
+`PIP_REQUIRE_VIRTUALENV=1`; installing packages into the sandbox is allowed by default without a prompt (built-in
+`allow` rule for `pip` and `uv pip` installs whose target is the sandbox; a user `ask` or `deny` rule can tighten it),
+while any install outside the sandbox stays denied. The sandbox isolates packages, not privileges: commands still run as the user, so the
+permission rules, the path policy and folder trust remain the security boundary. `/sandbox` shows its state and
+`/sandbox reset` rebuilds it; neither is ever required.
+Acceptance: with a temporary home, the first sandbox use builds it without user action; a deleted or corrupted
+sandbox is repaired before the next use; two parallel sessions build it once; offline without Python gives a clear
+message and the program keeps working; nothing is written to the system or user site-packages.
+
 ## 6. Cross-cutting rules
 
 - Policy precedence and confidentiality rules in `LARIS.md` and `.laris/rules/` apply to every new
@@ -342,6 +584,12 @@ hostile notes, a manipulated model, a curious tool call. Local administrator acc
 Controls: deny-lists and brain-only access, integrity lock, path confinement, leak and injection guards,
 redaction, read-only system brain, proposals inbox, loopback-only egress.
 
+Second programme additions (T83 tests them): attackers also include a hostile network client (slow TLS
+handshakes, oversized or malformed bodies, forged `X-Forwarded-For`), a compromised container, a hostile project
+folder (hooks, custom commands) and a manipulated model asking to run shell commands. Controls: proxy limits and
+timeouts, trusted-proxy list, internal-only network for model and database, read-only mounts, Docker secrets,
+folder trust, permission rules and modes, checkpoints.
+
 ## 9. Core model (paused)
 
 The model work resumes only after the exit criteria of phases 1 to 6 hold and the owner opens the gate
@@ -352,3 +600,6 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 The authoritative status of every task is in task.md. Phase 0: T01-T47 (T01-T04, T40, T41, T47). Phase 8 (Agentic): T42-T46. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.
+Second programme: Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
+Phase 12 (server API): T56-T59. Phase 13 (PostgreSQL): T60-T63. Phase 14 (client SQLite): T64-T66. Phase 15
+(Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85.

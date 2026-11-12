@@ -1,6 +1,6 @@
-# LARIS — Task ledger: Obsidian brain and scholarly harness
+# LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.1.0 · 2026-11-11 · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.0 · 2026-11-12 (T48-T85: second programme) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -565,3 +565,373 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - Suite passes; limits hold in every scenario
 - Status: done
 - Note: tests/unit/agent/test_agentic_scenarios.py (14 scenarios) and docs/testing/AGENTIC_SCENARIOS.md; the report states the model is NOT QUALIFIED. Scripted provider only: says nothing about a trained model's planning quality.
+
+## Phase 9 — Decisions of the second programme
+
+### T48 — ADR-019 and dependency approvals
+- Requirements: SR-S1, SR-S2, SR-H5
+- Depends: T46
+- Deliverables:
+  - ADR-019 "Three blocks, two protocols, two SQL engines, Docker, terminal client" with D10 to D21
+  - Amendments to ADR-015 (embedding path, server storage, client data in the global home), ADR-016 (no offline mode, protocol version, global home and isolated runtime, project `.laris/` without configuration, login without `--server`), ADR-018 (PostgreSQL, trusted proxy)
+  - `pyproject.toml` extras: `server` (fastapi, uvicorn, psycopg[binary], psycopg_pool, cryptography), `model` (fastapi, uvicorn); `ink`, `react` recorded as approved (2026-11-12) with pinned versions; `prompt_toolkit` and `rich` recorded as approved then dropped (D22); `uv` recorded as approved (2026-11-12) for sandbox provisioning, its binary pinned per platform
+- Validation:
+  - `validate_docs` and `validate_spec` pass; ADR index lists ADR-019
+- Status: pending
+
+## Phase 10 — Three blocks
+
+### T49 — Protocol package and removal of import cycles
+- Requirements: SR-S1, SR-S2
+- Depends: T48
+- Deliverables:
+  - `laris.protocol`: `Message`, `ToolCall`, `AssistantTurn`, `ChatProvider`, SSE encode and decode, `Chunk`, P1 and P2 pydantic schemas, protocol version constant
+  - Cycles removed: `Chunk` out of `application/workspace.py`, provider types out of `agent/provider.py`, `check_key` out of `harness/credentials.py`, `config/loader.py` no longer imports `harness.prefs`
+- Validation:
+  - No cycle among `agent`, `harness`, `vault`, `application`, `learning`; the no-training suite passes unchanged
+- Status: pending
+
+### T50 — Move packages into blocks
+- Requirements: SR-S1
+- Depends: T49
+- Deliverables:
+  - A one-off import-rewrite script; packages moved to `src/laris/{shared,client,server,model,research}` as listed in spec SR-S1 (brain to server, project vault to client, `serving` and `serverdata` to server, `execution` and `language/inference` to model, training and evaluation to research)
+  - Tests, configuration, `pyproject.toml`, Makefile and CI paths updated
+- Validation:
+  - `ruff`, `mypy`, `validate_docs`, `make check-no-training` pass with the same results as before the move
+- Status: pending
+
+### T51 — Block-boundary contract test
+- Requirements: SR-S1
+- Depends: T50
+- Deliverables:
+  - `tests/unit/architecture/test_blocks.py`: blocks import only `protocol` and `shared`; nothing imports `research`; `shared` and `protocol` import no block
+- Validation:
+  - Test passes and fails on a planted violation
+- Status: pending
+
+### T52 — Entry points and the client wheel by block
+- Requirements: SR-S1
+- Depends: T51
+- Deliverables:
+  - Entry points `laris`, `laris-server`, `laris-model`; `cli/main.py` role switch removed
+  - `packaging/build_client.py` builds from `client`, `protocol`, `shared` instead of an import closure; `client-package.yml` updated
+- Validation:
+  - Built wheel contains no server, model, research module and no `.laris/` policy; npm smoke test in an empty folder passes
+- Status: pending
+
+## Phase 11 — Model service
+
+### T53 — Model service on P2
+- Requirements: SR-S3, SR-S2
+- Depends: T52
+- Deliverables:
+  - `laris-model serve` (FastAPI, uvicorn): `/v1/chat/completions` (stream, tools, reasoning), `/v1/embeddings`, `/health`; backend loader and `OfflinePlanner` placeholder moved here; encoder from `language/inference`
+  - The client loses its offline mode (D16)
+- Validation:
+  - Model boundary tests (SR-H6) pass over HTTP with the scripted backend; P2 contract tests pass
+- Status: pending
+
+### T54 — GPU queue from the execution package
+- Requirements: SR-S3
+- Depends: T53
+- Deliverables:
+  - Task router, weight staging and headroom governor wired into the model service: one queue, load and release by VRAM budget (configuration only)
+- Validation:
+  - Scripted backends with declared sizes never exceed the configured budget; queue order and timeouts tested
+- Status: pending
+
+### T55 — Server calls the model over P2
+- Requirements: SR-S3
+- Depends: T54
+- Deliverables:
+  - Gateway backend is an `HttpChatProvider` to `model_api.internal_url`; bounded concurrency `serving.model_concurrency`; no model code in the server process
+- Validation:
+  - Gateway tests pass against a model service; pointing the URL at another OpenAI-compatible server needs no code change
+- Status: pending
+
+## Phase 12 — Server API
+
+### T56 — FastAPI server for P1
+- Requirements: SR-S4, SR-S2
+- Depends: T55
+- Deliverables:
+  - P1 routes on FastAPI and uvicorn replacing `serving/model_server.py`; body validation (size, negative or missing `Content-Length`, shape); SSE `error` event mid-stream; protocol header check; brain lock narrowed to the brain budget
+- Validation:
+  - Tests for 400, 401, 403, 411, 413, 429, version mismatch, error mid-stream, a slow client not blocking others; `test_policy_server.py` passes
+- Status: pending
+
+### T57 — Trusted proxy and address rules
+- Requirements: SR-S4
+- Depends: T56
+- Deliverables:
+  - `serving.trusted_proxies`; real address from `X-Forwarded-For` only from a trusted proxy; `@server` and CIDR rules use it
+- Validation:
+  - Tests with trusted, untrusted and forged headers
+- Status: pending
+
+### T58 — Embedding through the server
+- Requirements: SR-S2, SR-S4
+- Depends: T56, T53
+- Deliverables:
+  - `POST /v1/laris/embed` (permission `embed`, metered, text never stored); client dense search embeds through it; the client no longer loads an encoder
+- Validation:
+  - Dense search works end to end with a scripted encoder; a test shows no request text in the database
+- Status: pending
+
+### T59 — Default key handling
+- Requirements: SR-S4
+- Depends: T56
+- Deliverables:
+  - The default key is no longer printed; `laris-server keys reveal default` or a 0600 secret file delivers it
+- Validation:
+  - Start-up output and logs contain no key (test)
+- Status: pending
+
+## Phase 13 — Server storage on PostgreSQL
+
+### T60 — PostgreSQL adapter and migrations
+- Requirements: SR-S5
+- Depends: T52
+- Deliverables:
+  - `laris.server.storage` on `psycopg_pool` implementing the ports; numbered SQL migrations; `laris-server db migrate`; key logic of `serverdata/keys.py`, `crypto.py`, `cache.py`, `netcheck.py` reused with new SQL
+- Validation:
+  - Storage tests pass with `LARIS_TEST_PG_DSN`; CI runs them against a PostgreSQL service
+- Status: pending
+
+### T61 — Atomic quota
+- Requirements: SR-S5
+- Depends: T60, T56
+- Deliverables:
+  - Reserve before the model call, settle after it in one transaction, in `finally`
+- Validation:
+  - N parallel requests never pass a limit; a disconnect is still settled
+- Status: pending
+
+### T62 — Partitions and retention
+- Requirements: SR-S5
+- Depends: T60
+- Deliverables:
+  - Monthly partitions for `usage` and `traces`; background retention on `serving.retention_interval_s`; daily usage summary
+- Validation:
+  - Expired partitions removed by the task; summaries match raw usage
+- Status: pending
+
+### T63 — Import from the SQLite server database
+- Requirements: SR-S5
+- Depends: T60
+- Deliverables:
+  - `laris-server db import-sqlite PATH` for keys, usage and traces
+- Validation:
+  - Lossless on a fixture database; imported keys verify and reveal
+- Status: pending
+
+## Phase 14 — Client storage on SQLite
+
+### T64 — Client store and automatic migration
+- Requirements: SR-S6
+- Depends: T52
+- Deliverables:
+  - `laris.client.store`: one SQLite file per private space at `~/.laris/projects/<slug>/<key-fp>.sqlite` (WAL, busy timeout, numbered migrations); one-time idempotent migration of existing files (including the project's `artifacts/chat/users/<fp>/`) with backups
+- Validation:
+  - Migration tests on fixtures; second run changes nothing; backups present
+- Status: pending
+
+### T65 — Workspace and embedding cache in SQLite
+- Requirements: SR-S6
+- Depends: T64, T58
+- Deliverables:
+  - `Workspace` and `SearchService` on the store with the same public interface; vectors cached by passage and model id; BM25 ranking unchanged
+- Validation:
+  - Rankings identical before and after on the retrieval fixture; two concurrent ingests lose nothing
+- Status: pending
+
+### T66 — Conversations, learning data and vault index cache in SQLite
+- Requirements: SR-S6
+- Depends: T64
+- Deliverables:
+  - `ConversationStore`, `Collector` storage and the vault index cache on the store; `laris learn export` still writes JSONL; vault notes stay Markdown
+- Validation:
+  - Existing conversation, learning and vault tests pass; export matches the earlier format
+- Status: pending
+
+## Phase 15 — Deployment with Docker
+
+### T67 — API and model images
+- Requirements: SR-S7
+- Depends: T55, T56
+- Deliverables:
+  - `docker/api.Dockerfile` (slim, non-root, `.[server]`), `docker/model.Dockerfile` (CUDA base, inference only); `.dockerignore` keeps policy, weights and data out
+- Validation:
+  - Images build; an image scan shows no `.laris/`, weights or data
+- Status: pending
+
+### T68 — Compose, Caddy and secrets
+- Requirements: SR-S7, SR-S4
+- Depends: T67, T60, T57
+- Deliverables:
+  - `docker/compose.yaml` (caddy, api, model with GPU reservation, postgres; internal network), `docker/Caddyfile` (TLS, SSE flush, body limit, timeouts), read-only mounts, Docker secrets, health checks
+- Validation:
+  - `docker compose config` validates; only Caddy publishes ports; integrity check runs at API start
+- Status: pending
+
+### T69 — Backup, runbook and smoke test
+- Requirements: SR-S7
+- Depends: T68, T62
+- Deliverables:
+  - `pg_dump` backup and restore scripts; operator runbook; end-to-end smoke test (empty folder, fresh home: login, chat with the placeholder, dense search)
+- Validation:
+  - Smoke test passes on the stack, or its commands are handed to the owner when no Docker or GPU is available
+- Status: pending
+
+## Phase 16 — Terminal client like Claude Code
+
+### T70 — Engine and engine protocol E1
+- Requirements: SR-C7
+- Depends: T52, T48
+- Deliverables:
+  - `laris engine --stdio`: the agent session behind E1 (JSON lines; events and commands of SR-C7; version in `ready`); JSON Schema in `laris.protocol`; the existing `AgentSession.send()` events mapped onto E1
+- Validation:
+  - Contract tests for every event and command; a scripted session produces a stable, schema-valid transcript
+- Status: pending
+
+### T71 — Global home, credentials and Claude-Code-style settings
+- Requirements: SR-C6, SR-C2
+- Depends: T52
+- Deliverables:
+  - Global home layout of SR-C6; `settings.json` with a shipped JSON Schema (server, model, ui, permissions, env, hooks, statusLine, sandbox, vault, learning, cleanupPeriodDays, autoUpdates); environment and flags override for one run; `laris config get|set` and `/config`
+  - Project `./.laris/` limited to `LARIS.md`, `skills/`, `commands/`, `memory/`; configuration files there ignored with a warning; `laris init` creates only that layout
+  - `laris login` without `--server`: reads `server.url`, hidden key prompt, check, certificate pin into `server.caFingerprint`, key saved to `~/.laris/.credentials.json` (0600)
+  - One-time migration of a 1.x home (`config.yaml`, `api_key`, legacy `runtime/<version>/`) with backups
+- Validation:
+  - Schema errors name the JSON path; first start in an empty home creates the layout; migration is idempotent; login refuses without `server.url`; a planted project `settings.json` changes nothing
+- Status: pending
+
+### T72 — Automatic sandbox
+- Requirements: SR-C8, SR-C5
+- Depends: T71
+- Deliverables:
+  - Background check at start and health check before each use; silent build and repair of `~/.laris/.venv/` with the bundled `uv` (standalone Python into `~/.laris/python/` from a configured source with checksums, else a suitable system Python); `sandbox.packages`; built-in `allow` rule for installs into the sandbox (user rules may tighten it); file lock; status-line hints; `/sandbox` and `/sandbox reset`
+  - Command environment: sandbox first on `PATH`, `VIRTUAL_ENV`, `PIP_REQUIRE_VIRTUALENV=1`
+- Validation:
+  - Temporary-home tests: an install into the sandbox runs without a prompt and a user `ask` rule restores the prompt; first use builds it without user action; deleted or corrupted sandbox repaired; two parallel sessions build once; offline without Python gives a clear message and the program keeps working; nothing written to system or user site-packages
+- Status: pending
+
+### T73 — Slash-command registry and custom commands
+- Requirements: SR-C2
+- Depends: T70
+- Deliverables:
+  - Registry in the engine replacing the `if/elif` chain in `cli/commands/agent.py`; built-in commands of SR-C2; custom commands from `~/.laris/commands` and `./.laris/commands` with `$ARGUMENTS`; completion served through E1 `complete`
+- Validation:
+  - Tests for each built-in command, completion and custom-command expansion
+- Status: pending
+
+### T74 — Permission modes and rules
+- Requirements: SR-C3
+- Depends: T71, T70
+- Deliverables:
+  - Modes `default`, `acceptEdits`, `plan`, policy-gated `bypass`; `allow`, `ask`, `deny` rules with patterns; `permission_request` and `permission_response` over E1; "always allow" written to `~/.laris/projects/<slug>/state.json` (or `permissions.allow` in `~/.laris/settings.json` for "everywhere"); Shift+Tab cycles modes
+- Validation:
+  - Rule precedence (deny wins), each mode, persistence of answers
+- Status: pending
+
+### T75 — Coding tools, diffs and checkpoints
+- Requirements: SR-C3, SR-C5
+- Depends: T74, T72
+- Deliverables:
+  - `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash` under the path policy and guards; `Bash` runs in the sandbox; built-in deny rule for installs outside the sandbox; diff carried in `permission_request`; checkpoint per edit (in `~/.laris/projects/<slug>/checkpoints/`) and `/rewind`
+- Validation:
+  - `Edit` uniqueness, denied paths never written, `Bash` timeout and confinement, `pip install --user` or a system interpreter install denied, rewind restores files
+- Status: pending
+
+### T76 — Input forms
+- Requirements: SR-C2
+- Depends: T73
+- Deliverables:
+  - `@path` mentions with completion, `!command` (in the sandbox), `# note`, pasted long text and images (local OCR)
+- Validation:
+  - Tests for each form; `!command` follows permission rules
+- Status: pending
+
+### T77 — Headless mode
+- Requirements: SR-C4
+- Depends: T70, T74
+- Deliverables:
+  - `laris -p`, standard input, `--output-format text|json|stream-json` (stream-json is E1), `--continue`, `--resume`, `--max-turns`, `--permission-mode`, `--allowed-tools`, `--disallowed-tools`, documented exit codes
+- Validation:
+  - Scripted-provider tests for every format and exit code
+- Status: pending
+
+### T78 — Hooks and folder trust
+- Requirements: SR-C4, SR-C5
+- Depends: T74, T72
+- Deliverables:
+  - Hooks `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` declared only in `~/.laris/settings.json`, run inside the sandbox, with JSON input, block decisions and timeouts; `/hooks`; a project's custom commands and skills used only after the folder is trusted (trust in `~/.laris/projects/<slug>/state.json`)
+- Validation:
+  - Allow, block, timeout and malformed-output tests; an untrusted folder runs nothing; hooks placed in a project folder are never run
+- Status: pending
+
+### T79 — Status, cost, context, interrupt and queued input
+- Requirements: SR-C1
+- Depends: T70, T56
+- Deliverables:
+  - `status` events (model, mode, context use, tokens left from `/v1/laris/account`, git branch, sandbox state); `/cost` and `/context`; `interrupt` closes the running stream and keeps a consistent conversation; messages sent while working are queued
+- Validation:
+  - Values match the account route and the context estimator; interrupt tests: saved conversation valid, usage recorded by the server
+- Status: pending
+
+### T80 — Plain-text mode (no dependencies)
+- Requirements: SR-C1
+- Depends: T79, T73, T76
+- Deliverables:
+  - `laris --plain`: minimal mode in the engine using only `input`/`print` over E1 (messages, approvals with diffs as text, slash commands, Ctrl+C); replaces the current `input()` REPL; offered by the npm launcher when the Ink front end cannot start
+- Validation:
+  - Pipe-input tests of the scenarios that apply to plain mode; no new dependency imported
+- Status: pending
+
+### T81 — Ink and React front end
+- Requirements: SR-C1, SR-C7
+- Depends: T79, T73, T76
+- Deliverables:
+  - TypeScript front end in the main npm package that starts the engine binary and speaks E1; multi-line input, history and search, completion, streamed Markdown with highlighting, spinner, approval dialogs with diffs, status line, Esc and Ctrl+C, queued input; version check against `ready`; build step and package layout (`packaging/npm`), Node engines field kept at 18 or newer
+- Validation:
+  - The scenario set passes through a recorded engine; npm smoke test in an empty folder with a fresh home starts the Ink interface; a version mismatch is reported
+- Status: pending
+
+### T82 — Client acceptance suite
+- Requirements: SR-C1, SR-C2, SR-C3, SR-C4, SR-C6, SR-C7, SR-C8
+- Depends: T75, T77, T78, T80, T81
+- Deliverables:
+  - End-to-end scripted sessions (Ink front end, plain mode and headless) covering the phase's features; user guide section drafted for owner approval (the guide is locked policy)
+- Validation:
+  - Suite passes in CI on Python 3.10 to 3.12 and Node 18 and 20
+- Status: pending
+
+## Phase 17 — Hardening and release 2.0.0
+
+### T83 — Security tests for the new surfaces
+- Requirements: SR-S4, SR-C5
+- Depends: T69, T82
+- Deliverables:
+  - Tests for slow handshakes, oversized and malformed bodies, forged forwarding headers, container isolation (ports, mounts), untrusted folders, planted project configuration, hostile hook output, injected shell and install requests, a tampered sandbox download
+- Validation:
+  - Security suite passes in CI
+- Status: pending
+
+### T84 — Documentation of the restructured system
+- Requirements: SR-H3, SR-S1
+- Depends: T83
+- Deliverables:
+  - SYSTEM_OVERVIEW, DATA_FLOW, AGENT_HARNESS, MODEL_BOUNDARY, CLI reference (Ink front end, plain mode, headless, E1, settings schema), deployment runbook, migration guide 1.x to 2.0; guide changes under `.laris/help` only with the owner's approval, then `laris harness verify` and `lock`
+- Validation:
+  - `validate_docs` passes; documents describe the flow of plan.md section 8
+- Status: pending
+
+### T85 — Release 2.0.0
+- Requirements: SR-H5
+- Depends: T84
+- Deliverables:
+  - Release branch, changelog, npm packages (main with the Ink front end, per-platform engine binaries with `uv`) and server images under the git flow
+- Validation:
+  - CI green; owner authorisation recorded for push, merge, tag and release
+- Status: pending
