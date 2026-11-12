@@ -5,7 +5,7 @@ document_type: "adr"
 status: "ACCEPTED"
 version: "1.0.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-12"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -14,6 +14,7 @@ related_documents:
   - "docs/architecture/AGENT_HARNESS.md"
   - "docs/architecture/BRAIN_THREAT_MODEL.md"
 decision_references:
+  - "ADR-019"
   - "ADR-014"
 change_summary: "Fixes where data lives and where code runs: everything on the user's machine except model inference, which is served by an authenticated, stateless server."
 ---
@@ -44,6 +45,16 @@ change_summary: "Fixes where data lives and where code runs: everything on the u
    with each request. That is acceptable only because the server is the owner's own; remote use must be
    enabled explicitly with `model_api.allow_remote` (rule C-4), and transport security (TLS) comes from
    a reverse proxy in front of the server.
+
+## 1b. Amendment by ADR-019 (2026-11-12)
+
+- **Embedding path.** The client never holds weights. Embeddings are computed only by the model block and
+  reached through `POST /v1/laris/embed` on the server (D16).
+- **Server storage.** Item 3 ("stores nothing") stays amended by ADR-018 and now by ADR-019: the server
+  keeps keys, usage and traces in PostgreSQL (D13). User documents, vault, skills and memory still never
+  reach the server's disk.
+- **Client data.** Conversations, workspace, embedding cache, learning data and the vault index cache are
+  kept in SQLite under the global home `~/.laris/projects/<slug>/` instead of `artifacts/chat/users/` (D13, D18).
 
 ## 2. Consequences
 

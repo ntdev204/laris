@@ -5,7 +5,7 @@ document_type: "adr"
 status: "ACCEPTED"
 version: "1.0.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-12"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,6 +13,7 @@ related_documents:
   - "docs/adr/ADR-015-local-data-plane-and-authenticated-server.md"
   - "docs/adr/ADR-016-policy-server-and-thin-client.md"
 decision_references:
+  - "ADR-019"
   - "ADR-015"
   - "ADR-016"
 change_summary: "The server gains a database (keys with roles, permissions and token quotas; usage; reasoning traces) and a cache. The model's reasoning is stored for the operator and never sent to a client."
@@ -71,6 +72,15 @@ change_summary: "The server gains a database (keys with roles, permissions and t
    `keys ip`). The check uses the TCP peer address on every request; a key used from a forbidden address
    looks like an unknown key (401). The server no longer refuses to start for lack of keys, because the
    built-in key always exists.
+
+## 1b. Amendment by ADR-019 (2026-11-12)
+
+- **PostgreSQL.** The server database becomes PostgreSQL (`psycopg`, `psycopg_pool`) in the Docker
+  deployment; tables `keys`, `usage`, `traces` keep their meaning, quota reservation becomes atomic and
+  traces gain partitions and retention (D13). The SQLite file of item 1 is imported once, then retired.
+- **Trusted proxy.** Behind Caddy every request arrives from the proxy's address. The address rules of
+  item 9 use the client address from `X-Forwarded-For` only when the TCP peer is in the configured
+  trusted-proxy list; otherwise the TCP peer is used (D14).
 
 ## 2. Consequences
 
