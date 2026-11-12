@@ -1,0 +1,5 @@
+{"name":"completion of slash and at","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}]},
+ {"expect":{"type":"complete","trigger":"/","text":"he"},"emit":[{"type":"completion","id":"c1","items":[{"value":"help","description":"list commands"}]}]},
+ {"expect":{"type":"complete","trigger":"@","text":"sr"},"emit":[{"type":"completion","id":"c2","items":[{"value":"src/","description":""},{"value":"srv.py","description":""}]}]}
+]}

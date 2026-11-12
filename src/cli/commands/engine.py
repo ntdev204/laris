@@ -13,6 +13,10 @@ class _Engine:
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--stdio", action="store_true", required=True, help="Speak E1 on stdio")
         parser.add_argument("--resume", default=None, help="Resume a session by id")
+        parser.add_argument(
+            "--continue", dest="continue_session", nargs="?", const="last", default=None,
+            metavar="SESSION_ID", help="Continue the newest session, or the one named by id",
+        )  # fmt: skip
         parser.add_argument("--workspace", default=None)
         parser.add_argument("--chat-dir", default=None)
         parser.add_argument("--model-api-url", default=None)
@@ -27,19 +31,25 @@ class _Engine:
 
         chat: Any = make_chat(args, interactive=False)  # never prompts: stdin carries commands
         conversation = None
-        if args.resume:
-            try:
-                conversation = dict(chat.conversations.get(args.resume))
-            except KeyError:
-                print(f"[ERROR] no session {args.resume}", file=sys.stderr)
-                return 2
+        wanted = args.resume or args.continue_session
+        if wanted:
+            rows = chat.conversations.list()  # newest first
+            if wanted == "last":
+                wanted = str(rows[0]["id"]) if rows else None  # none saved: start a new one
+            else:
+                matches = [str(r["id"]) for r in rows if str(r["id"]).startswith(wanted)]
+                if len(matches) != 1:  # an id, or a prefix that names exactly one session
+                    print(f"[ERROR] no session {wanted}", file=sys.stderr)
+                    return 2
+                wanted = matches[0]
+        if wanted:
+            conversation = dict(chat.conversations.get(wanted))
         try:
             version = metadata.version("laris")
         except metadata.PackageNotFoundError:
             version = "unknown"
         home = Path("~/.laris").expanduser()
         manager = make_sandbox(home, chat.prefs.path, version)
-        manager.start_background(lambda state: None)  # build or repair quietly while the user types
         return Engine(
             chat,
             sys.stdin,

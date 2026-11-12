@@ -70,8 +70,10 @@ class AgentSession:
         audit_dir: Optional[Path] = None,
         plan: Optional[List[Dict[str, str]]] = None,
         permissions: Optional[Any] = None,
+        hooks: Optional[Any] = None,
     ) -> None:
         self.permissions = permissions
+        self.hooks = hooks
         self.provider = provider
         self.registry = registry
         self.harness = harness or HarnessRuntime()
@@ -98,6 +100,29 @@ class AgentSession:
     def history(self) -> List[Message]:
         """Messages without the system prompt: what is persisted and shown."""
         return self.messages[1:]
+
+    def seal_interrupted(self) -> int:
+        """Make the conversation valid after a stream was closed early (Esc, SR-C1): every tool
+        call that never got a result receives an `interrupted` one, so the next request to the
+        model is well-formed. Returns how many results were added."""
+        answered = {m.get("tool_call_id") for m in self.messages if m.get("role") == "tool"}
+        added = 0
+        for message in list(self.messages):
+            for call in message.get("tool_calls") or []:
+                if call["id"] in answered:
+                    continue
+                answered.add(call["id"])
+                result = {"error": {"code": "interrupted", "message": "interrupted by the user"}}
+                position = self.messages.index(message) + 1
+                while (
+                    position < len(self.messages) and self.messages[position].get("role") == "tool"
+                ):
+                    position += 1  # keep the results of one assistant message together
+                self.messages.insert(
+                    position, {"role": "tool", "tool_call_id": call["id"], "content": dumps(result)}
+                )
+                added += 1
+        return added
 
     # -- conversation ----------------------------------------------------------------------
     # -- agentic planning ------------------------------------------------------------------
@@ -558,6 +583,12 @@ class AgentSession:
     def _execute(self, name: str, arguments: Dict[str, Any]) -> Any:
         spec = self.registry.tools.get(name)
         writes = bool(spec and spec.writes)
+        if self.hooks is not None:  # a PreToolUse hook can only block, never grant
+            pre = self.hooks.run(
+                "PreToolUse", {"tool_name": name, "tool_input": arguments}, tool=name
+            )
+            if pre.blocked:
+                return ToolExecutionError("hook_blocked", pre.reason).to_dict()
         if self.permissions is not None:  # modes and rules (SR-C3)
             decision = self.permissions.decide(name, arguments, writes).action
         else:
@@ -573,9 +604,23 @@ class AgentSession:
         ):
             return ToolExecutionError("approval_denied", "this action was not approved").to_dict()
         try:
-            return self.registry.call(name, arguments)
+            result = self.registry.call(name, arguments)
         except ToolExecutionError as exc:
             return exc.to_dict()
+        if self.hooks is not None:
+            post = self.hooks.run(
+                "PostToolUse",
+                {"tool_name": name, "tool_input": arguments, "tool_response": result},
+                tool=name,
+            )
+            feedback = "\n".join(([post.reason] if post.blocked else []) + post.context).strip()
+            if feedback:
+                result = (
+                    {**result, "hook_feedback": feedback}
+                    if isinstance(result, dict)
+                    else {"result": result, "hook_feedback": feedback}
+                )
+        return result
 
     # -- logs ------------------------------------------------------------------------------
     def _log_path(self) -> Optional[str]:

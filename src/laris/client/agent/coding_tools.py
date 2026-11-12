@@ -271,7 +271,14 @@ def build_coding_tools(ctx: CodingContext, sandbox: Sandbox) -> Tuple[ToolSpec, 
             dirs[:] = sorted(d for d in dirs if d not in SKIPPED_DIRS)
             for name in sorted(names):
                 found = Path(folder) / name
-                if not (ctx.policy is not None and ctx.policy.denied(found)):
+                try:  # a symlink planted in the folder may point out of it
+                    resolved = found.resolve()
+                except (OSError, RuntimeError):
+                    continue
+                if ctx.inside(resolved) and not (
+                    ctx.policy is not None
+                    and (ctx.policy.denied(found) or ctx.policy.denied(resolved))
+                ):
                     yield found
 
     def glob(args: Dict[str, Any]) -> Any:

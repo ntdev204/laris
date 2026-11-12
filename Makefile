@@ -1,6 +1,6 @@
 PY ?= laris-env/bin/python
 
-.PHONY: bench-vault lint typecheck docs workflow test test-no-training test-model-free eval-fast check check-no-training clean
+.PHONY: bench-vault lint typecheck docs workflow test test-no-training test-model-free test-client test-security eval-fast check check-no-training clean
 
 lint:
 	$(PY) -m ruff check .
@@ -26,6 +26,22 @@ test-model-free:
 		tests/unit/gateway tests/unit/serverdata tests/unit/architecture tests/unit/model \
 		tests/unit/evaluation/test_model_free_suite.py tests/unit/cli/test_tls_init.py \
 		tests/unit/cli/test_server_url_in_settings.py tests/unit/cli/test_server_auth.py
+
+# Client acceptance (T82): scripted sessions through the engine, headless and plain mode, plus the
+# client suites they rest on. The Ink front end is tested by `npm test` in packaging/npm (CI job
+# front-end). Separate invocations: the engine and acceptance suites each start engines that
+# outlive a test, and must not share a process.
+test-client:
+	$(PY) -m pytest -p no:cacheprovider tests/acceptance
+	$(PY) -m pytest -p no:cacheprovider tests/unit/engine tests/unit/hooks tests/unit/permissions \
+		tests/unit/coding tests/unit/sandbox tests/unit/settings
+
+# Security suite (T83): hostile network clients, a compromised container, a hostile project folder,
+# hostile hook output, injected shell and install requests, a tampered sandbox download. The tests
+# that need Docker run the local `caddy:2` image and skip without it. Its own process: it starts
+# servers and containers that must not share state with other suites.
+test-security:
+	$(PY) -m pytest -p no:cacheprovider tests/security -rs
 
 # Vault at 10,000 notes against the spec targets and recorded budgets (run on the workstation).
 bench-vault:

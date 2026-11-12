@@ -10,9 +10,11 @@ which saves the conversation, so the stored state is always consistent.
 import json
 import queue
 import threading
+from collections import deque
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, TextIO
 
+import laris.client.engine.statusline as statusline
 from laris.client.engine.commands import BUILTIN, Context
 from laris.client.input_forms import InputProcessor, kind_of
 from laris.protocol import engine as e1
@@ -99,13 +101,20 @@ class Engine:
         self._interrupted = threading.Event()
         self._turn: Optional[threading.Thread] = None
         self._permission_count = 0
+        self._queued: "deque[Dict[str, Any]]" = deque()  # messages typed while a turn runs
+        self.account = statusline.Account(chat)
+        self._sandbox_state = "unknown"
+        self._working = False
 
     # -- output ----------------------------------------------------------------------------
     def emit(self, message: Any) -> None:
         line = json.dumps(message.model_dump(mode="json"), ensure_ascii=False)
         with self._out:
-            self.writer.write(line + "\n")
-            self.writer.flush()
+            try:
+                self.writer.write(line + "\n")
+                self.writer.flush()
+            except (ValueError, OSError):  # the front end is gone: nobody is left to tell
+                return
 
     def _error(self, code: str, text: str) -> None:
         self.emit(e1.ErrorEvent(code=code, message=text))
@@ -207,15 +216,37 @@ class Engine:
         self._start(self._run_turn, text)
 
     def _start(self, target: Callable[..., None], *args: Any) -> None:
-        if self._turn is not None and self._turn.is_alive():
+        if self._busy():
             self._error("busy", "a turn is already running; send `interrupt` first")
             return
         self._interrupted.clear()
-        self._turn = threading.Thread(target=target, args=args, daemon=True)
+        self._working = True
+
+        def work() -> None:
+            try:
+                target(*args)
+            finally:
+                self._working = False  # before the thread ends, so the next one can start
+                # the main loop starts the next queued message and refreshes the status
+                self._inbox.put({"type": "_idle"})
+
+        self._turn = threading.Thread(target=work, daemon=True)
         self._turn.start()
 
     # -- input forms: @path, !command, # note, pasted text and images (SR-C2) --------------
+    def _busy(self) -> bool:
+        return self._working
+
     def _user_message(self, text: str, attachments: List[Dict[str, Any]]) -> None:
+        if self._busy() or self._queued:  # typed while the agent works: it runs next, in order
+            self._queued.append({"text": text, "attachments": attachments})
+            self.emit(
+                e1.Status(kind="queued", data={"count": len(self._queued), "text": text[:200]})
+            )
+            return
+        self._submit(text, attachments)
+
+    def _submit(self, text: str, attachments: List[Dict[str, Any]]) -> None:
         processor = InputProcessor(self.chat)
         form = kind_of(text)
         if form == "shell":
@@ -249,6 +280,51 @@ class Engine:
         self.emit(e1.Text(delta=str(result["output"]) + "\n"))
         self.emit(e1.Done(status="timed_out" if result["timed_out"] else "completed"))
 
+    def _next_queued(self) -> None:
+        if self._queued and not self._busy():
+            item = self._queued.popleft()
+            self.emit(
+                e1.Status(
+                    kind="queued", data={"count": len(self._queued), "started": item["text"][:200]}
+                )
+            )
+            self._submit(item["text"], item["attachments"])
+
+    # -- status line (SR-C1) ---------------------------------------------------------------
+    def status_line(self, refresh_account: bool = False) -> None:
+        """Send the values of the status line. The account (tokens left) is read off this thread
+        so a slow server never delays the session."""
+
+        def send(account: Optional[Dict[str, Any]]) -> None:
+            self.emit(
+                e1.Status(
+                    kind="line",
+                    data=statusline.collect(
+                        self.chat,
+                        self.conversation["id"],
+                        self.cwd,
+                        self._sandbox_state,
+                        account,
+                        len(self._queued),
+                    ),
+                )
+            )
+
+        send(self.account.value)
+
+        def fetch() -> None:
+            before = self.account.value
+            after = self.account.refresh(force=refresh_account)
+            if after is not None and after != before:
+                send(after)
+
+        threading.Thread(target=fetch, daemon=True, name="e1-account").start()
+
+    def _sandbox_changed(self, state: Any) -> None:
+        self._sandbox_state = state.state
+        self.emit(e1.Status(kind="sandbox", data={"state": state.state, "hint": state.hint()}))
+        self.status_line()
+
     def _join_turn(self) -> None:
         if self._turn is not None:
             self._turn.join(timeout=30)
@@ -256,7 +332,13 @@ class Engine:
     # -- slash commands and completion -----------------------------------------------------
     def _context(self) -> Context:
         return Context(
-            self.chat, self.conversation, self.home, self.cwd, self.sandbox, self.registry
+            self.chat,
+            self.conversation,
+            self.home,
+            self.cwd,
+            self.sandbox,
+            self.registry,
+            {"account": self.account},
         )
 
     def _command(self, command: Dict[str, Any]) -> None:
@@ -305,6 +387,7 @@ class Engine:
             self._error("bad_mode", str(exc))
             return
         self.emit(e1.Status(kind="mode", data={"mode": self.mode}))
+        self.status_line()
 
     # -- main loop -------------------------------------------------------------------------
     def run(self) -> int:
@@ -317,7 +400,15 @@ class Engine:
                 server=self.chat.runtime.config.model_api.base_url,
             )
         )
+        started = self.chat.session_start(self.conversation["id"])
+        for note in self.chat.hooks.drain():
+            self.emit(e1.Status(kind="hook", data=note))
+        if started.blocked:  # a SessionStart hook cannot stop a session; it is told to the user
+            self._error("hook_blocked", started.reason)
         threading.Thread(target=self._read, daemon=True, name="e1-reader").start()
+        if self.sandbox is not None:
+            self.sandbox.start_background(self._sandbox_changed)  # build or repair while typing
+        self.status_line()
         while True:
             command = self._inbox.get()
             if command is None or command["type"] == "shutdown":
@@ -331,6 +422,10 @@ class Engine:
                 self._set_mode(command["mode"])
             elif kind == "complete":
                 self._complete(command)
+            elif kind == "_idle":
+                self.status_line(refresh_account=True)  # the turn just spent tokens
+                self._next_queued()
+        self._queued.clear()
         self._interrupt()  # a running turn is stopped and its conversation saved
         self._join_turn()
         return 0

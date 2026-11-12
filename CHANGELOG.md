@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Security suite (T83):** `tests/security` and `make test-security` (a CI step): hostile network clients, a compromised container (static compose checks and the real `caddy:2`), a hostile project folder, hostile hook output, injected shell and install requests, a tampered sandbox download.
+- **Client acceptance suite (T82):** scripted sessions through the engine, headless `stream-json`, plain mode and the Ink front end (recorded from the engine and kept equal by a test), `make test-client` in CI, and a draft user-guide section for owner approval (`docs/development/CLIENT_GUIDE_DRAFT.md`).
 - **Three blocks (ADR-019):** `client`, `server` and `model` programs over shared `protocol` and `shared` packages, with import-boundary tests; protocols P1 (client-server, HTTPS and SSE), P2 (server-model, internal) and E1 (engine protocol over stdio, `laris engine --stdio`).
 - **Server storage on PostgreSQL:** numbered migrations, atomic token quota (reserve, settle, release), monthly partitions, retention worker, SQLite importer, `laris-server db migrate|import-sqlite`.
 - **Docker deployment:** API and model images (CPU and CUDA), Compose stack behind Caddy with Docker secrets and read-only policy, backup and restore scripts, image scanner, end-to-end smoke test, deployment runbook.
@@ -19,8 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Coding tools:** `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash` with diffs in permission requests, a checkpoint per edit and `/rewind`.
 - **Input forms:** `@path` mentions, `!command`, `# note`, long pasted text and pasted images (local OCR).
 - **Headless mode:** `laris -p` with `--output-format text|json|stream-json`, `--continue`, `--resume`, `--max-turns`, `--permission-mode`, `--allowed-tools`, `--disallowed-tools` and documented exit codes.
+- **Hooks and folder trust:** `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop` hooks declared only in `~/.laris/settings.json`, run in the sandbox with block decisions and timeouts, `/hooks`; project commands and skills are used only after the folder is trusted.
+- **Status line, queued input and interrupt:** engine `status` events (model, mode, context use, tokens left from the account route, git branch, sandbox state), `/cost` and `/context` from the same values; messages typed while the agent works are queued in order; an interrupted turn leaves every tool call answered in the saved conversation.
+- **Plain-text mode:** `laris --plain` is an E1 front end that uses only `input` and `print` (messages, slash commands, approvals with diffs as text, Ctrl+C); it replaces the old `input()` loop and needs no extra dependency.
+- **Ink front end:** `laris` opens a terminal interface written in TypeScript with Ink and React over engine protocol E1: multi-line input (backslash+Enter), history and Ctrl+R search, `/` and `@` completion from the engine, streamed Markdown with code highlighting, a spinner, approval dialogs with diffs and "always allow" scopes, a status line, Esc to interrupt, Ctrl+C twice to exit, Shift+Tab to change mode and typing while the agent works (queued). It checks the protocol version in `ready` and refuses a mismatch; if the interface cannot load, the launcher starts `--plain`. `laris --resume` lists sessions to choose from; `laris --continue [ID]` continues the newest session or the one named by id (unique prefix accepted).
+
+### Fixed
+- **Permission rules and installs:** an `allow` rule for one shell command no longer lets a chained, piped or substituted second command through; `deny` and `ask` rules match any part of a line; the built-in install rule reads `&`, new lines, `$(…)`, backticks, groups, `bash -c` and wrappers, and checks every part of a line.
+- **Hostile project folder:** the client no longer reads a project `.env` (it could redirect the model, switch approvals off and disable the integrity check); `Grep` no longer follows a symlink out of the project.
+- **Server and proxy:** a deeply nested JSON body is a 400, not a 500; Caddy now closes slow TLS handshakes and slow headers (`read_header`, `read_body`, `idle`).
+- **Hooks:** invalid UTF-8 output no longer crashes the runner, output is read with a bound, and terminal escape sequences are removed from what a hook shows.
 
 ### Changed
+- The npm package now needs Node 22 or newer (Ink 8) and ships the compiled front end; `ink` 8.0.0 and `react` 19.3.1 are runtime dependencies.
 - Diagnostics of `laris -p` go to standard error; tests no longer read or write the real `~/.laris`.
 
 ## [1.5.2] - 2026-11-12

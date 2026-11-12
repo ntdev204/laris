@@ -1,5 +1,18 @@
 # TLS terminates here. `LARIS_DOMAIN=localhost` uses Caddy's local CA; a real name gets a public
 # certificate automatically. The API sees only plain HTTP on the internal network.
+# Slow clients: Caddy's defaults wait for a TLS handshake, a header or a body for ever, so a few
+# hundred half-open connections would hold every socket. `read_body` also bounds the TLS handshake.
+# No write timeout: it would cut a long server-sent-events answer.
+{
+	servers {
+		timeouts {
+			read_body 30s
+			read_header 10s
+			idle 2m
+		}
+	}
+}
+
 {$LARIS_DOMAIN:localhost} {
 	encode zstd gzip
 

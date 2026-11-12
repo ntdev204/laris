@@ -1,0 +1,9 @@
+{"name":"typing while the agent works","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}]},
+ {"expect":{"type":"user_message","text":"first"},"emit":[{"type":"text","delta":"working on first\n"}]},
+ {"expect":{"type":"user_message","text":"second"},"wait":150,"emit":[
+   {"type":"status","kind":"queued","data":{"count":1,"text":"second"}},
+   {"type":"done","status":"completed","answer":""},
+   {"type":"status","kind":"queued","data":{"count":0,"started":"second"}},
+   {"type":"text","delta":"answer to second\n"},{"type":"done","status":"completed","answer":""}]}
+]}

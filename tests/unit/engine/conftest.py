@@ -49,12 +49,25 @@ class Out(io.StringIO):
         raise AssertionError(f"no {kind} event; got {[e['type'] for e in self.events()]}")
 
 
+def wait_status(out, kind, count=1, timeout=10.0):
+    """Wait for `count` status events of one kind (status lines arrive on their own schedule)."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        found = [e for e in out.events() if e["type"] == "status" and e["kind"] == kind]
+        if len(found) >= count:
+            return found
+        time.sleep(0.01)
+    raise AssertionError(f"no {count} status {kind}; got {out.events()}")
+
+
 class Harness:
     def __init__(self, chat, project):
         self.feed, self.out = Feed(), Out()
         self.engine = Engine(chat, self.feed, self.out, "2.0.0-test", cwd=project)
         self.code = []
-        self.thread = threading.Thread(target=lambda: self.code.append(self.engine.run()))
+        self.thread = threading.Thread(
+            target=lambda: self.code.append(self.engine.run()), daemon=True
+        )
         self.thread.start()
 
     def stop(self):

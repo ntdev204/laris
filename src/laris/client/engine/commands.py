@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from laris.client.engine.statusline import Account, context_use
 from laris.client.permissions import parse_rule
 from laris.client.project_state import ProjectState
 from laris.client.sandbox import SandboxManager, sandbox_command
@@ -288,18 +289,33 @@ def _status(ctx: Context, rest: str) -> Result:
     return Result(json.dumps(info, indent=2, ensure_ascii=False, default=str))
 
 
-@cmd("cost", "tokens used in this session")
+def _account(ctx: Context) -> Optional[Dict[str, Any]]:
+    """The account route's answer, shared with the status line when the engine provides it."""
+    source = ctx.extras.get("account") or Account(ctx.chat)
+    return source.refresh(force=True)  # type: ignore[no-any-return]
+
+
+@cmd("cost", "tokens used in this session and left on the account")
 def _cost(ctx: Context, rest: str) -> Result:
-    usage = ctx.chat.usage(ctx.conversation["id"])
-    return Result(f"≈ {usage['tokens']} tokens in the context of {usage['window']}")
+    use = context_use(ctx.chat, ctx.conversation["id"])
+    lines = [f"context: ≈ {use['tokens']} tokens of {use['window']}"]
+    account = _account(ctx)
+    if account is None:
+        lines.append("account: not available (no server, or it did not answer)")
+    else:
+        left, used = account.get("tokens_left"), account.get("tokens_used")
+        lines.append(f"used on the account: {used}")
+        lines.append("left: " + ("unlimited" if left is None else str(left)))
+    return Result("\n".join(lines))
 
 
 @cmd("context", "context size and auto-compact setting")
 def _context(ctx: Context, rest: str) -> Result:
-    usage = ctx.chat.usage(ctx.conversation["id"])
+    use = context_use(ctx.chat, ctx.conversation["id"])
     cfg = ctx.chat.settings()
+    share = f" ({use['percent']}%)" if use["percent"] is not None else ""
     return Result(
-        f"≈ {usage['tokens']}/{usage['window']} tokens; auto-compact "
+        f"≈ {use['tokens']}/{use['window']} tokens{share}; auto-compact "
         f"{'on' if cfg['auto_compact'] else 'off'} at {int(cfg['compact_threshold'] * 100)}%"
     )
 

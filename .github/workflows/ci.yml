@@ -85,8 +85,39 @@ jobs:
       - name: Run the PostgreSQL storage tests (real database service)
         run: uv run pytest tests/unit/storage -q
 
+      - name: Run the client acceptance suite (scripted sessions, no model)
+        run: make PY='uv run python' test-client
+
+      - name: Run the security suite (hostile clients, folders, hooks, installs; Docker tests skip when caddy:2 is not local)
+        run: make PY='uv run python' test-security
+
       - name: Run owner-authorized preparation checks (no training tests)
         run: make PY='uv run python' check-no-training
+
+  front-end:
+    name: Ink front end (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: packaging/npm/package-lock.json
+
+      - name: Install the pinned front-end packages
+        working-directory: packaging/npm
+        run: npm ci
+
+      - name: Type-check, build and run the front-end tests (recorded engine, pty smoke test)
+        working-directory: packaging/npm
+        run: npm test
 
   build-and-smoke:
     name: Package Build & Fresh Environment Smoke Test

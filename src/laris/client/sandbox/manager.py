@@ -182,6 +182,7 @@ class SandboxManager:
         )
 
     def _fail(self, message: str) -> SandboxState:
+        shutil.rmtree(self.home / ".venv.building", ignore_errors=True)  # never keep a half build
         self.last_failure = message
         return SandboxState("failed", message)
 

@@ -116,7 +116,7 @@ def create_app(
             raise HTTPException(408, "the request body arrived too slowly") from None
         try:
             body = json.loads(b"".join(chunks) or b"{}")
-        except ValueError:
+        except (ValueError, RecursionError):  # a nesting bomb is invalid JSON, not a server error
             raise HTTPException(400, "invalid JSON") from None
         if not isinstance(body, dict):
             raise HTTPException(400, "the body must be a JSON object")

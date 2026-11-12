@@ -543,7 +543,7 @@
       },
       "Status": {
         "additionalProperties": false,
-        "description": "Progress that is not text: `kind` is verify, reflect, brain, learning, mode, notice ...",
+        "description": "Progress that is not text: `kind` is verify, reflect, brain, learning, mode, notice, line\n(the status line values), queued (a message waiting for the running turn), sandbox ...",
         "properties": {
           "data": {
             "additionalProperties": true,
