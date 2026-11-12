@@ -18,9 +18,9 @@ def test_owner_runbook_commands_parse_without_execution():
     for block in re.findall(r"```bash\n(.*?)```", text, re.S):
         for line in block.replace("\\\n", " ").splitlines():
             tokens = shlex.split(line.split("|", 1)[0])
-            if ".venv/bin/laris" not in tokens:
+            if ".venv/bin/laris-server" not in tokens:
                 continue
-            index = tokens.index(".venv/bin/laris")
+            index = tokens.index(".venv/bin/laris-server")
             args = parser.parse_args([token for token in tokens[index + 1 :] if token != "2>&1"])
             parsed.append(args)
             prefix = tokens[:index]
