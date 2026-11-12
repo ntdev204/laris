@@ -170,6 +170,9 @@ serving:
   database_pool_min: 1
   database_pool_max: 10
   database_timeout_s: 10.0
+  trace_retention_days: 30.0
+  usage_retention_days: 90.0
+  retention_interval_s: 3600.0
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true

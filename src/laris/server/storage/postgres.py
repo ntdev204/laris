@@ -7,9 +7,10 @@ on a pooled connection in autocommit mode, `?` becomes `%s`, rows are dicts, and
 several statements that must commit together. The key logic itself is reused unchanged.
 """
 
+import time
 from contextlib import contextmanager
 from decimal import Decimal
-from typing import Any, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set
 
 from laris.server.storage.migrate import migrate
 
@@ -46,6 +47,8 @@ class Session:
         self._db, self._conn = db, conn
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> Result:
+        if sql.lstrip()[:11].upper() in ("INSERT INTO",) and sql.split()[2] in ("usage", "traces"):
+            self._db.ensure_current_partitions()  # rows are written "now": its month must exist
         if self._conn is not None:
             return self._run(self._conn, sql, params)
         with self._db.pool.connection() as conn:
@@ -74,6 +77,8 @@ class PgDatabase:
         except ImportError as exc:  # the server extra provides both
             raise StorageError("PostgreSQL needs psycopg and psycopg_pool (laris[server])") from exc
         self.schema = schema
+        self._ensured: Set[str] = set()
+        self.auto_partitions = True  # off only for tests that run old migrations by hand
         options = f"-c search_path={schema}" if schema else None
         kwargs: Dict[str, Any] = {"autocommit": True, "row_factory": dict_row}
         if options:
@@ -90,6 +95,16 @@ class PgDatabase:
             self.session().execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
         if apply_migrations:
             migrate(self)
+
+    def ensure_current_partitions(self) -> None:
+        """Once per month per process: create this and the next months' partitions."""
+        key = time.strftime("%Y%m", time.gmtime())
+        if not self.auto_partitions or key in self._ensured:
+            return
+        from laris.server.storage.maintenance import Maintenance
+
+        Maintenance(self).ensure_partitions()
+        self._ensured.add(key)
 
     def session(self) -> Session:
         return Session(self)

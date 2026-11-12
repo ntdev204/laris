@@ -121,6 +121,14 @@ class _Serve:
             else "AUTHENTICATION IS OFF"
         )
         server = build_server(service, host, port, cfg.max_body_bytes, cfg.trusted_proxies)
+        retention = None
+        if cfg.database_engine == "postgres":  # partitions, daily summary, expiry (T62)
+            from laris.server.storage.maintenance import Maintenance, RetentionWorker
+
+            retention = RetentionWorker(
+                Maintenance(data.db, cfg.usage_retention_days, cfg.trace_retention_days),
+                cfg.retention_interval_s,
+            ).start()
         if cert:
             try:
                 enable_tls(server, cert, identity)
@@ -138,6 +146,8 @@ class _Serve:
         except KeyboardInterrupt:
             print("\nstopped")
         finally:
+            if retention is not None:
+                retention.stop()
             server.server_close()
         return 0
 

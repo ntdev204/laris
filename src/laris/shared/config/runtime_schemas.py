@@ -237,6 +237,8 @@ class ServingConfig(BaseModel):
     reasoning_tags: List[List[str]] = Field(default_factory=lambda: [["<think>", "</think>"]])
     reasoning_http: bool = Field(default=False)  # serve traces over HTTP (off: local CLI only)
     trace_retention_days: float = Field(default=30.0, gt=0.0)
+    usage_retention_days: float = Field(default=90.0, gt=0.0)  # raw usage rows; days stay summed
+    retention_interval_s: float = Field(default=3600.0, ge=1.0)  # how often retention runs
     roles: Dict[str, List[str]] = Field(
         default_factory=lambda: {
             "user": ["chat", "embed", "models", "workflows", "help", "account"],

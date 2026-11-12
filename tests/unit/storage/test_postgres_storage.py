@@ -26,26 +26,35 @@ def test_migrations_are_numbered_without_gaps_and_apply_once(pg):
     assert [r["version"] for r in rows] == [n for n, _, _ in files]
 
 
-def test_two_processes_migrating_together_apply_each_once(pg):
+def test_two_processes_migrating_together_apply_each_once():
+    import os
+    import uuid
+
     from laris.server.storage import PgDatabase
 
-    pg.session().execute("DROP TABLE schema_version CASCADE")
-    for table in ("keys", "usage", "traces"):
-        pg.session().execute(f"DROP TABLE {table} CASCADE")
+    dsn = os.environ.get("LARIS_TEST_PG_DSN")
+    if not dsn:
+        pytest.skip("LARIS_TEST_PG_DSN is not set")
+    schema = "mm_" + uuid.uuid4().hex[:8]
+    db = PgDatabase(dsn, schema=schema, apply_migrations=False, max_size=8)
     errors = []
 
     def run():
         try:
-            migrate(pg)
+            migrate(db)
         except Exception as exc:  # pragma: no cover - the assertion reports it
             errors.append(exc)
 
-    threads = [threading.Thread(target=run) for _ in range(4)]
-    [t.start() for t in threads]
-    [t.join() for t in threads]
-    assert not errors
-    count = pg.session().execute("SELECT COUNT(*) AS n FROM schema_version").fetchone()["n"]
-    assert count == len(migration_files()) and PgDatabase
+    try:
+        threads = [threading.Thread(target=run) for _ in range(4)]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+        assert not errors
+        count = db.session().execute("SELECT COUNT(*) AS n FROM schema_version").fetchone()["n"]
+        assert count == len(migration_files())
+    finally:
+        db.session().execute(f'DROP SCHEMA "{schema}" CASCADE')
+        db.close()
 
 
 def test_keys_create_verify_reveal_revoke_limit(pg):
