@@ -60,7 +60,7 @@ def test_failed_transaction_rolls_back(tmp_path):
 def test_migration_is_lossless_idempotent_and_backed_up(tmp_path):
     ws, chats = _legacy(tmp_path)
     store = Store(tmp_path / "home" / "projects" / "p" / "local.sqlite")
-    assert migrate_legacy(store, ws, chats) == {"chunks": 3, "conversations": 1}
+    assert migrate_legacy(store, ws, chats) == {"chunks": 3, "conversations": 1, "learning": 0}
     with store.connect() as conn:
         assert [r[0] for r in conn.execute("SELECT text FROM chunks ORDER BY ordinal")] == [
             "passage 0",
@@ -72,7 +72,7 @@ def test_migration_is_lossless_idempotent_and_backed_up(tmp_path):
     backups = sorted(p.name for p in (store.path.parent / "backups").iterdir())
     assert len(backups) == 2 and (ws / "chunks.jsonl").exists()  # originals are kept
     before = store.path.read_bytes()
-    assert migrate_legacy(store, ws, chats) == {"chunks": 0, "conversations": 0}
+    assert migrate_legacy(store, ws, chats) == {"chunks": 0, "conversations": 0, "learning": 0}
     with store.connect() as conn:
         assert conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0] == 3
     assert len(list((store.path.parent / "backups").iterdir())) == 2

@@ -210,7 +210,7 @@ def _vault_command(chat: Any, query: str) -> None:
     if not folder.is_dir():
         print("chưa có vault; nó được tạo ở lần nạp tài liệu hoặc hỏi đáp đầu tiên")
         return
-    index = VaultIndex.build(folder, cache_file=chat.project_root / cfg.cache_dir / "index.json")
+    index = VaultIndex.build(folder, cache_file=chat.project_root / cfg.cache_dir / "index.sqlite")
     if not query:
         print(
             f"vault {cfg.dir}/: {len(index.notes)} ghi chú, {len(index.unresolved)} liên kết hỏng"

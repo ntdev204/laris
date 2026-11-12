@@ -1,4 +1,3 @@
-import json
 import random
 import string
 from pathlib import Path
@@ -47,22 +46,28 @@ def test_index_serialisation_is_byte_identical_and_cache_is_disposable(tmp_path)
     first = make(vault, files)
     second = VaultIndex.build(vault)
     assert first.dumps() == second.dumps()
-    cache = tmp_path / "cache" / "index.json"
+    cache = tmp_path / "cache" / "index.sqlite"
     built = VaultIndex.build(vault, cache_file=cache)
-    assert cache.exists() and json.loads(cache.read_text())["version"] == 1
+    import sqlite3
+
+    with sqlite3.connect(cache) as conn:
+        assert conn.execute("SELECT data FROM vault_index WHERE path='__version__'").fetchone() == (
+            "1",
+        )
+        assert conn.execute("SELECT COUNT(*) FROM vault_index").fetchone()[0] == 3
     from_cache = VaultIndex.build(vault, cache_file=cache)
     assert from_cache.dumps() == built.dumps()
     assert from_cache.notes["A.md"].props["created"] == first.notes["A.md"].props["created"]
     cache.unlink()  # deleting the cache loses nothing
     assert VaultIndex.build(vault, cache_file=cache).dumps() == built.dumps()
-    cache.write_text("{broken", encoding="utf-8")  # a corrupt cache is ignored
+    cache.write_text("{broken", encoding="utf-8")  # a corrupt cache is ignored, then replaced
     assert VaultIndex.build(vault, cache_file=cache).dumps() == built.dumps()
 
 
 def test_editing_one_note_changes_only_its_entries(tmp_path):
     vault = tmp_path / "v"
     index = make(vault, {"A.md": "one", "B.md": "two"})
-    cache = tmp_path / "c.json"
+    cache = tmp_path / "c.sqlite"
     VaultIndex.build(vault, cache_file=cache)
     (vault / "A.md").write_text("one changed", encoding="utf-8")
     again = VaultIndex.build(vault, cache_file=cache)

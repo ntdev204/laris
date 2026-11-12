@@ -1,4 +1,4 @@
-"""Persistent conversations (JSON files) and user settings for the chat front ends."""
+"""Persistent conversations (SQLite) and user settings for the chat front ends."""
 
 import json
 import re
@@ -7,18 +7,26 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from laris.client.store import Store, migrate_legacy
+
 _ID = re.compile(r"^[0-9a-f]{12}$")
 
 
 class ConversationStore:
-    def __init__(self, root: Path) -> None:
+    """Conversations in SQLite: `store` (a private space) or `<root>/conversations.sqlite`. Earlier
+    `<root>/<id>.json` files are imported once, with a backup."""
+
+    def __init__(self, root: Path, store: Optional[Store] = None) -> None:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
+        self.store = store or Store(self.root / "conversations.sqlite")
+        migrate_legacy(self.store, conversations=self.root)
 
-    def _path(self, conversation_id: str) -> Path:
+    @staticmethod
+    def _check(conversation_id: str) -> str:
         if not _ID.match(conversation_id):
             raise KeyError(conversation_id)
-        return self.root / f"{conversation_id}.json"
+        return conversation_id
 
     def create(self, title: str = "Cuộc trò chuyện mới") -> Dict[str, Any]:
         now = time.time()
@@ -33,34 +41,44 @@ class ConversationStore:
         return conversation
 
     def get(self, conversation_id: str) -> Dict[str, Any]:
-        path = self._path(conversation_id)
-        if not path.exists():
+        with self.store.connect() as conn:
+            row = conn.execute(
+                "SELECT data FROM conversations WHERE id = ?", (self._check(conversation_id),)
+            ).fetchone()
+        if row is None:
             raise KeyError(conversation_id)
-        data: Dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        data: Dict[str, Any] = json.loads(row[0])
         return data
 
     def save(self, conversation: Dict[str, Any]) -> None:
         conversation["updated"] = time.time()
-        path = self._path(conversation["id"])
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(conversation, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(path)
+        self._check(conversation["id"])
+        with self.store.transaction() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO conversations VALUES (?,?,?,?,?)",
+                (
+                    conversation["id"],
+                    conversation["title"],
+                    conversation["created"],
+                    conversation["updated"],
+                    json.dumps(conversation, ensure_ascii=False),
+                ),
+            )
 
     def delete(self, conversation_id: str) -> None:
-        self._path(conversation_id).unlink(missing_ok=True)
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM conversations WHERE id = ?", (self._check(conversation_id),))
 
     def list(self) -> List[Dict[str, Any]]:
-        rows = []
-        for path in self.root.glob("*.json"):
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-                rows.append(
-                    {k: data[k] for k in ("id", "title", "created", "updated")}
-                    | {"messages": len(data.get("messages", []))}
-                )
-            except (json.JSONDecodeError, KeyError):
-                continue
-        return sorted(rows, key=lambda r: -r["updated"])
+        with self.store.connect() as conn:
+            rows = conn.execute(
+                "SELECT id, title, created, updated, "
+                "json_array_length(data, '$.messages') FROM conversations ORDER BY updated DESC"
+            ).fetchall()
+        return [
+            {"id": r[0], "title": r[1], "created": r[2], "updated": r[3], "messages": r[4] or 0}
+            for r in rows
+        ]
 
 
 def title_from(text: str, limit: int = 48) -> str:

@@ -213,8 +213,7 @@ def store(project, tmp_path):
 
 
 def rows(store, kind):
-    path = store.dir / f"{kind}.jsonl"
-    return [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
+    return list(store._read(kind))
 
 
 def test_good_turn_is_stored_as_sft_retrieval_pair(store):
@@ -349,9 +348,7 @@ def test_chat_upload_reports_the_generated_skill(project, tmp_path):
     import base64
 
     service = SearchService(Workspace(tmp_path / "ws"))
-    chat = ChatApp(
-        service, project, project / "chat", overrides={"learning.skill_on_ingest": True}
-    )
+    chat = ChatApp(service, project, project / "chat", overrides={"learning.skill_on_ingest": True})
     out = chat.upload("graphene notes.txt", base64.b64encode(GRAPHENE.encode()).decode(), True)
     assert out["ingested"]["skill"] == "corpus-graphene-notes"
     assert (skills_dir(project) / "corpus-graphene-notes" / "SKILL.md").exists()

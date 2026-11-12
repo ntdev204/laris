@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from laris.client.store import Store, migrate_legacy
 from laris.shared.config.runtime_schemas import LearningConfig
 from laris.shared.harness.guard import Guard
 
@@ -28,15 +29,29 @@ def _digest(*parts: str) -> str:
 
 
 class Collector:
-    def __init__(self, cfg: LearningConfig, root: Path) -> None:
+    def __init__(self, cfg: LearningConfig, root: Path, store: Optional[Store] = None) -> None:
         self.cfg = cfg
         self.dir = Path(root)
         self._lock = threading.Lock()
         self._seen: Optional[Dict[str, set]] = None
+        self._store = store
+        self._ready = False
 
     # -- storage ---------------------------------------------------------------------------
-    def _path(self, kind: str) -> Path:
-        return self.dir / f"{kind}.jsonl"
+    @property
+    def store(self) -> Store:
+        """Opened on first use, so a disabled collector creates nothing."""
+        if self._store is None:
+            self.dir.mkdir(parents=True, exist_ok=True)
+            try:
+                self.dir.chmod(0o700)
+            except OSError:
+                pass
+            self._store = Store(self.dir / "learning.sqlite")
+        if not self._ready:
+            migrate_legacy(self._store, learning=self.dir)
+            self._ready = True
+        return self._store
 
     def _ids(self) -> Dict[str, set]:
         if self._seen is None:
@@ -44,27 +59,30 @@ class Collector:
         return self._seen
 
     def _read(self, kind: str) -> Iterable[Dict[str, Any]]:
-        path = self._path(kind)
-        if not path.is_file():
+        if (
+            self._store is None
+            and not (self.dir / "learning.sqlite").exists()
+            and not any((self.dir / f"{k}.jsonl").exists() for k in (*KINDS, "feedback"))
+        ):
             return
-        with open(path, encoding="utf-8") as handle:
-            for line in handle:
-                if line.strip():
-                    yield json.loads(line)
+        with self.store.connect() as conn:
+            rows = conn.execute(
+                "SELECT data FROM learning WHERE kind = ? ORDER BY id", (kind,)
+            ).fetchall()
+        for row in rows:
+            yield json.loads(row[0])
 
     def _append(self, kind: str, row: Dict[str, Any]) -> bool:
         ids = self._ids()[kind]
         if row["id"] in ids:
             return False
-        self.dir.mkdir(parents=True, exist_ok=True)
-        try:
-            self.dir.chmod(0o700)
-        except OSError:
-            pass
-        with open(self._path(kind), "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO learning(kind, created, data) VALUES (?,?,?)",
+                (kind, float(row.get("ts", time.time())), json.dumps(row, ensure_ascii=False)),
+            )
         ids.add(row["id"])
-        return True
+        return bool(cur.rowcount)
 
     # -- quality gate ----------------------------------------------------------------------
     def record(
@@ -245,20 +263,19 @@ class Collector:
         with self._lock:
             if example_id not in self._ids()["sft"]:
                 raise KeyError("unknown example")
-            self.dir.mkdir(parents=True, exist_ok=True)
-            with open(self.dir / "feedback.jsonl", "a", encoding="utf-8") as handle:
-                row = {"example": example_id, "rating": rating, "ts": int(time.time())}
-                handle.write(json.dumps(row) + "\n")
+            now = int(time.time())
+            row = {"example": example_id, "rating": rating, "ts": now}
+            with self.store.transaction() as conn:
+                conn.execute(
+                    "INSERT INTO learning(kind, created, data) VALUES ('feedback', ?, ?)",
+                    (float(now), json.dumps(row)),
+                )
         return {"example_id": example_id, "rating": rating}
 
     def ratings(self) -> Dict[str, str]:
         latest: Dict[str, str] = {}
-        path = self.dir / "feedback.jsonl"
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    row = json.loads(line)
-                    latest[row["example"]] = row["rating"]
+        for row in self._read("feedback"):
+            latest[row["example"]] = row["rating"]
         return latest
 
     def stats(self) -> Dict[str, Any]:
@@ -300,11 +317,20 @@ class Collector:
         return manifest
 
     def purge(self) -> int:
+        """Delete everything collected: rows, the database file's content, imported JSONL files and
+        their backups. Returns how many rows were removed."""
         removed = 0
-        for name in [*(f"{k}.jsonl" for k in KINDS), "feedback.jsonl"]:
+        if (self.dir / "learning.sqlite").exists() or self._store is not None:
+            with self.store.transaction() as conn:
+                removed = conn.execute("DELETE FROM learning").rowcount
+                conn.execute("DELETE FROM meta WHERE key LIKE 'legacy:learning:%'")
+        for name in [f"{k}.jsonl" for k in (*KINDS, "feedback")]:
             path = self.dir / name
             if path.is_file():
                 path.unlink()
                 removed += 1
+        backups = self.store.path.parent / "backups" if self._store else self.dir / "backups"
+        for path in backups.glob("*-learning-*"):
+            path.unlink()
         self._seen = None
         return removed

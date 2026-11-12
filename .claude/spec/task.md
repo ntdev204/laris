@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T65 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T66 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -767,7 +767,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `ConversationStore`, `Collector` storage and the vault index cache on the store; `laris learn export` still writes JSONL; vault notes stay Markdown
 - Validation:
   - Existing conversation, learning and vault tests pass; export matches the earlier format
-- Status: pending
+- Status: done
+- Note: `ConversationStore(root, store=None)` keeps its interface (`create`, `get`, `save`, `delete`, `list`, `root`, ids still validated) on the `conversations` table of the SQLite store; old `<id>.json` files are imported once with backups. `Collector(cfg, root, store=None)` keeps `record`, `rate`, `ratings`, `stats`, `export`, `purge` on the `learning` table (opened lazily, so a disabled collector creates nothing; `<dir>/learning.sqlite`, dir mode 0700); store migration 2 adds a unique index on (kind, row id) for deduplication; existing `sft/retrieval/preference/feedback.jsonl` files are imported once with backups; `export` still writes the same JSONL (byte-identical to the earlier format in the test) plus the manifest; `purge` now also deletes the imported files and their backups, because a backup would otherwise defeat it. The vault index cache moved from `index.json` to `index.sqlite` (one row per note in the `vault_index` table; `VaultIndex.save_cache/load_cache`, `dumps()` unchanged and byte-identical, a corrupt or missing file is ignored); vault notes stay Markdown. Limit: the vault cache is its own SQLite file in `vault.cache_dir`, not a table of the per-key space file, because `laris.shared` may not import the client store (ADR-019 boundary); it uses the same table layout and is disposable. Tests: tests/unit/store/test_conversations_learning_on_store.py (3 tests: JSON import and listing; export equals the earlier JSONL and respects ratings; purge removes rows, files and backups) plus the existing conversation, learning and vault tests adapted to read through the store; full unit suite leaves only the two failures described in T50; mypy 280 files and `make check-no-training` pass.
 
 ## Phase 15 — Deployment with Docker
 

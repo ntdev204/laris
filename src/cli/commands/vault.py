@@ -69,7 +69,7 @@ class _Check:
         if not folder.is_dir():
             print("no project vault yet; run `laris vault init`")
             return 0
-        index = VaultIndex.build(folder, cache_file=root / config.vault.cache_dir / "index.json")
+        index = VaultIndex.build(folder, cache_file=root / config.vault.cache_dir / "index.sqlite")
         schema = Schema.load(root / config.prompts.vault_dir / "schema.yaml")
         runtime = HarnessRuntime(config, root)
         problems = (
@@ -233,7 +233,9 @@ def _index(args: argparse.Namespace) -> tuple:
     folder = root / config.vault.dir
     if not folder.is_dir():
         return None, config
-    return VaultIndex.build(folder, cache_file=root / config.vault.cache_dir / "index.json"), config
+    return VaultIndex.build(
+        folder, cache_file=root / config.vault.cache_dir / "index.sqlite"
+    ), config
 
 
 class _Search:

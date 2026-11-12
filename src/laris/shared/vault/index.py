@@ -6,6 +6,7 @@ reported, never guessed.
 """
 
 import json
+import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
@@ -14,6 +15,10 @@ from laris.shared.vault.notes import Link, Note, link_name, note_from_dict, note
 
 IGNORED_DIRS = {".obsidian", ".git", ".trash", "__pycache__", ".laris", "_templates"}
 CACHE_VERSION = 1
+_CACHE_SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS vault_index "
+    "(path TEXT PRIMARY KEY, mtime REAL NOT NULL, data TEXT NOT NULL)"
+)
 Fingerprint = Tuple[int, int]  # (mtime_ns, size)
 
 
@@ -87,26 +92,66 @@ class VaultIndex:
         return json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
     def save_cache(self, path: Path) -> None:
+        """Rewrite the disposable cache: one SQLite row per note (`vault_index`, the same table
+        the client store defines). A cache that cannot be written is not an error."""
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(path.suffix + ".tmp")
-            tmp.write_text(self.dumps(), encoding="utf-8")
-            tmp.replace(path)
-        except OSError:  # a cache that cannot be written is not an error
+            conn = sqlite3.connect(path, timeout=5, isolation_level=None)
+            try:
+                conn.execute(_CACHE_SCHEMA)
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute("DELETE FROM vault_index")
+                conn.execute(
+                    "INSERT OR REPLACE INTO vault_index VALUES ('__version__', 0, ?)",
+                    (str(CACHE_VERSION),),
+                )
+                conn.executemany(
+                    "INSERT INTO vault_index VALUES (?, ?, ?)",
+                    [
+                        (
+                            p,
+                            float(self._fingerprints.get(p, (0, 0))[0]),
+                            json.dumps(
+                                {
+                                    "fp": list(self._fingerprints.get(p, (0, 0))),
+                                    "note": note_to_dict(n),
+                                },
+                                sort_keys=True,
+                                ensure_ascii=False,
+                            ),
+                        )
+                        for p, n in sorted(self.notes.items())
+                    ],
+                )
+                conn.execute("COMMIT")
+            finally:
+                conn.close()
+        except (OSError, sqlite3.Error):
             pass
 
     @classmethod
     def load_cache(cls, root: Path, path: Path) -> Optional["VaultIndex"]:
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            if data.get("version") != CACHE_VERSION:
+            if not path.is_file():
                 return None
-            index = cls(root=root)
-            for key, row in data["notes"].items():
-                index.notes[key] = note_from_dict(row["note"])
-                index._fingerprints[key] = (int(row["fp"][0]), int(row["fp"][1]))
-            return index
-        except (OSError, ValueError, KeyError, TypeError, IndexError):
+            conn = sqlite3.connect(path, timeout=5)
+            try:
+                version = conn.execute(
+                    "SELECT data FROM vault_index WHERE path = '__version__'"
+                ).fetchone()
+                if version is None or version[0] != str(CACHE_VERSION):
+                    return None
+                index = cls(root=root)
+                for key, data in conn.execute(
+                    "SELECT path, data FROM vault_index WHERE path != '__version__'"
+                ):
+                    row = json.loads(data)
+                    index.notes[key] = note_from_dict(row["note"])
+                    index._fingerprints[key] = (int(row["fp"][0]), int(row["fp"][1]))
+                return index
+            finally:
+                conn.close()
+        except (OSError, sqlite3.Error, ValueError, KeyError, TypeError, IndexError):
             return None  # corrupt or missing: rebuild from the notes
 
     def _link(self) -> None:

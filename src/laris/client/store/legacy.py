@@ -23,17 +23,40 @@ def _backup(store: Store, source: Path, label: str) -> None:
         shutil.copy2(source, target)
 
 
+LEARNING_KINDS = ("sft", "retrieval", "preference", "feedback")
+
+
 def migrate_legacy(
-    store: Store, workspace: Optional[Path] = None, conversations: Optional[Path] = None
+    store: Store,
+    workspace: Optional[Path] = None,
+    conversations: Optional[Path] = None,
+    learning: Optional[Path] = None,
 ) -> Dict[str, int]:
-    """Import `<workspace>/chunks.jsonl` and `<conversations>/*.json`; returns what was added."""
-    added = {"chunks": 0, "conversations": 0}
+    """Import `<workspace>/chunks.jsonl`, `<conversations>/*.json` and `<learning>/<kind>.jsonl`;
+    returns what was added."""
+    added = {"chunks": 0, "conversations": 0, "learning": 0}
+    if learning is not None:
+        for kind in LEARNING_KINDS:
+            source = Path(learning) / f"{kind}.jsonl"
+            marker = _marker("learning", source)
+            if not source.is_file() or store.get_meta(marker) is not None:
+                continue
+            with open(source, encoding="utf-8") as handle:
+                kept = [json.loads(line) for line in handle if line.strip()]
+            _backup(store, source, "learning")
+            with store.transaction() as conn:
+                for row in kept:
+                    cur = conn.execute(
+                        "INSERT OR IGNORE INTO learning(kind, created, data) VALUES (?,?,?)",
+                        (kind, float(row.get("ts", 0)), json.dumps(row, ensure_ascii=False)),
+                    )
+                    added["learning"] += cur.rowcount
+                conn.execute("INSERT INTO meta VALUES (?, 'done')", (marker,))
     if workspace is not None:
         source = Path(workspace) / "chunks.jsonl"
         if source.is_file() and store.get_meta(_marker("chunks", source)) is None:
-            rows: List[dict] = []
             with open(source, encoding="utf-8") as handle:
-                rows = [json.loads(line) for line in handle if line.strip()]
+                rows: List[dict] = [json.loads(line) for line in handle if line.strip()]
             _backup(store, source, "workspace")
             with store.transaction() as conn:
                 conn.executemany(

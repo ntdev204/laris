@@ -35,6 +35,12 @@ MIGRATIONS: Tuple[Tuple[int, str], ...] = (
         CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         """,
     ),
+    (
+        2,
+        """
+        CREATE UNIQUE INDEX learning_row ON learning(kind, json_extract(data, '$.id'));
+        """,
+    ),
 )
 
 _SAFE = re.compile(r"[^a-z0-9._-]+")
