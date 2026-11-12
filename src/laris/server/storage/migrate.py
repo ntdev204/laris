@@ -28,7 +28,7 @@ def migration_files() -> List[Tuple[int, str, str]]:
 def migrate(db: Any) -> int:
     """Apply the pending migrations; returns how many were applied."""
     applied = 0
-    with db.transaction() as tx:
+    with db.transaction(ensure=False) as tx:
         tx.execute("SELECT pg_advisory_xact_lock(?)", (_LOCK,))
         tx.execute(
             "CREATE TABLE IF NOT EXISTS schema_version "
@@ -42,4 +42,6 @@ def migrate(db: Any) -> int:
             tx.execute(sql)
             tx.execute("INSERT INTO schema_version (version, name) VALUES (?, ?)", (number, name))
             applied += 1
+    if hasattr(db, "auto_partitions"):
+        db.auto_partitions = True  # partitions exist now: inserts may create their month
     return applied

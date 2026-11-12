@@ -84,7 +84,13 @@ COMMANDS: Table = {
         "show": ("Print one reasoning trace", keys.REASONING_COMMANDS["show"]),
         "purge": ("Delete old reasoning traces", keys.REASONING_COMMANDS["purge"]),
     },
-    "db": {"migrate": ("Create or update the server database schema", db.COMMANDS["migrate"])},
+    "db": {
+        "migrate": ("Create or update the server database schema", db.COMMANDS["migrate"]),
+        "import-sqlite": (
+            "Copy keys, usage and traces from an old SQLite server database into PostgreSQL",
+            db.COMMANDS["import-sqlite"],
+        ),
+    },
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
     },

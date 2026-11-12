@@ -38,7 +38,7 @@ class Maintenance:
     def ensure_partitions(self, now: Optional[float] = None, months_ahead: int = 2) -> List[str]:
         now = time.time() if now is None else now
         made = []
-        with self.db.transaction() as tx:
+        with self.db.transaction(ensure=False) as tx:
             tx.execute("SELECT pg_advisory_xact_lock(?)", (_LOCK,))
             for add in range(-1, months_ahead + 1):
                 stamp = _month_start(_utc(now), add).timestamp()
@@ -70,7 +70,7 @@ class Maintenance:
     def summarise(self, now: Optional[float] = None) -> int:
         """Rebuild the summary from the last summarised day (inclusive) onward; returns rows."""
         now = time.time() if now is None else now
-        with self.db.transaction() as tx:
+        with self.db.transaction(ensure=False) as tx:
             tx.execute("SELECT pg_advisory_xact_lock(?)", (_LOCK,))
             last = tx.execute("SELECT MAX(day) AS d FROM usage_daily").fetchone()["d"]
             since = (

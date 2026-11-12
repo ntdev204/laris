@@ -23,6 +23,11 @@ def _translate(sql: str) -> str:
     return sql.replace("?", "%s")
 
 
+def _writes_partitioned(sql: str) -> bool:
+    words = sql.split(None, 3)
+    return len(words) > 2 and words[0].upper() == "INSERT" and words[2] in ("usage", "traces")
+
+
 def _plain(row: Dict[str, Any]) -> Dict[str, Any]:
     return {k: int(v) if isinstance(v, Decimal) and v == v.to_integral_value() else v
             for k, v in row.items()}  # fmt: skip
@@ -78,7 +83,7 @@ class PgDatabase:
             raise StorageError("PostgreSQL needs psycopg and psycopg_pool (laris[server])") from exc
         self.schema = schema
         self._ensured: Set[str] = set()
-        self.auto_partitions = True  # off only for tests that run old migrations by hand
+        self.auto_partitions = False  # switched on once migration 0003 has run
         options = f"-c search_path={schema}" if schema else None
         kwargs: Dict[str, Any] = {"autocommit": True, "row_factory": dict_row}
         if options:
@@ -94,7 +99,7 @@ class PgDatabase:
         if schema:
             self.session().execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
         if apply_migrations:
-            migrate(self)
+            migrate(self)  # also switches auto_partitions on
 
     def ensure_current_partitions(self) -> None:
         """Once per month per process: create this and the next months' partitions."""
@@ -113,8 +118,11 @@ class PgDatabase:
         return self.session()
 
     @contextmanager
-    def transaction(self) -> Iterator[Session]:
-        """One connection, `BEGIN` … `COMMIT`; any exception rolls everything back."""
+    def transaction(self, ensure: bool = True) -> Iterator[Session]:
+        """One connection, `BEGIN` … `COMMIT`; any exception rolls everything back. Partition
+        and migration code passes `ensure=False`."""
+        if ensure:
+            self.ensure_current_partitions()  # before this transaction holds any lock on the tables
         with self.pool.connection() as conn:
             with conn.transaction():
                 yield Session(self, conn)
