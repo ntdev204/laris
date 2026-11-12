@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Headless mode:** `laris -p` with `--output-format text|json|stream-json`, `--continue`, `--resume`, `--max-turns`, `--permission-mode`, `--allowed-tools`, `--disallowed-tools` and documented exit codes.
 - **Hooks and folder trust:** `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop` hooks declared only in `~/.laris/settings.json`, run in the sandbox with block decisions and timeouts, `/hooks`; project commands and skills are used only after the folder is trusted.
 - **Status line, queued input and interrupt:** engine `status` events (model, mode, context use, tokens left from the account route, git branch, sandbox state), `/cost` and `/context` from the same values; messages typed while the agent works are queued in order; an interrupted turn leaves every tool call answered in the saved conversation.
+- **Plain-text mode:** `laris --plain` is an E1 front end that uses only `input` and `print` (messages, slash commands, approvals with diffs as text, Ctrl+C); it replaces the old `input()` loop and needs no extra dependency.
 
 ### Changed
 - Diagnostics of `laris -p` go to standard error; tests no longer read or write the real `~/.laris`.

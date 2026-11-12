@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 from cli.common import load_runtime, make_service
 from laris.client.application.chat_app import ChatApp
-from laris.client.engine.commands import BUILTIN, Context
 from laris.client.headless import (
     EXIT_CODES_HELP,
     EXIT_USAGE,
@@ -22,7 +21,6 @@ from laris.client.headless import (
     run_headless,
     split_rules,
 )
-from laris.client.input_forms import InputProcessor, kind_of
 from laris.client.sandbox import make_sandbox
 
 
@@ -228,35 +226,6 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     return code
 
 
-def _input(chat: Any, conversation_id: str, line: str, always: set) -> int:
-    """A typed line: `!command`, `# note`, or a message with `@path` mentions attached."""
-    processor = InputProcessor(chat)
-    form = kind_of(line)
-    if form == "shell":
-        result = processor.shell(
-            conversation_id,
-            processor.prepare(line).text,
-            lambda name, arguments: _ask_permission(chat, name, arguments, always),
-        )
-        if "error" in result:
-            print(_paint(_ERR, result["error"]["message"]))
-            return 1
-        print(result["output"], end="" if str(result["output"]).endswith("\n") else "\n")
-        return 0 if result["exit_code"] == 0 else 1
-    if form == "note":
-        done = processor.note(processor.prepare(line).text)
-        print(
-            _paint(_ERR, done["error"]["message"])
-            if "error" in done
-            else f"noted in {done['path']}"
-        )
-        return 0
-    prepared = processor.prepare(line)
-    for note in prepared.notes:
-        print(_paint(_DIM, note))
-    return _turn(chat, conversation_id, prepared.text, always)
-
-
 def _hook_line(note: Dict[str, Any]) -> str:
     if "blocked" in note:
         return f"  ⛔ hook {note['event']} blocked: {note['blocked']}"
@@ -290,6 +259,11 @@ class _Chat:
             choices=FORMATS,
             default="text",
             help="With -p: text, json or stream-json",
+        )
+        parser.add_argument(
+            "--plain",
+            action="store_true",
+            help="Plain-text mode: input/print over the engine protocol, no extra dependency",
         )
         parser.epilog = EXIT_CODES_HELP
         parser.add_argument(
@@ -327,34 +301,20 @@ class _Chat:
         conversation = self._start(
             chat, "last" if args.continue_last and not args.resume else args.resume
         )
+        from importlib import metadata
+
+        from laris.client.plain import run_plain
+
+        try:
+            version = metadata.version("laris")
+        except metadata.PackageNotFoundError:
+            version = "unknown"
         home = Path("~/.laris").expanduser()
-        manager = make_sandbox(home, chat.prefs.path, "plain")
-        manager.start_background(lambda state: None)
-        chat.sandbox_manager = manager
-        chat.session_start(conversation["id"])
-        for note in chat.hooks.drain():
-            print(_paint(_DIM, _hook_line(note)), file=sys.stderr)
-        always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
-        print(
-            _paint(_USE, "LARIS")
-            + f"  session {conversation['id']}  ·  {chat.model_health()['detail']}"
-        )
-        print(_paint(_DIM, "Type a task. /help lists commands. Ctrl+D exits."))
-        while True:
-            try:
-                line = input("\n> ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print()
-                return 0
-            if not line:
-                continue
-            if line.startswith("/"):
-                updated = self._command(chat, conversation, line, always, manager)
-                if updated is None:
-                    return 0
-                conversation = updated
-                continue
-            _input(chat, conversation["id"], line, always)
+        manager = make_sandbox(home, chat.prefs.path, version)
+        if args.allow_write:  # the same session rules `-p --allow-write` uses
+            for rule in ("write_file", "ingest_path", "save_memory", "Write", "Edit"):
+                chat.permissions.remember(rule, "session")
+        return run_plain(chat, conversation, version, home, manager)
 
     @staticmethod
     def _headless(args: argparse.Namespace) -> int:
@@ -423,30 +383,6 @@ class _Chat:
                 except KeyError:
                     print(f"Không có phiên {target}; bắt đầu phiên mới.")
         return dict(chat.conversations.create())
-
-    @staticmethod
-    def _command(
-        chat: Any, conversation: Dict[str, Any], line: str, always: set, session: Any = None
-    ) -> Optional[Dict[str, Any]]:
-        """One slash command through the registry shared with the engine (SR-C2)."""
-        if line.strip().lower() in chat.runtime.config.prompts.help_commands:
-            print(chat.how_to_use())
-            return conversation
-        context = Context(
-            chat, conversation, Path("~/.laris").expanduser(), Path.cwd(), session, BUILTIN
-        )
-        context.extras["last_example"] = _LAST.get("example", "")
-        result = BUILTIN.dispatch(line, context)
-        if result.exit:
-            return None
-        if result.text:
-            print(_paint(_ERR, result.text) if result.error else result.text)
-        if result.conversation is not None:
-            conversation = result.conversation
-        if result.turn is not None:
-            _turn(chat, conversation["id"], result.turn, always)
-            conversation = dict(chat.conversations.get(conversation["id"]))
-        return conversation
 
 
 COMMANDS = {"tools": _Tools(), "run": _Run(), "chat": _Chat(), "guide": _Guide()}
