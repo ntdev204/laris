@@ -1,4 +1,4 @@
-"""`laris app ...`: local end-to-end application (ingest, index, search, ask, status).
+"""`laris app ...`: local end-to-end application (ingest, index, search, status).
 
 Every default (workspace, host, port, limits) comes from configuration; flags only override.
 """
@@ -79,19 +79,6 @@ def _search(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
     print(f"\n{result['notice']}")
 
 
-def _ask(service: SearchService, args: argparse.Namespace, rt: Any) -> None:
-    result = service.answer(args.query, args.mode, _top_k(args, rt))
-    primary = result["primary"]
-    print(
-        f"Answer: {primary['answer']} (source: {primary['source']})"
-        if primary
-        else "No verbatim answer found."
-    )
-    for hit in result["hits"]:
-        print(f"  - [{hit['source']}] {' '.join(hit['text'].split())[:160]}")
-    print(f"\n{result['notice']}")
-
-
 def _status(service: SearchService, args: argparse.Namespace, rt: Any) -> Dict[str, Any]:
     info = service.status()
     if not rt.config.security.expose_internal_info:
@@ -122,6 +109,5 @@ COMMANDS = {
     ),
     "index": _Command({}, _index),
     "search": _Command(_SEARCH_FLAGS, lambda s, a, r: _search(s, a, r)),
-    "ask": _Command(_SEARCH_FLAGS, lambda s, a, r: _ask(s, a, r)),
     "status": _Command({}, _status, model=False),
 }
