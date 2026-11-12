@@ -28,7 +28,7 @@ async function session(exe: string, engineArgs: string[], initialInput: string |
   let final: State | null = null;
   const instance = render(
     <App client={client} initialInput={initialInput} onFinish={(state) => { final = state; }} />,
-    { exitOnCtrlC: false },
+    { exitOnCtrlC: false, interactive: true }, // plan() only gets here on a real terminal, even when CI is set
   );
   await instance.waitUntilExit();
   await client.stop(500);
