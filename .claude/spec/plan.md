@@ -183,7 +183,7 @@ Exit criteria:
 ### Phase 13 — Server storage on PostgreSQL
 Goal: keys, usage and traces in PostgreSQL with atomic quota and running retention.
 Tasks: T60, T61, T62, T63
-Progress: [x] T60 (2026-11-12). Remaining: T61, T62, T63.
+Progress: [x] T60, [x] T61 (2026-11-12). Remaining: T62, T63.
 Exit criteria:
 - Migrations apply on an empty database; the concurrency test never passes a limit.
 - Partitions and background retention work; the SQLite import is lossless on a fixture.

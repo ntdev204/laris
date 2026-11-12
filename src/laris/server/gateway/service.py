@@ -210,7 +210,10 @@ class PolicyGateway:
         return wf, wf.render(request, self.rt.config.prompts.workflow_max_chars)
 
     def stream(
-        self, body: Dict[str, Any], principal: Optional[Principal] = None
+        self,
+        body: Dict[str, Any],
+        principal: Optional[Principal] = None,
+        reservation: Any = None,
     ) -> Iterator[Chunk]:
         """Yield OpenAI-style chunks. Tokens are metered and the reasoning is stored for the
         operator in `finally`, so both happen even if the client disconnects. Reasoning is never
@@ -226,7 +229,7 @@ class PolicyGateway:
                 "usage": self._usage(state),
             }
         finally:
-            self._finish(principal, state)
+            self._finish(principal, state, reservation)
 
     def _usage(self, state: "_State") -> Dict[str, int]:
         prompt = int(state.prompt_chars / self.chars_per_token) + (1 if state.steps else 0)
@@ -237,12 +240,23 @@ class PolicyGateway:
             "total_tokens": prompt + completion,
         }
 
-    def _finish(self, principal: Optional[Principal], state: "_State") -> None:
+    def _finish(
+        self, principal: Optional[Principal], state: "_State", reservation: Any = None
+    ) -> None:
         if principal is None or not state.steps:
+            if reservation is not None:
+                reservation.release()  # nothing reached the model: give the tokens back
             return
         usage = {**self._usage(state), "session_id": state.session_id, "kind": state.kind}
-        if self.meter is not None:
-            self.meter.record(principal, usage)
+        try:
+            if reservation is not None:
+                reservation.settle(usage)
+            elif self.meter is not None:
+                self.meter.record(principal, usage)
+        finally:
+            self._store_trace(principal, state)
+
+    def _store_trace(self, principal: Principal, state: "_State") -> None:
         if self.traces is not None and state.kind == "chat":
             self.traces.record(
                 principal,

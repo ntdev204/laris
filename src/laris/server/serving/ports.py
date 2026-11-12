@@ -44,7 +44,18 @@ class Authenticator(Protocol):
     ) -> Optional[Principal]: ...
 
 
+class Reservation(Protocol):
+    """Tokens set aside for one request: end it with `settle` (real use) or `release`."""
+
+    def settle(self, usage: Dict[str, Any]) -> None: ...
+
+    def release(self) -> None: ...
+
+
 class UsageMeter(Protocol):
+    def reserve(self, principal: Principal, estimated_tokens: int) -> Reservation:
+        """Set tokens aside atomically; raise QuotaExceeded when the key cannot cover them."""
+
     def check(self, principal: Principal, estimated_tokens: int) -> None:
         """Raise QuotaExceeded when the key cannot cover the request."""
 

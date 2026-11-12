@@ -219,6 +219,7 @@ def create_app(
         permission = EMBED if embedding else CHAT
         principal = await run_in_threadpool(allow, request, permission)
         body, length = await read_json(request)
+        reservation: Any = None
         try:
             if full in ("/v1/laris/chat", "/v1/chat/completions"):
                 try:
@@ -231,25 +232,29 @@ def create_app(
                 except (ValidationError, TypeError) as exc:
                     raise HTTPException(400, f"invalid request: {_first_error(exc)}") from None
             if service.meter is not None:
-                await run_in_threadpool(
-                    service.meter.check, principal, service.estimate_tokens(length)
+                reservation = await run_in_threadpool(
+                    service.meter.reserve, principal, service.estimate_tokens(length)
                 )
             if full == "/v1/laris/chat" and service.gateway:
-                return await sse(service.gateway.stream(body, principal))
+                handed, reservation = reservation, None  # the stream settles it, even on a drop
+                return await sse(service.gateway.stream(body, principal, handed))
             if full == "/v1/laris/chat" or (service.gateway and full == "/v1/chat/completions"):
                 raise HTTPException(404, "not found")
             if full == "/v1/chat/completions" and body.get("stream"):
                 response = await sse(service.stream_chunks(body))
-                await run_in_threadpool(service.bill, principal, length, 0, "chat")
+                handed, reservation = reservation, None
+                await run_in_threadpool(service.bill, principal, length, 0, "chat", handed)
                 return response
             if full == "/v1/chat/completions":
                 reply = await run_in_threadpool(service.complete, body)
+                handed, reservation = reservation, None
                 await run_in_threadpool(
-                    service.bill, principal, length, len(json.dumps(reply)), "chat"
+                    service.bill, principal, length, len(json.dumps(reply)), "chat", handed
                 )
                 return reply
             reply = await run_in_threadpool(service.embeddings, body)
-            await run_in_threadpool(service.bill, principal, length, 0, "embed")
+            handed, reservation = reservation, None
+            await run_in_threadpool(service.bill, principal, length, 0, "embed", handed)
             return reply
         except QuotaExceeded as exc:
             raise HTTPException(429, str(exc)) from exc
@@ -257,6 +262,9 @@ def create_app(
             raise HTTPException(502, str(exc)) from exc
         except ValueError as exc:  # includes the gateway's refusals
             raise HTTPException(400, str(exc)) from exc
+        finally:
+            if reservation is not None:  # an error before the work was handed on: give it back
+                await run_in_threadpool(reservation.release)
 
     return app
 

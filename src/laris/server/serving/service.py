@@ -54,16 +54,16 @@ class ModelService:
         return int(text_chars / self.chars_per_token) + 1
 
     def bill(self, principal: Optional[Principal], prompt_chars: int, completion_chars: int,
-             kind: str) -> None:  # fmt: skip
-        if self.meter is not None and principal is not None:
-            self.meter.record(
-                principal,
-                {
-                    "kind": kind,
-                    "prompt_tokens": self.estimate_tokens(prompt_chars),
-                    "completion_tokens": self.estimate_tokens(completion_chars),
-                },
-            )
+             kind: str, reservation: Any = None) -> None:  # fmt: skip
+        usage = {
+            "kind": kind,
+            "prompt_tokens": self.estimate_tokens(prompt_chars),
+            "completion_tokens": self.estimate_tokens(completion_chars),
+        }
+        if reservation is not None:
+            reservation.settle(usage)  # releases what was set aside and records the real use
+        elif self.meter is not None and principal is not None:
+            self.meter.record(principal, usage)
 
     def models(self) -> Dict[str, Any]:
         return {

@@ -3,8 +3,9 @@
 import os
 import sqlite3
 import threading
+from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+from typing import Iterator, List
 
 MIGRATIONS: List[str] = [
     """
@@ -51,6 +52,7 @@ MIGRATIONS: List[str] = [
     ALTER TABLE keys ADD COLUMN allowed_ips TEXT NOT NULL DEFAULT '[]';
     ALTER TABLE keys ADD COLUMN builtin INTEGER NOT NULL DEFAULT 0;
     """,
+    "ALTER TABLE keys ADD COLUMN tokens_reserved INTEGER NOT NULL DEFAULT 0;",
 ]
 
 
@@ -71,6 +73,18 @@ class Database:
             conn.execute("PRAGMA foreign_keys=ON")
             self._local.conn = conn
         return conn
+
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        """`BEGIN IMMEDIATE` … `COMMIT` on this thread's connection; an exception rolls back."""
+        conn = self.connection()
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            yield conn
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+        conn.execute("COMMIT")
 
     def _migrate(self) -> None:
         conn = self.connection()
