@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-from language.evaluation.evaluator import EVAL_SPLITS
-from language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
+from laris.research.language.evaluation.evaluator import EVAL_SPLITS
+from laris.research.language.evaluation.runner import EXIT_USAGE, evaluate_checkpoint
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:

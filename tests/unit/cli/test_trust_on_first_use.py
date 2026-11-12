@@ -3,14 +3,14 @@ import threading
 
 import pytest
 
-from agent.provider import check_key
 from cli.commands import account
 from cli.main import main
-from harness import trust
-from harness.runtime import HarnessRuntime
-from serverdata import tls as server_tls
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server, enable_tls, load_backend
+from laris.client.agent.provider import check_key
+from laris.server.serverdata import tls as server_tls
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.model_server import ModelService, build_server, enable_tls, load_backend
+from laris.shared.harness import trust
+from laris.shared.harness.runtime import HarnessRuntime
 
 KEY = "lk_test_trust_key_value"
 

@@ -4,7 +4,7 @@ import stat
 
 import pytest
 
-from serverdata import tls
+from laris.server.serverdata import tls
 
 
 def test_create_self_signed_then_discover(tmp_path):

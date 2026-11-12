@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from cli.common import load_runtime
-from learning.collector import KINDS, Collector
+from laris.client.learning.collector import KINDS, Collector
 
 
 def _collector(args: argparse.Namespace) -> Collector:

@@ -14,20 +14,20 @@ from __future__ import annotations
 import concurrent.futures
 from dataclasses import asdict
 
-from execution.headroom_governor import (
+from laris.model.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from execution.schemas import (
+from laris.model.execution.schemas import (
     TelemetryStatus,
 )
-from execution.task_router import (
+from laris.model.execution.task_router import (
     ExecutionTier,
     HardwareStressProtocol,
     TaskDomain,
     TaskRouter,
     TaskRoutingRequest,
 )
-from execution.telemetry import (
+from laris.model.execution.telemetry import (
     HardwareTelemetryEngine,
     MockHardwareTelemetrySampler,
 )

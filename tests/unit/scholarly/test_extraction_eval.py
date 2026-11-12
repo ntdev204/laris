@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from evaluation.extraction import (
+from laris.research.evaluation.extraction import (
     baseline_from,
     dumps,
     evaluate,

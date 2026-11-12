@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from agent.provider import AuthError, HttpChatProvider, OfflinePlanner, check_key
 from cli.main import main
-from harness.runtime import HarnessRuntime
-from serving.auth import KeyRing
-from serving.model_server import ModelService, build_server
+from laris.client.agent.provider import AuthError, HttpChatProvider, OfflinePlanner, check_key
+from laris.server.serving.auth import KeyRing
+from laris.server.serving.model_server import ModelService, build_server
+from laris.shared.harness.runtime import HarnessRuntime
 
 SRC = Path(__file__).resolve().parents[3] / "src"
 GOOD, OTHER = "test-key-user-one", "test-key-user-two"
@@ -114,14 +114,14 @@ def test_model_server_writes_no_files_and_logs_nothing():
 # -- TLS ---------------------------------------------------------------------------------------
 def _self_signed(folder):
     pytest.importorskip("cryptography")
-    from serverdata.tls import create_self_signed
+    from laris.server.serverdata.tls import create_self_signed
 
     cert, identity = create_self_signed(str(folder), ["localhost", "127.0.0.1"])
     return cert, identity
 
 
 def test_tls_server_is_verified_by_the_client(tmp_path, monkeypatch):
-    from serving.model_server import enable_tls
+    from laris.server.serving.model_server import enable_tls
 
     cert, identity = _self_signed(tmp_path)
     rt = HarnessRuntime()
@@ -133,7 +133,7 @@ def test_tls_server_is_verified_by_the_client(tmp_path, monkeypatch):
     try:
         monkeypatch.delenv("SSL_CERT_FILE", raising=False)
         assert check_key(url, GOOD, 3) == "unreachable"  # unknown CA: never trusted silently
-        from harness import trust
+        from laris.shared.harness import trust
 
         trust.install(str(cert))  # the pinned certificate, as `laris login` records it
         assert check_key(url, GOOD, 3) == "ok"
@@ -145,7 +145,10 @@ def test_tls_server_is_verified_by_the_client(tmp_path, monkeypatch):
 
 def test_serve_refuses_plain_http_off_loopback_and_half_a_tls_pair(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("LARIS_SERVER_KEYS", GOOD)
-    assert main(["model", "serve", "--host", "0.0.0.0", "--port", "0"]) == 2
+    url = ["--model-url", "http://127.0.0.1:9/v1"]
+    assert main(["model", "serve", *url, "--host", "0.0.0.0", "--port", "0"]) == 2
     assert "plain HTTP" in capsys.readouterr().out
-    assert main(["model", "serve", "--tls-cert", str(tmp_path / "c.pem")]) == 2
+    assert main(["model", "serve", *url, "--tls-cert", str(tmp_path / "c.pem")]) == 2
     assert "both a certificate" in capsys.readouterr().out
+    assert main(["model", "serve"]) == 2  # no model block configured
+    assert "model_api.internal_url" in capsys.readouterr().out

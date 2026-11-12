@@ -10,8 +10,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from config.loader import load_runtime_config
-from serverdata import ServerData, tls
+from laris.server.serverdata import ServerData, tls
+from laris.shared.config.loader import load_runtime_config
 
 
 def _data() -> ServerData:
@@ -58,7 +58,7 @@ class _Create:
         )
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:
@@ -96,7 +96,7 @@ class _Show:
         parser.add_argument("id")
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:
@@ -115,7 +115,7 @@ class _Revoke:
         parser.add_argument("id")
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:
@@ -134,7 +134,7 @@ class _Limit:
         parser.add_argument("--add", action="store_true", help="Add the number to the old quota")
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:
@@ -150,7 +150,7 @@ class _Reveal:
         parser.add_argument("id", help="Key id, or `default` for the built-in key")
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:
@@ -175,7 +175,7 @@ class _Ip:
         parser.add_argument("--clear", action="store_true", help="Allow any address again")
 
     def run(self, args: argparse.Namespace) -> int:
-        from serverdata.keys import KeyError_
+        from laris.server.serverdata.keys import KeyError_
 
         data = _data()
         try:

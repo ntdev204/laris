@@ -7,13 +7,13 @@ Boundary D: MOD-SCINLP-001 (Scientific Language Intelligence)
 
 import pytest
 
-from core.errors import (
+from laris.shared.core.errors import (
     ExtractionConfidenceBelowThresholdError,
     MalformedDiscourseSpanError,
     ModuleContractViolationError,
 )
-from core.schemas import EpistemicStatus, EvidenceCoordinate
-from scientific import (
+from laris.shared.core.schemas import EpistemicStatus, EvidenceCoordinate
+from laris.shared.scientific import (
     AssumptionRecord,
     ClaimRecord,
     DatasetRecord,
@@ -26,7 +26,7 @@ from scientific import (
     MetricRecord,
     ResultRecord,
 )
-from scientific.schemas import _validate_coordinate_span
+from laris.shared.scientific.schemas import _validate_coordinate_span
 
 
 @pytest.fixture

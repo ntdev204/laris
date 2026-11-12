@@ -12,21 +12,21 @@ Tests compliance with DOC-SPEC-MOD-001 (Boundary I), ADR-001, ADR-005, and Issue
 
 import pytest
 
-from core.errors import (
-    HardwareBudgetExceededError,
-    ModuleContractViolationError,
-    WeightStagingError,
-)
-from execution.headroom_governor import (
+from laris.model.execution.headroom_governor import (
     HeadroomBudgetGovernor,
 )
-from execution.weight_staging import (
+from laris.model.execution.weight_staging import (
     MockSpecialistWeightLoader,
     SpecialistLRUCache,
     SpecialistWeightDescriptor,
     StagingState,
     StorageTier,
     WeightTransferMetrics,
+)
+from laris.shared.core.errors import (
+    HardwareBudgetExceededError,
+    ModuleContractViolationError,
+    WeightStagingError,
 )
 
 

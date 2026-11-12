@@ -10,17 +10,17 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import ProvenanceViolationError
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     ConflictBenchmarkReport,
     ConflictEvaluationBenchmark,
     ConflictType,
     ContradictionBenchmarkCase,
     StudyFinding,
 )
-from reasoning.conflict_detector import ConditionAwareConflictDetector
-from reasoning.schemas import ComparativeCell, ComparativeMatrix
+from laris.research.reasoning.conflict_detector import ConditionAwareConflictDetector
+from laris.research.reasoning.schemas import ComparativeCell, ComparativeMatrix
+from laris.shared.core.errors import ProvenanceViolationError
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 @pytest.fixture

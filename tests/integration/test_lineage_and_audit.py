@@ -16,12 +16,7 @@ from typing import Dict, List, Tuple
 
 import pytest
 
-from core.errors import (
-    AuditIntegrityError,
-    CoordinateResolutionError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting import (
+from laris.research.reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     CorpusVersionRecord,
@@ -38,6 +33,11 @@ from reporting import (
     StructuredResearchReport,
     UserInterventionRecord,
 )
+from laris.shared.core.errors import (
+    AuditIntegrityError,
+    CoordinateResolutionError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _build_synthetic_corpus_fixtures() -> Tuple[

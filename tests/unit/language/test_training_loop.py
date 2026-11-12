@@ -8,23 +8,23 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from core.authorization import temporary_training_authorization  # noqa: E402
-from language.encoder.transformer import (  # noqa: E402
+from laris.research.language.training.loop import (  # noqa: E402
+    TrainingRunConfig,
+    run_training,
+)
+from laris.research.language.training.schedule import warmup_cosine_factor  # noqa: E402
+from laris.research.language.training.trainer import LanguageEncoderTrainer  # noqa: E402
+from laris.shared.core.authorization import temporary_training_authorization  # noqa: E402
+from laris.shared.language.encoder.transformer import (  # noqa: E402
     LanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from language.training.checkpoint import (  # noqa: E402
+from laris.shared.language.loading.checkpoint import (  # noqa: E402
     MODEL_FILE,
     load_checkpoint,
     read_manifest,
 )
-from language.training.dataloader import StreamingParquetMultiTaskDataLoader  # noqa: E402
-from language.training.loop import (  # noqa: E402
-    TrainingRunConfig,
-    run_training,
-)
-from language.training.schedule import warmup_cosine_factor  # noqa: E402
-from language.training.trainer import LanguageEncoderTrainer  # noqa: E402
+from laris.shared.language.loading.dataloader import StreamingParquetMultiTaskDataLoader  # noqa: E402
 
 TEXT = "Quantum computing uses superposition and entanglement for computation."
 
@@ -251,7 +251,7 @@ def test_run_training_renders_progress_and_validation_table(
 ) -> None:
     import io
 
-    from language.training.progress import TrainingProgress
+    from laris.research.language.training.progress import TrainingProgress
 
     out = io.StringIO()
     loader = _loader(data_dir)

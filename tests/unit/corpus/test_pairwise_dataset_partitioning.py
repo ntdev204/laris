@@ -7,13 +7,13 @@ from typing import Dict, List
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from corpus.splits.partitioners.pairwise import (
+from laris.research.corpus.splits.partitioners.pairwise import (
     partition_all_nli_physical,
     partition_anli_physical,
     partition_paws_physical,
     partition_stsb_physical,
 )
-from corpus.splits.runner import execute_physical_partitioning
+from laris.research.corpus.splits.runner import execute_physical_partitioning
 
 
 def _write(path: Path, columns: Dict[str, List]) -> None:

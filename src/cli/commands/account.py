@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 
 from cli import credentials
 from cli.common import load_runtime
-from harness import trust
-from harness.prefs import UserPrefs
+from laris.shared.harness import trust
+from laris.shared.harness.prefs import UserPrefs
 
 GLOBAL_DIR = Path("~/.laris")
 PROJECT_TEMPLATE = (
@@ -31,8 +31,8 @@ def _set_server(url: str) -> Path:
 
 def _show_account(key: str) -> None:
     """Role and token balance, when a server is configured and reachable."""
-    from agent.provider import ProviderError
-    from harness.remote import ServerClient
+    from laris.client.agent.provider import ProviderError
+    from laris.shared.harness.remote import ServerClient
 
     api = load_runtime().config.model_api
     if not api.base_url:

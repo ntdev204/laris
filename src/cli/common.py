@@ -8,10 +8,10 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from application.service import SearchService
-from application.workspace import Workspace
-from harness.runtime import HarnessRuntime
-from learning.hooks import make_ingest_hook
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.client.learning.hooks import make_ingest_hook
+from laris.shared.harness.runtime import HarnessRuntime
 
 
 def model_flags(parser: argparse.ArgumentParser) -> None:

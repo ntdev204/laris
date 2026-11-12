@@ -40,8 +40,8 @@ def run(table: Table, prog: str, argv: Optional[Sequence[str]], interactive: boo
     args = build_parser_for(table, prog).parse_args(items)
     handler: Handler = args.handler
     from cli.credentials import CredentialError
-    from harness.integrity import IntegrityError
-    from harness.prompts import PromptError
+    from laris.shared.harness.integrity import IntegrityError
+    from laris.shared.policy.prompts import PromptError
 
     try:
         return handler(args)

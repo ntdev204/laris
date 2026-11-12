@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import ModuleContractViolationError, ProvenanceViolationError
-from core.schemas import EvidenceCoordinate
-from reasoning import (
+from laris.research.reasoning import (
     CaveatSeverity,
     ComparabilityCaveat,
     ComparativeCell,
@@ -24,6 +22,8 @@ from reasoning import (
     MetricDirection,
     StudyFinding,
 )
+from laris.shared.core.errors import ModuleContractViolationError, ProvenanceViolationError
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 @pytest.fixture

@@ -6,12 +6,14 @@ import stat
 
 import pytest
 
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace
 from cli import credentials
 from cli.main import build_parser, interactive_default, main
-from config.loader import load_runtime_config
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.shared.config.loader import load_runtime_config
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 KEY_A = "key-alice-0123456789"
 KEY_B = "key-bob-9876543210"
@@ -109,18 +111,25 @@ def test_chat_without_a_key_stops_with_a_clear_message(project, monkeypatch, cap
     assert "LARIS_API_KEY" in capsys.readouterr().out
 
 
-def test_client_has_no_server_or_operator_commands():
-    from cli.main import build_parser, commands_for
+def test_each_program_has_only_its_own_commands():
+    from cli import client as client_cli
+    from cli import model as model_cli
+    from cli import server as server_cli
+    from cli.main import COMMANDS as everything
+    from cli.parser import build_parser_for
 
-    client, server = commands_for("client"), commands_for("server")
+    client, server, model = client_cli.COMMANDS, server_cli.COMMANDS, model_cli.COMMANDS
     assert set(client) == {"agent", "account", "vault", "skills", "learn", "app"}
     assert set(client["app"]) == {"ingest", "search", "status"}
-    for group in ("model", "harness", "brain", "data", "train", "evaluate", "infer", "workflows"):
+    for group in ("model", "harness", "brain", "data", "train", "evaluate", "workflows"):
         assert group not in client and group in server
+    assert "infer" not in client and "infer" not in server and set(model) == {"infer"}
     assert set(server["app"]) == {"index", "ask"}
     with pytest.raises(SystemExit):
-        build_parser("client").parse_args(["model", "serve"])
+        build_parser_for(client, "laris").parse_args(["model", "serve"])
     with pytest.raises(SystemExit):
-        build_parser("client").parse_args(["app", "serve"])
-    assert build_parser("server").parse_args(["model", "serve"]).command == "serve"
-    assert build_parser("client").prog == "laris" and build_parser("server").prog == "laris-server"
+        build_parser_for(client, "laris").parse_args(["app", "serve"])
+    assert (
+        build_parser_for(server, "laris-server").parse_args(["model", "serve"]).command == "serve"
+    )
+    assert set(everything) == set(client) | set(server) | set(model)  # development entry only

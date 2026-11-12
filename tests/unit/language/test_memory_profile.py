@@ -2,7 +2,7 @@
 
 import pytest
 
-from language.training.memory_profile import TaskMeasurement, TrainingMemoryProfile
+from laris.research.language.training.memory_profile import TaskMeasurement, TrainingMemoryProfile
 
 
 def _profile(**overrides) -> TrainingMemoryProfile:
@@ -36,7 +36,7 @@ torch = pytest.importorskip("torch")
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA autocast")
 def test_paraphrase_loss_runs_under_cuda_bf16_autocast() -> None:
-    from language.training.trainer import LanguageEncoderTrainer
+    from laris.research.language.training.trainer import LanguageEncoderTrainer
 
     trainer = LanguageEncoderTrainer(
         model=torch.nn.Linear(2, 2), config=None, dataloader=None,

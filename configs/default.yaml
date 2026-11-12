@@ -99,6 +99,7 @@ model_api:
   timeout_s: 120.0
   temperature: 0.0
   allow_remote: false
+  internal_url: ''
 
 # Confidentiality and injection defences. Not editable from the web UI.
 security:
@@ -161,9 +162,29 @@ serving:
   max_body_bytes: 33554432
   model_name: laris-core
   placeholder_name: laris-placeholder
+  model_concurrency: 4
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true
+
+# Model block (`laris-model serve`, protocol P2). No keys: it listens on the internal network only.
+model_service:
+  host: 127.0.0.1
+  port: 8001
+  max_body_bytes: 33554432
+  model_name: laris-core
+  placeholder_name: laris-placeholder
+  backend: ''
+  checkpoint: ''
+  tokenizer_model: ''
+  device: ''
+  vram_budget_bytes: 15569256448
+  vram_margin_bytes: 1610612736
+  chat_vram_bytes: 1048576
+  embed_vram_bytes: 1048576
+  gpu_workers: 1
+  queue_max_waiting: 64
+  queue_wait_timeout_s: 60.0
 
 # Chat application and document workspace.
 app:

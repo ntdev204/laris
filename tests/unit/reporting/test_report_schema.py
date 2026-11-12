@@ -11,12 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.errors import (
-    ReportSchemaValidationError,
-    UnanchoredAssertionError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting import (
+from laris.research.reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     EvidenceGate,
@@ -27,6 +22,11 @@ from reporting import (
     StructuredReportGenerator,
     StructuredResearchReport,
 )
+from laris.shared.core.errors import (
+    ReportSchemaValidationError,
+    UnanchoredAssertionError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _sample_coordinate(coord_id: str = "COORD-DOC1#p1s1") -> EvidenceCoordinate:

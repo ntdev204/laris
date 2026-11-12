@@ -4,19 +4,21 @@ import json
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox, ToolExecutionError
-from application.chat_app import ChatApp
-from application.service import SearchService
-from application.workspace import Workspace, chunks_from_text
-from harness.prefs import PrefsError
-from harness.runtime import HarnessRuntime
-from learning.collector import Collector
-from learning.hooks import make_ingest_hook
-from learning.skills import lint_skill
-from skills import SkillLibrary
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox, ToolExecutionError
+from laris.client.application.chat_app import ChatApp
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace, chunks_from_text
+from laris.client.learning.collector import Collector
+from laris.client.learning.hooks import make_ingest_hook
+from laris.client.learning.skills import lint_skill
+from laris.shared.harness.prefs import PrefsError
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.skills import SkillLibrary
+
+pytestmark = pytest.mark.usefixtures("use_placeholder_model")
 
 PEROVSKITE = (
     "Perovskite solar cells reach high efficiency. Perovskite layers absorb light well. "

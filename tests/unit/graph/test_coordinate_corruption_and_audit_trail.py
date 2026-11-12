@@ -14,16 +14,16 @@ import hashlib
 
 import pytest
 
-from core.errors import ProvenanceViolationError
-from core.schemas import EvidenceCoordinate
-from graph.schemas import (
+from laris.shared.core.errors import ProvenanceViolationError
+from laris.shared.core.schemas import EvidenceCoordinate
+from laris.shared.graph.schemas import (
     ClaimNode,
     DocumentNode,
     EdgeType,
     EvidenceEdge,
     EvidenceGraph,
 )
-from retrieval import (
+from laris.shared.retrieval import (
     DenseVectorAdapter,
     DenseVectorItem,
     EvidenceCoordinateValidator,

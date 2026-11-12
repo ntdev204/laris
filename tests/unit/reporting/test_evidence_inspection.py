@@ -15,16 +15,7 @@ import hashlib
 
 import pytest
 
-from core.errors import (
-    AuditIntegrityError,
-    CoordinateResolutionError,
-    InvalidInterventionError,
-    LineageCycleError,
-    LineageNotFoundError,
-    ReportSchemaValidationError,
-)
-from core.schemas import EvidenceCoordinate
-from reporting import (
+from laris.research.reporting import (
     AssertionStatus,
     CorpusManifestEntry,
     CorpusVersionRecord,
@@ -44,6 +35,15 @@ from reporting import (
     TargetEntityType,
     UserInterventionRecord,
 )
+from laris.shared.core.errors import (
+    AuditIntegrityError,
+    CoordinateResolutionError,
+    InvalidInterventionError,
+    LineageCycleError,
+    LineageNotFoundError,
+    ReportSchemaValidationError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 def _make_coord(

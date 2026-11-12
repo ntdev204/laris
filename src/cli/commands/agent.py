@@ -11,8 +11,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from application.chat_app import ChatApp
 from cli.common import load_runtime, make_service, model_flags
+from laris.client.application.chat_app import ChatApp
 
 
 def _common(parser: argparse.ArgumentParser) -> None:
@@ -203,8 +203,8 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
 
 def _vault_command(chat: Any, query: str) -> None:
     """`/vault` shows the vault's size; `/vault <words>` searches its notes."""
-    from vault.index import VaultIndex
-    from vault.search import NoteSearch
+    from laris.shared.vault.index import VaultIndex
+    from laris.shared.vault.search import NoteSearch
 
     cfg = chat.runtime.config.vault
     folder = chat.project_root / cfg.dir

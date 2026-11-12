@@ -8,16 +8,16 @@ import math
 
 import pytest
 
-from core.errors import InvalidNLIInputError
-from language.benchmarks.stem_benchmark import get_stem_vocabulary_tokens
-from language.encoder.sentence_encoder import CompactSentenceEncoder
-from language.schemas import VocabularyContract
-from language.tokenization.tokenizer import ScientificTokenizer
-from reasoning import (
+from laris.research.reasoning import (
     DeterministicScientificNLIEngine,
     NLILabel,
     SentencePairInput,
 )
+from laris.shared.core.errors import InvalidNLIInputError
+from laris.shared.language.encoder.sentence_encoder import CompactSentenceEncoder
+from laris.shared.language.schemas import VocabularyContract
+from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
+from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
 
 
 class TestNLIInferenceBehavior:
@@ -205,7 +205,7 @@ class TestNLIBoundaryAndResourceGates:
     def test_invariant_violation_raises_runtime_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from reasoning import NLIOutput
+        from laris.research.reasoning import NLIOutput
 
         monkeypatch.setattr(NLIOutput, "verify_contradiction_invariant", lambda self: False)
         pair = SentencePairInput(premise="A holds.", hypothesis="A holds.")

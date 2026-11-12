@@ -4,13 +4,13 @@ import argparse
 from pathlib import Path
 from typing import Any, List
 
-from config.loader import load_runtime_config
-from harness.runtime import HarnessRuntime
-from vault.brain import Brain
-from vault.index import VaultIndex
-from vault.lint import Problem, lint_content, lint_format, lint_hierarchy
-from vault.project import FOLDERS, ProjectVault
-from vault.schema import Schema, lint_schema
+from laris.shared.brain import Brain
+from laris.shared.config.loader import load_runtime_config
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import Problem, lint_content, lint_format, lint_hierarchy
+from laris.shared.vault.project import FOLDERS, ProjectVault
+from laris.shared.vault.schema import Schema, lint_schema
 
 
 def _root(parser: argparse.ArgumentParser) -> None:
@@ -166,7 +166,7 @@ class _MigrateMemory:
         parser.add_argument("--undo", action="store_true", help="Remove the notes it created")
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.memory import migrate, undo_migration
+        from laris.shared.vault.memory import migrate, undo_migration
 
         root, config = Path(args.project_root).resolve(), _config(args)
         vault = ProjectVault(root, config.vault)
@@ -186,7 +186,7 @@ class _Sync:
         parser.add_argument("--accept", action="store_true", help="Adopt hand edits in blocks")
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.repair import accept_edits, find_conflicts
+        from laris.shared.vault.repair import accept_edits, find_conflicts
 
         root, config = Path(args.project_root).resolve(), _config(args)
         vault = ProjectVault(root, config.vault)
@@ -212,7 +212,7 @@ class _Repair:
         )
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.repair import repair, restore
+        from laris.shared.vault.repair import repair, restore
 
         root, config = Path(args.project_root).resolve(), _config(args)
         vault = ProjectVault(root, config.vault)
@@ -243,7 +243,7 @@ class _Search:
         parser.add_argument("--limit", type=int, default=8)
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.search import NoteSearch
+        from laris.shared.vault.search import NoteSearch
 
         index, _ = _index(args)
         if index is None:
@@ -291,14 +291,14 @@ class _Graph:
     def run(self, args: argparse.Namespace) -> int:
         import json
 
-        from vault.graph import VaultGraph
+        from laris.shared.vault.graph import VaultGraph
 
         index, _ = _index(args)
         if index is None:
             print("no project vault yet; run `laris vault init`")
             return 0
         if args.format in ("graphml", "canvas"):
-            from scholarly import kg
+            from laris.shared.scholarly import kg
 
             graph_kg = kg.build(index)
             text = graph_kg.to_graphml() if args.format == "graphml" else graph_kg.to_canvas()
@@ -337,7 +337,7 @@ class _Propose:
         parser.add_argument("text")
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.proposals import propose
+        from laris.client.vault.proposals import propose
 
         root, config = Path(args.project_root).resolve(), _config(args)
         result = propose(ProjectVault(root, config.vault), args.title, args.text, "user")
@@ -350,7 +350,7 @@ class _Review:
         _root(parser)
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.proposals import pending
+        from laris.client.vault.proposals import pending
 
         root, config = Path(args.project_root).resolve(), _config(args)
         items = pending(ProjectVault(root, config.vault))
@@ -367,7 +367,7 @@ class _Accept:
         parser.add_argument("--into", default="memory", choices=["memory", "decision", "concept"])
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.proposals import accept
+        from laris.client.vault.proposals import accept
 
         root, config = Path(args.project_root).resolve(), _config(args)
         try:
@@ -385,7 +385,7 @@ class _Reject:
         parser.add_argument("title")
 
     def run(self, args: argparse.Namespace) -> int:
-        from vault.proposals import reject
+        from laris.client.vault.proposals import reject
 
         root, config = Path(args.project_root).resolve(), _config(args)
         ok = reject(ProjectVault(root, config.vault), args.title)

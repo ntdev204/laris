@@ -13,16 +13,16 @@ from pathlib import Path
 
 import pytest
 
-from core.errors import ModuleContractViolationError
-from corpus.pipeline import CorpusIngestionPipeline
-from corpus.schemas import DatasetSplit
-from corpus.storage import (
+from laris.research.corpus.pipeline import CorpusIngestionPipeline
+from laris.research.corpus.storage import (
     MANIFEST_FILE_NAME,
     SPLIT_MANIFEST_FILE_NAME,
     export_processed_corpus,
     load_processed_split,
     verify_processed_directory_layout,
 )
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.corpus.schemas import DatasetSplit
 from tests.fixtures.synthetic_corpus import get_standard_synthetic_corpus
 
 

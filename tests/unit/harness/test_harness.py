@@ -6,22 +6,22 @@ from pathlib import Path
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.loop import AgentSession
-from agent.provider import AssistantTurn, ChatProvider, ToolCall
-from agent.tools import Sandbox, ToolExecutionError
-from application.service import SearchService
-from application.workspace import Workspace
-from config.loader import assert_no_literal_secrets, load_dotenv, load_runtime_config
-from core.errors import ModuleContractViolationError
-from harness.audit import AuditLog
-from harness.guard import InjectionScanner, LeakDetector
-from harness.integrity import write_lock
-from harness.policy import ApprovalPolicy, egress_allowed, is_loopback_url
-from harness.prefs import PrefsError, UserPrefs
-from harness.prompts import PromptError
-from harness.runtime import HarnessRuntime
-from harness.verifier import AnswerVerifier
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.loop import AgentSession
+from laris.client.agent.provider import AssistantTurn, ChatProvider, ToolCall
+from laris.client.agent.tools import Sandbox, ToolExecutionError
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Workspace
+from laris.shared.config.loader import assert_no_literal_secrets, load_dotenv, load_runtime_config
+from laris.shared.core.errors import ModuleContractViolationError
+from laris.shared.harness.audit import AuditLog
+from laris.shared.harness.guard import InjectionScanner, LeakDetector
+from laris.shared.harness.integrity import write_lock
+from laris.shared.harness.prefs import PrefsError, UserPrefs
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.policy.policy import ApprovalPolicy, egress_allowed, is_loopback_url
+from laris.shared.policy.prompts import PromptError
+from laris.shared.policy.verifier import AnswerVerifier
 
 REPO = Path(__file__).resolve().parents[3]
 
@@ -70,7 +70,7 @@ def test_yaml_with_literal_secret_is_rejected(project):
 
 
 def test_default_yaml_matches_schema_defaults():
-    from config.schemas import LarisConfig
+    from laris.shared.config.schemas import LarisConfig
 
     loaded = load_runtime_config(REPO)
     schema = LarisConfig()
@@ -317,7 +317,7 @@ def test_loop_redacts_secrets_in_answers_and_audits_without_content(project, tmp
 def test_loop_retries_once_when_grounded_answer_has_no_citation(project, tmp_path):
     rt = HarnessRuntime(project_root=project, environ={})
     service = SearchService(Workspace(tmp_path / "ws"))
-    from application.workspace import chunks_from_text
+    from laris.client.application.workspace import chunks_from_text
 
     service.workspace.add(chunks_from_text("solar.txt", "Perovskite cells reach 25% efficiency."))
     registry = build_registry(service, Sandbox([project], tmp_path / "o", policy=rt.paths), rt)

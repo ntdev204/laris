@@ -16,12 +16,12 @@ from pathlib import Path
 
 import numpy as np
 
-from core.errors import (
+from laris.shared.core.errors import (
     EmbeddingDimensionMismatchError,
     SequenceLengthExceededError,
     TrainingExecutionProhibitedError,
 )
-from language.encoder.transformer import (
+from laris.shared.language.encoder.transformer import (
     LanguageEncoderConfig,
     ModelReadinessState,
     RandomlyInitializedTransformerEncoder,
@@ -232,7 +232,7 @@ class TestRoPEMathematics(unittest.TestCase):
 
     def test_rope_norm_preservation(self) -> None:
         """Rotary rotation is orthogonal and must strictly preserve Euclidean vector norms."""
-        from language.encoder.transformer import _apply_rope
+        from laris.shared.language.encoder.transformer import _apply_rope
 
         seq_len = 8
         head_dim = 64
@@ -253,7 +253,7 @@ class TestRoPEMathematics(unittest.TestCase):
 
     def test_rope_position_zero_is_identity(self) -> None:
         """At position 0, angles are 0, so rotation must equal identity (q_rot[0] == q[0])."""
-        from language.encoder.transformer import _apply_rope
+        from laris.shared.language.encoder.transformer import _apply_rope
 
         seq_len = 4
         head_dim = 32

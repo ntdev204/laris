@@ -1,7 +1,7 @@
 """The golden fixture vault: one fixed expectation for every link form (spec: vault format 7)."""
 
+from laris.shared.vault.index import VaultIndex
 from tests.unit.conftest import REPO
-from vault.index import VaultIndex
 
 FIXTURE = REPO / "tests" / "fixtures" / "vault"
 

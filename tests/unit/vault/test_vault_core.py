@@ -2,10 +2,10 @@
 
 import pytest
 
-from vault.index import VaultIndex
-from vault.lint import lint_format
-from vault.notes import parse_note
-from vault.writer import (
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_format
+from laris.shared.vault.notes import parse_note
+from laris.shared.vault.writer import (
     VaultWriteError,
     VaultWriter,
     resolve_inside,

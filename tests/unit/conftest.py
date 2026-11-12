@@ -11,7 +11,7 @@ REPO = Path(__file__).resolve().parents[2]
 @pytest.fixture(autouse=True)
 def _fresh_url_opener():
     """No test may inherit (or leave behind) a process-wide pinned-certificate opener."""
-    from harness import trust
+    from laris.shared.harness import trust
 
     trust.reset()
     yield

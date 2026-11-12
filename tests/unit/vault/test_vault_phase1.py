@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from config.runtime_schemas import PromptConfig
-from harness import integrity
-from vault.graph import VaultGraph
-from vault.index import VaultIndex
-from vault.lint import lint_content
-from vault.notes import parse_note
-from vault.schema import Schema, as_dict, lint_schema
-from vault.writer import VaultWriteError, VaultWriter
+from laris.shared.config.runtime_schemas import PromptConfig
+from laris.shared.harness import integrity
+from laris.shared.vault.graph import VaultGraph
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_content
+from laris.shared.vault.notes import parse_note
+from laris.shared.vault.schema import Schema, as_dict, lint_schema
+from laris.shared.vault.writer import VaultWriteError, VaultWriter
 
 
 def make(root: Path, files: dict) -> VaultIndex:
@@ -95,7 +95,7 @@ def test_crash_during_write_leaves_the_old_file(tmp_path, monkeypatch):
     def boom(*_a, **_k):
         raise OSError("disk full")
 
-    monkeypatch.setattr("vault.writer.os.replace", boom)
+    monkeypatch.setattr("laris.shared.vault.writer.os.replace", boom)
     with pytest.raises(OSError):
         writer.write_note("N.md", {}, {"b": "new"})
     assert (vault / "N.md").read_text() == before

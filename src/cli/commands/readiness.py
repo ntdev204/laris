@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from language.evaluation.readiness import assess_readiness
+from laris.research.language.evaluation.readiness import assess_readiness
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:

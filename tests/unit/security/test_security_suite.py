@@ -9,17 +9,17 @@ from pathlib import Path
 
 import pytest
 
-from agent.builtin_tools import build_registry
-from agent.tools import Sandbox, ToolExecutionError
-from application.service import SearchService
-from application.workspace import Chunk, Workspace
-from harness.runtime import HarnessRuntime
-from vault.hooks import record_ingest
-from vault.index import VaultIndex
-from vault.lint import lint_content
-from vault.notes import MAX_FRONT_MATTER_CHARS, parse_note
-from vault.project import ProjectVault
-from vault.writer import VaultWriteError, VaultWriter
+from laris.client.agent.builtin_tools import build_registry
+from laris.client.agent.tools import Sandbox, ToolExecutionError
+from laris.client.application.service import SearchService
+from laris.client.application.workspace import Chunk, Workspace
+from laris.client.vault.hooks import record_ingest
+from laris.shared.harness.runtime import HarnessRuntime
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_content
+from laris.shared.vault.notes import MAX_FRONT_MATTER_CHARS, parse_note
+from laris.shared.vault.project import ProjectVault
+from laris.shared.vault.writer import VaultWriteError, VaultWriter
 
 REPO = Path(__file__).resolve().parents[3]
 SECRET = "sk-" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4"
@@ -126,7 +126,7 @@ def test_secrets_are_redacted_in_every_note_path(project):
     assert runtime.redactor.redact(f"key {SECRET}")[0] != f"key {SECRET}"  # the pattern is known
     text = f"Notes about cells. api_key = {SECRET} and more text about cells."
     record_ingest(runtime, [Chunk("c", "d", "docs/leaky.txt", "Leaky", text, 0, len(text))])
-    from vault.hooks import record_turn
+    from laris.client.vault.hooks import record_turn
 
     history = [
         {"role": "user", "content": f"my key is {SECRET}, what is a cell?"},

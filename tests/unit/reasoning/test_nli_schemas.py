@@ -7,17 +7,17 @@ import math
 
 import pytest
 
-from core.errors import (
-    InvalidNLIInputError,
-    ProbabilityValidationError,
-    UncertaintyCeilingExceededError,
-)
-from reasoning import (
+from laris.research.reasoning import (
     LN_3,
     NLILabel,
     NLIOutput,
     NLIProbabilities,
     SentencePairInput,
+)
+from laris.shared.core.errors import (
+    InvalidNLIInputError,
+    ProbabilityValidationError,
+    UncertaintyCeilingExceededError,
 )
 
 

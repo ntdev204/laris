@@ -5,11 +5,11 @@ from pathlib import Path
 
 from cli.client import COMMANDS as CLIENT_COMMANDS
 from cli.main import main
-from config.runtime_schemas import VaultConfig
-from vault.index import VaultIndex
-from vault.project import ProjectVault
-from vault.repair import accept_edits, backups, find_conflicts, repair, restore
-from vault.search import NoteSearch
+from laris.shared.config.runtime_schemas import VaultConfig
+from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.project import ProjectVault
+from laris.shared.vault.repair import accept_edits, backups, find_conflicts, repair, restore
+from laris.shared.vault.search import NoteSearch
 
 REPO = Path(__file__).resolve().parents[3]
 

@@ -13,9 +13,9 @@ import yaml
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
 
-from language.benchmarks import fertility as F  # noqa: E402
-from language.evaluation.readiness import assess_readiness  # noqa: E402
-from language.training.checkpoint import file_sha256  # noqa: E402
+from laris.research.language.benchmarks import fertility as F  # noqa: E402
+from laris.research.language.evaluation.readiness import assess_readiness  # noqa: E402
+from laris.shared.language.loading.checkpoint import file_sha256  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

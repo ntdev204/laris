@@ -1,7 +1,7 @@
 import json
 
 from cli.commands.account import _set_server
-from config.loader import load_runtime_config
+from laris.shared.config.loader import load_runtime_config
 
 
 def test_server_address_comes_from_global_settings_json(tmp_path, monkeypatch):
@@ -30,8 +30,8 @@ def test_login_server_writes_settings_json_and_keeps_other_fields(tmp_path, monk
 def test_login_saves_key_into_settings_json_with_model_and_url(tmp_path):
     import stat
 
-    from config.runtime_schemas import AppConfig
-    from harness import credentials
+    from laris.shared.config.runtime_schemas import AppConfig
+    from laris.shared.harness import credentials
 
     settings = tmp_path / "settings.json"
     settings.write_text(json.dumps({"base_url": "https://h/v1", "model": "laris-core"}))

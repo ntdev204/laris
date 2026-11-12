@@ -16,16 +16,9 @@ from typing import Dict
 
 import pytest
 
-from core.errors import (
-    EpistemicOverreachError,
-    InvalidNLIInputError,
-    ModuleContractViolationError,
-    ProvenanceViolationError,
-)
-from core.schemas import EvidenceCoordinate
-from evaluation.benchmark_runner import BenchmarkRunner
-from evaluation.error_taxonomy import ScientificErrorTaxonomy
-from evaluation.schemas import (
+from laris.research.evaluation.benchmark_runner import BenchmarkRunner
+from laris.research.evaluation.error_taxonomy import ScientificErrorTaxonomy
+from laris.research.evaluation.schemas import (
     BenchmarkBaseline,
     BenchmarkItem,
     BenchmarkRunReport,
@@ -36,6 +29,13 @@ from evaluation.schemas import (
     RegressionThreshold,
     ScientificErrorCategory,
 )
+from laris.shared.core.errors import (
+    EpistemicOverreachError,
+    InvalidNLIInputError,
+    ModuleContractViolationError,
+    ProvenanceViolationError,
+)
+from laris.shared.core.schemas import EvidenceCoordinate
 
 
 class TestStableBenchmarkManifestIntegrity:
