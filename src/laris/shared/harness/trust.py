@@ -16,6 +16,10 @@ from typing import Optional
 
 TRUST_DIR = "~/.laris/trusted"
 _installed: Optional[str] = None
+# The pinned file may hold a server's own (leaf) certificate, as when the owner's reverse proxy
+# issues one from a private CA. A certificate in the trust store is then enough to anchor the
+# chain; the host name is still checked.
+_PINNED = getattr(ssl, "VERIFY_X509_PARTIAL_CHAIN", 0)
 
 
 def fingerprint_der(der: bytes) -> str:
@@ -43,6 +47,7 @@ def is_trusted(host: str, port: int, ca_file: str = "", timeout: float = 5.0) ->
     context = ssl.create_default_context()
     if ca_file and Path(ca_file).expanduser().is_file():
         context.load_verify_locations(cafile=str(Path(ca_file).expanduser()))
+        context.verify_flags |= _PINNED
     try:
         with socket.create_connection((host, port), timeout=timeout) as raw:
             with context.wrap_socket(raw, server_hostname=host):
@@ -70,6 +75,7 @@ def install(ca_file: str) -> None:
         return
     context = ssl.create_default_context()
     context.load_verify_locations(cafile=str(path))
+    context.verify_flags |= _PINNED
     urllib.request.install_opener(
         urllib.request.build_opener(urllib.request.HTTPSHandler(context=context))
     )

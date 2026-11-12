@@ -198,7 +198,7 @@ Exit criteria:
 ### Phase 15 — Deployment with Docker
 Goal: the whole server side runs with `docker compose` on one machine.
 Tasks: T67, T68, T69
-Progress: [x] T67, [x] T68 (2026-11-12). Remaining: T69.
+Progress: [x] T67, [x] T68, [x] T69 (2026-11-12). Phase complete.
 Exit criteria:
 - Images build; only Caddy publishes ports; policy and weights are read-only mounts; secrets are Docker secrets.
 - The end-to-end smoke test passes (or its commands are prepared for the owner when no Docker or GPU is available).

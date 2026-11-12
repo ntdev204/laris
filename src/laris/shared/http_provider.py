@@ -156,10 +156,12 @@ class HttpEmbedder:
         model: str = "",
         api_key_env: Optional[str] = None,
         timeout_s: float = 120.0,
+        api_key: Optional[str] = None,
     ) -> None:
         self.url = base_url.rstrip("/") + self.path
         self.model = model
-        self.api_key = os.environ.get(api_key_env) if api_key_env else None
+        # an explicit key (the one `laris login` saved) wins over the environment variable
+        self.api_key = api_key or (os.environ.get(api_key_env) if api_key_env else None)
         self.timeout_s = timeout_s
 
     def __call__(self, texts: List[str]) -> List[List[float]]:

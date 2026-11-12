@@ -43,8 +43,13 @@ def load_runtime(args: Optional[argparse.Namespace] = None) -> HarnessRuntime:
 def make_service(args: argparse.Namespace, runtime: HarnessRuntime) -> SearchService:
     cfg = runtime.config.app
     api = runtime.config.model_api
+    key = None
+    if api.base_url:  # the key `laris login` saved, unless the environment names another
+        from laris.shared.harness.credentials import load_saved
+
+        key = runtime.environ.get(cfg.key_env) or load_saved(cfg)
     embedder = (
-        ServerEmbedder(api.base_url, "", api.api_key_env or None, api.timeout_s)
+        ServerEmbedder(api.base_url, "", api.api_key_env or None, api.timeout_s, key)
         if api.base_url
         else None
     )

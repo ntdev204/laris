@@ -4,6 +4,7 @@
 service that speaks it can drive the agent. This module imports nothing from the other packages.
 """
 
+import json
 import urllib.error
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -38,12 +39,24 @@ class AuthError(ProviderError):
     """The server rejected the API key (HTTP 401 or 403)."""
 
 
+def _error_detail(exc: urllib.error.HTTPError, limit: int = 200) -> str:
+    """The message in an error body (`{"error": "…"}` or `{"error": {"message": "…"}}`), if any."""
+    try:
+        body = json.loads(exc.read().decode("utf-8", errors="replace"))
+        error = body.get("error") if isinstance(body, dict) else None
+        text = error.get("message") if isinstance(error, dict) else error
+        return " ".join(str(text).split())[:limit] if text else ""
+    except (OSError, ValueError, AttributeError):
+        return ""
+
+
 def http_failure(exc: urllib.error.HTTPError) -> ProviderError:
     if exc.code == 429:
         return QuotaError("token quota of this API key is used up")
     if exc.code in (401, 403):
         return AuthError(f"API key rejected by the server (HTTP {exc.code})")
-    return ProviderError(f"model API returned HTTP {exc.code}")
+    detail = _error_detail(exc)
+    return ProviderError(f"model API returned HTTP {exc.code}" + (f": {detail}" if detail else ""))
 
 
 class ChatProvider(ABC):

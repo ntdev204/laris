@@ -120,3 +120,41 @@ def test_the_client_has_no_encoder_of_its_own(tmp_path):
     with pytest.raises(ServiceError, match="QA model"):
         service.answer("what?")
     assert not hasattr(service, "checkpoint")
+
+
+def test_the_embedder_uses_the_key_that_login_saved(tmp_path, monkeypatch):
+    import argparse
+    import json
+
+    from cli.common import load_runtime, make_service
+
+    account = tmp_path / "settings.json"
+    account.write_text(json.dumps({"api_key": "lk_saved_by_login"}), encoding="utf-8")
+    monkeypatch.setenv("LARIS_APP__ACCOUNT_FILE", str(account))
+    monkeypatch.setenv("LARIS_MODEL_API__BASE_URL", "https://example.invalid/v1")
+    monkeypatch.delenv("LARIS_API_KEY", raising=False)
+    monkeypatch.chdir(tmp_path)
+    runtime = load_runtime()
+    service = make_service(argparse.Namespace(), runtime)
+    assert service.embedder.api_key == "lk_saved_by_login"
+    monkeypatch.setenv("LARIS_API_KEY", "lk_from_environment")
+    assert make_service(argparse.Namespace(), load_runtime()).embedder.api_key == (
+        "lk_from_environment"
+    )
+
+
+def test_http_failures_carry_the_servers_message():
+    import io
+    import urllib.error
+
+    from laris.protocol.types import http_failure
+
+    def failure(code, body):
+        return urllib.error.HTTPError("u", code, "x", {}, io.BytesIO(body))
+
+    flat = http_failure(failure(400, b'{"error": "no embedding model loaded"}'))
+    assert str(flat) == "model API returned HTTP 400: no embedding model loaded"
+    nested = http_failure(failure(502, b'{"error": {"message": "a\\nb  c"}}'))
+    assert str(nested) == "model API returned HTTP 502: a b c"
+    assert str(http_failure(failure(500, b"<html>"))) == "model API returned HTTP 500"
+    assert "quota" in str(http_failure(failure(429, b"{}")))
