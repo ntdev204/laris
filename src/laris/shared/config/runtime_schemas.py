@@ -218,7 +218,12 @@ class ServingConfig(BaseModel):
     tls_identity_file: str = Field(default="")  # PEM private key for that certificate
     tls_dir: str = Field(default="~/.laris-server/tls")  # cert.pem + key.pem here turn HTTPS on
     allow_plain_http: bool = Field(default=False)  # plain HTTP is only accepted on loopback
-    data_dir: str = Field(default="artifacts/server")  # database with keys, usage, reasoning traces
+    data_dir: str = Field(default="artifacts/server")  # SQLite file with keys, usage, traces
+    database_engine: str = Field(default="sqlite", pattern="^(sqlite|postgres)$")
+    database_url_env: str = Field(default="LARIS_DATABASE_URL")  # env var with the PostgreSQL DSN
+    database_pool_min: int = Field(default=1, ge=1)
+    database_pool_max: int = Field(default=10, ge=1)
+    database_timeout_s: float = Field(default=10.0, gt=0.0)
     master_env: str = Field(default="LARIS_SERVER_MASTER")  # env var holding the master secret
     master_file: str = Field(default="~/.laris-server/master.secret")  # used when the env is unset
     server_ips: List[str] = Field(default_factory=list)  # extra addresses counted as "the server"

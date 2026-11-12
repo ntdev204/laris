@@ -1,6 +1,7 @@
 """One object that opens the server database and exposes the ports the model server uses."""
 
 import hashlib
+import os
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Set
 
@@ -67,6 +68,25 @@ def database_path(cfg: ServingConfig, root: Path) -> Path:
     return (folder if folder.is_absolute() else root / folder) / "laris-server.db"
 
 
+def open_database(
+    cfg: ServingConfig, root: Path, environ: Optional[Mapping[str, str]] = None
+) -> Any:
+    """SQLite (one file) or PostgreSQL (`serving.database_engine`, DSN in the environment)."""
+    if cfg.database_engine == "postgres":
+        from laris.server.storage import PgDatabase, StorageError
+
+        dsn = (environ if environ is not None else os.environ).get(cfg.database_url_env, "")
+        if not dsn:
+            raise StorageError(f"set {cfg.database_url_env} to the PostgreSQL connection string")
+        return PgDatabase(
+            dsn,
+            min_size=cfg.database_pool_min,
+            max_size=cfg.database_pool_max,
+            timeout_s=cfg.database_timeout_s,
+        )
+    return Database(database_path(cfg, root))
+
+
 class ServerData:
     def __init__(
         self,
@@ -77,7 +97,7 @@ class ServerData:
         environ: Optional[Mapping[str, str]] = None,
         extra_ips: Optional[list] = None,
     ) -> None:
-        self.db = Database(database_path(cfg, root))
+        self.db: Any = open_database(cfg, root, environ)
         self.cfg = cfg
         self.box = SecretBox(load_master(cfg.master_env, cfg.master_file, environ))
         extras = [*cfg.server_ips, *(extra_ips or [])]

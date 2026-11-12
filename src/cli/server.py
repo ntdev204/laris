@@ -7,6 +7,7 @@ from typing import Optional, Sequence
 from cli.commands import (
     calibrate,
     check,
+    db,
     evaluate,
     keys,
     language_encoder,
@@ -83,6 +84,7 @@ COMMANDS: Table = {
         "show": ("Print one reasoning trace", keys.REASONING_COMMANDS["show"]),
         "purge": ("Delete old reasoning traces", keys.REASONING_COMMANDS["purge"]),
     },
+    "db": {"migrate": ("Create or update the server database schema", db.COMMANDS["migrate"])},
     "model": {
         "serve": ("Serve the OpenAI-compatible model API", model.COMMANDS["serve"]),
     },

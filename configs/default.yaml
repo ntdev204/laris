@@ -165,6 +165,11 @@ serving:
   model_concurrency: 4
   trusted_proxies: []
   first_admin_file: ~/.laris-server/default.key
+  database_engine: sqlite
+  database_url_env: LARIS_DATABASE_URL
+  database_pool_min: 1
+  database_pool_max: 10
+  database_timeout_s: 10.0
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true
