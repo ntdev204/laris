@@ -9,7 +9,6 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 import sentencepiece as spm
-
 from language.benchmarks.fertility import (
     DEFAULT_SOURCES,
     classify_overlap,
