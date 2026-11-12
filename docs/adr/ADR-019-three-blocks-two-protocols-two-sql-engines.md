@@ -70,11 +70,15 @@ a bump needs a ledger entry.
 | Python extra `model` | `fastapi`, `uvicorn` | same ranges | the model block needs no database driver |
 | Container images | Caddy, PostgreSQL | tags pinned in T68 | not Python dependencies |
 | npm (client front end) | `ink`, `react` | `ink` 8.0.0, `react` 19.3.1 (Ink 8 requires react >= 19.3.0) | exact versions, no ranges |
+| npm (front-end build and tests, dev only, approved 2026-11-12 in T81) | `typescript`, `@types/react`, `@types/node`, `ink-testing-library` | `typescript` 7.0.2, `@types/react` 19.3.0, `@types/node` 26.6.6, `ink-testing-library` 4.0.0 | exact versions; not shipped to users |
 | Sandbox provisioning | `uv` single binary, one per platform in the npm platform package | 0.13.1 | fetches standalone Python and builds `~/.laris/.venv/` |
 | Dropped | `prompt_toolkit`, `rich` | n/a | approved, then dropped with the Python front end (D22) |
 
 Further Ink component packages (spinners, text input and similar) are **not** approved by this ADR; the
-front end uses `ink` and `react` only until the owner approves another by name.
+front end uses `ink` and `react` only at run time until the owner approves another by name.
+
+**Node requirement (owner decision in T81, 2026-11-12).** `ink` 8.0.0 declares `engines.node >=22`, so the
+npm package's `engines.node` is `>=22` (it was `>=18`). The CI matrix for the front end is Node 22 and 24.
 
 ## 2b. Block map (owner confirmed the proposal, 2026-11-12; applied by T50, adjusted by T51)
 

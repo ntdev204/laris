@@ -22,8 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hooks and folder trust:** `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop` hooks declared only in `~/.laris/settings.json`, run in the sandbox with block decisions and timeouts, `/hooks`; project commands and skills are used only after the folder is trusted.
 - **Status line, queued input and interrupt:** engine `status` events (model, mode, context use, tokens left from the account route, git branch, sandbox state), `/cost` and `/context` from the same values; messages typed while the agent works are queued in order; an interrupted turn leaves every tool call answered in the saved conversation.
 - **Plain-text mode:** `laris --plain` is an E1 front end that uses only `input` and `print` (messages, slash commands, approvals with diffs as text, Ctrl+C); it replaces the old `input()` loop and needs no extra dependency.
+- **Ink front end:** `laris` opens a terminal interface written in TypeScript with Ink and React over engine protocol E1: multi-line input (backslash+Enter), history and Ctrl+R search, `/` and `@` completion from the engine, streamed Markdown with code highlighting, a spinner, approval dialogs with diffs and "always allow" scopes, a status line, Esc to interrupt, Ctrl+C twice to exit, Shift+Tab to change mode and typing while the agent works (queued). It checks the protocol version in `ready` and refuses a mismatch; if the interface cannot load, the launcher starts `--plain`. `laris engine --stdio --continue` continues the newest session.
 
 ### Changed
+- The npm package now needs Node 22 or newer (Ink 8) and ships the compiled front end; `ink` 8.0.0 and `react` 19.3.1 are runtime dependencies.
 - Diagnostics of `laris -p` go to standard error; tests no longer read or write the real `~/.laris`.
 
 ## [1.5.2] - 2026-11-12

@@ -1,0 +1,9 @@
+{"name":"an approval with a diff","steps":[
+ {"emit":[{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}]},
+ {"expect":{"type":"user_message","text":"write a note"},"emit":[
+   {"type":"tool_call","id":"call_1","name":"write_file","arguments":{"path":"a.txt"}},
+   {"type":"permission_request","id":"p1","tool":"write_file","arguments":{"path":"a.txt"},"reason":"writes a file","rule":"write_file(a.txt)","diff":"--- a/a.txt\n+++ b/a.txt\n@@ -0,0 +1 @@\n+hello","scopes":["once","session","project","everywhere"]}]},
+ {"expect":{"type":"permission_response","id":"p1","decision":"allow","scope":"project"},"emit":[
+   {"type":"tool_result","id":"call_1","name":"write_file","result":{"text":"ok","total_chars":2}},
+   {"type":"text","delta":"Done.\n"},{"type":"done","status":"completed","answer":""}]}
+]}

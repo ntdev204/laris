@@ -264,3 +264,42 @@ def test_permission_request_carries_the_diff_of_an_edit(run, project):
     t.join(5)
     assert (project / "app.py").read_text() == "x = 1\n"  # the request changed nothing
     h.stop()
+
+
+def test_the_engine_command_continues_the_newest_session(chat, monkeypatch, capsys):
+    """`laris -c` through the Ink front end starts the engine with --continue (T81)."""
+    import io
+    import json
+    import sys
+
+    from cli import client
+
+    earlier = chat.conversations.create("earlier")
+    chat.conversations.save({**earlier, "messages": [{"role": "user", "content": "hi"}]})
+    newest = chat.conversations.list()[0]["id"]
+    monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
+    assert client.main(["engine", "--stdio", "--continue"]) == 0
+    ready = json.loads(capsys.readouterr().out.splitlines()[0])
+    assert ready["type"] == "ready" and ready["session"] == newest
+
+
+def test_the_recorded_scenarios_of_the_node_front_end_are_valid_e1():
+    """packaging/npm/test/scenarios replay recorded engine output; they must stay valid E1."""
+    import json
+    from pathlib import Path
+
+    folder = Path(__file__).resolve().parents[3] / "packaging" / "npm" / "test" / "scenarios"
+    files = sorted(folder.glob("*.json"))
+    assert len(files) >= 8
+    for file in files:
+        steps = json.loads(file.read_text(encoding="utf-8"))["steps"]
+        for step in steps:
+            for event in step.get("emit", []):
+                if file.name == "mismatch.json":
+                    continue  # the point of that scenario is an event from another version
+                e1.parse_event(event)
+            if "expect" in step:
+                want = step["expect"]
+                assert want["type"] in e1.COMMANDS, (file.name, want)

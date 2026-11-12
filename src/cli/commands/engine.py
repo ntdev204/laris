@@ -13,6 +13,10 @@ class _Engine:
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--stdio", action="store_true", required=True, help="Speak E1 on stdio")
         parser.add_argument("--resume", default=None, help="Resume a session by id")
+        parser.add_argument(
+            "--continue", dest="continue_last", action="store_true",
+            help="Continue the most recent session",
+        )  # fmt: skip
         parser.add_argument("--workspace", default=None)
         parser.add_argument("--chat-dir", default=None)
         parser.add_argument("--model-api-url", default=None)
@@ -27,6 +31,9 @@ class _Engine:
 
         chat: Any = make_chat(args, interactive=False)  # never prompts: stdin carries commands
         conversation = None
+        if args.continue_last and not args.resume:
+            rows = chat.conversations.list()
+            args.resume = str(rows[0]["id"]) if rows else None  # newest first; none: start new
         if args.resume:
             try:
                 conversation = dict(chat.conversations.get(args.resume))
