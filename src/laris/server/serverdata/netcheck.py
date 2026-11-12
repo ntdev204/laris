@@ -3,7 +3,7 @@ meaning this machine: loopback plus the addresses the machine itself owns, found
 
 import ipaddress
 import socket
-from typing import Callable, Iterable, Optional, Set, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Set, Union
 
 Address = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 SERVER = "@server"
@@ -66,3 +66,36 @@ def allowed(
         except ValueError:
             continue
     return False
+
+
+Network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+
+
+def networks(rules: Iterable[str]) -> List[Network]:
+    """Trusted proxy entries (addresses or CIDRs); an invalid entry is a configuration error."""
+    out: List[Network] = []
+    for rule in rules:
+        out.append(ipaddress.ip_network(rule.strip(), strict=False))
+    return out
+
+
+def real_address(
+    peer: Optional[str], forwarded: Sequence[str], trusted: Sequence[Network]
+) -> Optional[str]:
+    """The address of the caller. `X-Forwarded-For` is believed only when the TCP peer is a trusted
+    proxy, and then only the hops that trusted proxies added: walking from the right, the first
+    address that is not a trusted proxy is the client. Anything the client put further left is
+    ignored; an unparsable hop gives None (no address rule can match it)."""
+    address = parse(peer or "")
+    if address is None:
+        return None
+    if not trusted or not any(address in net for net in trusted):
+        return str(address)
+    hops = [h.strip() for part in forwarded for h in part.split(",") if h.strip()]
+    for hop in reversed(hops):
+        parsed = parse(hop)
+        if parsed is None:
+            return None
+        if not any(parsed in net for net in trusted):
+            return str(parsed)
+    return str(address)  # every hop was a trusted proxy (or there were none): the peer itself

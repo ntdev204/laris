@@ -11,7 +11,7 @@ started becomes an `error` event followed by `[DONE]`.
 import json
 import socket
 import threading
-from typing import Any, Callable, Dict, Iterator, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, Optional, Sequence, Tuple
 
 import anyio
 from fastapi import FastAPI, HTTPException, Request
@@ -28,6 +28,7 @@ from laris.protocol import (
     encode_done,
     encode_event,
 )
+from laris.server.serverdata import netcheck
 from laris.server.serving.ports import (
     ACCOUNT,
     CHAT,
@@ -43,12 +44,20 @@ from laris.server.serving.service import ModelService
 _END = object()
 
 
-def client_address(request: Request) -> Optional[str]:
-    """The address key rules are checked against: the TCP peer (T57 adds trusted proxies)."""
-    return request.client.host if request.client else None
+def create_app(
+    service: ModelService,
+    max_body_bytes: int,
+    body_timeout_s: float = 30.0,
+    trusted_proxies: Sequence[str] = (),
+) -> FastAPI:
+    trusted = netcheck.networks(trusted_proxies)
 
+    def client_address(request: Request) -> Optional[str]:
+        """The address key rules are checked against: the TCP peer, or the client a trusted
+        proxy forwarded (`serving.trusted_proxies`)."""
+        peer = request.client.host if request.client else None
+        return netcheck.real_address(peer, request.headers.getlist("x-forwarded-for"), trusted)
 
-def create_app(service: ModelService, max_body_bytes: int, body_timeout_s: float = 30.0) -> FastAPI:
     app = FastAPI(title="laris-server", docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.exception_handler(HTTPException)
@@ -293,6 +302,7 @@ class ApiServer:
             log_level="warning",
             timeout_keep_alive=self._timeout_keep_alive,
             access_log=False,
+            proxy_headers=False,  # we read X-Forwarded-For ourselves, only from trusted proxies
             **kwargs,
         )
         self._server = uvicorn.Server(config)

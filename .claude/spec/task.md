@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T56 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T57 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -677,7 +677,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `serving.trusted_proxies`; real address from `X-Forwarded-For` only from a trusted proxy; `@server` and CIDR rules use it
 - Validation:
   - Tests with trusted, untrusted and forged headers
-- Status: pending
+- Status: done
+- Note: New config `serving.trusted_proxies` (list of addresses or CIDRs, default empty; an invalid entry fails at start). `netcheck.real_address(peer, forwarded, trusted)`: with no trusted proxy, or a peer that is not one, `X-Forwarded-For` is ignored; from a trusted peer the hops are read from the right and the first address that is not a trusted proxy is the client, so hops the client wrote on the left cannot help; an unparsable hop gives no address (every address rule then fails); several header lines are joined; IPv4-mapped IPv6 is normalised. The FastAPI server uses it for every key check, so `@server` and CIDR rules hold behind the proxy (behind an untrusted or unconfigured proxy every request is the proxy's address, as ADR-018 already warned). uvicorn's own `proxy_headers` is turned off, otherwise it would rewrite the peer from a forged header when the peer is loopback. `build_server` and `laris-server model serve` pass `serving.trusted_proxies`. tests/unit/serverdata/test_trusted_proxy.py (4 tests): the address function (untrusted, trusted, chained, forged first hop, two header lines, garbage, no config, mapped IPv4, bad entry) and over HTTP with the test client as the proxy: a key limited to 198.51.100.0/24 and a `@server` key, with trusted, forged and untrusted-proxy cases. Verification: ruff, mypy (277 files), full pytest leaves only the two failures described in T50. Limit: only `X-Forwarded-For` is read, not `Forwarded` or `X-Real-IP`; Caddy (T68) must set `X-Forwarded-For` itself and `trusted_proxies` must be set to its network in the compose file.
 
 ### T58 — Embedding through the server
 - Requirements: SR-S2, SR-S4

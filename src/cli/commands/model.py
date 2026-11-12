@@ -118,7 +118,7 @@ class _Serve:
             if cfg.require_auth
             else "AUTHENTICATION IS OFF"
         )
-        server = build_server(service, host, port, cfg.max_body_bytes)
+        server = build_server(service, host, port, cfg.max_body_bytes, cfg.trusted_proxies)
         if cert:
             try:
                 enable_tls(server, cert, identity)

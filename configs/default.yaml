@@ -163,6 +163,7 @@ serving:
   model_name: laris-core
   placeholder_name: laris-placeholder
   model_concurrency: 4
+  trusted_proxies: []
   api_key_env: LARIS_SERVER_KEYS
   allowed_file: ''
   require_auth: true

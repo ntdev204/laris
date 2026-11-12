@@ -210,6 +210,7 @@ class ServingConfig(BaseModel):
     model_name: str = Field(default="laris-core")
     placeholder_name: str = Field(default="laris-placeholder")
     model_concurrency: int = Field(default=4, ge=1)  # calls to the model block at the same time
+    trusted_proxies: List[str] = Field(default_factory=list)  # CIDRs allowed to set X-Forwarded-For
     api_key_env: str = Field(default="LARIS_SERVER_KEYS")  # env var with the accepted keys
     allowed_file: str = Field(default="")  # optional file, one key per line
     require_auth: bool = Field(default=True)  # the server refuses to start without keys
