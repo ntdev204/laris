@@ -149,6 +149,7 @@ class PermissionEngine:
         self.allow_bypass = allow_bypass
         self.always_ask = frozenset(always_ask)
         self.session_allow: List[str] = []
+        self.session_deny: List[str] = []  # `--disallowed-tools` of one headless run
         self._mode: Optional[str] = None  # None: follow `permissions.defaultMode` as saved now
         if mode:
             self.mode = mode
@@ -194,6 +195,8 @@ class PermissionEngine:
         rules += [r for r in extra if isinstance(r, str)]
         if kind == "allow":
             rules += self.session_allow
+        elif kind == "deny":
+            rules += self.session_deny
         return rules
 
     def _first(self, kind: str, tool: str, arguments: Dict[str, Any]) -> Optional[str]:

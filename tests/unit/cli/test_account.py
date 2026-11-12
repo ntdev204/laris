@@ -112,7 +112,7 @@ def test_chat_without_a_key_stops_with_a_clear_message(project, monkeypatch, cap
     monkeypatch.setenv("LARIS_APP__ACCOUNT_FILE", str(tmp_path / "none.json"))
     monkeypatch.delenv("LARIS_API_KEY", raising=False)
     assert main(["-p", "xin chào"]) == 2
-    assert "LARIS_API_KEY" in capsys.readouterr().out
+    assert "LARIS_API_KEY" in capsys.readouterr().err
 
 
 def test_each_program_has_only_its_own_commands():

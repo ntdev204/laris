@@ -69,9 +69,25 @@ def test_chat_stops_when_the_server_rejects_the_key(server, project, monkeypatch
     monkeypatch.setenv("LARIS_MODEL_API__BASE_URL", server)
     monkeypatch.setenv("LARIS_MODEL_API__ALLOW_REMOTE", "false")
     assert main(["-p", "xin chào"]) == 2
-    assert "từ chối" in capsys.readouterr().out
+    assert "từ chối" in capsys.readouterr().err  # diagnostics go to standard error in -p mode
     monkeypatch.setenv("LARIS_API_KEY", GOOD)
     assert main(["-p", "xin chào"]) == 0
+
+
+def test_headless_through_the_cli_with_a_real_server(server, project, monkeypatch, capsys):
+    import json
+
+    monkeypatch.chdir(project)
+    monkeypatch.setenv("LARIS_API_KEY", GOOD)
+    monkeypatch.setenv("LARIS_MODEL_API__BASE_URL", server)
+    monkeypatch.setenv("LARIS_MODEL_API__ALLOW_REMOTE", "false")
+    monkeypatch.setattr("cli.commands.agent._piped_input", lambda: "text from a pipe")
+    code = main(["-p", "graphene", "--output-format", "json", "--max-turns", "2"])
+    out = capsys.readouterr().out.strip().splitlines()
+    assert code in (0, 1) and json.loads(out[-1])["type"] == "result"
+    assert main(["-p", "x", "--output-format", "json", "--max-turns", "99"]) == 2
+    assert main(["-p", "x", "--permission-mode", "bypass"]) == 2
+    assert main(["-p", "x", "--continue", "--resume", "nonexistent"]) == 2
 
 
 def test_login_does_not_save_a_rejected_key(server, project, tmp_path, monkeypatch):

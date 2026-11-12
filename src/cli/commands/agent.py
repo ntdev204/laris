@@ -14,6 +14,14 @@ from typing import Any, Dict, List, Optional
 from cli.common import load_runtime, make_service
 from laris.client.application.chat_app import ChatApp
 from laris.client.engine.commands import BUILTIN, Context
+from laris.client.headless import (
+    EXIT_CODES_HELP,
+    EXIT_USAGE,
+    FORMATS,
+    HeadlessOptions,
+    run_headless,
+    split_rules,
+)
 from laris.client.input_forms import InputProcessor, kind_of
 from laris.client.sandbox import make_sandbox
 
@@ -247,12 +255,56 @@ def _input(chat: Any, conversation_id: str, line: str, always: set) -> int:
     return _turn(chat, conversation_id, prepared.text, always)
 
 
+def _piped_input() -> str:
+    """Text piped on standard input (`cat file | laris -p "explain"`); nothing on a terminal."""
+    try:
+        return "" if sys.stdin.isatty() else sys.stdin.read()
+    except (OSError, ValueError):  # no usable standard input
+        return ""
+
+
 class _Chat:
     """Claude-Code-style terminal session; conversations and settings are shared with the web UI."""
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         _common(parser)
-        parser.add_argument("-p", "--print", dest="print_text", help="Run one prompt and exit")
+        parser.add_argument(
+            "-p",
+            "--print",
+            dest="print_text",
+            nargs="?",
+            const="",
+            default=None,
+            help="Run one prompt without the interface (text may also come from standard input)",
+        )
+        parser.add_argument(
+            "--output-format",
+            choices=FORMATS,
+            default="text",
+            help="With -p: text, json or stream-json",
+        )
+        parser.epilog = EXIT_CODES_HELP
+        parser.add_argument(
+            "-c", "--continue", dest="continue_last", action="store_true",
+            help="Continue the most recent session",
+        )  # fmt: skip
+        parser.add_argument(
+            "--max-turns", type=int, default=None, help="With -p: agent steps (1-10)"
+        )
+        parser.add_argument(
+            "--permission-mode",
+            choices=["default", "acceptEdits", "plan", "bypass"],
+            default=None,
+            help="Permission mode for this run (bypass only when the policy allows it)",
+        )
+        parser.add_argument(
+            "--allowed-tools", action="append", default=None, metavar="RULES",
+            help="Tool rules allowed without asking, e.g. 'Read,Bash(git status:*)'",
+        )  # fmt: skip
+        parser.add_argument(
+            "--disallowed-tools", action="append", default=None, metavar="RULES",
+            help="Tool rules refused for this run",
+        )  # fmt: skip
         parser.add_argument(
             "--resume",
             nargs="?",
@@ -261,18 +313,17 @@ class _Chat:
         )
 
     def run(self, args: argparse.Namespace) -> int:
+        if args.print_text is not None:
+            return self._headless(args)
         chat = make_chat(args)
-        conversation = self._start(chat, args.resume)
+        conversation = self._start(
+            chat, "last" if args.continue_last and not args.resume else args.resume
+        )
         home = Path("~/.laris").expanduser()
         manager = make_sandbox(home, chat.prefs.path, "plain")
         manager.start_background(lambda state: None)
         chat.sandbox_manager = manager
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
-        if args.print_text:
-            prepared = InputProcessor(chat).prepare(args.print_text)
-            for note in prepared.notes:
-                print(_paint(_DIM, note), file=sys.stderr)
-            return _turn(chat, conversation["id"], prepared.text or args.print_text, always)
         print(
             _paint(_USE, "LARIS")
             + f"  session {conversation['id']}  ·  {chat.model_health()['detail']}"
@@ -293,6 +344,37 @@ class _Chat:
                 conversation = updated
                 continue
             _input(chat, conversation["id"], line, always)
+
+    @staticmethod
+    def _headless(args: argparse.Namespace) -> int:
+        """`laris -p`: one task, no interface, documented output formats and exit codes."""
+        from cli.credentials import CredentialError
+        from laris.shared.harness.integrity import IntegrityError
+        from laris.shared.policy.prompts import PromptError
+
+        try:
+            chat = make_chat(args, interactive=False)
+        except (CredentialError, IntegrityError, PromptError) as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return EXIT_USAGE
+        allowed = split_rules(args.allowed_tools)
+        if args.allow_write:
+            allowed += ["write_file", "ingest_path", "save_memory", "Write", "Edit"]
+        options = HeadlessOptions(
+            prompt=args.print_text,
+            stdin_text=_piped_input(),
+            output_format=args.output_format,
+            continue_last=args.continue_last,
+            resume=None if args.resume in (None, "pick") else args.resume,
+            max_turns=args.max_turns,
+            permission_mode=args.permission_mode,
+            allowed_tools=allowed,
+            disallowed_tools=split_rules(args.disallowed_tools),
+        )
+        if args.resume == "pick":
+            print("[ERROR] --resume needs a session id with -p", file=sys.stderr)
+            return EXIT_USAGE
+        return run_headless(chat, options)
 
     @staticmethod
     def _pick(rows: List[Dict[str, Any]]) -> Optional[str]:
