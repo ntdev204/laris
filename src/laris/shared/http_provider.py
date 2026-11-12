@@ -28,6 +28,7 @@ class HttpChatProvider(ChatProvider):
     """Client for an OpenAI-compatible chat-completions endpoint (local or remote)."""
 
     name = "http"
+    extra_headers: Dict[str, str] = {}  # e.g. the protocol version for the policy server
 
     def __init__(
         self,
@@ -54,7 +55,7 @@ class HttpChatProvider(ChatProvider):
 
     def chat(self, messages: List[Message], tools: List[Dict[str, Any]]) -> AssistantTurn:
         body = self._body(messages, tools)
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", **self.extra_headers}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(
@@ -88,7 +89,11 @@ class HttpChatProvider(ChatProvider):
     ) -> Iterator[Dict[str, Any]]:
         """Server-sent events from `stream: true`; tool-call fragments are merged by index."""
         body = {**self._body(messages, tools), "stream": True}
-        headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+            **self.extra_headers,
+        }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(

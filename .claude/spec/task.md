@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T55 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.2.1 · 2026-11-12 (T48-T85: second programme; T48 to T56 done) · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -667,7 +667,8 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - P1 routes on FastAPI and uvicorn replacing `serving/model_server.py`; body validation (size, negative or missing `Content-Length`, shape); SSE `error` event mid-stream; protocol header check; brain lock narrowed to the brain budget
 - Validation:
   - Tests for 400, 401, 403, 411, 413, 429, version mismatch, error mid-stream, a slow client not blocking others; `test_policy_server.py` passes
-- Status: pending
+- Status: done
+- Note: The P1 server runs on FastAPI and uvicorn (src/laris/server/api.py); `serving/model_server.py` keeps only the compatibility names (`ModelService` now lives in serving/service.py, `build_server` returns an `ApiServer` that binds first and serves with uvicorn, `enable_tls` sets the certificate). Routes as before: /health, /v1/models, /v1/laris/{workflows,help,account,chat}, /v1/admin/{usage,reasoning}, bare /v1/chat/completions (closed when the gateway runs) and /v1/embeddings. Bodies: 411 without Content-Length (chunked is refused), 400 for a negative or non-numeric length, bad JSON, non-object or wrong shape (checked with the protocol schemas `ChatRequest` and `EmbedRequest`), 413 before the body is read and again while reading, 408 when the body arrives too slowly (30 s default). `/v1/laris/*` needs `X-Laris-Protocol: 1`, otherwise 426 with a message that tells the user to update the client; the client (`PolicyServerProvider`, `ServerClient`) now sends it. 401, 403, 429 (quota) and 502 (provider) behave as in SR-H9; a failure after the first byte of a stream becomes an `error` event then `[DONE]`, and the generator is closed (usage and traces recorded) even when the reader disconnects. Blocking work (database, gateway, model calls) runs in the thread pool, so a stalled client does not block others. The brain lock was already limited to the per-turn consult and brain tools (never a model call); test_the_brain_lock_is_not_held_during_a_model_call shows three one-second model calls overlapping. Tests: tests/unit/gateway/test_p1_api.py (8 tests) plus the existing policy-confidentiality, key, quota, TLS and trust-on-first-use suites, all passing with the new server. Existing tests that call /laris/* directly now send the version header. Limits: the missing-header refusal applies to every /v1/laris/* route, so a 1.x client is refused by design; TLS minimum version is whatever uvicorn and Python 3.10 default to (not forced to 1.2 as before); `serving.body_timeout_s` is not yet configuration (default argument of `create_app`). Verification: ruff, mypy (277 files), `make check-no-training`; full pytest leaves only the two failures described in T50.
 
 ### T57 — Trusted proxy and address rules
 - Requirements: SR-S4

@@ -75,7 +75,13 @@ def stack(tmp_path):
 def call(base, key, path="/laris/chat", body=None, method=None):
     data = None if body is None and method != "POST" else json.dumps(body or {}).encode()
     request = urllib.request.Request(
-        base + path, data, {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        base + path,
+        data,
+        {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=10) as response:

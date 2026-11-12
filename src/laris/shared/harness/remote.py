@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from laris.protocol import AuthError, ProviderError
+from laris.protocol import PROTOCOL_HEADER, PROTOCOL_VERSION, AuthError, ProviderError
 from laris.protocol import http_failure as _http_failure
 from laris.shared.config.schemas import LarisConfig
 from laris.shared.policy.prompts import ComposedPrompt, expand
@@ -129,7 +129,9 @@ class ServerClient:
         self.timeout_s = timeout_s
 
     def get(self, path: str) -> Dict[str, Any]:
-        headers = {"Authorization": f"Bearer {self.key}"} if self.key else {}
+        headers = {PROTOCOL_HEADER: PROTOCOL_VERSION}
+        if self.key:
+            headers["Authorization"] = f"Bearer {self.key}"
         request = urllib.request.Request(self.base + path, headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=self.timeout_s) as response:

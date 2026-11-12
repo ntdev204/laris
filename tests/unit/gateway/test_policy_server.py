@@ -93,7 +93,11 @@ def test_nothing_of_the_policy_reaches_the_client(server, client_dir):
                 "stream": True,
             }
         ).encode(),
-        {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"},
+        {
+            "Authorization": f"Bearer {KEY}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     backend.reply = "Sure: " + first  # a model that leaks its prompt
     with urllib.request.urlopen(request) as response:
@@ -107,7 +111,11 @@ def test_nothing_of_the_policy_reaches_the_client(server, client_dir):
 
 def test_clients_cannot_inject_a_system_prompt_or_use_the_bare_model(server):
     url, backend = server
-    head = {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
+    head = {
+        "Authorization": f"Bearer {KEY}",
+        "Content-Type": "application/json",
+        "X-Laris-Protocol": "1",
+    }
 
     def post(path, body):
         request = urllib.request.Request(url + path, json.dumps(body).encode(), head)
@@ -221,7 +229,11 @@ def test_the_hidden_brain_brief_is_marked_as_a_harness_note(server, client_dir):
                 "laris": {"kind": "turn", "session_id": "abc123", "task": "perovskite papers"},
             }
         ).encode(),
-        {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"},
+        {
+            "Authorization": f"Bearer {KEY}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        },
     )
     urllib.request.urlopen(request).read()
     sent = backend.seen[-1][0]

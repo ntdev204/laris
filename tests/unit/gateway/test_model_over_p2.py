@@ -73,7 +73,11 @@ def test_gateway_works_against_any_openai_compatible_url(other_runtime):
     srv = build_server(service, "127.0.0.1", 0, runtime.config.serving.max_body_bytes)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
-        head = {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
+        head = {
+            "Authorization": f"Bearer {KEY}",
+            "Content-Type": "application/json",
+            "X-Laris-Protocol": "1",
+        }
         body = {"messages": [{"role": "user", "content": "hi"}], "stream": True,
                 "laris": {"kind": "turn", "session_id": "abc123"}}  # fmt: skip
         request = urllib.request.Request(

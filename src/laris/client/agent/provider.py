@@ -9,6 +9,8 @@ import copy
 from typing import Any, Dict, List, Optional
 
 from laris.protocol import (
+    PROTOCOL_HEADER,
+    PROTOCOL_VERSION,
     AssistantTurn,
     AuthError,
     ChatProvider,
@@ -45,6 +47,7 @@ class PolicyServerProvider(HttpChatProvider):
     server adds the system prompt, runs the brain and guards the reply. Streaming only."""
 
     name = "policy-server"
+    extra_headers = {PROTOCOL_HEADER: PROTOCOL_VERSION}
 
     def __init__(self, *args: Any, kind: str = "turn", **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
