@@ -26,7 +26,7 @@
     "postinstall": "node scripts/postinstall.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "npm run build && node --test \"build/test/*.test.js\"",
+    "test": "npm run build && node --test --test-timeout=60000 --test-reporter=spec \"build/test/*.test.js\"",
     "prepack": "npm run build"
   },
   "dependencies": {
