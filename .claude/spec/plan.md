@@ -217,7 +217,7 @@ Exit criteria:
 ### Phase 17 — Hardening and release 2.0.0
 Goal: security, documentation and the release of the restructured system.
 Tasks: T83, T84, T85
-Progress: [x] T83 (2026-11-13), [x] T84 (2026-11-13), [ ] T85
+Progress: [x] T83 (2026-11-13), [x] T84 (2026-11-13), [ ] T85 (release branch built and green; merge, tag and publish wait for the owner)
 Exit criteria:
 - Security tests for the new surfaces pass; architecture documents and the guide describe the new flow.
 - Release 2.0.0 under the git flow, only with the owner's authorisation.
