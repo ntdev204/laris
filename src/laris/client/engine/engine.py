@@ -11,8 +11,9 @@ import json
 import queue
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, TextIO
 
+from laris.client.engine.commands import BUILTIN, Context
 from laris.protocol import engine as e1
 
 
@@ -77,6 +78,8 @@ class Engine:
         version: str,
         cwd: Optional[Path] = None,
         conversation: Optional[Dict[str, Any]] = None,
+        home: Optional[Path] = None,
+        sandbox: Optional[Any] = None,
     ) -> None:
         self.chat = chat
         self.reader, self.writer = reader, writer
@@ -84,10 +87,9 @@ class Engine:
         self.cwd = Path(cwd or Path.cwd())
         self.conversation = conversation or chat.conversations.create()
         self.mode = chat.runtime.config.agent.approval.mode
-        self.commands: Dict[str, Callable[[str], Iterable[Any]]] = {
-            "help": self._help,
-            "compact": self._compact,
-        }
+        self.home = Path(home or Path.home() / ".laris")
+        self.sandbox = sandbox
+        self.registry = BUILTIN
         self._out = threading.Lock()
         self._inbox: "queue.Queue[Optional[Dict[str, Any]]]" = queue.Queue()
         self._pending: Dict[str, _Pending] = {}
@@ -199,35 +201,38 @@ class Engine:
             self._turn.join(timeout=30)
 
     # -- slash commands and completion -----------------------------------------------------
-    def _help(self, args: str) -> Iterable[Any]:
-        return [e1.Text(delta=self.chat.how_to_use() + "\n"), e1.Done(status="completed")]
-
-    def _compact(self, args: str) -> Iterable[Any]:
-        session = self.chat._session(self.chat.conversations.get(self.conversation["id"]))
-        out: List[Any] = []
-        for event in session.compact(args):
-            out += map_event(event, {}, [0])
-        out.append(e1.Done(status="completed"))
-        return out
+    def _context(self) -> Context:
+        return Context(
+            self.chat, self.conversation, self.home, self.cwd, self.sandbox, self.registry
+        )
 
     def _command(self, command: Dict[str, Any]) -> None:
         name = command["name"].lstrip("/").lower()
-        handler = self.commands.get(name)
-        if handler is None:
-            self._error("unknown_command", f"unknown command /{name}")
+        line = f"{name} {command['args']}".strip()
+        result = self.registry.dispatch(line, self._context())
+        if result.error:
+            code = (
+                "unknown_command" if result.text.startswith("unknown command") else "command_failed"
+            )
+            self._error(code, result.text)
             return
-        try:
-            for message in handler(command["args"]):
-                self.emit(message)
-        except Exception as exc:
-            self._error("command_failed", f"/{name}: {type(exc).__name__}: {exc}")
+        if result.conversation is not None:
+            self.conversation = result.conversation
+            self.emit(e1.Status(kind="session", data={"session": self.conversation["id"]}))
+        if result.text:
+            self.emit(e1.Text(delta=result.text + "\n"))
+        if result.exit:
+            self._inbox.put({"type": "shutdown"})
+        elif result.turn is not None:
+            self._start_turn(result.turn)
+        else:
+            self.emit(e1.Done(status="completed"))
 
     def _complete(self, request: Dict[str, Any]) -> None:
         text, items = request["text"], []
         if request["trigger"] == "/":
-            for name in sorted(self.commands):
-                if name.startswith(text.lower()):
-                    items.append(e1.CompletionItem(value=name))
+            for found in self.registry.complete(text, self._context()):
+                items.append(e1.CompletionItem(value=found.name, description=found.summary))
         else:
             runtime = self.chat.runtime
             prefix = text.lower()

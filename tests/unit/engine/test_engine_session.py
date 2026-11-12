@@ -104,7 +104,13 @@ def test_completion_for_commands_and_files(run, project):
     h.feed.send({"type": "complete", "id": "c1", "trigger": "/", "text": "co"})
     h.feed.send({"type": "complete", "id": "c2", "trigger": "@", "text": "notes"})
     got = {c["id"]: c for c in h.out.wait("completion", 2)}
-    assert [i["value"] for i in got["c1"]["items"]] == ["compact"]
+    assert [i["value"] for i in got["c1"]["items"]] == [
+        "compact",
+        "config",
+        "context",
+        "continue",
+        "cost",
+    ]
     assert [i["value"] for i in got["c2"]["items"]] == ["notes.md"]
     h.stop()
 
@@ -170,3 +176,27 @@ def test_the_cli_command_speaks_e1_on_stdio(chat, monkeypatch, capsys):
     lines = [json.loads(x) for x in capsys.readouterr().out.splitlines()]
     assert lines[0]["type"] == "ready" and lines[0]["version"] == e1.E1_VERSION
     assert len(lines) == 1
+
+
+def test_custom_commands_complete_and_run_a_turn_through_e1(run):
+    from pathlib import Path
+
+    folder = Path.home() / ".laris" / "commands"
+    folder.mkdir(parents=True)
+    (folder / "greet.md").write_text(
+        "---\ndescription: Say hello\n---\nGreet $ARGUMENTS", encoding="utf-8"
+    )
+    h = run()
+    h.out.wait("ready")
+    h.feed.send({"type": "complete", "id": "k1", "trigger": "/", "text": "gre"})
+    items = h.out.wait("completion")[0]["items"]
+    assert items == [{"value": "greet", "description": "Say hello"}]
+    h.feed.send({"type": "command", "name": "greet", "args": "world"})
+    done = h.out.wait("done")[0]
+    assert done["status"]  # the expanded text ran as an agent turn
+    h.feed.send({"type": "command", "name": "clear"})
+    h.out.wait("done", 2)
+    assert "session" in [e.get("kind") for e in h.out.events() if e["type"] == "status"]
+    h.feed.send({"type": "command", "name": "exit"})
+    h.thread.join(timeout=10)
+    assert h.code == [0]

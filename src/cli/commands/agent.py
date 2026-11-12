@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 
 from cli.common import load_runtime, make_service
 from laris.client.application.chat_app import ChatApp
+from laris.client.engine.commands import BUILTIN, Context
+from laris.client.sandbox import make_sandbox
 
 
 def _common(parser: argparse.ArgumentParser) -> None:
@@ -200,26 +202,6 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     return code
 
 
-def _vault_command(chat: Any, query: str) -> None:
-    """`/vault` shows the vault's size; `/vault <words>` searches its notes."""
-    from laris.shared.vault.index import VaultIndex
-    from laris.shared.vault.search import NoteSearch
-
-    cfg = chat.runtime.config.vault
-    folder = chat.project_root / cfg.dir
-    if not folder.is_dir():
-        print("chưa có vault; nó được tạo ở lần nạp tài liệu hoặc hỏi đáp đầu tiên")
-        return
-    index = VaultIndex.build(folder, cache_file=chat.project_root / cfg.cache_dir / "index.sqlite")
-    if not query:
-        print(
-            f"vault {cfg.dir}/: {len(index.notes)} ghi chú, {len(index.unresolved)} liên kết hỏng"
-        )
-        return
-    for hit in NoteSearch(index).search(query, 8):
-        print(f"  {hit.score:6.2f}  {hit.path}")
-
-
 class _Chat:
     """Claude-Code-style terminal session; conversations and settings are shared with the web UI."""
 
@@ -236,6 +218,9 @@ class _Chat:
     def run(self, args: argparse.Namespace) -> int:
         chat = make_chat(args)
         conversation = self._start(chat, args.resume)
+        home = Path("~/.laris").expanduser()
+        manager = make_sandbox(home, chat.prefs.path, "plain")
+        manager.start_background(lambda state: None)
         always: set = {"write_file", "ingest_path", "save_memory"} if args.allow_write else set()
         if args.print_text:
             return _turn(chat, conversation["id"], args.print_text, always)
@@ -253,7 +238,7 @@ class _Chat:
             if not line:
                 continue
             if line.startswith("/"):
-                updated = self._command(chat, conversation, line, always)
+                updated = self._command(chat, conversation, line, always, manager)
                 if updated is None:
                     return 0
                 conversation = updated
@@ -299,96 +284,26 @@ class _Chat:
 
     @staticmethod
     def _command(
-        chat: Any, conversation: Dict[str, Any], line: str, always: set
+        chat: Any, conversation: Dict[str, Any], line: str, always: set, session: Any = None
     ) -> Optional[Dict[str, Any]]:
-        name, _, rest = line.partition(" ")
-        rest = rest.strip()
-        if name in ("/exit", "/quit"):
-            return None
+        """One slash command through the registry shared with the engine (SR-C2)."""
         if line.strip().lower() in chat.runtime.config.prompts.help_commands:
             print(chat.how_to_use())
-        elif name == "/help":
-            print(
-                "/how-to-use /new /sessions /resume ID /tools /skills /<skill> <yêu cầu> "
-                "/compact [ghi chú] "
-                "/context /workflows /workflow NAME <yêu cầu> /status /vault [từ khóa] "
-                "/model [URL [NAME]] "
-                "/write on|off /learn on|off /rate up|down /exit"
-            )
-        elif name == "/new":
-            conversation = dict(chat.conversations.create())
-            print(f"new session {conversation['id']}")
-        elif name == "/sessions":
-            for row in chat.conversations.list()[:15]:
-                print(f"  {row['id']}  {row['messages']:>3} msgs  {row['title']}")
-        elif name == "/resume":
-            try:
-                conversation = dict(chat.conversations.get(rest))
-                print(f"resumed {rest}: {conversation['title']}")
-            except KeyError:
-                print(f"no such session: {rest}")
-        elif name == "/tools":
-            for spec in chat.tool_specs():
-                print(f"  {spec.name}{' (asks)' if spec.writes else ''}: {spec.description}")
-        elif name == "/vault":
-            _vault_command(chat, rest)
-        elif name == "/status":
-            print(json.dumps(chat.service.status(), indent=2, ensure_ascii=False))
-        elif name == "/model":
-            if rest:
-                parts = rest.split()
-                try:
-                    chat.update_settings(
-                        {"base_url": parts[0], **({"model": parts[1]} if len(parts) > 1 else {})}
-                    )
-                except ValueError as exc:
-                    print(_paint(_ERR, str(exc)))
-            print(chat.model_health()["detail"])
-        elif name == "/write":
-            chat.update_settings({"allow_write": rest == "on"})
-            print(f"write tools {'auto-approved' if rest == 'on' else 'ask permission'}")
-        elif name == "/skills":
-            library = chat.skills_for(chat.runtime)
-            for skill_name in library.names():
-                print(f"  /{skill_name}: {library.skills[skill_name].summary(110)}")
-            for problem in library.problems:
-                print(_paint(_ERR, f"  skill problem: {problem}"))
-        elif name == "/rate":
-            try:
-                chat.rate(_LAST.get("example", ""), rest)
-                print(f"đã ghi đánh giá: {rest}")
-            except (KeyError, ValueError):
-                print("dùng: /rate up|down sau một câu trả lời đã được lưu")
-        elif name == "/learn":
-            chat.update_settings({"learning_enabled": rest == "on"})
-            print(f"lưu dữ liệu fine-tune cục bộ: {'bật' if rest == 'on' else 'tắt'}")
-        elif name == "/workflows":
-            for item in chat.runtime.workflows().summary():
-                print(f"  /workflow {item['name']}: {item['description']}")
-        elif name == "/workflow":
-            _turn(chat, conversation["id"], line, always)
+            return conversation
+        context = Context(
+            chat, conversation, Path("~/.laris").expanduser(), Path.cwd(), session, BUILTIN
+        )
+        context.extras["last_example"] = _LAST.get("example", "")
+        result = BUILTIN.dispatch(line, context)
+        if result.exit:
+            return None
+        if result.text:
+            print(_paint(_ERR, result.text) if result.error else result.text)
+        if result.conversation is not None:
+            conversation = result.conversation
+        if result.turn is not None:
+            _turn(chat, conversation["id"], result.turn, always)
             conversation = dict(chat.conversations.get(conversation["id"]))
-        elif name == "/compact":
-            events = list(chat.compact(conversation["id"], rest))
-            shown = [e for e in events if e["type"] == "compact"]
-            for event in shown:
-                print(f"nén {event['before']} → {event['after']} token ({event['method']})")
-            if not shown:
-                print("không có gì để nén")
-            conversation = dict(chat.conversations.get(conversation["id"]))
-        elif name == "/context":
-            usage = chat.usage(conversation["id"])
-            cfg = chat.settings()
-            print(
-                f"≈ {usage['tokens']}/{usage['window']} token; autocompact "
-                f"{'bật' if cfg['auto_compact'] else 'tắt'} ở "
-                f"{int(cfg['compact_threshold'] * 100)}%"
-            )
-        elif name[1:] in chat.skills_for(chat.runtime).skills:
-            _turn(chat, conversation["id"], line, always)
-            conversation = dict(chat.conversations.get(conversation["id"]))
-        else:
-            print(f"unknown command {name}; try /help")
         return conversation
 
 

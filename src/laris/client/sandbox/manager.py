@@ -328,3 +328,14 @@ def sandbox_command(manager: SandboxManager, argument: str = "") -> str:
     if word:
         return "usage: /sandbox [reset]"
     return manager.describe()
+
+
+def make_sandbox(home: Path, settings_file: Path, engine_version: str) -> SandboxManager:
+    """The manager for this user's settings; an unreadable settings file means the defaults."""
+    from laris.shared.config import settings as settings_mod
+
+    try:
+        sandbox = settings_mod.validate(settings_mod.read_raw(settings_file)).sandbox.model_dump()
+    except settings_mod.SettingsError:
+        sandbox = {}
+    return SandboxManager(home, sandbox, engine_version)

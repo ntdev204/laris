@@ -2,9 +2,11 @@
 
 import argparse
 import sys
+from pathlib import Path
 from typing import Any
 
 from cli.commands.agent import make_chat
+from laris.client.sandbox import make_sandbox
 
 
 class _Engine:
@@ -35,7 +37,18 @@ class _Engine:
             version = metadata.version("laris")
         except metadata.PackageNotFoundError:
             version = "unknown"
-        return Engine(chat, sys.stdin, sys.stdout, version, conversation=conversation).run()
+        home = Path("~/.laris").expanduser()
+        manager = make_sandbox(home, chat.prefs.path, version)
+        manager.start_background(lambda state: None)  # build or repair quietly while the user types
+        return Engine(
+            chat,
+            sys.stdin,
+            sys.stdout,
+            version,
+            conversation=conversation,
+            home=home,
+            sandbox=manager,
+        ).run()
 
 
 COMMANDS = {"engine": _Engine()}

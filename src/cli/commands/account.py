@@ -9,16 +9,12 @@ from urllib.parse import urlparse
 
 from cli import credentials
 from cli.common import load_runtime
+from laris.client.engine.commands import PROJECT_TEMPLATE
 from laris.shared.config import settings
 from laris.shared.harness import trust
 from laris.shared.harness.prefs import UserPrefs
 
 GLOBAL_DIR = Path("~/.laris")
-PROJECT_TEMPLATE = (
-    "# Project instructions for LARIS\n\n"
-    "Notes that apply to this project only (field, terminology, citation style, folders to\n"
-    "ignore). They are sent to the assistant with every task. Do not put secrets here.\n"
-)
 
 
 def _set_server(url: str) -> Path:
