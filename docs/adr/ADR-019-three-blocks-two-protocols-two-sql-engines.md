@@ -5,7 +5,7 @@ document_type: "adr"
 status: "ACCEPTED"
 version: "1.0.0"
 created_at: "2026-11-12"
-updated_at: "2026-11-12"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -97,6 +97,16 @@ the test pass without changing behaviour, the policy composer, brain loader and 
 server gateway uses the same runtime; the confidential policy and brain *data* remain server-only. They
 move to `server` when the client's local policy path is removed. One edge is still listed in the test:
 the client embeds locally through `laris.model.inference` until T58.
+
+## 2c. Implementation notes (2026-11-13, found while documenting 2.0 in T84)
+
+- **`laris login --server URL` is kept.** D21 and ADR-016 say login takes no `--server` flag; the address is
+  `server.url`, and `laris login` without the flag uses it. The flag stayed as an optional shortcut that writes
+  `server.url` and starts the certificate pinning (trust on first use, `--trust-fingerprint`), which the
+  operator's key output, the smoke test, the tests and the user guide rely on. Nothing requires it.
+  The owner may still remove it; that would be a separate change to those places.
+- **`laris app ask` was removed.** It was unreachable (in no command table) and extractive answers need a QA
+  model that the client does not hold (D16); `laris app search` returns the passages.
 
 ## 3. Consequences
 
