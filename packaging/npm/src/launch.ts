@@ -22,8 +22,15 @@ export function plan(argv: string[], env: Env, tty: boolean): Plan {
     const name = arg.split("=", 1)[0] as string;
     if (PASSTHROUGH_FLAGS.has(name)) return pass(`${name} is handled by the engine program`);
     if (!arg.startsWith("-")) return pass(`${arg} is a command of the engine program`);
-    if (arg === "-c" || arg === "--continue") {
-      engineArgs.push("--continue");
+    if (arg === "-c" || name === "--continue") {
+      // `--continue` alone: the newest session; `--continue ID` (or `=ID`): that session
+      const inline = arg.includes("=");
+      const next = argv[i + 1];
+      if (inline) engineArgs.push("--continue", arg.slice(name.length + 1));
+      else if (next !== undefined && !next.startsWith("-")) {
+        engineArgs.push("--continue", next);
+        i += 1;
+      } else engineArgs.push("--continue");
     } else if (VALUE_FLAGS.has(name)) {
       const inline = arg.includes("=");
       const value = inline ? arg.slice(name.length + 1) : argv[i + 1];

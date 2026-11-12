@@ -269,6 +269,9 @@ describe("launch plan", () => {
   });
   it("passes the session options the engine understands", () => {
     assert.deepEqual(plan(["-c"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--continue"], initialInput: null });
+    assert.deepEqual(plan(["--continue", "abc12"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--continue", "abc12"], initialInput: null });
+    assert.deepEqual(plan(["--continue=abc12", "--allow-write"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--continue", "abc12", "--allow-write"], initialInput: null });
+    assert.deepEqual(plan(["-c", "--allow-write"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--continue", "--allow-write"], initialInput: null });
     assert.deepEqual(plan(["--resume", "abc", "--allow-write"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--resume", "abc", "--allow-write"], initialInput: null });
     assert.deepEqual(plan(["--model-name=m"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio", "--model-name", "m"], initialInput: null });
     assert.deepEqual(plan(["--resume"], {}, tty), { kind: "ink", engineArgs: ["engine", "--stdio"], initialInput: "/resume" });
