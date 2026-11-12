@@ -67,6 +67,7 @@ class _Pending:
     def __init__(self) -> None:
         self.done = threading.Event()
         self.allowed = False
+        self.scope = "once"
 
 
 class Engine:
@@ -86,7 +87,6 @@ class Engine:
         self.version = version
         self.cwd = Path(cwd or Path.cwd())
         self.conversation = conversation or chat.conversations.create()
-        self.mode = chat.runtime.config.agent.approval.mode
         self.home = Path(home or Path.home() / ".laris")
         self.sandbox = sandbox
         self.registry = BUILTIN
@@ -94,7 +94,6 @@ class Engine:
         self._inbox: "queue.Queue[Optional[Dict[str, Any]]]" = queue.Queue()
         self._pending: Dict[str, _Pending] = {}
         self._pending_lock = threading.Lock()
-        self._allowed: set = set()  # tools approved "for this session"
         self._interrupted = threading.Event()
         self._turn: Optional[threading.Thread] = None
         self._permission_count = 0
@@ -138,6 +137,9 @@ class Engine:
             self._error("unknown_permission", f"no pending permission request {response.id!r}")
             return
         pending.allowed = response.decision == "allow"
+        pending.scope = (
+            "session" if response.remember and response.scope == "once" else response.scope
+        )
         pending.done.set()
 
     def _interrupt(self) -> None:
@@ -150,8 +152,9 @@ class Engine:
 
     # -- permissions -----------------------------------------------------------------------
     def _approve(self, name: str, arguments: Dict[str, Any]) -> bool:
-        if name in self._allowed:
-            return True
+        permissions = self.chat.permissions
+        rule = permissions.suggest(name, arguments)
+        why = permissions.decide(name, arguments, True).reason
         self._permission_count += 1
         request_id = f"perm_{self._permission_count}"
         pending = _Pending()
@@ -159,10 +162,15 @@ class Engine:
             self._pending[request_id] = pending
         self.emit(
             e1.PermissionRequest(
-                id=request_id, tool=name, arguments=arguments, reason="needs your approval"
+                id=request_id, tool=name, arguments=arguments, reason=why, rule=rule
             )
         )
         pending.done.wait()
+        if pending.allowed and pending.scope != "once":
+            try:
+                permissions.remember(rule, pending.scope)
+            except (ValueError, OSError) as exc:
+                self._error("remember_failed", str(exc))
         return pending.allowed
 
     # -- turns -----------------------------------------------------------------------------
@@ -249,12 +257,20 @@ class Engine:
                     items.append(e1.CompletionItem(value=rel))
         self.emit(e1.Completion(id=request["id"], items=items))
 
+    @property
+    def mode(self) -> str:
+        return str(self.chat.permissions.mode)
+
     def _set_mode(self, mode: str) -> None:
-        self.mode = mode
-        overrides = dict(self.chat.overrides or {})
-        overrides["agent.approval.mode"] = mode
-        self.chat.overrides = overrides
-        self.emit(e1.Status(kind="mode", data={"mode": mode}))
+        try:
+            if mode == "next":
+                self.chat.permissions.cycle()
+            else:
+                self.chat.permissions.mode = mode
+        except ValueError as exc:
+            self._error("bad_mode", str(exc))
+            return
+        self.emit(e1.Status(kind="mode", data={"mode": self.mode}))
 
     # -- main loop -------------------------------------------------------------------------
     def run(self) -> int:

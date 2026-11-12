@@ -122,13 +122,28 @@ def _summarise(result: Any) -> str:
     return json.dumps(result, ensure_ascii=False)[:160]
 
 
-def _ask_permission(name: str, arguments: Dict[str, Any], always: set) -> bool:
+_SCOPES = {"a": "session", "p": "project", "e": "everywhere"}
+
+
+def _ask_permission(chat: Any, name: str, arguments: Dict[str, Any], always: set) -> bool:
     if name in always:
         return True
     shown = json.dumps(arguments, ensure_ascii=False)[:200]
-    reply = input(f"  Allow {name} {shown}?  [y]es / [a]lways this session / [N]o ").strip().lower()
-    if reply in ("a", "always"):
-        always.add(name)
+    rule = chat.permissions.suggest(name, arguments)
+    reply = (
+        input(
+            f"  Allow {name} {shown}?  [y]es / [a]lways this session / always in this [p]roject / "
+            f"always [e]verywhere ({rule}) / [N]o "
+        )
+        .strip()
+        .lower()
+    )
+    scope = _SCOPES.get(reply[:1]) if reply not in ("y", "yes", "n", "no", "") else None
+    if scope:
+        try:
+            chat.permissions.remember(rule, scope)
+        except (ValueError, OSError) as exc:
+            print(_paint(_ERR, f"could not save the rule: {exc}"))
         return True
     return reply in ("y", "yes")
 
@@ -140,7 +155,7 @@ def _turn(chat: Any, conversation_id: str, text: str, always: set, interactive: 
     for event in chat.send(
         conversation_id,
         text,
-        (lambda name, arguments: _ask_permission(name, arguments, always))
+        (lambda name, arguments: _ask_permission(chat, name, arguments, always))
         if interactive
         else (lambda name, arguments: name in always),
     ):

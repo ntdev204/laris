@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class ApprovalConfig(BaseModel):
     mode: Literal["ask", "auto", "deny"] = Field(default="ask")
+    allow_bypass: bool = Field(default=False)  # policy gate for the `bypass` permission mode
     always_ask: List[str] = Field(
         default_factory=lambda: ["write_file", "ingest_path", "save_memory", "save_skill"]
     )

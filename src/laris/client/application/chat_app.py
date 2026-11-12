@@ -26,6 +26,8 @@ from laris.client.application.service import SearchService
 from laris.client.application.workspace import IngestError, chunks_from_bytes
 from laris.client.learning.collector import Collector
 from laris.client.learning.hooks import make_ingest_hook
+from laris.client.permissions import PermissionEngine
+from laris.client.project_state import ProjectState
 from laris.shared.harness.prefs import UserPrefs, effective
 from laris.shared.harness.runtime import HarnessRuntime
 from laris.shared.policy.policy import egress_allowed
@@ -75,6 +77,15 @@ class ChatApp:
         self.uploads.mkdir(parents=True, exist_ok=True)
         self.memory_dir = self.project_root / base.config.prompts.memory_dir
         self.service.on_ingest = make_ingest_hook(lambda: self.runtime)
+        home = settings.parent
+        self.permissions = PermissionEngine(
+            settings,
+            ProjectState(home, self.project_root),
+            self.project_root,
+            sandbox_bin=home / ".venv" / "bin",
+            allow_bypass=base.config.agent.approval.allow_bypass,
+            always_ask=tuple(base.config.agent.approval.always_ask),
+        )
 
     # -- runtime ---------------------------------------------------------------------------
     @property
@@ -243,6 +254,7 @@ class ChatApp:
             log_dir=self.root / "sessions",
             audit_dir=self.root / "audit",
             plan=conversation.get("plan"),
+            permissions=self.permissions,
         )
 
     def parse_workflow_command(

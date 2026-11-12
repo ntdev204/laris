@@ -61,6 +61,7 @@ agent:
   skill_max_chars: 24000
   approval:
     mode: ask
+    allow_bypass: false
     always_ask:
     - write_file
     - ingest_path

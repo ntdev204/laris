@@ -65,6 +65,8 @@ class PermissionRequest(_Message):
     tool: str
     arguments: Dict[str, Any] = Field(default_factory=dict)
     reason: str = ""
+    rule: str = ""  # the rule an "always allow" answer would save
+    scopes: List[str] = Field(default_factory=lambda: ["once", "session", "project", "everywhere"])
 
 
 class Status(_Message):
@@ -132,7 +134,8 @@ class PermissionResponse(_Message):
     type: Literal["permission_response"] = "permission_response"
     id: str
     decision: Literal["allow", "deny"]
-    remember: bool = False  # for this session
+    remember: bool = False  # for this session (same as scope "session")
+    scope: Literal["once", "session", "project", "everywhere"] = "once"
 
 
 class Interrupt(_Message):
@@ -149,7 +152,7 @@ class Command(_Message):
 
 class SetMode(_Message):
     type: Literal["set_mode"] = "set_mode"
-    mode: Literal["ask", "auto", "deny"]
+    mode: Literal["default", "acceptEdits", "plan", "bypass", "next"]  # `next` is Shift+Tab
 
 
 class Complete(_Message):

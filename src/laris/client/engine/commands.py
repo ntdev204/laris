@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from laris.client.permissions import parse_rule
 from laris.client.project_state import ProjectState
 from laris.client.sandbox import SandboxManager, sandbox_command
 from laris.shared.config import settings as settings_mod
@@ -322,14 +323,34 @@ def _config(ctx: Context, rest: str) -> Result:
     return Result("usage: /config [get PATH | set PATH VALUE]", error=True)
 
 
-@cmd("permissions", "approval mode and permission rules")
+@cmd(
+    "permissions",
+    "approval mode and rules",
+    "[mode MODE|next | allow|ask|deny RULE [everywhere]]",
+)
 def _permissions(ctx: Context, rest: str) -> Result:
-    perms = settings_mod.validate(settings_mod.read_raw(ctx.settings_file)).permissions
-    lines = [f"mode: {ctx.chat.runtime.config.agent.approval.mode}"]
-    for kind in ("allow", "ask", "deny"):
-        rules = getattr(perms, kind)
-        lines.append(f"{kind}: " + (", ".join(rules) if rules else "(none)"))
-    return Result("\n".join(lines))
+    engine = ctx.chat.permissions
+    words = rest.split(None, 2)
+    if not words:
+        return Result(engine.describe())
+    if words[0] == "mode" and len(words) >= 2:
+        engine.cycle() if words[1] == "next" else setattr(engine, "mode", words[1])
+        return Result(f"mode: {engine.mode}")
+    if words[0] in ("allow", "ask", "deny") and len(words) >= 2:
+        rule = rest.split(None, 1)[1].removesuffix(" everywhere").strip()
+        if parse_rule(rule) is None:
+            return Result(f"not a rule: {rule}", error=True)
+        data = settings_mod.read_raw(ctx.settings_file)
+        path = f"permissions.{words[0]}"
+        try:
+            current = list(settings_mod.get_path(data, path))
+        except KeyError:
+            current = []
+        if rule not in current:
+            data = settings_mod.set_path(data, path, current + [rule])
+            settings_mod.write(ctx.settings_file, data)
+        return Result(f"{words[0]}: {rule}")
+    return Result("usage: /permissions [mode MODE|next | allow|ask|deny RULE]", error=True)
 
 
 @cmd("memory", "list memory notes", "")

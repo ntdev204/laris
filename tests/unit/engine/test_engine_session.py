@@ -68,8 +68,8 @@ def test_permission_round_trip_remember_and_interrupt(run):
     )
     t.join(5)
     assert answers == [("write_file", True)]
-    h.engine._allowed.add("write_file")  # `remember` is applied by the engine on the answer
-    assert h.engine._approve("write_file", {}) is True  # no second request
+    permissions = h.engine.chat.permissions  # `remember` became a session rule
+    assert permissions.decide("write_file", {"path": "a.txt"}, True).action == "allow"
     t2 = threading.Thread(target=ask, args=("save_memory",))
     t2.start()
     h.out.wait("permission_request", 2)
@@ -89,9 +89,9 @@ def test_bad_lines_and_unknown_commands_do_not_stop_the_engine(run):
     h.feed.send({"type": "command", "name": "nope"})
     codes = [e["code"] for e in h.out.wait("error", 3)]
     assert codes == ["bad_command", "bad_command", "unknown_command"]
-    h.feed.send({"type": "set_mode", "mode": "auto"})
+    h.feed.send({"type": "set_mode", "mode": "acceptEdits"})
     status = h.out.wait("status")[0]
-    assert status["kind"] == "mode" and status["data"] == {"mode": "auto"}
+    assert status["kind"] == "mode" and status["data"] == {"mode": "acceptEdits"}
     h.feed.send({"type": "command", "name": "help"})
     h.out.wait("done")
     assert h.stop() == 0
@@ -200,3 +200,47 @@ def test_custom_commands_complete_and_run_a_turn_through_e1(run):
     h.feed.send({"type": "command", "name": "exit"})
     h.thread.join(timeout=10)
     assert h.code == [0]
+
+
+def test_always_allow_scopes_are_saved_and_mode_cycles(run):
+    import json
+    from pathlib import Path
+
+    h = run()
+    h.out.wait("ready")
+    permissions = h.engine.chat.permissions
+
+    def ask(path, scope):
+        results = []
+        t = threading.Thread(
+            target=lambda: results.append(h.engine._approve("write_file", {"path": path}))
+        )
+        t.start()
+        count = len(h.out.wait("permission_request", len(asked) + 1))
+        asked.append(count)
+        request = h.out.wait("permission_request", count)[-1]
+        assert request["rule"] == f"write_file({path})" and "project" in request["scopes"]
+        h.feed.send(
+            {
+                "type": "permission_response",
+                "id": request["id"],
+                "decision": "allow",
+                "scope": scope,
+            }
+        )
+        t.join(5)
+        return results == [True]
+
+    asked: list = []
+    assert ask("p.txt", "project") and ask("e.txt", "everywhere")
+    state = json.loads(permissions.state.path.read_text())
+    assert state["permissions"]["allow"] == ["write_file(p.txt)"]
+    saved = json.loads((Path.home() / ".laris" / "settings.json").read_text())
+    assert saved["permissions"]["allow"] == ["write_file(e.txt)"]
+    assert permissions.decide("write_file", {"path": "p.txt"}, True).action == "allow"
+    assert permissions.decide("write_file", {"path": "other.txt"}, True).action == "ask"
+    h.feed.send({"type": "set_mode", "mode": "next"})
+    assert h.out.wait("status")[-1]["data"] == {"mode": "acceptEdits"}
+    h.feed.send({"type": "set_mode", "mode": "bypass"})  # policy does not allow it
+    assert h.out.wait("error")[-1]["code"] == "bad_mode"
+    h.stop()

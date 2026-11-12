@@ -69,7 +69,9 @@ class AgentSession:
         log_dir: Optional[Path] = None,
         audit_dir: Optional[Path] = None,
         plan: Optional[List[Dict[str, str]]] = None,
+        permissions: Optional[Any] = None,
     ) -> None:
+        self.permissions = permissions
         self.provider = provider
         self.registry = registry
         self.harness = harness or HarnessRuntime()
@@ -556,7 +558,10 @@ class AgentSession:
     def _execute(self, name: str, arguments: Dict[str, Any]) -> Any:
         spec = self.registry.tools.get(name)
         writes = bool(spec and spec.writes)
-        decision = self.harness.approval.decide(name, writes)
+        if self.permissions is not None:  # modes and rules (SR-C3)
+            decision = self.permissions.decide(name, arguments, writes).action
+        else:
+            decision = self.harness.approval.decide(name, writes)
         wf = getattr(self, "workflow", None)
         if wf is not None and writes:  # a workflow can only make approval stricter (W-1)
             if wf.approval == "deny":

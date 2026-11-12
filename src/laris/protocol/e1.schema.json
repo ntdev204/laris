@@ -97,6 +97,17 @@
             "title": "Remember",
             "type": "boolean"
           },
+          "scope": {
+            "default": "once",
+            "enum": [
+              "once",
+              "session",
+              "project",
+              "everywhere"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
           "type": {
             "const": "permission_response",
             "default": "permission_response",
@@ -116,9 +127,11 @@
         "properties": {
           "mode": {
             "enum": [
-              "ask",
-              "auto",
-              "deny"
+              "default",
+              "acceptEdits",
+              "plan",
+              "bypass",
+              "next"
             ],
             "title": "Mode",
             "type": "string"
@@ -383,6 +396,18 @@
             "default": "",
             "title": "Reason",
             "type": "string"
+          },
+          "rule": {
+            "default": "",
+            "title": "Rule",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
           },
           "tool": {
             "title": "Tool",

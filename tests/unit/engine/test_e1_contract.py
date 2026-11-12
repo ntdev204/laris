@@ -36,7 +36,7 @@ COMMANDS = [
     {"type": "permission_response", "id": "perm_1", "decision": "allow", "remember": True},
     {"type": "interrupt"},
     {"type": "command", "name": "compact", "args": "keep results"},
-    {"type": "set_mode", "mode": "auto"},
+    {"type": "set_mode", "mode": "acceptEdits"},
     {"type": "complete", "id": "c1", "trigger": "/", "text": "he"},
     {"type": "shutdown"},
 ]
