@@ -1,0 +1,10 @@
+[package]
+name = "laris-protocol"
+description = "P1, P2 and core events; JSON Schema export."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

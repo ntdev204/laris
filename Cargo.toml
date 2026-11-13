@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/laris-protocol",
+    "crates/laris-config",
+    "crates/laris-vault",
+    "crates/laris-retrieval",
+    "crates/laris-model-client",
+    "crates/laris-store",
+    "crates/laris-core",
+    "crates/laris-tools",
+    "crates/laris-policy",
+    "crates/laris-sandbox",
+    "crates/laris-evidence",
+    "crates/laris-server",
+    "crates/laris-tui",
+    "crates/laris-cli",
+    "xtask",
+]
+
+[workspace.package]
+version = "2.0.0-dev"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }

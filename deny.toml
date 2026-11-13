@@ -1,0 +1,36 @@
+# cargo-deny policy (T121, ADR-021 D29). Only crates approved in T119 may be used.
+# Adding a crate is a reviewed edit of this file, made only after the owner's approval.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+ignore = []
+
+[licenses]
+version = 2
+allow = ["Apache-2.0", "MIT", "Unicode-3.0"]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# `allow` makes every crate outside the list a failure, workspace crates included.
+allow = [
+    # workspace crates
+    "xtask", "laris-protocol", "laris-config", "laris-vault", "laris-retrieval", "laris-model-client", "laris-store", "laris-core", "laris-tools", "laris-policy", "laris-sandbox", "laris-evidence", "laris-server", "laris-tui", "laris-cli",
+    # approved in T119 (direct use; add each when the task that needs it lands)
+    "tokio", "axum", "tower-http", "rustls", "reqwest", "serde", "serde_json", "schemars",
+    "sqlx", "rusqlite", "ratatui", "crossterm", "clap", "tracing", "thiserror", "sha2", "hmac",
+    "uuid", "time", "regex", "globset", "ignore", "similar", "pulldown-cmark", "syntect",
+    "landlock", "seccompiler", "windows-sys",
+    # transitive crates of the approved ones, as resolved today
+    "aho-corasick", "memchr", "regex-automata", "regex-syntax",
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

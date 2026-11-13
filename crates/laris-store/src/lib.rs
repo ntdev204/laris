@@ -1,0 +1,1 @@
+//! Client SQLite store.

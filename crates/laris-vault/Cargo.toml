@@ -1,0 +1,10 @@
+[package]
+name = "laris-vault"
+description = "Obsidian format: parse, index, write, schema, lint."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

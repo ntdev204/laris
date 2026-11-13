@@ -1,0 +1,3 @@
+//! Binary laris.
+
+fn main() {}

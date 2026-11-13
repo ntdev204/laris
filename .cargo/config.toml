@@ -1,0 +1,12 @@
+[alias]
+xtask = "run --quiet --package xtask --"
+
+# Crates come only from the vendor folder (T121, ADR-021 D29); builds work offline.
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"
+
+[net]
+offline = true

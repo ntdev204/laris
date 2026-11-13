@@ -1,0 +1,10 @@
+[package]
+name = "laris-config"
+description = "Settings, environment, packaged defaults and catalogue."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
