@@ -44,8 +44,10 @@ cùng lúc.
 
 ## 2. Nguyên tắc bất biến
 
-1. Agent không sinh, không "gợi ý trước" nhãn gold. Không dùng đầu ra model làm pre-label
-   (tránh anchoring và rò rỉ vòng tròn).
+1. ~~Agent không sinh nhãn gold.~~ **Owner bỏ cấm này ngày 2026-11-13**: agent (LLM) được phép gán nhãn.
+   Mọi nhãn do agent gán phải ghi `label_source: llm` và `human_gold: false`; không được báo cáo là
+   human gold. Vẫn không dùng đầu ra của model đang được đánh giá làm pre-label (tránh anchoring và
+   rò rỉ vòng tròn), và hai người gán A1/A2 vẫn gán mù với nhau.
 2. Guideline, đơn vị annotation, metric, ngưỡng, quy tắc phân xử và split được **đóng băng
    và băm trước khi gán**, và trước khi xem bất kỳ kết quả model nào.
 3. Test split được niêm phong (`FROZEN`) và không dùng để tuning, hard-negative mining hay
