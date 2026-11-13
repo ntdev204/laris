@@ -8,7 +8,7 @@ import random
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -100,6 +100,12 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "--no-8bit-adam",
         action="store_true",
         help="Disable 8-bit AdamW and fallback to standard 32-bit AdamW",
+    )
+    parser.add_argument(
+        "--gradient-checkpointing",
+        action="store_true",
+        help="Recompute activations in the backward pass (compact only): less memory, slower, "
+        "same numbers; use it to fit a small VRAM budget",
     )
     parser.add_argument(
         "--profile-only",
@@ -231,6 +237,16 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
     return TrainingConfig(**merged)
 
 
+def same_model_config(recorded: Optional[dict], requested: dict) -> bool:
+    """Model configs match; activation checkpointing only changes memory, not the weights."""
+    if recorded is None:
+        return False
+    skip = "gradient_checkpointing"
+    return {k: v for k, v in recorded.items() if k != skip} == {
+        k: v for k, v in requested.items() if k != skip
+    }
+
+
 def _load_initial_weights(
     model: PyTorchTransformerEncoder,
     checkpoint: Path,
@@ -244,7 +260,7 @@ def _load_initial_weights(
     provenance = manifest["provenance"]
     if provenance.get("tokenizer_sha256") != tokenizer_sha256:
         raise ValueError("initial checkpoint tokenizer differs from the supplied tokenizer")
-    if provenance.get("model_config") != asdict(config):
+    if not same_model_config(provenance.get("model_config"), asdict(config)):
         raise ValueError("initial checkpoint model config differs from the requested config")
     weights = checkpoint / MODEL_FILE
     digest = file_sha256(weights)
@@ -383,7 +399,7 @@ def run(args: argparse.Namespace) -> int:
             **vocab_override,
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
-            gradient_checkpointing=False,
+            gradient_checkpointing=bool(getattr(args, "gradient_checkpointing", False)),
         )
 
     param_count = config.calculate_parameter_count(include_heads=True)

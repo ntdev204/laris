@@ -251,7 +251,7 @@ specialists must not be advanced through the historical paper pilot.
 
 ## 7. T99: foundation rounds for the R1 encoder (48k tokenizer)
 
-Status: **PROPOSED budget; the owner approves it by running it.** Sections 3 to 5b describe the historical 32k
+Status: **PROPOSED budget; the owner approves it by running it.** **VRAM budget for this round: 8 GB** (CARLA holds the rest of the GPU), not the 14.5 GiB of section 3. Sections 3 to 5b describe the historical 32k
 tokenizer; their `laris` and `laris-server` commands also name scripts that the current virtual environment no
 longer imports. Use `.venv/bin/python -m cli.model` as below. Nothing here authorizes an agent to train, profile with an
 optimizer or set `LARIS_TRAINING_AUTHORIZED`. The foundation model is **NOT QUALIFIED**.
@@ -282,16 +282,16 @@ probe fails the decision gate, adding licensed STEM pairs is a separate task and
 | Step | What | GPU time (estimate) | Hard timeout |
 |---|---|---|---|
 | 0 | Development measurements of `foundation-r1-run1` (inference only) | 10 min | 600 s each |
-| 1 | Memory profile of the R2 configuration (optimizer steps, owner only) | 3 min | 300 s |
+| 1 | Memory profile of the R2 configuration under the 8 GB budget (optimizer steps, owner only) | 5 min | 300 s per attempt |
 | 2 | Smoke run, 20 steps | 1 min | 180 s |
-| 3 | Probe `foundation-r2-probe`: 1,000 steps, retrieval weight 5.0 | 14 min | 1,800 s |
+| 3 | Probe `foundation-r2-probe`: 1,000 steps, retrieval weight 5.0 | 18 min | 2,400 s |
 | 4 | Decision gate on the probe (inference only) | 10 min | 600 s each |
-| 5 | Main round `foundation-r2`: 4,000 steps | 55 min | 7,200 s |
+| 5 | Main round `foundation-r2`: 4,000 steps | 72 min | 9,000 s |
 | 6 | Development measurements and intake of `foundation-r2` | 20 min | 600 s each |
 
-Total at most about 2 h 30 min of GPU time and two training runs. A step estimate of 0.8 s per step assumes the two extra
-encoder passes for QA batches cost at most 60 % more than the 0.5 s measured without them; the smoke log replaces this
-estimate. Stop other GPU workloads first. After this budget, stop and review before any further round.
+Total at most about 3 h of GPU time and two training runs. A step estimate of about 1.0 s per step assumes the two extra
+encoder passes for QA batches cost at most 60 % more than the 0.5 s measured without them, and that activation
+checkpointing (needed for the 8 GB budget, 7.5) adds about 25 %; the smoke log replaces this estimate. Stop other GPU workloads first. After this budget, stop and review before any further round.
 
 ### 7.4 Step 0: development measurements (inference only)
 
@@ -301,7 +301,7 @@ R1=artifacts/checkpoints/language_encoder/foundation-r1-run1/best
 TOK=artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model
 mkdir -p artifacts/evaluations/language_encoder
 HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m cli.model evaluate language-encoder \
-  --checkpoint $R1 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 16 \
+  --checkpoint $R1 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 8 \
   --seed 42 --device cuda --output artifacts/evaluations/language_encoder/foundation-r1-run1-val.json
 ```
 
@@ -309,23 +309,36 @@ Read the validation report against the gate thresholds. If G01-G09 are far below
 retrieval training will not fix them and a later general round (7.9) has to be planned. The development retrieval numbers
 of R1 already exist (see 7.1).
 
-### 7.5 Step 1: memory profile (owner only)
+### 7.5 Step 1: memory profile under 8 GB (owner only)
 
-This performs backward and optimizer steps on a discarded model. It uses the real configuration.
+This performs backward and optimizer steps on a discarded model. `foundation-r1-run1` peaked at 10.4 GiB with micro-batch 16
+and no checkpointing, so that setting does not fit 8 GB. The contrastive term encodes queries and passages in two extra passes,
+so it needs more. Try the attempts in order; the first one whose peak CUDA allocation is **<= 7.0 GiB** (leave about 1 GiB
+for the CUDA context and fragmentation next to CARLA) is used in every later command. The effective batch stays 64.
+
+| Attempt | `MB` | `ACC` | `CKPT` | In-batch negatives per query (QA) |
+|---|---|---|---|---|
+| a | 8 | 8 | (empty) | about 7 |
+| b | 16 | 4 | `--gradient-checkpointing` | about 15 |
+| c | 8 | 8 | `--gradient-checkpointing` | about 7 |
+| d | 4 | 16 | `--gradient-checkpointing` | about 3 |
+
+Attempt b is preferred if it fits: the same negatives as R1 at about 25 % more time per step. Fewer negatives weaken the
+contrastive signal; if you end on c or d, say so in the return and expect the probe gate to be harder. The flag changes memory
+and speed only; the weights and the saved model config stay compatible with `--init-from`.
 
 ```bash
+MB=16; ACC=4; CKPT="--gradient-checkpointing"     # attempt b; edit for another attempt
 mkdir -p artifacts/profiles
 LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 300s .venv/bin/python -m cli.model train language-encoder \
   --profile-only --model-size compact --vocab-size 48000 --max-seq-len 1024 \
   --training-config configs/language_encoder/compact_r1.yaml \
-  --micro-batch-size 16 --grad-accum-steps 4 --precision bf16 --no-8bit-adam \
+  --micro-batch-size $MB --grad-accum-steps $ACC $CKPT --precision bf16 --no-8bit-adam \
   --retrieval-loss-weight 5.0 --tokenizer-model $TOK --normalize-input \
   2>&1 | tee artifacts/profiles/foundation-r2-profile.log
 ```
 
-Pass: peak CUDA allocation <= 14.5 GiB. If it exceeds, repeat with `--micro-batch-size 8 --grad-accum-steps 8`, then
-`4`/`16`, and use the first passing pair in every later command (smaller micro-batches mean fewer in-batch negatives; say so
-in the return).
+If every attempt exceeds 7.0 GiB, stop and tell the agent; do not raise the ceiling while CARLA is running.
 
 ### 7.6 Step 2 and 3: smoke, then the probe
 
@@ -333,12 +346,12 @@ Each run starts from the R1 best checkpoint with a fresh optimizer and schedule.
 
 ```bash
 set -o pipefail
-for RUN in "smoke 20 180 foundation-r2-smoke 0" "probe 1000 1800 foundation-r2-probe 100"; do
+for RUN in "smoke 20 240 foundation-r2-smoke 0" "probe 1000 2400 foundation-r2-probe 100"; do
   set -- $RUN
   LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL ${3}s .venv/bin/python -m cli.model train language-encoder \
     --authorized --model-size compact --vocab-size 48000 --max-seq-len 1024 \
     --training-config configs/language_encoder/compact_r1.yaml \
-    --init-from $R1 --micro-batch-size 16 --grad-accum-steps 4 --precision bf16 --no-8bit-adam \
+    --init-from $R1 --micro-batch-size $MB --grad-accum-steps $ACC $CKPT --precision bf16 --no-8bit-adam \
     --steps $2 --learning-rate 0.00005 --warmup-steps $5 \
     --eval-interval 250 --eval-batches 16 --save-interval 250 --patience 4 --seed 42 \
     --tokenizer-model $TOK --normalize-input --retrieval-loss-weight 5.0 \
@@ -346,7 +359,9 @@ for RUN in "smoke 20 180 foundation-r2-smoke 0" "probe 1000 1800 foundation-r2-p
 done
 ```
 
-Return both logs before continuing. Smoke pass: finite losses, no out-of-memory, step time recorded.
+Return both logs before continuing. Smoke pass: finite losses, no out-of-memory, peak memory in the log <= 7.0 GiB, step time
+recorded. Watch `nvidia-smi`: if CARLA's footprint grows, the run can fail with an out-of-memory error; that ends the run, it is
+not a result.
 
 ### 7.7 Step 4: probe decision gate (inference only)
 
@@ -359,7 +374,7 @@ HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python scripts/score_vi_stem_
   --checkpoint $P --tokenizer-model $TOK --output reports/retrieval/foundation-r2-probe-vi-stem-dev.json
 .venv/bin/python scripts/training_intake.py --run-id foundation-r2-probe --expect-steps 1000 \
   --expect-retrieval-weight 5.0 --tokenizer-model $TOK --init-run foundation-r1-run1 \
-  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2-probe.log
+  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2-probe.log --max-peak-gib 7.5
 ```
 
 Decision (SciFact **dev**, never the sealed test): continue to step 5 only if dense MRR >= 0.10 and the intake passes.
@@ -369,11 +384,11 @@ pairs or hard negatives.
 
 ### 7.8 Step 5: main round R2
 
-Same command as the probe with `--steps 4000 --warmup-steps 200`, `--run-id foundation-r2`, timeout 7,200 s, and the
-retrieval weight chosen at the gate. Stop rules (any one ends the round; keep the last saved checkpoint):
+Same command as the probe with `--steps 4000 --warmup-steps 200`, `--run-id foundation-r2`, timeout 9,000 s, and the
+retrieval weight chosen at the gate and the same `MB`, `ACC`, `CKPT`. Stop rules (any one ends the round; keep the last saved checkpoint):
 
 1. four validation points in a row without improvement of the mean loss (`--patience 4`, interval 250);
-2. a non-finite loss or an out-of-memory error;
+2. a non-finite loss or an out-of-memory error (CARLA competing for memory counts; rerun with the next smaller attempt);
 3. the hard timeout;
 4. at intake: any of MLM, NLI, paraphrase or similarity validation loss more than 10 % above `foundation-r1-run1`
    (forgetting), or a failed integrity check. The round is then not accepted.
@@ -384,10 +399,10 @@ Then run step 6:
 R2=artifacts/checkpoints/language_encoder/foundation-r2/best
 .venv/bin/python scripts/training_intake.py --run-id foundation-r2 --expect-steps 4000 \
   --expect-retrieval-weight <WEIGHT> --tokenizer-model $TOK --init-run foundation-r1-run1 \
-  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2.log \
+  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2.log --max-peak-gib 7.5 \
   --report reports/verification/T99-foundation-r2-intake.json
 HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m cli.model evaluate language-encoder \
-  --checkpoint $R2 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 16 --seed 42 \
+  --checkpoint $R2 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 8 --seed 42 \
   --device cuda --output artifacts/evaluations/language_encoder/foundation-r2-val.json
 HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m laris.research.language.benchmarks.retrieval run \
   --config configs/evaluation/foundation_retrieval_dev.yaml --checkpoint $R2 --tokenizer-model $TOK \
