@@ -36,8 +36,10 @@ returned logs, manifests and reports.
   - `docs/adr/README.md` index entry
 - Validation:
   - The owner chooses the option and the thresholds in writing; estimates are labelled as estimates
-- Status: blocked
-- Note: Draft `docs/adr/ADR-020-researchllm.md` (status PROPOSED) with five stage-6 options (A1-A3, B, C), estimates
+- Status: done
+- Note: Closed 2026-11-13: the owner delegated the choice ("Tự chọn phương án phù hợp nhất"); Option C on A2 and the
+  provisional thresholds are recorded in section 6 of the ADR (status ACCEPTED, delegation noted, owner may overturn).
+  Earlier draft note: `docs/adr/ADR-020-researchllm.md` (status PROPOSED) with five stage-6 options (A1-A3, B, C), estimates
   labelled, the weak-generator risk, a recommendation (Option C on A2) and proposed gates S6-1 to S6-6. Waiting for the
   owner to choose the option and the thresholds in writing (section 6 of the ADR); it becomes `done` then. Merged into
   `laris-v2` as a draft.
@@ -112,7 +114,14 @@ returned logs, manifests and reports.
     annotation tooling and agreement computation (weighted kappa)
 - Validation:
   - Owner assigns annotators; agreement ≥ the D05 threshold; the test split is sealed; agents generate no labels
-- Status: pending
+- Status: done
+- Note: Deviation from the validation line, by the owner's instruction ("Bạn tự gán", "gán A2 luôn"): all labels are
+  LLM-assigned, so the set is `label_source: llm`, `human_gold: false`, and D05 (agents never create gold) is NOT met.
+  Built by `scripts/build_vi_stem_gold.py` with the frozen `docs/training/D05_GUIDELINE_VI_STEM.md`; 4000-passage corpus,
+  200 queries, 1561 pooled items (pilot 157, dev 1093, test 311); weighted quadratic kappa 0.943 / 0.945 / 0.932 against the
+  0.85 threshold; 67 disagreements adjudicated by the assistant; dev and test sealed. Report
+  `reports/verification/T98-vi-stem-relevance.md`. Data in `data/processed/gold_vi_stem/` (outside Git, source licence
+  not cleared). The owner must accept it as LLM gold before G12 is promoted for Vietnamese.
 
 ### T99 — Foundation training rounds (owner run)
 - Requirements: SR-M6, SR-M3

@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-020"
 title: "ADR-020: What ResearchLLM is (stages, stage-6 advisor options, gates)"
 document_type: "adr"
-status: "PROPOSED"
+status: "ACCEPTED"
 version: "0.1.0"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
@@ -20,7 +20,7 @@ change_summary: "Draft for the owner's decision D44: options for the stage-6 gen
 # ADR-020: What ResearchLLM is
 
 ## Metadata
-- **Status:** PROPOSED. Becomes ACCEPTED only when the owner chooses an option and the thresholds in writing (task T93).
+- **Status:** ACCEPTED on 2026-11-13 by the owner's delegation ("tự chọn phương án phù hợp nhất"); the thresholds stay provisional until T113.
 - **Date drafted:** 2026-11-13 · **Decision (ledger):** D44 · **Requirements:** SR-M11, SR-M3
 - **Qualification:** the foundation model and every specialist are NOT QUALIFIED. Every number below marked *estimate*
   is arithmetic from assumptions, not a measurement.
@@ -87,9 +87,14 @@ Measured on sealed held-out research tasks, EN and VI separately; a gate passes 
 The thresholds are proposals without any empirical basis yet; T113 revises them with the measured stage 1-5 results
 and the owner freezes them before T114.
 
-## 6. Decision (to be completed by the owner)
-- Chosen option: ______ · Model size: ______ · Data mix and compute budget: ______
-- Thresholds accepted or changed: ______ · Date and signature: ______
+## 6. Decision (owner-delegated)
+- Chosen option: C (retrieval-conditioned generation) on A2 (350M decoder on the shared tokenizer), as recommended in
+  section 4 · Data mix and compute budget: as estimated in section 3, to be fixed in T113 before any stage-6 work.
+- Thresholds: S6-1 to S6-6 accepted as proposed and provisional; T113 revises them with the measured stage 1-5 results
+  and the owner freezes them before T114.
+- Date: 2026-11-13. The owner delegated the choice to the assistant in conversation ("Tự chọn phương án phù hợp nhất");
+  this is a recorded delegation, not a signature, and the owner may overturn it. Nothing in stage 6 starts before stage 5
+  is promoted.
 
 ## 7. Consequences
 Nothing in stage 6 starts before this ADR is ACCEPTED and stage 5 is promoted. No agent trains or fits any stage.
