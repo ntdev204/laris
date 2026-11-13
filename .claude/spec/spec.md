@@ -552,7 +552,7 @@ without a default says so and asks for `server.url`; a scripted test covers the 
 The Ink front end presents the layout of D26: welcome banner with version, server and folder, a bordered multi-line input
 box, tool calls and diffs as blocks, the status line and footer hints, the login form and permission dialogs in the same style, narrow and wide
 terminals, no flicker while streaming. It keeps all existing keys and E1 behaviour (SR-C1, SR-C7).
-Acceptance: the Ink acceptance scenarios still pass against the recorded engine; render tests cover each screen at 60 and 120 columns;
+Acceptance: the Ink acceptance scenarios still pass against the recorded engine; render tests cover each screen at 60 and 100 columns (the test terminal is 100 wide);
 the owner reviews screenshots of a real terminal (Linux and Windows).
 
 ## 6. Cross-cutting rules

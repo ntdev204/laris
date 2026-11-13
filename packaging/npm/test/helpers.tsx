@@ -50,7 +50,7 @@ export interface Session {
 }
 
 /** The interface against a recorded engine, driven by key presses. */
-export function open(client: EngineClient, props: { exitWindowMs?: number; initialInput?: string | null } = {}): Session {
+export function open(client: EngineClient, props: { exitWindowMs?: number; initialInput?: string | null; columns?: number } = {}): Session {
   let final: State | null = null;
   const r = render(<App client={client} onFinish={(s) => { final = s; }} {...props} />);
   const frame = () => r.lastFrame() ?? "";

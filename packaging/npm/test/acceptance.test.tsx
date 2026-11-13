@@ -19,7 +19,7 @@ describe("the golden session through the Ink front end", () => {
     await s.waitFor("laris-base"); // status line from the engine
     await s.type("go");
     await s.type(KEYS.enter);
-    await s.waitFor("Permission: Write");
+    await s.waitFor("Write file");
     assert.match(s.frame(), /search_corpus/); // the search ran before the write was asked
     assert.match(s.frame(), /\+hi/); // the diff of the new file
     await s.settle();
@@ -42,7 +42,7 @@ describe("the golden session through the Ink front end", () => {
     await s.waitFor("session abcdef12");
     await s.type("go");
     await s.type(KEYS.enter);
-    await s.waitFor("Permission: Write");
+    await s.waitFor("Write file");
     await s.settle();
     await s.type("n");
     await new Promise((r) => setTimeout(r, 300));
