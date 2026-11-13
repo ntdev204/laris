@@ -442,3 +442,86 @@ that on the R2 candidate until the owner has reviewed the T99 analysis.
 No gate is close (per-gate table in the report). Round R3 is not approved. T100 (sealed test) is not run until the
 owner reads the analysis. Evaluate on `val` with `--max-samples 2048` needs `timeout 1800s`; 600 s kills it.
 
+## 8. T99: round R3, a mixture that shows the weak tasks more (PROPOSED, not approved)
+
+Status: **PROPOSED by the agent after the R2 analysis; nothing here is approved or run.** The owner approves it by running
+it. The agent prepared the commands and the config and runs only inference and the intake. The foundation model is
+**NOT QUALIFIED**; R2 has no gate close (`reports/verification/T99-r2-analysis.md`).
+
+### 8.1 What changes and why
+
+`reports/verification/T99-paws-and-mixture.md` found that R1 and R2 gave every task less than one pass over its data
+(PAWS about 0.23, similarity 0.51) because tasks were drawn in proportion to size^0.7 and the CLI never exposed that
+temperature. R3 changes **the mixture, not the model or the loss**:
+
+| Setting | R1 / R2 | R3 |
+|---|---|---|
+| Task temperature alpha (`training.task_sampling_alpha`, new, default 0.7) | 0.7 | **0.4** |
+| Micro-batch share MLM / NLI / paraphrase / QA / similarity | 61.5 / 21.4 / 9.6 / 6.0 / 1.4 % | **44.0 / 24.1 / 15.2 / 11.7 / 5.1 %** |
+| Dataset exponent within NLI, paraphrase, QA (`--dataset-sampling-ablation`) | none (1.0) | **0.7** (PAWS 13 % to 21 % of the paraphrase draws) |
+| Start | R1 best | **`foundation-r2/best`**, fresh optimizer |
+| Retrieval weight, learning rate, model, tokenizer, batch | 5.0, 5e-5, compact 48k, 16 x 4 with checkpointing | unchanged |
+
+Expected passes in 5,000 steps (R3a): paraphrase 0.13, QA 0.19, similarity 0.65; in 20,000 steps: 0.51, 0.76 and 2.6
+(computed from the scheduler, not measured). Validation samples keep the old mixture, so validation losses stay
+comparable with R1 and R2. The contrastive term is added on QA micro-batches, whose share doubles (6 % to 11.7 %); that
+may move retrieval and forgetting, so both are measured.
+
+### 8.2 Data rules, budget, stop rules
+
+Same data rules as 7.2: no VIPUBMED, no `gold_vi_stem`, no SciFact claims, no held-out test, no S2ORC (stage 2). Stop
+other GPU workloads first. R3a: 5,000 steps at about 0.6 s/step is about 50 min plus evaluations (timeout 5,400 s). R3b,
+only after the decision below: 20,000 steps, about 3.5 h (timeout 18,000 s). Stop rules for both: four validation points
+without improvement (`--patience 4`), a non-finite loss, an out-of-memory error, the timeout, or at intake any task loss
+more than 10 % above `foundation-r2`.
+
+### 8.3 Round R3a (owner run)
+
+```bash
+export HOME_ISOLATED=$(mktemp -d)
+R1=artifacts/checkpoints/language_encoder/foundation-r1-run1/best
+R2=artifacts/checkpoints/language_encoder/foundation-r2/best
+TOK=artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model
+MB=16; ACC=4; CKPT="--gradient-checkpointing"
+echo "MB=$MB ACC=$ACC CKPT=[$CKPT]"      # CKPT must show the flag
+set -o pipefail
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 5400s .venv/bin/python -m cli.model train language-encoder \
+  --authorized --model-size compact --vocab-size 48000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/compact_r3.yaml --dataset-sampling-ablation \
+  --init-from $R2 --micro-batch-size $MB --grad-accum-steps $ACC $CKPT --precision bf16 --no-8bit-adam \
+  --steps 5000 --learning-rate 0.00005 --warmup-steps 200 \
+  --eval-interval 500 --eval-batches 16 --save-interval 500 --patience 4 --seed 42 \
+  --tokenizer-model $TOK --normalize-input --retrieval-loss-weight 5.0 \
+  --run-id foundation-r3a --no-evaluate-after 2>&1 | tee artifacts/profiles/foundation-r3a.log
+```
+
+The header must show `Micro-Batch / Accum: 16 / 4` and `Activation Checkpointing: ENABLED`.
+
+### 8.4 Measurements after R3a (inference only)
+
+```bash
+R3A=artifacts/checkpoints/language_encoder/foundation-r3a/best
+.venv/bin/python scripts/training_intake.py --run-id foundation-r3a --expect-steps 5000 \
+  --expect-retrieval-weight 5.0 --tokenizer-model $TOK --init-run foundation-r2 --reference-run foundation-r2 \
+  --log artifacts/profiles/foundation-r3a.log --max-peak-gib 14.5 --report reports/verification/T99-foundation-r3a-intake.json
+HOME=$HOME_ISOLATED timeout -s KILL 1800s .venv/bin/python -m cli.model evaluate language-encoder \
+  --checkpoint $R3A --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 8 --seed 42 \
+  --device cuda --output artifacts/evaluations/language_encoder/foundation-r3a-val.json
+HOME=$HOME_ISOLATED timeout -s KILL 900s .venv/bin/python -m laris.research.language.benchmarks.retrieval run \
+  --config configs/evaluation/foundation_retrieval_dev.yaml --checkpoint $R3A --tokenizer-model $TOK \
+  --output reports/retrieval/foundation-r3a-scifact-dev.json
+HOME=$HOME_ISOLATED timeout -s KILL 900s .venv/bin/python scripts/score_vi_stem_gold.py --split dev \
+  --checkpoint $R3A --tokenizer-model $TOK --output reports/retrieval/foundation-r3a-vi-stem-dev.json
+```
+
+### 8.5 Decision after R3a (decision aids proposed by the agent, not gates)
+
+| Observation on `val` / dev, against R2 | Reading | Next |
+|---|---|---|
+| PAWS accuracy from 0.50 to >= 0.60, or STS-B Spearman from 0.32 to >= 0.45 | the exposure explanation is supported | R3b: same command with `--init-from artifacts/checkpoints/language_encoder/foundation-r3a/best`, `--steps 20000`, `--eval-interval 1000 --save-interval 1000`, timeout 18,000 s, run-id `foundation-r3b`, intake `--init-run foundation-r3a --expect-steps 20000` |
+| Neither moves, no forgetting | exposure is not the cause | stop; check the paraphrase head output on PAWS validation pairs (inference) and the data before any more GPU time |
+| Any task loss more than 10 % above R2, or SciFact dense MRR below 0.10 | the mixture or the doubled contrastive share hurts | stop; return the logs to the agent |
+
+R3 does not approve T100. The sealed test splits stay unused until the owner has reviewed the R3 analysis and the
+threshold review (`reports/verification/T99-threshold-review.md`).
+
