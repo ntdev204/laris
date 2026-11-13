@@ -47,7 +47,10 @@ returned logs, manifests and reports.
   - A no-training guard that fails when a check sets `LARIS_TRAINING_AUTHORIZED` or calls a training entry point
 - Validation:
   - The command passes on `laris-v2`; a seeded training call is caught; the result is recorded in a report
-- Status: pending
+- Status: done
+- Note: `scripts/verify_model_block.py` passes on `laris-v2` (ruff, mypy on 187 files, 1259 tests); report in
+  `reports/verification/T94-model-block-verification.md`. 10 training/profiling test files and 3 obsolete files are
+  excluded and named; the seeded cases are in `tests/unit/scripts/test_verify_model_block.py`. Merged into `laris-v2`.
 
 ## Phase 20 — Stage 1: foundation EN/VI
 
