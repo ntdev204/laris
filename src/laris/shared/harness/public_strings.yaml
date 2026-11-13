@@ -34,6 +34,10 @@ verify:
   sections_warning: "Lưu ý: câu trả lời thiếu các mục bắt buộc của quy trình ({missing})."
   uncited_warning: "Lưu ý: câu trả lời này chưa dẫn nguồn đầy đủ; hãy kiểm tra trước khi dùng."
 planner:
+  greeting_pattern: "^(xin\\s+chào|chào(\\s+bạn)?|hello|hi|hey|alo|good\\s+(morning|afternoon|evening))$"
+  greeting_reply: >-
+    Xin chào. Trợ lý tích hợp này chưa có mô hình ngôn ngữ nên không trò chuyện được; nó đọc tệp bạn
+    nêu (ví dụ `tai_lieu.pdf`) và tìm đoạn khớp trong kho tài liệu. Hãy hỏi về tài liệu hoặc đưa đường dẫn tệp.
   task: "Nhiệm vụ: {task}"
   evidence_heading: "Đoạn bằng chứng:"
   no_match: "Không có đoạn nào trong kho khớp với nhiệm vụ này."
