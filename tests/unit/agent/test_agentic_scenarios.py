@@ -267,3 +267,23 @@ def test_the_report_states_that_the_model_is_not_qualified():
         encoding="utf-8"
     )
     assert "NOT QUALIFIED" in text and "scripted" in text
+
+
+# 2b. an empty corpus cannot be fixed by another keyword ---------------------------------------
+def test_an_empty_corpus_is_told_once_and_spends_no_replan(project, tmp_path):
+    rt = HarnessRuntime.load(project)
+    service = SearchService(Workspace(tmp_path / "empty"))  # nothing ingested
+    registry = build_registry(service, Sandbox([project], tmp_path / "o", policy=rt.paths), rt)
+    provider = Scripted([
+        AssistantTurn(None, [search("hello")]),
+        AssistantTurn("Chưa có tài liệu nào được nạp, nên tôi chưa trả lời được."),
+    ])  # fmt: skip
+    session = AgentSession(provider, registry, rt)
+    events = list(session.send("hello"))
+    result = next(e for e in events if e["type"] == "tool_result")
+    assert result["result"]["error"]["code"] == "no_documents"
+    reflects = [e for e in events if e["type"] == "reflect"]
+    assert len(reflects) == 1 and reflects[0].get("permanent") and "replans" not in reflects[0]
+    told = [m["content"] for m in session.messages if m.get("harness")]
+    assert len(told) == 1 and "Đừng gọi lại" in told[0] and "lần lập lại" not in told[0]
+    assert events[-1]["status"] == "completed" and "Chưa có tài liệu" in events[-1]["answer"]

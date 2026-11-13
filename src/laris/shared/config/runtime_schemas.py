@@ -43,6 +43,8 @@ class ReflectConfig(BaseModel):
     enabled: bool = Field(default=True)
     max_replans: int = Field(default=2, ge=0, le=5)
     completion_retries: int = Field(default=2, ge=0, le=3)
+    # errors no change of approach can fix: the loop says so once instead of asking for a replan
+    permanent_errors: List[str] = Field(default_factory=lambda: ["no_documents"])
     empty_keys: List[str] = Field(
         default_factory=lambda: ["hits", "passages", "results", "matches", "items"]
     )
