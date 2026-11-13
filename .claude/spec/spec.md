@@ -1,6 +1,6 @@
 # LARIS — System specification: Obsidian brain, scholarly harness, three-block system and terminal client
 
-Version 0.3.0 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 IMPLEMENTED (release 2.0.0 published); owner gates open (T38 review, T39 decision); phase 18 (zero-configuration client, release 2.1.0: T86-T88) PLANNED · Replaces the retired `.agents/` ledger.
+Version 0.3.0 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 IMPLEMENTED (release 2.0.0 published); owner gates open (T38 review, T39 decision); phase 18 (zero-configuration client, release 2.1.0: T86-T88) IMPLEMENTED · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.
@@ -620,6 +620,6 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 The authoritative status of every task is in task.md. Phase 0: T01-T47 (T01-T04, T40, T41, T47). Phase 8 (Agentic): T42-T46. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.
-Second programme (done: T48 to T85): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
+Second programme (done: T48 to T88): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
 Phase 12 (server API): T56-T59. Phase 13 (PostgreSQL): T60-T63. Phase 14 (client SQLite): T64-T66. Phase 15
 (Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85. Phase 18 (zero-configuration client and release 2.1.0): T86-T88.
