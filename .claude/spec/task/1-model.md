@@ -142,7 +142,9 @@ returned logs, manifests and reports.
   and runbook section 8 (round R3a proposed, not approved), `T99-threshold-review.md` (G01 ANLI 0.85 likely unreachable; no threshold changed).
   Owner decisions 2026-11-14: (1) run R3a (approved; owner run, 5,000 steps, runbook 8.3); (2) G01 is NOT changed now, it is amended only after a
   verified published figure for a model of comparable size, all other gates unchanged; (3) T100 on R2 is not run, the gates are too far.
-  Waiting for the owner to run R3a and return logs for intake. Earlier report `reports/verification/T99-runbook-and-intake.md`.
+  R3a run by the owner and analysed (`reports/verification/T99-r3a-analysis.md`): intake 17/18 (similarity loss 2.5x R2 fails the 10 % stop rule),
+  gains on NLI, paraphrase, QA-en, dense MRR (SciFact 0.129 to 0.157, vi-STEM 0.391 to 0.555), similarity-vi regressed; no gate passed, NOT QUALIFIED.
+  Waiting for the owner: R3b (20,000 steps), a similarity-protecting variant, or stop. Earlier report `reports/verification/T99-runbook-and-intake.md`.
 
 ### T100 — Stage-1 held-out evaluation and promotion
 - Requirements: SR-M6, SR-M12
