@@ -80,7 +80,13 @@ returned logs, manifests and reports.
   - Review of the owner's branch `wip/corpus-acquisition-changes` (`b9a629f`) and a proposal to integrate or drop each file
 - Validation:
   - `data check --verify-sha256` passes; partition isolation re-verified; no test data used for tuning
-- Status: pending
+- Status: done
+- Note: Revision `r1` in `data/processed/r1/` (outside Git; originals untouched and re-verified): STS-B cross-split pairs
+  removed from train (-9) and val (-3), test unchanged; 9 ViQuAD answer offsets corrected (val 5, test 4), nothing
+  dropped. `data check --verify-sha256` passes on both directories and overlaps and offsets were recomputed. Lineage and
+  review in `reports/verification/T96-data-corrections*.{json,md}`. The review of `wip/corpus-acquisition-changes`
+  proposes integrating all four files, with one manifest status fix; nothing integrated without the owner. Earlier
+  STS-B and ViQuAD validation numbers are not comparable with r1. Merged into `laris-v2`.
 
 ### T97 — Tokenizer R1 (owner run)
 - Requirements: SR-M5, SR-M3
