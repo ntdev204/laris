@@ -138,7 +138,9 @@ returned logs, manifests and reports.
 - Note: Round R2 run by the owner 2026-11-13 and analysed: runbook section 7 (executed, results in 7.9), `scripts/training_intake.py`
   (18/18 on `foundation-r2`), `scripts/score_vi_stem_gold.py`, report `reports/verification/T99-r2-analysis.md`. SciFact dev dense MRR 0.0067 (R1)
   to 0.1285 (R2) against BM25 0.636; no gate is close (G01-G09 are 0.37-0.60 below threshold on `val`, PAWS at chance); the foundation model is NOT QUALIFIED.
-  Waiting for the owner's decision: investigate PAWS and the mixture, round R3, review of the G01-G12 thresholds, or T100 on R2. Earlier report `reports/verification/T99-runbook-and-intake.md`.
+  Follow-up 2026-11-14 (owner order B, C, D): `T99-paws-and-mixture.md` (every task saw under one pass; PAWS about 0.23), the `task_sampling_alpha` knob
+  and runbook section 8 (round R3a proposed, not approved), `T99-threshold-review.md` (G01 ANLI 0.85 likely unreachable; no threshold changed).
+  Waiting for the owner's decision: run R3a, amend thresholds, or T100 on R2. Earlier report `reports/verification/T99-runbook-and-intake.md`.
 
 ### T100 — Stage-1 held-out evaluation and promotion
 - Requirements: SR-M6, SR-M12

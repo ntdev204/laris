@@ -313,6 +313,7 @@ def _run_memory_profile(
         split="train",
         require_real_data=True,
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        alpha=hyper.task_sampling_alpha,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
     )
     missing = sorted(set(TASK_DATASET_DIRS) - set(loader.task_paths))
@@ -479,6 +480,7 @@ def run(args: argparse.Namespace) -> int:
     loader = StreamingParquetMultiTaskDataLoader(
         split="train",
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        alpha=hyper.task_sampling_alpha,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
         **common,  # type: ignore[arg-type]
     )
