@@ -168,6 +168,7 @@ changes in the ADR named in the task.
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
+| D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); not yet executed |
 
 ## 7. Requirements
 
