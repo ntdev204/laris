@@ -123,7 +123,7 @@ master secret into `docker/secrets/master.secret` first, or the imported keys wi
 docker/smoke_test.sh --cpu      # or without --cpu on a GPU machine
 ```
 
-It brings the stack up on ports 18080/18443, creates a key, pins Caddy's certificate by fingerprint,
+It brings the stack up on ports 18080/18443, creates a key, pins Caddy's certificate authority by fingerprint,
 then from an empty folder with a fresh home runs `laris login`, a chat with the placeholder model, a
 dense index and a dense search through the server, and checks that a wrong key gets 401. It removes
 the stack afterwards (`--keep` leaves it running).
@@ -175,3 +175,29 @@ Limits of the tests: TLS handshake timing is tested on Caddy only, and the whole
 | Clients see 426 | the client is older than the server's protocol; update the client |
 | Wrong client address in key rules | check `serving.trusted_proxies` matches the Caddy subnet (172.31.0.0/24) |
 | Model service unhealthy | GPU not visible to Docker, or `LARIS_MODEL_CHECKPOINT` wrong |
+
+## 12. A package that knows this server (ADR-019 D24)
+
+Users should only install the npm package and type `laris`. The release workflow can write this server's
+address into the package, so nobody types it:
+
+1. With `LARIS_DOMAIN=localhost` or an IP address Caddy signs with its own authority. Read the fingerprint
+   of that authority (it stays the same for about ten years; the server certificate under it is renewed
+   every few hours and must not be used here):
+
+   ```sh
+   curl -sk https://HOST:PORT/.well-known/laris/ca.crt | openssl x509 -noout -fingerprint -sha256
+   ```
+
+   With a real domain name Caddy gets a public certificate, the path answers 404 and no fingerprint is needed.
+2. Set the repository variables (GitHub: Settings, Secrets and variables, Actions, Variables):
+   `LARIS_DEFAULT_SERVER_URL` (for example `https://laris.example.com`, `/v1` is added by the client) and,
+   for a private authority, `LARIS_DEFAULT_SERVER_CA_FINGERPRINT` (`SHA256:AA:BB:...`).
+3. Release. `packaging/assemble_npm.py` writes `defaults.json` beside the program in every platform package.
+   The values are not in the source tree, and a user's `settings.json` or `LARIS_MODEL_API__BASE_URL`
+   still overrides them.
+
+An address in a public npm package is public. Use a private address (Tailscale, a LAN) only for a trial;
+anyone who installs the package learns it, though they still need a key and network access to it. If the
+authority changes (the `caddy_data` volume was lost), release again with the new fingerprint: clients built
+for the old one refuse the server instead of trusting it.

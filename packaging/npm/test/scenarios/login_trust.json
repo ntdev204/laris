@@ -1,0 +1,7 @@
+{"name":"first run against a private server: address, certificate fingerprint, then the key","steps":[
+ {"emit":[{"type":"login_required","reason":"no_server","server":"","fingerprint":"","message":""}]},
+ {"expect":{"type":"login","server":"laris.internal:8443"},"emit":[{"type":"login_required","reason":"untrusted_certificate","server":"https://laris.internal:8443","fingerprint":"SHA256:AB:CD:EF","message":""}]},
+ {"expect":{"type":"login","trust":true},"emit":[{"type":"login_required","reason":"no_key","server":"https://laris.internal:8443","fingerprint":"","message":""}]},
+ {"expect":{"type":"login","key":"lk_good_key"},"emit":[
+   {"type":"ready","version":"1","engine":"2.1.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.internal:8443"}]}
+]}

@@ -172,6 +172,7 @@ def test_the_cli_command_speaks_e1_on_stdio(chat, monkeypatch, capsys):
     from cli import client
 
     monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("laris.client.engine.login.LoginGate.run", lambda self: True)
     monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
     assert client.main(["engine", "--stdio"]) == 0
@@ -278,6 +279,7 @@ def test_the_engine_command_continues_the_newest_session(chat, monkeypatch, caps
     chat.conversations.save({**earlier, "messages": [{"role": "user", "content": "hi"}]})
     newest = chat.conversations.list()[0]["id"]
     monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("laris.client.engine.login.LoginGate.run", lambda self: True)
     monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"type": "shutdown"}) + "\n"))
     assert client.main(["engine", "--stdio", "--continue"]) == 0
@@ -318,6 +320,7 @@ def test_continue_and_resume_take_an_id_or_a_unique_prefix(chat, monkeypatch, ca
         chat.conversations.save({**made, "messages": [{"role": "user", "content": title}]})
         ids.append(made["id"])
     monkeypatch.setattr("cli.commands.engine.make_chat", lambda args, interactive=True: chat)
+    monkeypatch.setattr("laris.client.engine.login.LoginGate.run", lambda self: True)
     monkeypatch.setattr("cli.bootstrap.ensure_global_home", lambda: None)
 
     def session(*flags):

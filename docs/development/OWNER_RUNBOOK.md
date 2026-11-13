@@ -5,7 +5,7 @@ document_type: "architecture"
 status: "DRAFT"
 version: "0.1.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -30,15 +30,18 @@ Commands run from the codebase that holds the system `.laris/` on the server, wi
 2. `laris-server tls init --host your.domain --host 203.0.113.5` writes a self-signed certificate and a
    0600 key to `~/.laris-server/tls`. With a real certificate authority, copy its `cert.pem` and `key.pem`
    there instead; clients then need nothing. `tls init` and `model serve` print the certificate
-fingerprint: publish it through another channel (chat, the website), and users run `laris login --server
-https://HOST:PORT/v1 --trust-fingerprint SHA256:...` once. The client pins that certificate for that server only.
+fingerprint: publish it through another channel (chat, the website). Users start `laris`, which shows the
+fingerprint and asks them to confirm it (or they run `laris login --server https://HOST:PORT/v1
+--trust-fingerprint SHA256:...` once). The client pins that certificate for that server only. A package built
+with a default server and fingerprint (deployment runbook, section 12) asks nothing.
 3. `laris-server model serve --host 0.0.0.0 --port 8443` serves HTTPS. Without a certificate it refuses to
    bind outside loopback. The first start creates the built-in admin key and prints it once.
 4. Keep `~/.laris-server/master.secret` (or the variable `LARIS_SERVER_MASTER`) safe and backed up
    *separately from the database*: without it the stored keys cannot be decrypted.
 
-If you change the certificate, users must run `laris login --server ...` again and confirm the new
-fingerprint; a different certificate is never accepted silently.
+If you change the certificate, users are asked to confirm the new fingerprint the next time they start
+`laris`; a different certificate is never accepted silently. Behind Caddy the client pins Caddy's
+certificate *authority*, so the server certificate Caddy renews every few hours needs no action.
 
 ## 2. Keys and quotas
 

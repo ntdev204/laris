@@ -92,14 +92,24 @@ memory for the session. Plain mode offers the same slash commands and the questi
 ### 1.2 Account, server and settings
 
 ```bash
-laris config set server.url https://laris.example.com/v1   # where the server is
-laris login                       # enter the API key once (hidden input, saved with mode 0600)
-laris                             # chat
+laris                             # opens the interface; the first run asks for the API key there
 ```
 
-`laris login` checks the key against the server, shows the certificate fingerprint of a private server for
-the user to confirm (or takes `--trust-fingerprint`) and pins it for that server only, and saves the key in
-`~/.laris/.credentials.json`. It still accepts `--server URL` as a shortcut that writes `server.url`.
+Nothing has to be configured first (ADR-019 D24, D25). The **server address** comes from, in order: the
+`LARIS_MODEL_API__BASE_URL` environment variable, `server.url` in `~/.laris/settings.json`, and the default
+written into the package at build time (`defaults.json` beside the program; see the deployment runbook). When
+something is missing the engine says so before the session starts (E1 event `login_required`) and the interface
+asks: the API key (hidden; checked against the server before it is saved to `~/.laris/.credentials.json`,
+mode 0600; a refused key is asked again), a server address when the build has no default (a bare host name
+becomes `https://HOST/v1`), or a confirmation of a private certificate's SHA-256 fingerprint. A fingerprint
+packaged with the program needs no question, and a server that does not match it cannot be accepted.
+
+For a server with a private certificate authority the client pins the **authority** the server publishes at
+`/.well-known/laris/ca.crt`, not the server certificate (a reverse proxy renews that one every few hours); it
+falls back to the server's own certificate only when no authority is published.
+
+`laris login` is optional: it asks for the key outside the interface and still accepts `--server URL` and
+`--trust-fingerprint SHA256:...` (the fingerprint of the authority, or of the certificate).
 `laris logout` forgets the key; `laris whoami` shows the role and the tokens left. The key can also come from
 `LARIS_API_KEY`. Certificates are always verified. There is no offline mode: the client needs a server.
 

@@ -233,3 +233,76 @@ describe("keys", () => {
     assert.match(s.final()?.fatal ?? "", /no API key/);
   });
 });
+
+describe("first run: signing in inside the interface (ADR-019 D25)", () => {
+  it("asks for the key, hides it, asks again when it is refused, then opens the session", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    assert.match(s.frame(), /https:\/\/laris\.example/);
+    assert.match(s.frame(), /API key:/);
+    await s.settle();
+    await s.type("lk_wrong_key");
+    assert.doesNotMatch(s.frame(), /lk_wrong_key/); // typed keys are never drawn
+    assert.match(s.frame(), /•{12}/);
+    await s.type(KEYS.enter);
+    await s.waitFor("The server refused that key");
+    await s.settle();
+    await s.type("lk_good_key");
+    await s.type(KEYS.enter);
+    await s.waitFor("develop"); // the session started: the status line is there
+    assert.doesNotMatch(s.frame(), /API key:/);
+    await s.type("hello");
+    await s.type(KEYS.enter);
+    await s.waitFor("Hi.");
+    await s.client.stop();
+  });
+
+  it("an empty answer is explained instead of being sent", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    await s.settle();
+    await s.type(KEYS.enter);
+    await s.waitFor("Paste or type your API key");
+    assert.equal(s.client.exited, false);
+    await s.client.stop();
+  });
+
+  it("a private server: the address, then the fingerprint to compare, then the key", async () => {
+    const s = open(scenarioClient("login_trust"));
+    await s.waitFor("Connect to a LARIS server");
+    await s.settle();
+    await s.type("laris.internal:8443");
+    await s.type(KEYS.enter);
+    await s.waitFor("SHA256:AB:CD:EF");
+    assert.match(s.frame(), /Trust this server\?/);
+    await s.settle();
+    await s.type("y");
+    await s.waitFor("API key:");
+    await s.settle();
+    await s.type("lk_good_key");
+    await s.type(KEYS.enter);
+    await s.waitFor("session abcdef12");
+    await s.client.stop();
+  });
+
+  it("Esc at the sign-in screen leaves without a session", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    await s.settle();
+    await s.type(KEYS.esc);
+    await until(() => s.final() !== null, "the session to end");
+    assert.equal(s.final()?.ready, null);
+    assert.equal(s.final()?.exitCode, 0);
+  });
+
+  it("a certificate that is not the packaged one cannot be accepted", () => {
+    const transport = new FakeTransport();
+    const s = open(new EngineClient(transport));
+    transport.emit({ type: "login_required", reason: "certificate_mismatch", server: "https://laris.example", fingerprint: "SHA256:00:11", message: "" });
+    return s.waitFor("not the expected one").then(async () => {
+      await s.settle();
+      await s.type("y");
+      assert.deepEqual(transport.commands().filter((c) => c["type"] === "login"), []);
+    });
+  });
+});

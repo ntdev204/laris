@@ -10,6 +10,7 @@ from laris.protocol import engine as e1
 SCHEMA_FILE = Path(e1.__file__).with_name("e1.schema.json")
 
 EVENTS = [
+    {"type": "login_required", "reason": "no_key", "server": "https://s", "message": ""},
     {
         "type": "ready",
         "version": "1",
@@ -32,6 +33,7 @@ EVENTS = [
     {"type": "done", "status": "completed", "answer": "ok"},
 ]
 COMMANDS = [
+    {"type": "login", "key": "lk_example_key", "trust": True},
     {"type": "user_message", "text": "hi"},
     {"type": "permission_response", "id": "perm_1", "decision": "allow", "remember": True},
     {"type": "interrupt"},

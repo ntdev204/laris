@@ -272,14 +272,16 @@ def load_runtime_config(
     """Resolve the runtime configuration for a project.
 
     Order (later wins): schema defaults, `configs/default.yaml`, `~/.laris/config.yaml`,
-    `<project>/.laris/config.yaml` (not on the client), the user's saved settings
-    (`~/.laris/settings.json`, where `server.url` names the server), `LARIS_*` environment (after
+    `<project>/.laris/config.yaml` (not on the client), the server address packaged at build time
+    (D24), the user's saved settings (`~/.laris/settings.json`, where `server.url` names the
+    server), `LARIS_*` environment (after
     loading `<project>/.env`), then explicit overrides.
     """
     root = Path(project_root or Path.cwd())
     if _PROJECT_CONFIG:  # the client never lets a folder it opened set LARIS_* variables
         load_dotenv(root / ".env")
     if user_layer is None:  # the global settings.json (server address, model) applies everywhere
+        # `layer_from` puts the address packaged at build time beneath the user's own (D24)
         user_layer = layer_from(read_settings(Path.home() / ".laris" / "settings.json")) or None
     default = root / "configs" / "default.yaml"
     project_files = [root / ".laris" / "config.yaml"] if _PROJECT_CONFIG else []
