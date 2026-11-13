@@ -394,22 +394,29 @@
     },
     {
       "dataset_id": "S2ORC-STEM",
-      "name": "Semantic Scholar Open Research Corpus (S2ORC) STEM Subset",
-      "version": "2024-Release / S2AG",
+      "name": "S2ORC full-text papers (stage 02, STEM by external id)",
+      "version": "s2ag-2026-11-03",
       "official_source_url": "https://api.semanticscholar.org/datasets/v1/release/latest/dataset/s2orc",
-      "license_name": "ODC-BY-1.0",
+      "license_name": "ODC-BY-1.0 (collection); per-paper open license kept in `license`",
       "license_status": "APPROVED_FOR_ACQUISITION",
       "acquisition_status": "SKIPPED_TEMPORARILY",
       "language": "English",
-      "sample_unit": "Parsed STEM Paper Record",
-      "expected_sample_count": "Target: 500k STEM papers (Cap: <20M samples, <20 GB payload)",
-      "actual_sample_count": 0,
-      "actual_size_bytes": 0,
-      "sha256_checksum": "",
-      "storage_path": "data/raw/s2orc_stem",
+      "sample_unit": "Parsed full-text paper",
+      "expected_sample_count": "Bounded stream: <= 10 GB stored, from 250 shards",
+      "actual_sample_count": 19724,
+      "actual_size_bytes": 211241570,
+      "sha256_checksum": "b6158b10cca98bd2e0f3d17217384e6d8cc39812c1aa3a22b1fd57703bae81a7",
+      "storage_path": "data/raw/s2orc_stage02",
       "schema_valid": false,
-      "notes": "SKIPPED_TEMPORARILY: Official Semantic Scholar dataset API requires an authenticated API key (HTTP 401 Unauthorized for anonymous download). Full unpartitioned dataset is 30 x 4 GB (120 GB) or 30 x 6 GB (180 GB), exceeding the 20 GB hard cap. In strict accordance with Section 7 of the execution mandate, full-corpus download is prohibited. Acquisition will resume once an authorized Semantic Scholar API key is configured or a compliant pre-filtered STEM subset is provisioned.",
-      "files": []
+      "notes": "Filtered on the fly from signed s2orc shards; no raw shard is stored. Kept papers carry an id in ('arxiv', 'dblp', 'acl', 'pubmed', 'pubmedcentral'), text >= 2000 chars and an open license ['CC0', 'CCBY', 'CCBYNC', 'CCBYNCSA', 'CCBYSA', 'PUBLICDOMAIN']. STEM is approximated by identifier, not by field of study. Source counts: {'pubmedcentral': 18088, 'arxiv': 1549, 'acl': 87}.",
+      "files": [
+        {
+          "filename": "shard-0655.parquet",
+          "bytes": 211241570,
+          "sample_count": 19724,
+          "sha256": "b6158b10cca98bd2e0f3d17217384e6d8cc39812c1aa3a22b1fd57703bae81a7"
+        }
+      ]
     },
     {
       "dataset_id": "LARIS-GOLD",
@@ -1059,6 +1066,6 @@
     }
   ],
   "total_datasets_tracked": 18,
-  "total_acquired_bytes": 12060618101,
+  "total_acquired_bytes": 12271859671,
   "total_acquired_samples": 8295759
 }

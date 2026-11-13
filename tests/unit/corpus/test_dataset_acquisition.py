@@ -94,10 +94,17 @@ def test_s2orc_cap_and_skip_status(manifest_data):
     s2orc_entries = [d for d in manifest_data["datasets"] if "S2ORC" in d["dataset_id"]]
     assert len(s2orc_entries) == 1
     s2orc = s2orc_entries[0]
-    assert s2orc["acquisition_status"] == "SKIPPED_TEMPORARILY"
     assert s2orc["actual_size_bytes"] < 20 * (1024**3)  # < 20 GB
     assert s2orc["actual_sample_count"] < 20_000_000  # < 20M samples
-    assert "401" in s2orc["notes"] or "Unauthorized" in s2orc["notes"]
+    if s2orc["actual_sample_count"] == 0:
+        # Nothing acquired: the skip must be explained (anonymous download is unauthorized).
+        assert s2orc["acquisition_status"] == "SKIPPED_TEMPORARILY"
+        assert "401" in s2orc["notes"] or "Unauthorized" in s2orc["notes"]
+    else:
+        # Streamed acquisition: the stored bytes and samples must match the listed files.
+        assert s2orc["files"]
+        assert s2orc["actual_size_bytes"] == sum(f["bytes"] for f in s2orc["files"])
+        assert s2orc["actual_sample_count"] == sum(f["sample_count"] for f in s2orc["files"])
 
 
 def test_laris_gold_specification_status(manifest_data):
