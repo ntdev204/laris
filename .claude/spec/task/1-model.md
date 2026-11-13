@@ -97,7 +97,12 @@ returned logs, manifests and reports.
 - Validation:
   - The owner approves the budget and runs the fit; the candidate is compared under the frozen protocol; lineage review
     done if the vocabulary changes
-- Status: pending
+- Status: done
+- Note: The owner's fit (2026-11-11, 48k vocabulary, digits not split) was taken in, not repeated: `scripts/tokenizer_intake.py`
+  passes (checksums, 48,000-piece contract equal to the model, special ids 0-7 unchanged, token and unknown counts and
+  development fertility EN 1.2996 / VI 1.1848 recomputed and equal to the report); report in
+  `reports/verification/T97-tokenizer-r1-intake.md` with the lineage review (encoder re-initialised, memory profile to
+  redo in T99, held-out G10 and G11 still unmeasured). Owner confirmation of the intake is the one open item.
 
 ### T98 — Human STEM relevance for G12
 - Requirements: SR-M6, SR-M4
