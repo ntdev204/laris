@@ -144,7 +144,9 @@ returned logs, manifests and reports.
   verified published figure for a model of comparable size, all other gates unchanged; (3) T100 on R2 is not run, the gates are too far.
   R3a run by the owner and analysed (`reports/verification/T99-r3a-analysis.md`): intake 17/18 (similarity loss 2.5x R2 fails the 10 % stop rule),
   gains on NLI, paraphrase, QA-en, dense MRR (SciFact 0.129 to 0.157, vi-STEM 0.391 to 0.555), similarity-vi regressed; no gate passed, NOT QUALIFIED.
-  Waiting for the owner: R3b (20,000 steps), a similarity-protecting variant, or stop. Earlier report `reports/verification/T99-runbook-and-intake.md`.
+  Data review 2026-11-14 (Vietnamese QA near the always-no-answer baseline, similarity-vi translated and source-shifted) led to the owner's
+  decision D46 / ADR-022: English-only encoder, Vietnamese by translation, replacement English data. R3b is not run. Next: amendment task for
+  gates and data inventory (agent), then a new tokenizer fit and retraining (owner). Earlier report `reports/verification/T99-runbook-and-intake.md`.
 
 ### T100 — Stage-1 held-out evaluation and promotion
 - Requirements: SR-M6, SR-M12
