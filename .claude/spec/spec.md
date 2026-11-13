@@ -166,7 +166,7 @@ changes in the ADR named in the task.
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | proposed (T120) |
 | D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 3.0.0 | proposed (T120) |
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
-| D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | proposed (T93) |
+| D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
 
 ## 7. Requirements
