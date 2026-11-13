@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-13
+
+Major release: the system is split into client, server and model programs over two protocols, with PostgreSQL on the server, SQLite on the client, a Docker deployment and a Claude-Code-style terminal client. **Breaking:** the client no longer has `data`, `train` or `evaluate` (they are `laris-server` commands), has no offline mode, and reads no project configuration; client and server must both be 2.0.0 (the protocol version is checked). Upgrade steps: `docs/development/MIGRATION_1X_TO_2_0.md`. The foundation model is still NOT QUALIFIED; this release changes engineering structure, not model quality.
+
 ### Added
 - **Documentation of the restructured system (T84):** `SYSTEM_OVERVIEW` (blocks, protocols, storage, trust boundaries), `DATA_FLOW` (pipeline 0, one chat turn), `AGENT_HARNESS` (where each part runs, client configuration precedence, permissions, hooks, sandbox), `MODEL_BOUNDARY` (model service and P2), a rewritten CLI reference (Ink, plain and headless modes, E1, settings schema, slash commands, `laris-server`, `laris-model`), edge limits and security checks in the deployment runbook, a new migration guide 1.x to 2.0 (`docs/development/MIGRATION_1X_TO_2_0.md`); owner runbooks now name `laris-server data|train|evaluate`. The user guide `.laris/help` is unchanged (owner approval pending, see `CLIENT_GUIDE_DRAFT.md`).
 - **Security suite (T83):** `tests/security` and `make test-security` (a CI step): hostile network clients, a compromised container (static compose checks and the real `caddy:2`), a hostile project folder, hostile hook output, injected shell and install requests, a tampered sandbox download.

@@ -15,7 +15,6 @@ import json
 import os
 import re
 import shutil
-import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -23,6 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from laris.client.agent.tools import Sandbox, ToolExecutionError, ToolSpec, schema
+from laris.client.proc import kill_tree, new_group_options
 from laris.client.sandbox import SandboxManager, classify_install, command_env
 
 NEVER_WRITTEN = (".git", ".laris")
@@ -358,17 +358,14 @@ def build_coding_tools(ctx: CodingContext, sandbox: Sandbox) -> Tuple[ToolSpec, 
         shell = shutil.which("bash") or "/bin/sh"
         proc = subprocess.Popen(
             [shell, "-c", command], cwd=cwd, env=env, text=True, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **new_group_options(),
         )  # fmt: skip
         timed_out = False
         try:
             output, _ = proc.communicate(timeout=limit)
         except subprocess.TimeoutExpired:
             timed_out = True
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            kill_tree(proc)
             output, _ = proc.communicate()
         cap = cfg.bash_output_max_chars
         clipped = len(output) > cap
