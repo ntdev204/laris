@@ -113,15 +113,18 @@ returned logs, manifests and reports.
   - D05 retrieval-relevance phase opened with the owner: guideline, units, splits frozen and hashed before labelling;
     annotation tooling and agreement computation (weighted kappa)
 - Validation:
-  - Owner assigns annotators; agreement ≥ the D05 threshold; the test split is sealed; agents generate no labels
+  - Owner assigns annotators; agreement ≥ the D05 threshold; the test split is sealed; agent labels are allowed from 2026-11-13 and recorded as `label_source: llm`
 - Status: done
 - Note: Deviation from the validation line, by the owner's instruction ("Bạn tự gán", "gán A2 luôn"): all labels are
-  LLM-assigned, so the set is `label_source: llm`, `human_gold: false`, and D05 (agents never create gold) is NOT met.
+  LLM-assigned, so the set is `label_source: llm`, `human_gold: false`. On 2026-11-13 the owner lifted the D05 ban on agent
+  labels (`docs/training/D05_HUMAN_GOLD_PROTOCOL.md`, principle 1); the evidence stays LLM gold, never human gold. A second pass
+  on the same day relabelled A2 on full text where truncation could hide relevance, paraphrased the 55 queries that copied a
+  6-gram of their source and excluded 4 queries whose source is a degenerate machine translation.
   Built by `scripts/build_vi_stem_gold.py` with the frozen `docs/training/D05_GUIDELINE_VI_STEM.md`; 4000-passage corpus,
-  200 queries, 1561 pooled items (pilot 157, dev 1093, test 311); weighted quadratic kappa 0.943 / 0.945 / 0.932 against the
-  0.85 threshold; 67 disagreements adjudicated by the assistant; dev and test sealed. Report
+  196 queries, 1,529 pooled items (pilot 157, dev 1,068, test 304); weighted quadratic kappa 0.943 / 0.952 / 0.939 against the
+  0.85 threshold; 61 disagreements adjudicated by the assistant; dev and test sealed. Report
   `reports/verification/T98-vi-stem-relevance.md`. Data in `data/processed/gold_vi_stem/` (outside Git, source licence
-  not cleared). The owner must accept it as LLM gold before G12 is promoted for Vietnamese.
+  not cleared). The owner accepts LLM gold for G12 by the 2026-11-13 instruction; it is not human gold.
 
 ### T99 — Foundation training rounds (owner run)
 - Requirements: SR-M6, SR-M3

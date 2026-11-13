@@ -8,9 +8,12 @@ passages come from the VIPUBMED machine translation whose licence is not cleared
   pool      BM25 + dense (R1 encoder, inference) pooling, blind annotation sheets, frozen manifest
   reconcile weighted kappa of two label files, adjudication, sealed gold
 
+  amend     apply `amendments.json`: paraphrase queries that copy a 6-gram of their source passage
+            and exclude queries whose source passage is a degenerate machine translation
+
 Roles for this gold were assigned by the owner on 2026-11-13: every label is produced by a
 language model (an agent), not by a human, so the manifest records `label_source: llm` and the
-evidence is not human gold.
+evidence is not human gold. The owner lifted the D05 ban on agent labels the same day.
 """
 
 import argparse
@@ -190,6 +193,39 @@ def cmd_pool(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_amend(args: argparse.Namespace) -> int:
+    sys.path.insert(0, str(ROOT / "src"))
+    amend = json.loads((OUT / "amendments.json").read_text(encoding="utf-8"))
+    rewrite: Dict[str, str] = amend["rewrite"]
+    queries = read_jsonl(OUT / "queries.jsonl")
+    items = read_jsonl(OUT / "items.jsonl")
+    sources = {r["query_id"]: r["passage"] for r in read_jsonl(OUT / "query_sources.jsonl")}
+    for row in queries:
+        if row["query_id"] in rewrite and "query_original" not in row:
+            row["query_original"] = row["query"]
+            row["query"] = rewrite[row["query_id"]]
+    for it in items:
+        if it["query_id"] in rewrite and "query_original" not in it:
+            it["query_original"] = it["query"]
+            it["query"] = rewrite[it["query_id"]]
+    still = [q["query_id"] for q in queries if _ngram_copy(q["query"], sources[q["query_id"]])]
+    write_jsonl(OUT / "queries.jsonl", queries)
+    write_jsonl(OUT / "items.jsonl", items)
+    manifest = json.loads((OUT / "freeze_manifest.json").read_text(encoding="utf-8"))
+    manifest["amendment"] = {
+        "queries_rewritten": sorted(rewrite),
+        "queries_excluded": amend["exclude"],
+        "exclude_reason": "source passage is a degenerate machine translation",
+        "queries_still_6gram_copy": still,
+        "queries_sha256_after": sha256_file(OUT / "queries.jsonl"),
+        "items_sha256_after": sha256_file(OUT / "items.jsonl"),
+        "pool_note": "pooling ran on the original queries; items are unchanged",
+    }
+    (OUT / "freeze_manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
+    print(f"rewritten {len(rewrite)}, excluded {len(amend['exclude'])}, still copying {still}")
+    return 0
+
+
 def _load_labels(annotator: str, items: List[Dict[str, Any]]) -> Dict[str, int]:
     labels: Dict[str, int] = {}
     for path in sorted((OUT / "labels").glob(f"{annotator}_*.jsonl")):
@@ -208,8 +244,13 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
     from laris.research.evaluation import human_gold as hg
 
     items = read_jsonl(OUT / "items.jsonl")
-    split_of = {i["item_id"]: i["split"] for i in items}
     a1, a2 = _load_labels("A1", items), _load_labels("A2", items)
+    amend_path = OUT / "amendments.json"
+    excluded = set(json.loads(amend_path.read_text())["exclude"]) if amend_path.exists() else set()
+    items = [i for i in items if i["query_id"] not in excluded]
+    split_of = {i["item_id"]: i["split"] for i in items}
+    a1 = {k: v for k, v in a1.items() if k in split_of}
+    a2 = {k: v for k, v in a2.items() if k in split_of}
     manifest = json.loads((OUT / "freeze_manifest.json").read_text(encoding="utf-8"))
     report: Dict[str, Any] = {"label_source": "llm", "human_gold": False, "splits": {}}
     adj_path = OUT / "adjudication.json"
@@ -243,6 +284,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("sample").set_defaults(func=cmd_sample)
+    sub.add_parser("amend").set_defaults(func=cmd_amend)
     pool = sub.add_parser("pool")
     pool.add_argument(
         "--checkpoint", default="artifacts/checkpoints/language_encoder/foundation-r1-run1/best"
