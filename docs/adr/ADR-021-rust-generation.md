@@ -72,12 +72,14 @@ The wording is consistent with D28 as long as each rung is read as a property of
 Draft verdict: D28 holds unchanged. The owner confirms or overturns this reading.
 
 ## 4. Release tools (named here as T119 requires)
-T119 approved "a release signing tool and a cross-compilation tool" without naming them. Proposed, for the owner to
-confirm or replace:
-- Cross-compilation: `cross` for the Linux targets (static musl); native CI runners for macOS and Windows, because the
-  sandbox crates (landlock, seccomp, Windows APIs) are tested on their own platform.
-- Release signing: `minisign` (small, offline keys, detached signatures checked by the installer).
-Neither is installed or used before T121 and neither becomes a dependency of the Rust code.
+T119 approved "a release signing tool and a cross-compilation tool" without naming them. The owner delegated the
+choice on 2026-11-13 ("chọn phương pháp phù hợp nhất, giống Claude Code"): one native binary per platform, built on
+that platform, installed by a one-line script (D34). Chosen:
+- Build: native CI runners for macOS and Windows, because the sandbox crates (landlock, seccomp, Windows APIs) must be
+  built and tested on their own platform; `cross` only for the static Linux (musl) targets.
+- Signing: `minisign` detached signatures over a checksum manifest, verified by the install script; platform code
+  signing (macOS notarisation, Windows Authenticode) is added at release 3.0.0 if the owner holds the certificates.
+Neither tool is installed or used before T121 and neither becomes a dependency of the Rust code.
 
 ## 5. Consequences
 - Plan 2 phases follow the ladder (phases 31-34) while the loop, harness and prompt layers (phases 28-30) are built
@@ -87,4 +89,4 @@ Neither is installed or used before T121 and neither becomes a dependency of the
 - If the owner changes a decision, the spec table, the affected requirements and this ADR change together in one task.
 
 ## 6. Owner decision (to fill)
-For each of D28 and D35-D42, and for the two release tools in section 4: confirm / change to ___. Date: ___.
+For each of D28 and D35-D42, and (optionally) overturn the release tools in section 4: confirm / change to ___. Date: ___.
