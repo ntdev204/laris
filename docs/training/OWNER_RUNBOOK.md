@@ -442,10 +442,9 @@ that on the R2 candidate until the owner has reviewed the T99 analysis.
 No gate is close (per-gate table in the report). Round R3 is not approved. T100 (sealed test) is not run until the
 owner reads the analysis. Evaluate on `val` with `--max-samples 2048` needs `timeout 1800s`; 600 s kills it.
 
-## 8. T99: round R3, a mixture that shows the weak tasks more (PROPOSED, not approved)
+## 8. T99: round R3, a mixture that shows the weak tasks more (R3a APPROVED 2026-11-14, owner run pending)
 
-Status: **PROPOSED by the agent after the R2 analysis; nothing here is approved or run.** The owner approves it by running
-it. The agent prepared the commands and the config and runs only inference and the intake. The foundation model is
+Status: **R3a APPROVED by the owner on 2026-11-14 (not yet run); R3b stays unapproved until R3a is analysed.** The owner runs it. The agent prepared the commands and the config and runs only inference and the intake. The foundation model is
 **NOT QUALIFIED**; R2 has no gate close (`reports/verification/T99-r2-analysis.md`).
 
 ### 8.1 What changes and why
