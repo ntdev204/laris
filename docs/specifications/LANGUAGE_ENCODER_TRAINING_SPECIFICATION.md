@@ -4,9 +4,9 @@ title: 'LARIS Language Encoder Training Specification: Architecture, Curriculum 
   Execution Gates'
 document_type: specification
 status: APPROVED
-version: 3.0.0
+version: 3.1.0
 created_at: '2026-10-16'
-updated_at: '2026-11-10'
+updated_at: '2026-11-14'
 owner: LARIS Architecture Team
 reviewers: []
 source_of_truth: true
@@ -33,7 +33,7 @@ change_summary: Separates formal stage gates from baseline checks and removes ob
 
 ## 1. Scope and current state
 
-Model 01 is the general English/Vietnamese language foundation. Model 02 is a
+Model 01 is the general English language foundation (amended 2026-11-14 by ADR-022 / D46: Vietnamese is removed from the encoder and handled by a translation layer). Model 02 is a
 later scientific-language specialization; its model/data/evaluation pipeline is
 not implemented. Existing general-language checkpoints are not qualified for
 stage promotion. The historical scientific-paper pilot is an integration diagnostic,
@@ -78,7 +78,7 @@ flowchart TD
 | **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 3,072 | Standard $4 \times d_{\text{model}}$ 2-matrix feed-forward network with GELU activation ($W_1 \in \mathbb{R}^{d \times d_{\text{ff}}}, W_2 \in \mathbb{R}^{d_{\text{ff}} \times d}$; no projection bias). |
 | **Positional Encoding** | Rotary Position Embeddings (RoPE) | Applied directly to query and key states; zero learned absolute positional parameters. |
 | **Layer Normalization** | Pre-LayerNorm (RMSNorm) | Scale parameter $\gamma \in \mathbb{R}^d$ without bias $\beta$ on attention and FFN inputs ($2 \times d$ per layer), plus final RMSNorm ($d$). |
-| **Vocabulary Size ($V$)** | 32,000 | Balanced bilingual subwords: ~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens. |
+| **Vocabulary Size ($V$)** | 32,000 | Balanced bilingual subwords: ~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens. **Superseded in intent by D46 (ADR-022): the English-only vocabulary size is decided with the new tokenizer fit (T175); the figures here are generation-1 history.** |
 | **Embedding Tying** | Tied MLM Output Projection | The MLM prediction head output projection shares the $V \times d$ weight matrix with the input embedding, adding only a $V$-dim output bias ($32,000$ params). |
 | **Maximum Sequence Length** | 512 tokens | Conforms to `DEFAULT_MAX_SEQUENCE_LENGTH = 512` in `schemas.py`. |
 | **Total Parameters** | **109,561,856** ($\approx 109.56\text{M}$) | Exact equation: $V \cdot d + L \cdot (4 d^2 + 2 d \cdot d_{\text{ff}} + 2 d) + d + V = 24,576,000 + 12 \times 7,079,424 + 768 + 32,000 = 109,561,856$. (If untied MLM head: $134,137,856 \approx 134.14\text{M}$). |
@@ -139,27 +139,28 @@ owner instruction. Only the owner may measure training-memory feasibility.
 Every required gate must pass on held-out test data with matching protocols and
 artifact identity before promotion. Validation is for development; a baseline-floor
 PASS is not stage qualification. Missing metrics/protocols are NOT VERIFIED,
-not implicitly passed. English and Vietnamese are tracked separately.
+not implicitly passed. The stage-1 gates are English only (ADR-022 / D46). G02, G08, G09 and G11 are WITHDRAWN from stage 1: they are not passed and not waived, they
+leave the stage because Vietnamese leaves the encoder. They return only with a separate Vietnamese or translation-layer gate.
 
 The earlier document disagreed on English QA (70/82 versus 72/83). This revision
 retains the stricter existing 72/83 requirement, without relaxing any gate. PAWS
 requires both accuracy and two-class macro F1, not positive-class F1 or AUC.
-ViNLI supplies Vietnamese NLI; a QA dataset is not an NLI benchmark.
+A QA dataset is not an NLI benchmark.
 
 | Gate | Dataset | Language | Metric | Required | Protocol |
 | --- | --- | --- | --- | ---: | --- |
 | G01 | anli | en | macro_f1 | >= 0.85 | three-class NLI |
-| G02 | vinli | vi | macro_f1 | >= 0.78 | three-class NLI |
+| G02 | vinli | vi (withdrawn, D46) | macro_f1 | >= 0.78 | three-class NLI |
 | G03 | paws | en | accuracy | >= 0.88 | binary classification |
 | G04 | paws | en | macro_f1 | >= 0.88 | two-class macro F1 |
 | G05 | stsb | en | spearman | >= 0.82 | rank correlation |
 | G06 | squad | en | exact_match | >= 0.72 | normalized answer text |
 | G07 | squad | en | f1 | >= 0.83 | normalized answer text |
-| G08 | viquad_v2 | vi | exact_match | >= 0.65 | normalized answer text |
-| G09 | viquad_v2 | vi | f1 | >= 0.78 | normalized answer text |
+| G08 | viquad_v2 | vi (withdrawn, D46) | exact_match | >= 0.65 | normalized answer text |
+| G09 | viquad_v2 | vi (withdrawn, D46) | f1 | >= 0.78 | normalized answer text |
 | G10 | unseen_text | en | fertility | <= 1.35 | unseen text, tokens/word |
-| G11 | unseen_text | vi | fertility | <= 1.35 | unseen text, tokens/word |
-| G12 | stem_retrieval | all | mrr | >= 0.82 and > BM25 | held-out query relevance |
+| G11 | unseen_text | vi (withdrawn, D46) | fertility | <= 1.35 | unseen text, tokens/word |
+| G12 | stem_retrieval | en | mrr | >= 0.82 and > BM25 | held-out query relevance |
 
 The evaluator now reports normalized answer-text QA scores (`exact_match`, `f1`, protocol
 `normalized_answer_text`) and keeps token-position scores separately as
@@ -208,7 +209,7 @@ preparing a later stage do not authorize executing it or declaring it complete.
 
 | Stage | Capability | Gate and current state |
 | --- | --- | --- |
-| 1 | General natural language EN/VI | All section 5 gates; implemented, not qualified. |
+| 1 | General natural language EN (Vietnamese by translation, D46) | All section 5 gates; implemented, not qualified. |
 | 2 | Scientific language / STEM adaptation | SciFact NLI macro F1 >= 0.82; evidence precision and recall >= 0.80; not implemented. |
 | 3 | Scientific OCR | CER <= 1.5% clean / 3.0% degraded; layout IoU >= 0.88; blocked by stage 2. |
 | 4 | OCR-coupled manuscript learning | Discourse-role macro F1 >= 0.82; blocked by stage 3. |

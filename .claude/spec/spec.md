@@ -168,7 +168,7 @@ changes in the ADR named in the task.
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
-| D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); not yet executed |
+| D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, retraining T175 (owner) |
 
 ## 7. Requirements
 
@@ -591,4 +591,4 @@ The authoritative status of every task is in the task files. Programme 1: Phase 
 Phase 21: T101-T104. Phase 22: T105-T107. Phase 23: T108-T110. Phase 24: T111-T112. Phase 25: T113-T118.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172.
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T175 (stage-1 re-scope, D46; programme 1).
