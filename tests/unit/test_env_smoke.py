@@ -18,7 +18,7 @@ class TestEnvironmentSmoke(unittest.TestCase):
         import laris.shared.core as core
 
         self.assertIsNotNone(core)
-        self.assertEqual(core.__version__, "2.1.0")
+        self.assertEqual(core.__version__, "2.2.0")
         self.assertIsNotNone(core.schemas.ScientificClaim)
         self.assertIsNotNone(core.errors.LarisError)
 

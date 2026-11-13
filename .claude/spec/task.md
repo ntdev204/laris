@@ -1020,3 +1020,15 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
   - `tests/unit/agent/test_greeting_without_search.py`: greetings answered with no tool call, questions still search
 - Status: done
 - Note: Done 2026-11-13 on `feature/T89-greeting-without-search`. The owner typed "hello" in a folder with no documents and got three failed `search_corpus` calls: the placeholder planner (the server's stand-in for a model while the foundation model is paused) always searches when no file is named. Separate from this task: (a) a project's own `configs/default.yaml` made the client stop with `ValidationError ... environment`; fixed on `fix/client-ignores-project-default-yaml` (`f65f696`, client reads no configuration file from the opened folder); (b) the retry loop on an empty corpus is handled by the existing branch `fix/empty-corpus-no-replan` (permanent errors are said once), not by this task. **Limits:** only a bare greeting is recognised (a rule of the placeholder, not understanding); the real fix is a language model that chooses its tools. The unit suite passes except `tests/unit/corpus/test_task_splits.py::test_audit_dataset_inventory_from_manifest`, which fails the same way without this change (corpus files in the working tree).
+
+### T90 — Version 2.2.0 frozen as `laris-v1`
+- Requirements: SR-H5
+- Depends: T89
+- Deliverables:
+  - Version 2.2.0 in `pyproject.toml`, `laris.shared.core.__version__`, `packaging/npm/package.json` and lock; CHANGELOG `[2.2.0]`; `idea.md` (hand-off notes for the Rust generation)
+  - Release PR into main; branch `laris-v1` cut from that merge commit, with the owner's corpus work (`wip/corpus-acquisition-changes`) merged into it by PR; `laris-v1` protected (no deletion, no force-push, pull requests required)
+- Validation:
+  - CI green on the release PR; branch protection read back from the GitHub API; owner authorisation recorded
+- Status: in_progress
+- Note: Owner's instruction 2026-11-13 in chat: create `laris-v1`, commit and merge all current code into it, mark it undeletable; then a branch `laris-v2` without the old Python harness. Owner's choices: commit only (no tag `v2.2.0`, no npm publish, no GitHub Release); merge the corpus work into `laris-v1` (its test `test_audit_dataset_inventory_from_manifest` is known to fail); on `laris-v2` delete the harness and keep the model side (model, research, scientific NLP).
+
