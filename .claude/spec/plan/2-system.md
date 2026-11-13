@@ -1,0 +1,89 @@
+# LARIS — Plan 2: System, server and client (Rust)
+
+Version 2.0.0-draft · 2026-11-13 · Implements [spec.md](../spec.md) sections 5.1, 5.2 and 7.1-7.7; tasks in
+[task/2-system.md](../task/2-system.md).
+
+## 1. How this programme works
+
+- The system is built in its layers, **loop → harness → prompt** (phases 28-30). The server climbs the ladder
+  **LLM → RAG → Agent → Agentic** (phases 31-34), each rung closed by an end-to-end scenario (SR-S9). The client
+  follows once the model is finished (phase 35, after T118).
+- Programme 1 has priority: phases 26-34 run while the next programme-1 task waits for the owner (spec section 2).
+- One task, one feature branch cut from `laris-v2` (`feature/Txx-<slug>`), one session; report each step.
+- A task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, the spec check
+  and a pull request into `laris-v2`. No dependency without the owner's approval (T119).
+- Generation-1 behaviour on `laris-v1` is the reference; when unsure, read it and keep the behaviour.
+- With the placeholder backend, scenarios prove mechanics only; capability claims wait for a qualified model.
+
+## 2. Phases
+
+### Phase 26 — Rust foundations
+Goal: approved toolchain, recorded decisions, a workspace with CI.
+Tasks: T119, T120, T121, T122
+Exit criteria:
+- Toolchain and crates approved; ADR-021 records D27-D43; `AGENTS.md` updated with the owner's approval.
+- Empty workspace green in CI (fmt, clippy, test, deny, spec, no-training guard); threat model written.
+
+### Phase 27 — Protocol and shared libraries
+Goal: one schema source and the libraries both binaries use.
+Tasks: T123, T124, T125, T126, T127
+Exit criteria:
+- Generation-1 SSE chunks and Ink scenarios validate against the Rust types.
+- The golden vault yields the generation-1 index; writer property tests pass.
+
+### Phase 28 — System: loop
+Goal: the state machine runs headless with a scripted model and records everything.
+Tasks: T128, T129, T130, T131
+Exit criteria:
+- Replay from the event log is byte-identical; translated Agentic scenarios pass with a scripted model and decider.
+
+### Phase 29 — System: harness
+Goal: tools, policy, sandbox, evidence and learning data around the loop.
+Tasks: T132, T133, T134, T135, T136, T137, T138
+Exit criteria:
+- Tool, permission, hook, sandbox (three platforms), redaction, evidence and learning-data tests pass.
+
+### Phase 30 — System: prompt
+Goal: the prompt layer and the model-free evaluation runner.
+Tasks: T139, T140
+Exit criteria:
+- Layer contract test (loop → harness → prompt) passes; pinned items survive compaction; the evaluation runner replays
+  golden and Agentic scenarios in one command.
+
+### Phase 31 — Server: LLM
+Goal: `laris-server` serves chat through the model service with keys, quotas and storage.
+Tasks: T141, T142, T143, T144
+Exit criteria:
+- Status-code, quota and storage tests pass; a generation-1 database migrates; the LLM-rung scenario passes.
+
+### Phase 32 — Server: RAG
+Goal: grounded answers from workspace retrieval and the system brain.
+Tasks: T145, T146, T147, T148
+Exit criteria:
+- Retrieval parity with generation 1; confidentiality suite passes; brain navigation within budget; the RAG-rung
+  scenario passes with the evidence gate.
+
+### Phase 33 — Server: Agent
+Goal: local and remote tools end to end.
+Tasks: T149, T150, T151
+Exit criteria:
+- Scientific remote tools reproduce generation-1 results; traces hold no content; the Agent-rung scenario passes.
+
+### Phase 34 — Server: Agentic
+Goal: the full ladder on the deployed stack.
+Tasks: T152, T153, T154
+Exit criteria:
+- The Agentic-rung suite passes against the compose stack; deployment smoke test passes; security suite and
+  performance budgets pass.
+
+### Phase 35 — Client (after the model is finished)
+Goal: `laris` works like Claude Code and installs in one command.
+Tasks: T155, T156, T157, T158, T159
+Exit criteria:
+- Golden scenarios pass through the interface; owner screenshot review; one-command install per platform.
+
+### Phase 36 — Parity and release 3.0.0
+Goal: generation 2 replaces generation 1.
+Tasks: T160, T161
+Exit criteria:
+- Parity checklist complete; generation-1 data works unchanged; release 3.0.0 merged with the owner's authorisation.
