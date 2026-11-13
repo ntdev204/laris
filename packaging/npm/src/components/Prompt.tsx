@@ -57,7 +57,11 @@ export function Prompt(p: PromptProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buffer.text, buffer.cursor, dismissed]);
 
-  const items = menuId && p.completion?.id === menuId ? p.completion.items.slice(0, 8) : [];
+  const served = menuId && p.completion?.id === menuId ? p.completion.items : [];
+  const word = /^\/(\S*)$/.exec(buffer.text)?.[1];
+  const local = word !== undefined && "copy".startsWith(word) && !served.some((i) => i.value === "copy");
+  // `/copy` is the front end's own command (it talks to the terminal's clipboard)
+  const items = (local ? [...served, { value: "copy", description: "copy the last answer as plain text" }] : served).slice(0, 8);
   const trigger = currentTrigger(buffer.text, buffer.cursor);
 
   const expand = (text: string): string =>
