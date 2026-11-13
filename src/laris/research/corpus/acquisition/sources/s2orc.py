@@ -284,7 +284,7 @@ def acquire_s2orc(
                 papers, size, counts, hit = _write_shard(files[idx], out, remaining, seen, drops)
                 break
             except urllib.error.HTTPError as exc:
-                if exc.code == 403 and not refreshed:  # signed URL expired
+                if exc.code in (400, 403) and not refreshed:  # signed URL expired
                     files = fetch_release(refresh=True)["files"]
                     refreshed = True
                     continue
