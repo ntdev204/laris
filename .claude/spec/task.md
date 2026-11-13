@@ -1,6 +1,6 @@
 # LARIS — Task ledger: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-13 (T48-T85: second programme; T48 to T85 done). Paths of notes written before T50 (`src/vault`, `src/scholarly`, `src/evaluation`, `src/gateway`, `src/serverdata`) now live under `src/laris/{shared,research,server}`; those notes are history and are not rewritten · Implements [plan.md](plan.md) for [spec.md](spec.md).
+Version 0.3.0 · 2026-11-13 (T48-T88: second programme; T48 to T85 done, T86 to T88 planned). Paths of notes written before T50 (`src/vault`, `src/scholarly`, `src/evaluation`, `src/gateway`, `src/serverdata`) now live under `src/laris/{shared,research,server}`; those notes are history and are not rewritten · Implements [plan.md](plan.md) for [spec.md](spec.md).
 
 Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done`
 only when every deliverable and validation item holds and a completion note is written. After each
@@ -977,3 +977,33 @@ task run `python scripts/validate_spec.py`. Do not start a task before its depen
 - Status: done
 - Note: Release branch `release/2.0.0` cut from main (after develop was merged into main by PR #360, owner's rule: release only from main). Version 2.0.0 in `pyproject.toml`, `laris.shared.core.__version__`, `packaging/npm/package.json` and lock; CHANGELOG `[2.0.0] - 2026-11-13`. Local checks (isolated HOME): `make check-no-training` (ruff, mypy, docs, spec, 268 passed 5 skipped without PostgreSQL, model-free eval), `tests/security` 232 passed. **The release build found two real defects before any tag, both fixed on the release branch:** (1) the frozen program lacked `public_strings.yaml` (`build_binary.py` still collected the data of the pre-T50 package `harness`; now `laris.shared.harness`; confirmed by a local build and smoke test); (2) the Windows program could not import the client (`fcntl` in the sandbox lock, `os.killpg` and `SIGKILL` for timeouts): now `msvcrt` locking and `laris.client.proc.kill_tree`/`new_group_options`. Windows is only import-smoke-tested; shell tools and hooks on Windows still need Git Bash and were never exercised. Workflow **Client package (all platforms)** on the release branch: five programs built and smoke-tested, six npm packages assembled, publish skipped (no tag). Owner decisions at hand: T83 findings (terminal escape sequences in tool output reach Ink unfiltered; sandbox installs may name any index) to be analysed by the owner after their own testing; the four model-related corpus files in the working tree are not part of the release. **Release done 2026-11-13 with the owner's authorisation (merge to main, tag and publish given in chat):** release PR #361 merged into main, back-merge #362 into develop, branches removed (only `main` and `develop` remain). Tag `v2.0.0` on the merge commit of #361; the tag run of the Client package workflow built five programs and published six npm packages (`@ntdev204/laris-cli` and the platform packages `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64`, all 2.0.0). The registry served them with a delay of up to 27 minutes (the Linux packages are about 105 to 112 MB; the last one, `linux-x64`, appeared at 00:47 UTC); the publish log had no error for any package. A fresh `npm install @ntdev204/laris-cli@2.0.0` in an empty folder with a temporary HOME installed and `laris --version` printed `laris 2.0.0` (Linux x64 only; the other four platforms were smoke-tested in CI, not installed from npm). GitHub Release `LARIS 2.0.0` created by hand from the changelog (the workflow does not create releases). Not done: server images were not built or pushed (needs Docker and the owner's registry; commands are in `docs/development/SERVER_DEPLOYMENT_RUNBOOK.md`); `make bench-vault` was not run (workstation step); PostgreSQL tests stayed skipped locally (`LARIS_TEST_PG_DSN` unset, they run in CI).
 
+## Phase 18 — Zero-configuration client and release 2.1.0
+
+### T86 — Packaged default server and first-run login in the interface
+- Requirements: SR-C9
+- Depends: T85
+- Deliverables:
+  - ADR-019 section 2d (D24 to D26; D21 amended); `defaults.json` written into the per-platform package by `packaging/assemble_npm.py` from a repository variable (server address, optional fingerprint), read by the engine with precedence environment, `settings.json`, packaged default
+  - E1 event `login_required` (and command to answer it); a key form in the front end; `laris login` optional; no `--server` needed
+  - No false "settings.json is ignored" warning when the project folder is the global home
+- Validation:
+  - SR-C9 acceptance; E1 schema and contract tests; scripted scenario from an empty folder and a fresh home; the default is absent from the source tree (a test searches for it)
+- Status: pending
+
+### T87 — Interface like Claude Code
+- Requirements: SR-C10
+- Depends: T86
+- Deliverables:
+  - Ink components: welcome banner, bordered input box, tool and diff blocks, status line and footer hints, login and permission screens in one style; width handling
+- Validation:
+  - Ink acceptance scenarios unchanged; render tests at 60 and 120 columns; owner reviews screenshots (Linux and Windows)
+- Status: pending
+
+### T88 — Release 2.1.0
+- Requirements: SR-H5
+- Depends: T87
+- Deliverables:
+  - Release branch from main, version 2.1.0, changelog, npm packages with the packaged default, the Docker fixes (`default_sni`, `tokenizer` extra in the model image), server images under the git flow
+- Validation:
+  - CI green; a fresh `npm i -g` on Linux and Windows reaches a chat turn with only `laris`; owner authorisation recorded for push, merge, tag and release
+- Status: pending

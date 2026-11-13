@@ -1,6 +1,6 @@
 # LARIS — Plan: Obsidian brain, scholarly harness and the second programme
 
-Version 0.2.1 · 2026-11-13 (second programme in section 8) · Implements [spec.md](spec.md); task detail in [task.md](task.md).
+Version 0.3.0 · 2026-11-13 (second programme in section 8) · Implements [spec.md](spec.md); task detail in [task.md](task.md).
 
 ## 1. Order of work
 
@@ -222,9 +222,18 @@ Exit criteria:
 - Security tests for the new surfaces pass; architecture documents and the guide describe the new flow.
 - Release 2.0.0 under the git flow, only with the owner's authorisation.
 
+### Phase 18 — Zero-configuration client and release 2.1.0
+Goal: the user installs the npm package and types `laris`; the interface opens like Claude Code and asks for the key only when needed (owner instruction 2026-11-13).
+Tasks: T86, T87, T88
+Progress: [ ] T86, [ ] T87, [ ] T88
+Exit criteria:
+- Packaged default server and fingerprint written at build time (D24); first-run login inside the interface (D25); no false warning in the home folder.
+- The interface follows D26; acceptance scenarios still pass through Ink, plain mode and headless.
+- Release 2.1.0 (with the Docker fixes: `default_sni`, `sentencepiece` in the model image) under the git flow, only with the owner's authorisation.
+
 ### Critical path of the second programme
 
-T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55 → T56 → T57 → T68 → T69 → T83 → T84 → T85.
+T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55 → T56 → T57 → T68 → T69 → T83 → T84 → T85 → T86 → T87 → T88.
 Phase 13 (T60 to T63) and Phase 14 (T64 to T66) can start after T52; Phase 16 starts after T52 and T48
 (pinned front-end dependencies): T70 (engine) first, then T71 to T79 on the engine, then plain mode T80, the Ink front end
 T81 and the acceptance suite T82; T79 needs T56.
@@ -243,4 +252,5 @@ T81 and the acceptance suite T82; T79 needs T56.
 | Logic leaks into the Ink front end | All logic in the engine; the front end speaks only E1; the same scenarios run through Ink, plain mode and headless (T82) |
 | Sandbox cannot be built (offline, no Python) | System Python fallback, clear message, the program keeps working; download source is configuration |
 | Agent installs break the program | The program is a sealed binary from npm (D19); the agent works only in the sandbox, which is repaired automatically (D23) |
+| A server address baked into the package leaks or goes stale | It is build-time configuration from a repository variable, not source; settings and environment override it; a stale address needs a new release (or a user override) |
 | A cloned repository reconfigures the client | Project `./.laris/` carries no configuration (D20); hooks only from the global settings; folder trust |
