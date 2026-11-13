@@ -148,7 +148,7 @@ def test_report_feeds_the_formal_gates_with_the_declared_protocol(tmp_path):
     gates = {
         g["id"]: g for g in assess_readiness([wrap_for_readiness(report)], formal_config())["gates"]
     }
-    assert gates["G10"]["status"] == "PASS" and gates["G11"]["status"] == "PASS"
+    assert gates["G10"]["status"] == "PASS" and gates["G11"]["status"] == "WITHDRAWN"  # D46
     assert gates["G10"]["value"] == pytest.approx(1.0)
 
 
@@ -158,7 +158,7 @@ def test_report_fails_a_gate_when_fertility_is_too_high(tmp_path):
     gates = {
         g["id"]: g for g in assess_readiness([wrap_for_readiness(report)], formal_config())["gates"]
     }
-    assert gates["G10"]["status"] == "FAIL" and gates["G11"]["status"] == "PASS"
+    assert gates["G10"]["status"] == "FAIL" and gates["G11"]["status"] == "WITHDRAWN"  # D46
 
 
 def test_unverified_split_or_changed_file_is_refused(tmp_path):
@@ -187,5 +187,5 @@ def test_committed_report_is_a_complete_readiness_measurement():
     assert report["training_executed"] is False and report["tokenizer_fitting_executed"] is False
     assert report["fit_corpus"]["lines_match_partition_train_counts"] is True
     gates = {g["id"]: g for g in assess_readiness([report], formal_config())["gates"]}
-    for gate_id in ("G10", "G11"):
-        assert gates[gate_id]["status"] in {"PASS", "FAIL"}, gates[gate_id]
+    assert gates["G10"]["status"] in {"PASS", "FAIL"}, gates["G10"]
+    assert gates["G11"]["status"] == "WITHDRAWN"  # D46: measured history stays in the report, the gate does not count

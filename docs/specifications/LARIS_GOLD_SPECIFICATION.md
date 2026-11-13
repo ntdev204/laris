@@ -3,9 +3,9 @@ document_id: "DOC-SPEC-DATA-002"
 title: "LARIS-GOLD Benchmark Specification & Annotation Protocol"
 document_type: "specification"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-10-16"
-updated_at: "2026-10-16"
+updated_at: "2026-11-14"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -43,8 +43,8 @@ LARIS-GOLD evaluates end-to-end epistemic reasoning across five core capabilitie
    Validation that every assertion links directly to an immutable `EvidenceCoordinate` (`corpus_id`, `page_number`, `bounding_box`, `sentence_index`, `sha256_digest`).
 4. **12-Class Research Gap Identification:**
    Verification against human-curated genuine research gaps classified under the canonical 12-class LARIS gap taxonomy.
-5. **Bilingual Evaluation:**
-   Parallel STEM benchmark cases in both English ($80\%$) and Vietnamese ($20\%$) to track language capabilities independently.
+5. **Language scope (amended by D46 / ADR-022):**
+   Benchmark cases are English. The Vietnamese share (formerly $20\%$) is not built for the stage-1 encoder; Vietnamese cases are added only after the translation layer has its own round-trip gate, and until then Vietnamese capability is not claimed. The schema keeps `vi` as a reserved value.
 
 ---
 
@@ -71,7 +71,7 @@ Every LARIS-GOLD benchmark instance conforms to the following JSON schema:
   "properties": {
     "case_id": { "type": "string", "pattern": "^LG-[A-Z0-9]{4,8}$" },
     "domain": { "type": "string", "enum": ["Computer Science", "Physics", "Biology", "Medicine", "Mathematics"] },
-    "language": { "type": "string", "enum": ["en", "vi"] },
+    "language": { "type": "string", "enum": ["en", "vi"], "description": "vi is reserved until the translation layer is gated (D46)" },
     "query": { "type": "string" },
     "epistemic_task": {
       "type": "string",

@@ -47,6 +47,15 @@ exposure that the English tasks, which sit furthest from their gates, also need.
 | Evaluation | The translation layer needs its own gate (round-trip quality) before Vietnamese is claimed; until then Vietnamese capability is **not claimed**. | later ADR |
 | Reports | R1-R3a reports stay as measured history. | none |
 
+### 3.1 Progress (2026-11-14)
+| Area | State |
+|---|---|
+| Gates | Done in T173 (training specification 3.1.0) and T176 (`configs/evaluation/foundation.yaml` 1.1.0, readiness reports `WITHDRAWN`). |
+| Data | The owner asked for replacement data of at least 20 GB covering the task cases; T175 acquired it (`configs/data/english_sources.yaml`, `DATASET_SPECIFICATION.md` section 2.1). Sources with a non-commercial or undeclared licence are `NEEDS_LICENSE_REVIEW` until the owner records approval. |
+| Held-out sets | STS-B leakage check built (`scripts/check_sts_leakage.py`); an English STEM gold for G12 is still open. |
+| Tokenizer, retraining | Pending: partition and wiring (T177), then the owner's fit and run. |
+| Documents | Normative documents amended; measured-history documents carry a D46 banner and keep their text. D05 VI guideline is FROZEN (digest bound into the sealed gold) and is not edited. |
+
 ## 4. Risks
 - Retrieval or QA quality on translated Vietnamese depends on the translator; this moves a risk, it does not remove it.
 - Scientific Vietnamese terms may translate poorly.

@@ -3,9 +3,9 @@ document_id: DOC-PLAN-HUMAN-GOLD-D05-001
 title: Proposed Human Gold Protocol
 document_type: plan
 status: PROPOSED
-version: 0.1.0
+version: 0.2.0
 created_at: '2026-11-11'
-updated_at: '2026-11-11'
+updated_at: '2026-11-14'
 owner: LARIS Project Owner
 reviewers: []
 source_of_truth: false
@@ -16,6 +16,8 @@ decision_references:
 - ADR-008
 change_summary: Adds repository metadata to the existing draft.
 ---
+
+> **D46 / ADR-022 (2026-11-14):** the stage-1 foundation encoder is English only. Vietnamese gates G02, G08, G09 and G11, Vietnamese data and the Vietnamese tokenizer capacity named below are **withdrawn from stage 1**; Vietnamese reaches the model through a translation layer. This document keeps the measured history of rounds R1-R3a as written; it is not the current plan. Current plan: `docs/adr/ADR-022-english-only-foundation.md`, `docs/specifications/DATASET_SPECIFICATION.md` section 2.1 and `reports/verification/T174-english-data-inventory.md`.
 
 # D05 — Thiết kế quy trình human gold (PROPOSED)
 
@@ -110,7 +112,7 @@ tỉ lệ).
 | Giai đoạn | Nội dung | Quy mô khởi đầu | Mở khóa |
 | --- | --- | --- | --- |
 | **D05-a** | Retrieval relevance STEM, EN trước | ≥ 200 query, mỗi query chấm top-k gộp từ BM25 + dense (pooling) | G12 → **F07** |
-| D05-b | Evidence/NLI khoa học EN/VI | ≥ 400 claim, 80% EN / 20% VI theo LARIS-GOLD | S01A → S05 |
+| D05-b | Evidence/NLI khoa học (EN; phần VI chỉ khi lớp dịch có gate riêng, D46) | ≥ 400 claim, tiếng Anh theo LARIS-GOLD đã sửa | S01A → S05 |
 | D05-c | OCR text/layout | ≥ 100 trang từ DocLayNet subset đã chọn | O01A → O04 |
 | D05-d | Discourse trên OCR | sau khi O04 có đầu ra OCR | M01A → M03 |
 

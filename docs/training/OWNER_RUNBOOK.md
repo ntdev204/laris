@@ -3,9 +3,9 @@ document_id: "DOC-RUNBOOK-OWNER-001"
 title: "Owner-Executed Foundation Training and Evaluation"
 document_type: "specification"
 status: "DRAFT"
-version: "1.2.0"
+version: "1.3.0"
 created_at: "2026-11-10"
-updated_at: "2026-11-13"
+updated_at: "2026-11-14"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
@@ -16,7 +16,7 @@ related_documents:
 decision_references:
   - "ADR-008"
   - "ADR-013"
-change_summary: "Adds section 7: the T99 round plan for the R1 (48k tokenizer) encoder."
+change_summary: "Adds section 7 (T99 round plan for the R1 encoder), section 8 (R3) and section 9 (English stage 1, D46); sections 7 and 8 are historical."
 ---
 
 # Owner runbook
@@ -248,6 +248,11 @@ Passing foundation report checks is a review prerequisite, not an automatic comm
 to train model 02. The owner reviews the complete held-out evidence first. Scientific
 language is implemented and evaluated next; OCR, manuscripts, integration and later
 specialists must not be advanced through the historical paper pilot.
+
+> **Historical since D46 / ADR-022 (2026-11-14).** Sections 7 and 8 describe rounds R1-R3a of the EN+VI encoder with the 48k tokenizer. They stay as the record of what was run; their Vietnamese data, `score_vi_stem_gold.py` steps and Vietnamese gates are withdrawn from stage 1. Do not start R3b. The next owner runs are in section 9.
+
+> **D46 / ADR-022 (2026-11-14):** sections 7 and 8 describe rounds on the English+Vietnamese R1 tokenizer. They are measured history and
+> are **not to be rerun**; every Vietnamese command (`score_vi_stem_gold.py`, VI datasets) is withdrawn from stage 1. Section 9 is the current path.
 
 ## 7. T99: foundation rounds for the R1 encoder (48k tokenizer)
 
@@ -524,3 +529,46 @@ HOME=$HOME_ISOLATED timeout -s KILL 900s .venv/bin/python scripts/score_vi_stem_
 R3 does not approve T100. The sealed test splits stay unused until the owner has reviewed the R3 analysis and the
 threshold review (`reports/verification/T99-threshold-review.md`).
 
+
+## 9. English stage 1 (D46 / ADR-022, T175-T177)
+
+Status: the English data is acquired (T175) and the document and configuration sweep is done (T176). Partitioning, the data
+wiring and the exact owner commands are task T177; **no command below fits a tokenizer or trains**, and none authorises an agent
+to. The foundation model is NOT QUALIFIED.
+
+### 9.1 Data acquired by the agent (T175, no training)
+
+Sources, file selection and licences are in `configs/data/english_sources.yaml`; the result is in
+`data/acquisition_manifest.json` and `data/raw/<source>_en/` (outside Git). To repeat or resume (it resumes partial files):
+
+```bash
+HOME=$HOME_ISOLATED .venv/bin/python -c "import sys; from laris.research.corpus.acquisition.runner import main; sys.exit(main(['--english-all']))"
+.venv/bin/python scripts/check_sts_leakage.py     # writes data/processed/sts_extra_en/train.parquet and reports/verification/T175-sts-leakage.json
+```
+
+Sources with `license_approved: false` (non-commercial or undeclared licence) are in the manifest as `NEEDS_LICENSE_REVIEW`. The owner
+records the decision per source before any of them is used in a run that is reported; until then they are research-only.
+
+### 9.2 What the owner does next (after T177 prepares the commands)
+
+1. Review the licence column of `DATASET_SPECIFICATION.md` section 2.1 and approve or drop sources.
+2. Run the tokenizer fit on the English train text (command prepared in T177; no tokenizer is fitted by the agent).
+3. Run the encoder from scratch (R1 weights depend on the old 48k vocabulary and cannot initialise an English tokenizer).
+4. Return logs; the agent checks intake and reports per English gate; T100 (held-out) follows only after the owner reviews the analysis.
+
+## 9. English stage 1 after D46 (T175 to T177)
+
+The agent has acquired the English replacement data (no training, no fitting). Current state and what the owner does next:
+
+1. **Data on disk (agent, done).** `configs/data/english_sources.yaml` lists the sources; they are in `data/raw/<id>/` and in
+   `data/acquisition_manifest.json`. Reproduce or resume with
+   `HOME=$HOME_ISOLATED .venv/bin/python -c "import sys; from laris.research.corpus.acquisition.runner import main; sys.exit(main(['--english-all']))"`
+   (resumes partial files; `--only ID ...` fetches single sources). Report: `reports/verification/T175-english-acquisition.md`.
+2. **Licences (owner).** Sources marked `NEEDS_LICENSE_REVIEW` in the manifest are research-only until you approve them; decide before
+   they enter a training mixture.
+3. **STS-B leakage (agent, after similarity files exist).** `python scripts/check_sts_leakage.py` writes `data/processed/sts_extra_en/train.parquet`
+   without any pair that shares a sentence with STS-B val or test.
+4. **Partition and wiring (agent, T177, pending).** Until it is done there is no English fit corpus and no mixture config, so there are no
+   tokenizer or training commands here yet. They are added by T177, with a budget, a timeout and stop rules, before you run anything.
+5. **Owner runs (after T177).** Fit the English tokenizer, train the English encoder from scratch (R1-R3a weights cannot initialise it), return
+   logs for intake; T100 evaluates held-out. The model stays NOT QUALIFIED until T100 passes.

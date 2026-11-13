@@ -1063,9 +1063,1333 @@
           "sha256": "0864bb985e0ca2367ba217977e72004d549054b2b06666ed9d4825ac7c21284c"
         }
       ]
+    },
+    {
+      "dataset_id": "FINEWEB-EDU-EN",
+      "name": "Fineweb Edu En",
+      "version": "HuggingFaceFW/fineweb-edu@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu",
+      "license_name": "ODC-By-1.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Educational web document",
+      "expected_sample_count": ">= 1,000,000 samples",
+      "actual_sample_count": 3661000,
+      "actual_size_bytes": 10761613935,
+      "sha256_checksum": "b1ba7b2ce4cb5ea6ef42dca40263eabb85f37700d01693a68e9b30a31d78e871",
+      "storage_path": "data/raw/fineweb_edu_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Quality-filtered educational web text (register: explanatory, textbook-like). Per-document web rights stay with the publishers. Source HuggingFaceFW/fineweb-edu@main; 5 file(s) selected by pattern '*.parquet' with limit 5. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "000_00000.parquet",
+          "bytes": 2152819114,
+          "sample_count": 726000,
+          "sha256": "b1ba7b2ce4cb5ea6ef42dca40263eabb85f37700d01693a68e9b30a31d78e871"
+        },
+        {
+          "filename": "001_00000.parquet",
+          "bytes": 2152222432,
+          "sample_count": 729000,
+          "sha256": "3fcf2dc69cd52503986276d3d2d26a8c356d0f2ea28a0de4fdbda8cf87755693"
+        },
+        {
+          "filename": "002_00000.parquet",
+          "bytes": 2151796315,
+          "sample_count": 727000,
+          "sha256": "547ae182d132c9f06b6ce63149567208ea9f57630bfd9b1a2938e504f0c9ebd7"
+        },
+        {
+          "filename": "003_00000.parquet",
+          "bytes": 2152437524,
+          "sample_count": 734000,
+          "sha256": "22184e6eb25759ddd97783751ffc73e1705dfa2542e630dae1f2a8bac8ee6ddb"
+        },
+        {
+          "filename": "004_00000.parquet",
+          "bytes": 2152338550,
+          "sample_count": 745000,
+          "sha256": "33557ddd87a07a4ae6fcaf7a4789c7b484e5cc0c273ca12a65b74200e6d8748b"
+        }
+      ]
+    },
+    {
+      "dataset_id": "OPENWEBTEXT-EN",
+      "name": "Openwebtext En",
+      "version": "Skylion007/openwebtext@main",
+      "official_source_url": "https://huggingface.co/datasets/Skylion007/openwebtext",
+      "license_name": "CC0-1.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Web document (Reddit-linked)",
+      "expected_sample_count": ">= 500,000 samples",
+      "actual_sample_count": 1202073,
+      "actual_size_bytes": 3634493401,
+      "sha256_checksum": "caed9f4b7053d7cd4d1a13ce9ec9224d84a3bba1f11579193562a7e31ebe656e",
+      "storage_path": "data/raw/openwebtext_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Open reproduction of WebText; the CC0 tag covers the compilation, not the rights of the original pages. Source Skylion007/openwebtext@main; 12 file(s) selected by pattern 'train-*.parquet' with limit 12. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00080.parquet",
+          "bytes": 302848326,
+          "sample_count": 100173,
+          "sha256": "caed9f4b7053d7cd4d1a13ce9ec9224d84a3bba1f11579193562a7e31ebe656e"
+        },
+        {
+          "filename": "train-00001-of-00080.parquet",
+          "bytes": 305678548,
+          "sample_count": 100173,
+          "sha256": "70307b7749e10cb0bfb895fde024dd82d96e6bb2710bca1886b952abe45bf3ea"
+        },
+        {
+          "filename": "train-00002-of-00080.parquet",
+          "bytes": 304419240,
+          "sample_count": 100173,
+          "sha256": "0d02a67f73464d383c8df2059f27b36b4b1652c855051be3c65930baef12bd2d"
+        },
+        {
+          "filename": "train-00003-of-00080.parquet",
+          "bytes": 304332042,
+          "sample_count": 100173,
+          "sha256": "437833e29326c3d88792e834d36368d2c4836e5c5f3535233a88f3cf7dd46aad"
+        },
+        {
+          "filename": "train-00004-of-00080.parquet",
+          "bytes": 301175397,
+          "sample_count": 100173,
+          "sha256": "7b3cef26e2d4e2b041e6e13a0102cb4d03277e8c6418b8ff1b865544a4695de3"
+        },
+        {
+          "filename": "train-00005-of-00080.parquet",
+          "bytes": 301755705,
+          "sample_count": 100173,
+          "sha256": "2d3200a936b021c9abafdda6714e4d678387e8854e56abaac5d2b62882fc6044"
+        },
+        {
+          "filename": "train-00006-of-00080.parquet",
+          "bytes": 303536715,
+          "sample_count": 100173,
+          "sha256": "76c0b96ce0250c3a32f2e8878172a4b79ac7970fede78edfcfc4d98d87ec5a6c"
+        },
+        {
+          "filename": "train-00007-of-00080.parquet",
+          "bytes": 300180244,
+          "sample_count": 100173,
+          "sha256": "d6088d5452e4cd840a6a2d52497ba6b92d003a62394788789e246fd58090863d"
+        },
+        {
+          "filename": "train-00008-of-00080.parquet",
+          "bytes": 302694767,
+          "sample_count": 100173,
+          "sha256": "9d738ba5d171bb2a0b28179f9a5335411c9846140086c4a1f170fb1fd0d86d12"
+        },
+        {
+          "filename": "train-00009-of-00080.parquet",
+          "bytes": 302691677,
+          "sample_count": 100172,
+          "sha256": "51e193a86a363394bdf5344918980d1e873150bf6ded659673375a4f75397f1e"
+        },
+        {
+          "filename": "train-00010-of-00080.parquet",
+          "bytes": 302204895,
+          "sample_count": 100172,
+          "sha256": "c5e950cdeb9a958580aa279dacd44a9a45507c8777a9105c89d0d605f8f01e11"
+        },
+        {
+          "filename": "train-00011-of-00080.parquet",
+          "bytes": 302975845,
+          "sample_count": 100172,
+          "sha256": "699a4f4fc791d4ba9e6487ca91b63faa59a831cd5975aeaf8260451af9bb432f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "C4-EN",
+      "name": "C4 En",
+      "version": "allenai/c4@main",
+      "official_source_url": "https://huggingface.co/datasets/allenai/c4",
+      "license_name": "ODC-By-1.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Cleaned Common Crawl document",
+      "expected_sample_count": ">= 1,000,000 samples",
+      "actual_sample_count": 2850538,
+      "actual_size_bytes": 2549156905,
+      "sha256_checksum": "8ef8d75b0e045dec4aa5123a671b4564466b0707086a7ed1ba8721626dfffbc9",
+      "storage_path": "data/raw/c4_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. First shards of the English C4 (general web register, many domains). Source allenai/c4@main; 8 file(s) selected by pattern 'c4-train.*.json.gz' with limit 8. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "c4-train.00000-of-01024.json.gz",
+          "bytes": 319308785,
+          "sample_count": 356317,
+          "sha256": "8ef8d75b0e045dec4aa5123a671b4564466b0707086a7ed1ba8721626dfffbc9"
+        },
+        {
+          "filename": "c4-train.00001-of-01024.json.gz",
+          "bytes": 318039285,
+          "sample_count": 356318,
+          "sha256": "b945059cd1a343cabe311881b7840a6f0363f570e745a0eff0e687e266f6b55d"
+        },
+        {
+          "filename": "c4-train.00002-of-01024.json.gz",
+          "bytes": 319748667,
+          "sample_count": 356317,
+          "sha256": "2967dc7e587ced6ecb9ba617ad2d4c44901467969de5bf5b0f5a9e5b70555d75"
+        },
+        {
+          "filename": "c4-train.00003-of-01024.json.gz",
+          "bytes": 318564193,
+          "sample_count": 356317,
+          "sha256": "b79d9abef5741578929be0d59db9ca652a8276207ef18a944b7a5f11fef5beb6"
+        },
+        {
+          "filename": "c4-train.00004-of-01024.json.gz",
+          "bytes": 318579884,
+          "sample_count": 356317,
+          "sha256": "cd9f98eac2bc6062f55d9a36bd744cc924a78ea2fd998830e0034e4456f5d014"
+        },
+        {
+          "filename": "c4-train.00005-of-01024.json.gz",
+          "bytes": 318003681,
+          "sample_count": 356318,
+          "sha256": "8ac5907a54dbc7ab9c14624448c7c3f6afed33af9d0a855f1eae955e62e255b9"
+        },
+        {
+          "filename": "c4-train.00006-of-01024.json.gz",
+          "bytes": 318495137,
+          "sample_count": 356317,
+          "sha256": "8fd9b9a4b74c9414466b245ebda7db041e7bd8603971de51b5db782bd758aac7"
+        },
+        {
+          "filename": "c4-train.00007-of-01024.json.gz",
+          "bytes": 318417273,
+          "sample_count": 356317,
+          "sha256": "41dd377a1ba6b72eab0260c39c626fe45ab6b649d42d57b311d3ba21a0337cd0"
+        }
+      ]
+    },
+    {
+      "dataset_id": "GUTENBERG-EN",
+      "name": "Gutenberg En",
+      "version": "manu/project_gutenberg@main",
+      "official_source_url": "https://huggingface.co/datasets/manu/project_gutenberg",
+      "license_name": "Public domain (Project Gutenberg texts)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Book",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 16520,
+      "actual_size_bytes": 3326332168,
+      "sha256_checksum": "63d4ba4e7541798d3ae9fca4326ea7f4cec522fe237dbf1176cf010b8dd94e50",
+      "storage_path": "data/raw/gutenberg_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Long coherent narrative and expository text; archaic register, so it is a minority of the mixture. Source manu/project_gutenberg@main; 14 file(s) selected by pattern 'en-*.parquet' with limit 14. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "en-00000-of-00052-7cda8f63c262acf8.parquet",
+          "bytes": 196766094,
+          "sample_count": 1180,
+          "sha256": "63d4ba4e7541798d3ae9fca4326ea7f4cec522fe237dbf1176cf010b8dd94e50"
+        },
+        {
+          "filename": "en-00001-of-00052-5c2b3fd5e60f0124.parquet",
+          "bytes": 209225030,
+          "sample_count": 1180,
+          "sha256": "efd10760ff247e6c03d090c682007d26c55ba86dd9bc6c3607ff717b749afae6"
+        },
+        {
+          "filename": "en-00002-of-00052-835bd07d97f52cbd.parquet",
+          "bytes": 214679261,
+          "sample_count": 1180,
+          "sha256": "dabfe9e9c5fd17ca63c8603cf497c26f94c8fbc4ca21605f83dda8ad788e7ebd"
+        },
+        {
+          "filename": "en-00003-of-00052-3827386b583e4d76.parquet",
+          "bytes": 238508258,
+          "sample_count": 1180,
+          "sha256": "a01a673462a18f1ba940cf8d525794d8aa588448a578917e29d1bf773eb32017"
+        },
+        {
+          "filename": "en-00004-of-00052-a2f24c4fe858fe0f.parquet",
+          "bytes": 267836632,
+          "sample_count": 1180,
+          "sha256": "52db4e707c3229790faa610a46717f3f8dd7a1f8121a8d464e0c86401fad4ae3"
+        },
+        {
+          "filename": "en-00005-of-00052-2a13fc98474cabed.parquet",
+          "bytes": 276717928,
+          "sample_count": 1180,
+          "sha256": "0d5d116f4e27f18a9465acc7bee014b6335725dba2783db730dda5126acc34c5"
+        },
+        {
+          "filename": "en-00006-of-00052-81d2618caede0093.parquet",
+          "bytes": 194907582,
+          "sample_count": 1180,
+          "sha256": "8fdc0e43b44e2771b9d9d4e7d6032bb0495549543a97ca35a86c559ae287791e"
+        },
+        {
+          "filename": "en-00007-of-00052-de0de442f370b789.parquet",
+          "bytes": 217399517,
+          "sample_count": 1180,
+          "sha256": "a6f9477e8f321cba880699ad93f783a14d91656cb98e70d913d9f77b285a5116"
+        },
+        {
+          "filename": "en-00008-of-00052-a83055e8ef415c07.parquet",
+          "bytes": 244194551,
+          "sample_count": 1180,
+          "sha256": "86095feeab0a00391dfdd89ce7395aeccd059dd9319a7dffb926919ab6dac417"
+        },
+        {
+          "filename": "en-00009-of-00052-f2f126633fa25668.parquet",
+          "bytes": 236713314,
+          "sample_count": 1180,
+          "sha256": "1a19aa341338452463325b8e102ec18a18cd6b6c406f2e74d6b0ed1077b4da98"
+        },
+        {
+          "filename": "en-00010-of-00052-2226b3722aa696eb.parquet",
+          "bytes": 276163707,
+          "sample_count": 1180,
+          "sha256": "a59b4b3f3bda1f5fe60d4ca1952906bed1a0c33dcb6853ccae75464c1c784265"
+        },
+        {
+          "filename": "en-00011-of-00052-6c9ae05ed451701f.parquet",
+          "bytes": 318525986,
+          "sample_count": 1180,
+          "sha256": "010e873a1230c1646fbbfa8211530d76082a20469d66aff0bf1b0ce8f5459513"
+        },
+        {
+          "filename": "en-00012-of-00052-2de5b14941be3266.parquet",
+          "bytes": 200551535,
+          "sample_count": 1180,
+          "sha256": "f5307e5d0e453ec93576ca2dbf2110df1c6847b043ccd0930c097647a1c07044"
+        },
+        {
+          "filename": "en-00013-of-00052-a66a5e317603bb21.parquet",
+          "bytes": 234142773,
+          "sample_count": 1180,
+          "sha256": "c854e603c6b22e7f8aa5b2002e4abf4fd9e78c81d636cd9b503227cc5fb691e7"
+        }
+      ]
+    },
+    {
+      "dataset_id": "CC-NEWS-EN",
+      "name": "Cc News En",
+      "version": "vblagoje/cc_news@main",
+      "official_source_url": "https://huggingface.co/datasets/vblagoje/cc_news",
+      "license_name": "Not declared (CC-News crawl)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "News article",
+      "expected_sample_count": ">= 300,000 samples",
+      "actual_sample_count": 708241,
+      "actual_size_bytes": 1122805586,
+      "sha256_checksum": "5cda9a2b0b40a9c9438ae02168b16beb61e52449a895869515501962c5aeb977",
+      "storage_path": "data/raw/cc_news_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Publisher licence is not declared; research use only until the owner approves. Source vblagoje/cc_news@main; 5 file(s) selected by pattern '*.parquet' with limit 5. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00005.parquet",
+          "bytes": 211044294,
+          "sample_count": 141649,
+          "sha256": "5cda9a2b0b40a9c9438ae02168b16beb61e52449a895869515501962c5aeb977"
+        },
+        {
+          "filename": "train-00001-of-00005.parquet",
+          "bytes": 233804414,
+          "sample_count": 141648,
+          "sha256": "1d33583fdd82fa28a7aa961a633aeb63be90fdac8f47c1893daf630c9a5f074a"
+        },
+        {
+          "filename": "train-00002-of-00005.parquet",
+          "bytes": 218914067,
+          "sample_count": 141648,
+          "sha256": "78d59696b61fa9789879836a303c7a04beb52107c6678a444b98ce4e8b97b1ae"
+        },
+        {
+          "filename": "train-00003-of-00005.parquet",
+          "bytes": 244540595,
+          "sample_count": 141648,
+          "sha256": "53b35fa4b5d82a0308ddaba3d55033c49a1f1d4cca45d88d2633495cab4767db"
+        },
+        {
+          "filename": "train-00004-of-00005.parquet",
+          "bytes": 214502216,
+          "sample_count": 141648,
+          "sha256": "e0869a42852439aa408030de51464d0a8cbe5608ff1a7ba9d165e10964c6fdef"
+        }
+      ]
+    },
+    {
+      "dataset_id": "CNN-DAILYMAIL-EN",
+      "name": "Cnn Dailymail En",
+      "version": "abisee/cnn_dailymail@main",
+      "official_source_url": "https://huggingface.co/datasets/abisee/cnn_dailymail",
+      "license_name": "Apache-2.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "News article with highlights",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 311971,
+      "actual_size_bytes": 837094602,
+      "sha256_checksum": "04e322d2634a96dba76bf9a6294fbbe48e0b36abeae43f13d86ba2c3bebffe4e",
+      "storage_path": "data/raw/cnn_dailymail_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. News register with summaries; the article text is used for MLM, the highlights are kept for later summarisation use. Source abisee/cnn_dailymail@main; 5 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 30000471,
+          "sample_count": 11490,
+          "sha256": "04e322d2634a96dba76bf9a6294fbbe48e0b36abeae43f13d86ba2c3bebffe4e"
+        },
+        {
+          "filename": "train-00000-of-00003.parquet",
+          "bytes": 256540614,
+          "sample_count": 95705,
+          "sha256": "a56093836f6283ceac48128515f6c87ade70abb11aec31d23a176c4d90ae1736"
+        },
+        {
+          "filename": "train-00001-of-00003.parquet",
+          "bytes": 256588241,
+          "sample_count": 95704,
+          "sha256": "7549c4f8f43c15750f4103aa3ec2966be1f3a51a990e60d97e3a1bac79f8802e"
+        },
+        {
+          "filename": "train-00002-of-00003.parquet",
+          "bytes": 259300551,
+          "sample_count": 95704,
+          "sha256": "ef3b5a190df25ac99592b802f070e244251553b78a5157a0c88fa19d8ef1a13b"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 34664725,
+          "sample_count": 13368,
+          "sha256": "65a5ccce932b08f050114ce6e3c39355d563fa24f194052bb2f27d1c6c499c91"
+        }
+      ]
+    },
+    {
+      "dataset_id": "XSUM-EN",
+      "name": "Xsum En",
+      "version": "EdinburghNLP/xsum@main",
+      "official_source_url": "https://huggingface.co/datasets/EdinburghNLP/xsum",
+      "license_name": "Not declared (BBC articles)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "News article with one-sentence summary",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 226711,
+      "actual_size_bytes": 332791351,
+      "sha256_checksum": "224e9dbc6fed987759c1954603b43cb280b8d475d78893779130aa707d967ed7",
+      "storage_path": "data/raw/xsum_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Abstractive one-sentence summaries; BBC rights are not declared, research use only until the owner approves. Source EdinburghNLP/xsum@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 16731226,
+          "sample_count": 11334,
+          "sha256": "224e9dbc6fed987759c1954603b43cb280b8d475d78893779130aa707d967ed7"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 299612457,
+          "sample_count": 204045,
+          "sha256": "0bba72d330f2a35ba20321444e54724e487b49f2eab6b26625b5f282d1c797c9"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 16447668,
+          "sample_count": 11332,
+          "sha256": "b7fc808c2dd3d1340349481aeef489e6eb8c22ff5739d8bce6d0f99e5ef8044d"
+        }
+      ]
+    },
+    {
+      "dataset_id": "WIKIPEDIA-SIMPLE-EN",
+      "name": "Wikipedia Simple En",
+      "version": "wikimedia/wikipedia@main",
+      "official_source_url": "https://huggingface.co/datasets/wikimedia/wikipedia",
+      "license_name": "CC-BY-SA-3.0 / GFDL",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Simple English Wikipedia article",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 241787,
+      "actual_size_bytes": 156885218,
+      "sha256_checksum": "31bded16768a47c286becd292079122f5d7d4397a17b87d4250a00ccd581e6f0",
+      "storage_path": "data/raw/wikipedia_simple_en",
+      "schema_valid": true,
+      "notes": "Role: mlm. Plain-language register; overlap with English Wikipedia is removed by the leakage check before partitioning. Source wikimedia/wikipedia@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 156885218,
+          "sample_count": 241787,
+          "sha256": "31bded16768a47c286becd292079122f5d7d4397a17b87d4250a00ccd581e6f0"
+        }
+      ]
+    },
+    {
+      "dataset_id": "WANLI-EN",
+      "name": "Wanli En",
+      "version": "alisawuffles/WANLI@main",
+      "official_source_url": "https://huggingface.co/datasets/alisawuffles/WANLI",
+      "license_name": "CC-BY-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Premise-hypothesis NLI pair (worker-and-AI collaboration)",
+      "expected_sample_count": ">= 50,000 samples",
+      "actual_sample_count": 107885,
+      "actual_size_bytes": 26671494,
+      "sha256_checksum": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd",
+      "storage_path": "data/raw/wanli_en",
+      "schema_valid": true,
+      "notes": "Role: nli. Harder reasoning patterns than SNLI/MNLI; complements ANLI. Source alisawuffles/WANLI@main; 2 file(s) selected by pattern '[tT]*.jsonl'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test.jsonl",
+          "bytes": 1233111,
+          "sample_count": 5000,
+          "sha256": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd"
+        },
+        {
+          "filename": "train.jsonl",
+          "bytes": 25438383,
+          "sample_count": 102885,
+          "sha256": "85058cf017a911e89242dc29fa0a4ddaad3664cb923dc0a82145fdda14b694e5"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SCITAIL-EN",
+      "name": "Scitail En",
+      "version": "allenai/scitail@main",
+      "official_source_url": "https://huggingface.co/datasets/allenai/scitail",
+      "license_name": "Not declared (AllenAI release)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Science entailment pair",
+      "expected_sample_count": ">= 20,000 samples",
+      "actual_sample_count": 27026,
+      "actual_size_bytes": 7476483,
+      "sha256_checksum": "9814bcb18de316ee02bb533626bee2ed8db03bed7b0bd6d0deb9d66536ded627",
+      "storage_path": "data/raw/scitail_en",
+      "schema_valid": true,
+      "notes": "Role: nli. Science-domain entailment (entails / neutral); licence tag missing, research use pending review. Source allenai/scitail@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 653112,
+          "sample_count": 2126,
+          "sha256": "9814bcb18de316ee02bb533626bee2ed8db03bed7b0bd6d0deb9d66536ded627"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 6423089,
+          "sample_count": 23596,
+          "sha256": "c4c77597d52d3ef45e2f9c804b127562395b1d096a6a5ef5da1dc15d7760d394"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 400282,
+          "sample_count": 1304,
+          "sha256": "cfcbb30a8c3781f5ca346244b96ea4b5c0f5e813638b71f7d0a382595cbaa337"
+        }
+      ]
+    },
+    {
+      "dataset_id": "STS-COMPANION-EN",
+      "name": "Sts Companion En",
+      "version": "tasksource/sts-companion@main",
+      "official_source_url": "https://huggingface.co/datasets/tasksource/sts-companion",
+      "license_name": "Apache-2.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Graded sentence pair, label 0-5",
+      "expected_sample_count": ">= 5,000 samples",
+      "actual_sample_count": 5293,
+      "actual_size_bytes": 992395,
+      "sha256_checksum": "511482f4158f2ffb736ebb2021a2f69661fedcd99e07d2f34e2e04555d0acca0",
+      "storage_path": "data/raw/sts_companion_en",
+      "schema_valid": true,
+      "notes": "Role: similarity. STS 2012-2017 companion sets (the rest of the pairs STS-B was drawn from); the leakage rule is mandatory. Source tasksource/sts-companion@main; 1 file(s) selected by pattern '*.tsv'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "sts-companion.tsv",
+          "bytes": 992395,
+          "sample_count": 5293,
+          "sha256": "511482f4158f2ffb736ebb2021a2f69661fedcd99e07d2f34e2e04555d0acca0"
+        }
+      ]
+    },
+    {
+      "dataset_id": "STS12-TRAIN-EN",
+      "name": "Sts12 Train En",
+      "version": "mteb/sts12-sts@main",
+      "official_source_url": "https://huggingface.co/datasets/mteb/sts12-sts",
+      "license_name": "Not declared (SemEval-2012 release)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Graded sentence pair, label 0-5",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 2234,
+      "actual_size_bytes": 131940,
+      "sha256_checksum": "a61e140fc92251d1f86e6c6bc00605dab5a32298c218b0c7e1cac00ad05afddd",
+      "storage_path": "data/raw/sts12_train_en",
+      "schema_valid": true,
+      "notes": "Role: similarity. STS 2012 train portion only; test portions of STS12-16 stay unused so they remain a possible extra evaluation. Source mteb/sts12-sts@main; 1 file(s) selected by pattern 'train.jsonl.gz'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train.jsonl.gz",
+          "bytes": 131940,
+          "sample_count": 2234,
+          "sha256": "a61e140fc92251d1f86e6c6bc00605dab5a32298c218b0c7e1cac00ad05afddd"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SICK-EN",
+      "name": "Sick En",
+      "version": "RobZamp/sick@refs%2Fconvert%2Fparquet",
+      "official_source_url": "https://huggingface.co/datasets/RobZamp/sick",
+      "license_name": "CC-BY-NC-SA-3.0",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Graded sentence pair (relatedness 1-5) with NLI label",
+      "expected_sample_count": ">= 9,000 samples",
+      "actual_sample_count": 9840,
+      "actual_size_bytes": 701078,
+      "sha256_checksum": "4926985a232bd0d221af60e729693351bad7ba09e2ac7297079dc34018095830",
+      "storage_path": "data/raw/sick_en",
+      "schema_valid": true,
+      "notes": "Role: similarity. Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only. Source RobZamp/sick@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test__0000.parquet",
+          "bytes": 326621,
+          "sample_count": 4906,
+          "sha256": "4926985a232bd0d221af60e729693351bad7ba09e2ac7297079dc34018095830"
+        },
+        {
+          "filename": "train__0000.parquet",
+          "bytes": 312523,
+          "sample_count": 4439,
+          "sha256": "2da781478d790d0cc0b7d6e2b4a93fd760f572c94c791f8eec0dcad331c8824c"
+        },
+        {
+          "filename": "validation__0000.parquet",
+          "bytes": 61934,
+          "sample_count": 495,
+          "sha256": "04fea5338366c8e42c51b8addb511316bcbf08aac57fe5813e6d8a34696c8e59"
+        }
+      ]
+    },
+    {
+      "dataset_id": "MRPC-EN",
+      "name": "Mrpc En",
+      "version": "nyu-mll/glue@main",
+      "official_source_url": "https://huggingface.co/datasets/nyu-mll/glue",
+      "license_name": "Other (GLUE, MSR paraphrase corpus)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "News sentence pair with paraphrase label",
+      "expected_sample_count": ">= 4,000 samples",
+      "actual_sample_count": 5801,
+      "actual_size_bytes": 1033400,
+      "sha256_checksum": "a623ed1cbdf445b11f8e249acbf649d7d3a5ee58c918554c40cbd8307e488693",
+      "storage_path": "data/raw/mrpc_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Small, human-labelled; MSR licence for research use. Source nyu-mll/glue@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 308441,
+          "sample_count": 1725,
+          "sha256": "a623ed1cbdf445b11f8e249acbf649d7d3a5ee58c918554c40cbd8307e488693"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 649281,
+          "sample_count": 3668,
+          "sha256": "61fd41301e0e244b0420c4350a170c8e7cf64740335fc875a4af2d79af0df0af"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 75678,
+          "sample_count": 408,
+          "sha256": "33c007dbf5bfa8463d87a13e6226df8c0fcf2596c2cd39d0f3bb79754e00f50f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ALTLEX-EN",
+      "name": "Altlex En",
+      "version": "sentence-transformers/altlex@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/altlex",
+      "license_name": "Not declared (AltLex release)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Wikipedia / Simple Wikipedia sentence pair",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 112696,
+      "actual_size_bytes": 19447229,
+      "sha256_checksum": "17fec2cfd105caf8983eebcb98d798d90fd6902a6ad8653e0bbefbe01b0f0092",
+      "storage_path": "data/raw/altlex_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Positive pairs only (no negative label); use for the contrastive term. Source sentence-transformers/altlex@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 19447229,
+          "sample_count": 112696,
+          "sha256": "17fec2cfd105caf8983eebcb98d798d90fd6902a6ad8653e0bbefbe01b0f0092"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SIMPLE-WIKI-EN",
+      "name": "Simple Wiki En",
+      "version": "sentence-transformers/simple-wiki@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/simple-wiki",
+      "license_name": "Not declared (Wikipedia-derived)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Complex / simple sentence pair",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 102225,
+      "actual_size_bytes": 18402665,
+      "sha256_checksum": "eb59c998ebe0922239b0c96201d9f0ddafbfb4b55562055131af3ab5c5ea8dbf",
+      "storage_path": "data/raw/simple_wiki_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Positive pairs only; syntactic and lexical simplification. Source sentence-transformers/simple-wiki@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 18402665,
+          "sample_count": 102225,
+          "sha256": "eb59c998ebe0922239b0c96201d9f0ddafbfb4b55562055131af3ab5c5ea8dbf"
+        }
+      ]
+    },
+    {
+      "dataset_id": "COCO-CAPTIONS-EN",
+      "name": "Coco Captions En",
+      "version": "sentence-transformers/coco-captions@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/coco-captions",
+      "license_name": "Not declared (COCO captions, CC-BY-4.0 upstream annotations)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Caption pair for the same image",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 414010,
+      "actual_size_bytes": 23935511,
+      "sha256_checksum": "d1c6a6c9929b9cb58f322e0038e0c575cc006d3a830de181bfcf8867e4fc384f",
+      "storage_path": "data/raw/coco_captions_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Positive pairs about concrete scenes (everyday semantics). Source sentence-transformers/coco-captions@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 23935511,
+          "sample_count": 414010,
+          "sha256": "d1c6a6c9929b9cb58f322e0038e0c575cc006d3a830de181bfcf8867e4fc384f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "STACKEXCHANGE-DUPLICATES-EN",
+      "name": "Stackexchange Duplicates En",
+      "version": "sentence-transformers/stackexchange-duplicates@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/stackexchange-duplicates",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange data dump)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Duplicate-question pair (title, body or post level)",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 805504,
+      "actual_size_bytes": 401051948,
+      "sha256_checksum": "bde6b875eb1be021d1098b4c9e0a62122b6da557295e847bc06852e047b43491",
+      "storage_path": "data/raw/stackexchange_duplicates_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Technical and scientific duplicate questions across many forums. Source sentence-transformers/stackexchange-duplicates@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "body-body-pair__train-00000-of-00001.parquet",
+          "bytes": 181363161,
+          "sample_count": 250460,
+          "sha256": "bde6b875eb1be021d1098b4c9e0a62122b6da557295e847bc06852e047b43491"
+        },
+        {
+          "filename": "post-post-pair__train-00000-of-00001.parquet",
+          "bytes": 194620191,
+          "sample_count": 250519,
+          "sha256": "bfd2738b817650deea2562ddb3196379e9a471a93deaa4bd405ab48b7c7128ad"
+        },
+        {
+          "filename": "title-title-pair__train-00000-of-00001.parquet",
+          "bytes": 25068596,
+          "sample_count": 304525,
+          "sha256": "3f712c7636d78b998ff4c29a9f7d8bccaef27bf6318d060891a155d87783c2fe"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SPECTER-TRIPLETS-EN",
+      "name": "Specter Triplets En",
+      "version": "sentence-transformers/specter@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/specter",
+      "license_name": "Not declared (SPECTER citation triplets)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Paper-title triplet (query, cited, uncited)",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 684098,
+      "actual_size_bytes": 62182004,
+      "sha256_checksum": "70271dd4a34816c5dd122fdfa1da207c5273ac6727eb56d5288da4256114921e",
+      "storage_path": "data/raw/specter_triplets_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. Scientific-title relatedness; titles only, no full text. Source sentence-transformers/specter@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 62182004,
+          "sample_count": 684098,
+          "sha256": "70271dd4a34816c5dd122fdfa1da207c5273ac6727eb56d5288da4256114921e"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SQUAD-V2-EN",
+      "name": "Squad V2 En",
+      "version": "rajpurkar/squad_v2@main",
+      "official_source_url": "https://huggingface.co/datasets/rajpurkar/squad_v2",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Extractive QA item including unanswerable questions",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 142192,
+      "actual_size_bytes": 17720493,
+      "sha256_checksum": "f6da32ffb482ff463ad056477740d1bb284b96a45db3a08bee6a225ca6abf291",
+      "storage_path": "data/raw/squad_v2_en",
+      "schema_valid": true,
+      "notes": "Role: qa. English counterpart of the withdrawn unanswerable-QA task (ViQuAD2); keeps the no-answer behaviour measurable in English. Source rajpurkar/squad_v2@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 16369982,
+          "sample_count": 130319,
+          "sha256": "f6da32ffb482ff463ad056477740d1bb284b96a45db3a08bee6a225ca6abf291"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 1350511,
+          "sample_count": 11873,
+          "sha256": "0560174ab095c5ac0a8c8dc8da05f1625453c45a77e4ce9cabc6947ddfdd24cb"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ADVERSARIAL-QA-EN",
+      "name": "Adversarial Qa En",
+      "version": "UCLNLP/adversarial_qa@main",
+      "official_source_url": "https://huggingface.co/datasets/UCLNLP/adversarial_qa",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Adversarially written extractive QA item",
+      "expected_sample_count": ">= 20,000 samples",
+      "actual_sample_count": 36000,
+      "actual_size_bytes": 5301049,
+      "sha256_checksum": "1a84cab6ed591ed6024c9eab388131fb40cfcd01b0a76d84735b85115b4bde76",
+      "storage_path": "data/raw/adversarial_qa_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Questions written to fool a reader model; tests robustness beyond SQuAD. Source UCLNLP/adversarial_qa@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 457062,
+          "sample_count": 3000,
+          "sha256": "1a84cab6ed591ed6024c9eab388131fb40cfcd01b0a76d84735b85115b4bde76"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 4348721,
+          "sample_count": 30000,
+          "sha256": "0010a888ffe67a4da4afb7a9cbb7e0e77daaf02aaf055ee1697c88519afb94d8"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 495266,
+          "sample_count": 3000,
+          "sha256": "1ed5569eb1dedc73ad7a1dc34d9064ca8693216b1b47e5c2773a9b2a81668f1f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "TRIVIAQA-WIKI-EN",
+      "name": "Triviaqa Wiki En",
+      "version": "mandarjoshi/trivia_qa@main",
+      "official_source_url": "https://huggingface.co/datasets/mandarjoshi/trivia_qa",
+      "license_name": "Not declared (TriviaQA, Apache-2.0 upstream code)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Trivia question with Wikipedia evidence documents",
+      "expected_sample_count": ">= 50,000 samples",
+      "actual_sample_count": 77582,
+      "actual_size_bytes": 2293374081,
+      "sha256_checksum": "735df844a0011af55546089a1aaf2e98e47a9989c175f4c56da78d68a021d44f",
+      "storage_path": "data/raw/triviaqa_wiki_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Long evidence documents, distant supervision; trivia-style factual questions. Source mandarjoshi/trivia_qa@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 221488939,
+          "sample_count": 7701,
+          "sha256": "735df844a0011af55546089a1aaf2e98e47a9989c175f4c56da78d68a021d44f"
+        },
+        {
+          "filename": "train-00000-of-00007.parquet",
+          "bytes": 240036659,
+          "sample_count": 8842,
+          "sha256": "d4f952bc93e9b8ff8306d712a6dbc11a60ac90ad17807c34320164b1dc060cb2"
+        },
+        {
+          "filename": "train-00001-of-00007.parquet",
+          "bytes": 260772194,
+          "sample_count": 8841,
+          "sha256": "55cd82902467361c86f350f95c408e741bef13d23ad3ecbc07cb6eca2d9def59"
+        },
+        {
+          "filename": "train-00002-of-00007.parquet",
+          "bytes": 318599085,
+          "sample_count": 8841,
+          "sha256": "ebb999da6a4fb3da87cb747b6ad50f277daf75d26fb11017822cfc6ea9dfabe3"
+        },
+        {
+          "filename": "train-00003-of-00007.parquet",
+          "bytes": 265912308,
+          "sample_count": 8841,
+          "sha256": "d97825bc6a92c6b050995a678df25085639536200c45d0323270f5ef02c0d91d"
+        },
+        {
+          "filename": "train-00004-of-00007.parquet",
+          "bytes": 240380758,
+          "sample_count": 8841,
+          "sha256": "54fc211994cef077a0d07d985ecdc35d34defdad80d8a3a00ae06fe4c45ba542"
+        },
+        {
+          "filename": "train-00005-of-00007.parquet",
+          "bytes": 258630104,
+          "sample_count": 8841,
+          "sha256": "6d47faf88d279a5378eea2e3392a59fc29c90d99f25bcf9d2b0877413d590f52"
+        },
+        {
+          "filename": "train-00006-of-00007.parquet",
+          "bytes": 252775640,
+          "sample_count": 8841,
+          "sha256": "da55db2ce980a69563af2a61cb63d831ba56c49b8d0673f586b233bcb042cfc0"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 234778394,
+          "sample_count": 7993,
+          "sha256": "59dcbdde6c1b67b4ef0b7e2591ce682200d32b523cd311e83721716489c104c8"
+        }
+      ]
+    },
+    {
+      "dataset_id": "BOOLQ-EN",
+      "name": "Boolq En",
+      "version": "google/boolq@main",
+      "official_source_url": "https://huggingface.co/datasets/google/boolq",
+      "license_name": "CC-BY-SA-3.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Yes/no question with passage",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 12697,
+      "actual_size_bytes": 4942776,
+      "sha256_checksum": "4f028e992c0bd4df30b9f056f4946b64f5c23028034ff0ed5ea467d8538cc623",
+      "storage_path": "data/raw/boolq_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Boolean questions needing inference over the passage. Source google/boolq@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 3685146,
+          "sample_count": 9427,
+          "sha256": "4f028e992c0bd4df30b9f056f4946b64f5c23028034ff0ed5ea467d8538cc623"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 1257630,
+          "sample_count": 3270,
+          "sha256": "52355d11524b4b874a9b9dcc278feb10f672d52c4f4eff9872e695ede59820f8"
+        }
+      ]
+    },
+    {
+      "dataset_id": "DROP-EN",
+      "name": "Drop En",
+      "version": "ucinlp/drop@main",
+      "official_source_url": "https://huggingface.co/datasets/ucinlp/drop",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Discrete-reasoning reading question",
+      "expected_sample_count": ">= 70,000 samples",
+      "actual_sample_count": 86935,
+      "actual_size_bytes": 11538387,
+      "sha256_checksum": "abb5e578c2156a61f83b56c066a922ec1c7c5140638a3f0f2a7c348fafe1cb35",
+      "storage_path": "data/raw/drop_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Counting, arithmetic and sorting over passages. Source ucinlp/drop@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 10333127,
+          "sample_count": 77400,
+          "sha256": "abb5e578c2156a61f83b56c066a922ec1c7c5140638a3f0f2a7c348fafe1cb35"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 1205260,
+          "sample_count": 9535,
+          "sha256": "7f9a3bdbb1b5909abfa25cbab693f89f47568c98e6e03473500d604f044c8f68"
+        }
+      ]
+    },
+    {
+      "dataset_id": "QASC-EN",
+      "name": "Qasc En",
+      "version": "allenai/qasc@main",
+      "official_source_url": "https://huggingface.co/datasets/allenai/qasc",
+      "license_name": "CC-BY-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Multi-hop science multiple-choice question with facts",
+      "expected_sample_count": ">= 8,000 samples",
+      "actual_sample_count": 9980,
+      "actual_size_bytes": 2349698,
+      "sha256_checksum": "495cfbd17abc1720b54785cdce68825104aaf60d7b8bdb2acac62157a31eb517",
+      "storage_path": "data/raw/qasc_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Science facts composed in two hops. Source allenai/qasc@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 158241,
+          "sample_count": 920,
+          "sha256": "495cfbd17abc1720b54785cdce68825104aaf60d7b8bdb2acac62157a31eb517"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 1967904,
+          "sample_count": 8134,
+          "sha256": "b9a297b5ab55f1605c7682ffbb7042c26d7ecb9ff1e1aa5a820d4e791c8302d1"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 223553,
+          "sample_count": 926,
+          "sha256": "d1ae34ae13c5fce2c55305372c203c6cdb789728d0d7e5ea2956d55bc33f40ae"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ARC-CHALLENGE-EN",
+      "name": "Arc Challenge En",
+      "version": "allenai/ai2_arc@main",
+      "official_source_url": "https://huggingface.co/datasets/allenai/ai2_arc",
+      "license_name": "CC-BY-SA-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Grade-school science multiple-choice question",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 2590,
+      "actual_size_bytes": 449460,
+      "sha256_checksum": "62f03257e737aed263f55c6abf87c7bb0028a44a6bdd2a26eb1279eb42c1d1e9",
+      "storage_path": "data/raw/arc_challenge_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Science reasoning; development and probing use. Source allenai/ai2_arc@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 203808,
+          "sample_count": 1172,
+          "sha256": "62f03257e737aed263f55c6abf87c7bb0028a44a6bdd2a26eb1279eb42c1d1e9"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 189909,
+          "sample_count": 1119,
+          "sha256": "e488c1587ffdcfc8443f916c53488a95cd471c5790e0746c6bfe4cecf20962cb"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 55743,
+          "sample_count": 299,
+          "sha256": "395a5c88d1580d69855fbaee9450270578df1ad5af6259771cd0a42c20e99f05"
+        }
+      ]
+    },
+    {
+      "dataset_id": "COMMONSENSEQA-EN",
+      "name": "Commonsenseqa En",
+      "version": "tau/commonsense_qa@main",
+      "official_source_url": "https://huggingface.co/datasets/tau/commonsense_qa",
+      "license_name": "MIT",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Commonsense multiple-choice question",
+      "expected_sample_count": ">= 9,000 samples",
+      "actual_sample_count": 12102,
+      "actual_size_bytes": 1558570,
+      "sha256_checksum": "19efe93223d1712397aaa44b3adc07f4fa50349206a611ca4f33afbec661fa5e",
+      "storage_path": "data/raw/commonsenseqa_en",
+      "schema_valid": true,
+      "notes": "Role: qa. Everyday world knowledge. Source tau/commonsense_qa@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 151227,
+          "sample_count": 1140,
+          "sha256": "19efe93223d1712397aaa44b3adc07f4fa50349206a611ca4f33afbec661fa5e"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 1247103,
+          "sample_count": 9741,
+          "sha256": "b0449767ed986bfc2ca52b1244a46ef12f732756727f3cb0a4ab69ac8b3d282b"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 160240,
+          "sample_count": 1221,
+          "sha256": "bdbd9bf9cc4d2349b24901038b2ab2f58e10e4e507ad2fd425dca55cd3cb6660"
+        }
+      ]
+    },
+    {
+      "dataset_id": "NATURAL-QUESTIONS-PAIRS-EN",
+      "name": "Natural Questions Pairs En",
+      "version": "sentence-transformers/natural-questions@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/natural-questions",
+      "license_name": "CC-BY-SA-3.0 (Natural Questions)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Question and answer passage pair",
+      "expected_sample_count": ">= 90,000 samples",
+      "actual_sample_count": 100231,
+      "actual_size_bytes": 43995757,
+      "sha256_checksum": "8cfb5e5a7cb1cd09dbb035a581aa42ce5db5852acb3e70f070d89d7035887de9",
+      "storage_path": "data/raw/natural_questions_pairs_en",
+      "schema_valid": true,
+      "notes": "Role: retrieval. Real search queries with Wikipedia answers; dense-retrieval training pairs. Source sentence-transformers/natural-questions@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 43995757,
+          "sample_count": 100231,
+          "sha256": "8cfb5e5a7cb1cd09dbb035a581aa42ce5db5852acb3e70f070d89d7035887de9"
+        }
+      ]
+    },
+    {
+      "dataset_id": "GOOAQ-EN",
+      "name": "Gooaq En",
+      "version": "sentence-transformers/gooaq@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/gooaq",
+      "license_name": "Apache-2.0 (GooAQ)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Search question and answer snippet pair",
+      "expected_sample_count": ">= 1,000,000 samples",
+      "actual_sample_count": 3012496,
+      "actual_size_bytes": 613248932,
+      "sha256_checksum": "de4650e42d6a36a16195b64b2892622340f7af691f3c8c05a53e34fa262ee5dc",
+      "storage_path": "data/raw/gooaq_en",
+      "schema_valid": true,
+      "notes": "Role: retrieval. Large question-answer pairs from search engine snippets (explanatory register). Source sentence-transformers/gooaq@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train-00000-of-00002.parquet",
+          "bytes": 306606760,
+          "sample_count": 1506248,
+          "sha256": "de4650e42d6a36a16195b64b2892622340f7af691f3c8c05a53e34fa262ee5dc"
+        },
+        {
+          "filename": "train-00001-of-00002.parquet",
+          "bytes": 306642172,
+          "sample_count": 1506248,
+          "sha256": "256acef0099aa7849af9b105b961eec60dcc78203e54cf35a13ef917ab1bc883"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ELI5-EN",
+      "name": "Eli5 En",
+      "version": "sentence-transformers/eli5@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/eli5",
+      "license_name": "Not declared (ELI5 forum answers)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Question and long-form answer pair",
+      "expected_sample_count": ">= 100,000 samples",
+      "actual_sample_count": 325475,
+      "actual_size_bytes": 112893890,
+      "sha256_checksum": "0ce47a5e6c200590f1513e50fe53f000900b500adf0be112577fa5dfac4f9ab9",
+      "storage_path": "data/raw/eli5_en",
+      "schema_valid": true,
+      "notes": "Role: retrieval. Long-form explanation answers. Source sentence-transformers/eli5@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 112893890,
+          "sample_count": 325475,
+          "sha256": "0ce47a5e6c200590f1513e50fe53f000900b500adf0be112577fa5dfac4f9ab9"
+        }
+      ]
+    },
+    {
+      "dataset_id": "YAHOO-ANSWERS-EN",
+      "name": "Yahoo Answers En",
+      "version": "sentence-transformers/yahoo-answers@main",
+      "official_source_url": "https://huggingface.co/datasets/sentence-transformers/yahoo-answers",
+      "license_name": "Not declared (Yahoo Answers)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Question and answer pair",
+      "expected_sample_count": ">= 500,000 samples",
+      "actual_sample_count": 681164,
+      "actual_size_bytes": 296974225,
+      "sha256_checksum": "04f92e1e6df0299378f39d27adb5b1cecd56227e82889e61baec9dd72e5ea4c5",
+      "storage_path": "data/raw/yahoo_answers_en",
+      "schema_valid": true,
+      "notes": "Role: retrieval. Community question answering, informal register. Source sentence-transformers/yahoo-answers@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 296974225,
+          "sample_count": 681164,
+          "sha256": "04f92e1e6df0299378f39d27adb5b1cecd56227e82889e61baec9dd72e5ea4c5"
+        }
+      ]
+    },
+    {
+      "dataset_id": "MSMARCO-EN",
+      "name": "Msmarco En",
+      "version": "microsoft/ms_marco@main",
+      "official_source_url": "https://huggingface.co/datasets/microsoft/ms_marco",
+      "license_name": "Microsoft research-only terms",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Query with ranked passages",
+      "expected_sample_count": ">= 500,000 samples",
+      "actual_sample_count": 1010916,
+      "actual_size_bytes": 2105722550,
+      "sha256_checksum": "bfbf0c91c55f85176a25760d12ec8daf9f222305bebb69025700c2147931c2a8",
+      "storage_path": "data/raw/msmarco_en",
+      "schema_valid": true,
+      "notes": "Role: retrieval. Non-commercial research licence; passage retrieval signal. Source microsoft/ms_marco@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 204396131,
+          "sample_count": 101092,
+          "sha256": "bfbf0c91c55f85176a25760d12ec8daf9f222305bebb69025700c2147931c2a8"
+        },
+        {
+          "filename": "train-00000-of-00007.parquet",
+          "bytes": 239836532,
+          "sample_count": 115533,
+          "sha256": "c92b58a2f53fbbe3cb6a24dadeafaaa7c0cf6f231eb99b95910d6b339812cffc"
+        },
+        {
+          "filename": "train-00001-of-00007.parquet",
+          "bytes": 240396892,
+          "sample_count": 115533,
+          "sha256": "7b8feabe6fce4896f57eb27bc116c634a28b6bc28bf26a70aaa42d60c4745058"
+        },
+        {
+          "filename": "train-00002-of-00007.parquet",
+          "bytes": 241310853,
+          "sample_count": 115533,
+          "sha256": "5ecc1666b6f00c5178a862473e35565be9dc45cfdcbb8955246fb0d25187fad1"
+        },
+        {
+          "filename": "train-00003-of-00007.parquet",
+          "bytes": 241994230,
+          "sample_count": 115533,
+          "sha256": "c7cfc7eac63fe85ba1bfea309e04f44d8a28fd2800a4d2e6632cba4fb9bbb413"
+        },
+        {
+          "filename": "train-00004-of-00007.parquet",
+          "bytes": 241681548,
+          "sample_count": 115533,
+          "sha256": "4f4cdc310668f4d8e0f4ce166151d2c42f2c8690fd9baa093077e9dbddd1e5fd"
+        },
+        {
+          "filename": "train-00005-of-00007.parquet",
+          "bytes": 242286762,
+          "sample_count": 115533,
+          "sha256": "7746c5633447a23708372c973e46d606783a6ce5aeb2b1f54819c1bed2f24e70"
+        },
+        {
+          "filename": "train-00006-of-00007.parquet",
+          "bytes": 244190815,
+          "sample_count": 115533,
+          "sha256": "31def634615297347937066c2728d28e6d77aa4b99723ad19f81b6ceee523416"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 209628787,
+          "sample_count": 101093,
+          "sha256": "a07a87f483e602f5812573bff45109e5cbd934773c1c364366f176dd791e44d7"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 18,
-  "total_acquired_bytes": 12271859671,
-  "total_acquired_samples": 8315483
+  "total_datasets_tracked": 50,
+  "total_acquired_bytes": 41065128852,
+  "total_acquired_samples": 25321296
 }

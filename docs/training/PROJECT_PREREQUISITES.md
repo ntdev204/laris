@@ -3,9 +3,9 @@ document_id: "DOC-RUNBOOK-PREREQ-001"
 title: "Project Prerequisites and Owner Decisions"
 document_type: "plan"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-14"
 owner: "LARIS Project Owner"
 reviewers: []
 source_of_truth: false
@@ -20,6 +20,8 @@ decision_references:
   - "ADR-013"
 change_summary: "G03 agent draft: preserves existing approvals and records missing source, human-gold and dependency decisions for owner handoff."
 ---
+
+> **D46 / ADR-022 (2026-11-14):** the stage-1 foundation encoder is English only. Vietnamese gates G02, G08, G09 and G11, Vietnamese data and the Vietnamese tokenizer capacity named below are **withdrawn from stage 1**; Vietnamese reaches the model through a translation layer. This document keeps the measured history of rounds R1-R3a as written; it is not the current plan. Current plan: `docs/adr/ADR-022-english-only-foundation.md`, `docs/specifications/DATASET_SPECIFICATION.md` section 2.1 and `reports/verification/T174-english-data-inventory.md`.
 
 # Tiền điều kiện dự án và quyết định của owner
 

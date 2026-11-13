@@ -34,7 +34,7 @@ envelope is one RTX 5070 Ti with 16 GB VRAM (target server limit 15.0 GB for all
 ## 2. The six stages and their gates (fixed; not decided here)
 | Stage | Capability | Gate |
 |---|---|---|
-| 1 | General language EN/VI (encoder, ~110 M parameters *estimate* from `configs/default.yaml`) | G01-G12 of the specification (ANLI, ViNLI, PAWS, STS-B, SQuAD, ViQuAD, fertility, STEM MRR) |
+| 1 | General language, English only since D46 / ADR-022 (encoder, ~110 M parameters *estimate* from `configs/default.yaml`) | G01-G12 of the specification (ANLI, PAWS, STS-B, SQuAD, English fertility, English STEM MRR; the ViNLI, ViQuAD and Vietnamese fertility gates are withdrawn) |
 | 2 | Scientific language | SciFact NLI macro F1 >= 0.82; evidence precision and recall >= 0.80 |
 | 3 | Scientific OCR | CER <= 1.5 % clean, <= 3.0 % degraded; layout IoU >= 0.88 |
 | 4 | Manuscript learning | Discourse-role macro F1 >= 0.82 |
@@ -73,7 +73,7 @@ Recommendation of this draft, for the owner to accept or change: **Option C on t
 debugging-scale run and B kept as a fallback if grounded faithfulness fails on A2.
 
 ## 5. Stage-6 gates (thresholds proposed, to be set by the owner)
-Measured on sealed held-out research tasks, EN and VI separately; a gate passes only if both languages pass.
+Measured on sealed held-out research tasks. Stage-6 language scope: English is measured directly; Vietnamese is measured only after the translation layer of ADR-022 has its own round-trip gate, and until then Vietnamese capability is not claimed (this paragraph replaces "EN and VI separately").
 
 | Gate | Metric | Proposed threshold |
 |---|---|---|

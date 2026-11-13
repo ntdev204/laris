@@ -50,8 +50,8 @@ Model 1 serves as the foundational text encoder powering syntax analysis, semant
 
 ```mermaid
 flowchart TD
-    subgraph Inputs["Bilingual Input Tokens"]
-        T["Input Tokens: English & Vietnamese (seq_len <= 512)"]
+    subgraph Inputs["English Input Tokens"]
+        T["Input Tokens: English (seq_len <= 512; Vietnamese is translated before the encoder, D46)"]
     end
     subgraph Encoder["Model 1: 110M Bidirectional Transformer Encoder"]
         Emb["Token + RoPE Position Embeddings (d_model = 768)"] --> L1["Transformer Layer 1 (12 Heads, Pre-RMSNorm)"]
@@ -78,7 +78,7 @@ flowchart TD
 | **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 3,072 | Standard $4 \times d_{\text{model}}$ 2-matrix feed-forward network with GELU activation ($W_1 \in \mathbb{R}^{d \times d_{\text{ff}}}, W_2 \in \mathbb{R}^{d_{\text{ff}} \times d}$; no projection bias). |
 | **Positional Encoding** | Rotary Position Embeddings (RoPE) | Applied directly to query and key states; zero learned absolute positional parameters. |
 | **Layer Normalization** | Pre-LayerNorm (RMSNorm) | Scale parameter $\gamma \in \mathbb{R}^d$ without bias $\beta$ on attention and FFN inputs ($2 \times d$ per layer), plus final RMSNorm ($d$). |
-| **Vocabulary Size ($V$)** | 32,000 | Balanced bilingual subwords: ~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens. **Superseded in intent by D46 (ADR-022): the English-only vocabulary size is decided with the new tokenizer fit (T175); the figures here are generation-1 history.** |
+| **Vocabulary Size ($V$)** | 32,000 | Generation-1 split of the vocabulary (~16,000 EN, ~12,000 VI, ~4,000 STEM/Math/Special tokens). **Superseded in intent by D46 (ADR-022): the English-only vocabulary size is decided with the new tokenizer fit (T175); the figures here are generation-1 history.** |
 | **Embedding Tying** | Tied MLM Output Projection | The MLM prediction head output projection shares the $V \times d$ weight matrix with the input embedding, adding only a $V$-dim output bias ($32,000$ params). |
 | **Maximum Sequence Length** | 512 tokens | Conforms to `DEFAULT_MAX_SEQUENCE_LENGTH = 512` in `schemas.py`. |
 | **Total Parameters** | **109,561,856** ($\approx 109.56\text{M}$) | Exact equation: $V \cdot d + L \cdot (4 d^2 + 2 d \cdot d_{\text{ff}} + 2 d) + d + V = 24,576,000 + 12 \times 7,079,424 + 768 + 32,000 = 109,561,856$. (If untied MLM head: $134,137,856 \approx 134.14\text{M}$). |
@@ -95,7 +95,7 @@ To maximize compute capacity on the target RTX 5070 Ti, LARIS provides the 512.9
 | **Attention Heads ($H$)** | 20 | Head dimension $d_k = 1280 / 20 = 64$ (optimal for GPU Tensor Cores). |
 | **Intermediate FFN Dimension ($d_{\text{ff}}$)** | 5,120 | Standard $4 \times d_{\text{model}}$ expansion. |
 | **Maximum Sequence Length** | 1,024 tokens | Doubled context length for full-length scientific paper abstracts and discourse spans. |
-| **Vocabulary Size ($V$)** | 32,000 | Shared bilingual SentencePiece BPE vocabulary. |
+| **Vocabulary Size ($V$)** | 32,000 | SentencePiece BPE vocabulary; English only since D46 (size fixed by the new fit, T177). |
 | **Positional Encoding & Norm** | RoPE + Pre-RMSNorm | Preserves exact architectural invariants without parameter bloat. |
 | **Total Backbone Parameters** | **512,913,920** ($\approx 512.91\text{M}$) | Formula: $32000 \cdot 1280 + 24 \cdot (4 \cdot 1280^2 + 2 \cdot 1280 \cdot 5120 + 2 \cdot 1280) + 1280 + 32000$. Total with heads: **513,247,751** ($\approx 513.25\text{M}$). |
 

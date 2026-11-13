@@ -1,0 +1,30 @@
+{
+  "task": "T175",
+  "rule": "drop any pair sharing a normalised sentence with STS-B validation or test",
+  "stsb_heldout_sentences": 5378,
+  "kept_pairs": 14429,
+  "per_source": {
+    "STS-COMPANION-EN": {
+      "input": 5289,
+      "leaked": 0,
+      "duplicate": 52,
+      "empty": 0,
+      "kept": 5237
+    },
+    "STS12-TRAIN-EN": {
+      "input": 2234,
+      "leaked": 697,
+      "duplicate": 734,
+      "empty": 0,
+      "kept": 803
+    },
+    "SICK-EN": {
+      "input": 9840,
+      "leaked": 1395,
+      "duplicate": 56,
+      "empty": 0,
+      "kept": 8389
+    }
+  },
+  "output": "data/processed/sts_extra_en/train.parquet"
+}

@@ -141,15 +141,14 @@ def test_candidate_datasets_coverage(manifest_data):
 
 
 def test_target_scale_requirements(manifest_data):
-    """Verifies that total verified samples reach at least 5M and < 20M (Issue #209)."""
-    total_samples = manifest_data["total_acquired_samples"]
-    total_bytes = manifest_data["total_acquired_bytes"]
+    """Totals reach 5M samples; D46 requires at least 20 GB of English replacement data."""
+    from laris.research.corpus.acquisition.sources.english_hf import load_sources_config
 
-    # Hard requirements: >= 5,000,000 and < 20,000,000
-    assert total_samples >= 5_000_000, f"Expected >= 5M samples, got {total_samples:,}"
-    assert total_samples < 20_000_000, f"Expected < 20M samples, got {total_samples:,}"
-    # Payload ceiling: strictly < 20 GB
-    assert total_bytes < 20 * (1024**3), f"Expected payload < 20 GB, got {total_bytes:,} bytes"
+    assert manifest_data["total_acquired_samples"] >= 5_000_000
+    english = {s["id"] for s in load_sources_config()["sources"]}
+    entries = [d for d in manifest_data["datasets"] if d["dataset_id"] in english]
+    assert {d["dataset_id"] for d in entries} == english
+    assert sum(d["actual_size_bytes"] for d in entries) >= 20 * 10**9
 
 
 def test_wikipedia_verified_coverage(manifest_data):

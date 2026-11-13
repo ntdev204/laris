@@ -36,7 +36,7 @@ In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.
 
 | Suite ID | Evaluated Capability | Primary Metrics | Target Threshold |
 | :--- | :--- | :--- | :--- |
-| `BENCH-STEM-TOKEN-01` | Tokenizer fertility | Tokens per word separately on unseen EN and VI text; STEM fixtures are supplementary diagnostics. | Canonical foundation G10/G11: $\le 1.35$ tokens/word per language |
+| `BENCH-STEM-TOKEN-01` | Tokenizer fertility | Tokens per word on unseen English text; STEM fixtures are supplementary diagnostics. | Canonical foundation G10: $\le 1.35$ tokens/word (G11, Vietnamese, withdrawn by D46 / ADR-022) |
 | `BENCH-SCINLI-01` | Scientific NLI & Contradiction | Macro F1, Contradiction Recall. | Macro F1 $\ge 0.82$ |
 | `BENCH-DISCOURSE-01` | Heading-Agnostic Limitation Detection | Sensitivity (Recall) on stripped-header test set. | Recall $\ge 80.0\%$ |
 | `BENCH-GAP-VAL-01` | Research Gap Non-Triviality | Adversarial refutation rate, expert validation. | $> 85\%$ validated |
