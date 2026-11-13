@@ -59,8 +59,10 @@ export function Login({ request, busy, onAnswer, onExit }: LoginProps) {
       if (lower === "n" || key.return) return onExit();
       return;
     }
-    if (key.return) {
-      const text = value.trim();
+    // a key pasted together with its line break arrives as one burst: the break still means Enter
+    const burst = !key.ctrl && !key.meta && /[\r\n]/.test(input) ? input.split(/[\r\n]/, 1)[0] ?? "" : null;
+    if (key.return || burst !== null) {
+      const text = (value + (burst ?? "").replace(/[\t ]+/g, "")).trim();
       if (!text) return setProblem(kind === "key" ? "Paste or type your API key, then press Enter." : "Type the address of your LARIS server.");
       return onAnswer(kind === "key" ? { key: text } : { server: text });
     }
