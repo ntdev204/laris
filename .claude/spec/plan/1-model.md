@@ -27,13 +27,21 @@ Exit criteria:
   envelope on the target GPU, and its gates.
 - One command runs the model block's non-training checks on `laris-v2`.
 
-### Phase 20 — Stage 1: foundation EN/VI
-Goal: the foundation encoder passes G01-G12 on held-out data.
+### Phase 20 — Stage 1: foundation encoder (English since D46)
+Goal: the foundation encoder passes its English gates (G01, G03-G07, G10, G12; G02, G08, G09, G11 withdrawn by D46) on held-out data.
 Tasks: T95, T96, T97, T98, T99, T100
 Exit criteria:
 - Every gate G01-G12 has a valid measurement protocol (no NOT VERIFIED left).
 - Data corrections are frozen with lineage; the tokenizer meets G10 and G11; human STEM relevance exists for G12.
 - The readiness check exits 0 on held-out reports and the owner records the promotion.
+
+### Phase 41 — Stage 1 re-scope to English (D46, ADR-022)
+Goal: gates and data match an English-only foundation encoder; Vietnamese is left to a translation layer.
+Tasks: T173, T174, T175
+Exit criteria:
+- Withdrawn gates are recorded, none relaxed or marked passed.
+- English replacement data (MLM text, similarity beyond STS-B) is approved, leakage-checked against STS-B, and ingested.
+- A new English tokenizer and encoder exist from an owner run; T100 evaluates them.
 
 ### Phase 21 — Stage 2: scientific language
 Goal: scientific adaptation passes SciFact NLI and evidence gates.

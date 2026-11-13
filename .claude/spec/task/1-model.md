@@ -58,7 +58,7 @@ returned logs, manifests and reports.
   `reports/verification/T94-model-block-verification.md`. 10 training/profiling test files and 3 obsolete files are
   excluded and named; the seeded cases are in `tests/unit/scripts/test_verify_model_block.py`. Merged into `laris-v2`.
 
-## Phase 20 — Stage 1: foundation EN/VI
+## Phase 20 — Stage 1: foundation encoder (English since D46)
 
 ### T95 — Stage-1 audit and missing measurements
 - Requirements: SR-M6, SR-M12
@@ -157,6 +157,45 @@ returned logs, manifests and reports.
   - The readiness check exits 0 on held-out reports; the owner records the stage-1 promotion; otherwise the task records
     NOT QUALIFIED and returns to T99
 - Status: pending
+
+## Phase 41 — Stage 1 re-scope to English (D46)
+
+### T173 — Amend stage-1 gates and specification for D46
+- Requirements: SR-M6, SR-M3
+- Depends: T98
+- Deliverables:
+  - `docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md` section 5: G02, G08, G09, G11 withdrawn, G12 English, stage-1 wording English
+  - Plan and task ledger updated together
+- Validation:
+  - `scripts/validate_spec.py` passes; no gate was relaxed: withdrawn gates are recorded, not marked passed
+- Status: done
+- Note: Training specification 3.1.0 (2026-11-14) records the withdrawal and the English G12. Not changed here, and listed for later tasks:
+  other documents that mention Vietnamese (`DATASET_SPECIFICATION.md`, `FOUNDATION_BUDGET.md`, `BENCHMARK_PROTOCOL.md`, configs under
+  `configs/evaluation/`, `configs/default.yaml`) and the code paths for VI data; `.laris/` policy is untouched (owner approval needed).
+
+### T174 — English replacement data inventory
+- Requirements: SR-M6, SR-M3
+- Depends: T173
+- Deliverables:
+  - `reports/verification/T174-english-data-inventory.md`: what leaves, candidates for English MLM text and English similarity, the
+    STS-B leakage rule, licence checks to do
+- Validation:
+  - Owner reviews and approves sources; nothing acquired before approval
+- Status: done
+- Note: Inventory written 2026-11-14 as a proposal; external sizes and licences are from memory and must be verified. Owner approval of the
+  sources is the open item that opens T175.
+
+### T175 — English data, new tokenizer and retraining (owner run)
+- Requirements: SR-M6, SR-M3
+- Depends: T174
+- Deliverables:
+  - Acquisition scripts and an STS-B leakage check, English manifests, a new English tokenizer fit and an English encoder run, with intake
+  - Prepared commands for the owner; T100 evaluates the result
+- Validation:
+  - Intake passes; validation reported per English gate; the owner decides on held-out evaluation (T100)
+- Status: blocked
+- Note: Waiting for the owner to confirm the English sources in `reports/verification/T174-english-data-inventory.md`. Tokenizer fitting and
+  training are owner runs. T100 (held-out evaluation) now follows T175, not R2 or R3a.
 
 ## Phase 21 — Stage 2: scientific language
 
