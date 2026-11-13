@@ -3,9 +3,9 @@ document_id: "DOC-RUNBOOK-OWNER-001"
 title: "Owner-Executed Foundation Training and Evaluation"
 document_type: "specification"
 status: "DRAFT"
-version: "1.1.0"
+version: "1.2.0"
 created_at: "2026-11-10"
-updated_at: "2026-11-11"
+updated_at: "2026-11-13"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
@@ -16,7 +16,7 @@ related_documents:
 decision_references:
   - "ADR-008"
   - "ADR-013"
-change_summary: "Records the F04A budget and owner commands for the F05 sampling comparison."
+change_summary: "Adds section 7: the T99 round plan for the R1 (48k tokenizer) encoder."
 ---
 
 # Owner runbook
@@ -248,3 +248,166 @@ Passing foundation report checks is a review prerequisite, not an automatic comm
 to train model 02. The owner reviews the complete held-out evidence first. Scientific
 language is implemented and evaluated next; OCR, manuscripts, integration and later
 specialists must not be advanced through the historical paper pilot.
+
+## 7. T99: foundation rounds for the R1 encoder (48k tokenizer)
+
+Status: **PROPOSED budget; the owner approves it by running it.** Sections 3 to 5b describe the historical 32k
+tokenizer; their `laris` and `laris-server` commands also name scripts that the current virtual environment no
+longer imports. Use `.venv/bin/python -m cli.model` as below. Nothing here authorizes an agent to train, profile with an
+optimizer or set `LARIS_TRAINING_AUTHORIZED`. The foundation model is **NOT QUALIFIED**.
+
+### 7.1 Evidence this plan rests on
+
+| Fact | Source |
+|---|---|
+| `foundation-r1-run1`: 10,000 steps, effective batch 64 (16 x 4), 0.4-0.5 s/step, 1 h 24 min, peak 10.4 GiB, validation mean loss 0.3827 and still falling at the last evaluation; `--retrieval-loss-weight 0` | `artifacts/profiles/foundation-r1-run1.log`, best manifest |
+| Dense retrieval is at chance because the CLS embedding was never trained to retrieve: SciFact dev MRR 0.0067 against BM25 0.636 | `reports/retrieval/foundation-r1-run1-scifact-dev.json` |
+| Vietnamese STEM dev (LLM gold): dense MRR 0.115, BM25 0.989, hybrid 0.429 | `reports/retrieval/foundation-r1-run1-vi-stem-dev.json` |
+| The contrastive term is added to the QA loss, so its effective weight is `loss_lambda_qa` (0.15) x `--retrieval-loss-weight` | `src/laris/research/language/training/trainer.py` |
+| In-batch negatives only; no hard negatives; supervision comes from the general-domain QA shards (SQuAD, HotpotQA, ViQuAD v2) | trainer, `data/processed` |
+
+Two consequences. First, gate G12 (dense MRR >= 0.82 and above BM25) cannot be reached by more of the same training: it
+needs the retrieval objective. Second, BM25 scores 0.989 on the Vietnamese gold because its queries were written from
+the passages, so that gold can show dense progress but **cannot show dense above BM25**; the English SciFact test is the
+only discriminating G12 source until the owner decides otherwise.
+
+### 7.2 Data rules for every round
+
+Do not train on VIPUBMED (licence not cleared), on `data/processed/gold_vi_stem/`, on SciFact claims (dev or test) or on
+any held-out test split. Round R2 uses only the existing QA shards. STEM-domain retrieval pairs do not exist yet; if the
+probe fails the decision gate, adding licensed STEM pairs is a separate task and budget.
+
+### 7.3 Round plan and budget (owner-approved when run)
+
+| Step | What | GPU time (estimate) | Hard timeout |
+|---|---|---|---|
+| 0 | Development measurements of `foundation-r1-run1` (inference only) | 10 min | 600 s each |
+| 1 | Memory profile of the R2 configuration (optimizer steps, owner only) | 3 min | 300 s |
+| 2 | Smoke run, 20 steps | 1 min | 180 s |
+| 3 | Probe `foundation-r2-probe`: 1,000 steps, retrieval weight 5.0 | 14 min | 1,800 s |
+| 4 | Decision gate on the probe (inference only) | 10 min | 600 s each |
+| 5 | Main round `foundation-r2`: 4,000 steps | 55 min | 7,200 s |
+| 6 | Development measurements and intake of `foundation-r2` | 20 min | 600 s each |
+
+Total at most about 2 h 30 min of GPU time and two training runs. A step estimate of 0.8 s per step assumes the two extra
+encoder passes for QA batches cost at most 60 % more than the 0.5 s measured without them; the smoke log replaces this
+estimate. Stop other GPU workloads first. After this budget, stop and review before any further round.
+
+### 7.4 Step 0: development measurements (inference only)
+
+```bash
+export HOME_ISOLATED=$(mktemp -d)
+R1=artifacts/checkpoints/language_encoder/foundation-r1-run1/best
+TOK=artifacts/tokenizer/foundation-r1-super/candidate/laris_spm_48k_r1.model
+mkdir -p artifacts/evaluations/language_encoder
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m cli.model evaluate language-encoder \
+  --checkpoint $R1 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 16 \
+  --seed 42 --device cuda --output artifacts/evaluations/language_encoder/foundation-r1-run1-val.json
+```
+
+Read the validation report against the gate thresholds. If G01-G09 are far below target on validation, record it: more
+retrieval training will not fix them and a later general round (7.9) has to be planned. The development retrieval numbers
+of R1 already exist (see 7.1).
+
+### 7.5 Step 1: memory profile (owner only)
+
+This performs backward and optimizer steps on a discarded model. It uses the real configuration.
+
+```bash
+mkdir -p artifacts/profiles
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 300s .venv/bin/python -m cli.model train language-encoder \
+  --profile-only --model-size compact --vocab-size 48000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/compact_r1.yaml \
+  --micro-batch-size 16 --grad-accum-steps 4 --precision bf16 --no-8bit-adam \
+  --retrieval-loss-weight 5.0 --tokenizer-model $TOK --normalize-input \
+  2>&1 | tee artifacts/profiles/foundation-r2-profile.log
+```
+
+Pass: peak CUDA allocation <= 14.5 GiB. If it exceeds, repeat with `--micro-batch-size 8 --grad-accum-steps 8`, then
+`4`/`16`, and use the first passing pair in every later command (smaller micro-batches mean fewer in-batch negatives; say so
+in the return).
+
+### 7.6 Step 2 and 3: smoke, then the probe
+
+Each run starts from the R1 best checkpoint with a fresh optimizer and schedule. Never use a 32k checkpoint.
+
+```bash
+set -o pipefail
+for RUN in "smoke 20 180 foundation-r2-smoke 0" "probe 1000 1800 foundation-r2-probe 100"; do
+  set -- $RUN
+  LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL ${3}s .venv/bin/python -m cli.model train language-encoder \
+    --authorized --model-size compact --vocab-size 48000 --max-seq-len 1024 \
+    --training-config configs/language_encoder/compact_r1.yaml \
+    --init-from $R1 --micro-batch-size 16 --grad-accum-steps 4 --precision bf16 --no-8bit-adam \
+    --steps $2 --learning-rate 0.00005 --warmup-steps $5 \
+    --eval-interval 250 --eval-batches 16 --save-interval 250 --patience 4 --seed 42 \
+    --tokenizer-model $TOK --normalize-input --retrieval-loss-weight 5.0 \
+    --run-id $4 --no-evaluate-after 2>&1 | tee artifacts/profiles/$4.log
+done
+```
+
+Return both logs before continuing. Smoke pass: finite losses, no out-of-memory, step time recorded.
+
+### 7.7 Step 4: probe decision gate (inference only)
+
+```bash
+P=artifacts/checkpoints/language_encoder/foundation-r2-probe/best
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m laris.research.language.benchmarks.retrieval run \
+  --config configs/evaluation/foundation_retrieval_dev.yaml --checkpoint $P --tokenizer-model $TOK \
+  --output reports/retrieval/foundation-r2-probe-scifact-dev.json
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python scripts/score_vi_stem_gold.py --split dev \
+  --checkpoint $P --tokenizer-model $TOK --output reports/retrieval/foundation-r2-probe-vi-stem-dev.json
+.venv/bin/python scripts/training_intake.py --run-id foundation-r2-probe --expect-steps 1000 \
+  --expect-retrieval-weight 5.0 --tokenizer-model $TOK --init-run foundation-r1-run1 \
+  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2-probe.log
+```
+
+Decision (SciFact **dev**, never the sealed test): continue to step 5 only if dense MRR >= 0.10 and the intake passes.
+If dense MRR is between 0.02 and 0.10, change one thing (retrieval weight 10.0, or micro-batch 32 x 2 if memory allows) and
+rerun the probe once. Below 0.02, stop: the in-batch objective on general QA is not enough and the owner decides on STEM
+pairs or hard negatives.
+
+### 7.8 Step 5: main round R2
+
+Same command as the probe with `--steps 4000 --warmup-steps 200`, `--run-id foundation-r2`, timeout 7,200 s, and the
+retrieval weight chosen at the gate. Stop rules (any one ends the round; keep the last saved checkpoint):
+
+1. four validation points in a row without improvement of the mean loss (`--patience 4`, interval 250);
+2. a non-finite loss or an out-of-memory error;
+3. the hard timeout;
+4. at intake: any of MLM, NLI, paraphrase or similarity validation loss more than 10 % above `foundation-r1-run1`
+   (forgetting), or a failed integrity check. The round is then not accepted.
+
+Then run step 6:
+
+```bash
+R2=artifacts/checkpoints/language_encoder/foundation-r2/best
+.venv/bin/python scripts/training_intake.py --run-id foundation-r2 --expect-steps 4000 \
+  --expect-retrieval-weight <WEIGHT> --tokenizer-model $TOK --init-run foundation-r1-run1 \
+  --reference-run foundation-r1-run1 --log artifacts/profiles/foundation-r2.log \
+  --report reports/verification/T99-foundation-r2-intake.json
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m cli.model evaluate language-encoder \
+  --checkpoint $R2 --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 16 --seed 42 \
+  --device cuda --output artifacts/evaluations/language_encoder/foundation-r2-val.json
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python -m laris.research.language.benchmarks.retrieval run \
+  --config configs/evaluation/foundation_retrieval_dev.yaml --checkpoint $R2 --tokenizer-model $TOK \
+  --output reports/retrieval/foundation-r2-scifact-dev.json
+HOME=$HOME_ISOLATED timeout -s KILL 600s .venv/bin/python scripts/score_vi_stem_gold.py --split dev \
+  --checkpoint $R2 --tokenizer-model $TOK --output reports/retrieval/foundation-r2-vi-stem-dev.json
+```
+
+Return: the three logs, the intake report, the two manifests with model SHA-256, and the three development reports. The
+agent then writes the per-gate analysis (T99 validation) from them. Validation and development numbers are diagnostic and
+are not held-out evidence.
+
+### 7.9 Conditional round R3 (not approved)
+
+Only if step 0 shows G01-G09 far below target and R2 is accepted: continue general training from `foundation-r2/best`
+with the retrieval weight kept, about 6,000 steps, peak learning rate 3e-5. It needs its own budget sign-off after the R2
+review; no command is given here on purpose.
+
+### 7.10 What T100 does next
+
+T100 scores the sealed held-out sources once per candidate (fertility, retrieval, the evaluation suite) and the sealed
+Vietnamese test split with `scripts/score_vi_stem_gold.py --split test --final --seal-sha256 <digest>`. Do not run any of
+that on the R2 candidate until the owner has reviewed the T99 analysis.

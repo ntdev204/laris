@@ -1,0 +1,51 @@
+{
+ "label_source": "llm",
+ "human_gold": false,
+ "split": "dev",
+ "seal_sha256": "b72ebdf05082f3b0ba80696358d3392efad89d7ceec39429ce00822232fd2c56",
+ "min_label": 2,
+ "queries_judged": 137,
+ "queries_with_relevant": 137,
+ "corpus": 4000,
+ "systems": {
+  "bm25": {
+   "mrr": 0.9890510948905109,
+   "ndcg_at_10": 0.9919181697862364,
+   "recall_at_1": 0.9781021897810219,
+   "recall_at_5": 1.0,
+   "recall_at_10": 1.0,
+   "recall_at_50": 1.0,
+   "mrr_ci95": [
+    0.9744525547445255,
+    1.0
+   ]
+  },
+  "dense": {
+   "mrr": 0.11492539972235272,
+   "ndcg_at_10": 0.12718786885964659,
+   "recall_at_1": 0.072992700729927,
+   "recall_at_5": 0.1386861313868613,
+   "recall_at_10": 0.19708029197080293,
+   "recall_at_50": 0.35766423357664234,
+   "mrr_ci95": [
+    0.07127303365432813,
+    0.16350457006826483
+   ]
+  },
+  "hybrid_rrf": {
+   "mrr": 0.429222022989678,
+   "ndcg_at_10": 0.4966671790828231,
+   "recall_at_1": 0.291970802919708,
+   "recall_at_5": 0.5401459854014599,
+   "recall_at_10": 0.7737226277372263,
+   "recall_at_50": 1.0,
+   "mrr_ci95": [
+    0.3595303844080073,
+    0.4920796386378167
+   ]
+  }
+ },
+ "checkpoint": "artifacts/checkpoints/language_encoder/foundation-r1-run1/best",
+ "model_sha256": "b3dd71391de1e334cae52c613e1942dfc150ddf421b71c2e4bb859aad4dacb2f",
+ "dense_beats_bm25": false
+}
