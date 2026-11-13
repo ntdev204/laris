@@ -21,6 +21,14 @@ model execution was inference for the baseline measurement below. The foundation
 The run used `--retrieval-loss-weight 0`, so the CLS embedding was never trained to retrieve. The trainer adds the contrastive
 term to the QA loss, so its effective weight is 0.15 times the flag; the plan therefore proposes weight 5.0.
 
+## Update 2026-11-13: 8 GB VRAM budget
+
+CARLA occupies the GPU, so the round must fit 8 GB. `foundation-r1-run1` peaked at 10.4 GiB (micro-batch 16, no
+checkpointing). Runbook 7.5 now gives four attempts (micro-batch 8 plain, or 16/8/4 with the new `--gradient-checkpointing` flag), a
+ceiling of 7.0 GiB peak allocation, longer timeouts (about 3 h total) and the intake ceiling `--max-peak-gib 7.5`. The flag
+is a small change in `src/cli/commands/language_encoder.py`; `--init-from` ignores it when comparing model configs. The memory
+figures for the attempts are not measured; step 1 measures them.
+
 ## Findings for the owner
 
 1. **The Vietnamese gold cannot show dense above BM25.** BM25 reaches 0.989 (rank 1 on 97.8 % of queries) because the queries were
