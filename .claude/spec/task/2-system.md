@@ -18,7 +18,13 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     cross-compilation tool; `uv` kept for the Python environment
 - Validation:
   - Each item approved, replaced or refused by the owner in writing
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-13: the owner approved the whole candidate list above without changes ("Duyệt toàn bộ danh
+  sách"). Approved as listed: stable Rust pinned in `rust-toolchain.toml`; every crate named in the deliverables (exact
+  versions are pinned and vendored in T121, and `cargo deny` allows only this list); `cargo-deny`; a release signing
+  tool and a cross-compilation tool (the concrete tool is named in ADR-021, T120); `uv` for the Python environment.
+  Not approved here: any crate or tool not named above. Nothing was installed by this task; `cargo` is not yet present
+  on the machine, so the toolchain installation belongs to T121.
 
 ### T120 — ADR-021 (Rust generation) and AGENTS.md
 - Requirements: SR-G1, SR-G4
