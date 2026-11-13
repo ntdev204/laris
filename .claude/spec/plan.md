@@ -224,8 +224,8 @@ Exit criteria:
 
 ### Phase 18 — Zero-configuration client and release 2.1.0
 Goal: the user installs the npm package and types `laris`; the interface opens like Claude Code and asks for the key only when needed (owner instruction 2026-11-13).
-Tasks: T86, T87, T88
-Progress: [x] T86 (2026-11-13), [x] T87 (2026-11-13), [ ] T88
+Tasks: T86, T87, T88, T89
+Progress: [x] T86 (2026-11-13), [x] T87 (2026-11-13), [x] T88 (2026-11-13, v2.1.0 released), [x] T89 (2026-11-13). Phase complete.
 Exit criteria:
 - Packaged default server and fingerprint written at build time (D24); first-run login inside the interface (D25); no false warning in the home folder.
 - The interface follows D26; acceptance scenarios still pass through Ink, plain mode and headless.

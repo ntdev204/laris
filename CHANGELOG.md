@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`/copy` and clean selection in the interface:** `/copy` puts the last answer on the clipboard as its original Markdown, `/copy code` the last code block (native clipboard tool, OSC 52 over SSH or tmux). The interface never turns on mouse reporting or the alternate screen, so selecting with the mouse works as in any terminal.
+
+### Fixed
+- **Copied text carried the drawing:** code blocks no longer have a frame, label or padding, answers no longer have a `●` gutter, lists copy as `- item`, quotes as `> `, tables as `| a | b |`, and no line ends in blanks.
+- **An empty corpus made the agent retry:** `no documents` is a permanent error; the model is told once and no replan is spent (`reflect.permanent_errors`).
+
+- **"hello" started a search:** the placeholder planner answers a bare greeting from the string catalogue and runs no tool (SR-C11, T89).
+
+### Fixed
+- **A project's own `configs/default.yaml` broke the client:** a research folder with that file (another schema) made `laris` stop with `ValidationError ... environment`. The client now reads no configuration file from the folder it opened (SR-C2, SR-C5).
+
 ## [2.1.0] - 2026-11-13
 
 Install the package and type `laris`: the server is built in, the key is asked inside the interface, and the interface follows the Claude Code layout. Clients and servers of 2.0.0 keep working with each other, but a 2.0.0 client of a server behind Caddy's own certificate authority stops verifying it after a few hours (see Fixed); update the client. Server operators: rebuild the images (the model image now has the tokenizer) and keep the `caddy_data` volume, which holds the authority that packaged clients pin. The foundation model is still NOT QUALIFIED.

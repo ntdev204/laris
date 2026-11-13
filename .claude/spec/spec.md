@@ -1,6 +1,6 @@
 # LARIS — System specification: Obsidian brain, scholarly harness, three-block system and terminal client
 
-Version 0.3.0 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 IMPLEMENTED (release 2.0.0 published); owner gates open (T38 review, T39 decision); phase 18 (zero-configuration client, release 2.1.0: T86-T88) PLANNED · Replaces the retired `.agents/` ledger.
+Version 0.3.0 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 IMPLEMENTED (release 2.0.0 published); owner gates open (T38 review, T39 decision); phase 18 (zero-configuration client, release 2.1.0: T86-T88) IMPLEMENTED · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.
@@ -555,6 +555,14 @@ terminals, no flicker while streaming. It keeps all existing keys and E1 behavio
 Acceptance: the Ink acceptance scenarios still pass against the recorded engine; render tests cover each screen at 60 and 100 columns (the test terminal is 100 wide);
 the owner reviews screenshots of a real terminal (Linux and Windows).
 
+### SR-C11 — A greeting is not a search
+While the chat backend is the scripted placeholder (no language model), a message that is only a greeting is answered at once
+from the string catalogue and starts no tool call; a message with a file path or any other content still follows the existing
+rules. The greeting words and the reply are catalogue entries (`planner.greeting_pattern`, `planner.greeting_reply`). A real
+model decides this itself, so the rule leaves with the placeholder.
+Acceptance: unit tests with greetings in Vietnamese and English (no tool call) and with questions that start with a greeting word
+(search still runs).
+
 ## 6. Cross-cutting rules
 
 - Policy precedence and confidentiality rules in `LARIS.md` and `.laris/rules/` apply to every new
@@ -620,6 +628,6 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 The authoritative status of every task is in task.md. Phase 0: T01-T47 (T01-T04, T40, T41, T47). Phase 8 (Agentic): T42-T46. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.
-Second programme (done: T48 to T85): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
+Second programme (done: T48 to T89): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
 Phase 12 (server API): T56-T59. Phase 13 (PostgreSQL): T60-T63. Phase 14 (client SQLite): T64-T66. Phase 15
-(Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85. Phase 18 (zero-configuration client and release 2.1.0): T86-T88.
+(Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85. Phase 18 (zero-configuration client and release 2.1.0): T86-T89.

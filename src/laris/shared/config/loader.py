@@ -283,7 +283,11 @@ def load_runtime_config(
     if user_layer is None:  # the global settings.json (server address, model) applies everywhere
         # `layer_from` puts the address packaged at build time beneath the user's own (D24)
         user_layer = layer_from(read_settings(Path.home() / ".laris" / "settings.json")) or None
+    # `configs/default.yaml` of the folder is project configuration too: a research project's own
+    # file of that name (another schema) must not break the client
     default = root / "configs" / "default.yaml"
+    if not _PROJECT_CONFIG:
+        default = root / "_no_project_default"  # never exists
     project_files = [root / ".laris" / "config.yaml"] if _PROJECT_CONFIG else []
     return load_config(
         default if default.is_file() else None,

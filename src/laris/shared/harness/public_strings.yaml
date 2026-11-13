@@ -34,6 +34,10 @@ verify:
   sections_warning: "Lưu ý: câu trả lời thiếu các mục bắt buộc của quy trình ({missing})."
   uncited_warning: "Lưu ý: câu trả lời này chưa dẫn nguồn đầy đủ; hãy kiểm tra trước khi dùng."
 planner:
+  greeting_pattern: "^(xin\\s+chào|chào(\\s+bạn)?|hello|hi|hey|alo|good\\s+(morning|afternoon|evening))$"
+  greeting_reply: >-
+    Xin chào. Trợ lý tích hợp này chưa có mô hình ngôn ngữ nên không trò chuyện được; nó đọc tệp bạn
+    nêu (ví dụ `tai_lieu.pdf`) và tìm đoạn khớp trong kho tài liệu. Hãy hỏi về tài liệu hoặc đưa đường dẫn tệp.
   task: "Nhiệm vụ: {task}"
   evidence_heading: "Đoạn bằng chứng:"
   no_match: "Không có đoạn nào trong kho khớp với nhiệm vụ này."
@@ -92,6 +96,9 @@ reflect:
   step_failed: >-
     Bước vừa rồi chưa đạt: {issues}. Còn {left} lần lập lại kế hoạch. Hãy đổi cách (từ khóa khác, công cụ
     khác, nguồn khác) và cập nhật kế hoạch bằng update_plan, hoặc kết luận rõ rằng chưa tìm thấy bằng chứng.
+  permanent: >-
+    {issues}. Đổi từ khóa hay công cụ cũng không giúp được. Đừng gọi lại công cụ đó. Trả lời trực tiếp và
+    nói rõ rằng chưa có dữ liệu để trả lời, kèm cách khắc phục (ví dụ nạp tài liệu bằng ingest).
   budget_out: >-
     Đã hết số lần lập lại kế hoạch. Đừng thử lại cách cũ. Trả lời bằng những gì đã có, nói rõ phần nào còn
     thiếu và vì sao.

@@ -62,6 +62,8 @@ class OfflinePlanner(ChatProvider):
         if "use_skill" in done and len(done) == 1:
             return AssistantTurn(self._skill_notice(done["use_skill"][-1]))
         paths = _PATH_RE.findall(task)
+        if not paths and not done and self._is_greeting(task):
+            return AssistantTurn(self.strings.get("planner.greeting_reply"))  # nothing to look up
         if paths and "read_file" not in done:
             return call("read_file", path=paths[0], max_chars=self.read_chars)
         if paths and _EXTRACT_RE.search(task) and "extract_discourse" not in done:
@@ -72,6 +74,10 @@ class OfflinePlanner(ChatProvider):
         if self.has_model and hits and "answer_question" not in done:
             return call("answer_question", question=task)
         return AssistantTurn(self._compose(task, done, hits))
+
+    def _is_greeting(self, task: str) -> bool:
+        pattern = self.strings.get("planner.greeting_pattern")
+        return bool(re.match(pattern, task.strip().strip("!.,?… ").lower(), re.I))
 
     def _skill_notice(self, result: Dict[str, Any]) -> str:
         t = self.strings
