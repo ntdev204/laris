@@ -36,7 +36,11 @@ returned logs, manifests and reports.
   - `docs/adr/README.md` index entry
 - Validation:
   - The owner chooses the option and the thresholds in writing; estimates are labelled as estimates
-- Status: pending
+- Status: blocked
+- Note: Draft `docs/adr/ADR-020-researchllm.md` (status PROPOSED) with five stage-6 options (A1-A3, B, C), estimates
+  labelled, the weak-generator risk, a recommendation (Option C on A2) and proposed gates S6-1 to S6-6. Waiting for the
+  owner to choose the option and the thresholds in writing (section 6 of the ADR); it becomes `done` then. Merged into
+  `laris-v2` as a draft.
 
 ### T94 — Model-block verification on `laris-v2`
 - Requirements: SR-G3, SR-M3

@@ -37,6 +37,7 @@ On `laris-v2` only the principle ADRs remain; the decisions about the Python gen
 | [ADR-004](ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens | ACCEPTED | 2026-10-15 | Layer 3, Layer 5, Layer 7 |
 | [ADR-007](ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
 | [ADR-008](ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
+| [ADR-020](ADR-020-researchllm.md) | What ResearchLLM is: stages, stage-6 advisor options, gates | PROPOSED (owner decision D44 pending) | — | Model block |
 
 ## Freeze Register
 
