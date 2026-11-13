@@ -36,13 +36,12 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     generation-1 commands that no longer exist
 - Validation:
   - Owner approves the ADR and the `AGENTS.md` change
-- Status: blocked
-- Note: 2026-11-13: drafted on `feature/T120-adr-rust-generation`, not merged. `docs/adr/ADR-021-rust-generation.md`
-  (PROPOSED) restates D27-D34 and D43, asks the owner to confirm D35-D42, confirms D28 against the ladder wording
-  (draft verdict: unchanged) and names the proposed release tools (`cross`, `minisign`); the ADR index lists it.
-  `AGENTS.md` now has the ledger paths, `cargo xtask spec` (from T121), branches from `laris-v2` with the merge
-  authorisation, and drops the `laris harness` commands. Waiting for the owner to approve the ADR and `AGENTS.md`
-  (section 6 of the ADR); then status becomes `done`, the ADR ACCEPTED and the spec statuses of D28, D35-D42 updated.
+- Status: done
+- Note: Closed 2026-11-13: the owner approved ("Đồng ý") D28 and D35-D42 as proposed and the `AGENTS.md` change; the
+  release tools (`cross` for static Linux, native runners elsewhere, `minisign`) were chosen under the owner's
+  delegation. `docs/adr/ADR-021-rust-generation.md` is ACCEPTED and indexed; spec D28 and D35-D42 are marked
+  confirmed. `AGENTS.md` carries the ledger paths, `cargo xtask spec` (from T121), branches from `laris-v2` and the
+  merge authorisation, and no longer lists the `laris harness` commands. Merged into `laris-v2`.
 
 ### T121 — Cargo workspace, xtask and CI
 - Requirements: SR-G2, SR-G3
