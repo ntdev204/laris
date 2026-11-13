@@ -1,0 +1,10 @@
+[package]
+name = "laris-policy"
+description = "Permission modes, rules, hooks and folder trust."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

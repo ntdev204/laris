@@ -1,0 +1,13 @@
+[package]
+name = "xtask"
+description = "Governance helpers: spec check, no-training guard."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+regex = "1"
+
+[lints]
+workspace = true

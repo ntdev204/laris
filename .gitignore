@@ -85,3 +85,4 @@ LARIS.local.md
 packaging/npm/vendor/
 docker/secrets/
 packaging/npm/node_modules/
+/target

@@ -51,7 +51,19 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     `THIRD_PARTY.md` skeleton; CI with fmt, clippy, test, deny, spec, model-block checks (T94) and the no-training guard
 - Validation:
   - CI green; a seeded unapproved crate and a seeded training call fail; offline build from the vendor folder
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-13. Toolchain installed with the owner's permission: rustup, Rust 1.100.0 pinned in
+  `rust-toolchain.toml`, `cargo-deny` 0.20.2. Root workspace with the 14 empty crates of spec 5.1 and `xtask`;
+  `cargo xtask spec` is a port of `validate_spec.py` (same result on the real ledger: 81 tasks, 9 done, now 10 with
+  this one); `cargo xtask guard` is the no-training guard over `crates/`, `xtask/` and `.github/`; `deny.toml` allows
+  only the T119 crates plus the workspace and the transitive crates of `regex`; vendoring in `vendor/` with source
+  replacement in `.cargo/config.toml` (offline); `THIRD_PARTY.md` skeleton; `.github/workflows/ci.yml` (rust and
+  model-block jobs). Verified locally: fmt, clippy `-D warnings`, test (7 xtask tests), `cargo deny check`, offline
+  frozen build; a seeded `itoa` dependency failed `cargo deny` and a seeded `run_training` call failed the guard
+  (also with the authorization variable set, exit 2). NOT verified here: the workflow itself has not run on GitHub
+  (push stays with the owner), and the model-block job (`verify_model_block.py` with the `model` extra) was not run
+  locally. "CI green" therefore remains to be confirmed on the first push. Foundation model unchanged: NOT QUALIFIED.
+
 
 ### T122 — Threat model of generation 2
 - Requirements: SR-G5
