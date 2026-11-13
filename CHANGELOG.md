@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Nothing to configure (T86, ADR-019 D24 and D25):** `laris` opens the interface at once. The server address is written into the npm package at build time from repository variables (never the source tree), and the interface asks for the API key, a server address or a certificate confirmation only when one is missing (E1 event `login_required`, command `login`). `laris login` is optional.
+- **Interface like Claude Code (T87, ADR-019 D26):** welcome frame, `●` blocks for answers and tool calls with their outcome under `⎿`, a checklist for the plan, a prompt between two rules with shell (`!`) and note (`#`) modes, a `?` shortcuts panel, a footer with the permission mode and the status line, restyled approval and sign-in screens, and a resume hint on exit.
 - **Server certificate authority published at `/.well-known/laris/ca.crt`** (Caddy) so clients can pin it.
 
 ### Fixed

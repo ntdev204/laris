@@ -45,5 +45,9 @@ export async function main(argv: string[], ctx: Context): Promise<number> {
   // `login_required` before `ready`), so there is nothing to run first.
   const final = await session(ctx.exe, chosen.engineArgs, chosen.initialInput);
   if (final.fatal) process.stderr.write(`\n${final.fatal}\n`);
+  else if (final.ready && final.items.some((item) => item.kind === "user")) {
+    // the way back into this conversation, like the last line of a terminal session should say
+    process.stderr.write(`\nResume this session with: laris --resume ${final.ready.session.slice(0, 8)}\n`);
+  }
   return final.exitCode;
 }

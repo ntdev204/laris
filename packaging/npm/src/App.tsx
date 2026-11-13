@@ -1,4 +1,4 @@
-import { Box, Static, Text, useApp } from "ink";
+import { Box, Static, Text, useApp, useWindowSize } from "ink";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { EngineClient } from "./engine-client.js";
 import { History } from "./input/history.js";
@@ -8,6 +8,8 @@ import { Permission } from "./components/Permission.js";
 import { Prompt } from "./components/Prompt.js";
 import { Spinner } from "./components/Spinner.js";
 import { StatusLine } from "./components/StatusLine.js";
+import { Welcome } from "./components/Welcome.js";
+import { theme } from "./theme.js";
 import type { Ready, Scope } from "./protocol.js";
 import { initialState, isFinal, reduce, type Item, type State } from "./state.js";
 
@@ -21,10 +23,14 @@ export interface AppProps {
   exitWindowMs?: number;
   /** a first line to send once the engine is ready (for `laris --resume` without an id) */
   initialInput?: string | null;
+  /** terminal width (tests); the real one otherwise */
+  columns?: number;
 }
 
-export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null }: AppProps) {
+export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null, columns: fixedColumns }: AppProps) {
   const app = useApp();
+  const size = useWindowSize();
+  const columns = Math.max(20, fixedColumns ?? size.columns ?? 80);
   const [state, dispatch] = useReducer(reduce, undefined, initialState);
   const [armed, setArmed] = useState(false);
   const history = useRef(new History());
@@ -118,7 +124,7 @@ export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null
   // Ink keeps one <Static>: the header and every finished item go through it, once each
   const rows: Row[] = [...(state.ready ? [{ kind: "header" as const, ready: state.ready }] : []), ...settled];
 
-  if (state.phase === "starting") return <Text dimColor>Starting the LARIS engine…</Text>;
+  if (state.phase === "starting") return <Text dimColor>Starting LARIS…</Text>;
   if (state.phase === "login" && state.login) {
     return (
       <>
@@ -138,41 +144,37 @@ export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null
   return (
     <>
       <Static items={rows}>
-        {(row) =>
-          row.kind === "header" ? (
-            <Box key="header" flexDirection="column">
-              <Text bold color="cyan">LARIS <Text dimColor>engine {row.ready.engine} · session {row.ready.session.slice(0, 8)}</Text></Text>
-              <Text dimColor>{row.ready.cwd}{row.ready.server ? ` · ${row.ready.server}` : " · no server configured"}</Text>
-            </Box>
-          ) : (
-            <ItemView key={row.id} item={row} />
-          )
-        }
+        {(row) => (row.kind === "header" ? <Welcome key="header" ready={row.ready} columns={columns} /> : <ItemView key={row.id} item={row} />)}
       </Static>
-      <Box flexDirection="column">
+      <Box flexDirection="column" width={columns}>
         {live.map((item) => <ItemView key={item.id} item={item} />)}
         {state.plan ? <PlanView source={state.plan.source} steps={state.plan.steps} /> : null}
+        {state.fatal ? <Text color={theme.error}>{state.fatal}</Text> : null}
+        {state.busy && !state.permission && state.phase === "running" ? (
+          <Box marginTop={1}><Spinner tokens={state.usage?.tokens ?? null} /></Box>
+        ) : null}
         {state.pending.map((text, n) => <Text key={n} dimColor>  ⧗ queued: {text.slice(0, 100)}</Text>)}
-        {state.fatal ? <Text color="red">{state.fatal}</Text> : null}
-        {state.busy && !state.permission && state.phase === "running" ? <Spinner /> : null}
         {state.permission ? <Permission request={state.permission} onAnswer={answer} onInterrupt={ctrlC} /> : null}
         {state.phase === "running" ? (
-          <Prompt
-            history={history.current}
-            busy={state.busy}
-            active={!state.permission}
-            completion={state.completion}
-            requestCompletion={requestCompletion}
-            onSubmit={submit}
-            onInterrupt={interrupt}
-            onCycleMode={() => client.send({ type: "set_mode", mode: "next" })}
-            onCtrlC={ctrlC}
-            onExit={exit}
-            onOtherKey={disarm}
-          />
+          <Box marginTop={1} flexDirection="column">
+            <Prompt
+              history={history.current}
+              busy={state.busy}
+              active={!state.permission}
+              completion={state.completion}
+              requestCompletion={requestCompletion}
+              onSubmit={submit}
+              onInterrupt={interrupt}
+              onCycleMode={() => client.send({ type: "set_mode", mode: "next" })}
+              onCtrlC={ctrlC}
+              onExit={exit}
+              onOtherKey={disarm}
+              columns={columns}
+            />
+            {armed ? <Text color={theme.warn}>  Press Ctrl+C again to exit</Text> : null}
+            {state.permission ? null : <StatusLine state={state} columns={columns} />}
+          </Box>
         ) : null}
-        {armed ? <Text color="yellow">Press Ctrl+C again to exit</Text> : null}
-        <StatusLine state={state} />
       </Box>
     </>
   );

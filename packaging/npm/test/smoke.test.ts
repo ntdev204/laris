@@ -60,7 +60,7 @@ describe("npm launcher smoke", { skip: !hasScript && "needs a pseudo-terminal (u
       ? [["/help", 6000], ["\r", 300], ["\x03", 3000], ["\x03", 200]]
       : [["hello", 1500], ["\r", 200], ["\x03", 1500], ["\x03", 200]];
     const run = await onPty([], { HOME: home, USERPROFILE: home, LARIS_ENGINE_BIN: exe, LARIS_API_KEY: "smoke-key" }, cwd, keys);
-    assert.match(run.output, /Type a task/, run.output);
+    assert.match(run.output, /Try "summarise the documents/, run.output);
     assert.match(run.output, /default/); // the status line
     if (!real) assert.match(run.output, /Found 2 passages\./, run.output);
     assert.match(run.output, /Press Ctrl\+C again to exit/);

@@ -78,6 +78,18 @@ allowed; `130` interrupted (the session is saved). With no one to answer, an act
 has no allow rule is refused and listed in `permission_denials`; the turn still completes (exit 0). `json`
 prints one result object; `text` prints only the answer.
 
+**The screen (Ink).** A session opens with a welcome frame (the LARIS mark and version, the server, the
+folder, tips, the session id). Messages follow as `> text` for the user and `●` for the assistant; a tool
+call is `● Name(detail)` with its outcome under `⎿` (lines read, bytes written, matches, the first line of a
+command's output); the task list is a checklist under `● Update Todos`. While a turn runs a line shows the
+elapsed time, the tokens in context and `esc to interrupt`. The prompt sits between two rules that span the
+terminal; `!` at the start of a line turns it into shell mode and `#` into note mode, and the prompt says
+so. `?` on an empty prompt shows the shortcuts. The footer shows `? for shortcuts` (or the permission mode
+when it is not the default) and the status line. An approval dialog takes the screen until it is answered.
+Below 84 columns the welcome frame and the footer stack instead of sitting side by side. On exit the
+program prints `Resume this session with: laris --resume ID`. The layout follows Claude Code (ADR-019 D26);
+the front end still holds no logic.
+
 **Interactive keys (Ink).** Enter sends. Backslash then Enter, Shift+Enter or Meta+Enter starts a new line
 (backslash then Enter works everywhere). Up and Down browse history (inside a multi-line text they move the
 cursor first); Ctrl+R searches history; Tab takes the completion the engine sent for `/command` or `@path`.

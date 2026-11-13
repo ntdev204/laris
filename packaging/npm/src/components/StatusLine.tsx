@@ -1,15 +1,21 @@
-import { Text } from "ink";
+// The line under the prompt: what a key does on the left, the state of the session on the right.
+import { Box, Text } from "ink";
 import { statusLine } from "../format.js";
 import type { State } from "../state.js";
+import { MODE_HINT } from "../theme.js";
 
-export function StatusLine({ state }: { state: State }) {
+export function StatusLine({ state, columns = 100 }: { state: State; columns?: number }) {
   const { text } = statusLine(state.line, state.mode, state.sandbox, state.pending.length);
-  const hint = state.mode === "plan" ? "plan mode (read-only)" : "";
+  const mode = MODE_HINT[state.mode];
+  const left = mode ? (
+    <Text color={mode.color}>{mode.text} <Text dimColor>(shift+tab to cycle)</Text></Text>
+  ) : (
+    <Text dimColor>? for shortcuts</Text>
+  );
   return (
-    <Text dimColor>
-      {text}
-      {hint ? ` · ${hint}` : ""}
-      {" · shift+tab mode"}
-    </Text>
+    <Box flexDirection={columns < 84 ? "column" : "row"} justifyContent="space-between" paddingX={2} width={columns}>
+      {left}
+      <Text dimColor wrap="wrap">{text}</Text>
+    </Box>
   );
 }

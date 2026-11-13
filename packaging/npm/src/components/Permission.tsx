@@ -1,7 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import { useState } from "react";
-import { argsPreview, diffKind } from "../format.js";
+import { diffKind, permissionTitle, toolTitle } from "../format.js";
 import type { PermissionRequest, Scope } from "../protocol.js";
+import { glyph, theme } from "../theme.js";
 
 const LABEL: Record<Scope, string> = {
   once: "Yes",
@@ -10,7 +11,7 @@ const LABEL: Record<Scope, string> = {
   everywhere: "Yes, and don't ask again anywhere",
 };
 const KEY: Record<string, Scope> = { y: "once", a: "session", p: "project", e: "everywhere" };
-const DIFF_COLOR = { add: "green", del: "red", hunk: "cyan", meta: "gray", context: undefined } as const;
+const DIFF_COLOR = { add: theme.add, del: theme.del, hunk: "cyan", meta: "gray", context: undefined } as const;
 const MAX_DIFF = 40;
 
 export interface PermissionProps {
@@ -24,7 +25,7 @@ export function Permission({ request, onAnswer, onInterrupt }: PermissionProps) 
   const scopes = request.scopes.length ? request.scopes : (["once"] as Scope[]);
   const options: { label: string; decision: "allow" | "deny"; scope: Scope }[] = [
     ...scopes.map((scope) => ({ label: scope === "everywhere" && request.rule ? `${LABEL[scope]} (${request.rule})` : LABEL[scope], decision: "allow" as const, scope })),
-    { label: "No", decision: "deny", scope: "once" },
+    { label: "No (esc)", decision: "deny", scope: "once" },
   ];
   const [index, setIndex] = useState(0);
 
@@ -48,13 +49,16 @@ export function Permission({ request, onAnswer, onInterrupt }: PermissionProps) 
   });
 
   const diff = request.diff ? request.diff.replace(/\n$/, "").split("\n") : [];
+  const title = toolTitle(request.tool, request.arguments, 300);
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1}>
-      <Text bold color="yellow">Permission: {request.tool}</Text>
-      <Text dimColor>{argsPreview(request.arguments, 300)}</Text>
-      {request.reason ? <Text>Why: {request.reason}</Text> : null}
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.permission} paddingX={1} marginTop={1}>
+      <Text bold color={theme.permission}>{permissionTitle(request.tool)}</Text>
+      <Box flexDirection="column" paddingLeft={2} marginTop={1}>
+        <Text><Text bold>{title.name}</Text>{title.detail ? <Text>({title.detail})</Text> : null}</Text>
+        {request.reason ? <Text dimColor>{request.reason}</Text> : null}
+      </Box>
       {diff.length > 0 ? (
-        <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="column" marginTop={1} paddingLeft={2}>
           {diff.slice(0, MAX_DIFF).map((line, n) => (
             <Text key={n} color={DIFF_COLOR[diffKind(line)]}>{line}</Text>
           ))}
@@ -62,11 +66,12 @@ export function Permission({ request, onAnswer, onInterrupt }: PermissionProps) 
         </Box>
       ) : null}
       <Box flexDirection="column" marginTop={1}>
+        <Text>Do you want to proceed?</Text>
         {options.map((option, n) => (
-          <Text key={n} color={n === index ? "cyan" : undefined}>{n === index ? "❯ " : "  "}{n + 1}. {option.label}</Text>
+          <Text key={n} color={n === index ? theme.permission : undefined}>{n === index ? `${glyph.pointer} ` : "  "}{n + 1}. {option.label}</Text>
         ))}
       </Box>
-      <Text dimColor>↑↓ and Enter, or y / a / p / e / n · Esc refuses</Text>
+      <Text dimColor>↑↓ and Enter, or y / a / p / e / n</Text>
     </Box>
   );
 }

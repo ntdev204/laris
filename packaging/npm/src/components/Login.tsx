@@ -3,7 +3,7 @@
 import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useState } from "react";
 import type { LoginRequired } from "../protocol.js";
-import { theme } from "../theme.js";
+import { glyph, theme } from "../theme.js";
 
 export interface LoginProps {
   request: LoginRequired;
@@ -78,7 +78,8 @@ export function Login({ request, busy, onAnswer, onExit }: LoginProps) {
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor={kind === "stop" ? theme.error : theme.accent} paddingX={2} paddingY={1}>
-      <Text bold color={kind === "stop" ? theme.error : theme.accent}>{TITLE[request.reason]}</Text>
+      <Text><Text color={theme.accent} bold>{glyph.mark} LARIS</Text></Text>
+      <Box marginTop={1}><Text bold color={kind === "stop" ? theme.error : undefined}>{TITLE[request.reason]}</Text></Box>
       {request.server ? <Text dimColor>{request.server}</Text> : null}
       <Box flexDirection="column" marginTop={1}>
         {kind === "server" ? (
