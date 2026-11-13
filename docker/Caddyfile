@@ -4,6 +4,9 @@
 # hundred half-open connections would hold every socket. `read_body` also bounds the TLS handshake.
 # No write timeout: it would cut a long server-sent-events answer.
 {
+	# a client that connects to an IP address (a private network such as Tailscale) sends no server
+	# name; serve the certificate of the configured domain to it instead of failing the handshake
+	default_sni {$LARIS_DOMAIN:localhost}
 	servers {
 		timeouts {
 			read_body 30s

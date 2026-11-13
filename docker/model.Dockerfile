@@ -2,7 +2,7 @@
 # Weights are a read-only volume at /models; nothing is baked in.
 #   docker build -f docker/model.Dockerfile -t laris-model .
 ARG CUDA_IMAGE=nvidia/cuda:12.4.1-runtime-ubuntu22.04
-ARG LARIS_EXTRAS=model,gpu
+ARG LARIS_EXTRAS=model,gpu,tokenizer
 FROM ${CUDA_IMAGE} AS build
 ARG LARIS_EXTRAS
 RUN apt-get update && apt-get install -y --no-install-recommends python3.10 python3-pip \
