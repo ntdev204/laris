@@ -257,6 +257,18 @@ describe("first run: signing in inside the interface (ADR-019 D25)", () => {
     await s.client.stop();
   });
 
+  it("a key that arrives together with its line break is sent (a paste on a terminal without bracketed paste)", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    await s.settle();
+    await s.type("lk_wrong_key\r");
+    await s.waitFor("The server refused that key");
+    await s.settle();
+    await s.type("lk_good_key\n");
+    await s.waitFor("develop");
+    await s.client.stop();
+  });
+
   it("an empty answer is explained instead of being sent", async () => {
     const s = open(scenarioClient("login"));
     await s.waitFor("Sign in");

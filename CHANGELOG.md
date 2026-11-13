@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-13
+
+Install the package and type `laris`: the server is built in, the key is asked inside the interface, and the interface follows the Claude Code layout. Clients and servers of 2.0.0 keep working with each other, but a 2.0.0 client of a server behind Caddy's own certificate authority stops verifying it after a few hours (see Fixed); update the client. Server operators: rebuild the images (the model image now has the tokenizer) and keep the `caddy_data` volume, which holds the authority that packaged clients pin. The foundation model is still NOT QUALIFIED.
+
 ### Added
 - **Nothing to configure (T86, ADR-019 D24 and D25):** `laris` opens the interface at once. The server address is written into the npm package at build time from repository variables (never the source tree), and the interface asks for the API key, a server address or a certificate confirmation only when one is missing (E1 event `login_required`, command `login`). `laris login` is optional.
 - **Interface like Claude Code (T87, ADR-019 D26):** welcome frame, `●` blocks for answers and tool calls with their outcome under `⎿`, a checklist for the plan, a prompt between two rules with shell (`!`) and note (`#`) modes, a `?` shortcuts panel, a footer with the permission mode and the status line, restyled approval and sign-in screens, and a resume hint on exit.
