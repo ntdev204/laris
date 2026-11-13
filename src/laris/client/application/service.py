@@ -16,6 +16,10 @@ class ServiceError(ValueError):
     """User-facing error (bad mode, no index, model unavailable)."""
 
 
+class NoDocumentsError(ServiceError):
+    """The index is empty: no other query can help until something is ingested."""
+
+
 def _tokens(text: str) -> List[str]:
     return [t for t in re.findall(r"\w+", text.lower()) if t]
 
@@ -153,7 +157,7 @@ class SearchService:
         with self._lock:
             self._refresh()
             if not self._chunks:
-                raise ServiceError("No documents yet: ingest some first")
+                raise NoDocumentsError("No documents yet: ingest some first")
             pool = max(top_k * 4, 20)
             if mode == "bm25":
                 order = self._bm25_rank(query, top_k)

@@ -12,7 +12,7 @@ import yaml
 
 from laris.client.agent.coding_tools import CodingContext, build_coding_tools
 from laris.client.agent.tools import Sandbox, ToolExecutionError, ToolRegistry, ToolSpec, schema
-from laris.client.application.service import SearchService, ServiceError
+from laris.client.application.service import NoDocumentsError, SearchService, ServiceError
 from laris.client.application.workspace import (
     IMAGE_SUFFIXES,
     IngestError,
@@ -108,6 +108,8 @@ def build_registry(
         top_k = min(int(args.get("top_k", app.search_default_top_k)), agent.search_max_top_k)
         try:
             found = service.search(args["query"], args.get("mode", "bm25"), top_k)
+        except NoDocumentsError as exc:
+            raise ToolExecutionError("no_documents", str(exc)) from exc
         except ServiceError as exc:
             raise ToolExecutionError("search_failed", str(exc)) from exc
         for hit in found["hits"]:  # small tool output keeps long sessions inside the context

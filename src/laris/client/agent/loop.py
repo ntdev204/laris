@@ -230,7 +230,7 @@ class AgentSession:
         plan_required = self._plan_required(user_text, wf)
         leftover = bool(self.plan.open_steps())  # a plan carried over from an earlier turn
         replans = completion_nudges = 0
-        budget_told = False
+        budget_told = permanent_told = False
         goal_open: List[str] = []
         auto_steps: Dict[str, int] = {}
         if leftover and planning:
@@ -341,6 +341,7 @@ class AgentSession:
             )
             cyclic = False
             issues: List[str] = []
+            permanent: List[str] = []
             acting = [c for c in turn.tool_calls if c.name != PLAN_TOOL]
             if planning and plan_required and not self.plan and acting:
                 # the model started acting without a plan: the harness records one, visibly
@@ -399,10 +400,18 @@ class AgentSession:
                     problem = assess(call.name, output, self.cfg.reflect.empty_keys)
                     if call.id in auto_steps:
                         self.plan.mark(auto_steps[call.id], "failed" if problem else "done")
-                    if problem:
+                    if problem and problem[1] in self.cfg.reflect.permanent_errors:
+                        permanent.append(describe(problem[0], problem[1], call.name, strings))
+                    elif problem:
                         issues.append(describe(problem[0], problem[1], call.name, strings))
                 if cyclic:
                     break
+            if permanent and self.cfg.reflect.enabled and not cyclic and not permanent_told:
+                permanent_told = True  # no replan is spent: retrying cannot help, so say it once
+                text = strings.get("reflect.permanent", issues="; ".join(permanent))
+                self.messages.append({"role": "user", "content": text, "harness": True})
+                audit.event("reflect", issues=len(permanent), permanent=True)
+                yield {"type": "reflect", "issues": permanent, "permanent": True}
             if issues and self.cfg.reflect.enabled and not cyclic:
                 # reflect: the step did not get anywhere; allow a bounded change of approach
                 if replans < self.cfg.reflect.max_replans:

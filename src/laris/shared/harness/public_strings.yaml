@@ -92,6 +92,9 @@ reflect:
   step_failed: >-
     Bước vừa rồi chưa đạt: {issues}. Còn {left} lần lập lại kế hoạch. Hãy đổi cách (từ khóa khác, công cụ
     khác, nguồn khác) và cập nhật kế hoạch bằng update_plan, hoặc kết luận rõ rằng chưa tìm thấy bằng chứng.
+  permanent: >-
+    {issues}. Đổi từ khóa hay công cụ cũng không giúp được. Đừng gọi lại công cụ đó. Trả lời trực tiếp và
+    nói rõ rằng chưa có dữ liệu để trả lời, kèm cách khắc phục (ví dụ nạp tài liệu bằng ingest).
   budget_out: >-
     Đã hết số lần lập lại kế hoạch. Đừng thử lại cách cũ. Trả lời bằng những gì đã có, nói rõ phần nào còn
     thiếu và vì sao.
