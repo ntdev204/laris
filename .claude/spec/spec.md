@@ -1,6 +1,6 @@
 # LARIS — System specification: Obsidian brain, scholarly harness, three-block system and terminal client
 
-Version 0.2.1 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 up to T84 IMPLEMENTED; owner gates open (T38 review, T39 decision); T85 (release 2.0.0) in progress · Replaces the retired `.agents/` ledger.
+Version 0.3.0 · 2026-11-13 · Status: phases 0-6, 8 and 9-17 IMPLEMENTED (release 2.0.0 published); owner gates open (T38 review, T39 decision); phase 18 (zero-configuration client, release 2.1.0: T86-T88) PLANNED · Replaces the retired `.agents/` ledger.
 
 Companion files: [plan.md](plan.md) (phases and exit criteria) and [task.md](task.md) (task ledger).
 Run `python scripts/validate_spec.py` after any change to the three files.
@@ -112,6 +112,9 @@ view, vault creation, Obsidian CLI). These facts shape the design.
 | D21 | Server address and login | The server address lives in `~/.laris/settings.json` (`server.url`); `laris login` takes no `--server` flag, only asks for the key and checks it against `server.url`; the key goes to `~/.laris/.credentials.json` (0600), never into `settings.json` | Same model as Claude Code: settings declare, login authenticates |
 | D22 | Engine and one front end | One engine (`laris engine --stdio`, Python, in the binary) owns the loop, tools, permissions, settings, commands, sandbox and storage; the front end only renders and collects input over the versioned engine protocol E1 (JSON lines both ways; the same stream as headless `stream-json`). The front end is **Ink + React**, started by the npm `laris` command. The prompt_toolkit + rich front end was dropped (owner, 2026-11-12): every install has Node, so a second interface is not worth its cost. Fallbacks need no dependency: headless `laris -p` for scripts and CI, and `laris --plain`, a minimal plain-text mode of the engine (`input`/`print` over E1) for debugging when the Ink front end fails | The prettiest interface without rewriting the core; one interface to build and test |
 | D23 | Automatic sandbox | The user never creates or manages the sandbox. The engine prepares it in the background at start and checks it before every sandbox use; when it is missing or broken it builds or repairs it silently (standalone Python per `sandbox.python`, else a suitable system Python, both through the bundled `uv`), installs the packages the agent needs there without asking (default `allow`; installs elsewhere stay denied), and reports only a short status-line hint while doing so | Owner instruction: the user only enjoys the result |
+| D24 | Packaged default server | The npm package ships a default server address (and, for a private server, its certificate fingerprint) as **build-time configuration**: the release workflow reads it from a repository variable and writes `defaults.json` into the per-platform package. It is not in the source tree. Precedence: `LARIS_*` environment, then `~/.laris/settings.json`, then the packaged default. Amends D21: nothing has to be typed for the address, and `laris login --server` stays only as an override | The owner ships one system; the user only installs and runs `laris` |
+| D25 | First run inside the interface | `laris` opens the interface at once. When there is no key (or the server refuses it) the engine emits `login_required` and the front end shows a key form; the key is checked against the server and saved to `.credentials.json`. `laris login` stays as an optional command | Same flow as Claude Code: start first, authenticate when asked |
+| D26 | Interface like Claude Code | The Ink front end looks and behaves like Claude Code in layout (welcome banner, bordered input box, tool and diff blocks, status line, footer hints, login and permission screens); visuals are front-end only and add no logic (D22) | Owner instruction 2026-11-13 |
 
 ## 5. Requirements
 
@@ -535,6 +538,23 @@ Acceptance: with a temporary home, the first sandbox use builds it without user 
 sandbox is repaired before the next use; two parallel sessions build it once; offline without Python gives a clear
 message and the program keeps working; nothing is written to the system or user site-packages.
 
+### SR-C9 — Start with nothing to configure
+After `npm i -g @ntdev204/laris-cli` a user types `laris` and the interface opens. The server address comes from the
+packaged default (D24), the key is asked inside the interface when missing or refused (D25), and a private
+server's certificate is pinned from the packaged fingerprint without a prompt. Running in the home folder (where the
+project `.laris/` is the global home) gives no false warning. Nothing secret or tunable is in the source tree: the default is
+written into the package at build time.
+Acceptance: from an empty folder and a fresh home, with a packaged default, `laris` reaches a chat turn after the key is entered
+in the interface; a wrong key shows the form again; `settings.json` and the environment override the default; a build
+without a default says so and asks for `server.url`; a scripted test covers the home-folder case.
+
+### SR-C10 — Interface like Claude Code
+The Ink front end presents the layout of D26: welcome banner with version, server and folder, a bordered multi-line input
+box, tool calls and diffs as blocks, the status line and footer hints, the login form and permission dialogs in the same style, narrow and wide
+terminals, no flicker while streaming. It keeps all existing keys and E1 behaviour (SR-C1, SR-C7).
+Acceptance: the Ink acceptance scenarios still pass against the recorded engine; render tests cover each screen at 60 and 100 columns (the test terminal is 100 wide);
+the owner reviews screenshots of a real terminal (Linux and Windows).
+
 ## 6. Cross-cutting rules
 
 - Policy precedence and confidentiality rules in `LARIS.md` and `.laris/rules/` apply to every new
@@ -600,6 +620,6 @@ relax any gate in `docs/specifications/` or any rule in `AGENTS.md`.
 
 The authoritative status of every task is in task.md. Phase 0: T01-T47 (T01-T04, T40, T41, T47). Phase 8 (Agentic): T42-T46. Phase 1: T05-T10. Phase 2:
 T11-T17. Phase 3: T18-T23. Phase 4: T24-T26. Phase 5: T27-T32. Phase 6: T33-T37. Phase 7: T38-T39.
-Second programme (done so far: T48 to T84): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
+Second programme (done: T48 to T85): Phase 9 (decisions): T48-T48. Phase 10 (blocks): T49-T52. Phase 11 (model service): T53-T55.
 Phase 12 (server API): T56-T59. Phase 13 (PostgreSQL): T60-T63. Phase 14 (client SQLite): T64-T66. Phase 15
-(Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85.
+(Docker): T67-T69. Phase 16 (terminal client): T70-T82. Phase 17 (hardening and release 2.0.0): T83-T85. Phase 18 (zero-configuration client and release 2.1.0): T86-T88.

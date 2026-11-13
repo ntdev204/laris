@@ -32,7 +32,7 @@ describe("scenarios through a recorded engine", () => {
     await s.waitFor("session abcdef12");
     await s.type("write a note");
     await s.type(KEYS.enter);
-    await s.waitFor("Permission: write_file");
+    await s.waitFor("Write file");
     assert.match(s.frame(), /\+hello/);
     assert.match(s.frame(), /Yes, and don't ask again in this project/);
     await s.settle();
@@ -47,7 +47,7 @@ describe("scenarios through a recorded engine", () => {
     await s.waitFor("session abcdef12");
     await s.type("write a note");
     await s.type(KEYS.enter);
-    await s.waitFor("Permission: write_file");
+    await s.waitFor("Write file");
     await s.settle();
     await s.type("n");
     await s.waitFor("I did not write it.");
@@ -202,7 +202,7 @@ describe("keys", () => {
     await s.type(KEYS.down);
     await s.type(KEYS.down);
     await s.type(KEYS.ctrlR);
-    await s.waitFor("(history search)");
+    await s.waitFor("search history:");
     await s.type("alp");
     await s.waitFor("alpha one");
     await s.type(KEYS.enter);
@@ -231,5 +231,127 @@ describe("keys", () => {
     await until(() => s.final() !== null, "end");
     assert.equal(s.final()?.exitCode, 1);
     assert.match(s.final()?.fatal ?? "", /no API key/);
+  });
+});
+
+describe("first run: signing in inside the interface (ADR-019 D25)", () => {
+  it("asks for the key, hides it, asks again when it is refused, then opens the session", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    assert.match(s.frame(), /https:\/\/laris\.example/);
+    assert.match(s.frame(), /API key:/);
+    await s.settle();
+    await s.type("lk_wrong_key");
+    assert.doesNotMatch(s.frame(), /lk_wrong_key/); // typed keys are never drawn
+    assert.match(s.frame(), /•{12}/);
+    await s.type(KEYS.enter);
+    await s.waitFor("The server refused that key");
+    await s.settle();
+    await s.type("lk_good_key");
+    await s.type(KEYS.enter);
+    await s.waitFor("develop"); // the session started: the status line is there
+    assert.doesNotMatch(s.frame(), /API key:/);
+    await s.type("hello");
+    await s.type(KEYS.enter);
+    await s.waitFor("Hi.");
+    await s.client.stop();
+  });
+
+  it("an empty answer is explained instead of being sent", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    await s.settle();
+    await s.type(KEYS.enter);
+    await s.waitFor("Paste or type your API key");
+    assert.equal(s.client.exited, false);
+    await s.client.stop();
+  });
+
+  it("a private server: the address, then the fingerprint to compare, then the key", async () => {
+    const s = open(scenarioClient("login_trust"));
+    await s.waitFor("Connect to a LARIS server");
+    await s.settle();
+    await s.type("laris.internal:8443");
+    await s.type(KEYS.enter);
+    await s.waitFor("SHA256:AB:CD:EF");
+    assert.match(s.frame(), /Trust this server\?/);
+    await s.settle();
+    await s.type("y");
+    await s.waitFor("API key:");
+    await s.settle();
+    await s.type("lk_good_key");
+    await s.type(KEYS.enter);
+    await s.waitFor("session abcdef12");
+    await s.client.stop();
+  });
+
+  it("Esc at the sign-in screen leaves without a session", async () => {
+    const s = open(scenarioClient("login"));
+    await s.waitFor("Sign in");
+    await s.settle();
+    await s.type(KEYS.esc);
+    await until(() => s.final() !== null, "the session to end");
+    assert.equal(s.final()?.ready, null);
+    assert.equal(s.final()?.exitCode, 0);
+  });
+
+  it("a certificate that is not the packaged one cannot be accepted", () => {
+    const transport = new FakeTransport();
+    const s = open(new EngineClient(transport));
+    transport.emit({ type: "login_required", reason: "certificate_mismatch", server: "https://laris.example", fingerprint: "SHA256:00:11", message: "" });
+    return s.waitFor("not the expected one").then(async () => {
+      await s.settle();
+      await s.type("y");
+      assert.deepEqual(transport.commands().filter((c) => c["type"] === "login"), []);
+    });
+  });
+});
+
+describe("the interface at different widths (SR-C10)", () => {
+  // the test terminal is 100 columns wide, so that is the widest frame it can show
+  for (const columns of [60, 100]) {
+    it(`draws the welcome frame, a turn, the prompt and the footer at ${columns} columns`, async () => {
+      const s = open(scenarioClient("basic_chat"), { columns });
+      await s.waitFor("develop");
+      const first = s.frame();
+      assert.match(first, /✻ LARIS v2\.0\.0/);
+      assert.match(first, /Welcome back!/);
+      assert.match(first, /laris\.example/);
+      assert.match(first, /Tips for getting started/);
+      assert.match(first, /session abcdef12/);
+      assert.match(first, /\? for shortcuts/);
+      assert.match(first, new RegExp(`─{${columns}}`)); // the rules of the prompt span the terminal
+      for (const line of first.split("\n")) assert.ok(line.length <= columns, `a line is wider than ${columns}: ${line}`);
+      await s.type("hello");
+      await s.type(KEYS.enter);
+      await s.waitFor("Found 2 passages.");
+      assert.match(s.frame(), /● search_papers\(graphs\)/);
+      assert.match(s.frame(), /⎿ {2}2 passages/);
+      await s.client.stop();
+    });
+  }
+
+  it("? on an empty prompt shows the shortcuts and the next key hides them", async () => {
+    const s = open(scenarioClient("basic_chat"));
+    await s.waitFor("develop");
+    await s.type("?");
+    await s.waitFor("ctrl+c twice to exit");
+    assert.match(s.frame(), /! for shell mode/);
+    await s.type("h");
+    await s.gone("ctrl+c twice to exit");
+    await s.type("?"); // not at the start of a line: it is a character
+    assert.doesNotMatch(s.frame(), /ctrl\+c twice to exit/);
+    await s.client.stop();
+  });
+
+  it("! and # change the prompt and say what the line will do", async () => {
+    const s = open(scenarioClient("basic_chat"));
+    await s.waitFor("develop");
+    await s.type("!ls");
+    await s.waitFor("! shell mode");
+    await s.type(KEYS.ctrlU);
+    await s.type("#remember this");
+    await s.waitFor("# note mode");
+    await s.client.stop();
   });
 });

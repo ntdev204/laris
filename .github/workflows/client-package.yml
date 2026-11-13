@@ -74,6 +74,10 @@ jobs:
           pattern: binary-*
           path: artifacts
       - name: Split into per-platform packages plus the launcher
+        # the default server of this build: repository variables, never the source tree (ADR-019 D24)
+        env:
+          LARIS_DEFAULT_SERVER_URL: ${{ vars.LARIS_DEFAULT_SERVER_URL }}
+          LARIS_DEFAULT_SERVER_CA_FINGERPRINT: ${{ vars.LARIS_DEFAULT_SERVER_CA_FINGERPRINT }}
         run: python packaging/assemble_npm.py artifacts npm-out
       - name: Pack every package (nothing is published here)
         run: |

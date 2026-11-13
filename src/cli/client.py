@@ -85,7 +85,10 @@ def _ignore_project_settings() -> None:
     from laris.shared.config.loader import ignore_project_config, ignored_project_files
 
     ignore_project_config(True)
+    here, home = Path.cwd().resolve(), Path.home().resolve()
     for path in ignored_project_files(Path.cwd()):
+        if here == home and path.parent == Path.cwd() / ".laris":
+            continue  # started in the home folder: this *is* the global ~/.laris, not a project's
         print(
             f"[warning] {path} is ignored: settings live only in ~/.laris/settings.json "
             "(`laris config set`)",

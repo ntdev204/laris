@@ -70,3 +70,42 @@ def test_a_missing_platform_stops_the_release(tmp_path: Path) -> None:
     _artifact(tmp_path / "in", "linux-x64")
     with pytest.raises(SystemExit, match="no build for"):
         assemble.main(tmp_path / "in", tmp_path / "out", _front_end(tmp_path))
+
+
+# -- packaged defaults (ADR-019 D24) -----------------------------------------------------------
+FINGERPRINT = "SHA256:" + ":".join(["AB"] * 32)
+
+
+def test_without_a_default_server_no_file_is_written(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("LARIS_DEFAULT_SERVER_URL", raising=False)
+    for platform in assemble.PLATFORMS:
+        _artifact(tmp_path / "artifacts", platform)
+    assemble.main(tmp_path / "artifacts", tmp_path / "out", _front_end(tmp_path))
+    assert not list((tmp_path / "out").rglob("defaults.json"))
+
+
+def test_the_default_server_is_written_beside_every_program(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LARIS_DEFAULT_SERVER_URL", "https://laris.example.com/")
+    monkeypatch.setenv("LARIS_DEFAULT_SERVER_CA_FINGERPRINT", FINGERPRINT)
+    for platform in assemble.PLATFORMS:
+        _artifact(tmp_path / "artifacts", platform)
+    assemble.main(tmp_path / "artifacts", tmp_path / "out", _front_end(tmp_path))
+    for platform in assemble.PLATFORMS:
+        pkg = tmp_path / "out" / platform
+        data = json.loads((pkg / "defaults.json").read_text(encoding="utf-8"))
+        assert data == {
+            "server": {"url": "https://laris.example.com", "caFingerprint": FINGERPRINT}
+        }
+        assert "defaults.json" in json.loads((pkg / "package.json").read_text())["files"]
+        assert (pkg / "laris").is_dir()  # the engine reads <package>/defaults.json beside laris/
+    assert not (tmp_path / "out" / "launcher" / "defaults.json").exists()
+
+
+@pytest.mark.parametrize(
+    "url,fingerprint",
+    [("http://laris.example.com", ""), ("https://ok.example", "SHA256:AB"), ("laris", "")],
+)
+def test_a_bad_default_stops_the_release(url: str, fingerprint: str) -> None:
+    env = {"LARIS_DEFAULT_SERVER_URL": url, "LARIS_DEFAULT_SERVER_CA_FINGERPRINT": fingerprint}
+    with pytest.raises(SystemExit):
+        assemble.packaged_defaults(env)

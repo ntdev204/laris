@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 from cli import credentials
 from cli.common import load_runtime
 from laris.client.engine.commands import PROJECT_TEMPLATE
-from laris.shared.config import settings
 from laris.shared.harness import trust
 from laris.shared.harness.prefs import UserPrefs
 
@@ -19,10 +18,13 @@ GLOBAL_DIR = Path("~/.laris")
 
 def _set_server(url: str) -> Path:
     """Record the model server in the user's global `~/.laris/settings.json` (`base_url`)."""
+    from laris.shared.config.settings import server_address
+
+    url = server_address(url)  # a bare host name gets https:// and the API prefix /v1
     if not url.startswith(("http://", "https://")):
         raise ValueError("server address must start with http:// or https://")
     path = GLOBAL_DIR.expanduser() / "settings.json"
-    UserPrefs(path).update({"base_url": url.rstrip("/")})  # validated, written as server.url
+    UserPrefs(path).update({"base_url": url})  # validated, written as server.url
     return path
 
 
@@ -44,42 +46,38 @@ def _show_account(key: str) -> None:
 
 
 def _ensure_trust(url: str, expected: str, ca_file: str) -> int:
-    """For an https server whose certificate is not trusted: show its fingerprint and, with the
-    user's confirmation (or a matching --trust-fingerprint), pin it. 0 = fine, 2 = refused."""
+    """For an https server whose certificate is not trusted: pin the authority it publishes (or
+    its own certificate) when the fingerprint is vouched for by `--trust-fingerprint`, the package
+    (D24) or the user's confirmation. 0 = fine, 2 = refused."""
+    from laris.shared.config import packaged
+
+    home = GLOBAL_DIR.expanduser()
+    vouched = expected or (packaged.ca_fingerprint() if url == packaged.server_url() else "")
+    decision = trust.decide(url, ca_file, expected=vouched, home=home)
+    if decision.status in ("trusted", "unreachable"):
+        return 0
     parsed = urlparse(url)
-    if parsed.scheme != "https" or not parsed.hostname:
-        return 0
-    host, port = parsed.hostname, parsed.port or 443
-    if trust.is_trusted(host, port, ca_file):
-        return 0
-    try:
-        pem = trust.fetch_certificate(host, port)
-    except OSError:
-        return 0
-    found = trust.fingerprint_pem(pem)
-    print(f"Máy chủ {host}:{port} dùng chứng chỉ mà máy bạn chưa tin cậy.")
-    print(f"Dấu vân tay (SHA-256): {found}")
-    if expected:
-        if trust.normalise(expected) != found:
-            print("Dấu vân tay KHÔNG khớp với giá trị bạn đưa ra. Không tin cậy; dừng lại.")
-            return 2
-    else:
+    what = "tổ chức cấp chứng chỉ (CA)" if decision.kind == "authority" else "chứng chỉ"
+    if decision.status == "unknown":
+        print(
+            f"Máy chủ {parsed.hostname}:{parsed.port or 443} dùng {what} mà máy bạn chưa tin cậy."
+        )
+        print(f"Dấu vân tay (SHA-256): {decision.fingerprint}")
         print("Hãy so sánh với dấu vân tay chủ máy chủ đã công bố (qua một kênh khác).")
         if not sys.stdin.isatty() or input("Tin cậy chứng chỉ này? [y/N] ").strip().lower() != "y":
             print(
                 "Không tin cậy. Chạy lại với --trust-fingerprint SHA256:... hoặc dùng CA công khai."
             )
             return 2
-    path = trust.save(pem, host, port)
-    path_in_settings = GLOBAL_DIR.expanduser() / "settings.json"
-    pinned = settings.set_path(
-        settings.read_raw(path_in_settings),
-        "server.caFingerprint",
-        settings.fingerprint_of_file(path),
-    )
-    settings.write(path_in_settings, pinned)
-    trust.install(str(path))
-    print(f"Đã ghi nhớ chứng chỉ (chỉ cho máy chủ này) tại {path}")
+        decision = trust.decide(url, ca_file, accept=decision.fingerprint, home=home)
+    if decision.status == "mismatch":
+        print(f"Dấu vân tay máy chủ đưa ra: {decision.fingerprint}")
+        print("Dấu vân tay KHÔNG khớp với giá trị được công bố. Không tin cậy; dừng lại.")
+        return 2
+    if decision.status != "pinned":
+        print("Không xác minh được chứng chỉ của máy chủ. Không tin cậy; dừng lại.")
+        return 2
+    print(f"Đã ghi nhớ {what} (chỉ cho máy chủ này) tại {decision.path}")
     return 0
 
 
@@ -106,8 +104,8 @@ class _Login:
         url = runtime.config.model_api.base_url
         if not url:
             print(
-                "[ERROR] no server address is set. Run `laris config set server.url ADDRESS` "
-                "(or `laris login --server ADDRESS`), then `laris login` again."
+                "[ERROR] this build has no default server and none is set. Run `laris`, which asks "
+                "for it, or `laris config set server.url ADDRESS`."
             )
             return 2
         if _ensure_trust(url, args.trust_fingerprint, runtime.config.model_api.ca_file):

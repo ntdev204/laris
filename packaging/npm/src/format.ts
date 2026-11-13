@@ -11,7 +11,23 @@ export function summarise(result: unknown): string {
       return `error ${String(e["code"] ?? "?")}: ${String(e["message"] ?? "").slice(0, 160)}`;
     }
     if (Array.isArray(r["hits"])) return `${r["hits"].length} passages`;
+    if (typeof r["total_lines"] === "number") {
+      const from = Number(r["start"] ?? 1), to = Number(r["end"] ?? r["total_lines"]);
+      const part = to - from + 1 < r["total_lines"] ? ` (${from}-${to} of ${r["total_lines"]})` : "";
+      return `Read ${to - from + 1} lines${part}`;
+    }
     if (typeof r["text"] === "string") return `${String(r["total_chars"] ?? r["text"].length)} chars`;
+    if (typeof r["bytes"] === "number") return `${r["created"] ? "Created" : "Wrote"} ${String(r["path"] ?? "")} (${compactNumber(r["bytes"])} bytes)`;
+    if (typeof r["replacements"] === "number") return `Updated ${String(r["path"] ?? "")} (${r["replacements"]} replacement${r["replacements"] === 1 ? "" : "s"})`;
+    if (Array.isArray(r["files"])) return `${r["files"].length} files${r["truncated"] ? " (more not shown)" : ""}`;
+    if (Array.isArray(r["matches"])) return `${r["matches"].length} matches${r["truncated"] ? " (more not shown)" : ""}`;
+    if ("exit_code" in r || "timed_out" in r) {
+      const lines = String(r["output"] ?? "").replace(/\n$/, "").split("\n");
+      const first = (lines[0] ?? "").slice(0, 120);
+      const more = lines.length > 1 ? ` … +${lines.length - 1} lines` : "";
+      const end = r["timed_out"] ? "timed out" : r["exit_code"] === 0 ? "" : `exit ${String(r["exit_code"])}`;
+      return [first + more, end].filter(Boolean).join(" · ") || "(no output)";
+    }
   }
   const text = JSON.stringify(result) ?? "";
   return text.slice(0, 160);
@@ -57,4 +73,47 @@ export function diffKind(line: string): DiffKind {
   if (line.startsWith("+")) return "add";
   if (line.startsWith("-")) return "del";
   return "context";
+}
+
+const PATH_TOOLS = new Set(["Read", "Write", "Edit", "read_file", "write_file"]);
+
+/** `Name(detail)` the way a person reads a tool call: the file, the command, the pattern. */
+export function toolTitle(name: string, args: Record<string, unknown>, max = 90): { name: string; detail: string } {
+  const text = (key: string): string => (typeof args[key] === "string" ? (args[key] as string) : "");
+  let detail = "";
+  if (PATH_TOOLS.has(name)) detail = text("file_path") || text("path");
+  else if (name === "Bash") detail = text("command");
+  else if (name === "Grep" || name === "Glob") detail = [text("pattern"), text("path")].filter(Boolean).join(" in ");
+  else detail = text("query") || text("task") || text("name");
+  if (!detail) {
+    const json = JSON.stringify(args) ?? "";
+    detail = json === "{}" ? "" : json;
+  }
+  detail = detail.replace(/\s+/g, " ");
+  return { name, detail: detail.length > max ? detail.slice(0, max - 1) + "…" : detail };
+}
+
+/** A human title for a permission dialog. */
+export function permissionTitle(tool: string): string {
+  if (tool === "Bash") return "Bash command";
+  if (tool === "Write" || tool === "write_file") return "Write file";
+  if (tool === "Edit") return "Edit file";
+  if (tool === "Read" || tool === "read_file") return "Read file";
+  return "Tool use";
+}
+
+/** `/home/me/work/x` as `~/work/x`; long paths keep their end. */
+export function shortPath(path: string, home: string, max = 44): string {
+  let out = home && (path === home || path.startsWith(home + "/") || path.startsWith(home + "\\")) ? "~" + path.slice(home.length) : path;
+  if (out.length > max) out = "…" + out.slice(out.length - max + 1);
+  return out;
+}
+
+/** The host of a server address (`https://laris.example.com/v1` -> `laris.example.com`). */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
 }

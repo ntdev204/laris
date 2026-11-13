@@ -106,6 +106,35 @@
         "title": "Interrupt",
         "type": "object"
       },
+      "Login": {
+        "additionalProperties": false,
+        "description": "The answer to `login_required`: any of a server address, a confirmation of the shown\ncertificate fingerprint, and the API key (never echoed back in any event).",
+        "properties": {
+          "key": {
+            "default": "",
+            "title": "Key",
+            "type": "string"
+          },
+          "server": {
+            "default": "",
+            "title": "Server",
+            "type": "string"
+          },
+          "trust": {
+            "default": false,
+            "title": "Trust",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "login",
+            "default": "login",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "Login",
+        "type": "object"
+      },
       "PermissionResponse": {
         "additionalProperties": false,
         "properties": {
@@ -221,6 +250,9 @@
       }
     },
     "anyOf": [
+      {
+        "$ref": "#/$defs/Login"
+      },
       {
         "$ref": "#/$defs/UserMessage"
       },
@@ -414,6 +446,50 @@
           "complete"
         ],
         "title": "Goal",
+        "type": "object"
+      },
+      "LoginRequired": {
+        "additionalProperties": false,
+        "description": "Sent before `ready` when the session cannot start yet. `reason` says what is missing;\n`fingerprint` is the SHA-256 a person compares for `untrusted_certificate`.",
+        "properties": {
+          "fingerprint": {
+            "default": "",
+            "title": "Fingerprint",
+            "type": "string"
+          },
+          "message": {
+            "default": "",
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "no_server",
+              "untrusted_certificate",
+              "certificate_mismatch",
+              "no_key",
+              "rejected",
+              "invalid"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "server": {
+            "default": "",
+            "title": "Server",
+            "type": "string"
+          },
+          "type": {
+            "const": "login_required",
+            "default": "login_required",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "LoginRequired",
         "type": "object"
       },
       "PermissionRequest": {
@@ -675,6 +751,9 @@
       }
     },
     "anyOf": [
+      {
+        "$ref": "#/$defs/LoginRequired"
+      },
       {
         "$ref": "#/$defs/Ready"
       },

@@ -4,6 +4,9 @@
 # hundred half-open connections would hold every socket. `read_body` also bounds the TLS handshake.
 # No write timeout: it would cut a long server-sent-events answer.
 {
+	# a client that connects to an IP address (a private network such as Tailscale) sends no server
+	# name; serve the certificate of the configured domain to it instead of failing the handshake
+	default_sni {$LARIS_DOMAIN:localhost}
 	servers {
 		timeouts {
 			read_body 30s
@@ -19,6 +22,16 @@
 	# the server enforces its own limit as well; this stops oversize bodies at the edge
 	request_body {
 		max_size 32MB
+	}
+
+	# The certificate of Caddy's own authority (the public half only; the rewrite names one file, so
+	# the keys beside it can never be served). A client pins this instead of the server certificate,
+	# which is renewed every few hours. With a public certificate the file does not exist: 404.
+	@authority path /.well-known/laris/ca.crt
+	handle @authority {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		file_server
 	}
 
 	reverse_proxy api:8000 {

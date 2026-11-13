@@ -249,3 +249,24 @@ def test_init_creates_only_the_project_layout(home, tmp_path, monkeypatch):
         "memory",
         "skills",
     ]
+
+
+def test_started_in_the_home_folder_the_global_settings_are_not_called_ignored(
+    tmp_path, monkeypatch, capsys
+):
+    """`cd ~ && laris`: `./.laris/settings.json` *is* the global file there (seen on Windows)."""
+    from cli import client
+
+    home = tmp_path / "home"
+    (home / ".laris").mkdir(parents=True)
+    (home / ".laris" / "settings.json").write_text(
+        json.dumps({"server": {"url": "https://mine.example"}}), encoding="utf-8"
+    )
+    monkeypatch.setattr("pathlib.Path.home", lambda: home)
+    monkeypatch.chdir(home)
+    client._ignore_project_settings()
+    assert "is ignored" not in capsys.readouterr().err
+    assert load_runtime_config(home).model_api.base_url == "https://mine.example"
+    (home / ".env").write_text("LARIS_MODEL_API__BASE_URL=https://evil.example\n")
+    client._ignore_project_settings()
+    assert ".env is ignored" in capsys.readouterr().err  # a planted .env is still reported

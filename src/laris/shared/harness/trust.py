@@ -1,20 +1,29 @@
 """Trusting a server whose certificate no public authority signed (a private or self-signed one).
 
 The client verifies every server certificate. A server run by its owner usually has a private
-certificate, so `laris login` can show the certificate's SHA-256 fingerprint and, when the user
-confirms it matches the one the owner published, keep that certificate as trusted for this server
-only (trust on first use, pinned). Nothing is trusted silently, and the fingerprint is the only
-thing a person has to compare.
+certificate authority, so the client can show a SHA-256 fingerprint and, when it matches the one
+the owner published (typed by the user, confirmed by the user, or packaged with the program, D24),
+keep that certificate as trusted for this server only (pinned). Nothing is trusted silently.
+
+What is pinned matters. A reverse proxy with its own authority (Caddy) renews the server's own
+certificate every few hours, so pinning that one stops working at the next renewal. The server
+therefore publishes its *authority* at `CA_PATH`; the client prefers it and falls back to the
+server's own certificate only for a server that publishes none (a self-signed one).
 """
 
 import hashlib
+import http.client
 import socket
 import ssl
 import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
+from urllib.parse import urlparse
 
 TRUST_DIR = "~/.laris/trusted"
+CA_PATH = "/.well-known/laris/ca.crt"  # where a server publishes its private authority
+CA_MAX_BYTES = 65536
 _installed: Optional[str] = None
 # The pinned file may hold a server's own (leaf) certificate, as when the owner's reverse proxy
 # issues one from a private CA. A certificate in the trust store is then enough to anchor the
@@ -87,3 +96,120 @@ def reset() -> None:
     global _installed
     urllib.request._opener = None  # type: ignore[attr-defined]
     _installed = None
+
+
+# -- deciding whom to trust ----------------------------------------------------------------------
+@dataclass
+class Candidate:
+    """A certificate that could be pinned for a server, with the fingerprint a person compares."""
+
+    pem: str
+    fingerprint: str
+    kind: str  # "authority" (published at CA_PATH) or "certificate" (the server's own)
+
+
+@dataclass
+class Decision:
+    """`trusted`: nothing to do. `pinned`: a certificate was verified and kept. `unknown`: a person
+    has to compare `fingerprint`. `mismatch`: the expected fingerprint names none of the server's
+    certificates. `unreachable`: the server did not answer."""
+
+    status: str
+    fingerprint: str = ""
+    kind: str = ""
+    path: Optional[Path] = None
+
+
+def fetch_authority(host: str, port: int, timeout: float = 5.0) -> Optional[str]:
+    """The authority certificate the server publishes at `CA_PATH`, or None. It is read without
+    verification on purpose: it is only compared by fingerprint, never trusted as it arrives."""
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    connection = http.client.HTTPSConnection(host, port, timeout=timeout, context=context)
+    try:
+        connection.request("GET", CA_PATH, headers={"Accept": "application/x-pem-file"})
+        response = connection.getresponse()
+        if response.status != 200:
+            return None
+        body = response.read(CA_MAX_BYTES + 1)
+    except (OSError, http.client.HTTPException):
+        return None
+    finally:
+        connection.close()
+    if len(body) > CA_MAX_BYTES:
+        return None
+    text = body.decode("ascii", errors="replace")
+    start, end = text.find("-----BEGIN CERTIFICATE-----"), text.find("-----END CERTIFICATE-----")
+    if start < 0 or end < start:
+        return None
+    pem = text[start : end + len("-----END CERTIFICATE-----")] + "\n"
+    try:
+        ssl.PEM_cert_to_DER_cert(pem)
+    except ValueError:
+        return None
+    return pem
+
+
+def candidates(host: str, port: int, timeout: float = 5.0) -> List[Candidate]:
+    """What could be pinned, best first: the published authority, then the server's certificate."""
+    found: List[Candidate] = []
+    authority = fetch_authority(host, port, timeout)
+    if authority:
+        found.append(Candidate(authority, fingerprint_pem(authority), "authority"))
+    try:
+        own = fetch_certificate(host, port, timeout)
+        found.append(Candidate(own, fingerprint_pem(own), "certificate"))
+    except (OSError, ValueError):
+        pass
+    return found
+
+
+def _record(path: Path, settings_file: Path) -> None:
+    from laris.shared.config import settings
+
+    pinned = settings.set_path(
+        settings.read_raw(settings_file), "server.caFingerprint", settings.fingerprint_of_file(path)
+    )
+    settings.write(settings_file, pinned)
+
+
+def decide(
+    url: str,
+    ca_file: str = "",
+    expected: str = "",
+    accept: str = "",
+    home: Optional[Path] = None,
+    timeout: float = 5.0,
+) -> Decision:
+    """Make the server at `url` verifiable, pinning a certificate when one is vouched for.
+
+    `expected` is a fingerprint from a trusted source (the package, a flag): the candidate that
+    carries it is pinned without a question. `accept` is the fingerprint a person just confirmed.
+    A pinned certificate is kept only if a verified handshake then succeeds, so a published
+    "authority" that did not sign the server's certificate is never kept.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.hostname:
+        return Decision("trusted")
+    host, port = parsed.hostname, parsed.port or 443
+    if is_trusted(host, port, ca_file, timeout):
+        return Decision("trusted")
+    found = candidates(host, port, timeout)
+    if not found:
+        return Decision("unreachable")
+    base = Path(home) if home else Path("~/.laris").expanduser()
+    wanted = {normalise(v) for v in (expected, accept) if v}
+    for candidate in found:
+        if candidate.fingerprint not in wanted:
+            continue
+        path = save(candidate.pem, host, port, str(base / "trusted"))
+        if is_trusted(host, port, str(path), timeout):
+            _record(path, base / "settings.json")
+            reset()  # the same file name may hold a new certificate
+            install(str(path))
+            return Decision("pinned", candidate.fingerprint, candidate.kind, path)
+        path.unlink(missing_ok=True)
+    if wanted:
+        return Decision("mismatch", found[0].fingerprint, found[0].kind)
+    return Decision("unknown", found[0].fingerprint, found[0].kind)

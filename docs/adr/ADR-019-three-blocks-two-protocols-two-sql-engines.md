@@ -108,6 +108,23 @@ the client embeds locally through `laris.model.inference` until T58.
 - **`laris app ask` was removed.** It was unreachable (in no command table) and extractive answers need a QA
   model that the client does not hold (D16); `laris app search` returns the passages.
 
+## 2d. Zero-configuration start (2026-11-13, owner instruction; tasks T86 to T88)
+
+The owner wants users to install the package and type `laris`. Three decisions amend D21:
+
+- **D24 Packaged default server.** The server address (and, for a private server, the certificate fingerprint) is
+  written into the per-platform npm package at build time from a repository variable; it is not in the source tree.
+  Precedence: `LARIS_*` environment, then `~/.laris/settings.json`, then the packaged default. A build without a
+  default asks for `server.url`. This keeps the rule "no endpoint hardcoded: configuration and environment only".
+- **D25 First run inside the interface.** `laris` opens the interface; without a key, or when the server refuses
+  it, the engine emits `login_required` and the front end shows a key form. `laris login` stays optional and
+  `--server` stays as an override.
+- **D26 Interface like Claude Code.** Banner, bordered input box, tool and diff blocks, status line, footer hints
+  and the login and permission screens follow the Claude Code layout; visuals only, no logic in the front end (D22).
+
+For the trial the default is the Tailscale address of the owner's server; a real domain with a public
+certificate replaces it for general users (the certificate then needs no pinning).
+
 ## 3. Consequences
 
 - Package paths change in Phase 10 (T50) without behaviour change; the full no-training suite must give

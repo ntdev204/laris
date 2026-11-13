@@ -1,9 +1,10 @@
-import { Box, Text, useInput, usePaste } from "ink";
+import { Box, Text, useInput, usePaste, useWindowSize } from "ink";
 import { useEffect, useRef, useState } from "react";
 import * as ed from "../input/editor.js";
 import { applyCompletion, currentTrigger } from "../input/completion.js";
 import { History } from "../input/history.js";
 import type { CompletionItem } from "../protocol.js";
+import { glyph, theme } from "../theme.js";
 
 const PASTE_LINES = 6;
 const PASTE_CHARS = 1000;
@@ -23,7 +24,15 @@ export interface PromptProps {
   onExit: () => void;
   /** a key other than Ctrl+C was pressed: the exit warning is over */
   onOtherKey: () => void;
+  /** terminal width (tests); the real one otherwise */
+  columns?: number;
 }
+
+const SHORTCUTS: string[][] = [
+  ["! for shell mode", "/ for commands", "shift+tab to cycle modes"],
+  ["# to save a note", "@ for file paths", "esc to interrupt"],
+  ["\\⏎ or shift+⏎ for a new line", "ctrl+r to search history", "ctrl+c twice to exit"],
+];
 
 export function Prompt(p: PromptProps) {
   const [buffer, setBuffer] = useState<ed.Buffer>(ed.empty());
@@ -32,6 +41,9 @@ export function Prompt(p: PromptProps) {
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [search, setSearch] = useState<{ query: string; at: number } | null>(null);
   const pastes = useRef(new Map<number, string>());
+  const [help, setHelp] = useState(false);
+  const size = useWindowSize();
+  const columns = Math.max(20, p.columns ?? size.columns ?? 80);
 
   // Ask the engine for completions whenever the word under the cursor changes.
   useEffect(() => {
@@ -76,6 +88,8 @@ export function Prompt(p: PromptProps) {
 
   useInput((input, key) => {
     if (!(key.ctrl && input === "c")) p.onOtherKey();
+    if (input === "?" && !buffer.text && !search && !key.ctrl && !key.meta) return setHelp((shown) => !shown);
+    if (help) setHelp(false);
 
     if (search) {
       if (key.escape || (key.ctrl && input === "c")) return setSearch(null);
@@ -160,46 +174,69 @@ export function Prompt(p: PromptProps) {
     setBuffer(ed.insert(buffer, input.replace(/\r\n?/g, "\n")));
   }, { isActive: p.active });
 
+  if (!p.active) return null; // a dialog has the screen; the draft is kept for when it closes
+  const rule = "─".repeat(columns);
   if (search) {
     const match = search.at >= 0 ? p.history.all()[search.at] : undefined;
     return (
       <Box flexDirection="column">
-        <Text color="cyan">(history search) <Text bold>{search.query}</Text>{match === undefined && search.query ? <Text color="red"> no match</Text> : null}</Text>
-        <Text dimColor>{match ?? ""}</Text>
-        <Text dimColor>Enter uses it · Ctrl+R older · Esc cancels</Text>
+        <Text dimColor>{rule}</Text>
+        <Text><Text color={theme.accent}>search history: </Text><Text bold>{search.query}</Text>{match === undefined && search.query ? <Text color={theme.error}> no match</Text> : null}</Text>
+        <Text dimColor>{match ?? " "}</Text>
+        <Text dimColor>{rule}</Text>
+        <Text dimColor>  Enter uses it · Ctrl+R older · Esc cancels</Text>
       </Box>
     );
   }
 
   const lines = buffer.text.split("\n");
   const at = ed.position(buffer);
+  // `!` runs a shell command and `#` saves a note: the prompt says which one this line is
+  const kind = buffer.text.startsWith("!") ? "shell" : buffer.text.startsWith("#") ? "note" : "chat";
+  const tint = kind === "shell" ? theme.bash : kind === "note" ? theme.note : undefined;
+  const mark = kind === "shell" ? "!" : kind === "note" ? "#" : ">";
+  const placeholder = p.busy ? "Type the next message; it is sent when this turn ends" : 'Try "summarise the documents in this folder"';
+  const widest = items.reduce((n, item) => Math.max(n, item.value.replace(/^[/@]/, "").length), 0);
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={p.busy ? "gray" : "cyan"} paddingX={1} flexDirection="column">
-        {lines.map((line, row) => (
-          <Text key={row}>
-            <Text color="cyan">{row === 0 ? "> " : "  "}</Text>
-            {row === at.row ? (
-              <>
-                {line.slice(0, at.column)}
-                <Text inverse>{line[at.column] ?? " "}</Text>
-                {line.slice(at.column + 1)}
-              </>
-            ) : (
-              line
-            )}
-          </Text>
-        ))}
-        {!buffer.text ? <Text dimColor>  Type a task · / commands · @ files · Enter sends · \ + Enter new line{p.busy ? " · typed messages are queued" : ""}</Text> : null}
-      </Box>
+      <Text color={tint} dimColor={!tint}>{rule}</Text>
+      {lines.map((line, row) => (
+        <Text key={row}>
+          <Text color={tint} dimColor={!tint}>{row === 0 ? `${mark} ` : "  "}</Text>
+          {row === at.row ? (
+            <>
+              {line.slice(0, at.column)}
+              <Text inverse>{line[at.column] ?? " "}</Text>
+              {line.slice(at.column + 1)}
+              {!buffer.text ? <Text dimColor>{placeholder}</Text> : null}
+            </>
+          ) : (
+            line
+          )}
+        </Text>
+      ))}
+      <Text color={tint} dimColor={!tint}>{rule}</Text>
+      {kind !== "chat" ? <Text color={tint}>  {kind === "shell" ? "! shell mode: the command runs in this folder" : "# note mode: the line is saved to memory"}</Text> : null}
       {items.length > 0 ? (
         <Box flexDirection="column" paddingLeft={2}>
-          {items.map((item, n) => (
-            <Text key={item.value} color={n === selected ? "cyan" : undefined}>
-              {n === selected ? "❯ " : "  "}{trigger?.trigger}{item.value.replace(/^[/@]/, "")}{item.description ? <Text dimColor>  {item.description}</Text> : null}
-            </Text>
+          {items.map((item, n) => {
+            const name = item.value.replace(/^[/@]/, "");
+            return (
+              <Text key={item.value} color={n === selected ? theme.accent : undefined}>
+                {n === selected ? `${glyph.pointer} ` : "  "}{trigger?.trigger}{name}{item.description ? <Text dimColor>{" ".repeat(widest - name.length + 3)}{item.description}</Text> : null}
+              </Text>
+            );
+          })}
+          <Text dimColor>  Tab inserts · ↑↓ choose · Esc closes</Text>
+        </Box>
+      ) : null}
+      {help && items.length === 0 ? (
+        <Box flexDirection="column" paddingLeft={2}>
+          {SHORTCUTS.map((row, n) => (
+            <Box key={n}>
+              {row.map((cell) => <Box key={cell} width={Math.max(24, Math.floor((columns - 4) / 3))}><Text dimColor>{cell}</Text></Box>)}
+            </Box>
           ))}
-          <Text dimColor>Tab inserts · ↑↓ choose · Esc closes</Text>
         </Box>
       ) : null}
     </Box>

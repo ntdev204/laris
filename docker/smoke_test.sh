@@ -39,15 +39,16 @@ created=$($compose exec -T api laris-server keys create --label smoke --role use
 key=$(printf '%s\n' "$created" | sed -n 's/^API key (shown once, give it to the user): //p')
 [ -n "$key" ] || fail "no key was created"
 
-step "the certificate Caddy serves"
+step "the certificate authority Caddy publishes"
+# the authority, not the server certificate: Caddy renews that one every few hours
 fingerprint=""
 n=0
 while [ -z "$fingerprint" ] && [ $n -lt 30 ]; do
-    fingerprint=$(openssl s_client -connect "localhost:$LARIS_HTTPS_PORT" -servername localhost </dev/null 2>/dev/null \
+    fingerprint=$(curl -sk "https://localhost:$LARIS_HTTPS_PORT/.well-known/laris/ca.crt" 2>/dev/null \
         | openssl x509 -noout -fingerprint -sha256 2>/dev/null | sed 's/^.*=//' || true)
     [ -n "$fingerprint" ] || { n=$((n + 1)); sleep 1; }
 done
-[ -n "$fingerprint" ] || fail "no certificate on port $LARIS_HTTPS_PORT"
+[ -n "$fingerprint" ] || fail "no certificate authority on port $LARIS_HTTPS_PORT"
 echo "SHA256:$fingerprint"
 
 step "a clean client: empty folder, fresh home"

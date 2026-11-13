@@ -16,6 +16,9 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from laris.shared.config.packaged import server_address  # noqa: F401  (re-exported)
+from laris.shared.config.packaged import under as packaged_under
+
 HOOK_EVENTS = ("SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop")
 MODES = ("default", "acceptEdits", "plan", "bypass")
 MODE_TO_APPROVAL = {"default": "ask", "acceptEdits": "auto", "plan": "deny", "bypass": "auto"}
@@ -275,6 +278,7 @@ def layer_from(data: Dict[str, Any], home: Optional[Path] = None) -> Dict[str, A
             node = node.setdefault(part, {})
         node[parts[-1]] = value
 
+    data = packaged_under(data)  # the address packaged at build time, beneath the user's (D24)
     server = data.get("server") or {}
     if "url" in server:
         put("model_api.base_url", str(server["url"]).rstrip("/"))
