@@ -44,10 +44,9 @@ export function ItemView({ item }: { item: Item }) {
       );
     case "assistant":
       return (
-        <Box marginTop={1}>
-          <Text>{glyph.bullet} </Text>
-          <Box flexDirection="column" flexGrow={1}><Markdown text={item.text} /></Box>
-        </Box>
+        // no bullet and no gutter: every column of an answer is its own text, so a selection
+        // copies it unchanged (tool lines keep their ● marker)
+        <Box marginTop={1} flexDirection="column"><Markdown text={item.text} /></Box>
       );
     case "tool": {
       const title = toolTitle(item.name, item.arguments);

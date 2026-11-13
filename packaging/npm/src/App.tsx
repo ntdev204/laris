@@ -1,6 +1,8 @@
 import { Box, Static, Text, useApp, useWindowSize } from "ink";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { EngineClient } from "./engine-client.js";
+import { copyText } from "./clipboard.js";
+import { copyTarget } from "./copy.js";
 import { History } from "./input/history.js";
 import { ItemView, PlanView } from "./components/Items.js";
 import { Login } from "./components/Login.js";
@@ -25,13 +27,17 @@ export interface AppProps {
   initialInput?: string | null;
   /** terminal width (tests); the real one otherwise */
   columns?: number;
+  /** how `/copy` reaches the clipboard (tests replace it) */
+  copy?: (text: string) => Promise<"native" | "osc52" | null>;
 }
 
-export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null, columns: fixedColumns }: AppProps) {
+export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null, columns: fixedColumns, copy = copyText }: AppProps) {
   const app = useApp();
   const size = useWindowSize();
   const columns = Math.max(20, fixedColumns ?? size.columns ?? 80);
   const [state, dispatch] = useReducer(reduce, undefined, initialState);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [armed, setArmed] = useState(false);
   const history = useRef(new History());
   const stopping = useRef(false);
@@ -65,6 +71,21 @@ export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null
   const submit = useCallback(
     (text: string) => {
       if (text === "/") return dispatch({ kind: "note", level: "info", text: "Type /help for the list of commands." });
+      if (/^\/copy(\s|$)/.test(text)) {
+        // the clipboard is the terminal's, so this one command never goes to the engine
+        const chosen = copyTarget(stateRef.current.items, text.slice(5));
+        if ("error" in chosen) return dispatch({ kind: "note", level: "warn", text: chosen.error });
+        void copy(chosen.text).then((how) =>
+          dispatch({
+            kind: "note",
+            level: how ? "info" : "warn",
+            text: how
+              ? `Copied ${chosen.what} (${chosen.text.length} characters) as plain text.`
+              : "Could not reach a clipboard here; select the text with the mouse instead.",
+          }),
+        );
+        return;
+      }
       dispatch({ kind: "sent", text });
       if (text.startsWith("/")) {
         const name = text.slice(1).split(/\s+/, 1)[0] ?? "";
@@ -74,7 +95,7 @@ export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null
         client.send({ type: "user_message", text });
       }
     },
-    [client],
+    [client, copy],
   );
 
   const answer = useCallback(

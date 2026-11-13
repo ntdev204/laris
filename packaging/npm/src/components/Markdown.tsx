@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { highlightLine, languageOf, type TokenKind } from "../highlight.js";
 import { parseMarkdown, type Span } from "../markdown.js";
 
+// no `lang` label line either: it would be copied with the code
+const CODE_BG = "#262626";
 const TOKEN_COLOR: Record<TokenKind, string | undefined> = {
   plain: undefined, keyword: "magenta", string: "green", comment: "gray", number: "yellow", literal: "cyan",
 };
@@ -33,16 +35,20 @@ export function Markdown({ text }: { text: string }) {
           case "code": {
             const lang = languageOf(block.lang);
             return (
-              <Box key={i} flexDirection="column" marginTop={i > 0 ? 1 : 0} borderStyle="round" borderColor="gray" paddingX={1}>
-                {block.lang ? <Text dimColor>{block.lang}</Text> : null}
-                {block.lines.map((line, n) => (
-                  <Text key={n}>
-                    {highlightLine(lang, line).map((t, k) => (
-                      <Text key={k} color={TOKEN_COLOR[t.kind]}>{t.text}</Text>
-                    ))}
-                    {line === "" ? " " : ""}
-                  </Text>
-                ))}
+              // No frame, no indent, no padding: a selection copies exactly the code. The block is
+              // told apart by its background, which a copy does not carry.
+              <Box key={i} flexDirection="column" marginTop={i > 0 ? 1 : 0}>
+                {block.lines.map((line, n) =>
+                  line === "" ? (
+                    <Box key={n} height={1} />
+                  ) : (
+                    <Text key={n}>
+                      {highlightLine(lang, line).map((t, k) => (
+                        <Text key={k} color={TOKEN_COLOR[t.kind]} backgroundColor={CODE_BG}>{t.text}</Text>
+                      ))}
+                    </Text>
+                  ),
+                )}
               </Box>
             );
           }
@@ -50,28 +56,27 @@ export function Markdown({ text }: { text: string }) {
             return (
               <Box key={i} flexDirection="column" marginTop={i > 0 ? 1 : 0}>
                 {block.items.map((item, n) => (
-                  <Box key={n} paddingLeft={item.depth * 2}>
-                    <Text>{block.ordered ? `${item.number}. ` : "• "}</Text>
-                    <Text wrap="wrap"><Spans spans={item.spans} /></Text>
-                  </Box>
+                  <Text key={n} wrap="wrap">
+                    {" ".repeat(item.depth * 2)}{block.ordered ? `${item.number}. ` : "- "}<Spans spans={item.spans} />
+                  </Text>
                 ))}
               </Box>
             );
           case "quote":
             return (
               <Box key={i} marginTop={i > 0 ? 1 : 0}>
-                <Text color="gray">▎ </Text>
-                <Text italic color="gray" wrap="wrap"><Spans spans={block.spans} /></Text>
+                <Text italic color="gray" wrap="wrap">{"> "}<Spans spans={block.spans} /></Text>
               </Box>
             );
           case "rule":
-            return <Text key={i} dimColor>────────────────────</Text>;
+            return <Text key={i} dimColor>---</Text>;
           case "table": {
             const widths = block.rows[0]?.map((_, c) => Math.max(...block.rows.map((r) => (r[c] ?? "").length))) ?? [];
             return (
               <Box key={i} flexDirection="column" marginTop={i > 0 ? 1 : 0}>
                 {block.rows.map((row, r) => (
-                  <Text key={r} bold={r === 0}>{row.map((cell, c) => cell.padEnd(widths[c] ?? 0)).join("  ")}</Text>
+                  // pipes at both ends: aligned on screen, valid Markdown when pasted, no trailing blanks
+                  <Text key={r} bold={r === 0}>{"| " + row.map((cell, c) => cell.padEnd(widths[c] ?? 0)).join(" | ") + " |"}</Text>
                 ))}
               </Box>
             );
