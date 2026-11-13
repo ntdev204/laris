@@ -75,6 +75,8 @@ def test_complete_evidence_qualifies_independent_of_baseline_flag(measured, conf
         "negative_fertility",
         "fractional_samples",
         "negative_baseline",
+        "fertility_protocol",
+        "paws_macro_f1_missing",
     ],
 )
 def test_baseline_pass_cannot_hide_missing_or_incompatible_evidence(measured, config, defect):
@@ -94,6 +96,12 @@ def test_baseline_pass_cannot_hide_missing_or_incompatible_evidence(measured, co
         next(r for r in measured["datasets"] if r["dataset"] == "squad")["metric_protocols"][
             "f1"
         ] = "token_span"
+    elif defect == "fertility_protocol":
+        next(r for r in measured["datasets"] if r["dataset"] == "unseen_text")["metric_protocols"][
+            "fertility"
+        ] = "pooled_tokens"
+    elif defect == "paws_macro_f1_missing":
+        next(r for r in measured["datasets"] if r["dataset"] == "paws")["metrics"].pop("macro_f1")
     elif defect == "duplicate":
         measured["datasets"].append(copy.deepcopy(measured["datasets"][0]))
     elif defect == "empty_samples":
