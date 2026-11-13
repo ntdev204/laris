@@ -66,7 +66,11 @@ returned logs, manifests and reports.
   - Evaluator and readiness support for every missing protocol (PAWS macro F1, normalized-answer QA, unseen-text fertility)
 - Validation:
   - Readiness tests with seeded faulty reports (missing metric, validation-only, mixed checkpoints) reject them
-- Status: pending
+- Status: done
+- Note: Audit in `reports/verification/T95-stage1-gate-audit.md`. No gate has held-out encoder evidence; G10 (1.420) and
+  G11 (1.363) are the only test-split measurements and both fail 1.35 (tokenizer R1, T97). The three named protocols
+  (PAWS macro F1, normalized-answer QA, unseen-text fertility) already had evaluator support; the gap is measurement,
+  so only two readiness regression cases were added. Foundation model remains NOT QUALIFIED. Merged into `laris-v2`.
 
 ### T96 — Frozen data corrections and corpus review
 - Requirements: SR-M4
