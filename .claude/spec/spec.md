@@ -150,21 +150,21 @@ changes in the ADR named in the task.
 | ID | Decision | Choice | Status |
 |---|---|---|---|
 | D27 | Languages | Rust for everything except the model block, which stays Python; no C++ | decided |
-| D28 | Where the loop runs | The system runs on the user's machine like codex and Claude Code; the server is a gateway and runs no agent loop. The server ladder is reached by server and system together | decided; the owner confirms after the 2026-11-13 ladder wording (T120) |
+| D28 | Where the loop runs | The system runs on the user's machine like codex and Claude Code; the server is a gateway and runs no agent loop. The server ladder is reached by server and system together | decided; confirmed by the owner 2026-11-13 against the ladder wording (ADR-021) |
 | D29 | Technology mastery | All logic written in-house on proven base crates, vendored (`cargo vendor`) and checked by `cargo-deny` | decided |
 | D30 | Sandbox | Forked from codex (Apache-2.0, `aa5f492`): OS mechanisms only, licence, notice and origin kept in `THIRD_PARTY.md` | decided |
 | D31 | Layout | Cargo workspace at the root; Python model block under `src/laris/` | decided |
 | D32 | Ownership | One owner per requirement (section 3) | decided |
 | D33 | Programme order | Model first; system and server in the owner's waiting time; client after the model; brain last (section 2) | decided |
 | D34 | Install | One static binary per platform, one-line install, npm as a thin wrapper | decided |
-| D35 | Wire compatibility | P1 and P2 keep the generation-1 wire format; additions versioned by `X-Laris-Protocol` | proposed (T120) |
-| D36 | Process model | Interface and core in one process; core events serialisable for headless mode and a later daemon | proposed (T120) |
-| D37 | Direct mode | None | proposed (T120) |
-| D38 | Core design | Event-sourced core with a decider seam, so programme 3 replaces the decider, not the core | proposed (T120) |
-| D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | proposed (T120) |
-| D40 | Learning data | Derived on the client from the event log; never sent; outside Git | proposed (T120) |
-| D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | proposed (T120) |
-| D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 3.0.0 | proposed (T120) |
+| D35 | Wire compatibility | P1 and P2 keep the generation-1 wire format; additions versioned by `X-Laris-Protocol` | confirmed 2026-11-13 (ADR-021) |
+| D36 | Process model | Interface and core in one process; core events serialisable for headless mode and a later daemon | confirmed 2026-11-13 (ADR-021) |
+| D37 | Direct mode | None | confirmed 2026-11-13 (ADR-021) |
+| D38 | Core design | Event-sourced core with a decider seam, so programme 3 replaces the decider, not the core | confirmed 2026-11-13 (ADR-021) |
+| D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | confirmed 2026-11-13 (ADR-021) |
+| D40 | Learning data | Derived on the client from the event log; never sent; outside Git | confirmed 2026-11-13 (ADR-021) |
+| D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | confirmed 2026-11-13 (ADR-021) |
+| D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 3.0.0 | confirmed 2026-11-13 (ADR-021) |
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
