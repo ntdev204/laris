@@ -38,6 +38,7 @@ On `laris-v2` only the principle ADRs remain; the decisions about the Python gen
 | [ADR-007](ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
 | [ADR-008](ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
 | [ADR-020](ADR-020-researchllm.md) | What ResearchLLM is: stages, stage-6 advisor options, gates | ACCEPTED (owner-delegated 2026-11-13; thresholds provisional) | — | Model block |
+| [ADR-021](ADR-021-rust-generation.md) | Rust generation: system, server, client; decisions D27-D43 | PROPOSED (awaiting owner, T120) | — | System, server, client |
 
 ## Freeze Register
 
