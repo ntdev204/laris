@@ -41,12 +41,4 @@ def run(table: Table, prog: str, argv: Optional[Sequence[str]], interactive: boo
         items = interactive_default(items)
     args = build_parser_for(table, prog).parse_args(items)
     handler: Handler = args.handler
-    from cli.credentials import CredentialError
-    from laris.shared.harness.integrity import IntegrityError
-    from laris.shared.policy.prompts import PromptError
-
-    try:
-        return handler(args)
-    except (IntegrityError, PromptError, CredentialError) as exc:  # reported, not traced
-        print(f"[ERROR] {exc}")
-        return 2
+    return handler(args)

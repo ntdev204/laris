@@ -1,5 +1,6 @@
 """`laris-model`: the model block. `laris-model serve` runs the model service (protocol P2);
-`laris-model infer ...` runs single-example predictions on a checkpoint.
+`laris-model infer ...` runs single-example predictions on a checkpoint; `data`, `train` and
+`evaluate` are the owner-only research tooling (moved from `laris-server` on `laris-v2`).
 
 Host, port, backend and checkpoint come from the `model_service` configuration; flags override it.
 """
@@ -9,10 +10,36 @@ import sys
 from pathlib import Path
 from typing import Optional, Sequence
 
-from cli.commands import infer
+from cli.commands import (
+    calibrate,
+    check,
+    evaluate,
+    infer,
+    language_encoder,
+    partition,
+    readiness,
+    suite,
+    tokenizer,
+)
 from cli.parser import Table, run
+from laris.research.corpus.acquisition import runner as acquisition
 
 COMMANDS: Table = {
+    "data": {
+        "acquire": ("Download and verify datasets", acquisition),
+        "partition": ("Physically partition raw datasets (zero training)", partition),
+        "check": ("Verify processed data and tooling before training", check),
+    },
+    "train": {
+        "tokenizer": ("Fit the SentencePiece tokenizer", tokenizer),
+        "language-encoder": ("Train or profile the language encoder", language_encoder),
+    },
+    "evaluate": {
+        "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
+        "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
+        "calibrate": ("Tighten thresholds from measured val reports", calibrate),
+        "suite": ("Model-free suites (retrieval, citation, extraction, leak, ...)", suite),
+    },
     "infer": {name: (f"Run {name} on a checkpoint", cmd) for name, cmd in infer.COMMANDS.items()},
 }
 

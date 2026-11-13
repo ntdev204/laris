@@ -9,16 +9,6 @@ REPO = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(autouse=True)
-def _fresh_url_opener():
-    """No test may inherit (or leave behind) a process-wide pinned-certificate opener."""
-    from laris.shared.harness import trust
-
-    trust.reset()
-    yield
-    trust.reset()
-
-
-@pytest.fixture(autouse=True)
 def _project_config_enabled():
     """`laris` switches project configuration off for its process; a test must not inherit that."""
     from laris.shared.config.loader import ignore_project_config

@@ -68,8 +68,6 @@ training = [
 ]
 
 [project.scripts]
-laris = "cli.client:main"
-laris-server = "cli.server:main"
 laris-model = "cli.model:main"
 
 [tool.setuptools.packages.find]
