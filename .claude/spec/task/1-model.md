@@ -134,7 +134,14 @@ returned logs, manifests and reports.
   - Intake check of returned logs, checkpoints and manifests; validation analysis per gate
 - Validation:
   - Logs and manifests match; validation results reported per gate; the owner decides on another round or held-out evaluation
-- Status: pending
+- Status: blocked
+- Note: Prepared 2026-11-13, nothing executed: runbook section 7 of `docs/training/OWNER_RUNBOOK.md` (round plan R2 = retrieval-contrastive
+  stage from `foundation-r1-run1`, proposed budget about 2.5 h GPU and two runs, stop rules, decision gate on SciFact dev);
+  `scripts/training_intake.py` (read-only intake, passes on `foundation-r1-run1`, six unit tests);
+  `scripts/score_vi_stem_gold.py` (inference-only scorer for the T98 gold; dev only until T100). Findings: dense retrieval of
+  R1 is at chance (SciFact dev MRR 0.0067 against BM25 0.636; Vietnamese gold dev 0.115 against 0.989), and BM25 at 0.989 means
+  the Vietnamese gold cannot show dense above BM25. Waiting for the owner to approve the budget and run steps 0-6; then the
+  agent runs the intake and writes the per-gate analysis. Report `reports/verification/T99-runbook-and-intake.md`.
 
 ### T100 — Stage-1 held-out evaluation and promotion
 - Requirements: SR-M6, SR-M12
