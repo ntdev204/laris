@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/development/DOCUMENTATION.md"
 decision_references: []
 change_summary: "Adds the empirical checkpoint and real-paper pilot report."
@@ -18,32 +17,20 @@ change_summary: "Adds the empirical checkpoint and real-paper pilot report."
 
 # LARIS Documentation Index
 
-Start with the repository [README](../README.md), then the sections below. Superseded material is removed; history lives in git and `CHANGELOG.md`.
+Start with the repository [README](../README.md), then the sections below. Superseded material is removed; history lives in git and `CHANGELOG.md`. On `laris-v2` the documents of the Python generation's architecture, deployment and configuration are removed (they remain on `laris-v1`); the Rust generation is described in `idea.md` until its new documents exist.
 
 | Area | Document | Purpose |
 | :--- | :--- | :--- |
 | Governance | [DOCUMENTATION.md](development/DOCUMENTATION.md) | Metadata schema, writing standard, document lifecycle |
 | | [GIT_FLOW.md](development/GIT_FLOW.md) | Branching, PR gates, review lifecycle |
-| | [CODING_STANDARDS.md](development/CODING_STANDARDS.md) | Code conventions and layout rules |
-| | [CLI.md](development/CLI.md) | `laris`, `laris-server` and `laris-model` reference: terminal client, settings, E1, operator commands |
-| | [SERVER_DEPLOYMENT_RUNBOOK.md](development/SERVER_DEPLOYMENT_RUNBOOK.md) | Docker Compose stack, secrets, backup, smoke test |
-| | [MIGRATION_1X_TO_2_0.md](development/MIGRATION_1X_TO_2_0.md) | Moving users, operators and the owner from 1.x to 2.0 |
-| | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md), [GLOSSARY.md](GLOSSARY.md), [CHANGELOG.md](../CHANGELOG.md) | Open items, terms, release history |
-| Architecture | [SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) | Three blocks, protocols P1 and P2, trust boundaries, memory hierarchy |
-| | [LAYER_ARCHITECTURE.md](architecture/LAYER_ARCHITECTURE.md) | The 12 layers |
-| | [DATA_FLOW.md](architecture/DATA_FLOW.md) | One chat turn (release 2.0), ingestion, retrieval, synthesis, reporting |
-| | [MODEL_ROUTING.md](architecture/MODEL_ROUTING.md) | Tiered execution and early exit |
-| | [SELECTIVE_COMPUTATION.md](architecture/SELECTIVE_COMPUTATION.md) | Selective loading, computation, access |
-| | [EVIDENCE_AND_PROVENANCE.md](architecture/EVIDENCE_AND_PROVENANCE.md) | Epistemic taxonomy and anchoring |
-| Specifications | [MODULE_CONTRACTS.md](specifications/MODULE_CONTRACTS.md), [DATA_SCHEMAS.md](specifications/DATA_SCHEMAS.md) | Boundaries and schemas |
-| | [ORCHESTRATION_SPECIFICATION.md](specifications/ORCHESTRATION_SPECIFICATION.md) | Agents, skills, tools, workflows |
+| | [GLOSSARY.md](GLOSSARY.md), [CHANGELOG.md](../CHANGELOG.md) | Terms, release history |
+| Specifications | [DATA_SCHEMAS.md](specifications/DATA_SCHEMAS.md) | Schemas |
+| | [OBSIDIAN_VAULT_FORMAT.md](specifications/OBSIDIAN_VAULT_FORMAT.md) | Vault format (old data must stay readable) |
 | | [LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md](specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md) | Training readiness gates and staged pipeline |
-| | [DATASET_SPECIFICATION.md](specifications/DATASET_SPECIFICATION.md), [CONFIGURATION_SPECIFICATION.md](specifications/CONFIGURATION_SPECIFICATION.md), [LARIS_GOLD_SPECIFICATION.md](specifications/LARIS_GOLD_SPECIFICATION.md), [REPORT_SPECIFICATION.md](specifications/REPORT_SPECIFICATION.md) | Datasets, configuration, gold set, reports |
+| | [DATASET_SPECIFICATION.md](specifications/DATASET_SPECIFICATION.md), [LARIS_GOLD_SPECIFICATION.md](specifications/LARIS_GOLD_SPECIFICATION.md), [REPORT_SPECIFICATION.md](specifications/REPORT_SPECIFICATION.md) | Datasets, gold set, reports |
 | Research | [LANGUAGE_AND_MODEL_STRATEGY.md](research/LANGUAGE_AND_MODEL_STRATEGY.md) | Language foundation, semantics, local model budgets |
 | | [RESEARCH_STRATEGY.md](research/RESEARCH_STRATEGY.md) | Evaluation, scientific NLP, hybrid retrieval and gap discovery |
 | Training order | [Training index](training/README.md) | Model 01 qualification precedes model 02; owner alone trains |
 | Measured status | [EMPIRICAL_STATUS.md](research/EMPIRICAL_STATUS.md) | Checkpoint validation, real-paper pilot failures and next experiment gates |
-| Plans | [ROADMAP.md](plans/ROADMAP.md) | Milestones and status; open work is tracked in GitHub issues |
-| Testing | [TEST_STRATEGY.md](testing/TEST_STRATEGY.md), [BENCHMARK_PROTOCOL.md](testing/BENCHMARK_PROTOCOL.md), [ACCEPTANCE_CRITERIA.md](testing/ACCEPTANCE_CRITERIA.md) | Verification scope and benchmarks |
-| ADRs | [ADR index](adr/README.md) | ADR-001 to ADR-013 |
-| Templates | [TEMPLATES.md](templates/TEMPLATES.md) | Document, ADR, spec, experiment, benchmark templates |
+| Testing | [BENCHMARK_PROTOCOL.md](testing/BENCHMARK_PROTOCOL.md), [AGENTIC_SCENARIOS.md](testing/AGENTIC_SCENARIOS.md) | Benchmarks; golden agent scenarios |
+| ADRs | [ADR index](adr/README.md) | ADR-002, 003, 004, 007, 008 (principles) |

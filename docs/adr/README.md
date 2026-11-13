@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/adr/README.md"
 decision_references: []
 change_summary: "Index of all Architecture Decision Records (ADRs) in LARIS."
@@ -29,27 +28,15 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 
 ## Active Accepted ADR Registry
 
+On `laris-v2` only the principle ADRs remain; the decisions about the Python generation's structure (ADR-001, 005, 006, 009 to 019) are on the frozen branch `laris-v1`.
+
 | ADR ID | Title | Status | Date Accepted | Primary Layer Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| [ADR-001](ADR-001-local-first-system-boundary.md) | Local-First System Boundary & Zero Mandatory Cloud Inference | ACCEPTED | 2026-10-15 | System-Wide, Layer 9 |
 | [ADR-002](ADR-002-self-built-language-foundation.md) | Self-Built Language Foundation & Exclusion of Mandatory Pretrained LLMs | ACCEPTED | 2026-10-15 | Layer 0, Layer 1 |
 | [ADR-003](ADR-003-language-first-not-pdf-first.md) | Language-First and Document-Agnostic Processing over PDF-First Design | ACCEPTED | 2026-10-15 | Layer 1, Layer 2, Layer 4 |
 | [ADR-004](ADR-004-evidence-provenance-first-class.md) | Evidence Provenance & Epistemic Traceability as First-Class Citizens | ACCEPTED | 2026-10-15 | Layer 3, Layer 5, Layer 7 |
-| [ADR-005](ADR-005-selective-loading-computation-access.md) | Strict Separation of Selective Loading, Computation, and Information Access | ACCEPTED | 2026-10-15 | Layer 6, Layer 9 |
-| [ADR-006](ADR-006-modular-specialist-architecture-routing.md) | Modular Specialist Architecture with Learned Task Routing | ACCEPTED | 2026-10-15 | Layer 8, Layer 9 |
 | [ADR-007](ADR-007-document-lifecycle-freeze-governance.md) | Document Lifecycle Governance, Baseline Freezing, and Scoped Control | ACCEPTED | 2026-10-15 | System-Wide Governance |
 | [ADR-008](ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
-| [ADR-009](ADR-009-embedded-evidence-graph-storage.md) | Embedded Evidence Graph Storage | ACCEPTED | see file | Layer 5 |
-| [ADR-010](ADR-010-multi-channel-hybrid-retrieval-rrf.md) | Multi-Channel Hybrid Retrieval with RRF | ACCEPTED | see file | Layer 6 |
-| [ADR-011](ADR-011-domain-based-package-refactoring.md) | Domain-Based Package Refactoring | ACCEPTED | see file | System-Wide |
-| [ADR-012](ADR-012-elimination-of-parallel-layer-hierarchies.md) | Elimination of Parallel Layer Hierarchies | ACCEPTED | see file | System-Wide |
-| [ADR-013](ADR-013-functional-package-layout-and-cli.md) | Functional Sub-Package Layout, Function-Based Naming and the laris CLI | ACCEPTED | 2026-10-29 | System-Wide |
-| [ADR-014](ADR-014-obsidian-compatible-brain.md) | Obsidian-Compatible Project Vault and Protected System Brain | ACCEPTED | 2026-11-11 | System-Wide |
-| [ADR-015](ADR-015-local-data-plane-and-authenticated-server.md) | Local Data Plane (User Disk = Database, User Machine = Sandbox) and Authenticated Server | ACCEPTED | 2026-11-11 | System-Wide |
-| [ADR-016](ADR-016-policy-server-and-thin-client.md) | Policy Server and Thin Client (system .laris stays on the server) | ACCEPTED | 2026-11-11 | System-Wide |
-| [ADR-017](ADR-017-layers-and-capability-ladder.md) | Runtime Layers and Capability Ladder (Agentic required) | ACCEPTED | 2026-11-11 | System-Wide |
-| [ADR-018](ADR-018-server-database-keys-and-reasoning.md) | Server Database, Managed API Keys and Private Reasoning | ACCEPTED | 2026-11-11 | System-Wide |
-| [ADR-019](ADR-019-three-blocks-two-protocols-two-sql-engines.md) | Three Blocks, Two Protocols, Two SQL Engines, Docker, Terminal Client | ACCEPTED | 2026-11-12 | System-Wide |
 
 ## Freeze Register
 

@@ -12,7 +12,6 @@ source_of_truth: true
 related_documents:
   - "docs/GLOSSARY.md"
   - "docs/adr/README.md"
-  - "docs/OPEN_QUESTIONS.md"
 decision_references:
   - "ADR-007"
 change_summary: "Condensed to the enforceable rules: metadata schema, writing standard, source-of-truth order and lifecycle."
@@ -27,7 +26,7 @@ How documents are structured, reviewed, frozen and changed. `scripts/validate_do
 - One topic, one document. Link instead of copying; never duplicate a specification.
 - Documents describe the repository as it is. Delivered plans, task lists and session notes belong in GitHub issues, PRs and `CHANGELOG.md`, not in `docs/`.
 - Every number cites its source or is labeled `[ESTIMATE]` / `[THEORETICAL TARGET]`. Illustrative snippets are prefixed `[EXAMPLE]`.
-- Use RFC 2119 keywords (MUST, SHOULD, MAY) for requirements. Separate facts, decisions (backed by an ADR), assumptions, hypotheses and open questions ([OPEN_QUESTIONS](../OPEN_QUESTIONS.md)).
+- Use RFC 2119 keywords (MUST, SHOULD, MAY) for requirements. Separate facts, decisions (backed by an ADR), assumptions, hypotheses and open questions.
 - No unquantified marketing claims; a performance claim needs a metric, a baseline and the benchmark protocol.
 - Use the terms defined in [GLOSSARY](../GLOSSARY.md).
 
@@ -71,7 +70,7 @@ Bump `version` and `updated_at` on every content change (patch: wording; minor: 
 When documents disagree, the higher item wins. Do not pick the newer file by default; fix the lower one in the same change.
 
 1. Accepted ADRs (`docs/adr/`)
-2. Architecture overview and vision ([SYSTEM_OVERVIEW](../architecture/SYSTEM_OVERVIEW.md))
+2. Architecture overview and vision (`idea.md` until the new architecture documents exist)
 3. Specifications (`docs/specifications/`)
 4. Architecture documents (`docs/architecture/`)
 5. Research and testing (`docs/research/`, `docs/testing/`)
