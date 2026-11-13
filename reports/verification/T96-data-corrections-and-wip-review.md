@@ -21,7 +21,7 @@ with r1 numbers; the next held-out run must name the revision in its dataset man
 
 ## 2. Review of `wip/corpus-acquisition-changes` (`b9a629f`), proposal for the owner
 
-The commit is based on the v1 tree; only its four files matter and all four exist on `laris-v2`. Nothing was merged.
+The commit is based on the v1 tree; only its four files matter and all four exist on `laris-v2`. Integrated afterwards on the owner's approval (S2ORC status set to `DOWNLOADED`, `total_acquired_samples` 8,315,483).
 
 | File | Change | Proposal |
 |---|---|---|

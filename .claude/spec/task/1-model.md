@@ -85,7 +85,7 @@ returned logs, manifests and reports.
   removed from train (-9) and val (-3), test unchanged; 9 ViQuAD answer offsets corrected (val 5, test 4), nothing
   dropped. `data check --verify-sha256` passes on both directories and overlaps and offsets were recomputed. Lineage and
   review in `reports/verification/T96-data-corrections*.{json,md}`. The review of `wip/corpus-acquisition-changes`
-  proposes integrating all four files, with one manifest status fix; nothing integrated without the owner. Earlier
+  proposed integrating all four files with one manifest status fix; the owner approved on 2026-11-13 and branch `feature/T96-corpus-integration` integrated them (S2ORC status `DOWNLOADED`, acquired-samples total 8,315,483). Earlier
   STS-B and ViQuAD validation numbers are not comparable with r1. Merged into `laris-v2`.
 
 ### T97 — Tokenizer R1 (owner run)

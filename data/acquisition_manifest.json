@@ -399,7 +399,7 @@
       "official_source_url": "https://api.semanticscholar.org/datasets/v1/release/latest/dataset/s2orc",
       "license_name": "ODC-BY-1.0 (collection); per-paper open license kept in `license`",
       "license_status": "APPROVED_FOR_ACQUISITION",
-      "acquisition_status": "SKIPPED_TEMPORARILY",
+      "acquisition_status": "DOWNLOADED",
       "language": "English",
       "sample_unit": "Parsed full-text paper",
       "expected_sample_count": "Bounded stream: <= 10 GB stored, from 250 shards",
@@ -1067,5 +1067,5 @@
   ],
   "total_datasets_tracked": 18,
   "total_acquired_bytes": 12271859671,
-  "total_acquired_samples": 8295759
+  "total_acquired_samples": 8315483
 }
