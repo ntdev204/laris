@@ -251,6 +251,19 @@ def parse_value(text: str) -> Any:
 
 
 # -- as configuration -------------------------------------------------------------------------
+def server_address(url: str) -> str:
+    """A server address as a person types it, made complete: `https://` when no scheme is given
+    and the API prefix `/v1` when there is no path (`laris.example.com` -> `https://laris.example.com/v1`)."""
+    url = url.strip().rstrip("/")
+    if not url:
+        return url
+    if "://" not in url:
+        url = "https://" + url
+    if urlparse(url).path in ("", "/"):
+        url += "/v1"
+    return url
+
+
 def pinned_path(url: str, home: Optional[Path] = None) -> Optional[Path]:
     parsed = urlparse(url)
     if parsed.scheme != "https" or not parsed.hostname:
@@ -275,6 +288,9 @@ def layer_from(data: Dict[str, Any], home: Optional[Path] = None) -> Dict[str, A
             node = node.setdefault(part, {})
         node[parts[-1]] = value
 
+    from laris.shared.config import packaged
+
+    data = packaged.under(data)  # the address packaged at build time, beneath the user's (D24)
     server = data.get("server") or {}
     if "url" in server:
         put("model_api.base_url", str(server["url"]).rstrip("/"))

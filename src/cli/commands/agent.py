@@ -48,6 +48,21 @@ def wanted_session(args: argparse.Namespace) -> Optional[str]:
     return wanted
 
 
+def _vouched(runtime: Any, args: argparse.Namespace) -> Any:
+    """Pin the packaged server's certificate authority when the package vouches for it (D24), so
+    plain and headless runs need no question either. Nothing else is ever trusted here."""
+    from laris.shared.config import packaged
+    from laris.shared.harness import trust
+
+    api = runtime.config.model_api
+    expected = packaged.ca_fingerprint()
+    if not expected or api.base_url != packaged.server_url() or api.ca_file:
+        return runtime
+    if trust.decide(api.base_url, api.ca_file, expected=expected).status == "pinned":
+        return load_runtime(args)
+    return runtime
+
+
 def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
     """The chat for the signed-in user: the API key picks a private conversation space and is
     the credential sent to the model API."""
@@ -56,7 +71,7 @@ def make_chat(args: argparse.Namespace, interactive: bool = True) -> ChatApp:
     from cli import credentials
     from cli.common import cli_overrides
 
-    runtime = load_runtime(args)
+    runtime = _vouched(load_runtime(args), args)
     app = runtime.config.app
     key = credentials.resolve(app, interactive=interactive and sys.stdin.isatty())
     os.environ[app.key_env] = key  # the redactor hides it; the model client reads it
@@ -306,9 +321,7 @@ class _Chat:
         if args.print_text is not None:
             return self._headless(args)
         chat = make_chat(args)
-        conversation = self._start(
-            chat, wanted_session(args)
-        )
+        conversation = self._start(chat, wanted_session(args))
         from importlib import metadata
 
         from laris.client.plain import run_plain
@@ -344,7 +357,9 @@ class _Chat:
             stdin_text=_piped_input(),
             output_format=args.output_format,
             continue_last=args.continue_session == "last" and not args.resume,
-            resume=None if args.resume in (None, "pick") else (
+            resume=None
+            if args.resume in (None, "pick")
+            else (
                 args.resume or (None if args.continue_session == "last" else args.continue_session)
             ),
             max_turns=args.max_turns,

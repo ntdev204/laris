@@ -24,6 +24,16 @@
 		max_size 32MB
 	}
 
+	# The certificate of Caddy's own authority (the public half only; the rewrite names one file, so
+	# the keys beside it can never be served). A client pins this instead of the server certificate,
+	# which is renewed every few hours. With a public certificate the file does not exist: 404.
+	@authority path /.well-known/laris/ca.crt
+	handle @authority {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		file_server
+	}
+
 	reverse_proxy api:8000 {
 		# server-sent events: send each chunk at once instead of buffering the answer
 		flush_interval -1

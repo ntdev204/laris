@@ -27,8 +27,13 @@ class _Engine:
     def run(self, args: argparse.Namespace) -> int:
         from importlib import metadata
 
+        from cli.common import load_runtime
         from laris.client.engine import Engine
+        from laris.client.engine.login import LoginGate
 
+        # No server, no key, a refused key or an unknown certificate: asked over E1, before `ready`.
+        if not LoginGate(sys.stdin, sys.stdout, lambda: load_runtime(args)).run():
+            return 0  # the front end left before the session started
         chat: Any = make_chat(args, interactive=False)  # never prompts: stdin carries commands
         conversation = None
         wanted = args.resume or args.continue_session

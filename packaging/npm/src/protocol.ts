@@ -8,6 +8,9 @@ export const E1_VERSION = "1";
 export type Scope = "once" | "session" | "project" | "everywhere";
 export type Mode = "default" | "acceptEdits" | "plan" | "bypass";
 
+export type LoginReason = "no_server" | "untrusted_certificate" | "certificate_mismatch" | "no_key" | "rejected" | "invalid";
+/** Sent before `ready` when the session cannot start yet (no server, a certificate to confirm, no key, a refused key). */
+export interface LoginRequired { type: "login_required"; reason: LoginReason; server: string; fingerprint: string; message: string }
 export interface Ready { type: "ready"; version: string; engine: string; session: string; cwd: string; mode: string; server: string }
 export interface TextEvent { type: "text"; delta: string }
 export interface ToolCall { type: "tool_call"; id: string; name: string; arguments: Record<string, unknown> }
@@ -28,16 +31,17 @@ export interface ErrorEvent { type: "error"; code: string; message: string }
 export interface Done { type: "done"; status: string; answer: string }
 
 export type EngineEvent =
-  | Ready | TextEvent | ToolCall | ToolResult | PlanEvent | PermissionRequest | StatusEvent
+  | LoginRequired | Ready | TextEvent | ToolCall | ToolResult | PlanEvent | PermissionRequest | StatusEvent
   | Usage | Compact | Goal | Completion | ErrorEvent | Done;
 
 export const EVENT_TYPES = [
-  "ready", "text", "tool_call", "tool_result", "plan", "permission_request", "status", "usage",
+  "login_required", "ready", "text", "tool_call", "tool_result", "plan", "permission_request", "status", "usage",
   "compact", "goal", "completion", "error", "done",
 ] as const;
 
 export interface Attachment { kind: "image" | "text"; name: string; data_base64: string }
 export type EngineCommand =
+  | { type: "login"; key?: string; server?: string; trust?: boolean }
   | { type: "user_message"; text: string; attachments?: Attachment[] }
   | { type: "permission_response"; id: string; decision: "allow" | "deny"; scope: Scope }
   | { type: "interrupt" }
@@ -47,7 +51,7 @@ export type EngineCommand =
   | { type: "shutdown" };
 
 export const COMMAND_TYPES = [
-  "user_message", "permission_response", "interrupt", "command", "set_mode", "complete", "shutdown",
+  "login", "user_message", "permission_response", "interrupt", "command", "set_mode", "complete", "shutdown",
 ] as const;
 
 // Errors that answer a command and are not followed by a `done` event.

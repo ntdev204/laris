@@ -3,6 +3,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { EngineClient } from "./engine-client.js";
 import { History } from "./input/history.js";
 import { ItemView, PlanView } from "./components/Items.js";
+import { Login } from "./components/Login.js";
 import { Permission } from "./components/Permission.js";
 import { Prompt } from "./components/Prompt.js";
 import { Spinner } from "./components/Spinner.js";
@@ -118,6 +119,22 @@ export function App({ client, onFinish, exitWindowMs = 2000, initialInput = null
   const rows: Row[] = [...(state.ready ? [{ kind: "header" as const, ready: state.ready }] : []), ...settled];
 
   if (state.phase === "starting") return <Text dimColor>Starting the LARIS engine…</Text>;
+  if (state.phase === "login" && state.login) {
+    return (
+      <>
+        <Static items={settled}>{(row) => <ItemView key={row.id} item={row} />}</Static>
+        <Login
+          request={state.login}
+          busy={state.loginBusy}
+          onAnswer={(answer) => {
+            dispatch({ kind: "login_sent" });
+            client.send({ type: "login", ...answer });
+          }}
+          onExit={exit}
+        />
+      </>
+    );
+  }
   return (
     <>
       <Static items={rows}>

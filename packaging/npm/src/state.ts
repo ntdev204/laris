@@ -2,7 +2,7 @@
 // scenario can be replayed in a test without a terminal.
 import {
   checkVersion, ENDS_COMMAND,
-  type CompletionItem, type EngineEvent, type PermissionRequest, type PlanStep, type Ready,
+  type CompletionItem, type EngineEvent, type LoginRequired, type PermissionRequest, type PlanStep, type Ready,
 } from "./protocol.js";
 
 export type Level = "info" | "warn" | "error" | "dim";
@@ -21,8 +21,11 @@ export interface LineData {
 }
 
 export interface State {
-  phase: "starting" | "running" | "closed";
+  phase: "starting" | "login" | "running" | "closed";
   ready: Ready | null;
+  /** what the engine needs before the session can start, and whether an answer is being checked */
+  login: LoginRequired | null;
+  loginBusy: boolean;
   /** why the session ended abnormally (version mismatch, engine died); null on a clean end */
   fatal: string | null;
   exitCode: number;
@@ -43,12 +46,13 @@ export type Action =
   | { kind: "event"; event: EngineEvent }
   | { kind: "sent"; text: string }
   | { kind: "answered" }
+  | { kind: "login_sent" }
   | { kind: "note"; level: Level; text: string }
   | { kind: "closed"; code: number | null; stderrTail: string; clean: boolean };
 
 export function initialState(): State {
   return {
-    phase: "starting", ready: null, fatal: null, exitCode: 0, items: [], nextId: 1, busy: false,
+    phase: "starting", ready: null, login: null, loginBusy: false, fatal: null, exitCode: 0, items: [], nextId: 1, busy: false,
     pending: [], permission: null, plan: null, line: null, mode: "default", sandbox: null,
     usage: null, completion: null,
   };
@@ -115,10 +119,12 @@ function status(state: State, kind: string, data: Record<string, unknown>): Stat
 
 function onEvent(state: State, event: EngineEvent): State {
   switch (event.type) {
+    case "login_required":
+      return { ...state, phase: "login", login: event, loginBusy: false };
     case "ready": {
       const problem = checkVersion(event);
       if (problem) return { ...state, phase: "closed", fatal: problem, exitCode: 2 };
-      return { ...state, phase: "running", ready: event, mode: event.mode };
+      return { ...state, phase: "running", ready: event, mode: event.mode, login: null, loginBusy: false };
     }
     case "text": {
       const last = state.items[state.items.length - 1];
@@ -184,6 +190,8 @@ export function reduce(state: State, action: Action): State {
       return { ...push(state, (id) => ({ kind: "user", id, text: action.text })), busy: true };
     case "answered":
       return { ...state, permission: null };
+    case "login_sent":
+      return { ...state, loginBusy: true };
     case "note":
       return note(state, action.level, action.text);
     case "closed": {

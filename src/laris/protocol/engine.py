@@ -6,9 +6,13 @@ The version in the `ready` event is `E1_VERSION`; a front end that does not know
 clear message. `json_schema()` is the machine-readable description (also shipped as
 `e1.schema.json` beside this module, and checked against it by the tests).
 
-Events out: ready, text, tool_call, tool_result, plan, permission_request, status, usage, compact,
-goal, completion, error, done. Commands in: user_message, permission_response, interrupt, command,
-set_mode, complete, shutdown.
+Events out: login_required, ready, text, tool_call, tool_result, plan, permission_request, status,
+usage, compact, goal, completion, error, done. Commands in: login, user_message,
+permission_response, interrupt, command, set_mode, complete, shutdown.
+
+Before `ready` the engine may send `login_required` (no server address, a certificate a person
+has to confirm, no API key, a refused key); the front end answers with `login` (or `shutdown`) and
+the engine asks again until the session can start (ADR-019 D25).
 """
 
 from typing import Any, Dict, List, Literal, Optional, Type, Union
@@ -24,6 +28,25 @@ class _Message(BaseModel):
 
 
 # -- events (engine -> front end) --------------------------------------------------------------
+LOGIN_REASONS = (
+    "no_server", "untrusted_certificate", "certificate_mismatch", "no_key", "rejected", "invalid",
+)  # fmt: skip
+
+
+class LoginRequired(_Message):
+    """Sent before `ready` when the session cannot start yet. `reason` says what is missing;
+    `fingerprint` is the SHA-256 a person compares for `untrusted_certificate`."""
+
+    type: Literal["login_required"] = "login_required"
+    reason: Literal[
+        "no_server", "untrusted_certificate", "certificate_mismatch", "no_key", "rejected",
+        "invalid",
+    ]  # fmt: skip
+    server: str = ""
+    fingerprint: str = ""
+    message: str = ""
+
+
 class Ready(_Message):
     type: Literal["ready"] = "ready"
     version: str = E1_VERSION
@@ -135,6 +158,16 @@ class Attachment(_Message):
     data_base64: str
 
 
+class Login(_Message):
+    """The answer to `login_required`: any of a server address, a confirmation of the shown
+    certificate fingerprint, and the API key (never echoed back in any event)."""
+
+    type: Literal["login"] = "login"
+    key: str = ""
+    server: str = ""
+    trust: bool = False
+
+
 class UserMessage(_Message):
     type: Literal["user_message"] = "user_message"
     text: str = Field(min_length=1)
@@ -182,6 +215,7 @@ class Shutdown(_Message):
 EVENTS: Dict[str, Type[_Message]] = {
     m.model_fields["type"].default: m
     for m in (
+        LoginRequired,
         Ready,
         Text,
         ToolCall,
@@ -199,7 +233,16 @@ EVENTS: Dict[str, Type[_Message]] = {
 }
 COMMANDS: Dict[str, Type[_Message]] = {
     m.model_fields["type"].default: m
-    for m in (UserMessage, PermissionResponse, Interrupt, Command, SetMode, Complete, Shutdown)
+    for m in (
+        Login,
+        UserMessage,
+        PermissionResponse,
+        Interrupt,
+        Command,
+        SetMode,
+        Complete,
+        Shutdown,
+    )  # fmt: skip
 }
 
 

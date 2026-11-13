@@ -41,16 +41,9 @@ export async function main(argv: string[], ctx: Context): Promise<number> {
   const chosen = plan(argv, env, tty);
   if (chosen.kind === "passthrough") return run(ctx.exe, chosen.args);
 
-  for (let attempt = 0; ; attempt++) {
-    const final = await session(ctx.exe, chosen.engineArgs, chosen.initialInput);
-    // No saved key yet: the engine says so before `ready`. Run `laris login` once, then start again.
-    if (!final.ready && final.fatal?.includes("laris login") && attempt === 0) {
-      process.stderr.write("\nNo API key yet. Starting `laris login`.\n");
-      const code = await run(ctx.exe, ["login"]);
-      if (code !== 0) return code;
-      continue;
-    }
-    if (final.fatal) process.stderr.write(`\n${final.fatal}\n`);
-    return final.exitCode;
-  }
+  // No key, no server or an unknown certificate is asked inside the interface (the engine sends
+  // `login_required` before `ready`), so there is nothing to run first.
+  const final = await session(ctx.exe, chosen.engineArgs, chosen.initialInput);
+  if (final.fatal) process.stderr.write(`\n${final.fatal}\n`);
+  return final.exitCode;
 }
