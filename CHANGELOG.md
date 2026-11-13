@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Copied text carried the drawing:** code blocks no longer have a frame, label or padding, answers no longer have a `●` gutter, lists copy as `- item`, quotes as `> `, tables as `| a | b |`, and no line ends in blanks.
 - **An empty corpus made the agent retry:** `no documents` is a permanent error; the model is told once and no replan is spent (`reflect.permanent_errors`).
+
+- **"hello" started a search:** the placeholder planner answers a bare greeting from the string catalogue and runs no tool (SR-C11, T89).
+
+### Fixed
 - **A project's own `configs/default.yaml` broke the client:** a research folder with that file (another schema) made `laris` stop with `ValidationError ... environment`. The client now reads no configuration file from the folder it opened (SR-C2, SR-C5).
 
 ## [2.1.0] - 2026-11-13
