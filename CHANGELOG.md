@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Nothing to configure (T86, ADR-019 D24 and D25):** `laris` opens the interface at once. The server address is written into the npm package at build time from repository variables (never the source tree), and the interface asks for the API key, a server address or a certificate confirmation only when one is missing (E1 event `login_required`, command `login`). `laris login` is optional.
+- **Server certificate authority published at `/.well-known/laris/ca.crt`** (Caddy) so clients can pin it.
+
+### Fixed
+- **A private server stopped working after a few hours:** the client pinned the server certificate, which Caddy's authority renews about every eight hours. It now pins the authority.
+- **A server address without `/v1`** made every key look unreachable; a bare host name is now completed to `https://HOST/v1`.
+- **`laris` started in the home folder** warned that the global `settings.json` was an ignored project file.
+- **Docker:** a client connecting by IP address (Tailscale, a LAN) failed the TLS handshake (`default_sni`); the model image lacked `sentencepiece`, so embeddings with a real encoder returned 500.
+
 ## [2.0.0] - 2026-11-13
 
 Major release: the system is split into client, server and model programs over two protocols, with PostgreSQL on the server, SQLite on the client, a Docker deployment and a Claude-Code-style terminal client. **Breaking:** the client no longer has `data`, `train` or `evaluate` (they are `laris-server` commands), has no offline mode, and reads no project configuration; client and server must both be 2.0.0 (the protocol version is checked). Upgrade steps: `docs/development/MIGRATION_1X_TO_2_0.md`. The foundation model is still NOT QUALIFIED; this release changes engineering structure, not model quality.

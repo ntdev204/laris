@@ -15,10 +15,24 @@ import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 ENV = "LARIS_PACKAGED_DEFAULTS"
 FILE_NAME = "defaults.json"
 MAX_BYTES = 65536
+
+
+def server_address(url: str) -> str:
+    """A server address as a person types it, made complete: `https://` when no scheme is given
+    and the API prefix `/v1` when there is no path (`laris.example.com` -> `https://laris.example.com/v1`)."""
+    url = url.strip().rstrip("/")
+    if not url:
+        return url
+    if "://" not in url:
+        url = "https://" + url
+    if urlparse(url).path in ("", "/"):
+        url += "/v1"
+    return url
 
 
 def path() -> Optional[Path]:
@@ -48,8 +62,6 @@ def load() -> Dict[str, Any]:
     out: Dict[str, str] = {}
     url = server.get("url")
     if isinstance(url, str) and url.startswith(("https://", "http://")):
-        from laris.shared.config.settings import server_address
-
         out["url"] = server_address(url)
     fingerprint = server.get("caFingerprint")
     if isinstance(fingerprint, str) and fingerprint.strip():

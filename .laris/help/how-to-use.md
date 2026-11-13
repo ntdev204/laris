@@ -14,12 +14,12 @@ và in nguyên văn, không qua mô hình. Gõ `/how-to-use` bất cứ lúc nà
 Chỉ cần lệnh `laris` (giao diện terminal giống Claude Code):
 
 ```bash
-laris login                    # nhập API key một lần (nhập ẩn, lưu riêng cho bạn)
-laris                          # mở phiên mới
+laris                          # mở phiên mới; lần đầu sẽ hỏi API key ngay trong giao diện
 laris --resume                 # liệt kê các phiên đã lưu để chọn
 laris --resume <mã-phiên>      # mở lại đúng phiên (gõ vài ký tự đầu của mã cũng được)
 laris -p "câu hỏi"             # hỏi một câu rồi thoát
 laris whoami | laris logout    # xem mã người dùng / xóa khóa đã lưu
+laris login                    # (không bắt buộc) nhập lại API key ngoài giao diện
 ```
 
 - **API key quyết định không gian riêng của bạn.** Mỗi key có hội thoại, cài đặt, tệp tải lên và dữ
@@ -170,9 +170,11 @@ Chỉ bạn mới khởi chạy được quy trình; mô hình không tự chọ
   phần suy luận nội bộ của mô hình không bao giờ được gửi về máy bạn. Máy chủ lưu phần này (đã che
   bí mật) kèm yêu cầu của bạn trong cơ sở dữ liệu của máy chủ, chỉ quản trị viên xem được, và tự xóa
   sau thời hạn lưu giữ. Đừng nhập thông tin bạn không muốn quản trị viên máy chủ thấy.
-- Kết nối tới máy chủ dùng TLS (HTTPS) và máy khách kiểm tra chứng chỉ; với chứng chỉ riêng (tự ký),
-  `laris login --server URL` hiện dấu vân tay SHA-256 của chứng chỉ: so với dấu vân tay quản trị viên công
-  bố rồi xác nhận (hoặc thêm `--trust-fingerprint SHA256:...`); chứng chỉ được ghi nhớ riêng cho máy chủ đó. Khóa API của bạn được máy chủ lưu dưới dạng
+- Kết nối tới máy chủ dùng TLS (HTTPS) và máy khách kiểm tra chứng chỉ. Bản cài đặt đã biết sẵn địa chỉ
+  máy chủ (và dấu vân tay chứng chỉ riêng của nó, nếu có), nên bạn không phải nhập gì. Với một máy chủ
+  khác dùng chứng chỉ riêng, giao diện hiện dấu vân tay SHA-256: so với dấu vân tay quản trị viên công
+  bố rồi xác nhận (hoặc `laris login --server URL --trust-fingerprint SHA256:...`); chứng chỉ được ghi
+  nhớ riêng cho máy chủ đó. Khóa API của bạn được máy chủ lưu dưới dạng
   mã hóa và tính theo hạn mức token của chính khóa đó.
 
 ## 9. Cài đặt
