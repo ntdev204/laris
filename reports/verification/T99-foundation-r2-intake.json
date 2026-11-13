@@ -1,0 +1,91 @@
+{
+ "run_id": "foundation-r2",
+ "passed": true,
+ "checks": [
+  {
+   "name": "best model.pt equals manifest model_sha256",
+   "passed": true,
+   "detail": "f976318e923fa0d3"
+  },
+  {
+   "name": "last model.pt equals manifest model_sha256",
+   "passed": true,
+   "detail": "62143bfed56fb057"
+  },
+  {
+   "name": "optimizer steps reached",
+   "passed": true,
+   "detail": "4000 of 4000"
+  },
+  {
+   "name": "no skipped steps",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "name": "retrieval loss weight recorded",
+   "passed": true,
+   "detail": "5.0"
+  },
+  {
+   "name": "tokenizer sha256 equals the accepted candidate",
+   "passed": true,
+   "detail": "36181adf89d9f654"
+  },
+  {
+   "name": "initialised from the named run's best checkpoint",
+   "passed": true,
+   "detail": "b3dd71391de1e334"
+  },
+  {
+   "name": "stale evaluations within patience",
+   "passed": true,
+   "detail": "1 / 4"
+  },
+  {
+   "name": "final validation losses finite",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "name": "log reports [SUCCESS]",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "name": "log has no nan or inf",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "name": "peak memory <= 14.5 GiB",
+   "passed": true,
+   "detail": "4.0 GiB, median 0.6 s/step"
+  },
+  {
+   "name": "mlm validation loss not worse than reference by > 10%",
+   "passed": true,
+   "detail": "1.0819 vs reference 1.1370"
+  },
+  {
+   "name": "nli validation loss not worse than reference by > 10%",
+   "passed": true,
+   "detail": "0.2277 vs reference 0.2100"
+  },
+  {
+   "name": "paraphrase validation loss not worse than reference by > 10%",
+   "passed": true,
+   "detail": "0.0819 vs reference 0.0773"
+  },
+  {
+   "name": "similarity validation loss not worse than reference by > 10%",
+   "passed": true,
+   "detail": "0.0053 vs reference 0.0054"
+  },
+  {
+   "name": "qa validation loss reported",
+   "passed": true,
+   "detail": "0.49675845354795456"
+  }
+ ]
+}

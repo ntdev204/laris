@@ -1,0 +1,51 @@
+{
+ "label_source": "llm",
+ "human_gold": false,
+ "split": "dev",
+ "seal_sha256": "b72ebdf05082f3b0ba80696358d3392efad89d7ceec39429ce00822232fd2c56",
+ "min_label": 2,
+ "queries_judged": 137,
+ "queries_with_relevant": 137,
+ "corpus": 4000,
+ "systems": {
+  "bm25": {
+   "mrr": 0.9890510948905109,
+   "ndcg_at_10": 0.9919181697862364,
+   "recall_at_1": 0.9781021897810219,
+   "recall_at_5": 1.0,
+   "recall_at_10": 1.0,
+   "recall_at_50": 1.0,
+   "mrr_ci95": [
+    0.9744525547445255,
+    1.0
+   ]
+  },
+  "dense": {
+   "mrr": 0.15071880086443212,
+   "ndcg_at_10": 0.16866015911760865,
+   "recall_at_1": 0.08759124087591241,
+   "recall_at_5": 0.2116788321167883,
+   "recall_at_10": 0.27007299270072993,
+   "recall_at_50": 0.5036496350364964,
+   "mrr_ci95": [
+    0.10568016419961072,
+    0.2021474890367696
+   ]
+  },
+  "hybrid_rrf": {
+   "mrr": 0.5180305358493423,
+   "ndcg_at_10": 0.5815992203310478,
+   "recall_at_1": 0.3722627737226277,
+   "recall_at_5": 0.6715328467153284,
+   "recall_at_10": 0.8248175182481752,
+   "recall_at_50": 1.0,
+   "mrr_ci95": [
+    0.4523192186969559,
+    0.5839075700848456
+   ]
+  }
+ },
+ "checkpoint": "artifacts/checkpoints/language_encoder/foundation-r2-probe/best",
+ "model_sha256": "8d963da5381ff96fcc4eb65c232d0a550533c37ffda529a26bba90e1f368aa1b",
+ "dense_beats_bm25": false
+}

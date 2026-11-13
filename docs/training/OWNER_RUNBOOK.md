@@ -251,7 +251,7 @@ specialists must not be advanced through the historical paper pilot.
 
 ## 7. T99: foundation rounds for the R1 encoder (48k tokenizer)
 
-Status: **PROPOSED budget; the owner approves it by running it.** **VRAM budget for this round: 8 GB** (CARLA holds the rest of the GPU), not the 14.5 GiB of section 3. Sections 3 to 5b describe the historical 32k
+Status: **EXECUTED 2026-11-13 by the owner; results in 7.9 and `reports/verification/T99-r2-analysis.md`.** The text below is the plan as proposed (8 GB budget while CARLA held the GPU); the run itself used the full GPU with `--gradient-checkpointing` at 16 x 4. Sections 3 to 5b describe the historical 32k
 tokenizer; their `laris` and `laris-server` commands also name scripts that the current virtual environment no
 longer imports. Use `.venv/bin/python -m cli.model` as below. Nothing here authorizes an agent to train, profile with an
 optimizer or set `LARIS_TRAINING_AUTHORIZED`. The foundation model is **NOT QUALIFIED**.
@@ -426,3 +426,19 @@ review; no command is given here on purpose.
 T100 scores the sealed held-out sources once per candidate (fertility, retrieval, the evaluation suite) and the sealed
 Vietnamese test split with `scripts/score_vi_stem_gold.py --split test --final --seal-sha256 <digest>`. Do not run any of
 that on the R2 candidate until the owner has reviewed the T99 analysis.
+
+### 7.9 What was run and found (added after the owner's run)
+
+| Item | Result |
+|---|---|
+| Configuration used | 16 x 4 (effective 64), `--gradient-checkpointing`, bf16, retrieval weight 5.0, learning rate 5e-5, warmup 200, from `foundation-r1-run1/best`, 4,000 steps, patience 4 |
+| Why checkpointing | 16 x 4 without it ran out of memory twice (14.5-14.8 GiB) in the QA task that carries the contrastive term |
+| Measured | peak 3.9-4.0 GiB, 0.6 s/step median, main round about 45 min (the 1.0 s/step estimate above was too high) |
+| Probes | 16 x 4: SciFact dev dense MRR 0.0513. 32 x 2: 0.0454 and paraphrase loss +12.8 %, intake FAIL |
+| Decision gate | not met by either probe (>= 0.10); the owner ran the main round anyway as an exploratory extension |
+| Main round | intake 18/18; SciFact dev dense 0.1285 (BM25 0.636, hybrid 0.3417); Vietnamese gold dev dense 0.3915 (BM25 0.989) |
+| Validation (`val`, 2,048 samples) | 6 of 9 development checks pass; QA-VI, similarity EN and VI fail |
+
+No gate is close (per-gate table in the report). Round R3 is not approved. T100 (sealed test) is not run until the
+owner reads the analysis. Evaluate on `val` with `--max-samples 2048` needs `timeout 1800s`; 600 s kills it.
+
