@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Copied text carried the drawing:** code blocks no longer have a frame, label or padding, answers no longer have a `●` gutter, lists copy as `- item`, quotes as `> `, tables as `| a | b |`, and no line ends in blanks.
-- **An empty corpus made the agent retry:** `no documents` is a permanent error; the model is told once and no replan is spent (`reflect.permanent_errors`).
 
 ## [2.1.0] - 2026-11-13
 
