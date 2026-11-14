@@ -163,7 +163,8 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--retrieval-loss-weight", type=float, default=None,
-        help="Weight of the train QA query-to-passage contrastive auxiliary loss",
+        help="Weight of the query-to-passage contrastive loss (train QA auxiliary; the "
+        "retrieval task when the YAML sets retrieval_task: true)",
     )
     parser.add_argument("--eval-interval", type=int, default=200, help="Validate every N steps")
     parser.add_argument(
@@ -315,8 +316,12 @@ def _run_memory_profile(
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
         alpha=hyper.task_sampling_alpha,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
+        include_retrieval_task=hyper.retrieval_task,
+        retrieval_batch_size=hyper.retrieval_batch_size,
+        retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
     )
-    missing = sorted(set(TASK_DATASET_DIRS) - set(loader.task_paths))
+    expected = set(TASK_DATASET_DIRS) | ({"retrieval"} if hyper.retrieval_task else set())
+    missing = sorted(expected - set(loader.task_paths))
     if missing:
         print(f"[ERROR] No real train data for tasks {missing}. Run `laris data partition`.")
         return 1
@@ -482,9 +487,18 @@ def run(args: argparse.Namespace) -> int:
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
         alpha=hyper.task_sampling_alpha,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
+        include_retrieval_task=hyper.retrieval_task,
+        retrieval_batch_size=hyper.retrieval_batch_size,
+        retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
         **common,  # type: ignore[arg-type]
     )
-    eval_loader = StreamingParquetMultiTaskDataLoader(split="val", **common)  # type: ignore[arg-type]
+    eval_loader = StreamingParquetMultiTaskDataLoader(
+        split="val",
+        include_retrieval_task=hyper.retrieval_task,
+        retrieval_batch_size=hyper.retrieval_batch_size,
+        retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
+        **common,  # type: ignore[arg-type]
+    )
 
     for task_name, shard_paths in sorted(loader.task_paths.items()):
         print(f"Data shards [train] {task_name:<11}: {len(shard_paths)}")

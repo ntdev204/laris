@@ -573,9 +573,15 @@ tokenizer fit and every training step are owner runs. R1-R3a weights cannot init
 | Model and mixture | `configs/language_encoder/english_r1.yaml` (large size, about 513 M parameters, vocabulary 32,000; **proposal**) |
 | Why this size | `reports/verification/T175-model-size-vs-data.md` |
 
-Not covered yet (T178): the retrieval-pair data (GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo, Stack Exchange duplicates, SPECTER,
-AltLex, Simple-Wiki, COCO captions, 10.4 GB) has no loader task, so it is not in this mixture and G12 (dense retrieval above BM25) is not
-helped by it yet. Decide whether to wait for T178 before the main run (recommended for G12) or to run the pilot now.
+Retrieval pairs (T178): GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO captions
+are partitioned (6.50 M pairs, 6.37 M train) and feed a dense-retrieval task with in-batch negatives (`retrieval_task: true`,
+`loss_lambda_retrieval: 0.20`, batch 32, passages cut at 256 tokens in `english_r1.yaml`; all **proposals**). Pairs touching SQuAD v1
+held-out text, STS-B held-out sentences or SciFact claims, titles and abstracts were removed (6,472) and the rescan is clean
+(`scripts/check_retrieval_leakage.py`, `reports/verification/T178-retrieval-leakage.json`). With real row counts the task sampler draws
+MLM 53.7 %, retrieval 28.8 %, NLI 9.5 %, paraphrase 4.0 %, QA 3.5 %, similarity 0.5 % of the steps, and a retrieval step encodes
+32 queries and 32 passages, so it costs more than an 8-sequence MLM step. If the profile or the pilot shows the retrieval share is too
+large, lower `loss_lambda_retrieval` or the batch size, or ask the agent for a row cap; do not change the files while a run is in progress.
+This does not make G12 pass: the encoder is NOT QUALIFIED until T100 measures it on held-out data.
 
 ### 9.2 Owner steps
 
@@ -608,6 +614,7 @@ LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 600s .venv/bin/python -m cli.model t
 If peak memory exceeds the VRAM you can give the run, lower `--micro-batch-size` (4 or 2) and raise `--grad-accum-steps` to keep 32 per update;
 if even 2 does not fit, tell the agent: the size is then reduced to the compact size (about 110 M) or an 8-bit optimiser state is considered.
 Return the log; the tokens per second in it replace the 35 TFLOP/s assumption.
+The profile also measures the retrieval task (peak memory is the maximum over all six tasks). If it is the task that does not fit, lower `retrieval_batch_size` in `english_r1.yaml` first (16 or 8) before touching `--micro-batch-size`.
 
 **Step 3: smoke run, 20 steps.**
 

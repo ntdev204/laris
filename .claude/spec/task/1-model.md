@@ -226,7 +226,8 @@ returned logs, manifests and reports.
   - Partition of GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO pairs (leakage-safe, no SciFact claims), a loader task with in-batch negatives, config weight, tests
 - Validation:
   - Non-training tests pass; leakage scan clean; no training run by the agent
-- Status: pending
+- Status: done
+- Note: 2026-11-14: `partitioners/retrieval.py`, `scripts/partition_english.py` (retrieval sources in one pass, cross-source dedupe), `scripts/check_retrieval_leakage.py`, task `retrieval` in `StreamingParquetMultiTaskDataLoader` (`include_retrieval_task`, own batch size and passage length; absent from `TASK_DATASET_DIRS` so the evaluator and `laris data check` are unchanged), trainer path (`_retrieval_loss`, weight `loss_lambda_retrieval`), `retrieval_task` / `retrieval_batch_size` / `retrieval_max_sequence_length` in the training schema, `english_r1.yaml` proposal (lambda 0.20, batch 32, 256 tokens). 6.50 M pairs (6.37 M train) from 10 sources; 6,472 pairs removed as leakage (SQuAD v1 val/test, STS-B val/test, SciFact claims, titles, abstracts; exact match or an eight-word window), 321,314 duplicates; rescan: 0 held-out hits, 0 queries in two splits within a source, 96 across sources (different sources, same text). A first run with Python's per-process `hash()` left 1,120 hits in the rescan; shingle keys are now CRC-32/Adler-32 and every window is indexed. Not done by design: no training, no profile (owner step 2 measures the retrieval task). Open for the owner: with real counts the retrieval task is drawn for 28.8 % of the steps (MLM 53.7 %); lambda 0.20 and batch 32 are unmeasured proposals. MS MARCO, ELI5, Yahoo, SPECTER, AltLex, Simple-Wiki and COCO keep `license_approved: false`.
 
 ### T179 — Science slice for the tokenizer fit (STEM vocabulary, G10)
 - Requirements: SR-M4, SR-M6

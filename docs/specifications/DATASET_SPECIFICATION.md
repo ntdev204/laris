@@ -131,14 +131,16 @@ Graded similarity: STS-B (8,628 pairs: 5,749 train / 1,500 validation / 1,379 te
 
 ## 4.1 Partition Coverage and Scope
 
-Partitioned (leakage-safe train/val/test, `data/processed`, manifest `task_splits_manifest.json`, 22 datasets, T177):
+Partitioned (leakage-safe train/val/test, `data/processed`, manifest `task_splits_manifest.json`, 32 datasets, T177 and T178):
 - **mlm:** English Wikipedia, FineWeb-Edu, OpenWebText, C4, Gutenberg, CC-News, CNN/DailyMail, XSum, Simple Wikipedia. Documents are split 98/1/1 by a hash of their id, cut into passages of at most 4,000 characters (the loader keeps only the first `seq_len` tokens of a record) and exact duplicates are dropped across sources and against English Wikipedia. Train passages: about 13.5 million from the new sources plus 1.99 million Wikipedia articles.
 - **nli:** ALL-NLI, ANLI, FEVER, WANLI (107,885 pairs pooled, 90/5/5 by pair hash), SciTail (labels `entails` / `neutral`).
 - **paraphrase:** Quora, PAWS, MRPC.
 - **similarity:** STS-B (gate set) and 14,429 extra pairs (`sts_extra_en`, train only).
 - **qa:** SQuAD, HotpotQA, SQuAD v2 and AdversarialQA. Rows whose article title or context is in the SQuAD v1 validation or test partition are removed (11,873 from SQuAD v2, 6,000 from AdversarialQA), so G06 and G07 stay clean.
 
-Acquired but **not partitioned** (no loader task yet, T178): retrieval pairs (GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki, COCO captions), TriviaQA, BoolQ, DROP, QASC, ARC, CommonsenseQA. Planned for later stages: S2ORC-STEM and science sources (stage 2), PDF sources (stage 3), LARIS-GOLD (D47).
+- **retrieval (T178):** GooAQ, Natural Questions, MS MARCO (selected passages only), ELI5, Yahoo Answers, Stack Exchange duplicates, SPECTER (anchor and cited title), AltLex, Simple-Wiki and COCO captions: 6.50 M query/positive pairs (6.37 M train), 98/1/1 by a hash of the query (symmetric sources by connected component of texts), in-batch negatives only, texts cut at 4,000 characters. Duplicate pairs are dropped (321,314, mostly SPECTER triplets that share an anchor and a cited title). Removed as leakage (6,472 pairs): any side equal to a SQuAD v1 validation/test question or paragraph, an STS-B validation/test sentence, a SciFact claim or title, or a positive sharing an eight-word window with a SQuAD v1 held-out paragraph or a SciFact abstract. `scripts/check_retrieval_leakage.py` rescans the output (report `reports/verification/T178-retrieval-leakage.json`): 0 held-out hits, 0 queries in two splits within a source, 96 across sources (same query text, different sources, not a held-out set). No SciFact claim is used for training. Licences stay as in section 2.1; MS MARCO, ELI5, Yahoo, SPECTER, AltLex, Simple-Wiki and COCO remain `license_approved: false`.
+
+Acquired but **not partitioned**: TriviaQA, BoolQ, DROP, QASC, ARC, CommonsenseQA. Planned for later stages: S2ORC-STEM and science sources (stage 2), PDF sources (stage 3), LARIS-GOLD (D47).
 
 Web text may still contain passages that also appear in evaluation sets (for example SQuAD contexts quoted from Wikipedia); exact-duplicate removal covers only identical documents, so near-duplicate contamination is not excluded and no number here says otherwise.
 

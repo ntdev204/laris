@@ -69,6 +69,8 @@ def profile_training_memory(
     )
     model = trainer.model
     model.train(with_training_step)
+    # the retrieval task exists only in runs that enable it (loss_lambda_retrieval > 0)
+    tasks = TASKS + (("retrieval",) if "retrieval" in loader.task_paths else ())
 
     def step(task: str) -> Any:
         batch = loader.generate_batch(task)
@@ -91,7 +93,7 @@ def profile_training_memory(
 
     def window() -> float:
         started = time.perf_counter()
-        for task in TASKS:
+        for task in tasks:
             loss = step(task)
             profile.tasks.append(
                 TaskMeasurement(
@@ -100,7 +102,7 @@ def profile_training_memory(
                     loss_finite=bool(torch.isfinite(loss.float()).item()),
                 )
             )
-        return (time.perf_counter() - started) / len(TASKS)
+        return (time.perf_counter() - started) / len(tasks)
 
     try:
         if with_training_step:
