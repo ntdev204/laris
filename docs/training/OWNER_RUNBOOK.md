@@ -569,7 +569,7 @@ tokenizer fit and every training step are owner runs. R1-R3a weights cannot init
 | Sources, licences, owner approvals (2026-11-14) | `configs/data/english_sources.yaml`, `data/acquisition_manifest.json` |
 | Partition and leakage rules | `configs/data/english_partition.yaml`, `scripts/partition_english.py`, `data/processed/task_splits_manifest.json` |
 | STS-B leakage check (2,092 pairs removed) | `scripts/check_sts_leakage.py`, `reports/verification/T175-sts-leakage.json` |
-| Tokenizer fit corpus (train splits only, word budgets per source) | `scripts/prepare_english_tokenizer_corpus.py` -> `data/cache/english_fit_corpus.txt` and `.json` |
+| Tokenizer fit corpus (train splits only, word budgets per source) | `scripts/prepare_english_tokenizer_corpus.py` -> `data/cache/english_fit_corpus_t183.txt` and `.json` |
 | Model and mixture | `configs/language_encoder/english_r1.yaml` (large size, about 544 M parameters, vocabulary 56,000 since T182; **proposal**) |
 | Why this size | `reports/verification/T175-model-size-vs-data.md` |
 
@@ -587,24 +587,24 @@ This does not make G12 pass: the encoder is NOT QUALIFIED until T100 measures it
 
 Set `HOME_ISOLATED` as in section 2 and stop other GPU workloads first.
 
-**Step 1: fit the English tokenizer** (CPU, about 3.7 GB of text, 605 M words; SentencePiece BPE, 56,000 pieces, digits split).
+**Step 1: fit the English tokenizer** (CPU, about 5.4 GB of text, 888 M words, STEM 9.0%; about 3 hours; SentencePiece BPE, 56,000 pieces, digits split).
 
-The first fit (32,000 pieces, `artifacts/tokenizer/english-r1/`) failed the intake: fertility 1.41 on general English validation text against the 1.35 limit (`reports/verification/english-r1-32k-tokenizer-intake.json`). Keep that directory as evidence. The vocabulary is raised to 56,000 (T182): the model grows by about 31 M parameters (tied embedding), the memory by about 0.5 GB. Whether 56,000 is enough is not known until it is fitted; if the intake still fails, the next lever is the STEM share or the digit split, not a larger vocabulary.
+The first fit (32,000 pieces, `artifacts/tokenizer/english-r1/`) failed the intake: fertility 1.41 on general English validation text against the 1.35 limit (`reports/verification/english-r1-32k-tokenizer-intake.json`). Keep that directory as evidence. The vocabulary is raised to 56,000 (T182): the model grows by about 31 M parameters (tied embedding), the memory by about 0.5 GB. The 56,000 fit on the T181 corpus (`artifacts/tokenizer/english-r1-56k/`) measured 1.352 to 1.359 on general English validation text, 0.002 to 0.009 over the 1.35 limit (`reports/verification/english-r1-56k-tokenizer-intake.json`). The corpus was then rebuilt (T183) so that STEM stays 80 M words but is 9.0% of the fit (general text 808 M words); the fit below is the third, and its expected effect on general fertility is small (an estimate of about 0.005 to 0.01, not a measurement). If the intake still fails, the next lever is the digit split, not a larger vocabulary.
 
 ```bash
-HOME=$HOME_ISOLATED timeout -s KILL 7200s .venv/bin/python -m cli.main train tokenizer \
-  --authorized --fit-corpus data/cache/english_fit_corpus.txt --vocab-size 56000 \
-  --output-dir artifacts/tokenizer/english-r1-56k --model-prefix laris_spm_en_56k \
-  2>&1 | tee artifacts/logs/english-r1-56k-tokenizer-fit.log
+HOME=$HOME_ISOLATED timeout -s KILL 14400s .venv/bin/python -m cli.main train tokenizer \
+  --authorized --fit-corpus data/cache/english_fit_corpus_t183.txt --vocab-size 56000 \
+  --output-dir artifacts/tokenizer/english-r1-56k-v2 --model-prefix laris_spm_en_56k_v2 \
+  2>&1 | tee artifacts/logs/english-r1-56k-v2-tokenizer-fit.log
 ```
 
-Return the log, `artifacts/tokenizer/english-r1-56k/` and `data/cache/english_fit_corpus.json`. The agent runs the intake (fertility on the
-validation split, unknown-token rate, special-token ids; `scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k/laris_spm_en_56k.model --out reports/verification/english-r1-56k-tokenizer-intake.json`) before step 2. Do not continue if fertility on English validation text is above 1.35.
+Return the log, `artifacts/tokenizer/english-r1-56k-v2/` and `data/cache/english_fit_corpus_t183.json`. Watch memory during the fit (SentencePiece loads the whole corpus; the trainer sets no `input_sentence_size`): note the peak RSS, for example with `/usr/bin/time -v` or `htop`; if the fit is killed for memory, tell the agent and a sampled fit with the same proportions is prepared. The agent runs the intake (fertility on the
+validation split, unknown-token rate, special-token ids; `scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k-v2/laris_spm_en_56k_v2.model --out reports/verification/english-r1-56k-v2-tokenizer-intake.json`) before step 2. Do not continue if fertility on English validation text is above 1.35.
 
 **Step 2: memory and speed profile** (decides batch size; the numbers replace every estimate in the size report).
 
 ```bash
-TOK=artifacts/tokenizer/english-r1-56k/laris_spm_en_56k.model
+TOK=artifacts/tokenizer/english-r1-56k-v2/laris_spm_en_56k_v2.model
 mkdir -p artifacts/profiles
 LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 600s .venv/bin/python -m cli.model train language-encoder \
   --profile-only --model-size large --vocab-size 56000 --max-seq-len 1024 \
