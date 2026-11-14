@@ -228,6 +228,16 @@ returned logs, manifests and reports.
   - Non-training tests pass; leakage scan clean; no training run by the agent
 - Status: pending
 
+### T179 — Science slice for the tokenizer fit (STEM vocabulary, G10)
+- Requirements: SR-M4, SR-M6
+- Depends: T177
+- Deliverables:
+  - One train shard each of ArXiv and PubMed full text acquired with SHA-256 (`science_sources.yaml`, `limit: 1`), partitioned by document hash into train/val/test, 20 M words each added to the tokenizer fit corpus (train splits only)
+- Validation:
+  - Corpus unit tests pass; the nine earlier fit-corpus sources are unchanged (same word counts and shard hashes); no tokenizer fitted, no training run
+- Status: done
+- Note: 2026-11-14, owner chose to add science before the fit. Acquired 435 MB (ArXiv 13,536 papers, PubMed 23,985). Partition: ArXiv 120,381 / 1,328 / 1,195 passages and PubMed 115,295 / 1,355 / 1,150 (train / val / test; 3 PubMed duplicates and 729 short documents dropped). Fit corpus 390.0 M words (350.0 M before), 2.34 GB, science about 10 %. The text keeps the source placeholders (`@xmath`, `@xcite`). The science directories are not in the stage-1 training mixture; stage 2 (T101) decides. The tokenizer fit stays an owner run (runbook section 9, step 1: rerun `scripts/prepare_english_tokenizer_corpus.py` first only if the corpus file is missing).
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
