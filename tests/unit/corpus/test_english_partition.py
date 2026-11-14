@@ -93,3 +93,17 @@ def test_qa_rows_from_squad_v1_heldout_articles_are_removed(tmp_path):
     )
     assert stats == {"dropped_squad_v1_heldout": 1, "kept": 1}
     assert sum(result.counts.values()) == 1
+
+
+def test_fit_corpus_lines_are_split_below_the_sentencepiece_limit():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[3] / "scripts" / "prepare_english_tokenizer_corpus.py"
+    spec = importlib.util.spec_from_file_location("prepare_fit", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    line = " ".join(["∑ααβ"] * 3000)  # multi-byte text: 4,000 characters can exceed 4,096 bytes
+    pieces = module.split_utf8(line, 4000)
+    assert len(pieces) > 1 and all(len(p.encode("utf-8")) <= 4000 for p in pieces)
+    assert " ".join(pieces) == line

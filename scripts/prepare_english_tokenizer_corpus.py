@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import pyarrow.parquet as pq
 
+MAX_LINE_BYTES = 4000  # below the SentencePiece max_sentence_length of 4096 bytes
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -29,6 +30,29 @@ def sha256(path: Path) -> str:
         while block := handle.read(1 << 20):
             digest.update(block)
     return digest.hexdigest()
+
+
+def split_utf8(line: str, limit: int) -> List[str]:
+    """Splits a line at whitespace into pieces of at most ``limit`` UTF-8 bytes.
+
+    SentencePiece silently skips sentences longer than ``max_sentence_length`` bytes (4096 by default), and
+    formula-heavy or non-ASCII text exceeds that with 4,000 characters; splitting keeps those documents in the fit.
+    """
+    if len(line.encode("utf-8")) <= limit:
+        return [line]
+    pieces: List[str] = []
+    current: List[str] = []
+    size = 0
+    for word in line.split(" "):
+        width = len(word.encode("utf-8")) + 1
+        if current and size + width > limit:
+            pieces.append(" ".join(current))
+            current, size = [], 0
+        current.append(word)
+        size += width
+    if current:
+        pieces.append(" ".join(current))
+    return pieces
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -68,9 +92,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             for group in groups:
                 for text in pf.read_row_group(group, columns=["text"]).column("text").to_pylist():
                     line = " ".join(normalize_scientific_text(text or "").split())
-                    if line:
-                        out.write(line + "\n")
-                        words += len(line.split())
+                    for piece in split_utf8(line, MAX_LINE_BYTES) if line else []:
+                        out.write(piece + "\n")
+                        words += len(piece.split())
                         lines += 1
                     if words >= limit:
                         break
