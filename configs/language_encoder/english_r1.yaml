@@ -32,10 +32,19 @@ training:
   loss_lambda_para: 0.10
   loss_lambda_sim: 0.05
   loss_lambda_qa: 0.15
-  # The retrieval-pair task (GooAQ, Natural Questions, MS MARCO, ...) needs loader support (T178); until then the
-  # contrastive term rides on QA batches only, as in R2/R3a.
-  loss_lambda_retrieval: 0.0
+  # Dense-retrieval task (T178): query/positive pairs from GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers,
+  # Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO captions (data/processed, leakage-scanned
+  # against the G12 sources). In-batch negatives only; the weight multiplies the InfoNCE loss (about ln(batch) at
+  # the start), so it is a PROPOSAL to revisit after the profile and the pilot loss curves. With the task on, the
+  # QA auxiliary contrastive term (same weight) is also on.
+  retrieval_task: true
+  loss_lambda_retrieval: 0.20
   retrieval_temperature: 0.07
+  # More in-batch negatives than the 8-pair micro-batch of the other tasks, and passages cut at 256 tokens (queries
+  # are short; the benchmark passages are paragraphs). The profile (runbook 9.2 step 2) measures the memory; lower
+  # the batch size if it does not fit.
+  retrieval_batch_size: 32
+  retrieval_max_sequence_length: 256
   task_sampling_alpha: 0.7
   # Within a task, datasets are drawn with probability proportional to (rows ** exponent) / total, so one large
   # source (FineWeb-Edu is 44 % of the MLM passages) does not take the whole task.
@@ -44,6 +53,7 @@ training:
     nli: 0.7
     paraphrase: 0.7
     qa: 0.7
+    retrieval: 0.5
 
 hardware:
   max_vram_gb: 14.5

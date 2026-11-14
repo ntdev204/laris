@@ -18,6 +18,7 @@ ABBREVIATIONS = {
     "paraphrase": "para",
     "similarity": "sim",
     "qa": "qa",
+    "retrieval": "ret",
 }
 BAR_FORMAT = "{l_bar}{bar:30}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]"
 

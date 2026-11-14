@@ -1,0 +1,62 @@
+{
+  "task": "T178",
+  "blocked": {
+    "squad_v1_val_question": 3278,
+    "squad_v1_val_paragraph": 729,
+    "stsb_val_sentence": 2906,
+    "squad_v1_test_question": 7251,
+    "squad_v1_test_paragraph": 1338,
+    "stsb_test_sentence": 2549,
+    "scifact_claim": 1105,
+    "scifact_title": 5180,
+    "scifact_abstract": 5183
+  },
+  "sources": {
+    "GOOAQ-EN": {
+      "rows": 3008479,
+      "held_out_hits": {}
+    },
+    "NATURAL-QUESTIONS-PAIRS-EN": {
+      "rows": 99673,
+      "held_out_hits": {}
+    },
+    "MSMARCO-EN": {
+      "rows": 590269,
+      "held_out_hits": {}
+    },
+    "ELI5-EN": {
+      "rows": 325366,
+      "held_out_hits": {}
+    },
+    "YAHOO-ANSWERS-EN": {
+      "rows": 680798,
+      "held_out_hits": {}
+    },
+    "STACKEXCHANGE-DUPLICATES-EN": {
+      "rows": 803970,
+      "held_out_hits": {}
+    },
+    "SPECTER-TRIPLETS-EN": {
+      "rows": 379832,
+      "held_out_hits": {}
+    },
+    "ALTLEX-EN": {
+      "rows": 111629,
+      "held_out_hits": {}
+    },
+    "SIMPLE-WIKI-EN": {
+      "rows": 88193,
+      "held_out_hits": {}
+    },
+    "COCO-CAPTIONS-EN": {
+      "rows": 413807,
+      "held_out_hits": {}
+    }
+  },
+  "split_isolation": {
+    "queries_in_two_splits_within_source": 0,
+    "queries_in_two_splits_across_sources": 96
+  },
+  "held_out_hits_total": 0,
+  "clean": true
+}

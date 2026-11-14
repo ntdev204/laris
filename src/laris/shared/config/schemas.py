@@ -8,7 +8,7 @@ Enforces:
 - Bounded parameter ranges and data ratio sum-to-one validation
 """
 
-from typing import Set
+from typing import Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -108,6 +108,11 @@ class TrainingConfig(BaseModel):
     loss_lambda_qa: float = Field(default=0.15, gt=0.0)
     loss_lambda_retrieval: float = Field(default=0.0, ge=0.0, allow_inf_nan=False)
     retrieval_temperature: float = Field(default=0.07, gt=0.0, allow_inf_nan=False)
+    # The retrieval task (T178) draws its own batch size (more in-batch negatives) and may
+    # cut passages shorter than the model's sequence length; null uses the general values.
+    retrieval_task: bool = False
+    retrieval_batch_size: Optional[int] = Field(default=None, ge=2)
+    retrieval_max_sequence_length: Optional[int] = Field(default=None, ge=8)
     dataset_sampling_exponents: dict[str, float] = Field(default_factory=dict)
     task_sampling_alpha: float = Field(default=0.7, gt=0.0, le=1.0, allow_inf_nan=False)
 
@@ -118,6 +123,8 @@ class TrainingConfig(BaseModel):
                 f"micro_batch_size ({self.micro_batch_size}) cannot exceed "
                 f"batch_size ({self.batch_size})"
             )
+        if self.retrieval_task and self.loss_lambda_retrieval <= 0:
+            raise ValueError("retrieval_task needs loss_lambda_retrieval > 0")
         return self
 
 

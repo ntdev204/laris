@@ -5,6 +5,9 @@ Reads data/raw and data/processed (Wikipedia and SQuAD v1, for deduplication and
 data/processed/<dir>/{train,val,test}.parquet and merges the entries into task_splits_manifest.json, dropping every
 withdrawn Vietnamese entry. It reads and writes files only; nothing trains or fits.
 
+Retrieval pairs (T178) are partitioned in one pass over all retrieval sources so that duplicates are dropped across
+them; use --only with every retrieval id to repeat it.
+
 Usage: python scripts/partition_english.py [--only ID ...] [--max-docs N]
 """
 
@@ -18,6 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from laris.research.corpus.splits.partitioners import english as E  # noqa: E402
+from laris.research.corpus.splits.partitioners import retrieval as R  # noqa: E402
 
 WITHDRAWN = {"WIKIPEDIA-VI", "CC100-VI-CLEAN", "VINLI", "VISTS", "UIT-VIQUAD-V2"}
 
@@ -90,6 +94,29 @@ def main(argv: Optional[List[str]] = None) -> int:
                 results.append(result.to_dict())
                 report[spec["id"]] = {"counts": result.counts, **stats}
                 print(f"[qa] {spec['id']}: {result.counts} {stats}", flush=True)
+
+    if any(want(s["id"]) for s in config["retrieval"]):
+        blocklist = R.build_blocklist(args.processed, args.raw, config)
+        print(
+            f"[retrieval] blocklist: {sum(len(v) for v in blocklist.exact.values()):,} texts, "
+            f"{sum(len(v) for v in blocklist.shingles.values()):,} shingles",
+            flush=True,
+        )
+        seen_pairs: Set[int] = set()
+        for spec in config["retrieval"]:
+            if want(spec["id"]):
+                result, stats = R.partition_retrieval_source(
+                    spec,
+                    args.raw / dirname(spec["id"]),
+                    args.processed / dirname(spec["id"]),
+                    config,
+                    blocklist,
+                    seen_pairs,
+                    args.max_docs,
+                )
+                results.append(result.to_dict())
+                report[spec["id"]] = {"counts": result.counts, **stats}
+                print(f"[retrieval] {spec['id']}: {result.counts} {stats}", flush=True)
 
     fresh = {r["dataset_id"] for r in results}
     kept = [

@@ -38,6 +38,15 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
     "qa": ["squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "qa"],
 }
 
+# Dense-retrieval pairs (T178). Kept out of TASK_DATASET_DIRS on purpose: the task exists only
+# when a run enables it (`include_retrieval_task`) and it has no per-dataset scorer in the evaluator.
+RETRIEVAL_TASK = "retrieval"
+RETRIEVAL_DATASET_DIRS: List[str] = [
+    "gooaq_en", "natural_questions_pairs_en", "msmarco_en", "eli5_en", "yahoo_answers_en",
+    "stackexchange_duplicates_en", "specter_triplets_en", "altlex_en", "simple_wiki_en",
+    "coco_captions_en",
+]
+
 
 def _text_length(record: Dict[str, Any]) -> int:
     """Characters of text in a record: a cheap proxy for its token length."""
@@ -239,9 +248,17 @@ class StreamingParquetMultiTaskDataLoader:
         length_pool_batches: int = 1,
         dataset_sampling_exponents: Optional[Dict[str, float]] = None,
         include_retrieval_pairs: bool = False,
+        include_retrieval_task: bool = False,
+        retrieval_batch_size: Optional[int] = None,
+        retrieval_max_sequence_length: Optional[int] = None,
     ) -> None:
         if length_pool_batches < 1:
             raise ValueError("length_pool_batches must be >= 1")
+        if retrieval_batch_size is not None and retrieval_batch_size < 2:
+            raise ValueError("retrieval_batch_size must be >= 2 (in-batch negatives need a batch)")
+        max_len = retrieval_max_sequence_length
+        if max_len is not None and not 8 <= max_len <= seq_len:
+            raise ValueError("retrieval_max_sequence_length must be between 8 and seq_len")
         if require_real_data and (tokenizer is None or fallback_to_synthetic):
             raise ValueError(
                 "require_real_data needs a fitted tokenizer and forbids the synthetic fallback"
@@ -267,13 +284,18 @@ class StreamingParquetMultiTaskDataLoader:
         self.length_pool_batches = length_pool_batches
         self.dataset_sampling_exponents = dict(dataset_sampling_exponents or {})
         if any(
-            task not in TASK_DATASET_DIRS or not math.isfinite(power) or power <= 0
+            (task not in TASK_DATASET_DIRS and task != RETRIEVAL_TASK)
+            or not math.isfinite(power)
+            or power <= 0
             for task, power in self.dataset_sampling_exponents.items()
         ):
             raise ValueError("dataset sampling exponents require known tasks and positive powers")
         if split != "train" and (self.dataset_sampling_exponents or include_retrieval_pairs):
             raise ValueError("dataset resampling and retrieval pairs require the train split")
         self.include_retrieval_pairs = include_retrieval_pairs
+        self.include_retrieval_task = include_retrieval_task
+        self.retrieval_batch_size = retrieval_batch_size or batch_size
+        self.retrieval_seq_len = retrieval_max_sequence_length or seq_len
         self._pending: Dict[str, List[List[Dict[str, Any]]]] = {}
 
         # Discover or assign task file paths
@@ -367,6 +389,15 @@ class StreamingParquetMultiTaskDataLoader:
                     found.extend(sorted(candidate_dir.glob(f"{self.split}*.parquet")))
             if found:
                 self.task_paths[task] = found
+        if self.include_retrieval_task:
+            retrieval = [
+                path
+                for subdir in RETRIEVAL_DATASET_DIRS
+                if (self.data_dir / subdir).is_dir()
+                for path in sorted((self.data_dir / subdir).glob(f"{self.split}*.parquet"))
+            ]
+            if retrieval:
+                self.task_paths[RETRIEVAL_TASK] = retrieval
 
     @classmethod
     def _interleaved_stream(
@@ -689,6 +720,29 @@ class StreamingParquetMultiTaskDataLoader:
             labels,
         )
 
+    def _format_retrieval_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
+        """Query/positive pairs for in-batch-negative contrastive training (T178).
+
+        Every other pair's passage is a negative for a query, except passages known to be positives
+        (the same passage, or another pair with the same query), which the mask excludes.
+        """
+        pairs: List[Tuple[List[int], List[int]]] = []
+        for rec in records:
+            q_toks = self._tokenize(rec.get("query") or "")
+            p_toks = self._tokenize(rec.get("positive") or "")
+            if q_toks and p_toks:
+                pairs.append((q_toks, p_toks))
+        if len(pairs) < 2:
+            raise RuntimeError("A retrieval batch needs two or more non-empty query/positive pairs")
+        labels = self._retrieval_labels(pairs)
+        # The trainer reads the query side as the batch input; the labels carry both sides.
+        return self._to_task_batch(
+            RETRIEVAL_TASK,
+            labels["retrieval_query_ids"],
+            labels["retrieval_query_mask"],
+            labels,
+        )
+
     def _retrieval_labels(
         self, pairs: List[Tuple[List[int], List[int]]]
     ) -> Dict[str, np.ndarray]:
@@ -697,7 +751,7 @@ class StreamingParquetMultiTaskDataLoader:
         encoded = []
         for column, name in enumerate(("query", "passage")):
             sequences, masks = zip(
-                *(build_sequence(pair[column], None, self.seq_len) for pair in pairs)
+                *(build_sequence(pair[column], None, self.retrieval_seq_len) for pair in pairs)
             )
             length = max(map(sum, masks))
             result[f"retrieval_{name}_ids"] = np.asarray(sequences, dtype=np.int64)[:, :length]
@@ -770,14 +824,14 @@ class StreamingParquetMultiTaskDataLoader:
         if not pending:
             it = self._task_iterators[task]
             pool: List[Dict[str, Any]] = []
-            for _ in range(self.batch_size * self.length_pool_batches):
+            size = self.retrieval_batch_size if task == RETRIEVAL_TASK else self.batch_size
+            for _ in range(size * self.length_pool_batches):
                 try:
                     pool.append(next(it))
                 except StopIteration:
                     break
             if self.length_pool_batches > 1:
                 pool.sort(key=_text_length)
-            size = self.batch_size
             batches = [pool[i : i + size] for i in range(0, len(pool), size)]
             self.rng.shuffle(batches)
             pending.extend(batches)
@@ -812,6 +866,8 @@ class StreamingParquetMultiTaskDataLoader:
             return self._format_similarity_batch(records)
         elif selected_task == "qa":
             return self._format_qa_batch(records)
+        elif selected_task == RETRIEVAL_TASK:
+            return self._format_retrieval_batch(records)
         else:
             raise ValueError(f"Unknown task: {selected_task}")
 

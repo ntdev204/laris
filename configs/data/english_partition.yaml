@@ -53,6 +53,33 @@ qa:
   - {id: SQUAD-V2-EN}
   - {id: ADVERSARIAL-QA-EN}
 
+retrieval:
+  # Retrieval pairs for the dense-retrieval task (T178): query and positive passage, in-batch negatives only, so no
+  # hard negatives are kept. `symmetric` sources have no direction (the same texts recur on both sides), so a split
+  # follows the connected component of texts that share a pair.
+  - {id: GOOAQ-EN, query: question, positive: answer}
+  - {id: NATURAL-QUESTIONS-PAIRS-EN, query: query, positive: answer}
+  - {id: MSMARCO-EN, kind: msmarco}  # query and its is_selected passages; unjudged passages are not used as negatives
+  - {id: ELI5-EN, query: question, positive: answer}
+  - {id: YAHOO-ANSWERS-EN, query: question, positive: answer}
+  - id: STACKEXCHANGE-DUPLICATES-EN
+    symmetric: true
+    columns: [[title1, title2], [body1, body2], [post1, post2]]
+  - {id: SPECTER-TRIPLETS-EN, query: anchor, positive: positive}  # the uncited negative column is dropped
+  - {id: ALTLEX-EN, query: text, positive: simplified, symmetric: true}
+  - {id: SIMPLE-WIKI-EN, query: text, positive: simplified, symmetric: true}
+  - {id: COCO-CAPTIONS-EN, query: caption1, positive: caption2, symmetric: true}
+retrieval_ratios: {train: 0.98, val: 0.01, test: 0.01}
+retrieval_max_chars: 4000
+# Held-out text no retrieval pair may contain (exact match on either side, or an eight-word overlap on the positive):
+# the G12 sources (SQuAD v1 held-out paragraphs and questions, SciFact claims, titles and abstracts) and STS-B (G05).
+retrieval_blocklist:
+  squad_dir: squad
+  stsb_dir: stsb
+  scifact_dir: scifact
+  scifact_queries: queries__queries-00000-of-00001.parquet
+  scifact_corpus: corpus__corpus-00000-of-00001.parquet
+
 similarity_extra:
   # Already leakage-filtered against STS-B validation and test by scripts/check_sts_leakage.py.
   source: data/processed/sts_extra_en/train.parquet

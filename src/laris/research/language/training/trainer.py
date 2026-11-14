@@ -286,6 +286,13 @@ class LanguageEncoderTrainer:
         """Runs the model computing only the head `task_type` needs (MLM: masked positions)."""
         import inspect
 
+        if task_type == "retrieval":
+            # Dense-retrieval task (T178): only the embedding path runs; labels carry both sides.
+            if self.retrieval_loss_weight <= 0:
+                raise ValueError(
+                    "The retrieval task needs retrieval_loss_weight (loss_lambda_retrieval) > 0"
+                )
+            return {"retrieval_loss": self._retrieval_loss(labels, training_pass)}
         kwargs: Dict[str, Any] = {"attention_mask": attention_mask}
         if training_pass:
             kwargs["training_pass"] = True
@@ -299,24 +306,28 @@ class LanguageEncoderTrainer:
             training_pass and task_type == "qa" and self.retrieval_loss_weight > 0
             and "retrieval_positives" in labels
         ):
-            embeddings = [
-                self.model(
-                    torch.as_tensor(labels[f"retrieval_{kind}_ids"], device=self.device),
-                    attention_mask=torch.as_tensor(
-                        labels[f"retrieval_{kind}_mask"], device=self.device
-                    ),
-                    task="embedding",
-                    training_pass=True,
-                )["cls_embedding"]
-                for kind in ("query", "passage")
-            ]
-            outputs["retrieval_loss"] = contrastive_retrieval_loss(
-                embeddings[0],
-                embeddings[1],
-                torch.as_tensor(labels["retrieval_positives"], device=self.device),
-                self.retrieval_temperature,
-            )
+            outputs["retrieval_loss"] = self._retrieval_loss(labels, True)
         return outputs
+
+    def _retrieval_loss(self, labels: Dict[str, Any], training_pass: bool) -> Any:
+        """In-batch InfoNCE of query and passage embeddings (known positives are masked)."""
+        embeddings = [
+            self.model(
+                torch.as_tensor(labels[f"retrieval_{kind}_ids"], device=self.device),
+                attention_mask=torch.as_tensor(
+                    labels[f"retrieval_{kind}_mask"], device=self.device
+                ),
+                task="embedding",
+                training_pass=training_pass,
+            )["cls_embedding"]
+            for kind in ("query", "passage")
+        ]
+        return contrastive_retrieval_loss(
+            embeddings[0],
+            embeddings[1],
+            torch.as_tensor(labels["retrieval_positives"], device=self.device),
+            self.retrieval_temperature,
+        )
 
     def _to_device(self, batch: Any) -> Any:
         token_ids = batch.token_ids
@@ -476,6 +487,9 @@ class LanguageEncoderTrainer:
             if "retrieval_loss" in outputs:
                 qa_loss = qa_loss + self.retrieval_loss_weight * outputs["retrieval_loss"]
             return qa_loss
+
+        elif task_type == "retrieval":
+            return self.retrieval_loss_weight * outputs["retrieval_loss"]
 
         else:
             raise ValueError(f"Unknown task_type: {task_type}")
