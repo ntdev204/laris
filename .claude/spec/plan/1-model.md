@@ -37,7 +37,7 @@ Exit criteria:
 
 ### Phase 41 — Stage 1 re-scope to English (D46, ADR-022)
 Goal: gates and data match an English-only foundation encoder; Vietnamese is left to a translation layer.
-Tasks: T173, T174, T175, T176, T177, T178, T179, T180, T181, T182, T183, T184
+Tasks: T173, T174, T175, T176, T177, T178, T179, T180, T181, T182, T183, T184, T190
 Exit criteria:
 - Withdrawn gates are recorded, none relaxed or marked passed.
 - English replacement data (MLM text, similarity beyond STS-B, NLI, paraphrase, QA, retrieval; at least 20 GB) is acquired with provenance, leakage-checked against STS-B, and partitioned.
