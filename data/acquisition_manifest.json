@@ -2340,9 +2340,231 @@
           "sha256": "12c22ab9cd78f114a22d9e582904fa45f8d744a4dcfb12e0ab9d12c8af04e914"
         }
       ]
+    },
+    {
+      "dataset_id": "VITAMINC-EN",
+      "name": "Vitaminc En",
+      "version": "tals/vitaminc@main",
+      "official_source_url": "https://huggingface.co/datasets/tals/vitaminc",
+      "license_name": "CC-BY-SA-3.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Claim and Wikipedia evidence (SUPPORTS / REFUTES / NOT ENOUGH INFO)",
+      "expected_sample_count": ">= 300,000 samples",
+      "actual_sample_count": 488904,
+      "actual_size_bytes": 255552326,
+      "sha256_checksum": "544934677f5d133873e6d38f4557f8966f4efa5d3d70874ffe6913f2091b86b5",
+      "storage_path": "data/raw/vitaminc_en",
+      "schema_valid": true,
+      "notes": "Role: nli. T201: contrastive pairs from Wikipedia revisions (the same claim with evidence that supports, refutes or does not settle it), so the label cannot be read from the claim alone. Maps to entailment / contradiction / neutral. Acquired only; not in the training mixture until T194. Source tals/vitaminc@main; 3 file(s) selected by pattern '*.jsonl'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "dev.jsonl",
+          "bytes": 32876983,
+          "sample_count": 63054,
+          "sha256": "544934677f5d133873e6d38f4557f8966f4efa5d3d70874ffe6913f2091b86b5"
+        },
+        {
+          "filename": "test.jsonl",
+          "bytes": 28717099,
+          "sample_count": 55197,
+          "sha256": "7ad1808dbc30c62e0a1427a53022d0dfaff668a1fde3c4b612a2d266edd753ad"
+        },
+        {
+          "filename": "train.jsonl",
+          "bytes": 193958244,
+          "sample_count": 370653,
+          "sha256": "7461c6fd1a13459590317c5ccdc8651dd2daf7c1ad8ae4b10ccd88d164fccd5a"
+        }
+      ]
+    },
+    {
+      "dataset_id": "PAWS-SWAP-EN",
+      "name": "Paws Swap En",
+      "version": "google-research-datasets/paws@main",
+      "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws",
+      "license_name": "Other (PAWS custom terms)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Wikipedia sentence pair, word-swapped (label 0/1)",
+      "expected_sample_count": ">= 20,000 samples",
+      "actual_sample_count": 30397,
+      "actual_size_bytes": 5741756,
+      "sha256_checksum": "21b9b68cd9398f01e6c766a9b12bc9a31cee11a6170a5acc5fa87ba853033a9b",
+      "storage_path": "data/raw/paws_swap_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. T201: PAWS-Wiki swap-only subset (word order changes meaning). The labeled_final subset is already in use. Research use pending licence review. Source google-research-datasets/paws@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 5741756,
+          "sample_count": 30397,
+          "sha256": "21b9b68cd9398f01e6c766a9b12bc9a31cee11a6170a5acc5fa87ba853033a9b"
+        }
+      ]
+    },
+    {
+      "dataset_id": "PAWS-UNLABELED-EN",
+      "name": "Paws Unlabeled En",
+      "version": "google-research-datasets/paws@main",
+      "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws",
+      "license_name": "Other (PAWS custom terms)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Wikipedia sentence pair with a model-assigned (noisy) label",
+      "expected_sample_count": ">= 500,000 samples",
+      "actual_sample_count": 655652,
+      "actual_size_bytes": 112644285,
+      "sha256_checksum": "c9724b30b187e8e2a6a4372cdefbeead1504d8645cdf0e1886c36b5ba3a68918",
+      "storage_path": "data/raw/paws_unlabeled_en",
+      "schema_valid": true,
+      "notes": "Role: paraphrase. T201: about 645 k word-order pairs whose labels come from a classifier, not from people; they are noisy and must be reported as `label_source: model` if ever used. Research use pending licence review. Source google-research-datasets/paws@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 110988709,
+          "sample_count": 645652,
+          "sha256": "c9724b30b187e8e2a6a4372cdefbeead1504d8645cdf0e1886c36b5ba3a68918"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 1655576,
+          "sample_count": 10000,
+          "sha256": "438720a7c059d2be528953c6a32f8542098aea02c6697460fc7b2d52c124a798"
+        }
+      ]
+    },
+    {
+      "dataset_id": "DUORC-EN",
+      "name": "Duorc En",
+      "version": "ibm/duorc@main",
+      "official_source_url": "https://huggingface.co/datasets/ibm/duorc",
+      "license_name": "MIT",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Movie-plot reading question (ParaphraseRC and SelfRC), some without an answer",
+      "expected_sample_count": ">= 150,000 samples",
+      "actual_sample_count": 187213,
+      "actual_size_bytes": 58710973,
+      "sha256_checksum": "6365f9178c615f3301f15b61dd04763c1148c9ec1b992e05733e4a22383162ba",
+      "storage_path": "data/raw/duorc_en",
+      "schema_valid": true,
+      "notes": "Role: qa. T201: long plots and questions written from a different plot of the same film, with `no_answer` rows. Needs a formatter (no character offsets) before use; see T197. Source ibm/duorc@main; 6 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "ParaphraseRC__test-00000-of-00001.parquet",
+          "bytes": 6136591,
+          "sample_count": 15857,
+          "sha256": "6365f9178c615f3301f15b61dd04763c1148c9ec1b992e05733e4a22383162ba"
+        },
+        {
+          "filename": "ParaphraseRC__train-00000-of-00001.parquet",
+          "bytes": 26005668,
+          "sample_count": 69524,
+          "sha256": "081f23715a05ebaa6310c2e5349c5ef2c4b1abcc5cdd9ef9c30aa2bcaf4400ee"
+        },
+        {
+          "filename": "ParaphraseRC__validation-00000-of-00001.parquet",
+          "bytes": 5566868,
+          "sample_count": 15591,
+          "sha256": "6890b9d6e21dbedf7bc4b5dcc2ec4df89461b96d731f2113241f04df53a73482"
+        },
+        {
+          "filename": "SelfRC__test-00000-of-00001.parquet",
+          "bytes": 3035736,
+          "sample_count": 12559,
+          "sha256": "cd763f41d30133c1161015dd01478e2ddedac98362299d7713eec8c50a0fa8e5"
+        },
+        {
+          "filename": "SelfRC__train-00000-of-00001.parquet",
+          "bytes": 14851720,
+          "sample_count": 60721,
+          "sha256": "2c0180bed6eea525a15e6d8c2eaf12be1f13ff3a3cc31e7409a75350f248ee41"
+        },
+        {
+          "filename": "SelfRC__validation-00000-of-00001.parquet",
+          "bytes": 3114390,
+          "sample_count": 12961,
+          "sha256": "c904b300cb5f475d6b01ed9abb384a9bfdc6219aa7551d2b80841fd28c8cf76a"
+        }
+      ]
+    },
+    {
+      "dataset_id": "ROPES-EN",
+      "name": "Ropes En",
+      "version": "allenai/ropes@main",
+      "official_source_url": "https://huggingface.co/datasets/allenai/ropes",
+      "license_name": "CC-BY-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Background paragraph, situation and a reasoning question",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 14322,
+      "actual_size_bytes": 1372548,
+      "sha256_checksum": "95b2ae3c1403b56a8e6a9250ccf7b0667b4c1b82b68694050654b142f5e868a6",
+      "storage_path": "data/raw/ropes_en",
+      "schema_valid": true,
+      "notes": "Role: qa. T201: reasoning over a background passage applied to a situation. Source allenai/ropes@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 199757,
+          "sample_count": 1710,
+          "sha256": "95b2ae3c1403b56a8e6a9250ccf7b0667b4c1b82b68694050654b142f5e868a6"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 1063606,
+          "sample_count": 10924,
+          "sha256": "5dd4781f69556326f366989e1e5df6603b43269388d5c2e22e0a7229c08df687"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 109185,
+          "sample_count": 1688,
+          "sha256": "5ad558e4089cbc1c0014fcd72f2bdfa3271d0a2ab04d19823ebba927323b6e26"
+        }
+      ]
+    },
+    {
+      "dataset_id": "QUOREF-EN",
+      "name": "Quoref En",
+      "version": "allenai/quoref@refs%2Fconvert%2Fparquet",
+      "official_source_url": "https://huggingface.co/datasets/allenai/quoref",
+      "license_name": "CC-BY-4.0",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Wikipedia passage with a coreference question",
+      "expected_sample_count": ">= 15,000 samples",
+      "actual_sample_count": 21817,
+      "actual_size_bytes": 7930492,
+      "sha256_checksum": "0552c1064fe266958b5efe30d42745230ad734ddc2bee02bf11e142de55519a9",
+      "storage_path": "data/raw/quoref_en",
+      "schema_valid": true,
+      "notes": "Role: qa. T201: span answers that need coreference resolution. Source allenai/quoref@refs%2Fconvert%2Fparquet; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "train__0000.parquet",
+          "bytes": 7062775,
+          "sample_count": 19399,
+          "sha256": "0552c1064fe266958b5efe30d42745230ad734ddc2bee02bf11e142de55519a9"
+        },
+        {
+          "filename": "validation__0000.parquet",
+          "bytes": 867717,
+          "sample_count": 2418,
+          "sha256": "d3ffcd51af1d596a83fbc90ffe2b2ece40e7b4050d51329d9089fc3b8341c663"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 65,
-  "total_acquired_bytes": 36222150618,
-  "total_acquired_samples": 21701023
+  "total_datasets_tracked": 71,
+  "total_acquired_bytes": 36664102998,
+  "total_acquired_samples": 23099328
 }

@@ -119,6 +119,17 @@ sources:
     min_rows: 20000
     notes: "Science-domain entailment (entails / neutral); licence tag missing, research use pending review."
 
+  - id: VITAMINC-EN
+    role: nli
+    repo: tals/vitaminc
+    path: ""
+    pattern: "*.jsonl"
+    license_name: "CC-BY-SA-3.0"
+    license_approved: true
+    sample_unit: "Claim and Wikipedia evidence (SUPPORTS / REFUTES / NOT ENOUGH INFO)"
+    min_rows: 300000
+    notes: "T192: contrastive pairs from Wikipedia revisions (the same claim with evidence that supports, refutes or does not settle it), so the label cannot be read from the claim alone. Maps to entailment / contradiction / neutral. Acquired only; not in the training mixture until T195."
+
   # ---- Similarity (graded) -----------------------------------------------------------------------------------------
   # Every pair here is deduplicated against STS-B val and test by scripts/check_sts_leakage.py before partitioning.
   - id: STS-COMPANION-EN
@@ -217,6 +228,27 @@ sources:
     min_rows: 100000
     notes: "Scientific-title relatedness; titles only, no full text."
 
+  - id: PAWS-SWAP-EN
+    role: paraphrase
+    repo: google-research-datasets/paws
+    path: labeled_swap
+    pattern: "*.parquet"
+    license_name: "Other (PAWS custom terms)"
+    license_approved: false
+    sample_unit: "Wikipedia sentence pair, word-swapped (label 0/1)"
+    min_rows: 20000
+    notes: "T192: PAWS-Wiki swap-only subset (word order changes meaning). The labeled_final subset is already in use. Research use pending licence review."
+  - id: PAWS-UNLABELED-EN
+    role: paraphrase
+    repo: google-research-datasets/paws
+    path: unlabeled_final
+    pattern: "*.parquet"
+    license_name: "Other (PAWS custom terms)"
+    license_approved: false
+    sample_unit: "Wikipedia sentence pair with a model-assigned (noisy) label"
+    min_rows: 500000
+    notes: "T192: about 645 k word-order pairs whose labels come from a classifier, not from people; they are noisy and must be reported as `label_source: model` if ever used. Research use pending licence review."
+
   # ---- Question answering and retrieval -------------------------------------------------------------------------------
   - id: SQUAD-V2-EN
     role: qa
@@ -268,6 +300,39 @@ sources:
     sample_unit: "Discrete-reasoning reading question"
     min_rows: 70000
     notes: "Counting, arithmetic and sorting over passages."
+  - id: DUORC-EN
+    role: qa
+    repo: ibm/duorc
+    path: ""
+    pattern: "*.parquet"
+    recursive: true
+    license_name: "MIT"
+    license_approved: true
+    sample_unit: "Movie-plot reading question (ParaphraseRC and SelfRC), some without an answer"
+    min_rows: 150000
+    notes: "T192: long plots and questions written from a different plot of the same film, with `no_answer` rows. Needs a formatter (no character offsets) before use; see T198."
+  - id: ROPES-EN
+    role: qa
+    repo: allenai/ropes
+    path: plain_text
+    pattern: "*.parquet"
+    license_name: "CC-BY-4.0"
+    license_approved: true
+    sample_unit: "Background paragraph, situation and a reasoning question"
+    min_rows: 10000
+    notes: "T192: reasoning over a background passage applied to a situation."
+  - id: QUOREF-EN
+    role: qa
+    repo: allenai/quoref
+    rev: "refs%2Fconvert%2Fparquet"
+    path: default
+    recursive: true
+    pattern: "*.parquet"
+    license_name: "CC-BY-4.0"
+    license_approved: true
+    sample_unit: "Wikipedia passage with a coreference question"
+    min_rows: 15000
+    notes: "T192: span answers that need coreference resolution."
   - id: QASC-EN
     role: qa
     repo: allenai/qasc
