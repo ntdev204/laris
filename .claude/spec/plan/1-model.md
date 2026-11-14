@@ -44,6 +44,20 @@ Exit criteria:
 - Every normative document and configuration that mentioned Vietnamese in stage 1 is amended or marked historical; withdrawn gates stay listed.
 - A new English tokenizer and encoder exist from an owner run; T100 evaluates them.
 
+### Phase 42 — NLP techniques: TF-IDF, word embeddings, NER token classification
+Goal: TF-IDF and word vectors are reusable model-block functions, and the existing encoder gets a token-classification
+(NER) head trained on a public dataset whose licence the owner approved; stage-1 checkpoints and gates stay unchanged.
+Tasks: T185, T186, T187, T188, T189
+Exit criteria:
+- The NER data licence review is written and the owner has chosen the source; nothing is downloaded before that
+  (CoNLL-2003 English needs the Reuters/NIST agreement and is not used without it).
+- TF-IDF and word vectors (static from the token embedding table, contextual from encoder states) are tested without
+  new dependencies and without training.
+- The NER head lives in a wrapper around the encoder, so stage-1 checkpoints load unchanged; label alignment and the
+  entity-level F1 evaluator are tested on fixtures.
+- The NER fine-tune and its held-out evaluation are owner runs; the result is reported as "measured on" the chosen
+  test split. NER has no qualification gate: adding one needs an ADR and a spec amendment.
+
 ### Phase 21 — Stage 2: scientific language
 Goal: scientific adaptation passes SciFact NLI and evidence gates.
 Tasks: T101, T102, T103, T104

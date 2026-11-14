@@ -290,6 +290,90 @@ returned logs, manifests and reports.
 - Note: 2026-11-14: two 56k fits did not reach 1.35 on general English validation text (1.359 on the T181 corpus, 1.358 on the T183 corpus with STEM at 9 %), so the STEM share is not a lever. The owner decided that splitting numbers into single digits is not needed and asked to drop it (the setting was only a default in `TokenizerTrainerConfig`; no spec or ADR requires it, see `docs/training/FOUNDATION_TOKENIZER_REMEDIATION.md`). Today digit pieces are about 13 % of the tokens of Wikipedia text, 5 % of C4 and FineWeb-Edu and 12 to 18 % of STEM text (measured on 600 validation passages per source, a lone space piece counted with them, so slightly high). Expected gain 1 to 3 % of the tokens of general text: an estimate. Costs named to the owner: numbers become pieces of uneven length (1992 and 2024 may be cut differently), rare numbers are learned less well, and stage 2 evidence text (effect sizes, p values) may be affected a little; none is measured. Intake limit stays 1.35; the fit is the owner's.
 - Result: 2026-11-14, owner fit done, intake PASS (`reports/verification/english-r1-56k-nd-tokenizer-intake.json`, 1,500 validation passages per source, normalised input): general text 1.282 (T183 fit 1.358; limit 1.35), STEM 1.373 (1.507), unknown rate 0.092 % (0.087 %), special ids and vocabulary size match the contract. The gain (5.6 % of the tokens) is larger than the 1 to 3 % estimated. Numbers are now whole pieces (`1992`, `0.05`, `2024`; long numbers are cut in chunks such as `100`+`00000`). This is validation text of the fit sources; G10 is still measured once on unseen text at T100. The three failed tokenizers (32k, 56k, 56k v2: `artifacts/tokenizer/english-r1*`) and their fit logs were deleted at the owner's request (9 MB; their intake reports in `reports/verification/` stay as the evidence); the T181 fit corpus `data/cache/english_fit_corpus.txt` (3.5 GB) was deleted too (the `.json` with its SHA-256 stays; `scripts/prepare_english_tokenizer_corpus.py` with the T181 budgets rebuilds it). RAM peak of the fit was not reported. Runbook step 2 (profile, owner run, `artifacts/profiles/english-r1-profile.log`) done 2026-11-14: large size, 543,991,751 parameters, micro-batch 8 x accumulation 4 (effective 32), 1024 tokens, bf16, gradient checkpointing, no 8-bit optimiser, RTX 5070 Ti (15.46 GB). All six tasks finite; peak per task: MLM 8.85 GB, NLI 10.32, paraphrase 10.33, similarity 10.33, QA 10.91, retrieval 11.39 (maximum, limit 14.5 GB), so the configuration fits and neither the batch size nor `retrieval_batch_size` needs lowering. Latency 0.82 s/micro-batch including data loading, about 3.3 s/optimizer step, which is about 10,000 tokens/s (8,192 tokens per micro-batch); derived, not logged: about 43 TFLOP/s counting the recompute of checkpointing (35 TFLOP/s was assumed). The 5,000-step pilot (about 164 M tokens) is then about 4.6 h at 3.3 s/step against its 8 h timeout. Caveats: one sample of real batches (16 QA rows, none unanswerable, none with the answer outside the window), so the unanswerable-QA path and the longest batches of a long run are not covered; the step time is from a profile, and tasks differ in cost, so the pilot log is the throughput evidence. Runbook step 3 (smoke run) is next; the foundation model remains NOT QUALIFIED.
 
+## Phase 42 — NLP techniques: TF-IDF, word embeddings, NER token classification
+
+### T185 — NER data licence review and source decision
+- Requirements: SR-M4, SR-M3
+- Depends: T184
+- Deliverables:
+  - `reports/verification/T185-ner-licence-review.md`: per candidate the licence as stated by the publisher (link, date
+    checked), origin of the text, redistribution and commercial terms, share-alike duties, label set, size, official
+    splits; a recommendation and the open owner decisions
+  - Candidates at least: CoNLL-2003 English, Few-NERD, WNUT-17, MultiNERD, WikiANN, OntoNotes 5.0
+- Validation:
+  - Every licence statement links its source; nothing downloaded; the owner records the chosen source(s) and whether
+    NER is a separate fine-tune (proposal) or part of the stage-1 mixture (would change T100's protocol: not proposed)
+- Status: pending
+- Note: Pre-check 2026-11-14 (to be re-verified in the task): CoNLL-2003 English is built from the Reuters Corpus (RCV1);
+  the shared task only publishes the annotations ("because of copyright reasons"), and the text requires the
+  organisational and individual Reuters agreements filed with NIST, so it is not used unless the owner signs them
+  (the Hugging Face copy declares licence `other` and cites those agreements). Few-NERD: CC BY-SA 4.0 (dataset;
+  code Apache-2.0), 188,200 sentences, 8 coarse / 66 fine types, share-alike, the same class as the Stack Exchange data
+  that stays `license_approved: false` (T180). WNUT-17: CC-BY-4.0 on the Hugging Face card only, social-media text,
+  official page to check. MultiNERD: non-commercial (the repository says both CC BY-NC-SA 4.0 and CC BY-NC 4.0).
+  WikiANN: licence `unknown`, silver labels. OntoNotes 5.0: LDC licence. Proposal: Few-NERD coarse types for training
+  and held-out test, WNUT-17 as a second, out-of-domain test if its licence is confirmed.
+
+### T186 — TF-IDF and word vectors as model-block functions
+- Requirements: SR-M2, SR-M3
+- Depends: T185
+- Deliverables:
+  - A TF-IDF module (numpy, sparse dict vectors: smoothed idf, optional sublinear tf, L2 norm, cosine, top-k terms and
+    neighbours) that `shared/scholarly/mining.py::group_documents` reuses without changing its results
+  - Word vectors from the encoder without training: static vectors from the token embedding table (a word = mean of its
+    `NormalizedSentencePiece` pieces) and contextual vectors (mean of the piece states of one forward pass,
+    inference only); nearest-neighbour lookup
+- Validation:
+  - Unit tests: TF-IDF on fixtures matches hand-computed values; `group_documents` output identical before and after;
+    word vectors on a tiny random-weight encoder (shapes, determinism, piece pooling); no new dependency (no
+    scikit-learn or gensim without owner approval); no fitting, no training
+- Status: pending
+- Note: Fitting static embeddings (word2vec, GloVe) counts as training and would be an owner run; not planned. Word
+  vectors from an untrained or unqualified encoder carry no claim of quality: the foundation model is NOT QUALIFIED.
+
+### T187 — NER data acquisition and partition
+- Requirements: SR-M4
+- Depends: T186
+- Deliverables:
+  - Source entries for the owner-approved set(s) with SHA-256 manifest, `license_approved` set only as the owner decided
+    in T185; conversion to one BIO scheme over the chosen label set; official train / validation / test kept, test sealed
+  - Leakage scan of the NER test sentences against the stage-1 training partitions (exact match and the eight-word
+    window used in T178)
+- Validation:
+  - Corpus unit tests pass; `data check --verify-sha256` passes; label counts per split reported; leakage hits listed
+    and removed from training, never from test
+- Status: pending
+
+### T188 — Token-classification (NER) head on the encoder
+- Requirements: SR-M12, SR-M3
+- Depends: T187
+- Deliverables:
+  - A wrapper module around the existing encoder with a `Linear(d_model, num_labels)` head (dropout configurable), so
+    the encoder's state dict and stage-1 checkpoints load unchanged
+  - Word-to-piece label alignment (first piece labelled, other pieces and special tokens ignored, index -100),
+    cross-entropy loss, a loader task `ner`, configuration schema fields, an entity-level span evaluator (strict BIO,
+    micro and per-type precision, recall, F1; own code, no new dependency) and a report following
+    `REPORT_SPECIFICATION.md`
+  - Prepared owner command (runbook) for the fine-tune: starting checkpoint, budget, timeout, stop rule, expected outputs
+- Validation:
+  - Non-training tests on a tiny random-weight encoder: shapes, alignment on fixtures with multi-piece words, loss mask,
+    evaluator against hand-computed spans; a stage-1 checkpoint loads into the wrapper with no missing or unexpected
+    encoder keys; no backward step, no optimiser
+- Status: pending
+
+### T189 — NER fine-tune and held-out evaluation (owner run)
+- Requirements: SR-M3, SR-M12
+- Depends: T188, T100
+- Deliverables:
+  - Intake of the owner's fine-tune logs and manifest; held-out evaluation command (owner run, once per candidate) and
+    the report
+- Validation:
+  - Logs and manifests match the prepared command; entity-level micro F1 on the sealed test reported as "measured on"
+    that set; validation results guide only; no qualification claim (NER has no gate)
+- Status: pending
+- Note: Waits for a stage-1 checkpoint (T100 pilot or promoted encoder; the owner chooses). Until stage 1 is promoted the
+  NER result describes an unqualified encoder.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
