@@ -2385,8 +2385,8 @@
       "version": "google-research-datasets/paws@main",
       "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws",
       "license_name": "Other (PAWS custom terms)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Wikipedia sentence pair, word-swapped (label 0/1)",
       "expected_sample_count": ">= 20,000 samples",
@@ -2395,7 +2395,7 @@
       "sha256_checksum": "21b9b68cd9398f01e6c766a9b12bc9a31cee11a6170a5acc5fa87ba853033a9b",
       "storage_path": "data/raw/paws_swap_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. T201: PAWS-Wiki swap-only subset (word order changes meaning). The labeled_final subset is already in use. Research use pending licence review. Source google-research-datasets/paws@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. T192: PAWS-Wiki swap-only subset (word order changes meaning). The labeled_final subset is already in use. Research use pending licence review. Source google-research-datasets/paws@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending. License not declared by the publisher; use approved by the project owner on 2026-11-14 (owner decision, not a legal clearance).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -2411,8 +2411,8 @@
       "version": "google-research-datasets/paws@main",
       "official_source_url": "https://huggingface.co/datasets/google-research-datasets/paws",
       "license_name": "Other (PAWS custom terms)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Wikipedia sentence pair with a model-assigned (noisy) label",
       "expected_sample_count": ">= 500,000 samples",
@@ -2421,7 +2421,7 @@
       "sha256_checksum": "c9724b30b187e8e2a6a4372cdefbeead1504d8645cdf0e1886c36b5ba3a68918",
       "storage_path": "data/raw/paws_unlabeled_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. T201: about 645 k word-order pairs whose labels come from a classifier, not from people; they are noisy and must be reported as `label_source: model` if ever used. Research use pending licence review. Source google-research-datasets/paws@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. T192: about 645 k word-order pairs whose labels come from a classifier, not from people; they are noisy and must be reported as `label_source: model` if ever used. Research use pending licence review. Source google-research-datasets/paws@main; 2 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending. License not declared by the publisher; use approved by the project owner on 2026-11-14 (owner decision, not a legal clearance).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
