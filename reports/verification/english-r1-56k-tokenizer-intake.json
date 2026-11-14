@@ -1,0 +1,150 @@
+{
+  "model_sha256": "cd266c9ed57282d5c6e43f89d49ae6f6715d5c405f6d3eec1935219671c46098",
+  "vocab_size": 56000,
+  "contract_vocab_size": 56000,
+  "special_ids": {
+    "[PAD]": 0,
+    "[UNK]": 1,
+    "[CLS]": 2,
+    "[SEP]": 3,
+    "[MASK]": 4,
+    "[MATH]": 5,
+    "[GREEK]": 6,
+    "[UNIT]": 7
+  },
+  "special_ids_match_contract": true,
+  "sources": {
+    "wikipedia_en": {
+      "words": 651601,
+      "fertility": 1.4979,
+      "unk_rate": 0.0015880805843316895
+    },
+    "fineweb_edu_en": {
+      "words": 671590,
+      "fertility": 1.327,
+      "unk_rate": 0.0006754762837135038
+    },
+    "openwebtext_en": {
+      "words": 701638,
+      "fertility": 1.3535,
+      "unk_rate": 0.0008360605333097467
+    },
+    "c4_en": {
+      "words": 530075,
+      "fertility": 1.3141,
+      "unk_rate": 0.0008110882219941285
+    },
+    "gutenberg_en": {
+      "words": 917459,
+      "fertility": 1.3319,
+      "unk_rate": 0.0007373599241198533
+    },
+    "cc_news_en": {
+      "words": 552082,
+      "fertility": 1.3534,
+      "unk_rate": 0.0011496114206333168
+    },
+    "cnn_dailymail_en": {
+      "words": 732535,
+      "fertility": 1.2895,
+      "unk_rate": 0.00017467507788920518
+    },
+    "xsum_en": {
+      "words": 523934,
+      "fertility": 1.2917,
+      "unk_rate": 0.0004432781304301571
+    },
+    "wikipedia_simple_en": {
+      "words": 353792,
+      "fertility": 1.5691,
+      "unk_rate": 0.0014915398347417096
+    },
+    "arxiv_fulltext": {
+      "words": 883832,
+      "fertility": 1.4337,
+      "unk_rate": 0.0
+    },
+    "pubmed_fulltext": {
+      "words": 850090,
+      "fertility": 1.2619,
+      "unk_rate": 0.0
+    },
+    "open_web_math": {
+      "words": 665151,
+      "fertility": 1.702,
+      "unk_rate": 0.0022489676037365015
+    },
+    "uspto_patents": {
+      "words": 816518,
+      "fertility": 1.4591,
+      "unk_rate": 0.0007529317753157571
+    },
+    "se_cs": {
+      "words": 241538,
+      "fertility": 1.6858,
+      "unk_rate": 0.003418526349912695
+    },
+    "se_devops": {
+      "words": 23206,
+      "fertility": 2.0135,
+      "unk_rate": 0.0
+    },
+    "se_electronics": {
+      "words": 671769,
+      "fertility": 1.5886,
+      "unk_rate": 0.0002942430503820943
+    },
+    "se_engineering": {
+      "words": 84558,
+      "fertility": 1.5646,
+      "unk_rate": 0.00010582090567577987
+    },
+    "se_iot": {
+      "words": 11753,
+      "fertility": 1.5993,
+      "unk_rate": 0.0
+    },
+    "se_materials": {
+      "words": 24416,
+      "fertility": 2.0165,
+      "unk_rate": 0.0004265345086728683
+    },
+    "se_mechanics": {
+      "words": 128028,
+      "fertility": 1.453,
+      "unk_rate": 6.988270456817864e-05
+    },
+    "se_networkengineering": {
+      "words": 109176,
+      "fertility": 1.664,
+      "unk_rate": 8.806983938263043e-05
+    },
+    "se_reverseengineering": {
+      "words": 41203,
+      "fertility": 2.0339,
+      "unk_rate": 0.0013484325962697342
+    },
+    "se_robotics": {
+      "words": 52749,
+      "fertility": 2.0449,
+      "unk_rate": 6.489352826113155e-05
+    },
+    "se_softwareengineering": {
+      "words": 668389,
+      "fertility": 1.4583,
+      "unk_rate": 7.489637624656298e-05
+    }
+  },
+  "groups": {
+    "general": {
+      "fertility": 1.3593,
+      "unk_rate": 0.0008570102432569523
+    },
+    "stem": {
+      "fertility": 1.5019,
+      "unk_rate": 0.0006826891081031763
+    }
+  },
+  "gate": 1.35,
+  "passed": false
+}

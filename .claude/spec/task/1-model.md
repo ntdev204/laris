@@ -269,6 +269,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-14: the owner's 32k fit (T177 command, 3.67 GB corpus) failed the runbook limit: fertility 1.408 on general English validation text (STEM 1.548, overall 1.475; limit 1.35), unknown rate 0.07 % with normalised input (0.57 % without it: typographic quotes and dashes, so every consumer must use `NormalizedSentencePiece`); special ids match the contract (`reports/verification/english-r1-32k-tokenizer-intake.json`, kept with `artifacts/tokenizer/english-r1/`). The owner chose a larger vocabulary (48k or 56k); 56k was taken for margin because gains of a larger BPE vocabulary shrink and 48k was likely to land near the limit. Cost: the large model grows from 513.25 M to about 544 M parameters (+30.7 M, tied embedding), about +0.5 GB of weights and optimiser state; the MLM head scores only masked positions. Not measured: whether 56k reaches 1.35 (fit pending); if the intake fails again, the next levers are the STEM share (13 %) and the digit split, and G10 is measured on unseen text at T100 anyway. Existing tests that hardcode 32,000 are for other configs and are unchanged.
 
+### T183 — Fit corpus with STEM at 9 % (80 M words, general text 808 M words)
+- Requirements: SR-M4, SR-M6
+- Depends: T182
+- Deliverables:
+  - Fit-corpus budgets: the four STEM areas stay at 20 M words each, general text raised by a factor of 1.54 so that STEM is 9 % of the corpus (owner range 8-10 %); corpus written to new file names (`english_fit_corpus_t183.txt` / `.json`), the T181 corpus kept; runbook 9.2 step 1 with the new corpus, output `artifacts/tokenizer/english-r1-56k-v2`, timeout 14,400 s and a memory note
+- Validation:
+  - Every budget reached; STEM 80,004,504 of 888,008,288 words = 9.01 %; four areas 20.00 M each; STEM source word counts and shard hashes identical to T181; no tokenizer fitted, no training run
+- Status: done
+- Note: 2026-11-14: the 56k fit on the T181 corpus (T182) measured general-text fertility 1.352 to 1.359 (limit 1.35), STEM 1.49 to 1.50; the owner asked for a lower STEM share without cutting STEM words. Corpus 5.38 GB (T181: 3.67 GB), no new download (all general sources have 200 M to 2.8 B words on disk). Expected gain is a small estimate (0.005 to 0.01 on general text, BPE merges follow the STEM share, not the absolute count); STEM fertility is expected to rise slightly. RAM of the fit is not measured (SentencePiece loads the whole file; the trainer sets no `input_sentence_size`); the owner notes the peak, and a sampled fit with the same proportions is the fallback if the fit is killed. Correction to T181: one line of the corpus (the same in both files) is 6,080 bytes because it holds one unbreakable word, so it is above 4,096 and SentencePiece skips that single sentence; nothing else exceeds the limit.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
