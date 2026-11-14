@@ -570,7 +570,7 @@ tokenizer fit and every training step are owner runs. R1-R3a weights cannot init
 | Partition and leakage rules | `configs/data/english_partition.yaml`, `scripts/partition_english.py`, `data/processed/task_splits_manifest.json` |
 | STS-B leakage check (2,092 pairs removed) | `scripts/check_sts_leakage.py`, `reports/verification/T175-sts-leakage.json` |
 | Tokenizer fit corpus (train splits only, word budgets per source) | `scripts/prepare_english_tokenizer_corpus.py` -> `data/cache/english_fit_corpus.txt` and `.json` |
-| Model and mixture | `configs/language_encoder/english_r1.yaml` (large size, about 513 M parameters, vocabulary 32,000; **proposal**) |
+| Model and mixture | `configs/language_encoder/english_r1.yaml` (large size, about 544 M parameters, vocabulary 56,000 since T182; **proposal**) |
 | Why this size | `reports/verification/T175-model-size-vs-data.md` |
 
 Retrieval pairs (T178): GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO captions
@@ -587,25 +587,27 @@ This does not make G12 pass: the encoder is NOT QUALIFIED until T100 measures it
 
 Set `HOME_ISOLATED` as in section 2 and stop other GPU workloads first.
 
-**Step 1: fit the English tokenizer** (CPU, about 3.7 GB of text, 605 M words; SentencePiece BPE, 32,000 pieces, digits split).
+**Step 1: fit the English tokenizer** (CPU, about 3.7 GB of text, 605 M words; SentencePiece BPE, 56,000 pieces, digits split).
+
+The first fit (32,000 pieces, `artifacts/tokenizer/english-r1/`) failed the intake: fertility 1.41 on general English validation text against the 1.35 limit (`reports/verification/english-r1-32k-tokenizer-intake.json`). Keep that directory as evidence. The vocabulary is raised to 56,000 (T182): the model grows by about 31 M parameters (tied embedding), the memory by about 0.5 GB. Whether 56,000 is enough is not known until it is fitted; if the intake still fails, the next lever is the STEM share or the digit split, not a larger vocabulary.
 
 ```bash
 HOME=$HOME_ISOLATED timeout -s KILL 7200s .venv/bin/python -m cli.main train tokenizer \
-  --authorized --fit-corpus data/cache/english_fit_corpus.txt --vocab-size 32000 \
-  --output-dir artifacts/tokenizer/english-r1 --model-prefix laris_spm_en_32k \
-  2>&1 | tee artifacts/logs/english-r1-tokenizer-fit.log
+  --authorized --fit-corpus data/cache/english_fit_corpus.txt --vocab-size 56000 \
+  --output-dir artifacts/tokenizer/english-r1-56k --model-prefix laris_spm_en_56k \
+  2>&1 | tee artifacts/logs/english-r1-56k-tokenizer-fit.log
 ```
 
-Return the log, `artifacts/tokenizer/english-r1/` and `data/cache/english_fit_corpus.json`. The agent runs the intake (fertility on the
-validation split, unknown-token rate, special-token ids) before step 2. Do not continue if fertility on English validation text is above 1.35.
+Return the log, `artifacts/tokenizer/english-r1-56k/` and `data/cache/english_fit_corpus.json`. The agent runs the intake (fertility on the
+validation split, unknown-token rate, special-token ids; `scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k/laris_spm_en_56k.model --out reports/verification/english-r1-56k-tokenizer-intake.json`) before step 2. Do not continue if fertility on English validation text is above 1.35.
 
 **Step 2: memory and speed profile** (decides batch size; the numbers replace every estimate in the size report).
 
 ```bash
-TOK=artifacts/tokenizer/english-r1/laris_spm_en_32k.model
+TOK=artifacts/tokenizer/english-r1-56k/laris_spm_en_56k.model
 mkdir -p artifacts/profiles
 LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 600s .venv/bin/python -m cli.model train language-encoder \
-  --profile-only --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --profile-only --model-size large --vocab-size 56000 --max-seq-len 1024 \
   --training-config configs/language_encoder/english_r1.yaml \
   --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
   --tokenizer-model $TOK --normalize-input 2>&1 | tee artifacts/profiles/english-r1-profile.log
@@ -620,7 +622,7 @@ The profile also measures the retrieval task (peak memory is the maximum over al
 
 ```bash
 LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 300s .venv/bin/python -m cli.model train language-encoder \
-  --authorized --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --authorized --model-size large --vocab-size 56000 --max-seq-len 1024 \
   --training-config configs/language_encoder/english_r1.yaml \
   --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
   --steps 20 --eval-interval 10 --eval-batches 2 --save-interval 20 --seed 42 \
@@ -632,7 +634,7 @@ LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 300s .venv/bin/python -m cli.model t
 
 ```bash
 LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 28800s .venv/bin/python -m cli.model train language-encoder \
-  --authorized --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --authorized --model-size large --vocab-size 56000 --max-seq-len 1024 \
   --training-config configs/language_encoder/english_r1.yaml \
   --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
   --steps 5000 --learning-rate 0.0002 --warmup-steps 500 \
