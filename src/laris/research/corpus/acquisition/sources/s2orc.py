@@ -26,6 +26,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 from laris.research.corpus.acquisition.common import (
     CACHE_DIR,
     RAW_DIR,
+    REPO_ROOT,
     DatasetEntry,
     _finalize_entry,
     _record_files,
@@ -93,6 +94,126 @@ def fetch_release(refresh: bool = False) -> Dict[str, Any]:
     return data
 
 
+FIELDS_CONFIG = REPO_ROOT / "configs" / "data" / "s2orc_fields.yaml"
+_FIELD_INDEX: Dict[str, Any] = {}
+
+
+def load_fields_config() -> Dict[str, Any]:
+    import yaml
+
+    with open(FIELDS_CONFIG, "r", encoding="utf-8") as handle:
+        return yaml.safe_load(handle)  # type: ignore[no-any-return]
+
+
+def _stream_lines(url: str) -> Iterator[bytes]:
+    req = urllib.request.Request(url, headers={"User-Agent": "laris-data-acquisition/1.0"})
+    decomp = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    tail = b""
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        while chunk := resp.read(1 << 20):
+            *lines, tail = (tail + decomp.decompress(chunk)).split(b"\n")
+            yield from (line for line in lines if line)
+    if tail.strip():
+        yield tail
+
+
+def _index_one_file(idx: int, url: str, out: Path, stem: frozenset) -> int:
+    """Streams one `papers` shard and stores the corpus ids whose fields of study intersect `stem`."""
+    import numpy as np
+
+    ids: List[int] = []
+    for line in _stream_lines(url):
+        row = json.loads(line)
+        fields = {f.get("category") for f in (row.get("s2fieldsofstudy") or []) if isinstance(f, dict)}
+        if fields & stem:
+            ids.append(int(row["corpusid"]))
+    np.save(out.with_suffix(".tmp.npy"), np.array(ids, dtype=np.int64))
+    out.with_suffix(".tmp.npy").replace(out)
+    return len(ids)
+
+
+def build_field_index(refresh_listing: bool = False) -> Path:
+    """One-off pass over the `papers` dataset; resumable per shard; writes sorted STEM corpus ids.
+
+    The shards are streamed and never stored. The result is `data/cache/s2_fields/stem_ids.npy`.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    import numpy as np
+
+    config = load_fields_config()
+    index_dir = REPO_ROOT / config["index_dir"]
+    index_dir.mkdir(parents=True, exist_ok=True)
+    final = index_dir / "stem_ids.npy"
+    stem = frozenset(config["stem_fields"])
+    base = os.environ.get(API_BASE_ENV, DEFAULT_API_BASE).rstrip("/")
+    key = _api_key()
+    listing_path = index_dir / "papers_release.json"
+
+    def listing(force: bool = False) -> Dict[str, Any]:
+        if listing_path.exists() and not (refresh_listing or force):
+            return json.loads(listing_path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+        release = _api_get(f"{base}/release/latest", key)
+        time.sleep(1.1)
+        dataset = _api_get(f"{base}/release/{release['release_id']}/dataset/{config['dataset']}", key)
+        data = {"release_id": release["release_id"], "files": dataset["files"]}
+        listing_path.write_text(json.dumps(data), encoding="utf-8")
+        listing_path.chmod(0o600)
+        return data
+
+    data = listing()
+    print(f"  [FIELDS] papers release {data['release_id']}: {len(data['files'])} shards")
+
+    def work(i: int) -> int:
+        out = index_dir / f"part-{i:04d}.npy"
+        if out.exists():
+            return int(np.load(out, mmap_mode="r").shape[0])
+        files = data["files"]
+        for attempt in range(1, S2ORC_MAX_ATTEMPTS + 1):
+            try:
+                n = _index_one_file(i, files[i], out, stem)
+                print(f"  [FIELDS] shard {i:03d}: {n:,} STEM ids")
+                return n
+            except urllib.error.HTTPError as exc:
+                if exc.code in (400, 403):
+                    files = listing(force=True)["files"]
+                    continue
+                raise
+            except (urllib.error.URLError, OSError, zlib.error, EOFError, json.JSONDecodeError):
+                if attempt == S2ORC_MAX_ATTEMPTS:
+                    raise
+                time.sleep(5 * attempt)
+        raise RuntimeError(f"fields shard {i} failed")
+
+    with ThreadPoolExecutor(max_workers=int(config["workers"])) as pool:
+        total = sum(pool.map(work, range(len(data["files"]))))
+    parts = [np.load(p) for p in sorted(index_dir.glob("part-*.npy"))]
+    merged = np.unique(np.concatenate(parts))
+    np.save(final, merged)
+    print(f"  [FIELDS] {len(merged):,} STEM corpus ids (from {total:,} before deduplication)")
+    return final
+
+
+def _stem_index() -> Optional[Any]:
+    """Sorted STEM corpus ids if the field index exists, else None (falls back to external ids)."""
+    if "ids" not in _FIELD_INDEX:
+        import numpy as np
+
+        path = REPO_ROOT / load_fields_config()["index_dir"] / "stem_ids.npy"
+        _FIELD_INDEX["ids"] = np.load(path) if path.exists() else None
+    return _FIELD_INDEX["ids"]
+
+
+def in_stem_index(corpusid: int) -> Optional[bool]:
+    ids = _stem_index()
+    if ids is None:
+        return None
+    import numpy as np
+
+    pos = int(np.searchsorted(ids, corpusid))
+    return pos < len(ids) and int(ids[pos]) == corpusid
+
+
 def select_shards(total: int, stage: str, seed: int = 20261111) -> List[int]:
     """Deterministic, stage-disjoint shard order spread over the whole release."""
     offset = STAGES[stage][2]
@@ -144,10 +265,17 @@ def filter_record(
         if drops is not None:
             drops[reason] = drops.get(reason, 0) + 1
 
+    by_field = in_stem_index(int(raw["corpusid"]))
     source = primary_source(ids)
-    if source is None:
-        drop("no_stem_id")
+    if by_field is None:
+        if source is None:
+            drop("no_stem_id")
+            return None
+    elif not by_field:
+        drop("not_stem_field")
         return None
+    else:
+        source = source or "fields_of_study"
     if len(text) < min_chars:
         drop("short_text")
         return None
@@ -266,46 +394,60 @@ def acquire_s2orc(
     for shard_file in sorted(dest.glob("shard-*.parquet")):
         seen.update(pq.read_table(shard_file, columns=["corpusid"]).column("corpusid").to_pylist())
 
-    processed = 0
-    refreshed = False
-    for idx in order:
-        if max_shards is not None and processed >= max_shards:
-            break
-        if str(idx) in state["done"]:
-            continue
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    workers = int(os.environ.get("S2ORC_WORKERS", "6"))
+    lock = threading.Lock()
+    urls = {"files": files, "refreshed": False}
+    queue = [i for i in order if str(i) not in state["done"]]
+    if max_shards is not None:
+        queue = queue[:max_shards]
+
+    def do_shard(idx: int) -> Optional[int]:
         remaining = budget_bytes - _dir_bytes(dest)
         if remaining <= 0:
-            print("  [BUDGET] byte budget reached; stopping")
-            break
+            return None
+        cap = max(remaining // workers, 50_000_000)  # parallel shards share what is left
         out = dest / f"shard-{idx:04d}.parquet"
         drops: Dict[str, int] = {}
         for attempt in range(1, S2ORC_MAX_ATTEMPTS + 1):
             try:
-                papers, size, counts, hit = _write_shard(files[idx], out, remaining, seen, drops)
+                papers, size, counts, hit = _write_shard(urls["files"][idx], out, cap, seen, drops)
                 break
             except urllib.error.HTTPError as exc:
-                if exc.code in (400, 403) and not refreshed:  # signed URL expired
-                    files = fetch_release(refresh=True)["files"]
-                    refreshed = True
+                if exc.code in (400, 403):  # signed URL expired
+                    with lock:
+                        urls["files"] = fetch_release(refresh=True)["files"]
                     continue
                 raise
             except (urllib.error.URLError, OSError, zlib.error, EOFError, json.JSONDecodeError):
                 if attempt == S2ORC_MAX_ATTEMPTS:
                     raise
                 time.sleep(5 * attempt)
-        state["done"][str(idx)] = {
-            "papers": papers, "bytes": size, "partial": hit, "dropped": drops,
-        }
-        for key, n in counts.items():
-            state["sources"][key] = state["sources"].get(key, 0) + n
-        state_path.write_text(json.dumps(state, indent=1), encoding="utf-8")
-        processed += 1
-        total_gb = _dir_bytes(dest) / 1e9
-        print(
-            f"  [SHARD {idx:03d}] {papers:,} papers, {size / 1e6:.0f} MB, total {total_gb:.2f} GB"
-        )
-        if hit:
-            break
+        with lock:
+            state["done"][str(idx)] = {
+                "papers": papers, "bytes": size, "partial": hit, "dropped": drops,
+            }
+            for key, n in counts.items():
+                state["sources"][key] = state["sources"].get(key, 0) + n
+            state_path.write_text(json.dumps(state, indent=1), encoding="utf-8")
+        print(f"  [SHARD {idx:03d}] {papers:,} papers, {size / 1e6:.0f} MB, "
+              f"total {_dir_bytes(dest) / 1e9:.2f} GB", flush=True)
+        return papers
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        pending = list(queue)
+        running = set()
+        while pending or running:
+            while pending and len(running) < workers and _dir_bytes(dest) < budget_bytes:
+                running.add(pool.submit(do_shard, pending.pop(0)))
+            if not running:
+                print("  [BUDGET] byte budget reached; stopping")
+                break
+            done_now = next(as_completed(running))
+            running.discard(done_now)
+            done_now.result()
 
     names = [p.name for p in sorted(dest.glob("shard-*.parquet"))]
     records, size, rows = _record_files(dest, names, count_parquet_rows)

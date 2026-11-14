@@ -194,9 +194,7 @@ returned logs, manifests and reports.
 - Validation:
   - Manifest complete for all sources; unit tests pass (`tests/unit/corpus/test_english_acquisition.py`); leakage rule tested
 - Status: done
-- Note: Owner asked on 2026-11-14 for at least 20 GB of English data covering all task cases; acquired 28.79 GB, 32 sources, 17.0 M records (manifest total 41.07 GB
-  with the retained Vietnamese files). 14 sources with non-commercial or undeclared licences are `NEEDS_LICENSE_REVIEW` (research-only; owner approval per source still open).
-  STS leakage check removed 697 STS12 and 1,395 SICK pairs; 14,429 clean extra pairs kept. No training, no tokenizer fit.
+- Note: 2026-11-14 the owner ordered the replacement data acquired (at least 20 GB, all semantic cases). Done by the agent: `configs/data/english_sources.yaml` (32 sources), `english_hf.py` acquirer (`--english-all`), `scripts/check_sts_leakage.py` (2,092 leaked pairs removed), manifest entries (33.0 GB, 21.2 M English records; Vietnamese entries WITHDRAWN_D46 and the data, checkpoints, tokenizer, logs and old reports deleted by the owner's order). Reports: `reports/verification/T175-english-acquisition.md`, `T175-model-size-vs-data.md` (proposal 0.6 B). Stage-2 and stage-3 source configs are prepared, not downloaded. Open: T177 (partition and wiring), then the owner fits the tokenizer and retrains; T100 follows.
 
 ### T176 — D46 document and configuration sweep
 - Requirements: SR-M6, SR-M3
@@ -231,6 +229,7 @@ returned logs, manifests and reports.
 - Validation:
   - Manifests and checksums; agreement thresholds met; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T102 — Scientific adaptation pipeline
 - Requirements: SR-M7
@@ -270,6 +269,7 @@ returned logs, manifests and reports.
 - Validation:
   - Gold agreement (CER ≤ 0.5 %, IoU ≥ 0.92) between annotators; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T106 — OCR pipeline
 - Requirements: SR-M8
@@ -299,6 +299,7 @@ returned logs, manifests and reports.
 - Validation:
   - Agreement kappa ≥ 0.85; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T109 — Manuscript-learning pipeline
 - Requirements: SR-M9
