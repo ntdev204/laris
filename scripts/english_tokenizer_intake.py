@@ -6,7 +6,7 @@ fertility (tokens per whitespace word) and the unknown-token rate on the validat
 the same normalisation as the fit corpus. Exit 1 when the general-text fertility is above the gate (default 1.35) or
 a check fails. Tokenizer inference only; the validation split is used, never the test split.
 
-Usage: python scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k/laris_spm_en_56k.model
+Usage: python scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
 """
 
 import argparse
