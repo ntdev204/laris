@@ -140,7 +140,10 @@ def run(args: argparse.Namespace) -> int:
         return 2
 
     # 3. Execute SentencePiece Fitting
-    print("\n[3/3] Executing SentencePiece BPE 32k training...")
+    print(
+        f"\n[3/3] Executing SentencePiece BPE {args.vocab_size}-piece training "
+        f"(digits {'kept as pieces' if args.no_split_digits else 'split'})..."
+    )
     cfg = TokenizerTrainerConfig(
         vocab_size=args.vocab_size,
         model_type="bpe",

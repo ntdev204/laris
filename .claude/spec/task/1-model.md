@@ -279,6 +279,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-14: the 56k fit on the T181 corpus (T182) measured general-text fertility 1.352 to 1.359 (limit 1.35), STEM 1.49 to 1.50; the owner asked for a lower STEM share without cutting STEM words. Corpus 5.38 GB (T181: 3.67 GB), no new download (all general sources have 200 M to 2.8 B words on disk). Expected gain is a small estimate (0.005 to 0.01 on general text, BPE merges follow the STEM share, not the absolute count); STEM fertility is expected to rise slightly. RAM of the fit is not measured (SentencePiece loads the whole file; the trainer sets no `input_sentence_size`); the owner notes the peak, and a sampled fit with the same proportions is the fallback if the fit is killed. Correction to T181: one line of the corpus (the same in both files) is 6,080 bytes because it holds one unbreakable word, so it is above 4,096 and SentencePiece skips that single sentence; nothing else exceeds the limit.
 
+### T184 — English tokenizer fit without digit splitting
+- Requirements: SR-M4, SR-M5
+- Depends: T183
+- Deliverables:
+  - Runbook 9.2 step 1 with `--no-split-digits` on the T183 corpus (output `artifacts/tokenizer/english-r1-56k-nd`, prefix `laris_spm_en_56k_nd`); the fit message of `train tokenizer` reports the real vocabulary size and the digit setting (it printed "32k" for every size)
+- Validation:
+  - Spec validator passes; no tokenizer fitted, no training run (the owner fits, the agent runs the intake with the 1.35 limit unchanged)
+- Status: done
+- Note: 2026-11-14: two 56k fits did not reach 1.35 on general English validation text (1.359 on the T181 corpus, 1.358 on the T183 corpus with STEM at 9 %), so the STEM share is not a lever. The owner decided that splitting numbers into single digits is not needed and asked to drop it (the setting was only a default in `TokenizerTrainerConfig`; no spec or ADR requires it, see `docs/training/FOUNDATION_TOKENIZER_REMEDIATION.md`). Today digit pieces are about 13 % of the tokens of Wikipedia text, 5 % of C4 and FineWeb-Edu and 12 to 18 % of STEM text (measured on 600 validation passages per source, a lone space piece counted with them, so slightly high). Expected gain 1 to 3 % of the tokens of general text: an estimate. Costs named to the owner: numbers become pieces of uneven length (1992 and 2024 may be cut differently), rare numbers are learned less well, and stage 2 evidence text (effect sizes, p values) may be affected a little; none is measured. Intake limit stays 1.35; the fit is the owner's.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
