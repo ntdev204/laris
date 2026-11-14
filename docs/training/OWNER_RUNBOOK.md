@@ -581,7 +581,7 @@ helped by it yet. Decide whether to wait for T178 before the main run (recommend
 
 Set `HOME_ISOLATED` as in section 2 and stop other GPU workloads first.
 
-**Step 1: fit the English tokenizer** (CPU, about 2.5 GB of text; SentencePiece BPE, 32,000 pieces, digits split).
+**Step 1: fit the English tokenizer** (CPU, about 3.7 GB of text, 605 M words; SentencePiece BPE, 32,000 pieces, digits split).
 
 ```bash
 HOME=$HOME_ISOLATED timeout -s KILL 7200s .venv/bin/python -m cli.main train tokenizer \

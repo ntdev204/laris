@@ -248,6 +248,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-14, owner approved the new downloads and set the range 10-15 % for total STEM. Fit corpus 399.6 M words, 2.42 GB; STEM 49.6 M words = 12.4 % (science 18 M: ArXiv 9 + PubMed 9; mathematics 12 M; engineering 12.6 M; technology 7 M). T179 budgets were cut from 20 M to 9 M each to stay in range. Patents granted before 1976 (13,023 of the first 75,000) are dropped as OCR noise. Licences: Stack Exchange is CC-BY-SA-4.0 and the patent shard's row metadata says CC-BY-4.0 (the Common Pile README says public domain), so all of these stay `license_approved: false` until the owner decides; the download was approved, use beyond the tokenizer fit is not. Stack Exchange threads carry `username_N` placeholders; ArXiv and PubMed keep `@xmath`/`@xcite`. Downloaded 2.5 GB. The science directories are not in the stage-1 mixture.
 
+### T181 — Balanced STEM slice and larger fit corpus; overlong-line fix
+- Requirements: SR-M4, SR-M6
+- Depends: T180
+- Deliverables:
+  - Fit corpus budgets: four STEM areas of 20 M words each (science, mathematics, engineering, technology), general text raised to 525 M words so that STEM stays about 13 %; fit-corpus script splits lines above 4,000 UTF-8 bytes
+- Validation:
+  - Corpus unit tests pass (line splitting tested); every budget reached; no line above 4,096 bytes; no tokenizer fitted, no training run
+- Status: done
+- Note: 2026-11-14, owner asked for equal STEM areas and a larger total instead of cutting science. Fit corpus 605.0 M words, 3.67 GB; STEM 80 M = 13.2 %. No new download (all data was on disk). Found while sizing: 3.3 % of the T180 corpus lines were over 4,096 bytes and SentencePiece skips such sentences (default `max_sentence_length`), which would have dropped mostly formula-heavy and non-ASCII STEM text; the script now splits them. Fit RAM is not measured: the trainer sets no `input_sentence_size`, so SentencePiece loads the whole 3.67 GB (31 GB machine); the owner should watch memory, and if it fails the fallback is a sampled fit (same proportions).
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold

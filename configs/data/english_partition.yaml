@@ -64,29 +64,33 @@ tokenizer_fit:
   output: data/cache/english_fit_corpus.txt
   report: data/cache/english_fit_corpus.json
   words:
-    wikipedia_en: 80000000
-    fineweb_edu_en: 100000000
-    openwebtext_en: 50000000
-    c4_en: 40000000
-    gutenberg_en: 40000000
-    cc_news_en: 20000000
-    cnn_dailymail_en: 10000000
-    xsum_en: 5000000
-    wikipedia_simple_en: 5000000
-    # STEM vocabulary (T179, T180): about 50 M words, 12-13% of the fit corpus (owner range 10-15%). Science 18 M,
-    # mathematics 12 M, engineering 12.6 M, technology 7 M. S2ORC stays out (stage 2, ADR-022).
-    arxiv_fulltext: 9000000
-    pubmed_fulltext: 9000000
-    open_web_math: 12000000
-    se_electronics: 3000000
-    se_engineering: 1000000
-    se_mechanics: 1200000
-    se_robotics: 600000
-    se_materials: 400000
-    se_iot: 400000
-    uspto_patents: 6000000
-    se_softwareengineering: 3000000
-    se_cs: 2000000
-    se_networkengineering: 1000000
-    se_devops: 400000
-    se_reverseengineering: 600000
+    wikipedia_en: 120000000
+    fineweb_edu_en: 150000000
+    openwebtext_en: 75000000
+    c4_en: 60000000
+    gutenberg_en: 60000000
+    cc_news_en: 30000000
+    cnn_dailymail_en: 15000000
+    xsum_en: 7500000
+    wikipedia_simple_en: 7500000
+    # STEM vocabulary (T179, T180, T181): four areas of 20 M words each (science, mathematics, engineering,
+    # technology) = 80 M words, about 13% of the fit corpus (owner range 10-15%). S2ORC stays out (stage 2, ADR-022).
+    # science: 20 M
+    arxiv_fulltext: 10000000
+    pubmed_fulltext: 10000000
+    # mathematics: 20 M
+    open_web_math: 20000000
+    # engineering: 20 M
+    uspto_patents: 8000000
+    se_electronics: 5000000
+    se_engineering: 2000000
+    se_mechanics: 2000000
+    se_robotics: 1500000
+    se_materials: 800000
+    se_iot: 700000
+    # technology: 20 M
+    se_softwareengineering: 7000000
+    se_cs: 5000000
+    se_networkengineering: 4000000
+    se_devops: 1500000
+    se_reverseengineering: 2500000
