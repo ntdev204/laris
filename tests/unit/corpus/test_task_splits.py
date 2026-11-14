@@ -215,7 +215,7 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
         # Check disaggregated unit ledgers
         ledgers = report["disaggregated_unit_ledgers"]
         self.assertIn("Clean Wikipedia Article Document (English)", ledgers["english"])
-        self.assertIn("Clean Wikipedia Article Document (Vietnamese)", ledgers["vietnamese"])
+        self.assertEqual(ledgers["vietnamese"], {})  # D46: Vietnamese datasets are withdrawn
         self.assertIn(
             "Sentence Pair with 3-Way NLI Label (entailment/neutral/contradiction)",
             ledgers["english"],
