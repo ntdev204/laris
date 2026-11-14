@@ -14,11 +14,11 @@ sources:
     repo: open-web-math/open-web-math
     path: data
     pattern: "train-*.parquet"
-    limit: 30
+    limit: 1
     license_name: "ODC-By-1.0 (compilation); per-page rights remain with the publishers"
     license_approved: false
     sample_unit: "Math and science web document"
-    min_rows: 500000
+    min_rows: 50000
     notes: "Mathematical and STEM web pages with LaTeX preserved; the share of formula-bearing text that stage 2 needs."
   - id: ARXIV-FULLTEXT
     role: scientific_text
@@ -62,6 +62,129 @@ sources:
     sample_unit: "Scientific literature instruction-following example (54 tasks)"
     min_rows: 50000
     notes: "Extraction, QA, entailment and summarisation tasks over papers; examples are capped at 4096 tokens."
+
+  # ---- engineering and technology terminology (T179, tokenizer fit slice; owner approved the download 2026-11-14) ------
+  - id: SE-ELECTRONICS
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: electronics.stackexchange.com
+    pattern: "train-*.parquet"
+    limit: 1
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Electronics and electrical engineering site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-ENGINEERING
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: engineering.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Engineering site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-MECHANICS
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: mechanics.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Mechanical engineering (mechanics) site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-ROBOTICS
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: robotics.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Robotics site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-MATERIALS
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: materials.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Materials engineering site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-IOT
+    role: stem_engineering
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: iot.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Internet of things site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-SOFTWAREENGINEERING
+    role: stem_technology
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: softwareengineering.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Software engineering site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-CS
+    role: stem_technology
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: cs.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Computer science site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-NETWORKENGINEERING
+    role: stem_technology
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: networkengineering.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Network engineering site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-DEVOPS
+    role: stem_technology
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: devops.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, DevOps and infrastructure site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence."
+  - id: SE-REVERSEENGINEERING
+    role: stem_technology
+    repo: HuggingFaceTB/stackexchange_2025_md
+    path: reverseengineering.stackexchange.com
+    pattern: "train-*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)"
+    license_approved: false
+    sample_unit: "Stack Exchange question and answers, Reverse engineering and systems site (markdown)"
+    min_rows: 1000
+    notes: "Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence."
+  - id: USPTO-PATENTS
+    role: stem_engineering
+    repo: common-pile/uspto_filtered
+    path: ""
+    pattern: "USPTO-0000.json.gz"
+    license_name: "Public domain as US government works (Common Pile README); row metadata states CC-BY-4.0 (Google Patents)"
+    license_approved: false
+    sample_unit: "US patent with background, description and claims; equations as LaTeX"
+    min_rows: 10000
+    notes: "Formal engineering and technology terminology across mechanical, electrical, chemical and software fields; one shard."
 
   # ---- claim verification and evidence ------------------------------------------------------------------------------
   - id: PUBMEDQA

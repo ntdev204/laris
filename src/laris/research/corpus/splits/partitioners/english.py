@@ -159,14 +159,22 @@ def partition_mlm_source(
     seen: Set[int],
     max_docs: Optional[int] = None,
 ) -> Tuple[PhysicalSplitResult, Dict[str, int]]:
-    """Splits documents by id hash, chunks them and drops exact duplicates (``seen`` is shared)."""
+    """Splits documents by id hash, chunks them and drops exact duplicates (``seen`` is shared).
+
+    An optional ``min_date: {field, value}`` in the spec drops rows whose ISO date field sorts below ``value``.
+    """
     ratios = _ratios(config["mlm_ratios"])
     files = sorted(p for p in raw_dir.iterdir() if p.suffix in {".parquet", ".gz", ".jsonl"})
     writers = _SplitWriters(out_dir, MLM_SCHEMA)
-    stats = {"documents": 0, "duplicates": 0, "short": 0}
+    stats = {"documents": 0, "duplicates": 0, "short": 0, "filtered": 0}
+    gate = spec.get("min_date")
     for index, row in enumerate(iter_rows(files, None)):
         if max_docs is not None and index >= max_docs:
             break
+        if gate and str(row.get(gate["field"]) or "") < gate["value"]:
+            # e.g. patents granted before the digital full-text era are OCR output with heavy noise
+            stats["filtered"] += 1
+            continue
         text = row.get(spec["text"]) or ""
         chunks = chunk_text(text, config["mlm_chunk_chars"], config["mlm_min_chunk_chars"])
         if not chunks:

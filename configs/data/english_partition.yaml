@@ -21,10 +21,24 @@ mlm:
   - {id: CNN-DAILYMAIL-EN, text: article, doc_id: id}
   - {id: XSUM-EN, text: document, doc_id: id}
   - {id: WIKIPEDIA-SIMPLE-EN, text: text, doc_id: id}
-  # Stage-2 science slice (T179): one train shard each, documents split by hash like every MLM source. Used for the
-  # tokenizer fit vocabulary (STEM terms); not part of the stage-1 training mixture.
+  # STEM slice (T179, T180): science, mathematics, engineering and technology sources, documents split by hash like
+  # every MLM source. Used for the tokenizer fit vocabulary (STEM terms); not part of the stage-1 training mixture.
   - {id: ARXIV-FULLTEXT, text: article}
   - {id: PUBMED-FULLTEXT, text: article}
+  - {id: OPEN-WEB-MATH, text: text, doc_id: url}
+  - {id: SE-ELECTRONICS, text: ThreadText, doc_id: Id}
+  - {id: SE-ENGINEERING, text: ThreadText, doc_id: Id}
+  - {id: SE-MECHANICS, text: ThreadText, doc_id: Id}
+  - {id: SE-ROBOTICS, text: ThreadText, doc_id: Id}
+  - {id: SE-MATERIALS, text: ThreadText, doc_id: Id}
+  - {id: SE-IOT, text: ThreadText, doc_id: Id}
+  - {id: SE-SOFTWAREENGINEERING, text: ThreadText, doc_id: Id}
+  - {id: SE-CS, text: ThreadText, doc_id: Id}
+  - {id: SE-NETWORKENGINEERING, text: ThreadText, doc_id: Id}
+  - {id: SE-DEVOPS, text: ThreadText, doc_id: Id}
+  - {id: SE-REVERSEENGINEERING, text: ThreadText, doc_id: Id}
+  # Patents before 1976 are OCR output with heavy noise; the filter keeps the clean digital era.
+  - {id: USPTO-PATENTS, text: text, doc_id: id, min_date: {field: created, value: "1976-01-01"}}
 
 nli:
   - {id: WANLI-EN, premise: premise, hypothesis: hypothesis, label: gold}
@@ -59,7 +73,20 @@ tokenizer_fit:
     cnn_dailymail_en: 10000000
     xsum_en: 5000000
     wikipedia_simple_en: 5000000
-    # Scientific vocabulary (T179, about 10% of the fit corpus): train splits of one arXiv and one PubMed shard.
-    # S2ORC stays out (stage 2, ADR-022).
-    arxiv_fulltext: 20000000
-    pubmed_fulltext: 20000000
+    # STEM vocabulary (T179, T180): about 50 M words, 12-13% of the fit corpus (owner range 10-15%). Science 18 M,
+    # mathematics 12 M, engineering 12.6 M, technology 7 M. S2ORC stays out (stage 2, ADR-022).
+    arxiv_fulltext: 9000000
+    pubmed_fulltext: 9000000
+    open_web_math: 12000000
+    se_electronics: 3000000
+    se_engineering: 1000000
+    se_mechanics: 1200000
+    se_robotics: 600000
+    se_materials: 400000
+    se_iot: 400000
+    uspto_patents: 6000000
+    se_softwareengineering: 3000000
+    se_cs: 2000000
+    se_networkengineering: 1000000
+    se_devops: 400000
+    se_reverseengineering: 600000

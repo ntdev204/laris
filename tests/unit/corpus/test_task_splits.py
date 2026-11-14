@@ -205,9 +205,9 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
         from laris.research.corpus.acquisition.sources.english_hf import load_sources_config
 
         # 18 generation-1 entries, the English stage-1 replacement sources (D46, T175) and the two
-        # stage-2 science shards acquired for the tokenizer fit (T179)
+        # STEM slice acquired for the tokenizer fit (T179, T180: 15 science, math, engineering and technology sources)
         self.assertEqual(
-            report["total_datasets_tracked"], 18 + len(load_sources_config()["sources"]) + 2
+            report["total_datasets_tracked"], 18 + len(load_sources_config()["sources"]) + 15
         )
         if report["physical_files_present"]:
             self.assertGreater(report["total_physical_files"], 40)
