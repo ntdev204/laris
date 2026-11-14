@@ -28,8 +28,10 @@ NLI_CLASSES = 3
 DATASET_LANGUAGE = {
     "wikipedia_en": "en", "all_nli": "en", "anli": "en", "quora": "en", "paws": "en",
     "quora_duplicates": "en", "stsb": "en", "squad": "en", "hotpotqa": "en", "fever": "en",
-    "wikipedia_vi": "vi", "cc100_vi_clean": "vi", "vinli": "vi", "vists": "vi",
-    "viquad_v2": "vi",
+    "fineweb_edu_en": "en", "openwebtext_en": "en", "c4_en": "en", "gutenberg_en": "en",
+    "cc_news_en": "en", "cnn_dailymail_en": "en", "xsum_en": "en", "wikipedia_simple_en": "en",
+    "wanli_en": "en", "scitail_en": "en", "mrpc_en": "en", "sts_extra_en": "en",
+    "squad_v2_en": "en", "adversarial_qa_en": "en",
 }  # fmt: skip
 QA_MAX_ANSWER_TOKENS = 64  # longest decoded answer, in tokens
 QA_NULL_THRESHOLD = 0.0  # fixed no-answer margin; never tuned on held-out data

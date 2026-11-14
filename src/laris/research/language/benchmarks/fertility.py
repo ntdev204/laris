@@ -54,8 +54,8 @@ class SourceSpec:
 DEFAULT_SOURCES: Tuple[SourceSpec, ...] = (
     SourceSpec("wikipedia_en_test", "en", "wikipedia_en", "WIKIPEDIA-EN", ("text",), "wiki"),
     SourceSpec("all_nli_test", "en", "all_nli", "ALL-NLI", ("premise", "hypothesis"), "sentences"),
-    SourceSpec("wikipedia_vi_test", "vi", "wikipedia_vi", "WIKIPEDIA-VI", ("text",), "wiki"),
-    SourceSpec("cc100_vi_test", "vi", "cc100_vi_clean", "CC100-VI-CLEAN", ("text",), "web"),
+    SourceSpec("fineweb_edu_test", "en", "fineweb_edu_en", "FINEWEB-EDU-EN", ("text",), "web"),
+    SourceSpec("gutenberg_test", "en", "gutenberg_en", "GUTENBERG-EN", ("text",), "books"),
 )  # fmt: skip
 
 

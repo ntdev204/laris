@@ -73,24 +73,24 @@ Acquired 2026-11-14 from `configs/data/english_sources.yaml` (endpoints, file se
 | **OPENWEBTEXT-EN** | mlm | [Skylion007/openwebtext](https://huggingface.co/datasets/Skylion007/openwebtext) | CC0-1.0 | 1,202,073 | 3.63 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **C4-EN** | mlm | [allenai/c4](https://huggingface.co/datasets/allenai/c4) | ODC-By-1.0 | 2,850,538 | 2.55 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **GUTENBERG-EN** | mlm | [manu/project_gutenberg](https://huggingface.co/datasets/manu/project_gutenberg) | Public domain (Project Gutenberg texts) | 16,520 | 3.33 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **CC-NEWS-EN** | mlm | [vblagoje/cc_news](https://huggingface.co/datasets/vblagoje/cc_news) | Not declared (CC-News crawl) | 708,241 | 1.12 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **CC-NEWS-EN** | mlm | [vblagoje/cc_news](https://huggingface.co/datasets/vblagoje/cc_news) | Not declared (CC-News crawl) | 708,241 | 1.12 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **CNN-DAILYMAIL-EN** | mlm | [abisee/cnn_dailymail](https://huggingface.co/datasets/abisee/cnn_dailymail) | Apache-2.0 | 311,971 | 0.84 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **XSUM-EN** | mlm | [EdinburghNLP/xsum](https://huggingface.co/datasets/EdinburghNLP/xsum) | Not declared (BBC articles) | 226,711 | 0.33 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **XSUM-EN** | mlm | [EdinburghNLP/xsum](https://huggingface.co/datasets/EdinburghNLP/xsum) | Not declared (BBC articles) | 226,711 | 0.33 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **WIKIPEDIA-SIMPLE-EN** | mlm | [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) | CC-BY-SA-3.0 / GFDL | 241,787 | 0.16 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **WANLI-EN** | nli | [alisawuffles/WANLI](https://huggingface.co/datasets/alisawuffles/WANLI) | CC-BY-4.0 | 107,885 | 0.03 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **SCITAIL-EN** | nli | [allenai/scitail](https://huggingface.co/datasets/allenai/scitail) | Not declared (AllenAI release) | 27,026 | 0.01 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **SCITAIL-EN** | nli | [allenai/scitail](https://huggingface.co/datasets/allenai/scitail) | Not declared (AllenAI release) | 27,026 | 0.01 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **STS-COMPANION-EN** | similarity | [tasksource/sts-companion](https://huggingface.co/datasets/tasksource/sts-companion) | Apache-2.0 | 5,293 | 0.00 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **STS12-TRAIN-EN** | similarity | [mteb/sts12-sts](https://huggingface.co/datasets/mteb/sts12-sts) | Not declared (SemEval-2012 release) | 2,234 | 0.00 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **SICK-EN** | similarity | [RobZamp/sick](https://huggingface.co/datasets/RobZamp/sick) | CC-BY-NC-SA-3.0 | 9,840 | 0.00 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **MRPC-EN** | paraphrase | [nyu-mll/glue](https://huggingface.co/datasets/nyu-mll/glue) | Other (GLUE, MSR paraphrase corpus) | 5,801 | 0.00 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **ALTLEX-EN** | paraphrase | [sentence-transformers/altlex](https://huggingface.co/datasets/sentence-transformers/altlex) | Not declared (AltLex release) | 112,696 | 0.02 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **SIMPLE-WIKI-EN** | paraphrase | [sentence-transformers/simple-wiki](https://huggingface.co/datasets/sentence-transformers/simple-wiki) | Not declared (Wikipedia-derived) | 102,225 | 0.02 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **COCO-CAPTIONS-EN** | paraphrase | [sentence-transformers/coco-captions](https://huggingface.co/datasets/sentence-transformers/coco-captions) | Not declared (COCO captions, CC-BY-4.0 upstream annotations) | 414,010 | 0.02 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **STS12-TRAIN-EN** | similarity | [mteb/sts12-sts](https://huggingface.co/datasets/mteb/sts12-sts) | Not declared (SemEval-2012 release) | 2,234 | 0.00 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **SICK-EN** | similarity | [RobZamp/sick](https://huggingface.co/datasets/RobZamp/sick) | CC-BY-NC-SA-3.0 | 9,840 | 0.00 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **MRPC-EN** | paraphrase | [nyu-mll/glue](https://huggingface.co/datasets/nyu-mll/glue) | Other (GLUE, MSR paraphrase corpus) | 5,801 | 0.00 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **ALTLEX-EN** | paraphrase | [sentence-transformers/altlex](https://huggingface.co/datasets/sentence-transformers/altlex) | Not declared (AltLex release) | 112,696 | 0.02 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **SIMPLE-WIKI-EN** | paraphrase | [sentence-transformers/simple-wiki](https://huggingface.co/datasets/sentence-transformers/simple-wiki) | Not declared (Wikipedia-derived) | 102,225 | 0.02 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **COCO-CAPTIONS-EN** | paraphrase | [sentence-transformers/coco-captions](https://huggingface.co/datasets/sentence-transformers/coco-captions) | Not declared (COCO captions, CC-BY-4.0 upstream annotations) | 414,010 | 0.02 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **STACKEXCHANGE-DUPLICATES-EN** | paraphrase | [sentence-transformers/stackexchange-duplicates](https://huggingface.co/datasets/sentence-transformers/stackexchange-duplicates) | CC-BY-SA-4.0 (Stack Exchange data dump) | 805,504 | 0.40 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **SPECTER-TRIPLETS-EN** | paraphrase | [sentence-transformers/specter](https://huggingface.co/datasets/sentence-transformers/specter) | Not declared (SPECTER citation triplets) | 684,098 | 0.06 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **SPECTER-TRIPLETS-EN** | paraphrase | [sentence-transformers/specter](https://huggingface.co/datasets/sentence-transformers/specter) | Not declared (SPECTER citation triplets) | 684,098 | 0.06 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **SQUAD-V2-EN** | qa | [rajpurkar/squad_v2](https://huggingface.co/datasets/rajpurkar/squad_v2) | CC-BY-SA-4.0 | 142,192 | 0.02 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **ADVERSARIAL-QA-EN** | qa | [UCLNLP/adversarial_qa](https://huggingface.co/datasets/UCLNLP/adversarial_qa) | CC-BY-SA-4.0 | 36,000 | 0.01 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **TRIVIAQA-WIKI-EN** | qa | [mandarjoshi/trivia_qa](https://huggingface.co/datasets/mandarjoshi/trivia_qa) | Not declared (TriviaQA, Apache-2.0 upstream code) | 77,582 | 2.29 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **TRIVIAQA-WIKI-EN** | qa | [mandarjoshi/trivia_qa](https://huggingface.co/datasets/mandarjoshi/trivia_qa) | Not declared (TriviaQA, Apache-2.0 upstream code) | 77,582 | 2.29 | `VERIFIED` / `APPROVED_BY_OWNER` |
 | **BOOLQ-EN** | qa | [google/boolq](https://huggingface.co/datasets/google/boolq) | CC-BY-SA-3.0 | 12,697 | 0.00 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **DROP-EN** | qa | [ucinlp/drop](https://huggingface.co/datasets/ucinlp/drop) | CC-BY-SA-4.0 | 86,935 | 0.01 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **QASC-EN** | qa | [allenai/qasc](https://huggingface.co/datasets/allenai/qasc) | CC-BY-4.0 | 9,980 | 0.00 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
@@ -98,9 +98,9 @@ Acquired 2026-11-14 from `configs/data/english_sources.yaml` (endpoints, file se
 | **COMMONSENSEQA-EN** | qa | [tau/commonsense_qa](https://huggingface.co/datasets/tau/commonsense_qa) | MIT | 12,102 | 0.00 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **NATURAL-QUESTIONS-PAIRS-EN** | retrieval | [sentence-transformers/natural-questions](https://huggingface.co/datasets/sentence-transformers/natural-questions) | CC-BY-SA-3.0 (Natural Questions) | 100,231 | 0.04 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
 | **GOOAQ-EN** | retrieval | [sentence-transformers/gooaq](https://huggingface.co/datasets/sentence-transformers/gooaq) | Apache-2.0 (GooAQ) | 3,012,496 | 0.61 | `VERIFIED` / `APPROVED_FOR_ACQUISITION` |
-| **ELI5-EN** | retrieval | [sentence-transformers/eli5](https://huggingface.co/datasets/sentence-transformers/eli5) | Not declared (ELI5 forum answers) | 325,475 | 0.11 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **YAHOO-ANSWERS-EN** | retrieval | [sentence-transformers/yahoo-answers](https://huggingface.co/datasets/sentence-transformers/yahoo-answers) | Not declared (Yahoo Answers) | 681,164 | 0.30 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
-| **MSMARCO-EN** | retrieval | [microsoft/ms_marco](https://huggingface.co/datasets/microsoft/ms_marco) | Microsoft research-only terms | 1,010,916 | 2.11 | `DOWNLOADED` / `NEEDS_LICENSE_REVIEW` |
+| **ELI5-EN** | retrieval | [sentence-transformers/eli5](https://huggingface.co/datasets/sentence-transformers/eli5) | Not declared (ELI5 forum answers) | 325,475 | 0.11 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **YAHOO-ANSWERS-EN** | retrieval | [sentence-transformers/yahoo-answers](https://huggingface.co/datasets/sentence-transformers/yahoo-answers) | Not declared (Yahoo Answers) | 681,164 | 0.30 | `VERIFIED` / `APPROVED_BY_OWNER` |
+| **MSMARCO-EN** | retrieval | [microsoft/ms_marco](https://huggingface.co/datasets/microsoft/ms_marco) | Microsoft research-only terms | 1,010,916 | 2.11 | `VERIFIED` / `APPROVED_BY_OWNER` |
 
 Similarity sources pass `scripts/check_sts_leakage.py` before use: of 17,363 candidate pairs, 2,092 shared a sentence with STS-B validation or test and were dropped, 842 were duplicates, leaving 14,429 pairs in `data/processed/sts_extra_en/train.parquet` (`reports/verification/T175-sts-leakage.json`).
 
@@ -114,7 +114,7 @@ Units: (1) supervised task records (a labelled pair or question), (2) general la
 - **Tracked datasets:** 50; five Vietnamese datasets are `WITHDRAWN_D46` (data deleted, zero counted).
 - **Stage-1 English data on disk:** 33.0 GB in 42 datasets, **21,219,097 records** (S2ORC stage-1 shards excluded: they belong to stage 2).
 - **MLM text:** about 11.8 billion tokens (characters divided by 4.2; an estimate until the new tokenizer exists) from FineWeb-Edu, English Wikipedia, OpenWebText, C4, Gutenberg, CC-News, CNN/DailyMail, Simple Wikipedia, XSum.
-- **License caveat:** sources with `NEEDS_LICENSE_REVIEW` (CC-News, XSum, SICK, MRPC, SciTail, TriviaQA, MS MARCO, Yahoo Answers, ELI5, STS12, AltLex, Simple-Wiki, COCO captions, SPECTER) are research-only until the owner records approval. The owner ordered acquisition on 2026-11-14; that is not a licence clearance.
+- **License caveat:** 14 sources with a non-commercial, undeclared or unclear licence (CC-News, XSum, SICK, MRPC, SciTail, TriviaQA, MS MARCO, Yahoo Answers, ELI5, STS12, AltLex, Simple-Wiki, COCO captions, SPECTER) were **approved by the owner on 2026-11-14** (`APPROVED_BY_OWNER`). This is an owner governance decision for research use, not a legal clearance; no redistribution.
 
 ### 3.1 Language ledger
 - **English track:** 21,219,097 records; supervised task records and retrieval pairs plus document text as listed in section 2 and 2.1.
@@ -131,9 +131,16 @@ Graded similarity: STS-B (8,628 pairs: 5,749 train / 1,500 validation / 1,379 te
 
 ## 4.1 Partition Coverage and Scope
 
-Partitioned today (leakage-safe train/val/test, `data/processed`): English Wikipedia (mlm); ALL-NLI, ANLI, FEVER (nli); QUORA-DUPLICATES, PAWS-WIKI (paraphrase); STSB (similarity); SQUAD, HOTPOTQA (qa). The new English sources are **acquired but not yet partitioned**: that is task T177, and until it is done they cannot enter a training mixture.
+Partitioned (leakage-safe train/val/test, `data/processed`, manifest `task_splits_manifest.json`, 22 datasets, T177):
+- **mlm:** English Wikipedia, FineWeb-Edu, OpenWebText, C4, Gutenberg, CC-News, CNN/DailyMail, XSum, Simple Wikipedia. Documents are split 98/1/1 by a hash of their id, cut into passages of at most 4,000 characters (the loader keeps only the first `seq_len` tokens of a record) and exact duplicates are dropped across sources and against English Wikipedia. Train passages: about 13.5 million from the new sources plus 1.99 million Wikipedia articles.
+- **nli:** ALL-NLI, ANLI, FEVER, WANLI (107,885 pairs pooled, 90/5/5 by pair hash), SciTail (labels `entails` / `neutral`).
+- **paraphrase:** Quora, PAWS, MRPC.
+- **similarity:** STS-B (gate set) and 14,429 extra pairs (`sts_extra_en`, train only).
+- **qa:** SQuAD, HotpotQA, SQuAD v2 and AdversarialQA. Rows whose article title or context is in the SQuAD v1 validation or test partition are removed (11,873 from SQuAD v2, 6,000 from AdversarialQA), so G06 and G07 stay clean.
 
-Planned for later stages: S2ORC-STEM and science sources (stage 2), PDF sources (stage 3), LARIS-GOLD.
+Acquired but **not partitioned** (no loader task yet, T178): retrieval pairs (GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki, COCO captions), TriviaQA, BoolQ, DROP, QASC, ARC, CommonsenseQA. Planned for later stages: S2ORC-STEM and science sources (stage 2), PDF sources (stage 3), LARIS-GOLD (D47).
+
+Web text may still contain passages that also appear in evaluation sets (for example SQuAD contexts quoted from Wikipedia); exact-duplicate removal covers only identical documents, so near-duplicate contamination is not excluded and no number here says otherwise.
 
 ---
 

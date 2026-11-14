@@ -216,6 +216,16 @@ returned logs, manifests and reports.
   - Owner commands (runbook section 9) for the English tokenizer fit and the encoder run, with budget and stop rules; owner licence decisions recorded
 - Validation:
   - Split isolation verified; non-training tests pass; the owner runs fit and training and returns logs; T100 follows
+- Status: done
+- Note: 2026-11-14: partition (`partitioners/english.py`, `scripts/partition_english.py`; 13 sources, SQuAD v1 held-out and STS-B leakage removed, passages of at most 4,000 characters), loader dirs English only, `configs/language_encoder/english_r1.yaml` (proposal), tokenizer fit corpus script and `--fit-corpus`, runbook section 9 with owner commands. Not done by design: tokenizer fit and training (owner runs). Retrieval-pair data is acquired but has no loader task: T178.
+
+### T178 — Retrieval-pair task for dense retrieval (G12)
+- Requirements: SR-M6
+- Depends: T177
+- Deliverables:
+  - Partition of GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers, Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO pairs (leakage-safe, no SciFact claims), a loader task with in-batch negatives, config weight, tests
+- Validation:
+  - Non-training tests pass; leakage scan clean; no training run by the agent
 - Status: pending
 
 ## Phase 21 — Stage 2: scientific language

@@ -27,11 +27,15 @@ CLS_ID, SEP_ID, MASK_ID, PAD_ID = 2, 3, 4, 0
 
 # Processed-data directories (under data/processed) that feed each task.
 TASK_DATASET_DIRS: Dict[str, List[str]] = {
-    "mlm": ["wikipedia_en", "wikipedia_vi", "cc100_vi_clean", "mlm"],
-    "nli": ["all_nli", "anli", "vinli", "fever", "nli"],
-    "paraphrase": ["quora", "paws", "quora_duplicates", "paraphrase"],
-    "similarity": ["stsb", "vists", "similarity"],
-    "qa": ["squad", "viquad_v2", "hotpotqa", "qa"],
+    # English only since D46 / ADR-022; the Vietnamese directories were withdrawn and deleted.
+    "mlm": [
+        "wikipedia_en", "fineweb_edu_en", "openwebtext_en", "c4_en", "gutenberg_en",
+        "cc_news_en", "cnn_dailymail_en", "xsum_en", "wikipedia_simple_en", "mlm",
+    ],
+    "nli": ["all_nli", "anli", "fever", "wanli_en", "scitail_en", "nli"],
+    "paraphrase": ["quora", "paws", "quora_duplicates", "mrpc_en", "paraphrase"],
+    "similarity": ["stsb", "sts_extra_en", "similarity"],
+    "qa": ["squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "qa"],
 }
 
 
@@ -131,11 +135,11 @@ class SyntheticMultiTaskDataLoader:
 
         # Baseline sample counts matching the language encoder training specification
         self.task_counts = {
-            "mlm": 3320430,  # Wikipedia EN + VI
+            "mlm": 3320430,  # Wikipedia EN (generation-1 figure)
             "nli": 1150647,  # All-NLI + ANLI
             "paraphrase": 469691,  # Quora + PAWS
             "similarity": 8628,  # STS-B
-            "qa": 130447,  # SQuAD + ViQuAD
+            "qa": 130447,  # SQuAD (generation-1 figure)
         }
         self.scheduler = TemperatureSamplingScheduler(self.task_counts, alpha=alpha)
 
@@ -207,11 +211,11 @@ class StreamingParquetMultiTaskDataLoader:
     """
 
     DEFAULT_TASK_COUNTS = {
-        "mlm": 3320430,  # Wikipedia EN + VI
+        "mlm": 3320430,  # Wikipedia EN (generation-1 figure)
         "nli": 1150647,  # All-NLI + ANLI
         "paraphrase": 469691,  # Quora + PAWS
         "similarity": 8628,  # STS-B
-        "qa": 130447,  # SQuAD + ViQuAD
+        "qa": 130447,  # SQuAD (generation-1 figure)
     }
 
     def __init__(
