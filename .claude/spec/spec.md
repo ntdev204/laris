@@ -66,7 +66,7 @@ values. One requirement has one implementation (owner decision: no duplication).
 
 ## 4. Definitions
 
-- **ResearchLLM**: the self-built model stack of programme 1: the EN/VI foundation encoder, the scientific,
+- **ResearchLLM**: the self-built model stack of programme 1: the English foundation encoder (D46), the scientific,
   OCR and manuscript stages, and the stage-6 generative and verification specialists that act as the research advisor.
 - **System** (harness): everything that turns model output into work: the loop (state machine, event log), the
   harness (tools, policy, sandbox, evidence, memory, storage) and the prompt layer (context assembly). The loop runs
@@ -124,7 +124,7 @@ Weights, datasets, checkpoints and collected learning data stay outside Git (`ar
 ### 5.3 Model stack (programme 1)
 
 ```text
-stage 1  foundation encoder EN/VI (tokenizer 32k, 110M compact / 513M large, MLM+NLI+paraphrase+STS+QA)
+stage 1  foundation encoder, English only (D46; English tokenizer to be fitted, 110M compact / 513M large, MLM+NLI+paraphrase+STS+QA)
 stage 2  scientific language adaptation (SciFact NLI, evidence selection)
 stage 3  scientific OCR (text and layout)
 stage 4  OCR-coupled manuscript learning (discourse roles)
@@ -168,7 +168,8 @@ changes in the ADR named in the task.
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
-| D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, retraining T175 (owner) |
+| D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, English data acquired and STS-B leakage check built in T175, document and config sweep in T176, partition and wiring in T177, then tokenizer fit and retraining (owner) |
+| D47 | Gold sources | No new human annotation for stages 2-4: held-out sets come from public human-labelled sets where one exists (SciFact, PubMedQA labeled, SCIDOCS, TREC-COVID, NFCorpus, DocLayNet boxes), and from LLM labels with `label_source: llm` where none exists; gates are reported as measured on those sets, never as human-gold results, and none is waived | decided by the owner 2026-11-14 (amends the labelling part of D45; D05 guideline and sealing rules still apply) |
 
 ## 7. Requirements
 
@@ -461,21 +462,22 @@ Acceptance: the no-training guard (SR-G3) covers the model block; every owner-ru
 ### SR-M4 — Data lineage and splits
 Owner: model
 Every dataset, source licence, preprocessing step, split and fix has a provenance record with checksums
-(`docs/specifications/DATASET_SPECIFICATION.md`, ADR-002); held-out test splits are sealed; corrections (STS-B overlaps,
-ViQuAD offsets) are frozen as new versions with lineage; the owner's corpus work on `wip/corpus-acquisition-changes` is
+(`docs/specifications/DATASET_SPECIFICATION.md`, ADR-002); held-out test splits are sealed; corrections (STS-B overlaps; the English extra-similarity sets are deduplicated against STS-B val and test by `scripts/check_sts_leakage.py`)
+are frozen as new versions with lineage; the owner's corpus work on `wip/corpus-acquisition-changes` is
 reviewed before use.
 Acceptance: `data check --verify-sha256` passes; partition isolation verified; no test data used for tuning.
 
 ### SR-M5 — Tokenizer meeting the fertility gates
 Owner: model
-A tokenizer that meets G10 and G11 (≤ 1.35 tokens per word on unseen EN and VI text) under the frozen protocol, with the
+A tokenizer that meets G10 (≤ 1.35 tokens per word on unseen English text; G11, Vietnamese, withdrawn by D46) under the frozen protocol, with the
 special-token contract of the encoder, chosen through the F06-R1 remediation (`docs/training/FOUNDATION_TOKENIZER_REMEDIATION.md`).
 Acceptance: fertility measured on sealed unseen text; checkpoint lineage reviewed when the vocabulary changes.
 
 ### SR-M6 — Stage 1: foundation qualification
 Owner: model
-The EN/VI foundation encoder passes every gate G01-G12 of the training specification section 5 on held-out test data with
-matching protocols and artifact identity; G12 needs human STEM relevance labels (D45).
+The English foundation encoder passes every active gate of the training specification section 5 (G01, G03-G07, G10, G12; G02, G08,
+G09, G11 are withdrawn by D46 and recorded, never counted as passed) on held-out test data with matching protocols and artifact
+identity; G12 needs STEM relevance labels (D45).
 Acceptance: the offline readiness check exits 0 on the held-out reports; the owner records the promotion.
 
 ### SR-M7 — Stage 2: scientific language
@@ -504,8 +506,8 @@ Acceptance: owner-measured full-load VRAM report; P2 contract tests pass with th
 Owner: model
 Self-built generation, reasoning and verification specialists (D44) serving `/v1/chat/completions` with tool calls as the
 research advisor. Gates fixed in ADR-020 before training and measured on held-out data, at least: grounded-answer
-faithfulness, citation accuracy, unsupported-claim rate, tool-call validity, plan quality on scripted research tasks, EN
-and VI separately.
+faithfulness, citation accuracy, unsupported-claim rate, tool-call validity, plan quality on scripted research tasks, in English;
+Vietnamese only after the translation layer has its own round-trip gate (ADR-022).
 Acceptance: readiness check on held-out reports; owner promotion; "the model is finished" recorded (section 2).
 
 ### SR-M12 — Evaluation and readiness
@@ -591,4 +593,4 @@ The authoritative status of every task is in the task files. Programme 1: Phase 
 Phase 21: T101-T104. Phase 22: T105-T107. Phase 23: T108-T110. Phase 24: T111-T112. Phase 25: T113-T118.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T175 (stage-1 re-scope, D46; programme 1).
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T177 (stage-1 re-scope, D46; programme 1).

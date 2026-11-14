@@ -1,0 +1,147 @@
+# Stage-2 (scientific language) sources beyond S2ORC: scientific text, claim verification, evidence QA, retrieval.
+# Same format as english_sources.yaml. Labels shipped with these sources are the publishers' labels (human or
+# crowd), recorded per source; none of them is the D05 evidence gold that T101 still has to freeze.
+config_version: "1.0.0"
+hf_endpoint: "https://huggingface.co"
+user_agent: "LARIS-Research-Agent/1.0"
+max_retries: 6
+timeout_seconds: 180
+
+sources:
+  # ---- scientific and mathematical text (MLM / continued pretraining) ------------------------------------------------
+  - id: OPEN-WEB-MATH
+    role: scientific_text
+    repo: open-web-math/open-web-math
+    path: data
+    pattern: "train-*.parquet"
+    limit: 30
+    license_name: "ODC-By-1.0 (compilation); per-page rights remain with the publishers"
+    license_approved: false
+    sample_unit: "Math and science web document"
+    min_rows: 500000
+    notes: "Mathematical and STEM web pages with LaTeX preserved; the share of formula-bearing text that stage 2 needs."
+  - id: ARXIV-FULLTEXT
+    role: scientific_text
+    repo: ccdv/arxiv-summarization
+    path: document
+    pattern: "train-*.parquet"
+    license_name: "Not declared (arXiv papers; per-paper licence varies)"
+    license_approved: false
+    sample_unit: "arXiv paper body with abstract"
+    min_rows: 100000
+    notes: "Long scientific documents (physics, maths, computer science); the abstract is a natural summary target."
+  - id: PUBMED-FULLTEXT
+    role: scientific_text
+    repo: ccdv/pubmed-summarization
+    path: document
+    pattern: "train-*.parquet"
+    license_name: "Not declared (PubMed Central open-access papers)"
+    license_approved: false
+    sample_unit: "Biomedical paper body with abstract"
+    min_rows: 100000
+    notes: "Biomedical full text with abstracts."
+  - id: ARXIV-ABSTRACTS
+    role: scientific_text
+    repo: gfissore/arxiv-abstracts-2021
+    path: ""
+    pattern: "*.jsonl.gz"
+    license_name: "CC0-1.0 (metadata)"
+    license_approved: true
+    sample_unit: "arXiv abstract with title, categories and authors"
+    min_rows: 1000000
+    notes: "Abstracts across all arXiv categories; category labels support domain-stratified sampling."
+  - id: SCIRIFF-4096
+    role: scientific_instruction
+    repo: allenai/SciRIFF
+    path: "4096"
+    pattern: "*.parquet"
+    license_name: "ODC-By-1.0"
+    license_approved: true
+    sample_unit: "Scientific literature instruction-following example (54 tasks)"
+    min_rows: 50000
+    notes: "Extraction, QA, entailment and summarisation tasks over papers; examples are capped at 4096 tokens."
+
+  # ---- claim verification and evidence ------------------------------------------------------------------------------
+  - id: PUBMEDQA
+    role: qa
+    repo: qiaojin/PubMedQA
+    path: ""
+    recursive: true
+    pattern: "*.parquet"
+    license_name: "MIT"
+    license_approved: true
+    sample_unit: "Biomedical yes/no/maybe question with abstract context (labelled, artificial, unlabeled)"
+    min_rows: 200000
+    notes: "pqa_labeled is expert-labelled (1,000); pqa_artificial and pqa_unlabeled are not gold."
+  - id: CLIMATE-FEVER
+    role: nli
+    repo: tdiggelm/climate_fever
+    path: data
+    pattern: "*.parquet"
+    license_name: "Not declared (Climate-FEVER, built on Wikipedia evidence)"
+    license_approved: false
+    sample_unit: "Claim with five evidence sentences and labels"
+    min_rows: 1000
+    notes: "Real-world scientific claims with SUPPORTS / REFUTES / NOT ENOUGH INFO evidence."
+
+  # ---- scientific retrieval (BEIR) ----------------------------------------------------------------------------------
+  - id: BEIR-SCIDOCS-CORPUS
+    role: retrieval
+    repo: BeIR/scidocs
+    path: corpus
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Paper title and abstract"
+    min_rows: 20000
+    notes: "Citation-prediction retrieval corpus."
+  - id: BEIR-SCIDOCS-QRELS
+    role: retrieval
+    repo: BeIR/scidocs-qrels
+    path: ""
+    pattern: "*.tsv"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Query-document relevance judgement"
+    min_rows: 1000
+    notes: "Relevance judgements for BEIR SCIDOCS."
+  - id: BEIR-TREC-COVID-CORPUS
+    role: retrieval
+    repo: BeIR/trec-covid
+    path: corpus
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "CORD-19 article abstract"
+    min_rows: 100000
+    notes: "Biomedical retrieval during the COVID-19 emergency."
+  - id: BEIR-TREC-COVID-QRELS
+    role: retrieval
+    repo: BeIR/trec-covid-qrels
+    path: ""
+    pattern: "*.tsv"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Query-document relevance judgement"
+    min_rows: 1000
+    notes: "Expert relevance judgements for TREC-COVID."
+  - id: BEIR-NFCORPUS-CORPUS
+    role: retrieval
+    repo: BeIR/nfcorpus
+    path: corpus
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "NutritionFacts article"
+    min_rows: 2000
+    notes: "Medical information retrieval over nutrition articles."
+  - id: BEIR-NFCORPUS-QRELS
+    role: retrieval
+    repo: BeIR/nfcorpus-qrels
+    path: ""
+    pattern: "*.tsv"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Query-document relevance judgement"
+    min_rows: 1000
+    notes: "Relevance judgements for NFCorpus."

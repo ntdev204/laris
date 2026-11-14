@@ -61,7 +61,7 @@ Standard tokenizers trained on generic web corpora (e.g. GPT-2/4, standard BERT)
 ---
 
 ### 4. Evaluation Protocol & Milestones
-- **Fertility Benchmark:** Canonical foundation G10/G11 require $\le 1.35$ tokens/word separately on unseen EN and VI text. Scientific-term/abstract fixtures may diagnose fragmentation but do not replace independent text manifests and the frozen protocol.
+- **Fertility Benchmark:** Canonical foundation G10 requires $\le 1.35$ tokens/word on unseen English text (G11, Vietnamese, is withdrawn by D46 / ADR-022: the stage-1 encoder is English only and Vietnamese reaches it through a translation layer). Scientific-term/abstract fixtures may diagnose fragmentation but do not replace independent text manifests and the frozen protocol.
 - **Paraphrase Retrieval MRR:** Mean Reciprocal Rank on scientific statement retrieval.
 
 ---

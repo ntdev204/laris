@@ -37,10 +37,11 @@ Exit criteria:
 
 ### Phase 41 — Stage 1 re-scope to English (D46, ADR-022)
 Goal: gates and data match an English-only foundation encoder; Vietnamese is left to a translation layer.
-Tasks: T173, T174, T175
+Tasks: T173, T174, T175, T176, T177
 Exit criteria:
 - Withdrawn gates are recorded, none relaxed or marked passed.
-- English replacement data (MLM text, similarity beyond STS-B) is approved, leakage-checked against STS-B, and ingested.
+- English replacement data (MLM text, similarity beyond STS-B, NLI, paraphrase, QA, retrieval; at least 20 GB) is acquired with provenance, leakage-checked against STS-B, and partitioned.
+- Every normative document and configuration that mentioned Vietnamese in stage 1 is amended or marked historical; withdrawn gates stay listed.
 - A new English tokenizer and encoder exist from an owner run; T100 evaluates them.
 
 ### Phase 21 — Stage 2: scientific language
@@ -72,5 +73,5 @@ Exit criteria:
 Goal: the generative research advisor and the reasoning and verification specialists pass their gates.
 Tasks: T113, T114, T115, T116, T117, T118
 Exit criteria:
-- The stage-6 gates of ADR-020 pass on held-out data, EN and VI separately.
+- The stage-6 gates of ADR-020 pass on held-out data in English; Vietnamese only after the translation layer has its own gate (ADR-022).
 - The owner records "the model is finished" (spec section 2); programme 2's client phase and programme 3 may start.

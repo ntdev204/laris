@@ -30,7 +30,7 @@ def assess_readiness(reports: list[dict], config: dict) -> dict:
         raise ValueError("Readiness requires reports and non-empty formal gates")
     expected_ids = {f"G{i:02d}" for i in range(1, 13)}
     if {g.get("id") for g in config["gates"] if isinstance(g, dict)} != expected_ids:
-        raise ValueError("All twelve foundation gates are required; partial configs cannot qualify")
+        raise ValueError("All twelve foundation gates must be listed (withdrawn ones with status: withdrawn); partial configs cannot qualify")  # noqa: E501
     if config.get("required_split") != "test" or config.get("stage") != "natural_language":
         raise ValueError(
             "Foundation qualification requires the test split and natural_language stage"
@@ -66,6 +66,19 @@ def assess_readiness(reports: list[dict], config: dict) -> dict:
         if not _finite(gate["threshold"]):
             raise ValueError("Formal thresholds must be finite numbers")
         seen.add(gate["id"])
+        if gate.get("status") == "withdrawn":
+            # A withdrawn gate stays on record and is never counted as passed (ADR-008, D46 / ADR-022).  # noqa: E501
+            if not gate.get("withdrawn_by"):
+                raise ValueError(f"Withdrawn gate {gate['id']} must name the decision that withdrew it")  # noqa: E501
+            gates.append(
+                {
+                    **gate,
+                    "status": "WITHDRAWN",
+                    "value": None,
+                    "reason": f"Withdrawn by {gate['withdrawn_by']}; not counted as passed",
+                }
+            )
+            continue
         matches = [
             r
             for r in records
@@ -111,7 +124,9 @@ def assess_readiness(reports: list[dict], config: dict) -> dict:
         gates.append(result)
     return {
         "stage": config["stage"],
-        "qualified": not issues and all(g["status"] == "PASS" for g in gates),
+        "qualified": not issues
+        and any(g["status"] == "PASS" for g in gates)
+        and all(g["status"] in {"PASS", "WITHDRAWN"} for g in gates),
         "evidence_issues": issues,
         "gates": gates,
         "model_executed": False,

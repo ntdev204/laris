@@ -3,9 +3,9 @@ document_id: "DOC-PLAN-FOUNDATION-TOKENIZER-R1-001"
 title: "Foundation Tokenizer Remediation R1"
 document_type: "plan"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-14"
 owner: "LARIS Project Owner"
 reviewers: []
 source_of_truth: false
@@ -17,6 +17,8 @@ decision_references:
   - "ADR-008"
 change_summary: "Prepares a train-only corpus and freezes validation for an owner-approved tokenizer trial."
 ---
+
+> **D46 / ADR-022 (2026-11-14):** the stage-1 foundation encoder is English only. Vietnamese gates G02, G08, G09 and G11, Vietnamese data and the Vietnamese tokenizer capacity named below are **withdrawn from stage 1**; Vietnamese reaches the model through a translation layer. This document keeps the measured history of rounds R1-R3a as written; it is not the current plan. Current plan: `docs/adr/ADR-022-english-only-foundation.md`, `docs/specifications/DATASET_SPECIFICATION.md` section 2.1 and `reports/verification/T174-english-data-inventory.md`.
 
 # Vòng sửa tokenizer foundation
 

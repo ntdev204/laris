@@ -214,7 +214,7 @@ def test_gate_requires_both_the_threshold_and_beating_bm25():
     def record(dense, bm25):
         return {
             "dataset": "stem_retrieval",
-            "language": "all",
+            "language": "en",
             "samples": 100,
             "metrics": {"mrr": dense},
             "baseline": {"mrr": bm25},
@@ -414,14 +414,3 @@ def test_dev_config_is_frozen_and_never_gates():
     if not (REPO_ROOT / "data/raw/scifact/qrels__train.tsv").is_file():
         pytest.skip("SciFact is not available")
     assert R.freeze_digests(config, data_dir) == config["frozen"]
-
-
-def test_stem_vi_diagnostic_config_is_frozen_and_never_gates():
-    config = R.load_config(REPO_ROOT / "configs/evaluation/foundation_retrieval_stem_vi_diag.yaml")
-    assert [s["kind"] for s in config["sources"]] == ["parallel"]
-    assert all(s["gate_eligible"] is False for s in config["sources"])
-    full = R.load_config(REPO_ROOT / "configs/evaluation/foundation_retrieval.yaml")
-    assert (
-        config["frozen"]["stem_vi_crosslingual_en_to_vi"]
-        == (full["frozen"]["stem_vi_crosslingual_en_to_vi"])
-    )

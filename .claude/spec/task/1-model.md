@@ -31,7 +31,7 @@ returned logs, manifests and reports.
     stage-6 generative advisor under ADR-002 (decoder on the shared tokenizer, encoder-decoder on the foundation encoder,
     retrieval-conditioned generation), each with parameter count, training-token budget, measured-or-estimated compute on
     the RTX 5070 Ti (16 GB), and the risk that a small self-built generator stays weak as an advisor
-  - Stage-6 gate list (faithfulness, citation accuracy, unsupported-claim rate, tool-call validity, plan quality, EN and VI)
+  - Stage-6 gate list (faithfulness, citation accuracy, unsupported-claim rate, tool-call validity, plan quality; English, Vietnamese only through the gated translation layer, ADR-022)
     with thresholds the owner sets
   - `docs/adr/README.md` index entry
 - Validation:
@@ -185,17 +185,38 @@ returned logs, manifests and reports.
 - Note: Inventory written 2026-11-14 as a proposal; external sizes and licences are from memory and must be verified. Owner approval of the
   sources is the open item that opens T175.
 
-### T175 — English data, new tokenizer and retraining (owner run)
-- Requirements: SR-M6, SR-M3
+### T175 — English replacement data acquisition and STS-B leakage check
+- Requirements: SR-M4, SR-M6
 - Depends: T174
 - Deliverables:
-  - Acquisition scripts and an STS-B leakage check, English manifests, a new English tokenizer fit and an English encoder run, with intake
-  - Prepared commands for the owner; T100 evaluates the result
+  - `configs/data/english_sources.yaml` (32 sources), acquirer `english_hf.py`, runner flag `--english-all`, manifest entries with SHA-256
+  - `scripts/check_sts_leakage.py` and `reports/verification/T175-sts-leakage.json`; `DATASET_SPECIFICATION.md` section 2.1
 - Validation:
-  - Intake passes; validation reported per English gate; the owner decides on held-out evaluation (T100)
-- Status: blocked
-- Note: Waiting for the owner to confirm the English sources in `reports/verification/T174-english-data-inventory.md`. Tokenizer fitting and
-  training are owner runs. T100 (held-out evaluation) now follows T175, not R2 or R3a.
+  - Manifest complete for all sources; unit tests pass (`tests/unit/corpus/test_english_acquisition.py`); leakage rule tested
+- Status: done
+- Note: 2026-11-14 the owner ordered the replacement data acquired (at least 20 GB, all semantic cases). Done by the agent: `configs/data/english_sources.yaml` (32 sources), `english_hf.py` acquirer (`--english-all`), `scripts/check_sts_leakage.py` (2,092 leaked pairs removed), manifest entries (33.0 GB, 21.2 M English records; Vietnamese entries WITHDRAWN_D46 and the data, checkpoints, tokenizer, logs and old reports deleted by the owner's order). Reports: `reports/verification/T175-english-acquisition.md`, `T175-model-size-vs-data.md` (proposal 0.6 B). Stage-2 and stage-3 source configs are prepared, not downloaded. Open: T177 (partition and wiring), then the owner fits the tokenizer and retrains; T100 follows.
+
+### T176 — D46 document and configuration sweep
+- Requirements: SR-M6, SR-M3
+- Depends: T175
+- Deliverables:
+  - Normative documents amended (dataset, benchmark, strategy, ADR-020, gold, training spec, runbook section 9), history documents bannered
+  - `configs/evaluation/foundation.yaml` 1.1.0 with withdrawn gates, readiness reporting `WITHDRAWN`, tests
+- Validation:
+  - Unit tests of language, corpus and contract suites pass (except `tests/contract/test_spec_ledger.py`, broken before this task: it reads a missing `plan.md`); spec validator passes
+- Status: done
+- Note: Not edited: the frozen D05 Vietnamese guideline (digest bound into the sealed gold), measured reports, `.laris/` policy (owner approval) and the Vietnamese acquirers and
+  partitioners, which stay as code history; T177 removes them from the active mixture.
+
+### T177 — Partition and wire the English data; prepare tokenizer fit and retraining (owner run)
+- Requirements: SR-M4, SR-M5, SR-M6
+- Depends: T176
+- Deliverables:
+  - Partitioners and split manifest for the English sources (dedupe against Wikipedia and against SQuAD/STS-B held-out sets), Vietnamese sources removed from the mixture and sampling config
+  - Owner commands (runbook section 9) for the English tokenizer fit and the encoder run, with budget and stop rules; owner licence decisions recorded
+- Validation:
+  - Split isolation verified; non-training tests pass; the owner runs fit and training and returns logs; T100 follows
+- Status: pending
 
 ## Phase 21 — Stage 2: scientific language
 
@@ -208,6 +229,7 @@ returned logs, manifests and reports.
 - Validation:
   - Manifests and checksums; agreement thresholds met; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T102 — Scientific adaptation pipeline
 - Requirements: SR-M7
@@ -247,6 +269,7 @@ returned logs, manifests and reports.
 - Validation:
   - Gold agreement (CER ≤ 0.5 %, IoU ≥ 0.92) between annotators; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T106 — OCR pipeline
 - Requirements: SR-M8
@@ -276,6 +299,7 @@ returned logs, manifests and reports.
 - Validation:
   - Agreement kappa ≥ 0.85; test sealed
 - Status: pending
+- Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T109 — Manuscript-learning pipeline
 - Requirements: SR-M9
@@ -372,5 +396,5 @@ returned logs, manifests and reports.
 - Deliverables:
   - Held-out evaluation commands (owner run) and readiness report for every stage-6 gate
 - Validation:
-  - All stage-6 gates pass on held-out data, EN and VI; the owner records "the model is finished"; otherwise NOT QUALIFIED
+  - All stage-6 gates pass on held-out data in English (ADR-022); the owner records "the model is finished"; otherwise NOT QUALIFIED
 - Status: pending

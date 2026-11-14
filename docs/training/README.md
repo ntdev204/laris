@@ -3,9 +3,9 @@ document_id: "DOC-INDEX-TRAINING-001"
 title: "Ordered Training and Owner Handoff"
 document_type: "plan"
 status: "DRAFT"
-version: "1.1.0"
+version: "1.2.0"
 created_at: "2026-11-10"
-updated_at: "2026-11-10"
+updated_at: "2026-11-14"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
@@ -20,7 +20,7 @@ change_summary: "Indexes the current foundation-first preparation and owner-only
 
 # Ordered training
 
-The current work prepares model 01, the general English/Vietnamese foundation.
+The current work prepares model 01, the general English foundation (Vietnamese is handled by a translation layer since D46 / ADR-022).
 It does not implement or train model 02, the scientific-language specialization.
 The foundation checkpoint has not met its formal exit gates. Passing the current
 baseline-relative evaluation config does not change that state.

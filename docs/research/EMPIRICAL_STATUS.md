@@ -18,6 +18,8 @@ decision_references:
 change_summary: "Reconciles actual develop merge state while preserving historical measurements and no-training verification scope."
 ---
 
+> **D46 / ADR-022 (2026-11-14):** Vietnamese rows below (MLM-VI, NLI-VI, QA-VI, similarity-VI, ViNLI) describe a withdrawn scope. The checkpoints and reports they were measured on were deleted by the owner's order on 2026-11-14; the figures are kept as written history only and support no claim about the English stage-1 encoder.
+
 # Checkpoint validation and scientific NLP pilot
 
 ## Measured readiness

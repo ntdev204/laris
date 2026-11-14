@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **English stage-1 data (T175):** `configs/data/english_sources.yaml` lists 32 English sources (MLM text, NLI, similarity, paraphrase, QA, retrieval); `python -m ... --english-all` acquires them with resume, SHA-256 and row counts; `scripts/check_sts_leakage.py` drops extra similarity pairs that touch STS-B validation or test.
+- **Withdrawn gates (T176):** a gate with `status: withdrawn` and `withdrawn_by` stays listed in `configs/evaluation/foundation.yaml` and is reported as `WITHDRAWN`, never as passed.
+
+### Changed
+- **Stage 1 is English only (D46, ADR-022):** gates G02, G08, G09, G11 are withdrawn, G12 is English STEM retrieval; the dataset, budget, benchmark, strategy, gold and runbook documents are amended or marked historical.
+
 ## [2.2.0] - 2026-11-13
 
 Last release of the Python and Ink generation (kept on the branch `laris-v1`). Copying from the interface gives the original text, and three problems seen in a research folder on Windows are fixed. The foundation model is still NOT QUALIFIED; chat still runs the placeholder backend.

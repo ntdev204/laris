@@ -1,0 +1,61 @@
+# Stage-3 (scientific OCR) source documents: PDFs. Endpoints, licences and budgets live here (T105 input data).
+# Acquiring PDFs is not training. Labels for OCR text and layout still need D05 gold (T105); the text shipped
+# with these sources is a *silver* reference (publisher XML or model output), never gold.
+config_version: "1.0.0"
+hf_endpoint: "https://huggingface.co"
+user_agent: "LARIS-Research-Agent/1.0"
+max_retries: 6
+timeout_seconds: 180
+
+pmc:
+  id: PMC-OA-PDF
+  endpoint: "https://pmc-oa-opendata.s3.amazonaws.com"
+  name: "PubMed Central Open Access subset (PDF, text, JATS XML)"
+  budget_gb: 10
+  # Only articles whose own metadata declares one of these licence codes are kept.
+  licenses: ["CC0", "CC BY", "CC BY-SA"]
+  # Deterministic id sampling: 5-digit PMC prefixes drawn between these bounds with this seed.
+  prefix_digits: 5
+  prefix_min: 70000
+  prefix_max: 119999
+  seed: 20261114
+  max_pdf_mb: 25
+  min_pdf_kb: 50
+  skip_manuscripts: true
+  keep_historical_ocr_fraction: 0.10   # scanned historical pages are a degraded-input stratum, kept as a minority
+  workers: 16
+  notes: "Article-level licence_code from PMC metadata; PDFs are the publisher files. The .txt and .xml files are kept as a silver text reference only."
+
+sources:
+  - id: OLMOCR-MIX-PDFS
+    role: ocr
+    repo: allenai/olmOCR-mix-0225
+    path: pdf_tarballs
+    pattern: "*.tar.gz"
+    limit: 4
+    license_name: "ODC-By-1.0 (collection); individual PDFs keep their own rights"
+    license_approved: false
+    sample_unit: "PDF page-source document"
+    min_rows: 1000
+    notes: "Academic, scanned and mixed-layout PDFs with model-written (silver) transcriptions in the parquet labels. Per-PDF rights vary, so it is research-only until the owner approves."
+  - id: OLMOCR-MIX-LABELS
+    role: ocr
+    repo: allenai/olmOCR-mix-0225
+    path: ""
+    pattern: "*.parquet"
+    license_name: "ODC-By-1.0"
+    license_approved: true
+    sample_unit: "PDF page with silver transcription"
+    min_rows: 1000
+    notes: "Silver (model-written) transcriptions and eval sets; never used as gold."
+  - id: DOCLAYNET-LAYOUT
+    role: ocr
+    repo: ds4sd/DocLayNet-v1.2
+    path: data
+    pattern: "train-*.parquet"
+    limit: 6
+    license_name: "CDLA-Permissive-1.0 (annotations); page images keep source rights"
+    license_approved: false
+    sample_unit: "Annotated document page (11 layout classes)"
+    min_rows: 1000
+    notes: "Human layout boxes (text, table, figure, caption, formula ...). Tagged licence is 'other'; verify before any redistribution."

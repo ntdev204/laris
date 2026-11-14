@@ -1,0 +1,350 @@
+# English stage-1 replacement sources (D46 / ADR-022, T175).
+# Every endpoint, file selection and licence note lives here, not in code.
+# `license_approved: true` means an open licence declared by the publisher (verified on the HF dataset card 2026-11-14);
+# `false` means the licence is non-commercial, undeclared or unclear: the data is downloaded for research and the manifest
+# marks it NEEDS_LICENSE_REVIEW until the owner records approval. Nothing here is a training run.
+config_version: "1.0.0"
+hf_endpoint: "https://huggingface.co"
+user_agent: "LARIS-Research-Agent/1.0"
+max_retries: 6
+timeout_seconds: 120
+
+sources:
+  # ---- Stage-1 MLM text (replaces CC100-VI and Wikipedia-VI) ---------------------------------------------------------
+  - id: FINEWEB-EDU-EN
+    role: mlm
+    repo: HuggingFaceFW/fineweb-edu
+    path: sample/10BT
+    pattern: "*.parquet"
+    limit: 5
+    license_name: "ODC-By-1.0"
+    license_approved: true
+    sample_unit: "Educational web document"
+    min_rows: 1000000
+    notes: "Quality-filtered educational web text (register: explanatory, textbook-like). Per-document web rights stay with the publishers."
+  - id: OPENWEBTEXT-EN
+    role: mlm
+    repo: Skylion007/openwebtext
+    path: plain_text
+    pattern: "train-*.parquet"
+    limit: 12
+    license_name: "CC0-1.0"
+    license_approved: true
+    sample_unit: "Web document (Reddit-linked)"
+    min_rows: 500000
+    notes: "Open reproduction of WebText; the CC0 tag covers the compilation, not the rights of the original pages."
+  - id: C4-EN
+    role: mlm
+    repo: allenai/c4
+    path: en
+    pattern: "c4-train.*.json.gz"
+    limit: 8
+    license_name: "ODC-By-1.0"
+    license_approved: true
+    sample_unit: "Cleaned Common Crawl document"
+    min_rows: 1000000
+    notes: "First shards of the English C4 (general web register, many domains)."
+  - id: GUTENBERG-EN
+    role: mlm
+    repo: manu/project_gutenberg
+    path: data
+    pattern: "en-*.parquet"
+    limit: 14
+    license_name: "Public domain (Project Gutenberg texts)"
+    license_approved: true
+    sample_unit: "Book"
+    min_rows: 10000
+    notes: "Long coherent narrative and expository text; archaic register, so it is a minority of the mixture."
+  - id: CC-NEWS-EN
+    role: mlm
+    repo: vblagoje/cc_news
+    path: plain_text
+    pattern: "*.parquet"
+    limit: 5
+    license_name: "Not declared (CC-News crawl)"
+    license_approved: false
+    sample_unit: "News article"
+    min_rows: 300000
+    notes: "Publisher licence is not declared; research use only until the owner approves."
+  - id: CNN-DAILYMAIL-EN
+    role: mlm
+    repo: abisee/cnn_dailymail
+    path: 3.0.0
+    pattern: "*.parquet"
+    license_name: "Apache-2.0"
+    license_approved: true
+    sample_unit: "News article with highlights"
+    min_rows: 100000
+    notes: "News register with summaries; the article text is used for MLM, the highlights are kept for later summarisation use."
+  - id: XSUM-EN
+    role: mlm
+    repo: EdinburghNLP/xsum
+    path: data
+    pattern: "*.parquet"
+    license_name: "Not declared (BBC articles)"
+    license_approved: false
+    sample_unit: "News article with one-sentence summary"
+    min_rows: 100000
+    notes: "Abstractive one-sentence summaries; BBC rights are not declared, research use only until the owner approves."
+  - id: WIKIPEDIA-SIMPLE-EN
+    role: mlm
+    repo: wikimedia/wikipedia
+    path: 20231101.simple
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-3.0 / GFDL"
+    license_approved: true
+    sample_unit: "Simple English Wikipedia article"
+    min_rows: 100000
+    notes: "Plain-language register; overlap with English Wikipedia is removed by the leakage check before partitioning."
+
+  # ---- Natural language inference ----------------------------------------------------------------------------------
+  - id: WANLI-EN
+    role: nli
+    repo: alisawuffles/WANLI
+    path: ""
+    pattern: "[tT]*.jsonl"
+    license_name: "CC-BY-4.0"
+    license_approved: true
+    sample_unit: "Premise-hypothesis NLI pair (worker-and-AI collaboration)"
+    min_rows: 50000
+    notes: "Harder reasoning patterns than SNLI/MNLI; complements ANLI."
+  - id: SCITAIL-EN
+    role: nli
+    repo: allenai/scitail
+    path: snli_format
+    pattern: "*.parquet"
+    license_name: "Not declared (AllenAI release)"
+    license_approved: false
+    sample_unit: "Science entailment pair"
+    min_rows: 20000
+    notes: "Science-domain entailment (entails / neutral); licence tag missing, research use pending review."
+
+  # ---- Similarity (graded) -----------------------------------------------------------------------------------------
+  # Every pair here is deduplicated against STS-B val and test by scripts/check_sts_leakage.py before partitioning.
+  - id: STS-COMPANION-EN
+    role: similarity
+    repo: tasksource/sts-companion
+    path: ""
+    pattern: "*.tsv"
+    license_name: "Apache-2.0"
+    license_approved: true
+    sample_unit: "Graded sentence pair, label 0-5"
+    min_rows: 5000
+    notes: "STS 2012-2017 companion sets (the rest of the pairs STS-B was drawn from); the leakage rule is mandatory."
+  - id: STS12-TRAIN-EN
+    role: similarity
+    repo: mteb/sts12-sts
+    path: ""
+    pattern: "train.jsonl.gz"
+    license_name: "Not declared (SemEval-2012 release)"
+    license_approved: false
+    sample_unit: "Graded sentence pair, label 0-5"
+    min_rows: 1000
+    notes: "STS 2012 train portion only; test portions of STS12-16 stay unused so they remain a possible extra evaluation."
+  - id: SICK-EN
+    role: similarity
+    repo: RobZamp/sick
+    rev: "refs%2Fconvert%2Fparquet"
+    path: default
+    recursive: true
+    pattern: "*.parquet"
+    license_name: "CC-BY-NC-SA-3.0"
+    license_approved: false
+    sample_unit: "Graded sentence pair (relatedness 1-5) with NLI label"
+    min_rows: 9000
+    notes: "Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only."
+
+  # ---- Paraphrase and semantic equivalence ---------------------------------------------------------------------------
+  - id: MRPC-EN
+    role: paraphrase
+    repo: nyu-mll/glue
+    path: mrpc
+    pattern: "*.parquet"
+    license_name: "Other (GLUE, MSR paraphrase corpus)"
+    license_approved: false
+    sample_unit: "News sentence pair with paraphrase label"
+    min_rows: 4000
+    notes: "Small, human-labelled; MSR licence for research use."
+  - id: ALTLEX-EN
+    role: paraphrase
+    repo: sentence-transformers/altlex
+    path: pair
+    pattern: "*.parquet"
+    license_name: "Not declared (AltLex release)"
+    license_approved: false
+    sample_unit: "Wikipedia / Simple Wikipedia sentence pair"
+    min_rows: 100000
+    notes: "Positive pairs only (no negative label); use for the contrastive term."
+  - id: SIMPLE-WIKI-EN
+    role: paraphrase
+    repo: sentence-transformers/simple-wiki
+    path: pair
+    pattern: "*.parquet"
+    license_name: "Not declared (Wikipedia-derived)"
+    license_approved: false
+    sample_unit: "Complex / simple sentence pair"
+    min_rows: 100000
+    notes: "Positive pairs only; syntactic and lexical simplification."
+  - id: COCO-CAPTIONS-EN
+    role: paraphrase
+    repo: sentence-transformers/coco-captions
+    path: pair
+    pattern: "*.parquet"
+    license_name: "Not declared (COCO captions, CC-BY-4.0 upstream annotations)"
+    license_approved: false
+    sample_unit: "Caption pair for the same image"
+    min_rows: 100000
+    notes: "Positive pairs about concrete scenes (everyday semantics)."
+  - id: STACKEXCHANGE-DUPLICATES-EN
+    role: paraphrase
+    repo: sentence-transformers/stackexchange-duplicates
+    path: ""
+    recursive: true
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0 (Stack Exchange data dump)"
+    license_approved: true
+    sample_unit: "Duplicate-question pair (title, body or post level)"
+    min_rows: 100000
+    notes: "Technical and scientific duplicate questions across many forums."
+  - id: SPECTER-TRIPLETS-EN
+    role: paraphrase
+    repo: sentence-transformers/specter
+    path: triplet
+    pattern: "*.parquet"
+    license_name: "Not declared (SPECTER citation triplets)"
+    license_approved: false
+    sample_unit: "Paper-title triplet (query, cited, uncited)"
+    min_rows: 100000
+    notes: "Scientific-title relatedness; titles only, no full text."
+
+  # ---- Question answering and retrieval -------------------------------------------------------------------------------
+  - id: SQUAD-V2-EN
+    role: qa
+    repo: rajpurkar/squad_v2
+    path: squad_v2
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Extractive QA item including unanswerable questions"
+    min_rows: 100000
+    notes: "English counterpart of the withdrawn unanswerable-QA task (ViQuAD2); keeps the no-answer behaviour measurable in English."
+  - id: ADVERSARIAL-QA-EN
+    role: qa
+    repo: UCLNLP/adversarial_qa
+    path: adversarialQA
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Adversarially written extractive QA item"
+    min_rows: 20000
+    notes: "Questions written to fool a reader model; tests robustness beyond SQuAD."
+  - id: TRIVIAQA-WIKI-EN
+    role: qa
+    repo: mandarjoshi/trivia_qa
+    path: rc.wikipedia
+    pattern: "*.parquet"
+    license_name: "Not declared (TriviaQA, Apache-2.0 upstream code)"
+    license_approved: false
+    sample_unit: "Trivia question with Wikipedia evidence documents"
+    min_rows: 50000
+    notes: "Long evidence documents, distant supervision; trivia-style factual questions."
+  - id: BOOLQ-EN
+    role: qa
+    repo: google/boolq
+    path: data
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-3.0"
+    license_approved: true
+    sample_unit: "Yes/no question with passage"
+    min_rows: 10000
+    notes: "Boolean questions needing inference over the passage."
+  - id: DROP-EN
+    role: qa
+    repo: ucinlp/drop
+    path: data
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Discrete-reasoning reading question"
+    min_rows: 70000
+    notes: "Counting, arithmetic and sorting over passages."
+  - id: QASC-EN
+    role: qa
+    repo: allenai/qasc
+    path: data
+    pattern: "*.parquet"
+    license_name: "CC-BY-4.0"
+    license_approved: true
+    sample_unit: "Multi-hop science multiple-choice question with facts"
+    min_rows: 8000
+    notes: "Science facts composed in two hops."
+  - id: ARC-CHALLENGE-EN
+    role: qa
+    repo: allenai/ai2_arc
+    path: ARC-Challenge
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0"
+    license_approved: true
+    sample_unit: "Grade-school science multiple-choice question"
+    min_rows: 1000
+    notes: "Science reasoning; development and probing use."
+  - id: COMMONSENSEQA-EN
+    role: qa
+    repo: tau/commonsense_qa
+    path: data
+    pattern: "*.parquet"
+    license_name: "MIT"
+    license_approved: true
+    sample_unit: "Commonsense multiple-choice question"
+    min_rows: 9000
+    notes: "Everyday world knowledge."
+  - id: NATURAL-QUESTIONS-PAIRS-EN
+    role: retrieval
+    repo: sentence-transformers/natural-questions
+    path: pair
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-3.0 (Natural Questions)"
+    license_approved: true
+    sample_unit: "Question and answer passage pair"
+    min_rows: 90000
+    notes: "Real search queries with Wikipedia answers; dense-retrieval training pairs."
+  - id: GOOAQ-EN
+    role: retrieval
+    repo: sentence-transformers/gooaq
+    path: pair
+    pattern: "*.parquet"
+    license_name: "Apache-2.0 (GooAQ)"
+    license_approved: true
+    sample_unit: "Search question and answer snippet pair"
+    min_rows: 1000000
+    notes: "Large question-answer pairs from search engine snippets (explanatory register)."
+  - id: ELI5-EN
+    role: retrieval
+    repo: sentence-transformers/eli5
+    path: pair
+    pattern: "*.parquet"
+    license_name: "Not declared (ELI5 forum answers)"
+    license_approved: false
+    sample_unit: "Question and long-form answer pair"
+    min_rows: 100000
+    notes: "Long-form explanation answers."
+  - id: YAHOO-ANSWERS-EN
+    role: retrieval
+    repo: sentence-transformers/yahoo-answers
+    path: question-answer-pair
+    pattern: "*.parquet"
+    license_name: "Not declared (Yahoo Answers)"
+    license_approved: false
+    sample_unit: "Question and answer pair"
+    min_rows: 500000
+    notes: "Community question answering, informal register."
+  - id: MSMARCO-EN
+    role: retrieval
+    repo: microsoft/ms_marco
+    path: v2.1
+    pattern: "*.parquet"
+    license_name: "Microsoft research-only terms"
+    license_approved: false
+    sample_unit: "Query with ranked passages"
+    min_rows: 500000
+    notes: "Non-commercial research licence; passage retrieval signal."

@@ -7,7 +7,7 @@ from dataclasses import asdict
 from typing import Optional, Sequence
 
 from laris.research.corpus.acquisition.common import MANIFEST_PATH, RAW_DIR, REPO_ROOT, DatasetEntry
-from laris.research.corpus.acquisition.registry import EXPANSION_ACQUIRERS
+from laris.research.corpus.acquisition.registry import ENGLISH_ACQUIRERS, EXPANSION_ACQUIRERS, OCR_ACQUIRERS, SCIENCE_ACQUIRERS
 from laris.research.corpus.acquisition.sources.cc100 import CC100_DEFAULT_MAX_DOCS, acquire_cc100_vi
 from laris.research.corpus.acquisition.sources.core_corpora import (
     acquire_all_nli,
@@ -35,7 +35,23 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         nargs="+",
         metavar="DATASET_ID",
         help="Acquire only these expansion datasets and merge them into the existing manifest "
-        f"(choices: {', '.join(EXPANSION_ACQUIRERS)})",
+        f"(choices: {', '.join(EXPANSION_ACQUIRERS)}; English: {', '.join(ENGLISH_ACQUIRERS)})",
+    )
+    parser.add_argument(
+        "--science-all",
+        action="store_true",
+        help="Acquire every stage-2 science source of configs/data/science_sources.yaml",
+    )
+    parser.add_argument(
+        "--ocr-all",
+        action="store_true",
+        help="Acquire every stage-3 PDF source of configs/data/ocr_sources.yaml and merge it into the manifest",
+    )
+    parser.add_argument(
+        "--english-all",
+        action="store_true",
+        help="Acquire every English stage-1 replacement source of configs/data/english_sources.yaml "
+        "and merge it into the existing manifest",
     )
     parser.add_argument(
         "--cc100-max-docs",
@@ -60,7 +76,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    unknown = [d for d in (args.only or []) if d not in EXPANSION_ACQUIRERS]
+    if args.english_all:
+        args.only = list(dict.fromkeys([*(args.only or []), *ENGLISH_ACQUIRERS]))
+    if args.ocr_all:
+        args.only = list(dict.fromkeys([*(args.only or []), *OCR_ACQUIRERS]))
+    if args.science_all:
+        args.only = list(dict.fromkeys([*(args.only or []), *SCIENCE_ACQUIRERS]))
+    known = {**EXPANSION_ACQUIRERS, **ENGLISH_ACQUIRERS, **OCR_ACQUIRERS, **SCIENCE_ACQUIRERS}
+    unknown = [d for d in (args.only or []) if d not in known]
     if unknown:
         print(f"[ERROR] unknown dataset id(s): {', '.join(unknown)}", file=sys.stderr)
         return 2
@@ -73,6 +96,12 @@ def run(args: argparse.Namespace) -> int:
                 return acquire_s2orc(
                     stage, int(args.s2orc_budget_gb * 1e9), args.s2orc_max_shards
                 )
+        if dataset_id in ENGLISH_ACQUIRERS:
+            return ENGLISH_ACQUIRERS[dataset_id]()
+        if dataset_id in SCIENCE_ACQUIRERS:
+            return SCIENCE_ACQUIRERS[dataset_id]()
+        if dataset_id in OCR_ACQUIRERS:
+            return OCR_ACQUIRERS[dataset_id]()
         return EXPANSION_ACQUIRERS[dataset_id]()
 
     print("============================================================")

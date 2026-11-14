@@ -3,9 +3,9 @@ document_id: "DOC-PLAN-FOUNDATION-BUDGET-001"
 title: "Foundation Training Budget and Tokenizer Decision"
 document_type: "plan"
 status: "APPROVED"
-version: "1.0.0"
+version: "1.1.0"
 created_at: "2026-11-11"
-updated_at: "2026-11-11"
+updated_at: "2026-11-14"
 owner: "LARIS Project Owner"
 reviewers: []
 source_of_truth: false
@@ -15,8 +15,10 @@ related_documents:
 decision_references:
   - "ADR-002"
   - "ADR-008"
-change_summary: "Records the owner profiling result and approved diagnostic budget."
+change_summary: "Records the owner profiling result and approved diagnostic budget; D46 banner added (Vietnamese rows withdrawn, history kept)."
 ---
+
+> **D46 / ADR-022 (2026-11-14):** the stage-1 foundation encoder is English only. Vietnamese gates G02, G08, G09 and G11, Vietnamese data and the Vietnamese tokenizer capacity named below are **withdrawn from stage 1**; Vietnamese reaches the model through a translation layer. This document keeps the measured history of rounds R1-R3a as written; it is not the current plan. Current plan: `docs/adr/ADR-022-english-only-foundation.md`, `docs/specifications/DATASET_SPECIFICATION.md` section 2.1 and `reports/verification/T174-english-data-inventory.md`.
 
 # Ngân sách foundation và quyết định tokenizer
 

@@ -1,10 +1,12 @@
 # Formal section-5 gates; distinct from baseline-relative regression floors.
-version: "1.0.0"
+# D46 / ADR-022 (2026-11-14): the stage-1 encoder is English only. G02, G08, G09 and G11 are WITHDRAWN: they stay listed with their
+# original threshold, are never counted as passed, and readiness reports them as WITHDRAWN. G12 is English STEM retrieval.
+version: "1.1.0"
 stage: natural_language
 required_split: test
 gates:
   - {id: G01, dataset: anli, language: en, metric: macro_f1, operator: ge, threshold: 0.85}
-  - {id: G02, dataset: vinli, language: vi, metric: macro_f1, operator: ge, threshold: 0.78}
+  - {id: G02, dataset: vinli, language: vi, metric: macro_f1, operator: ge, threshold: 0.78, status: withdrawn, withdrawn_by: D46}
   - {id: G03, dataset: paws, language: en, metric: accuracy, operator: ge, threshold: 0.88}
   - {id: G04, dataset: paws, language: en, metric: macro_f1, operator: ge, threshold: 0.88}
   - {id: G05, dataset: stsb, language: en, metric: spearman, operator: ge, threshold: 0.82}
@@ -29,6 +31,8 @@ gates:
     operator: ge
     threshold: 0.65
     protocol: normalized_answer_text
+    status: withdrawn
+    withdrawn_by: D46
   - id: G09
     dataset: viquad_v2
     language: vi
@@ -36,6 +40,8 @@ gates:
     operator: ge
     threshold: 0.78
     protocol: normalized_answer_text
+    status: withdrawn
+    withdrawn_by: D46
   - id: G10
     dataset: unseen_text
     language: en
@@ -50,9 +56,11 @@ gates:
     operator: le
     threshold: 1.35
     protocol: unseen_text_tokens_per_word
+    status: withdrawn
+    withdrawn_by: D46
   - id: G12
     dataset: stem_retrieval
-    language: all
+    language: en
     metric: mrr
     operator: ge
     threshold: 0.82

@@ -144,22 +144,15 @@ def test_partial_gate_config_cannot_certify(measured, config):
         assess_readiness([measured], config)
 
 
-def test_historical_validation_report_is_not_qualified(config):
-    data = json.loads((ROOT / "reports/language_encoder/compact-1024-04-best-val.json").read_text())
-    result = assess_readiness([data], config)
-    assert not result["qualified"]
-    assert next(g for g in result["gates"] if g["id"] == "G01")["status"] == "FAIL"
-    assert next(g for g in result["gates"] if g["id"] == "G04")["status"] == "MISSING"
-    assert next(g for g in result["gates"] if g["id"] == "G07")["status"] == "UNVERIFIED"
-
-
 def test_gate_config_matches_normative_table(config):
     text = (ROOT / "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md").read_text()
     for gate in config["gates"]:
         line = next(line for line in text.splitlines() if line.startswith(f"| {gate['id']} |"))
         assert str(gate["threshold"]) in line
-        for field in ("dataset", "language", "metric"):
+        for field in ("dataset", "metric"):
             assert f"| {gate[field]} |" in line
+        language = f"{gate['language']} (withdrawn, D46)" if gate.get("status") == "withdrawn" else gate["language"]
+        assert f"| {language} |" in line
 
 
 def test_qa_report_protocol_does_not_claim_answer_text():
@@ -194,3 +187,26 @@ def test_paraphrase_macro_f1_is_not_positive_class_f1():
     metrics, _ = evaluator._score_paraphrase([], [], 4)
     assert metrics["f1"] == pytest.approx(0.4)
     assert metrics["macro_f1"] == pytest.approx(0.2)
+
+
+def test_withdrawn_gates_stay_listed_and_are_never_counted_as_passed(measured, config):
+    withdrawn = {g["id"] for g in config["gates"] if g.get("status") == "withdrawn"}
+    assert withdrawn == {"G02", "G08", "G09", "G11"}
+    result = assess_readiness([measured], config)
+    by_id = {g["id"]: g for g in result["gates"]}
+    assert all(by_id[i]["status"] == "WITHDRAWN" and by_id[i]["value"] is None for i in withdrawn)
+    assert result["qualified"]
+
+
+def test_withdrawn_gate_must_name_its_decision(measured, config):
+    config = copy.deepcopy(config)
+    next(g for g in config["gates"] if g["id"] == "G02").pop("withdrawn_by")
+    with pytest.raises(ValueError, match="must name the decision"):
+        assess_readiness([measured], config)
+
+
+def test_all_gates_withdrawn_cannot_qualify(measured, config):
+    config = copy.deepcopy(config)
+    for gate in config["gates"]:
+        gate.update(status="withdrawn", withdrawn_by="D46")
+    assert not assess_readiness([measured], config)["qualified"]
