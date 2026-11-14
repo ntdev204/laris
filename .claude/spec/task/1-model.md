@@ -300,6 +300,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-14: the owner stopped the English R1 pilot at step 980 of 5,000 because `nli` and `sim` did not move (logged values are weighted: `nli` 0.214 / 0.20 = 1.07 to 1.13 is chance, ln 3 = 1.099; `sim` 0.003 / 0.05 = 0.06 is a constant predictor). `sim` has 20,163 rows, so at alpha 0.7 it is drawn for 0.5 % of the steps (about 25 of 5,000), too few updates to learn. The floor raises it to 3 % (150 of 5,000), taken proportionally from the other tasks (MLM 53.7 to 52.3 %, retrieval 28.8 to 28.1 %, NLI 9.5 to 9.3 %). `nli` already has 9.5 % (about 470 steps of 5,000), so a floor does not help it; its labels were checked on the first 20,000 rows of each of five sources (balanced, mapped by name to 0/1/2) and no defect was found. Whether `nli` only needs more steps is open until the owner reruns the pilot (new `--run-id`, for example `english-r1-pilot2`; the stopped pilot log and checkpoint stay as evidence). The 3 % is an unmeasured proposal. The first pilot evaluation (step 500) was mean 0.8430, mlm 3.487, ret 0.511, para 0.068, qa 0.750; no second evaluation was reached.
 
+### T191 — Diagnosis: why the pair tasks sit at chance in the English R1 pilot
+- Requirements: SR-M4
+- Depends: T190
+- Deliverables:
+  - `scripts/diagnose_pair_path.py` (forward passes only) and `reports/verification/T191-pair-path-diagnosis.md`
+- Validation:
+  - Spec validator passes; forward passes on the validation split only; no training, no optimizer step, sealed test split untouched
+- Status: done
+- Note: 2026-11-14: the owner stopped the second pilot (`english-r1-pilot2`, step 2,000 of 5,000, mean val loss 0.6865) and asked for the root cause. Measured on `best` (step 2,000): MLM learns (masked accuracy 0.238 against 0.041), but NLI macro F1 0.285, paraphrase AUC 0.552, QA F1 0.0735 (below the 0.0786 empty-answer baseline) and similarity Spearman 0.046 are at chance. Single-sentence CLS cosine ranks STS-B at Spearman 0.570 (word overlap alone 0.571) while the similarity head on the pair input gives 0.026 with near-constant output (mean 0.683, std 0.064, labels mean 0.470). NLI predictions follow the source (all_nli 74 % neutral, ANLI 73.5 % entailment). Reading: the body holds single-sentence meaning, the cross-segment (`[CLS] a [SEP] b [SEP]`) path has not formed because about 80 % of the steps (MLM 54 %, retrieval 28 %) are single-segment and the four pair tasks share about 20 % (about 190 NLI and 60 similarity updates in 2,000 steps). Correction to T190: the floor addresses only the exposure of similarity; it does not address the missing cross-segment circuit. Proposals for the owner (not proven, not implemented): a bi-encoder similarity head (cosine of the retrieval embeddings with a learned scale and bias), pair-format MLM (two segments per MLM sequence), larger floors for the pair tasks or a two-stage mixture, source-balanced NLI sampling, and a controlled short run (pair tasks only against the mixture) to separate exposure from interference.
+
 ## Phase 42 — NLP techniques: TF-IDF, word embeddings, NER token classification
 
 ### T185 — NER data licence review and source decision
