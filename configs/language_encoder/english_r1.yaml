@@ -1,12 +1,13 @@
 # English stage-1 encoder, first round (T177, D46 / ADR-022). PROPOSED, not run: owner measures memory and throughput first.
-# Architecture = the existing "large" size (about 513 M parameters with a 32k vocabulary), chosen from the data volume in
+# Architecture = the existing "large" size (about 544 M parameters with the 56k vocabulary; 513 M with 32k), chosen from the data volume in
 # reports/verification/T175-model-size-vs-data.md (about 11.8 B unique MLM tokens; 20 tokens per parameter).
 # Trained from scratch on the new English tokenizer; R1-R3a weights cannot initialise it.
 config_version: "1.0.0"
 environment: "foundation-pretraining"
 
 model:
-  vocab_size: 32000
+  # 56k because the 32k fit measured fertility 1.41 on English validation text (gate 1.35); T182.
+  vocab_size: 56000
   max_sequence_length: 1024
   d_model: 1280
   num_layers: 24

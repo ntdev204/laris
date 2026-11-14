@@ -259,6 +259,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-14, owner asked for equal STEM areas and a larger total instead of cutting science. Fit corpus 605.0 M words, 3.67 GB; STEM 80 M = 13.2 %. No new download (all data was on disk). Found while sizing: 3.3 % of the T180 corpus lines were over 4,096 bytes and SentencePiece skips such sentences (default `max_sentence_length`), which would have dropped mostly formula-heavy and non-ASCII STEM text; the script now splits them. Fit RAM is not measured: the trainer sets no `input_sentence_size`, so SentencePiece loads the whole 3.67 GB (31 GB machine); the owner should watch memory, and if it fails the fallback is a sampled fit (same proportions).
 
+### T182 — English tokenizer vocabulary 56,000 after the 32k intake failed
+- Requirements: SR-M4, SR-M5, SR-M6
+- Depends: T181
+- Deliverables:
+  - `english_r1.yaml` and runbook section 9.2 moved to a 56,000-piece vocabulary (output `artifacts/tokenizer/english-r1-56k`, prefix `laris_spm_en_56k`); `scripts/english_tokenizer_intake.py` (fertility, unknown rate, special ids on the validation split, with the fit normalisation)
+- Validation:
+  - Spec validator passes; the 32k intake reproduced by the script; no tokenizer fitted, no training run (the owner fits and the agent runs the intake)
+- Status: done
+- Note: 2026-11-14: the owner's 32k fit (T177 command, 3.67 GB corpus) failed the runbook limit: fertility 1.408 on general English validation text (STEM 1.548, overall 1.475; limit 1.35), unknown rate 0.07 % with normalised input (0.57 % without it: typographic quotes and dashes, so every consumer must use `NormalizedSentencePiece`); special ids match the contract (`reports/verification/english-r1-32k-tokenizer-intake.json`, kept with `artifacts/tokenizer/english-r1/`). The owner chose a larger vocabulary (48k or 56k); 56k was taken for margin because gains of a larger BPE vocabulary shrink and 48k was likely to land near the limit. Cost: the large model grows from 513.25 M to about 544 M parameters (+30.7 M, tied embedding), about +0.5 GB of weights and optimiser state; the MLM head scores only masked positions. Not measured: whether 56k reaches 1.35 (fit pending); if the intake fails again, the next levers are the STEM share (13 %) and the digit split, and G10 is measured on unseen text at T100 anyway. Existing tests that hardcode 32,000 are for other configs and are unchanged.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
