@@ -1,0 +1,50 @@
+# English stage-1 encoder, first round (T177, D46 / ADR-022). PROPOSED, not run: owner measures memory and throughput first.
+# Architecture = the existing "large" size (about 513 M parameters with a 32k vocabulary), chosen from the data volume in
+# reports/verification/T175-model-size-vs-data.md (about 11.8 B unique MLM tokens; 20 tokens per parameter).
+# Trained from scratch on the new English tokenizer; R1-R3a weights cannot initialise it.
+config_version: "1.0.0"
+environment: "foundation-pretraining"
+
+model:
+  vocab_size: 32000
+  max_sequence_length: 1024
+  d_model: 1280
+  num_layers: 24
+  num_heads: 20
+  d_ff: 5120
+  dropout: 0.1
+  norm_type: "rmsnorm"
+  pos_encoding: "rope"
+  activation: "gelu"
+  tie_embeddings: true
+  precision: "bf16"
+  seed: 42
+
+training:
+  batch_size: 32
+  micro_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0002
+  warmup_steps: 2000
+  max_steps: 100000
+  loss_lambda_mlm: 0.50
+  loss_lambda_nli: 0.20
+  loss_lambda_para: 0.10
+  loss_lambda_sim: 0.05
+  loss_lambda_qa: 0.15
+  # The retrieval-pair task (GooAQ, Natural Questions, MS MARCO, ...) needs loader support (T178); until then the
+  # contrastive term rides on QA batches only, as in R2/R3a.
+  loss_lambda_retrieval: 0.0
+  retrieval_temperature: 0.07
+  task_sampling_alpha: 0.7
+  # Within a task, datasets are drawn with probability proportional to (rows ** exponent) / total, so one large
+  # source (FineWeb-Edu is 44 % of the MLM passages) does not take the whole task.
+  dataset_sampling_exponents:
+    mlm: 0.6
+    nli: 0.7
+    paraphrase: 0.7
+    qa: 0.7
+
+hardware:
+  max_vram_gb: 14.5
+  target_device: "cuda"

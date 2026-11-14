@@ -64,7 +64,7 @@ def data_dir(tmp_path: Path) -> Path:
     root = tmp_path / "processed"
     for split in ("train", "val", "test"):
         _write(root, "wikipedia_en", split, pa.table({"id": list("abcd"), "text": [TEXT] * 4}))
-        _write(root, "wikipedia_vi", split, pa.table({"id": list("abcd"), "text": [TEXT] * 4}))
+        _write(root, "gutenberg_en", split, pa.table({"id": list("abcd"), "text": [TEXT] * 4}))
         _write(
             root, "all_nli", split,
             pa.table({"premise": [TEXT] * 6, "hypothesis": ["Computers."] * 6,
@@ -76,7 +76,7 @@ def data_dir(tmp_path: Path) -> Path:
                       "is_duplicate": [1, 0, 1, 0, 1, 0]}),
         )  # fmt: skip
         _write(
-            root, "vists", split,
+            root, "stsb", split,
             pa.table({"sentence1": [TEXT] * 6, "sentence2": ["Qubits compute."] * 6,
                       "score": [0.1, 0.5, 0.9, 0.3, 0.7, 0.2]}),
         )  # fmt: skip
@@ -132,8 +132,8 @@ def test_evaluator_scores_every_task_per_language(data_dir: Path, checkpoint: Pa
     report = evaluator.evaluate("test")
     groups = {(g["task"], g["language"]) for g in report.groups}
     assert groups == {
-        ("mlm", "en"), ("mlm", "vi"), ("nli", "en"), ("paraphrase", "en"),
-        ("similarity", "vi"), ("qa", "en"),
+        ("mlm", "en"), ("nli", "en"), ("paraphrase", "en"),
+        ("similarity", "en"), ("qa", "en"),
     }  # fmt: skip
     for g in report.groups:
         assert np.isfinite(g["value"]) and np.isfinite(g["baseline"])

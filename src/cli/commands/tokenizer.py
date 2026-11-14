@@ -68,6 +68,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Explicitly assert repository owner authorization for tokenizer fitting",
     )
     parser.add_argument(
+        "--fit-corpus",
+        type=Path,
+        default=None,
+        help="Prepared train-only text corpus (one passage per line, e.g. "
+        "data/cache/english_fit_corpus.txt from scripts/prepare_english_tokenizer_corpus.py); "
+        "skips the extraction step",
+    )
+    parser.add_argument(
         "--extract-only",
         action="store_true",
         help="Only extract clean corpus text, do not run SentencePiece fitting",
@@ -76,38 +84,45 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 def run(args: argparse.Namespace) -> int:
     print("=" * 60)
-    print("LARIS BILINGUAL TOKENIZER EXTRACTION & FIT RUNNER")
+    print("LARIS TOKENIZER EXTRACTION & FIT RUNNER")
     print(f"Target Vocabulary Size: {args.vocab_size}")
     print(f"Output Directory:       {args.output_dir}")
     print(f"Model Prefix:           {args.model_prefix}")
     print("=" * 60)
 
-    # 1. Resolve physical train shards
-    train_shards = args.train_shards
-    if not train_shards:
-        candidates = [
-            Path("data/processed/wikipedia_vi/train.parquet"),
-            Path("data/processed/wikipedia_en/train.parquet"),
-        ]
-        train_shards = [c for c in candidates if c.is_file()]
+    if args.fit_corpus is not None:
+        if not args.fit_corpus.is_file() or args.fit_corpus.stat().st_size == 0:
+            print(f"[ERROR] Fit corpus not found or empty: {args.fit_corpus}", file=sys.stderr)
+            return 1
+        args.corpus_text_out = args.fit_corpus
+        print(f"\n[1/3] Using the prepared fit corpus {args.fit_corpus}")
+    else:
+        # 1. Resolve physical train shards
+        train_shards = args.train_shards
+        if not train_shards:
+            candidates = [
+                Path("data/processed/wikipedia_en/train.parquet"),
+            ]
+            train_shards = [c for c in candidates if c.is_file()]
 
-    if not train_shards:
-        print(
-            "[ERROR] No physical TRAIN Parquet shards found. "
-            "Run `laris data partition` first.",
-            file=sys.stderr,
+        if not train_shards:
+            print(
+                "[ERROR] No physical TRAIN Parquet shards found. "
+                "Run `laris data partition` first.",
+                file=sys.stderr,
+            )
+            return 1
+
+        print(f"\n[1/3] Extracting clean text from {len(train_shards)} TRAIN shards...")
+        count = extract_clean_wikipedia_corpus(
+            parquet_paths=train_shards,
+            output_text_path=args.corpus_text_out,
+            max_articles=args.max_articles,
         )
-        return 1
+        print(f"[SUCCESS] Extracted {count} articles to {args.corpus_text_out}")
 
-    print(f"\n[1/3] Extracting clean text from {len(train_shards)} TRAIN shards...")
-    count = extract_clean_wikipedia_corpus(
-        parquet_paths=train_shards,
-        output_text_path=args.corpus_text_out,
-        max_articles=args.max_articles,
-    )
-    print(f"[SUCCESS] Extracted {count} articles to {args.corpus_text_out}")
 
-    if args.extract_only:
+    if args.extract_only and args.fit_corpus is None:
         print("[INFO] --extract-only flag specified. Skipping SentencePiece fitting.")
         return 0
 

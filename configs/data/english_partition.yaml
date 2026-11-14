@@ -1,0 +1,59 @@
+# Partitioning of the English stage-1 sources (T177, D46 / ADR-022). Output: data/processed/<dir>/{train,val,test}.parquet
+# in the schemas the training loader already reads. Seeds, ratios and chunk sizes live here, not in code.
+config_version: "1.0.0"
+seed: "laris-english-partition-v1"
+mlm_ratios: {train: 0.98, val: 0.01, test: 0.01}
+supervised_ratios: {train: 0.90, val: 0.05, test: 0.05}
+# The loader keeps only the first seq_len tokens of a record, so long documents are cut into passages at paragraph
+# boundaries; 4000 characters is about 950 tokens, matching a 1024-token training sequence.
+mlm_chunk_chars: 4000
+mlm_min_chunk_chars: 400
+# Exact duplicates (case, whitespace and NFC-normalised full document) are dropped across all MLM sources and
+# against English Wikipedia.
+dedupe_against: [wikipedia_en]
+
+mlm:
+  - {id: FINEWEB-EDU-EN, text: text, doc_id: id}
+  - {id: OPENWEBTEXT-EN, text: text}
+  - {id: C4-EN, text: text, url: url}
+  - {id: GUTENBERG-EN, text: text, doc_id: id}
+  - {id: CC-NEWS-EN, text: text, doc_id: url}
+  - {id: CNN-DAILYMAIL-EN, text: article, doc_id: id}
+  - {id: XSUM-EN, text: document, doc_id: id}
+  - {id: WIKIPEDIA-SIMPLE-EN, text: text, doc_id: id}
+
+nli:
+  - {id: WANLI-EN, premise: premise, hypothesis: hypothesis, label: gold}
+  - {id: SCITAIL-EN, premise: sentence1, hypothesis: sentence2, label: gold_label, label_map: {entails: entailment, neutral: neutral}}
+
+paraphrase:
+  - {id: MRPC-EN, sentence1: sentence1, sentence2: sentence2, label: label}
+
+qa:
+  # Rows whose article or context also sits in the SQuAD v1 validation or test partition are dropped, so G06 and G07
+  # stay clean (SQuAD v2 and AdversarialQA are built on SQuAD v1 articles).
+  - {id: SQUAD-V2-EN}
+  - {id: ADVERSARIAL-QA-EN}
+
+similarity_extra:
+  # Already leakage-filtered against STS-B validation and test by scripts/check_sts_leakage.py.
+  source: data/processed/sts_extra_en/train.parquet
+
+# English tokenizer fit corpus (T177). Train splits only, word budgets per source, deterministic row-group order.
+# Fitting itself is an owner run; this only prepares the text.
+tokenizer_fit:
+  seed: 42
+  output: data/cache/english_fit_corpus.txt
+  report: data/cache/english_fit_corpus.json
+  words:
+    wikipedia_en: 80000000
+    fineweb_edu_en: 100000000
+    openwebtext_en: 50000000
+    c4_en: 40000000
+    gutenberg_en: 40000000
+    cc_news_en: 20000000
+    cnn_dailymail_en: 10000000
+    xsum_en: 5000000
+    wikipedia_simple_en: 5000000
+  # Scientific vocabulary (stage 2) is not in the list above on purpose: S2ORC belongs to stage 2 (ADR-022). Add a
+  # train-split science source here before the fit if the owner wants STEM terms in the vocabulary.

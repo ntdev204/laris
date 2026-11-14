@@ -947,8 +947,8 @@
       "version": "vblagoje/cc_news@main",
       "official_source_url": "https://huggingface.co/datasets/vblagoje/cc_news",
       "license_name": "Not declared (CC-News crawl)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "News article",
       "expected_sample_count": ">= 300,000 samples",
@@ -957,7 +957,7 @@
       "sha256_checksum": "5cda9a2b0b40a9c9438ae02168b16beb61e52449a895869515501962c5aeb977",
       "storage_path": "data/raw/cc_news_en",
       "schema_valid": true,
-      "notes": "Role: mlm. Publisher licence is not declared; research use only until the owner approves. Source vblagoje/cc_news@main; 5 file(s) selected by pattern '*.parquet' with limit 5. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: mlm. Publisher licence is not declared; research use only until the owner approves. Source vblagoje/cc_news@main; 5 file(s) selected by pattern '*.parquet' with limit 5. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00005.parquet",
@@ -1047,8 +1047,8 @@
       "version": "EdinburghNLP/xsum@main",
       "official_source_url": "https://huggingface.co/datasets/EdinburghNLP/xsum",
       "license_name": "Not declared (BBC articles)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "News article with one-sentence summary",
       "expected_sample_count": ">= 100,000 samples",
@@ -1057,7 +1057,7 @@
       "sha256_checksum": "224e9dbc6fed987759c1954603b43cb280b8d475d78893779130aa707d967ed7",
       "storage_path": "data/raw/xsum_en",
       "schema_valid": true,
-      "notes": "Role: mlm. Abstractive one-sentence summaries; BBC rights are not declared, research use only until the owner approves. Source EdinburghNLP/xsum@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: mlm. Abstractive one-sentence summaries; BBC rights are not declared, research use only until the owner approves. Source EdinburghNLP/xsum@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test-00000-of-00001.parquet",
@@ -1143,8 +1143,8 @@
       "version": "allenai/scitail@main",
       "official_source_url": "https://huggingface.co/datasets/allenai/scitail",
       "license_name": "Not declared (AllenAI release)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Science entailment pair",
       "expected_sample_count": ">= 20,000 samples",
@@ -1153,7 +1153,7 @@
       "sha256_checksum": "9814bcb18de316ee02bb533626bee2ed8db03bed7b0bd6d0deb9d66536ded627",
       "storage_path": "data/raw/scitail_en",
       "schema_valid": true,
-      "notes": "Role: nli. Science-domain entailment (entails / neutral); licence tag missing, research use pending review. Source allenai/scitail@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: nli. Science-domain entailment (entails / neutral); licence tag missing, research use pending review. Source allenai/scitail@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test-00000-of-00001.parquet",
@@ -1207,8 +1207,8 @@
       "version": "mteb/sts12-sts@main",
       "official_source_url": "https://huggingface.co/datasets/mteb/sts12-sts",
       "license_name": "Not declared (SemEval-2012 release)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Graded sentence pair, label 0-5",
       "expected_sample_count": ">= 1,000 samples",
@@ -1217,7 +1217,7 @@
       "sha256_checksum": "a61e140fc92251d1f86e6c6bc00605dab5a32298c218b0c7e1cac00ad05afddd",
       "storage_path": "data/raw/sts12_train_en",
       "schema_valid": true,
-      "notes": "Role: similarity. STS 2012 train portion only; test portions of STS12-16 stay unused so they remain a possible extra evaluation. Source mteb/sts12-sts@main; 1 file(s) selected by pattern 'train.jsonl.gz'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: similarity. STS 2012 train portion only; test portions of STS12-16 stay unused so they remain a possible extra evaluation. Source mteb/sts12-sts@main; 1 file(s) selected by pattern 'train.jsonl.gz'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train.jsonl.gz",
@@ -1233,8 +1233,8 @@
       "version": "RobZamp/sick@refs%2Fconvert%2Fparquet",
       "official_source_url": "https://huggingface.co/datasets/RobZamp/sick",
       "license_name": "CC-BY-NC-SA-3.0",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Graded sentence pair (relatedness 1-5) with NLI label",
       "expected_sample_count": ">= 9,000 samples",
@@ -1243,7 +1243,7 @@
       "sha256_checksum": "4926985a232bd0d221af60e729693351bad7ba09e2ac7297079dc34018095830",
       "storage_path": "data/raw/sick_en",
       "schema_valid": true,
-      "notes": "Role: similarity. Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only. Source RobZamp/sick@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: similarity. Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only. Source RobZamp/sick@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test__0000.parquet",
@@ -1271,8 +1271,8 @@
       "version": "nyu-mll/glue@main",
       "official_source_url": "https://huggingface.co/datasets/nyu-mll/glue",
       "license_name": "Other (GLUE, MSR paraphrase corpus)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "News sentence pair with paraphrase label",
       "expected_sample_count": ">= 4,000 samples",
@@ -1281,7 +1281,7 @@
       "sha256_checksum": "a623ed1cbdf445b11f8e249acbf649d7d3a5ee58c918554c40cbd8307e488693",
       "storage_path": "data/raw/mrpc_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. Small, human-labelled; MSR licence for research use. Source nyu-mll/glue@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. Small, human-labelled; MSR licence for research use. Source nyu-mll/glue@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test-00000-of-00001.parquet",
@@ -1309,8 +1309,8 @@
       "version": "sentence-transformers/altlex@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/altlex",
       "license_name": "Not declared (AltLex release)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Wikipedia / Simple Wikipedia sentence pair",
       "expected_sample_count": ">= 100,000 samples",
@@ -1319,7 +1319,7 @@
       "sha256_checksum": "17fec2cfd105caf8983eebcb98d798d90fd6902a6ad8653e0bbefbe01b0f0092",
       "storage_path": "data/raw/altlex_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. Positive pairs only (no negative label); use for the contrastive term. Source sentence-transformers/altlex@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. Positive pairs only (no negative label); use for the contrastive term. Source sentence-transformers/altlex@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1335,8 +1335,8 @@
       "version": "sentence-transformers/simple-wiki@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/simple-wiki",
       "license_name": "Not declared (Wikipedia-derived)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Complex / simple sentence pair",
       "expected_sample_count": ">= 100,000 samples",
@@ -1345,7 +1345,7 @@
       "sha256_checksum": "eb59c998ebe0922239b0c96201d9f0ddafbfb4b55562055131af3ab5c5ea8dbf",
       "storage_path": "data/raw/simple_wiki_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. Positive pairs only; syntactic and lexical simplification. Source sentence-transformers/simple-wiki@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. Positive pairs only; syntactic and lexical simplification. Source sentence-transformers/simple-wiki@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1361,8 +1361,8 @@
       "version": "sentence-transformers/coco-captions@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/coco-captions",
       "license_name": "Not declared (COCO captions, CC-BY-4.0 upstream annotations)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Caption pair for the same image",
       "expected_sample_count": ">= 100,000 samples",
@@ -1371,7 +1371,7 @@
       "sha256_checksum": "d1c6a6c9929b9cb58f322e0038e0c575cc006d3a830de181bfcf8867e4fc384f",
       "storage_path": "data/raw/coco_captions_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. Positive pairs about concrete scenes (everyday semantics). Source sentence-transformers/coco-captions@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. Positive pairs about concrete scenes (everyday semantics). Source sentence-transformers/coco-captions@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1425,8 +1425,8 @@
       "version": "sentence-transformers/specter@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/specter",
       "license_name": "Not declared (SPECTER citation triplets)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Paper-title triplet (query, cited, uncited)",
       "expected_sample_count": ">= 100,000 samples",
@@ -1435,7 +1435,7 @@
       "sha256_checksum": "70271dd4a34816c5dd122fdfa1da207c5273ac6727eb56d5288da4256114921e",
       "storage_path": "data/raw/specter_triplets_en",
       "schema_valid": true,
-      "notes": "Role: paraphrase. Scientific-title relatedness; titles only, no full text. Source sentence-transformers/specter@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: paraphrase. Scientific-title relatedness; titles only, no full text. Source sentence-transformers/specter@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1521,8 +1521,8 @@
       "version": "mandarjoshi/trivia_qa@main",
       "official_source_url": "https://huggingface.co/datasets/mandarjoshi/trivia_qa",
       "license_name": "Not declared (TriviaQA, Apache-2.0 upstream code)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Trivia question with Wikipedia evidence documents",
       "expected_sample_count": ">= 50,000 samples",
@@ -1531,7 +1531,7 @@
       "sha256_checksum": "735df844a0011af55546089a1aaf2e98e47a9989c175f4c56da78d68a021d44f",
       "storage_path": "data/raw/triviaqa_wiki_en",
       "schema_valid": true,
-      "notes": "Role: qa. Long evidence documents, distant supervision; trivia-style factual questions. Source mandarjoshi/trivia_qa@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: qa. Long evidence documents, distant supervision; trivia-style factual questions. Source mandarjoshi/trivia_qa@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test-00000-of-00001.parquet",
@@ -1831,8 +1831,8 @@
       "version": "sentence-transformers/eli5@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/eli5",
       "license_name": "Not declared (ELI5 forum answers)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Question and long-form answer pair",
       "expected_sample_count": ">= 100,000 samples",
@@ -1841,7 +1841,7 @@
       "sha256_checksum": "0ce47a5e6c200590f1513e50fe53f000900b500adf0be112577fa5dfac4f9ab9",
       "storage_path": "data/raw/eli5_en",
       "schema_valid": true,
-      "notes": "Role: retrieval. Long-form explanation answers. Source sentence-transformers/eli5@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: retrieval. Long-form explanation answers. Source sentence-transformers/eli5@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1857,8 +1857,8 @@
       "version": "sentence-transformers/yahoo-answers@main",
       "official_source_url": "https://huggingface.co/datasets/sentence-transformers/yahoo-answers",
       "license_name": "Not declared (Yahoo Answers)",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Question and answer pair",
       "expected_sample_count": ">= 500,000 samples",
@@ -1867,7 +1867,7 @@
       "sha256_checksum": "04f92e1e6df0299378f39d27adb5b1cecd56227e82889e61baec9dd72e5ea4c5",
       "storage_path": "data/raw/yahoo_answers_en",
       "schema_valid": true,
-      "notes": "Role: retrieval. Community question answering, informal register. Source sentence-transformers/yahoo-answers@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: retrieval. Community question answering, informal register. Source sentence-transformers/yahoo-answers@main; 1 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "train-00000-of-00001.parquet",
@@ -1883,8 +1883,8 @@
       "version": "microsoft/ms_marco@main",
       "official_source_url": "https://huggingface.co/datasets/microsoft/ms_marco",
       "license_name": "Microsoft research-only terms",
-      "license_status": "NEEDS_LICENSE_REVIEW",
-      "acquisition_status": "DOWNLOADED",
+      "license_status": "APPROVED_BY_OWNER",
+      "acquisition_status": "VERIFIED",
       "language": "English",
       "sample_unit": "Query with ranked passages",
       "expected_sample_count": ">= 500,000 samples",
@@ -1893,7 +1893,7 @@
       "sha256_checksum": "bfbf0c91c55f85176a25760d12ec8daf9f222305bebb69025700c2147931c2a8",
       "storage_path": "data/raw/msmarco_en",
       "schema_valid": true,
-      "notes": "Role: retrieval. Non-commercial research licence; passage retrieval signal. Source microsoft/ms_marco@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "notes": "Role: retrieval. Non-commercial research licence; passage retrieval signal. Source microsoft/ms_marco@main; 9 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
       "files": [
         {
           "filename": "test-00000-of-00001.parquet",

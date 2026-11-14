@@ -558,17 +558,85 @@ records the decision per source before any of them is used in a run that is repo
 
 ## 9. English stage 1 after D46 (T175 to T177)
 
-The agent has acquired the English replacement data (no training, no fitting). Current state and what the owner does next:
+State: the English data is on disk, partitioned (train/val/test, hash by document or pair, passages of at most 4,000 characters), deduplicated, and
+checked against STS-B and SQuAD v1 held-out sets. Nothing below has been run by the agent: the foundation model is **NOT QUALIFIED**, and the
+tokenizer fit and every training step are owner runs. R1-R3a weights cannot initialise this model.
 
-1. **Data on disk (agent, done).** `configs/data/english_sources.yaml` lists the sources; they are in `data/raw/<id>/` and in
-   `data/acquisition_manifest.json`. Reproduce or resume with
-   `HOME=$HOME_ISOLATED .venv/bin/python -c "import sys; from laris.research.corpus.acquisition.runner import main; sys.exit(main(['--english-all']))"`
-   (resumes partial files; `--only ID ...` fetches single sources). Report: `reports/verification/T175-english-acquisition.md`.
-2. **Licences (owner).** Sources marked `NEEDS_LICENSE_REVIEW` in the manifest are research-only until you approve them; decide before
-   they enter a training mixture.
-3. **STS-B leakage (agent, after similarity files exist).** `python scripts/check_sts_leakage.py` writes `data/processed/sts_extra_en/train.parquet`
-   without any pair that shares a sentence with STS-B val or test.
-4. **Partition and wiring (agent, T177, pending).** Until it is done there is no English fit corpus and no mixture config, so there are no
-   tokenizer or training commands here yet. They are added by T177, with a budget, a timeout and stop rules, before you run anything.
-5. **Owner runs (after T177).** Fit the English tokenizer, train the English encoder from scratch (R1-R3a weights cannot initialise it), return
-   logs for intake; T100 evaluates held-out. The model stays NOT QUALIFIED until T100 passes.
+### 9.1 What the agent prepared
+
+| Item | Where |
+|---|---|
+| Sources, licences, owner approvals (2026-11-14) | `configs/data/english_sources.yaml`, `data/acquisition_manifest.json` |
+| Partition and leakage rules | `configs/data/english_partition.yaml`, `scripts/partition_english.py`, `data/processed/task_splits_manifest.json` |
+| STS-B leakage check (2,092 pairs removed) | `scripts/check_sts_leakage.py`, `reports/verification/T175-sts-leakage.json` |
+| Tokenizer fit corpus (train splits only, word budgets per source) | `scripts/prepare_english_tokenizer_corpus.py` -> `data/cache/english_fit_corpus.txt` and `.json` |
+| Model and mixture | `configs/language_encoder/english_r1.yaml` (large size, about 513 M parameters, vocabulary 32,000; **proposal**) |
+| Why this size | `reports/verification/T175-model-size-vs-data.md` |
+
+Not covered yet (T178): the retrieval-pair data (GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo, Stack Exchange duplicates, SPECTER,
+AltLex, Simple-Wiki, COCO captions, 10.4 GB) has no loader task, so it is not in this mixture and G12 (dense retrieval above BM25) is not
+helped by it yet. Decide whether to wait for T178 before the main run (recommended for G12) or to run the pilot now.
+
+### 9.2 Owner steps
+
+Set `HOME_ISOLATED` as in section 2 and stop other GPU workloads first.
+
+**Step 1: fit the English tokenizer** (CPU, about 2.5 GB of text; SentencePiece BPE, 32,000 pieces, digits split).
+
+```bash
+HOME=$HOME_ISOLATED timeout -s KILL 7200s .venv/bin/python -m cli.main train tokenizer \
+  --authorized --fit-corpus data/cache/english_fit_corpus.txt --vocab-size 32000 \
+  --output-dir artifacts/tokenizer/english-r1 --model-prefix laris_spm_en_32k \
+  2>&1 | tee artifacts/logs/english-r1-tokenizer-fit.log
+```
+
+Return the log, `artifacts/tokenizer/english-r1/` and `data/cache/english_fit_corpus.json`. The agent runs the intake (fertility on the
+validation split, unknown-token rate, special-token ids) before step 2. Do not continue if fertility on English validation text is above 1.35.
+
+**Step 2: memory and speed profile** (decides batch size; the numbers replace every estimate in the size report).
+
+```bash
+TOK=artifacts/tokenizer/english-r1/laris_spm_en_32k.model
+mkdir -p artifacts/profiles
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 600s .venv/bin/python -m cli.model train language-encoder \
+  --profile-only --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/english_r1.yaml \
+  --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
+  --tokenizer-model $TOK --normalize-input 2>&1 | tee artifacts/profiles/english-r1-profile.log
+```
+
+If peak memory exceeds the VRAM you can give the run, lower `--micro-batch-size` (4 or 2) and raise `--grad-accum-steps` to keep 32 per update;
+if even 2 does not fit, tell the agent: the size is then reduced to the compact size (about 110 M) or an 8-bit optimiser state is considered.
+Return the log; the tokens per second in it replace the 35 TFLOP/s assumption.
+
+**Step 3: smoke run, 20 steps.**
+
+```bash
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 300s .venv/bin/python -m cli.model train language-encoder \
+  --authorized --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/english_r1.yaml \
+  --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
+  --steps 20 --eval-interval 10 --eval-batches 2 --save-interval 20 --seed 42 \
+  --tokenizer-model $TOK --normalize-input --run-id english-r1-smoke --no-evaluate-after \
+  2>&1 | tee artifacts/profiles/english-r1-smoke.log
+```
+
+**Step 4: pilot, 5,000 steps** (about 160 M tokens; a short run to see the loss curve per task and the time per step before committing days).
+
+```bash
+LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 28800s .venv/bin/python -m cli.model train language-encoder \
+  --authorized --model-size large --vocab-size 32000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/english_r1.yaml \
+  --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
+  --steps 5000 --learning-rate 0.0002 --warmup-steps 500 \
+  --eval-interval 500 --eval-batches 16 --save-interval 500 --patience 4 --seed 42 \
+  --tokenizer-model $TOK --normalize-input --run-id english-r1-pilot --no-evaluate-after \
+  2>&1 | tee artifacts/profiles/english-r1-pilot.log
+```
+
+Stop rules: stop and return the log if any task loss is NaN or rises more than 10 % above its best value for two evaluations, or if a step takes
+more than twice the smoke-run time. The agent writes the intake check and the per-task analysis from the returned log; the main run
+(`max_steps` in the config, in segments with `--save-interval`) is approved after that review, not before.
+
+**Step 5 (after the pilot review): main run and T100.** Command, step count and time budget are fixed from the measured pilot throughput. T100
+(held-out evaluation, once per candidate) follows the main run.
