@@ -90,9 +90,20 @@ class TaskBatch:
 
 
 class TemperatureSamplingScheduler:
-    """Calculates multinomial sampling probabilities across tasks using temperature alpha."""
+    """Calculates multinomial sampling probabilities across tasks using temperature alpha.
 
-    def __init__(self, task_counts: Dict[str, int], alpha: float = 0.7) -> None:
+    `floors` (task -> minimum share of the steps) lifts a small task above its temperature share
+    (a 20 k-row task gets 0.5 % of the steps at alpha 0.7, too few for its head to learn); the
+    other tasks keep their relative proportions and give up the difference. Floors of tasks that
+    are not active are ignored.
+    """
+
+    def __init__(
+        self,
+        task_counts: Dict[str, int],
+        alpha: float = 0.7,
+        floors: Optional[Dict[str, float]] = None,
+    ) -> None:
         if not task_counts:
             raise ValueError("task_counts dictionary cannot be empty")
         if alpha <= 0.0:
@@ -106,6 +117,29 @@ class TemperatureSamplingScheduler:
         scaled_counts = [math.pow(max(task_counts[t], 1), alpha) for t in self.tasks]
         total_scaled = sum(scaled_counts)
         self.probabilities = [c / total_scaled for c in scaled_counts]
+        self.floors = {t: f for t, f in (floors or {}).items() if t in task_counts}
+        if self.floors:
+            self.probabilities = self._apply_floors(self.probabilities, self.floors)
+
+    def _apply_floors(self, probabilities: List[float], floors: Dict[str, float]) -> List[float]:
+        for task, floor in floors.items():
+            if not math.isfinite(floor) or not 0.0 <= floor < 1.0:
+                raise ValueError(f"floor for '{task}' must be in [0, 1), got {floor}")
+        if sum(floors.values()) >= 1.0:
+            raise ValueError(f"floors must sum to less than 1, got {sum(floors.values())}")
+        fixed: Dict[str, float] = {}
+        while True:
+            free = [t for t in self.tasks if t not in fixed]
+            budget = 1.0 - sum(fixed.values())
+            mass = sum(probabilities[self.tasks.index(t)] for t in free)
+            share = {t: probabilities[self.tasks.index(t)] / mass * budget for t in free}
+            below = [t for t in free if t in floors and share[t] < floors[t]]
+            if not below:
+                break
+            for t in below:
+                fixed[t] = floors[t]
+        share.update(fixed)
+        return [share[t] for t in self.tasks]
 
     def sample_task(self, rng: Optional[random.Random] = None) -> str:
         """Samples a task according to the temperature-scaled distribution."""
@@ -203,9 +237,10 @@ class SyntheticMultiTaskDataLoader:
 def create_multi_task_sampler(
     task_counts: Dict[str, int],
     alpha: float = 0.7,
+    floors: Optional[Dict[str, float]] = None,
 ) -> TemperatureSamplingScheduler:
     """Helper factory creating temperature-scaled scheduler for multi-task datasets."""
-    return TemperatureSamplingScheduler(task_counts, alpha=alpha)
+    return TemperatureSamplingScheduler(task_counts, alpha=alpha, floors=floors)
 
 
 class StreamingParquetMultiTaskDataLoader:
@@ -237,6 +272,7 @@ class StreamingParquetMultiTaskDataLoader:
         seq_len: int = 512,
         batch_size: int = 4,
         alpha: float = 0.7,
+        task_sampling_floor: Optional[Dict[str, float]] = None,
         buffer_size: int = 64,
         mlm_mask_prob: float = 0.15,
         seed: int = 42,
@@ -273,6 +309,7 @@ class StreamingParquetMultiTaskDataLoader:
         self.seq_len = seq_len
         self.batch_size = batch_size
         self.alpha = alpha
+        self.task_sampling_floor = dict(task_sampling_floor or {})
         self.buffer_size = buffer_size
         self.mlm_mask_prob = mlm_mask_prob
         self._seed = seed
@@ -334,7 +371,9 @@ class StreamingParquetMultiTaskDataLoader:
             )
             self.scheduler = self._synthetic_fallback.scheduler
         else:
-            self.scheduler = TemperatureSamplingScheduler(active_counts, alpha=self.alpha)
+            self.scheduler = TemperatureSamplingScheduler(
+                active_counts, alpha=self.alpha, floors=self.task_sampling_floor
+            )
 
         self._build_streams()
 
