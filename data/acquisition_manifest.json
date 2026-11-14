@@ -2002,9 +2002,347 @@
           "sha256": "4591b521c623947b13e7ad3afd6e86a0f23652948678ed7d0e83283f82725aba"
         }
       ]
+    },
+    {
+      "dataset_id": "OPEN-WEB-MATH",
+      "name": "Open Web Math",
+      "version": "open-web-math/open-web-math@main",
+      "official_source_url": "https://huggingface.co/datasets/open-web-math/open-web-math",
+      "license_name": "ODC-By-1.0 (compilation); per-page rights remain with the publishers",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Math and science web document",
+      "expected_sample_count": ">= 50,000 samples",
+      "actual_sample_count": 55397,
+      "actual_size_bytes": 236268485,
+      "sha256_checksum": "18d7ef70a6ef61f09c020950626d7e6e61d1300f3f85beddbd3b3c6801071a41",
+      "storage_path": "data/raw/open_web_math",
+      "schema_valid": true,
+      "notes": "Role: scientific_text. Mathematical and STEM web pages with LaTeX preserved; the share of formula-bearing text that stage 2 needs. Source open-web-math/open-web-math@main; 1 file(s) selected by pattern 'train-*.parquet' with limit 1. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00114-5a023365406cb9c4.parquet",
+          "bytes": 236268485,
+          "sample_count": 55397,
+          "sha256": "18d7ef70a6ef61f09c020950626d7e6e61d1300f3f85beddbd3b3c6801071a41"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-ELECTRONICS",
+      "name": "Se Electronics",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Electronics and electrical engineering site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 99788,
+      "actual_size_bytes": 529968419,
+      "sha256_checksum": "d8ec92a2ade964eed5f86801366a8ada3dd7a67d12f2726b7b36b06de5e51187",
+      "storage_path": "data/raw/se_electronics",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet' with limit 1. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00002.parquet",
+          "bytes": 529968419,
+          "sample_count": 99788,
+          "sha256": "d8ec92a2ade964eed5f86801366a8ada3dd7a67d12f2726b7b36b06de5e51187"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-ENGINEERING",
+      "name": "Se Engineering",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Engineering site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 15532,
+      "actual_size_bytes": 66926213,
+      "sha256_checksum": "5bf8c7e03e86666ffd18aed95f5587341915118eb09e0b9139bfbb9e8a632e42",
+      "storage_path": "data/raw/se_engineering",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 66926213,
+          "sample_count": 15532,
+          "sha256": "5bf8c7e03e86666ffd18aed95f5587341915118eb09e0b9139bfbb9e8a632e42"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-MECHANICS",
+      "name": "Se Mechanics",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Mechanical engineering (mechanics) site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 26355,
+      "actual_size_bytes": 101816933,
+      "sha256_checksum": "c691bb69a14906c46533e68c9db36d2c298fb85bd8e70f4ea3adb4d8c12e020f",
+      "storage_path": "data/raw/se_mechanics",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 101816933,
+          "sample_count": 26355,
+          "sha256": "c691bb69a14906c46533e68c9db36d2c298fb85bd8e70f4ea3adb4d8c12e020f"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-ROBOTICS",
+      "name": "Se Robotics",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Robotics site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 9854,
+      "actual_size_bytes": 43315678,
+      "sha256_checksum": "d21e348e6a07f86ce480acb3d469d67c444c31237a7bf52defaaca5662406b00",
+      "storage_path": "data/raw/se_robotics",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 43315678,
+          "sample_count": 9854,
+          "sha256": "d21e348e6a07f86ce480acb3d469d67c444c31237a7bf52defaaca5662406b00"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-MATERIALS",
+      "name": "Se Materials",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Materials engineering site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 4066,
+      "actual_size_bytes": 20521609,
+      "sha256_checksum": "89ce566ce833623bf3749a0a9d4170d5611b6ca7a34f8638807fe1d871e98cbc",
+      "storage_path": "data/raw/se_materials",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 20521609,
+          "sample_count": 4066,
+          "sha256": "89ce566ce833623bf3749a0a9d4170d5611b6ca7a34f8638807fe1d871e98cbc"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-IOT",
+      "name": "Se Iot",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Internet of things site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 2100,
+      "actual_size_bytes": 9047486,
+      "sha256_checksum": "f18e6d23ca6a10488ba63d0a3a4f46ea8dcaebf5c469b27b7b8990dabb382e4e",
+      "storage_path": "data/raw/se_iot",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Practitioner vocabulary for engineering; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 9047486,
+          "sample_count": 2100,
+          "sha256": "f18e6d23ca6a10488ba63d0a3a4f46ea8dcaebf5c469b27b7b8990dabb382e4e"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-SOFTWAREENGINEERING",
+      "name": "Se Softwareengineering",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Software engineering site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 61241,
+      "actual_size_bytes": 503480925,
+      "sha256_checksum": "e6e2e04de9a49950c750729f022f13f4c1bcaea355c56440857031d35a609ade",
+      "storage_path": "data/raw/se_softwareengineering",
+      "schema_valid": true,
+      "notes": "Role: stem_technology. Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 503480925,
+          "sample_count": 61241,
+          "sha256": "e6e2e04de9a49950c750729f022f13f4c1bcaea355c56440857031d35a609ade"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-CS",
+      "name": "Se Cs",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Computer science site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 44874,
+      "actual_size_bytes": 185294763,
+      "sha256_checksum": "277d998863d9f3727cbc0c5f5cd5ed214091bbb0a58565a20bb07d90f05496f2",
+      "storage_path": "data/raw/se_cs",
+      "schema_valid": true,
+      "notes": "Role: stem_technology. Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 185294763,
+          "sample_count": 44874,
+          "sha256": "277d998863d9f3727cbc0c5f5cd5ed214091bbb0a58565a20bb07d90f05496f2"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-NETWORKENGINEERING",
+      "name": "Se Networkengineering",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Network engineering site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 16223,
+      "actual_size_bytes": 69965350,
+      "sha256_checksum": "3ba9114774ea90b0653e40fba87fddfc836a3bd3bfc32e3c869530b1db0f7b1c",
+      "storage_path": "data/raw/se_networkengineering",
+      "schema_valid": true,
+      "notes": "Role: stem_technology. Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 69965350,
+          "sample_count": 16223,
+          "sha256": "3ba9114774ea90b0653e40fba87fddfc836a3bd3bfc32e3c869530b1db0f7b1c"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-DEVOPS",
+      "name": "Se Devops",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, DevOps and infrastructure site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 5159,
+      "actual_size_bytes": 19738390,
+      "sha256_checksum": "dd5c0b033473ec95bb6e43796c06a6ade731748a28fb5f676a5fd56b99608f21",
+      "storage_path": "data/raw/se_devops",
+      "schema_valid": true,
+      "notes": "Role: stem_technology. Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 19738390,
+          "sample_count": 5159,
+          "sha256": "dd5c0b033473ec95bb6e43796c06a6ade731748a28fb5f676a5fd56b99608f21"
+        }
+      ]
+    },
+    {
+      "dataset_id": "SE-REVERSEENGINEERING",
+      "name": "Se Reverseengineering",
+      "version": "HuggingFaceTB/stackexchange_2025_md@main",
+      "official_source_url": "https://huggingface.co/datasets/HuggingFaceTB/stackexchange_2025_md",
+      "license_name": "CC-BY-SA-4.0 (Stack Exchange user contributions; attribution and share-alike apply)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Stack Exchange question and answers, Reverse engineering and systems site (markdown)",
+      "expected_sample_count": ">= 1,000 samples",
+      "actual_sample_count": 8720,
+      "actual_size_bytes": 37386720,
+      "sha256_checksum": "f9c06e033f293ed7ac636511c01bdba582027058e0fec727d27eb7c6150daabf",
+      "storage_path": "data/raw/se_reverseengineering",
+      "schema_valid": true,
+      "notes": "Role: stem_technology. Practitioner vocabulary for technology; used for the tokenizer fit only until the owner approves the licence. Source HuggingFaceTB/stackexchange_2025_md@main; 1 file(s) selected by pattern 'train-*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 37386720,
+          "sample_count": 8720,
+          "sha256": "f9c06e033f293ed7ac636511c01bdba582027058e0fec727d27eb7c6150daabf"
+        }
+      ]
+    },
+    {
+      "dataset_id": "USPTO-PATENTS",
+      "name": "Uspto Patents",
+      "version": "common-pile/uspto_filtered@main",
+      "official_source_url": "https://huggingface.co/datasets/common-pile/uspto_filtered",
+      "license_name": "Public domain (US government works; Common Pile filtered USPTO)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "US patent with background, description and claims; equations as LaTeX",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 75372,
+      "actual_size_bytes": 766819319,
+      "sha256_checksum": "12c22ab9cd78f114a22d9e582904fa45f8d744a4dcfb12e0ab9d12c8af04e914",
+      "storage_path": "data/raw/uspto_patents",
+      "schema_valid": true,
+      "notes": "Role: stem_engineering. Formal engineering and technology terminology across mechanical, electrical, chemical and software fields; one shard. Source common-pile/uspto_filtered@main; 1 file(s) selected by pattern 'USPTO-0000.json.gz'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "USPTO-0000.json.gz",
+          "bytes": 766819319,
+          "sample_count": 75372,
+          "sha256": "12c22ab9cd78f114a22d9e582904fa45f8d744a4dcfb12e0ab9d12c8af04e914"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 52,
-  "total_acquired_bytes": 33631600328,
-  "total_acquired_samples": 21276342
+  "total_datasets_tracked": 65,
+  "total_acquired_bytes": 36222150618,
+  "total_acquired_samples": 21701023
 }

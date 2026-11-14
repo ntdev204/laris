@@ -45,6 +45,25 @@ def test_mlm_split_is_deterministic_and_documents_do_not_straddle(tmp_path):
             assert owner.setdefault(chunk_id.split("#")[0], split) == split
 
 
+def test_min_date_drops_old_and_undated_rows(tmp_path):
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    rows = [
+        {"id": "old", "text": "Old patent text. " * 20, "created": "1924-05-27"},
+        {"id": "none", "text": "Undated patent text. " * 20, "created": None},
+        {"id": "new", "text": "Modern patent text. " * 20, "created": "2008-12-09"},
+    ]
+    pq.write_table(pa.Table.from_pylist(rows), raw / "p.parquet")
+    spec = {
+        "id": "P",
+        "text": "text",
+        "doc_id": "id",
+        "min_date": {"field": "created", "value": "1976-01-01"},
+    }
+    _, stats = E.partition_mlm_source(spec, raw, tmp_path / "out", CONFIG, set())
+    assert stats["filtered"] == 2 and stats["documents"] == 1
+
+
 def test_pairs_drop_unknown_labels_and_duplicates(tmp_path):
     raw = tmp_path / "raw"
     raw.mkdir()

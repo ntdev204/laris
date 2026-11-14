@@ -236,7 +236,17 @@ returned logs, manifests and reports.
 - Validation:
   - Corpus unit tests pass; the nine earlier fit-corpus sources are unchanged (same word counts and shard hashes); no tokenizer fitted, no training run
 - Status: done
-- Note: 2026-11-14, owner chose to add science before the fit. Acquired 435 MB (ArXiv 13,536 papers, PubMed 23,985). Partition: ArXiv 120,381 / 1,328 / 1,195 passages and PubMed 115,295 / 1,355 / 1,150 (train / val / test; 3 PubMed duplicates and 729 short documents dropped). Fit corpus 390.0 M words (350.0 M before), 2.34 GB, science about 10 %. The text keeps the source placeholders (`@xmath`, `@xcite`). The science directories are not in the stage-1 training mixture; stage 2 (T101) decides. The tokenizer fit stays an owner run (runbook section 9, step 1: rerun `scripts/prepare_english_tokenizer_corpus.py` first only if the corpus file is missing).
+- Note: 2026-11-14, owner chose to add science before the fit. Acquired 435 MB (ArXiv 13,536 papers, PubMed 23,985). Partition: ArXiv 120,381 / 1,328 / 1,195 passages and PubMed 115,295 / 1,355 / 1,150 (train / val / test; 3 PubMed duplicates and 729 short documents dropped). Superseded by T180 (budgets rebalanced; fit corpus 399.6 M words). The text keeps the source placeholders (`@xmath`, `@xcite`). The science directories are not in the stage-1 training mixture; stage 2 (T101) decides. The tokenizer fit stays an owner run (runbook section 9, step 1: rerun `scripts/prepare_english_tokenizer_corpus.py` first only if the corpus file is missing).
+
+### T180 — STEM slice for the tokenizer fit: mathematics, engineering, technology (12.4 % of the fit corpus)
+- Requirements: SR-M4, SR-M6
+- Depends: T179
+- Deliverables:
+  - 13 more sources acquired with SHA-256: OpenWebMath (one shard), eleven Stack Exchange sites (electronics, engineering, mechanics, robotics, materials, IoT, software engineering, CS, network engineering, DevOps, reverse engineering) and one USPTO patent shard; partitioned by document hash; STEM budgets rebalanced so that all STEM stays within 10-15 % of the fit corpus
+- Validation:
+  - Corpus unit tests pass (date filter tested); earlier nine general sources unchanged; no tokenizer fitted, no training run
+- Status: done
+- Note: 2026-11-14, owner approved the new downloads and set the range 10-15 % for total STEM. Fit corpus 399.6 M words, 2.42 GB; STEM 49.6 M words = 12.4 % (science 18 M: ArXiv 9 + PubMed 9; mathematics 12 M; engineering 12.6 M; technology 7 M). T179 budgets were cut from 20 M to 9 M each to stay in range. Patents granted before 1976 (13,023 of the first 75,000) are dropped as OCR noise. Licences: Stack Exchange is CC-BY-SA-4.0 and the patent shard's row metadata says CC-BY-4.0 (the Common Pile README says public domain), so all of these stay `license_approved: false` until the owner decides; the download was approved, use beyond the tokenizer fit is not. Stack Exchange threads carry `username_N` placeholders; ArXiv and PubMed keep `@xmath`/`@xcite`. Downloaded 2.5 GB. The science directories are not in the stage-1 mixture.
 
 ## Phase 21 — Stage 2: scientific language
 
