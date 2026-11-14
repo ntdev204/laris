@@ -1950,9 +1950,61 @@
           "sha256": "a07a87f483e602f5812573bff45109e5cbd934773c1c364366f176dd791e44d7"
         }
       ]
+    },
+    {
+      "dataset_id": "ARXIV-FULLTEXT",
+      "name": "Arxiv Fulltext",
+      "version": "ccdv/arxiv-summarization@main",
+      "official_source_url": "https://huggingface.co/datasets/ccdv/arxiv-summarization",
+      "license_name": "Not declared (arXiv papers; per-paper licence varies)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "arXiv paper body with abstract",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 13536,
+      "actual_size_bytes": 227377097,
+      "sha256_checksum": "1f03bb7fa31cdc12b2af71d5879e720ad97105981705881acca3296292ebb1b0",
+      "storage_path": "data/raw/arxiv_fulltext",
+      "schema_valid": true,
+      "notes": "Role: scientific_text. Long scientific documents (physics, maths, computer science); the abstract is a natural summary target. Source ccdv/arxiv-summarization@main; 1 file(s) selected by pattern 'train-*.parquet' with limit 1. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00015.parquet",
+          "bytes": 227377097,
+          "sample_count": 13536,
+          "sha256": "1f03bb7fa31cdc12b2af71d5879e720ad97105981705881acca3296292ebb1b0"
+        }
+      ]
+    },
+    {
+      "dataset_id": "PUBMED-FULLTEXT",
+      "name": "Pubmed Fulltext",
+      "version": "ccdv/pubmed-summarization@main",
+      "official_source_url": "https://huggingface.co/datasets/ccdv/pubmed-summarization",
+      "license_name": "Not declared (PubMed Central open-access papers)",
+      "license_status": "NEEDS_LICENSE_REVIEW",
+      "acquisition_status": "DOWNLOADED",
+      "language": "English",
+      "sample_unit": "Biomedical paper body with abstract",
+      "expected_sample_count": ">= 10,000 samples",
+      "actual_sample_count": 23985,
+      "actual_size_bytes": 208410135,
+      "sha256_checksum": "4591b521c623947b13e7ad3afd6e86a0f23652948678ed7d0e83283f82725aba",
+      "storage_path": "data/raw/pubmed_fulltext",
+      "schema_valid": true,
+      "notes": "Role: scientific_text. Biomedical full text with abstracts. Source ccdv/pubmed-summarization@main; 1 file(s) selected by pattern 'train-*.parquet' with limit 1. English stage-1 replacement data (D46 / ADR-022); not a training run. Licence is non-commercial or undeclared: owner review pending.",
+      "files": [
+        {
+          "filename": "train-00000-of-00005.parquet",
+          "bytes": 208410135,
+          "sample_count": 23985,
+          "sha256": "4591b521c623947b13e7ad3afd6e86a0f23652948678ed7d0e83283f82725aba"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 50,
-  "total_acquired_bytes": 33195813096,
-  "total_acquired_samples": 21238821
+  "total_datasets_tracked": 52,
+  "total_acquired_bytes": 33631600328,
+  "total_acquired_samples": 21276342
 }

@@ -25,20 +25,22 @@ sources:
     repo: ccdv/arxiv-summarization
     path: document
     pattern: "train-*.parquet"
+    limit: 1
     license_name: "Not declared (arXiv papers; per-paper licence varies)"
     license_approved: false
     sample_unit: "arXiv paper body with abstract"
-    min_rows: 100000
+    min_rows: 10000
     notes: "Long scientific documents (physics, maths, computer science); the abstract is a natural summary target."
   - id: PUBMED-FULLTEXT
     role: scientific_text
     repo: ccdv/pubmed-summarization
     path: document
     pattern: "train-*.parquet"
+    limit: 1
     license_name: "Not declared (PubMed Central open-access papers)"
     license_approved: false
     sample_unit: "Biomedical paper body with abstract"
-    min_rows: 100000
+    min_rows: 10000
     notes: "Biomedical full text with abstracts."
   - id: ARXIV-ABSTRACTS
     role: scientific_text
