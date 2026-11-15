@@ -86,12 +86,12 @@ class TestTransformerEncoderConfig(unittest.TestCase):
         self.assertEqual(backbone_count, 109_561_856)
 
         heads_count = config.calculate_head_parameter_count()
-        # NLI (197,635) + Para (769) + Sim (769) + QA (1,538) = 200,711
-        self.assertEqual(heads_count, 200_711)
+        # NLI (197,635) + Para (769) + Sim (769) + QA (1,538) + Order (2,307) = 203,018
+        self.assertEqual(heads_count, 203_018)
 
         total_with_heads = config.calculate_parameter_count(include_heads=True)
-        self.assertEqual(total_with_heads, 109_561_856 + 200_711)
-        self.assertEqual(total_with_heads, 109_762_567)
+        self.assertEqual(total_with_heads, 109_561_856 + 203_018)
+        self.assertEqual(total_with_heads, 109_764_874)
 
         # Default maintains backward compatibility with 109.56M
         self.assertEqual(config.calculate_parameter_count(include_heads=False), 109_561_856)

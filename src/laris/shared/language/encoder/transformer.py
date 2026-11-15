@@ -4,7 +4,8 @@ Adheres to DOC-SPEC-TRAIN-001, ADR-002, ADR-003, and Issue #217 (WP4).
 Provides:
 - 109.56M parameter bidirectional Transformer encoder matching specification equations
 - Pre-RMSNorm, Rotary Position Embeddings (RoPE), GELU FFN (d_ff = 3072), and tied MLM projection
-- Explicit capability heads: 3-way NLI, paraphrase detection, semantic similarity, and span QA
+- Explicit capability heads: 3-way NLI, paraphrase detection, semantic similarity, span QA and
+  3-way sentence order (T195; zero-initialised so stage-1 checkpoints load unchanged)
 - CPU-capable NumPy forward pass without external cloud or foundation model dependencies
 - Deterministic initialization from seed with finite-output verification
 - Precise labeling: ModelReadinessState.RANDOMLY_INITIALIZED vs BASELINE vs TRAINED
@@ -33,6 +34,12 @@ from laris.shared.language.schemas import (
     DEFAULT_MAX_SEQUENCE_LENGTH,
     DEFAULT_TARGET_VOCAB_SIZE,
 )
+
+# Sentence-order head (T195): in order, swapped, other document (see loading.segments).
+ORDER_CLASS_COUNT = 3
+# Parameters a checkpoint written before a head existed may lack; they keep their fixed
+# initial values when such a checkpoint loads.
+OPTIONAL_HEAD_PREFIXES = ("order_head.",)
 
 
 class ModelReadinessState(str, Enum):
@@ -136,21 +143,24 @@ class LanguageEncoderConfig:
         return emb_params + total_layers + final_norm_params + head_bias_params
 
     def calculate_head_parameter_count(self) -> int:
-        """Calculates parameters across all capability task heads (NLI, Paraphrase, Similarity, QA).
+        """Calculates parameters across all capability task heads (NLI, Paraphrase, Similarity,
+        QA, sentence order).
 
         Head Equations:
           - 3-Way NLI head: (d -> 256 -> 3): d*256 + 256 + 256*3 + 3 = 197,635 params (d=768)
           - Paraphrase head: (d -> 1): d*1 + 1 = 769 params (d=768)
           - Semantic similarity head: (d -> 1): d*1 + 1 = 769 params (d=768)
           - Span QA head: (d -> 2): d*2 + 2 = 1,538 params (d=768)
-          Total capability head params = 200,711 params (d=768)
+          - Sentence-order head (T195): (d -> 3): d*3 + 3 = 2,307 params (d=768)
+          Total capability head params = 203,018 params (d=768)
         """
         d = self.d_model
         nli_params = (d * 256 + 256) + (256 * 3 + 3)
         para_params = d * 1 + 1
         sim_params = d * 1 + 1
         qa_params = d * 2 + 2
-        return nli_params + para_params + sim_params + qa_params
+        order_params = d * ORDER_CLASS_COUNT + ORDER_CLASS_COUNT
+        return nli_params + para_params + sim_params + qa_params + order_params
 
     def calculate_parameter_count(self, include_heads: bool = False) -> int:
         """Calculates parameter count according to architectural equations.
@@ -158,7 +168,7 @@ class LanguageEncoderConfig:
         Args:
             include_heads: If False (default), returns the exact backbone parameter count
                 (109,561,856 for canonical 110M model). If True, includes all instantiated
-                multi-task capability heads (109,762,567 for canonical 110M model).
+                multi-task capability heads (109,764,874 for canonical 110M model).
         """
         backbone = self.calculate_backbone_parameter_count()
         if include_heads:
@@ -213,7 +223,7 @@ class LargeLanguageEncoderConfig(LanguageEncoderConfig):
       Final Norm: 1,280
       Tied MLM Bias: 32,000
       Total Backbone = 512,913,920 parameters (~512.91M).
-      With capability heads: 513,247,751 parameters (~513.25M).
+      With capability heads: 513,251,594 parameters (~513.25M).
     """
 
     d_model: int = 1280
@@ -363,6 +373,10 @@ class RandomlyInitializedTransformerEncoder:
         weights["qa_w"] = self.rng.normal(0.0, std, (d, 2)).astype(np.float32)
         weights["qa_b"] = np.zeros(2, dtype=np.float32)
 
+        # Sentence-order head (d -> 3), fixed at zero: uniform logits, no draw from the RNG
+        weights["order_w"] = np.zeros((d, ORDER_CLASS_COUNT), dtype=np.float32)
+        weights["order_b"] = np.zeros(ORDER_CLASS_COUNT, dtype=np.float32)
+
         return weights
 
     def _compute_weights_hash(self) -> str:
@@ -489,6 +503,9 @@ class RandomlyInitializedTransformerEncoder:
         # QA Span Head (start and end logits per token)
         qa_logits = np.dot(hidden_states, self.weights["qa_w"]) + self.weights["qa_b"]  # (B, S, 2)
 
+        # Sentence-order Head (in order, swapped, other document)
+        order_logits = np.dot(cls_rep, self.weights["order_w"]) + self.weights["order_b"]
+
         # Assert all output arrays are strictly finite
         for name, tensor in [
             ("hidden_states", hidden_states),
@@ -498,6 +515,7 @@ class RandomlyInitializedTransformerEncoder:
             ("para_prob", para_prob),
             ("similarity_score", similarity_score),
             ("qa_logits", qa_logits),
+            ("order_logits", order_logits),
         ]:
             if not np.all(np.isfinite(tensor)):
                 raise ValueError(f"Non-finite values detected in forward pass output: '{name}'")
@@ -510,6 +528,7 @@ class RandomlyInitializedTransformerEncoder:
             "paraphrase_prob": para_prob,
             "similarity_score": similarity_score,
             "qa_logits": qa_logits,
+            "order_logits": order_logits,
         }
 
     def train_step(self, *args: Any, **kwargs: Any) -> None:
@@ -558,7 +577,7 @@ try:
 
     TORCH_AVAILABLE = True
 
-    _TASK_HEADS = ("mlm", "nli", "paraphrase", "similarity", "qa", "embedding")
+    _TASK_HEADS = ("mlm", "nli", "paraphrase", "similarity", "qa", "order", "embedding")
 
     class PyTorchTransformerEncoder(nn.Module):  # type: ignore[misc]
         """Real PyTorch Transformer encoder with autograd and GPU capability.
@@ -604,6 +623,13 @@ try:
             self.qa_head = nn.Linear(d, 2)
 
             self._init_parameters()
+            # Sentence-order head (T195), built after the random init and without drawing from
+            # the RNG, so every other parameter matches a pre-T195 model of the same seed; it
+            # starts at zero (uniform logits, loss ln 3) and a checkpoint without it loads.
+            self.order_head = nn.utils.skip_init(nn.Linear, d, ORDER_CLASS_COUNT)
+            with torch.no_grad():
+                self.order_head.weight.zero_()
+                self.order_head.bias.zero_()
             self.gradient_checkpointing = getattr(self.config, "gradient_checkpointing", False)
             self.eval()
 
@@ -631,18 +657,24 @@ try:
             training_pass: bool = False,
             task: Optional[str] = None,
             mlm_positions: Optional[torch.Tensor] = None,
+            with_order: bool = False,
         ) -> Dict[str, torch.Tensor]:
             """Forward pass for inference/profiling or authorized training.
 
             With `task` only that task's head is computed (every head otherwise). For `mlm`,
             `mlm_positions` (B, S bool) restricts the vocabulary projection to those positions
-            and `mlm_logits` becomes (N, V) instead of (B, S, V).
+            and `mlm_logits` becomes (N, V) instead of (B, S, V). `with_order` adds
+            `order_logits` to a single-task pass (order labels ride on MLM batches, T194).
             """
             if training_pass:
                 assert_training_authorized("PyTorch neural model forward pass with gradients")
-                return self._forward_impl(token_ids, attention_mask, task, mlm_positions)
+                return self._forward_impl(
+                    token_ids, attention_mask, task, mlm_positions, with_order
+                )
             with torch.no_grad():
-                return self._forward_impl(token_ids, attention_mask, task, mlm_positions)
+                return self._forward_impl(
+                    token_ids, attention_mask, task, mlm_positions, with_order
+                )
 
         def _forward_impl(
             self,
@@ -650,6 +682,7 @@ try:
             attention_mask: Optional[torch.Tensor] = None,
             task: Optional[str] = None,
             mlm_positions: Optional[torch.Tensor] = None,
+            with_order: bool = False,
         ) -> Dict[str, torch.Tensor]:
             if task is not None and task not in _TASK_HEADS:
                 raise ValueError(f"Unknown task '{task}'; expected one of {sorted(_TASK_HEADS)}")
@@ -688,7 +721,25 @@ try:
                 outputs["similarity_score"] = torch.sigmoid(self.sim_head(cls_rep))
             if task in (None, "qa"):
                 outputs["qa_logits"] = self.qa_head(hidden_states)
+            if task in (None, "order") or with_order:
+                outputs["order_logits"] = self.order_head(cls_rep)
             return outputs
+
+        def load_encoder_state(self, state: Dict[str, Any]) -> List[str]:
+            """Loads a state dict; only parameters of heads added later may be missing.
+
+            Returns the missing keys (they keep their fixed initial values). Any other missing
+            key, and every unexpected key, raises as a strict load would.
+            """
+            result = self.load_state_dict(state, strict=False)
+            missing = list(result.missing_keys)
+            not_optional = [k for k in missing if not k.startswith(OPTIONAL_HEAD_PREFIXES)]
+            if not_optional or result.unexpected_keys:
+                raise RuntimeError(
+                    "Error(s) in loading state_dict for PyTorchTransformerEncoder: "
+                    f"missing keys {not_optional}, unexpected keys {list(result.unexpected_keys)}"
+                )
+            return missing
 
         def train_step(self, *args: Any, **kwargs: Any) -> None:
             """Barrier preventing unauthorized model training or weight updates."""

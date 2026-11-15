@@ -14,7 +14,7 @@ import subprocess
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -132,6 +132,19 @@ def read_manifest(directory: Path) -> Dict[str, Any]:
     return manifest
 
 
+def load_model_weights(model: Any, state: Dict[str, Any]) -> List[str]:
+    """Loads encoder weights; a checkpoint may lack only heads added after it (T195).
+
+    Returns the keys that kept their fixed initial values. Models without the tolerant
+    loader are loaded strictly.
+    """
+    if hasattr(model, "load_encoder_state"):
+        missing: List[str] = model.load_encoder_state(state)
+        return missing
+    model.load_state_dict(state)
+    return []
+
+
 def load_checkpoint(
     directory: Path,
     *,
@@ -154,9 +167,17 @@ def load_checkpoint(
     if actual != manifest["model_sha256"]:
         raise ValueError(f"Checkpoint {directory} is corrupt: model.pt digest mismatch")
 
-    model.load_state_dict(torch.load(directory / MODEL_FILE, map_location=map_location))
+    missing = load_model_weights(
+        model, torch.load(directory / MODEL_FILE, map_location=map_location)
+    )
     state = torch.load(directory / STATE_FILE, map_location=map_location, weights_only=False)
     if optimizer is not None and state.get("optimizer") is not None:
+        if missing:
+            # the stored optimizer state has no slots for parameters the checkpoint lacks
+            raise ValueError(
+                f"Checkpoint {directory} predates parameters {missing}: resuming its optimizer "
+                "state is not possible; start a new run from its weights (--init-from)"
+            )
         optimizer.load_state_dict(state["optimizer"])
     if scheduler is not None and state.get("scheduler") is not None:
         scheduler.load_state_dict(state["scheduler"])

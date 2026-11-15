@@ -16,6 +16,7 @@ import pyarrow.parquet as pq
 
 from laris.model.inference.loader import LoadedEncoder
 from laris.research.language.evaluation import metrics as M
+from laris.research.language.evaluation.sentence_order import score_sentence_order
 from laris.shared.language.loading.dataloader import (
     SEP_ID,
     TASK_DATASET_DIRS,
@@ -60,6 +61,8 @@ class EvaluationReport:
     results: List[DatasetResult] = field(default_factory=list)
     groups: List[Dict[str, Any]] = field(default_factory=list)
     passed: bool = False
+    # Measurements without a gate (sentence order, T195); they never change `passed`
+    diagnostics: Dict[str, Any] = field(default_factory=dict)
 
 
 def _spans(logits: np.ndarray, mask: np.ndarray, max_len: int = 64) -> List[Tuple[int, int]]:
@@ -106,13 +109,17 @@ class LanguageEncoderEvaluator:
         max_samples: int = 2000,
         batch_size: int = 16,
         seed: int = 42,
+        order_samples: int = 0,
     ) -> None:
+        if order_samples < 0:
+            raise ValueError("order_samples must be >= 0")
         self.encoder = encoder
         self.data_dir = Path(data_dir)
         self.thresholds = thresholds
         self.max_samples = max_samples
         self.batch_size = batch_size
         self.seed = seed
+        self.order_samples = order_samples
         self._details: Dict[str, Dict[str, Any]] = {}
 
     # ------------------------------------------------------------------ data access
@@ -452,7 +459,28 @@ class LanguageEncoderEvaluator:
                 )
         report.groups = self._aggregate(report.results)
         report.passed = bool(report.groups) and all(g["passed"] for g in report.groups)
+        if self.order_samples:
+            report.diagnostics["sentence_order"] = self.sentence_order(split)
         return report
+
+    def sentence_order(self, split: str) -> Dict[str, Any]:
+        """Order-head accuracy per MLM dataset of `split` (T195); no gate, no effect on `passed`."""
+        datasets = []
+        for dataset in TASK_DATASET_DIRS["mlm"]:
+            files = sorted((self.data_dir / dataset).glob(f"{split}*.parquet"))
+            if not files:
+                continue
+            rows = min(self._row_count(files), self.order_samples)
+            result = score_sentence_order(
+                self.encoder, files, rows, batch_size=self.batch_size, seed=self.seed
+            )
+            datasets.append({"dataset": dataset, **result})
+        return {
+            "gate": None,
+            "inputs": "two consecutive segments of each held-out MLM row, unmasked",
+            "classes": ["in_order", "swapped", "other_document"],
+            "datasets": datasets,
+        }
 
     def _aggregate(self, results: List[DatasetResult]) -> List[Dict[str, Any]]:
         groups: Dict[Tuple[str, str], List[DatasetResult]] = {}
@@ -537,5 +565,7 @@ def report_to_dict(
             for r in report.results
         ],
     }  # fmt: skip
+    if report.diagnostics:
+        body["diagnostics"] = report.diagnostics
     body.update(extra or {})
     return body
