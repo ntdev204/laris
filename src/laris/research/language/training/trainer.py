@@ -8,6 +8,7 @@ Adheres to:
 - Mandatory stop condition: Strict authorization gate (assert_training_authorized)
 """
 
+import math
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -16,6 +17,7 @@ import numpy as np
 
 from laris.research.language.training.objectives import (
     contrastive_retrieval_loss,
+    contrastive_similarity_loss,
     sentence_order_loss,
 )
 from laris.shared.core.authorization import (
@@ -172,6 +174,9 @@ class LanguageEncoderTrainer:
         retrieval_loss_weight: float = 0.0,
         retrieval_temperature: float = 0.07,
         order_loss_weight: float = 0.0,
+        contrastive_sim_weight: float = 0.0,
+        contrastive_sim_temperature: float = 0.05,
+        similarity_calibration_only: bool = False,
     ) -> None:
         if precision not in ("fp32", "bf16", "fp16"):
             raise ValueError(f"precision must be fp32, bf16 or fp16, got '{precision}'")
@@ -195,6 +200,15 @@ class LanguageEncoderTrainer:
         # Sentence-order loss (T195): added to the MLM loss of batches with order labels
         self.order_loss_weight = order_loss_weight
         self._last_order_loss: Optional[float] = None
+        if not math.isfinite(contrastive_sim_weight) or contrastive_sim_weight < 0:
+            raise ValueError("contrastive_sim_weight must be finite and non-negative")
+        if not math.isfinite(contrastive_sim_temperature) or contrastive_sim_temperature <= 0:
+            raise ValueError("contrastive_sim_temperature must be finite and positive")
+        # Contrastive similarity (T199): in-batch InfoNCE of the bi-encoder embeddings
+        self.contrastive_sim_weight = contrastive_sim_weight
+        self.contrastive_sim_temperature = contrastive_sim_temperature
+        # Graded STS pairs then reach only the head's scale and bias, not the body
+        self.similarity_calibration_only = similarity_calibration_only
         self.step_history: List[TrainingMetricsSnapshot] = []
         self._accum_counter: int = 0
 
@@ -304,6 +318,13 @@ class LanguageEncoderTrainer:
                     "The retrieval task needs retrieval_loss_weight (loss_lambda_retrieval) > 0"
                 )
             return {"retrieval_loss": self._retrieval_loss(labels, training_pass)}
+        if task_type == "contrastive_sim":
+            if self.contrastive_sim_weight <= 0:
+                raise ValueError(
+                    "The contrastive_sim task needs contrastive_sim_weight "
+                    "(loss_lambda_contrastive_sim) > 0"
+                )
+            return {"contrastive_sim_loss": self._contrastive_sim_loss(labels, training_pass)}
         if task_type == "similarity" and self._bi_encoder_similarity():
             # two single-sentence passes; the pair input of the batch is not used (T198)
             sides = [
@@ -312,7 +333,9 @@ class LanguageEncoderTrainer:
                 for kind in ("ids", "mask")
             ]
             similarity: Dict[str, Any] = self.model.bi_encoder_similarity(
-                *sides, training_pass=training_pass
+                *sides,
+                training_pass=training_pass,
+                detach_embeddings=self.similarity_calibration_only,
             )
             return similarity
         kwargs: Dict[str, Any] = {"attention_mask": attention_mask}
@@ -339,6 +362,40 @@ class LanguageEncoderTrainer:
     def _bi_encoder_similarity(self) -> bool:
         return getattr(getattr(self.model, "config", None), "similarity_head", "cross") == (
             "bi_encoder"
+        )
+
+    def _contrastive_sim_loss(self, labels: Dict[str, Any], training_pass: bool) -> Any:
+        """In-batch InfoNCE: anchors against their positives (a second dropout pass for SimCSE
+        rows) and the hard negatives; the dropout passes are independent (T199)."""
+        import inspect
+
+        if training_pass and not self.model.training:
+            # SimCSE positives differ from their anchors only by dropout masks; a module in
+            # eval mode would make every pair identical and the loss meaningless
+            raise ValueError("the contrastive_sim task needs the model in training mode")
+        if "stochastic" not in inspect.signature(self.model.forward).parameters:
+            raise ValueError("the contrastive_sim task needs a model with a dropout pass")
+
+        def embed(name: str) -> Any:
+            return self.model(
+                torch.as_tensor(labels[f"contrastive_sim_{name}_ids"], device=self.device),
+                attention_mask=torch.as_tensor(
+                    labels[f"contrastive_sim_{name}_mask"], device=self.device
+                ),
+                task="embedding",
+                training_pass=training_pass,
+                stochastic=True,
+            )["cls_embedding"]
+
+        candidates = [embed("positive")]
+        if "contrastive_sim_negative_ids" in labels:
+            candidates.append(embed("negative"))
+        return contrastive_similarity_loss(
+            embed("anchor"),
+            torch.cat(candidates, dim=0),
+            torch.as_tensor(labels["contrastive_sim_known_positives"], device=self.device),
+            torch.as_tensor(labels["contrastive_sim_weights"], device=self.device),
+            self.contrastive_sim_temperature,
         )
 
     def _uses_order(self, task_type: str, labels: Dict[str, Any]) -> bool:
@@ -533,6 +590,9 @@ class LanguageEncoderTrainer:
 
         elif task_type == "retrieval":
             return self.retrieval_loss_weight * outputs["retrieval_loss"]
+
+        elif task_type == "contrastive_sim":
+            return self.contrastive_sim_weight * outputs["contrastive_sim_loss"]
 
         else:
             raise ValueError(f"Unknown task_type: {task_type}")

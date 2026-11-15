@@ -42,6 +42,7 @@ from laris.shared.language.loading.checkpoint import (
     read_manifest,
 )
 from laris.shared.language.loading.dataloader import (
+    CONTRASTIVE_SIM_TASK,
     TASK_DATASET_DIRS,
     StreamingParquetMultiTaskDataLoader,
 )
@@ -330,8 +331,17 @@ def _run_memory_profile(
         order_task=hyper.order_task,
         order_class_shares=hyper.order_class_shares,
         label_balanced_tasks=hyper.label_balanced_tasks,
+        include_contrastive_sim_task=hyper.contrastive_sim_task,
+        contrastive_sim_batch_size=hyper.contrastive_sim_batch_size,
+        contrastive_sim_max_sequence_length=hyper.contrastive_sim_max_sequence_length,
+        contrastive_sim_row_shares=hyper.contrastive_sim_row_shares,
+        contrastive_sim_row_weights=hyper.contrastive_sim_row_weights,
     )
-    expected = set(TASK_DATASET_DIRS) | ({"retrieval"} if hyper.retrieval_task else set())
+    expected = (
+        set(TASK_DATASET_DIRS)
+        | ({"retrieval"} if hyper.retrieval_task else set())
+        | ({CONTRASTIVE_SIM_TASK} if hyper.contrastive_sim_task else set())
+    )
     missing = sorted(expected - set(loader.task_paths))
     if missing:
         print(f"[ERROR] No real train data for tasks {missing}. Run `laris data partition`.")
@@ -352,6 +362,9 @@ def _run_memory_profile(
         retrieval_loss_weight=hyper.loss_lambda_retrieval,
         retrieval_temperature=hyper.retrieval_temperature,
         order_loss_weight=hyper.loss_lambda_order,
+        contrastive_sim_weight=hyper.loss_lambda_contrastive_sim,
+        contrastive_sim_temperature=hyper.contrastive_sim_temperature,
+        similarity_calibration_only=hyper.similarity_calibration_only,
     )
     profile = profile_training_memory(trainer, loader, MAX_VRAM_GB, with_training_step=with_step)
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
@@ -513,6 +526,11 @@ def run(args: argparse.Namespace) -> int:
         order_task=hyper.order_task,
         order_class_shares=hyper.order_class_shares,
         label_balanced_tasks=hyper.label_balanced_tasks,
+        include_contrastive_sim_task=hyper.contrastive_sim_task,
+        contrastive_sim_batch_size=hyper.contrastive_sim_batch_size,
+        contrastive_sim_max_sequence_length=hyper.contrastive_sim_max_sequence_length,
+        contrastive_sim_row_shares=hyper.contrastive_sim_row_shares,
+        contrastive_sim_row_weights=hyper.contrastive_sim_row_weights,
         **common,  # type: ignore[arg-type]
     )
     eval_loader = StreamingParquetMultiTaskDataLoader(
@@ -525,7 +543,10 @@ def run(args: argparse.Namespace) -> int:
 
     for task_name, shard_paths in sorted(loader.task_paths.items()):
         print(f"Data shards [train] {task_name:<11}: {len(shard_paths)}")
-    missing_val = sorted(set(loader.task_paths) - set(eval_loader.task_paths))
+    # the contrastive similarity task is train-only (relation pairs have no validation split)
+    missing_val = sorted(
+        set(loader.task_paths) - set(eval_loader.task_paths) - {CONTRASTIVE_SIM_TASK}
+    )
     if missing_val:
         print(f"[ERROR] Tasks without validation shards: {missing_val}.")
         print("Run `laris data partition` first.")
@@ -570,6 +591,9 @@ def run(args: argparse.Namespace) -> int:
         retrieval_loss_weight=hyper.loss_lambda_retrieval,
         retrieval_temperature=hyper.retrieval_temperature,
         order_loss_weight=hyper.loss_lambda_order,
+        contrastive_sim_weight=hyper.loss_lambda_contrastive_sim,
+        contrastive_sim_temperature=hyper.contrastive_sim_temperature,
+        similarity_calibration_only=hyper.similarity_calibration_only,
     )
     trainer.loss_calculator = MultiTaskLossCalculator(
         MultiTaskLossWeights(

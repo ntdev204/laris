@@ -8,6 +8,7 @@ Enforces:
 - Bounded parameter ranges and data ratio sum-to-one validation
 """
 
+import math
 from typing import Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -91,6 +92,19 @@ class ModelConfig(BaseModel):
             )
         return self
 
+# Row kinds of the contrastive similarity task (T199): SimCSE (one sentence, two dropout passes),
+# positive relations (a relation partner is the positive) and hard-negative relations (a SimCSE
+# row whose relation partner is also a negative). Names match `relation` in the T197 pair file.
+CONTRASTIVE_POSITIVE_KINDS = ("entailment", "paraphrase_duplicate", "adjacent_sentences")
+CONTRASTIVE_HARD_NEGATIVE_KINDS = ("contradiction", "paws_non_paraphrase")
+CONTRASTIVE_ROW_KINDS = ("simcse", *CONTRASTIVE_POSITIVE_KINDS, *CONTRASTIVE_HARD_NEGATIVE_KINDS)
+DEFAULT_CONTRASTIVE_ROW_SHARES = {
+    "simcse": 0.25, "entailment": 0.15, "paraphrase_duplicate": 0.15, "adjacent_sentences": 0.10,
+    "contradiction": 0.15, "paws_non_paraphrase": 0.20,
+}  # fmt: skip
+DEFAULT_CONTRASTIVE_ROW_WEIGHTS = {kind: 1.0 for kind in CONTRASTIVE_ROW_KINDS}
+DEFAULT_CONTRASTIVE_ROW_WEIGHTS["adjacent_sentences"] = 0.25
+
 
 class TrainingConfig(BaseModel):
     """Hyperparameters for model pretraining and multi-task representation learning."""
@@ -136,6 +150,24 @@ class TrainingConfig(BaseModel):
     similarity_head: str = "cross"
     similarity_initial_scale: float = Field(default=10.0, gt=0.0, allow_inf_nan=False)
     similarity_initial_bias: float = Field(default=-7.5, allow_inf_nan=False)
+    # Contrastive similarity (T199): in-batch InfoNCE over SimCSE rows (one sentence, two dropout
+    # passes) and relation pairs (T197); weight 0 keeps the task off. It draws its own batch size.
+    contrastive_sim_task: bool = False
+    loss_lambda_contrastive_sim: float = Field(default=0.0, ge=0.0, allow_inf_nan=False)
+    contrastive_sim_temperature: float = Field(default=0.05, gt=0.0, allow_inf_nan=False)
+    contrastive_sim_batch_size: Optional[int] = Field(default=None, ge=2)
+    contrastive_sim_max_sequence_length: Optional[int] = Field(default=None, ge=8)
+    # Share of each batch per row kind: `simcse` plus the relations of the pair file; an
+    # order-swapped pair is not a row kind (a symmetric head cannot separate it, T197).
+    contrastive_sim_row_shares: dict[str, float] = Field(
+        default_factory=lambda: dict(DEFAULT_CONTRASTIVE_ROW_SHARES)
+    )
+    # Loss weight per row kind; adjacent sentences are topical, not similar, so they count less.
+    contrastive_sim_row_weights: dict[str, float] = Field(
+        default_factory=lambda: dict(DEFAULT_CONTRASTIVE_ROW_WEIGHTS)
+    )
+    # Graded STS pairs only calibrate `sim_scale` and `sim_bias`: the body is not updated by them.
+    similarity_calibration_only: bool = False
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":
@@ -152,6 +184,21 @@ class TrainingConfig(BaseModel):
             )
         if self.order_task != (self.loss_lambda_order > 0):
             raise ValueError("order_task and loss_lambda_order > 0 go together")
+        if self.contrastive_sim_task != (self.loss_lambda_contrastive_sim > 0):
+            raise ValueError("contrastive_sim_task and loss_lambda_contrastive_sim > 0 go together")
+        if self.contrastive_sim_task and self.similarity_head != "bi_encoder":
+            raise ValueError("contrastive_sim_task trains the bi-encoder: similarity_head needs it")
+        for name, mapping in (
+            ("contrastive_sim_row_shares", self.contrastive_sim_row_shares),
+            ("contrastive_sim_row_weights", self.contrastive_sim_row_weights),
+        ):
+            bad = sorted(set(mapping) - set(CONTRASTIVE_ROW_KINDS))
+            if bad or any(not math.isfinite(v) or v < 0 for v in mapping.values()):
+                raise ValueError(f"{name}: finite non-negative values for {CONTRASTIVE_ROW_KINDS}")
+        if sum(self.contrastive_sim_row_shares.values()) <= 0:
+            raise ValueError("contrastive_sim_row_shares needs a positive share")
+        if self.similarity_calibration_only and self.similarity_head != "bi_encoder":
+            raise ValueError("similarity_calibration_only needs similarity_head 'bi_encoder'")
         if self.similarity_head not in {"cross", "bi_encoder"}:
             raise ValueError("similarity_head must be 'cross' or 'bi_encoder'")
         unknown = sorted(set(self.label_balanced_tasks) - {"nli", "paraphrase"})
