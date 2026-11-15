@@ -58,21 +58,21 @@ Exit criteria:
 - The NER fine-tune and its held-out evaluation are owner runs; the result is reported as "measured on" the chosen
   test split. NER has no qualification gate: adding one needs an ADR and a spec amendment.
 
-### Phase 43 — Pair-task data remediation (after the T191 diagnosis)
-Goal: the four pair tasks (NLI, paraphrase, QA, similarity) and the encoder body get data that can teach cross-segment
-comparison, before any further training. Owner direction 2026-11-14: no training now; solve the dataset problem first.
-Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201
+### Phase 43 — Pair-task remediation: self-supervised two-segment objectives, contrastive similarity, mixed batches, staged training
+Goal: the encoder body learns to compare two segments and the four pair tasks get data and objectives that can teach it,
+before any main run. Owner direction 2026-11-14: no training now, solve the data problem first; 2026-11-15: combined route
+(two-segment self-supervision, contrastive similarity without bought labels, mixed batches, two-stage schedule), planned step by step.
+Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205
+Execution order (each step needs the previous ones; no step before T204 trains): T192 data on disk (done) -> T193 audit ->
+T194 two-segment builder -> T195 order head -> T196 balanced NLI and paraphrase -> T197 relation pairs -> T198 bi-encoder head ->
+T199 contrastive objective -> T200 paraphrase and QA data -> T201 mixed batches -> T202 owner profile -> T203 mixture and schedule ->
+T204 owner stage-2 and control runs -> T205 analysis and decision.
 Exit criteria:
-- Extra raw data for the small parts is on disk with provenance and licence status (T192, owner order 2026-11-14) and is not yet in the training mixture.
-- The pair-data audit (T193) states, per source, the label prior, the share a word-overlap or hypothesis-only count baseline
-  already explains, truncation, duplicates and held-out overlap; every later task cites its numbers.
-- Two-segment inputs reach at least half of the MLM steps (T194) and NLI and paraphrase batches are source- and
-  label-balanced (T195), measured on the real loader without training.
-- Similarity has more than the current 20,163 training rows from sources the owner approved, a training label distribution
-  that matches the validation split, and a zero-hit leakage rescan against STS-B validation and test (T196, T197).
-- Paraphrase has word-order negatives beyond PAWS-Wiki and QA has a measured unanswerable share and window coverage (T198).
-- No task in this phase runs training, tokenizer fitting or a backward step; T201 is the owner's controlled run and starts
-  only on the owner's order. The foundation model stays NOT QUALIFIED.
+- Extra raw data is on disk with provenance and licence status (T192) and the audit (T193) states per source the label prior, shortcut baselines, truncation, duplicates and held-out overlap.
+- Two-segment inputs (pair-format MLM and sentence order) exist behind options that default to off (T194, T195), and NLI and paraphrase batches can be source- and label-balanced (T196).
+- Similarity gets relation pairs and a bi-encoder head without bought labels, with a zero-hit leakage rescan against STS-B validation and test (T197 to T199); STS-B stays the only gate data.
+- QA and paraphrase formatters and re-weighting exist and are measured (T200); mixed batches exist behind `tasks_per_step` (T201).
+- No task before T204 runs training, tokenizer fitting or a backward step; T202 and T204 are owner runs started only on the owner's order. The foundation model stays NOT QUALIFIED.
 
 ### Phase 21 — Stage 2: scientific language
 Goal: scientific adaptation passes SciFact NLI and evidence gates.
