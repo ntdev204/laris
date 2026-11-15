@@ -1,0 +1,41 @@
+{
+  "split": "val",
+  "seq_len": 512,
+  "batches": 250,
+  "batch_size": 8,
+  "seed": 42,
+  "tokenizer_model": "artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model",
+  "mlm_shards": [
+    "data/processed/wikipedia_en/val.parquet",
+    "data/processed/fineweb_edu_en/val.parquet",
+    "data/processed/openwebtext_en/val.parquet",
+    "data/processed/c4_en/val.parquet",
+    "data/processed/gutenberg_en/val.parquet",
+    "data/processed/cc_news_en/val.parquet",
+    "data/processed/cnn_dailymail_en/val.parquet",
+    "data/processed/xsum_en/val.parquet",
+    "data/processed/wikipedia_simple_en/val.parquet"
+  ],
+  "mlm_pair_fraction": 0.5,
+  "order_task": true,
+  "order_class_shares": [
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+  ],
+  "mlm_sequences": 2000,
+  "mlm_pair_sequences": 978,
+  "mlm_pair_share": 0.489,
+  "mlm_pair_without_boundary": 3,
+  "order_other_document_unavailable": 0,
+  "order_counts": {
+    "in_order": 326,
+    "swapped": 334,
+    "other_document": 318
+  },
+  "order_shares": {
+    "in_order": 0.3333333333333333,
+    "swapped": 0.34151329243353784,
+    "other_document": 0.32515337423312884
+  }
+}
