@@ -132,6 +132,7 @@ sources:
 
   # ---- Similarity (graded) -----------------------------------------------------------------------------------------
   # Every pair here is deduplicated against STS-B val and test by scripts/check_sts_leakage.py before partitioning.
+  # `score_field` names the human-graded score column and `score_range` its native range, mapped linearly onto [0, 1].
   - id: STS-COMPANION-EN
     role: similarity
     repo: tasksource/sts-companion
@@ -141,6 +142,8 @@ sources:
     license_approved: true
     sample_unit: "Graded sentence pair, label 0-5"
     min_rows: 5000
+    score_field: label
+    score_range: [0.0, 5.0]
     notes: "STS 2012-2017 companion sets (the rest of the pairs STS-B was drawn from); the leakage rule is mandatory."
   - id: STS12-TRAIN-EN
     role: similarity
@@ -151,6 +154,8 @@ sources:
     license_approved: false
     sample_unit: "Graded sentence pair, label 0-5"
     min_rows: 1000
+    score_field: score
+    score_range: [0.0, 5.0]
     notes: "STS 2012 train portion only; test portions of STS12-16 stay unused so they remain a possible extra evaluation."
   - id: SICK-EN
     role: similarity
@@ -163,7 +168,10 @@ sources:
     license_approved: false
     sample_unit: "Graded sentence pair (relatedness 1-5) with NLI label"
     min_rows: 9000
-    notes: "Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only."
+    # T206: the similarity score is the human-graded relatedness (1-5), never `label` (the SICK NLI class).
+    score_field: relatedness_score
+    score_range: [1.0, 5.0]
+    notes: "Non-commercial licence (CC-BY-NC-SA-3.0); compositional and negation phenomena. Licence state: APPROVED_BY_OWNER (owner decision 2026-11-14, research use); `license_approved: false` only records that the publisher licence is not open. Rows stay marked `source: SICK-EN` in sts_extra_en, so they can be filtered out without a rebuild. Any checkpoint trained on SICK-EN must not be released or used commercially."
 
   # ---- Paraphrase and semantic equivalence ---------------------------------------------------------------------------
   - id: MRPC-EN
