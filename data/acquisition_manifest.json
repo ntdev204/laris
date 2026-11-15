@@ -1243,7 +1243,7 @@
       "sha256_checksum": "4926985a232bd0d221af60e729693351bad7ba09e2ac7297079dc34018095830",
       "storage_path": "data/raw/sick_en",
       "schema_valid": true,
-      "notes": "Role: similarity. Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only. Source RobZamp/sick@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution).",
+      "notes": "Role: similarity. Non-commercial licence; compositional and negation phenomena. Keep only while the project is research-only. Source RobZamp/sick@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run. Use approved by the project owner on 2026-11-14 (owner decision for research use, not a legal clearance; no redistribution). Similarity score = relatedness_score (1-5), never the NLI label (T206). Any checkpoint trained on SICK-EN must not be released or used commercially (CC-BY-NC-SA-3.0).",
       "files": [
         {
           "filename": "test__0000.parquet",

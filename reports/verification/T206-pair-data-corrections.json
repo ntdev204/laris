@@ -1,0 +1,78 @@
+{
+  "task": "T206",
+  "applied": true,
+  "sick": {
+    "raw_rows": 9840,
+    "score_field": "relatedness_score",
+    "score_range": [
+      1.0,
+      5.0
+    ],
+    "precheck_current_table": {
+      "sick_rows": 8389,
+      "equals_nli_label_div_5": 8389,
+      "equals_relatedness_scaled": 51,
+      "equals_relatedness_div_5": 256
+    },
+    "rows_by_source_before": {
+      "STS-COMPANION-EN": 5237,
+      "STS12-TRAIN-EN": 803,
+      "SICK-EN": 8389
+    },
+    "postcheck_rebuilt_table": {
+      "sick_rows": 8389,
+      "equals_relatedness_scaled": 8389,
+      "equals_nli_label_div_5": 51,
+      "equals_relatedness_div_5": 220
+    },
+    "rows_by_source_after": {
+      "STS-COMPANION-EN": 5237,
+      "STS12-TRAIN-EN": 803,
+      "SICK-EN": 8389
+    },
+    "non_sick_rows_unchanged": true
+  },
+  "squad": {
+    "train_rows_before": 87599,
+    "squad_v2_heldout_pairs": 12733,
+    "train_rows_dropped": 9280,
+    "train_rows_after": 78319,
+    "rule": "drop squad/train rows whose normalised (question, context) is in squad_v2_en val or test",
+    "postcheck_train_pairs_in_v2_heldout": 0,
+    "manifest": {
+      "before": {
+        "counts": 87599,
+        "bytes": 17038525,
+        "sha256": "1a46e03b96fd2659a350dc1233eae222c94983377c9c69efc02ac9f72e7cbdfe"
+      },
+      "after": {
+        "counts": 78319,
+        "bytes": 15149008,
+        "sha256": "36fdb61e75b6bbfafbbc30106264f5f11dfaabcb471f3302d3c35dd01dc538be"
+      }
+    }
+  },
+  "backup": {
+    "dir": "data/cache/superseded/T206",
+    "sha256": {
+      "data/processed/sts_extra_en/train.parquet": "e8dabecdb4529dd69859f1bc8f77fe2d6e0bf1be14ae146e83a426e0ae3f1ca1",
+      "data/processed/squad/train.parquet": "1a46e03b96fd2659a350dc1233eae222c94983377c9c69efc02ac9f72e7cbdfe",
+      "data/processed/squad/val.parquet": "4431f743a51654d38f9896a99a8744a9e374c9bba7123a8f548641a86c31f8f0",
+      "data/processed/squad/test.parquet": "255f8a6b77616d07caff39d32d5428c6c56210ccb34ea5d48369cdc85a729a1b"
+    }
+  },
+  "r1_squad_frozen": true,
+  "sts_extra_en": {
+    "rows": 14429,
+    "sha256": "dae35ac30f7bbcbac43d0c1295f906539aaf25528c483cbf0123a75fdf990009"
+  },
+  "untouched_files_identical": true,
+  "untouched_sha256": {
+    "data/processed/squad/val.parquet": "4431f743a51654d38f9896a99a8744a9e374c9bba7123a8f548641a86c31f8f0",
+    "data/processed/squad/test.parquet": "255f8a6b77616d07caff39d32d5428c6c56210ccb34ea5d48369cdc85a729a1b",
+    "data/processed/squad_v2_en/train.parquet": "0fe7126ab05bdcb3fc4cdfb9b54b65d5005485707f49bf4df6dbfad918a3e690",
+    "data/processed/squad_v2_en/val.parquet": "29504d9f3c4db2a5cd200e151ce74f1fa940b5c146084998882d2405771f9c33",
+    "data/processed/squad_v2_en/test.parquet": "90af753ce7efe6aaae7a7d3576742fa005ea4a6d1ea1626e579e0870f50f0998"
+  },
+  "r1_squad_verifies": true
+}

@@ -28,7 +28,6 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 SENTENCE_KEYS = (("sentence1", "sentence2"), ("sentence_A", "sentence_B"))
-SCORE_KEYS = ("score", "label", "relatedness_score")
 _NON_ALNUM = re.compile(r"[^0-9a-z]+")
 
 
@@ -37,9 +36,22 @@ def normalise(text: str) -> str:
     return _NON_ALNUM.sub(" ", text.lower()).strip()
 
 
-def score_scale(source_id: str) -> float:
-    """Upper bound of each source's native score range (STS 0-5, SICK relatedness 1-5)."""
-    return 5.0
+def score_spec(source: Dict[str, Any]) -> Tuple[str, float, float]:
+    """(score column, low, high) declared per source in the config; never guessed.
+
+    T206: guessing from a list of column names took SICK's NLI `label` (0/1/2) instead of
+    `relatedness_score` (1-5), so the column and the native range must be configured.
+    """
+    field = source.get("score_field")
+    low, high = (source.get("score_range") or (None, None))[:2]
+    if not field or low is None or high is None or float(high) <= float(low):
+        raise ValueError(f"similarity source {source.get('id')} needs score_field and score_range")
+    return str(field), float(low), float(high)
+
+
+def scale_score(value: float, low: float, high: float) -> float:
+    """Maps a native score linearly onto [0, 1] (low -> 0, high -> 1), clipped."""
+    return max(0.0, min(1.0, (value - low) / (high - low)))
 
 
 def rows_from_file(path: Path) -> Iterator[Dict[str, Any]]:
@@ -62,16 +74,16 @@ def rows_from_file(path: Path) -> Iterator[Dict[str, Any]]:
                     yield json.loads(line)
 
 
-def extract_pair(row: Dict[str, Any]) -> Optional[Tuple[str, str, float]]:
-    """Returns (sentence1, sentence2, score) from a row, or None when the row has no usable pair."""
+def extract_pair(row: Dict[str, Any], score_field: str) -> Optional[Tuple[str, str, float]]:
+    """Returns (sentence1, sentence2, native score), or None when the row has no usable pair."""
     for left, right in SENTENCE_KEYS:
         if left in row and right in row:
-            for key in SCORE_KEYS:
-                if key in row and row[key] not in (None, ""):
-                    try:
-                        return str(row[left]), str(row[right]), float(row[key])
-                    except ValueError:
-                        return None
+            if row.get(score_field) in (None, ""):
+                return None
+            try:
+                return str(row[left]), str(row[right]), float(row[score_field])
+            except ValueError:
+                return None
     return None
 
 
@@ -129,19 +141,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     kept_all: List[Tuple[str, str, float, str]] = []
     per_source: Dict[str, Dict[str, int]] = {}
     for source in (s for s in config["sources"] if s["role"] == "similarity"):
+        field, low, high = score_spec(source)
         raw_dir = REPO_ROOT / "data/raw" / source["id"].lower().replace("-", "_")
         files = sorted(raw_dir.glob("*"))
         pairs = (
             p
             for f in files
             if f.is_file() and not f.name.endswith(".part")
-            for p in (extract_pair(r) for r in rows_from_file(f))
+            for p in (extract_pair(r, field) for r in rows_from_file(f))
             if p is not None
         )
         kept, stats = filter_pairs(pairs, blocked, seen)
         per_source[source["id"]] = stats
-        top = score_scale(source["id"])
-        kept_all.extend((a, b, max(0.0, min(1.0, s / top)), source["id"]) for a, b, s in kept)
+        kept_all.extend((a, b, scale_score(s, low, high), source["id"]) for a, b, s in kept)
         print(f"{source['id']}: {stats}")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -157,6 +169,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     report = {
         "task": "T175",
         "rule": "drop any pair sharing a normalised sentence with STS-B validation or test",
+        "score_columns": {
+            s["id"]: {"field": s.get("score_field"), "range": s.get("score_range")}
+            for s in config["sources"]
+            if s["role"] == "similarity"
+        },
         "stsb_heldout_sentences": len(blocked),
         "kept_pairs": len(kept_all),
         "per_source": per_source,

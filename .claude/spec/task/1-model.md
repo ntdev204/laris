@@ -547,6 +547,18 @@ returned logs, manifests and reports.
 - Status: pending
 - Note: The result decides whether the plan moves to a main run, to the sealed T100 evaluation, or to more data.
 
+### T206 — Pair-task data corrections from the T193 audit
+- Requirements: SR-M4
+- Depends: T193
+- Deliverables:
+  - `sts_extra_en` rebuilt with the score column and native range declared per similarity source (`score_field`, `score_range` in `configs/data/english_sources.yaml`; SICK-EN `relatedness_score` 1-5, STS 0-5, mapped linearly onto [0, 1]); `scripts/check_sts_leakage.py` no longer guesses a score column; rows keep `source`, so SICK-EN can be filtered without a rebuild; the NC restriction on checkpoints trained with SICK is recorded in the source notes, the acquisition manifest and the dataset specification
+  - `squad/train` without the rows whose normalised (question, context) pair occurs in `squad_v2_en` validation or test; SQuAD v1 val and test and every SQuAD v2 split unchanged; `task_splits_manifest.json` updated
+  - `scripts/correct_pair_data.py` (dry run by default, `--apply` writes), originals copied to `data/cache/superseded/T206/`, the frozen `data/processed/r1/squad` symlink replaced by a copy of the originals; lineage report `reports/verification/T206-pair-data-corrections.json` and `.md`
+- Validation:
+  - Precheck on all SICK rows of the old table (which raw column each score came from), postcheck on the rebuilt table, non-SICK rows unchanged, zero SQuAD v1 train pairs in SQuAD v2 held-out, untouched files byte-identical, r1 SQuAD checksums verify; fixture tests; no training
+- Status: done
+- Note: Owner decisions 2026-11-15: keep SICK, rebuilt from `relatedness_score` and marked by source (similarity has about 20 k rows, SICK is 8,389 of them; licence CC-BY-NC-SA-3.0, state APPROVED_BY_OWNER, where `license_approved: false` only records that the publisher licence is not open); remove the 9,280 duplicated SQuAD v1 training rows instead of re-splitting SQuAD 2.0, so the SQuAD validation and test splits that G06 and G07 use stay unchanged. Result: the precheck found all 8,389 SICK rows equal to the NLI label divided by 5; after the rebuild all 8,389 equal (relatedness - 1) / 4, non-SICK rows unchanged; `sts_extra_en` mean 0.628 (SICK 0.637, STS Companion 0.619, STS12 0.592), word-overlap Spearman 0.556 (SICK 0.587, was -0.136). SQuAD v1 train 87,599 -> 78,319 rows (9,280 removed, matched on the (question, context) pair, train only), 0 left in SQuAD v2 held-out. Still open for T197: the extra similarity label mean (0.628) is above STS-B validation (0.473).
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
