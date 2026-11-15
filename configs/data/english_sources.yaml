@@ -310,7 +310,7 @@ sources:
     license_approved: true
     sample_unit: "Movie-plot reading question (ParaphraseRC and SelfRC), some without an answer"
     min_rows: 150000
-    notes: "T192: long plots and questions written from a different plot of the same film, with `no_answer` rows. Needs a formatter (no character offsets) before use; see T198."
+    notes: "T192: long plots and questions written from a different plot of the same film, with `no_answer` rows. Needs a formatter (no character offsets) before use; see T200."
   - id: ROPES-EN
     role: qa
     repo: allenai/ropes
