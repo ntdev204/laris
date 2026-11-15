@@ -13,11 +13,18 @@ import random
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow.parquet as pq
 
+from laris.shared.language.loading.balanced import (
+    BALANCEABLE_TASKS,
+    LabelBalancedSampler,
+    label_counts,
+    nli_label,
+    paraphrase_label,
+)
 from laris.shared.language.loading.segments import (
     IGNORE_INDEX,
     ORDER_CLASSES,
@@ -302,6 +309,7 @@ class StreamingParquetMultiTaskDataLoader:
         mlm_pair_fraction: float = 0.0,
         order_task: bool = False,
         order_class_shares: Tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3),
+        label_balanced_tasks: Sequence[str] = (),
     ) -> None:
         if length_pool_batches < 1:
             raise ValueError("length_pool_batches must be >= 1")
@@ -365,6 +373,15 @@ class StreamingParquetMultiTaskDataLoader:
             raise ValueError("dataset sampling exponents require known tasks and positive powers")
         if split != "train" and (self.dataset_sampling_exponents or include_retrieval_pairs):
             raise ValueError("dataset resampling and retrieval pairs require the train split")
+        unknown = sorted(set(label_balanced_tasks) - set(BALANCEABLE_TASKS))
+        if unknown:
+            raise ValueError(f"label balancing supports {list(BALANCEABLE_TASKS)}, not {unknown}")
+        if label_balanced_tasks and split != "train":
+            raise ValueError("label balancing requires the train split (held-out keeps its prior)")
+        # Source- and label-balanced tasks (T196): a source per row, then a label of that source.
+        self.label_balanced_tasks = tuple(sorted(set(label_balanced_tasks)))
+        self._balanced: Dict[str, LabelBalancedSampler] = {}
+        self._label_counts: Dict[str, Dict[str, Dict[int, int]]] = {}
         self.include_retrieval_pairs = include_retrieval_pairs
         self.include_retrieval_task = include_retrieval_task
         self.retrieval_batch_size = retrieval_batch_size or batch_size
@@ -416,14 +433,46 @@ class StreamingParquetMultiTaskDataLoader:
     def _build_streams(self) -> None:
         """Recreate per-task streams using the configured dataset count exponents."""
         self._task_iterators: Dict[str, Iterator[Dict[str, Any]]] = {}
+        self._balanced = {}
         for task_name, path_list in self.task_paths.items():
-            if path_list:
+            if path_list and task_name in self.label_balanced_tasks:
+                self._balanced[task_name] = self._balanced_sampler(task_name, path_list)
+                self._task_iterators[task_name] = iter(())  # marks the task as available
+            elif path_list:
                 self._task_iterators[task_name] = self._interleaved_stream(
                     path_list,
                     self.buffer_size,
                     random.Random(f"{self._seed}:{task_name}"),
                     self.dataset_sampling_exponents.get(task_name, 1.0),
                 )
+
+    def _balanced_sampler(self, task: str, paths: List[Path]) -> LabelBalancedSampler:
+        """A source- and label-balanced sampler; a source is a dataset directory."""
+        sources: Dict[str, List[Path]] = {}
+        for path in paths:
+            sources.setdefault(path.parent.name, []).append(path)
+        if task not in self._label_counts:
+            counts: Dict[str, Dict[int, int]] = {}
+            for name, shard_paths in sources.items():
+                merged: Dict[int, int] = {}
+                for shard in shard_paths:
+                    for label, n in label_counts(shard, task).items():
+                        merged[label] = merged.get(label, 0) + n
+                counts[name] = merged
+            self._label_counts[task] = counts
+        return LabelBalancedSampler(
+            task,
+            sources,
+            lambda shard_paths: self._create_task_stream(shard_paths, self.buffer_size),
+            random.Random(f"{self._seed}:{task}:balanced"),
+            dataset_exponent=self.dataset_sampling_exponents.get(task, 1.0),
+            queue_limit=max(self.buffer_size, self.batch_size) * 4,
+            label_counts_by_source=self._label_counts[task],
+        )
+
+    def label_balance_report(self) -> Dict[str, Any]:
+        """Per balanced task: label share per source and per batch among the rows drawn so far."""
+        return {task: sampler.report() for task, sampler in sorted(self._balanced.items())}
 
     def reset(self) -> None:
         """Rewinds streams and random state so the next batches repeat from the start.
@@ -699,25 +748,10 @@ class StreamingParquetMultiTaskDataLoader:
         attention_mask_list: List[List[int]] = []
         nli_labels: List[int] = []
 
-        label_map: Dict[Any, int] = {
-            "entailment": 0,
-            "0": 0,
-            0: 0,
-            "neutral": 1,
-            "1": 1,
-            1: 1,
-            "contradiction": 2,
-            "2": 2,
-            2: 2,
-        }
-
         for rec in records:
             p = rec.get("premise") or rec.get("sentence1") or ""
             h = rec.get("hypothesis") or rec.get("sentence2") or ""
-            raw_lbl = rec.get("label") if "label" in rec else rec.get("gold_label")
-            if raw_lbl not in label_map:
-                raise ValueError(f"Unknown NLI label {raw_lbl!r}; refusing to guess a class")
-            lbl = label_map[raw_lbl]
+            lbl = nli_label(rec)
 
             p_toks = self._tokenize(p)
             h_toks = self._tokenize(h)
@@ -742,13 +776,7 @@ class StreamingParquetMultiTaskDataLoader:
         for rec in records:
             q1 = rec.get("question1") or rec.get("sentence1") or ""
             q2 = rec.get("question2") or rec.get("sentence2") or ""
-            raw_lbl = rec.get("is_duplicate") if "is_duplicate" in rec else rec.get("label")
-            if raw_lbl in (1, True, "1", "duplicate"):
-                lbl = 1.0
-            elif raw_lbl in (0, False, "0", "not_duplicate"):
-                lbl = 0.0
-            else:
-                raise ValueError(f"Unknown paraphrase label {raw_lbl!r}; refusing to guess")
+            lbl = float(paraphrase_label(rec))
 
             q1_toks = self._tokenize(q1)
             q2_toks = self._tokenize(q2)
@@ -977,7 +1005,13 @@ class StreamingParquetMultiTaskDataLoader:
         )
 
     def _next_records(self, task: str) -> List[Dict[str, Any]]:
-        """Next micro-batch of raw records; with a length pool, similar lengths share a batch."""
+        """Next micro-batch of raw records; with a length pool, similar lengths share a batch.
+
+        A label-balanced task draws its batch directly: sorting a pool by length would mix the
+        balanced batches, so it does not use the length pool.
+        """
+        if task in self._balanced:
+            return self._balanced[task].draw_batch(self.batch_size)
         pending = self._pending.setdefault(task, [])
         if not pending:
             it = self._task_iterators[task]

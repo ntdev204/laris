@@ -127,6 +127,10 @@ class TrainingConfig(BaseModel):
     # order labels; 0 keeps the task off.
     loss_lambda_order: float = Field(default=0.0, ge=0.0, allow_inf_nan=False)
     order_class_shares: tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3)
+    # Source- and label-balanced batches (T196) for the listed pair tasks ("nli", "paraphrase"):
+    # a source per row by its usual share, then a label from that source's own label set; empty
+    # keeps the plain stream, whose batches carry each source's label prior.
+    label_balanced_tasks: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":
@@ -143,6 +147,9 @@ class TrainingConfig(BaseModel):
             )
         if self.order_task != (self.loss_lambda_order > 0):
             raise ValueError("order_task and loss_lambda_order > 0 go together")
+        unknown = sorted(set(self.label_balanced_tasks) - {"nli", "paraphrase"})
+        if unknown:
+            raise ValueError(f"label_balanced_tasks supports nli and paraphrase, not {unknown}")
         shares = self.order_class_shares
         if any(not 0.0 <= v < float("inf") for v in shares) or sum(shares) <= 0:
             raise ValueError(
