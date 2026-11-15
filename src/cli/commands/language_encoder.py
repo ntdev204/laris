@@ -38,6 +38,7 @@ from laris.shared.language.loading.checkpoint import (
     MODEL_FILE,
     current_git_commit,
     file_sha256,
+    load_model_weights,
     read_manifest,
 )
 from laris.shared.language.loading.dataloader import (
@@ -267,7 +268,8 @@ def _load_initial_weights(
     digest = file_sha256(weights)
     if manifest.get("model_sha256") != digest:
         raise ValueError("initial checkpoint weights failed the manifest SHA-256 check")
-    model.load_state_dict(torch.load(weights, map_location="cpu", weights_only=True))
+    # a stage-1 checkpoint has no order head (T195): it keeps its fixed initial values
+    load_model_weights(model, torch.load(weights, map_location="cpu", weights_only=True))
     return digest
 
 
@@ -344,6 +346,7 @@ def _run_memory_profile(
         precision=args.precision,
         retrieval_loss_weight=hyper.loss_lambda_retrieval,
         retrieval_temperature=hyper.retrieval_temperature,
+        order_loss_weight=hyper.loss_lambda_order,
     )
     profile = profile_training_memory(trainer, loader, MAX_VRAM_GB, with_training_step=with_step)
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
@@ -387,10 +390,6 @@ def run(args: argparse.Namespace) -> int:
         hyper = _resolve_hyperparameters(args)
     except ValueError as exc:
         print(f"[ERROR] {exc}")
-        return 1
-    if hyper.order_task:
-        # The loader builds order labels (T194); the order head and its loss come with T195.
-        print("[ERROR] order_task needs the sentence-order head and loss, which are not built yet.")
         return 1
     args.micro_batch_size = hyper.micro_batch_size
     args.grad_accum_steps = hyper.gradient_accumulation_steps
@@ -558,6 +557,7 @@ def run(args: argparse.Namespace) -> int:
         total_optimizer_steps=hyper.max_steps,
         retrieval_loss_weight=hyper.loss_lambda_retrieval,
         retrieval_temperature=hyper.retrieval_temperature,
+        order_loss_weight=hyper.loss_lambda_order,
     )
     trainer.loss_calculator = MultiTaskLossCalculator(
         MultiTaskLossWeights(

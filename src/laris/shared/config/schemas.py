@@ -123,6 +123,9 @@ class TrainingConfig(BaseModel):
     mlm_pair_fraction: float = Field(default=0.0, ge=0.0, le=1.0, allow_inf_nan=False)
     # Sentence-order labels on the two-segment rows (in order, swapped, other document).
     order_task: bool = False
+    # Weight of the sentence-order loss (T195), added to the MLM loss of batches that carry
+    # order labels; 0 keeps the task off.
+    loss_lambda_order: float = Field(default=0.0, ge=0.0, allow_inf_nan=False)
     order_class_shares: tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3)
 
     @model_validator(mode="after")
@@ -138,6 +141,8 @@ class TrainingConfig(BaseModel):
             raise ValueError(
                 "order_task labels two-segment MLM rows: it needs mlm_pair_fraction > 0"
             )
+        if self.order_task != (self.loss_lambda_order > 0):
+            raise ValueError("order_task and loss_lambda_order > 0 go together")
         shares = self.order_class_shares
         if any(not 0.0 <= v < float("inf") for v in shares) or sum(shares) <= 0:
             raise ValueError(

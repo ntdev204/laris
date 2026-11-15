@@ -59,7 +59,7 @@ class TestLargeEncoderScalingAndTraining(unittest.TestCase):
 
         # Total with heads
         total_count = cfg.calculate_parameter_count(include_heads=True)
-        self.assertEqual(total_count, 513_247_751)
+        self.assertEqual(total_count, 513_251_594)
 
     def test_analytical_training_vram_under_safety_envelope(self) -> None:
         """Verifies analytical VRAM calculation for the large model respects 14.5 GB limit."""

@@ -262,4 +262,4 @@ def test_options_are_validated(tmp_path):
         TrainingConfig(order_task=True)
     with pytest.raises(ValueError):
         TrainingConfig(mlm_pair_fraction=0.5, order_class_shares=(-1.0, 1.0, 1.0))
-    TrainingConfig(mlm_pair_fraction=0.5, order_task=True)
+    TrainingConfig(mlm_pair_fraction=0.5, order_task=True, loss_lambda_order=0.1)  # T195

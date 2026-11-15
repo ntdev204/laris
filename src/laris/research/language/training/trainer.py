@@ -14,7 +14,10 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from laris.research.language.training.objectives import contrastive_retrieval_loss
+from laris.research.language.training.objectives import (
+    contrastive_retrieval_loss,
+    sentence_order_loss,
+)
 from laris.shared.core.authorization import (
     assert_training_authorized,
 )
@@ -63,6 +66,8 @@ class TrainingMetricsSnapshot:
     optimizer_step: int = 0
     learning_rate: Optional[float] = None
     grad_norm: Optional[float] = None
+    # Unweighted sentence-order cross-entropy of this micro-batch (T195), when it had one
+    order_loss: Optional[float] = None
 
 
 class MultiTaskLossCalculator:
@@ -166,6 +171,7 @@ class LanguageEncoderTrainer:
         min_lr_ratio: float = 0.1,
         retrieval_loss_weight: float = 0.0,
         retrieval_temperature: float = 0.07,
+        order_loss_weight: float = 0.0,
     ) -> None:
         if precision not in ("fp32", "bf16", "fp16"):
             raise ValueError(f"precision must be fp32, bf16 or fp16, got '{precision}'")
@@ -184,6 +190,11 @@ class LanguageEncoderTrainer:
         self.loss_calculator = MultiTaskLossCalculator()
         self.retrieval_loss_weight = retrieval_loss_weight
         self.retrieval_temperature = retrieval_temperature
+        if not order_loss_weight >= 0.0 or order_loss_weight == float("inf"):
+            raise ValueError("order_loss_weight must be finite and non-negative")
+        # Sentence-order loss (T195): added to the MLM loss of batches with order labels
+        self.order_loss_weight = order_loss_weight
+        self._last_order_loss: Optional[float] = None
         self.step_history: List[TrainingMetricsSnapshot] = []
         self._accum_counter: int = 0
 
@@ -296,11 +307,16 @@ class LanguageEncoderTrainer:
         kwargs: Dict[str, Any] = {"attention_mask": attention_mask}
         if training_pass:
             kwargs["training_pass"] = True
-        if "task" in inspect.signature(self.model.forward).parameters:
+        parameters = inspect.signature(self.model.forward).parameters
+        if "task" in parameters:
             kwargs["task"] = task_type
             if task_type == "mlm":
                 targets = torch.as_tensor(labels["mlm_labels"]).to(self.device)
                 kwargs["mlm_positions"] = targets != -100
+        if self._uses_order(task_type, labels):
+            if "with_order" not in parameters:
+                raise ValueError("The sentence-order loss needs a model with an order head")
+            kwargs["with_order"] = True
         outputs: Dict[str, Any] = self.model(token_ids, **kwargs)
         if (
             training_pass and task_type == "qa" and self.retrieval_loss_weight > 0
@@ -308,6 +324,10 @@ class LanguageEncoderTrainer:
         ):
             outputs["retrieval_loss"] = self._retrieval_loss(labels, True)
         return outputs
+
+    def _uses_order(self, task_type: str, labels: Dict[str, Any]) -> bool:
+        """Order labels ride on MLM batches (T194); the loss runs only with a positive weight."""
+        return task_type == "mlm" and self.order_loss_weight > 0 and "order_labels" in labels
 
     def _retrieval_loss(self, labels: Dict[str, Any], training_pass: bool) -> Any:
         """In-batch InfoNCE of query and passage embeddings (known positives are masked)."""
@@ -417,14 +437,21 @@ class LanguageEncoderTrainer:
                 targets = targets.to(self.device)
             vocab_size = logits.size(-1)
             if not bool((targets != -100).any()):
-                return logits.sum() * 0.0  # nothing masked: zero loss, not a NaN mean over nothing
-            if logits.dim() == 2:  # logits already restricted to the masked positions
-                ce = F.cross_entropy(logits, targets[targets != -100])
+                mlm_loss = logits.sum() * 0.0  # nothing masked: zero, not a NaN mean over nothing
+            elif logits.dim() == 2:  # logits already restricted to the masked positions
+                mlm_loss = F.cross_entropy(logits, targets[targets != -100]) * weights.lambda_mlm
             else:
-                ce = F.cross_entropy(
+                mlm_loss = F.cross_entropy(
                     logits.view(-1, vocab_size), targets.view(-1), ignore_index=-100
+                ) * weights.lambda_mlm
+            self._last_order_loss = None
+            if self._uses_order(task_type, labels) and "order_logits" in outputs:
+                order = sentence_order_loss(
+                    outputs["order_logits"], torch.as_tensor(labels["order_labels"])
                 )
-            return ce * weights.lambda_mlm
+                self._last_order_loss = float(order.detach().float().item())
+                mlm_loss = mlm_loss + self.order_loss_weight * order
+            return mlm_loss
 
         elif task_type == "nli":
             logits = outputs["nli_logits"]
@@ -586,6 +613,7 @@ class LanguageEncoderTrainer:
                 optimizer_step=self.optimizer_steps,
                 learning_rate=lr_used,
                 grad_norm=grad_norm,
+                order_loss=self._last_order_loss if task_type == "mlm" else None,
             )
             self.step_history.append(snapshot)
             return snapshot

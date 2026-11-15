@@ -1,4 +1,4 @@
-"""Dense retrieval objectives for independently encoded query and passage pairs."""
+"""Dense retrieval and sentence-order objectives."""
 
 import math
 from typing import Any
@@ -24,3 +24,21 @@ def contrastive_retrieval_loss(
         logits = logits / temperature
         positive_logits = logits.masked_fill(~positives.to(logits.device), -torch.inf)
         return (logits.logsumexp(dim=1) - positive_logits.logsumexp(dim=1)).mean()
+
+
+def sentence_order_loss(logits: Any, targets: Any, ignore_index: int = -100) -> Any:
+    """Mean cross-entropy over the labelled two-segment rows (T195), computed in fp32.
+
+    Rows with `ignore_index` (single-segment MLM rows) do not count; a batch without a
+    labelled row gives a zero that keeps the graph, not a NaN mean over nothing.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    if logits.ndim != 2 or targets.shape != logits.shape[:1]:
+        raise ValueError("order logits must be (B, classes) and targets (B,)")
+    targets = targets.to(device=logits.device, dtype=torch.long)
+    if not bool((targets != ignore_index).any()):
+        return logits.sum() * 0.0
+    with torch.autocast(device_type=logits.device.type, enabled=False):
+        return F.cross_entropy(logits.float(), targets, ignore_index=ignore_index)

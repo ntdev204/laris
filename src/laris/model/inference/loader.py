@@ -9,7 +9,12 @@ from laris.shared.language.encoder.transformer import (
     LargeLanguageEncoderConfig,
     PyTorchTransformerEncoder,
 )
-from laris.shared.language.loading.checkpoint import MODEL_FILE, file_sha256, read_manifest
+from laris.shared.language.loading.checkpoint import (
+    MODEL_FILE,
+    file_sha256,
+    load_model_weights,
+    read_manifest,
+)
 from laris.shared.language.tokenization.normalized import NORMALIZATION_ID, NormalizedSentencePiece
 
 
@@ -74,6 +79,6 @@ def load_encoder(
     config = config_cls(**provenance["model_config"])
     target = device or ("cuda" if torch.cuda.is_available() else "cpu")
     model = PyTorchTransformerEncoder(config)
-    model.load_state_dict(torch.load(checkpoint / MODEL_FILE, map_location="cpu"))
+    load_model_weights(model, torch.load(checkpoint / MODEL_FILE, map_location="cpu"))
     model.to(target).eval()
     return LoadedEncoder(model, tokenizer, config, target, manifest, checkpoint)

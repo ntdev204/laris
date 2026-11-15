@@ -30,6 +30,7 @@ def evaluate_checkpoint(
     batch_size: int = 16,
     seed: int = 42,
     device: Optional[str] = None,
+    order_samples: int = 0,
     log: Callable[[str], None] = print,
 ) -> Tuple[int, Dict[str, Any]]:
     """Returns (exit_code, report); exit 0 only if every task/language group beats its baseline."""
@@ -37,7 +38,13 @@ def evaluate_checkpoint(
     thresholds = load_thresholds(config_path)
     encoder = load_encoder(checkpoint, tokenizer_model, device=device, tokenizer=tokenizer)
     evaluator = LanguageEncoderEvaluator(
-        encoder, data_dir, thresholds, max_samples=max_samples, batch_size=batch_size, seed=seed
+        encoder,
+        data_dir,
+        thresholds,
+        max_samples=max_samples,
+        batch_size=batch_size,
+        seed=seed,
+        order_samples=order_samples,
     )
     report = evaluator.evaluate(split)
     extra = {
@@ -63,6 +70,12 @@ def evaluate_checkpoint(
     if not report.groups:
         log(f"No '{split}' shards found under {data_dir}")
     log(f"Overall: {'PASSED' if report.passed else 'FAILED'}")
+    for row in report.diagnostics.get("sentence_order", {}).get("datasets", []):
+        log(
+            f"sentence order (no gate) {row['dataset']}: accuracy {row['accuracy']:.4f} "
+            f"(majority {row['majority_baseline_accuracy']:.4f}), loss {row['loss']:.4f} "
+            f"(chance {row['chance_loss']:.4f}), {row['rows']} rows"
+        )
 
     if output is not None:
         output = Path(output)

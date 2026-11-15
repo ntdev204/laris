@@ -18,6 +18,12 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default=None, help="cuda or cpu (default: auto)")
+    parser.add_argument(
+        "--order-samples",
+        type=int,
+        default=0,
+        help="Rows per MLM dataset for the sentence-order diagnostic (no gate; 0 skips it)",
+    )
 
 
 def run(args: argparse.Namespace) -> int:
@@ -40,6 +46,7 @@ def run(args: argparse.Namespace) -> int:
             batch_size=args.batch_size,
             seed=args.seed,
             device=args.device,
+            order_samples=args.order_samples,
         )
     except (FileNotFoundError, ValueError, RuntimeError) as exc:
         print(f"[ERROR] {exc}")

@@ -2,9 +2,13 @@
 
 Usage (inference only; isolated HOME, validation split only, never the sealed test split):
     HOME=$(mktemp -d) .venv/bin/python -I scripts/diagnose_pair_path.py \
-        <checkpoint-dir> <tokenizer.model> [N]
+        <checkpoint-dir> <tokenizer.model> [N] [--order-only]
+
+Section G (T195) scores the sentence-order head on two-segment cuts of the MLM validation
+rows; `--order-only` runs only that section.
 """
 import glob
+import json
 import sys
 from pathlib import Path
 
@@ -14,11 +18,14 @@ import pyarrow.parquet as pq
 import torch
 
 from laris.model.inference.loader import load_encoder
-from laris.shared.language.loading.dataloader import build_sequence
+from laris.research.language.evaluation.sentence_order import score_sentence_order
+from laris.shared.language.loading.dataloader import TASK_DATASET_DIRS, build_sequence
 
-CKPT = Path(sys.argv[1])
-TOK = Path(sys.argv[2])
-N = int(sys.argv[3]) if len(sys.argv) > 3 else 600
+ORDER_ONLY = "--order-only" in sys.argv
+ARGS = [a for a in sys.argv[1:] if a != "--order-only"]
+CKPT = Path(ARGS[0])
+TOK = Path(ARGS[1])
+N = int(ARGS[2]) if len(ARGS) > 2 else 600
 L = 128
 
 enc = load_encoder(CKPT, TOK, device="cuda")
@@ -75,6 +82,26 @@ def collapse(x):
     off = (sim.sum() - sim.diag().sum()) / (n * (n - 1))
     return float(off)
 
+
+def sentence_order(n):
+    """G: order head on two-segment cuts of the MLM validation rows (forward only)."""
+    for ds in TASK_DATASET_DIRS["mlm"]:
+        files = sorted(Path(f"data/processed/{ds}").glob("val*.parquet"))
+        if not files:
+            continue
+        r = score_sentence_order(enc, files, n, batch_size=32, seed=42)
+        print(
+            f"G  order {ds}: acc {r['accuracy']:.3f} "
+            f"(majority {r['majority_baseline_accuracy']:.3f})  loss {r['loss']:.4f} "
+            f"(ln 3 {r['chance_loss']:.4f})  rows {r['rows']}  "
+            f"pred share {json.dumps(r['predicted_shares'])}  "
+            f"gold share {json.dumps(r['gold_shares'])}"
+        )
+
+
+if ORDER_ONLY:
+    sentence_order(N)
+    sys.exit(0)
 
 # ---------------- STS-B val ----------------
 sts = rows("stsb", N)
@@ -157,3 +184,6 @@ for ds in ("paws", "quora_duplicates"):
         f"F  paraphrase {ds}: AUC {auc:.3f}  prob mean {pp.mean():.3f} std {pp.std():.4f}  "
         f"positive rate {g.mean():.3f}"
     )
+
+# ---------------- sentence order (T195) ----------------
+sentence_order(N)
