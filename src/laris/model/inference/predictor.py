@@ -88,6 +88,22 @@ class LanguageEncoderPredictor:
         return {"is_paraphrase": prob >= 0.5, "probability": prob}
 
     def similarity(self, a: str, b: str) -> Dict[str, Any]:
+        import torch
+
+        if getattr(self.encoder.config, "similarity_head", "cross") == "bi_encoder":
+            # two single-sentence passes, the same path as training and evaluation (T198)
+            device = self.encoder.device
+            sides = []
+            for text in (a, b):
+                ids, mask = build_sequence(self._ids(text), None, self.encoder.seq_len)
+                sides += [
+                    torch.tensor([ids], dtype=torch.long, device=device),
+                    torch.tensor([mask], dtype=torch.long, device=device),
+                ]
+            with torch.no_grad():
+                out = self.encoder.model.bi_encoder_similarity(*sides)
+            score = float(out["similarity_score"][0].float().reshape(-1)[0])
+            return {"score": score, "score_0_to_5": score * 5.0}
         run = self._run(self._ids(a), self._ids(b))
         score = float(run["out"]["similarity_score"][0].float().reshape(-1)[0])
         return {"score": score, "score_0_to_5": score * 5.0}

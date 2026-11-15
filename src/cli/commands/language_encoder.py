@@ -243,9 +243,13 @@ def same_model_config(recorded: Optional[dict], requested: dict) -> bool:
     """Model configs match; activation checkpointing only changes memory, not the weights."""
     if recorded is None:
         return False
-    skip = "gradient_checkpointing"
-    return {k: v for k, v in recorded.items() if k != skip} == {
-        k: v for k, v in requested.items() if k != skip
+    # the similarity head settings (T198) change a head, never the body weights
+    skip = {
+        "gradient_checkpointing", "similarity_head", "similarity_initial_scale",
+        "similarity_initial_bias",
+    }
+    return {k: v for k, v in recorded.items() if k not in skip} == {
+        k: v for k, v in requested.items() if k not in skip
     }
 
 
@@ -407,6 +411,9 @@ def run(args: argparse.Namespace) -> int:
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=True,
+            similarity_head=hyper.similarity_head,
+            similarity_initial_scale=hyper.similarity_initial_scale,
+            similarity_initial_bias=hyper.similarity_initial_bias,
         )
     else:
         config = LanguageEncoderConfig(
@@ -414,6 +421,9 @@ def run(args: argparse.Namespace) -> int:
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
             gradient_checkpointing=bool(getattr(args, "gradient_checkpointing", False)),
+            similarity_head=hyper.similarity_head,
+            similarity_initial_scale=hyper.similarity_initial_scale,
+            similarity_initial_bias=hyper.similarity_initial_bias,
         )
 
     param_count = config.calculate_parameter_count(include_heads=True)

@@ -131,6 +131,11 @@ class TrainingConfig(BaseModel):
     # a source per row by its usual share, then a label from that source's own label set; empty
     # keeps the plain stream, whose batches carry each source's label prior.
     label_balanced_tasks: list[str] = Field(default_factory=list)
+    # Similarity output (T198): "cross" (pair input, linear head) or "bi_encoder" (cosine of two
+    # single-sentence embeddings with a learned scale and bias, starting at the values below).
+    similarity_head: str = "cross"
+    similarity_initial_scale: float = Field(default=10.0, gt=0.0, allow_inf_nan=False)
+    similarity_initial_bias: float = Field(default=-7.5, allow_inf_nan=False)
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":
@@ -147,6 +152,8 @@ class TrainingConfig(BaseModel):
             )
         if self.order_task != (self.loss_lambda_order > 0):
             raise ValueError("order_task and loss_lambda_order > 0 go together")
+        if self.similarity_head not in {"cross", "bi_encoder"}:
+            raise ValueError("similarity_head must be 'cross' or 'bi_encoder'")
         unknown = sorted(set(self.label_balanced_tasks) - {"nli", "paraphrase"})
         if unknown:
             raise ValueError(f"label_balanced_tasks supports nli and paraphrase, not {unknown}")

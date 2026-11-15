@@ -1,0 +1,96 @@
+{
+  "checkpoint": "artifacts/checkpoints/language_encoder/english-r1-pilot2/best",
+  "head": {
+    "similarity_head": "bi_encoder",
+    "initial_scale": 10.0,
+    "initial_bias": -7.5,
+    "keys_left_at_initial": [
+      "sim_scale",
+      "sim_bias"
+    ]
+  },
+  "training_authorization": "not enabled; forward passes only",
+  "stsb_validation": {
+    "rows": 1500,
+    "label_mean": 0.47279333333333334,
+    "label_variance": 0.0899935972888889,
+    "spearman": 0.4944731308974543,
+    "spearman_first_600_rows_as_T191": 0.5719895449834049,
+    "cosine_mean": 0.8168738484382629,
+    "cosine_std": 0.14212217926979065,
+    "score_mean": 0.6412631273269653,
+    "score_std": 0.255048006772995,
+    "mse_to_label": 0.11364505773191706,
+    "mse_of_constant_label_mean": 0.0899935972888889
+  },
+  "relation_pairs": {
+    "per_relation": {
+      "adjacent_sentences": {
+        "polarity": "positive",
+        "rows_in_file": 261677,
+        "rows_scored": 2000,
+        "cosine_mean": 0.6965912580490112,
+        "cosine_std": 0.131087526679039,
+        "score_mean": 0.41227397322654724
+      },
+      "contradiction": {
+        "polarity": "negative",
+        "rows_in_file": 326630,
+        "rows_scored": 2000,
+        "cosine_mean": 0.8101329207420349,
+        "cosine_std": 0.1195715069770813,
+        "score_mean": 0.631003737449646
+      },
+      "entailment": {
+        "polarity": "positive",
+        "rows_in_file": 355695,
+        "rows_scored": 2000,
+        "cosine_mean": 0.8458512425422668,
+        "cosine_std": 0.10657301545143127,
+        "score_mean": 0.6971803903579712
+      },
+      "order_swapped": {
+        "polarity": "negative",
+        "rows_in_file": 261686,
+        "rows_scored": 2000,
+        "cosine_mean": 0.6901879906654358,
+        "cosine_std": 0.13710293173789978,
+        "score_mean": 0.404110848903656
+      },
+      "paraphrase_duplicate": {
+        "polarity": "positive",
+        "rows_in_file": 149525,
+        "rows_scored": 2000,
+        "cosine_mean": 0.8810060024261475,
+        "cosine_std": 0.1019265204668045,
+        "score_mean": 0.7556353211402893
+      },
+      "paws_non_paraphrase": {
+        "polarity": "negative",
+        "rows_in_file": 54843,
+        "rows_scored": 2000,
+        "cosine_mean": 0.970451831817627,
+        "cosine_std": 0.0415952205657959,
+        "score_mean": 0.8941231966018677
+      }
+    },
+    "positive_vs_negative_auc_excluding_order_swapped": 0.2973001458333333,
+    "negatives_used": [
+      "contradiction",
+      "paws_non_paraphrase"
+    ],
+    "auc_by_negative": {
+      "contradiction": 0.510417625,
+      "paws_non_paraphrase": 0.08418266666666667
+    },
+    "auc_positive_by_negative": {
+      "adjacent_sentences > contradiction": 0.2431175,
+      "adjacent_sentences > paws_non_paraphrase": 0.00896175,
+      "entailment > contradiction": 0.594126,
+      "entailment > paws_non_paraphrase": 0.078090125,
+      "paraphrase_duplicate > contradiction": 0.694009375,
+      "paraphrase_duplicate > paws_non_paraphrase": 0.165496125
+    },
+    "note": "order_swapped holds the same two sentences as its adjacent pair, so a symmetric bi-encoder gives it the same cosine; it is left out of the AUC (T197 finding)."
+  }
+}

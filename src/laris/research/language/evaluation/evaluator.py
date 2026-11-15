@@ -160,6 +160,20 @@ class LanguageEncoderEvaluator:
             )
         return out
 
+    def _bi_encoder_forward(self, batch: Any) -> Dict[str, Any]:
+        """Similarity through two single-sentence passes (T198), the trainer's path."""
+        import torch
+
+        device = self.encoder.device
+        sides = [
+            batch.labels[f"sim_{side}_{kind}"].to(device)
+            for side in ("a", "b")
+            for kind in ("ids", "mask")
+        ]
+        with torch.no_grad():
+            out: Dict[str, Any] = self.encoder.model.bi_encoder_similarity(*sides)
+        return out
+
     def _train_files(self, dataset: str) -> List[Path]:
         return sorted((self.data_dir / dataset).glob("train*.parquet"))
 
@@ -259,8 +273,9 @@ class LanguageEncoderEvaluator:
         pred: List[float] = []
         gold: List[float] = []
         overlap: List[float] = []
+        bi_encoder = getattr(self.encoder.config, "similarity_head", "cross") == "bi_encoder"
         for batch, take in self._batches("similarity", files, n):
-            out = self._forward(batch)
+            out = self._bi_encoder_forward(batch) if bi_encoder else self._forward(batch)
             pred.extend(out["similarity_score"][:take].float().reshape(-1).cpu().tolist())
             gold.extend(batch.labels["sim_labels"][:take].tolist())
             overlap.extend(_jaccard(batch.token_ids[:take].numpy()).tolist())
