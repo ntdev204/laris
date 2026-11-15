@@ -36,9 +36,9 @@ CHUNK_BYTES = 1 << 20
 
 def load_sources_config(path: Optional[Path] = None) -> Dict[str, Any]:
     """Loads and minimally validates the English sources configuration."""
-    config_path = Path(path or os.environ.get(SOURCES_CONFIG_ENV, DEFAULT_SOURCES_CONFIG))
+    config_path = Path(path or os.environ.get(SOURCES_CONFIG_ENV) or DEFAULT_SOURCES_CONFIG)
     with open(config_path, "r", encoding="utf-8") as handle:
-        config = yaml.safe_load(handle)
+        config: Dict[str, Any] = yaml.safe_load(handle)
     seen = set()
     for source in config["sources"]:
         for key in (

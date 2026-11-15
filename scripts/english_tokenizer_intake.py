@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Intake check of the owner-fitted English tokenizer (runbook section 9.2, step 1). Read-only: fits nothing.
+"""Intake check of the owner-fitted English tokenizer (runbook section 9.2, step 1). Read-only: fits
+nothing.
 
-Checks the vocabulary size and the special-token ids against the contract written by the fit, then measures
-fertility (tokens per whitespace word) and the unknown-token rate on the validation split of every MLM source, with
-the same normalisation as the fit corpus. Exit 1 when the general-text fertility is above the gate (default 1.35) or
-a check fails. Tokenizer inference only; the validation split is used, never the test split.
+Checks the vocabulary size and the special-token ids against the contract written by the fit, then
+measures fertility (tokens per whitespace word) and the unknown-token rate on the validation split
+of every MLM source, with the same normalisation as the fit corpus. Exit 1 when the general-text
+fertility is above the gate (default 1.35) or a check fails. Tokenizer inference only; the
+validation split is used, never the test split.
 
-Usage: python scripts/english_tokenizer_intake.py --model artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
+Usage:
+    python scripts/english_tokenizer_intake.py \
+        --model artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
 """
 
 import argparse
@@ -91,7 +95,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     args.out.write_text(json.dumps(report, indent=2), encoding="utf-8")
     for name, row in report["sources"].items():
         print(f"{name:28s} fertility {row['fertility']:.3f}  unk {row['unk_rate']:.2e}")
-    print(json.dumps({k: report[k] for k in ("vocab_size", "special_ids_match_contract", "groups", "passed")}))
+    print(
+        json.dumps(
+            {k: report[k] for k in ("vocab_size", "special_ids_match_contract", "groups", "passed")}
+        )
+    )
     print("[PASS] intake" if ok else "[FAIL] intake: do not continue to step 2")
     print("Validation split only; held-out fertility (G10) is measured once at T100.")
     return 0 if ok else 1

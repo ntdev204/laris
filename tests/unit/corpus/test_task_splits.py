@@ -205,7 +205,8 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
         from laris.research.corpus.acquisition.sources.english_hf import load_sources_config
 
         # 18 generation-1 entries, the English stage-1 replacement sources (D46, T175) and the two
-        # STEM slice acquired for the tokenizer fit (T179, T180: 15 science, math, engineering and technology sources)
+        # STEM slice acquired for the tokenizer fit (T179, T180: 15 science, math, engineering and
+        # technology sources)
         self.assertEqual(
             report["total_datasets_tracked"], 18 + len(load_sources_config()["sources"]) + 15
         )

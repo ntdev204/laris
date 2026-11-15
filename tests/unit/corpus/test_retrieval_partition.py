@@ -45,8 +45,14 @@ def test_held_out_text_is_removed_on_either_side_or_by_overlap(tmp_path):
     _write(
         raw / "a.parquet",
         [
-            {"q": "What does the mitochondrion generate?", "a": "Energy for the cell."},  # held-out question
-            {"q": "Which organelle makes energy?", "a": HELD_PARAGRAPH.upper()},  # held-out paragraph
+            {
+                "q": "What does the mitochondrion generate?",
+                "a": "Energy for the cell.",
+            },  # held-out question
+            {
+                "q": "Which organelle makes energy?",
+                "a": HELD_PARAGRAPH.upper(),
+            },  # held-out paragraph
             {
                 "q": "Where is it found?",
                 "a": "Notes: " + HELD_PARAGRAPH + " Further reading follows.",  # eight-word overlap
@@ -80,12 +86,16 @@ def test_duplicates_are_dropped_across_sources_and_split_is_deterministic(tmp_pa
     _write(raw_b / "b.parquet", pairs[:10] + [{"q": "Other question", "a": "Other answer"}])
     spec = {"id": "X", "query": "q", "positive": "a"}
     seen = set()
-    _, first = R.partition_retrieval_source(spec, raw_a, tmp_path / "o1", CONFIG, R.Blocklist(), seen)
+    _, first = R.partition_retrieval_source(
+        spec, raw_a, tmp_path / "o1", CONFIG, R.Blocklist(), seen
+    )
     _, second = R.partition_retrieval_source(
         {**spec, "id": "Y"}, raw_b, tmp_path / "o2", CONFIG, R.Blocklist(), seen
     )
     assert first["kept"] == 80 and second["duplicate"] == 10 and second["kept"] == 1
-    _, again = R.partition_retrieval_source(spec, raw_a, tmp_path / "o3", CONFIG, R.Blocklist(), set())
+    _, again = R.partition_retrieval_source(
+        spec, raw_a, tmp_path / "o3", CONFIG, R.Blocklist(), set()
+    )
     assert _read(tmp_path / "o1") == _read(tmp_path / "o3") and again["kept"] == 80
 
 
@@ -94,7 +104,12 @@ def test_one_query_with_several_positives_stays_in_one_split(tmp_path):
     rows = [{"q": f"Query {i}", "a": f"Answer {i}.{j} text"} for i in range(40) for j in range(3)]
     _write(raw / "a.parquet", rows)
     R.partition_retrieval_source(
-        {"id": "X", "query": "q", "positive": "a"}, raw, tmp_path / "out", CONFIG, R.Blocklist(), set()
+        {"id": "X", "query": "q", "positive": "a"},
+        raw,
+        tmp_path / "out",
+        CONFIG,
+        R.Blocklist(),
+        set(),
     )
     owner = {}
     for row in _read(tmp_path / "out"):
@@ -131,7 +146,11 @@ def test_msmarco_uses_only_selected_passages(tmp_path):
                 "query": "what is a river",
                 "passages": {
                     "is_selected": [0, 1, 0],
-                    "passage_text": ["Unjudged one.", "A river is a natural stream.", "Unjudged two."],
+                    "passage_text": [
+                        "Unjudged one.",
+                        "A river is a natural stream.",
+                        "Unjudged two.",
+                    ],
                     "url": ["u", "v", "w"],
                 },
             },

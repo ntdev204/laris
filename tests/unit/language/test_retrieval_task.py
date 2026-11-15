@@ -1,4 +1,7 @@
-"""Dense-retrieval task (T178): discovery, in-batch negatives, config validation and forward-only loss."""
+"""Dense-retrieval task (T178).
+
+Covers discovery, in-batch negatives, config validation and the forward-only loss.
+"""
 
 from pathlib import Path
 from typing import List
@@ -46,7 +49,10 @@ def test_retrieval_task_exists_only_when_enabled(tmp_path):
     with pytest.raises(FileNotFoundError):  # no other task has data here, and retrieval is off
         _loader(data)
     loader = _loader(data, include_retrieval_task=True)
-    assert {p.parent.name for p in loader.task_paths["retrieval"]} == {"gooaq_en", "coco_captions_en"}
+    assert {p.parent.name for p in loader.task_paths["retrieval"]} == {
+        "gooaq_en",
+        "coco_captions_en",
+    }
     assert {"gooaq_en", "coco_captions_en"} <= set(RETRIEVAL_DATASET_DIRS)
     val = _loader(data, split="val", include_retrieval_task=True)  # validation scores the same task
     assert "retrieval" in val.task_paths
@@ -80,7 +86,8 @@ def test_known_positives_of_a_repeated_query_are_masked(tmp_path):
     loader = _loader(tmp_path, include_retrieval_task=True, retrieval_batch_size=4)
     positives = loader.generate_batch("retrieval").labels["retrieval_positives"]
     assert positives.shape == (4, 4)
-    # rows may be shuffled, so check the structure: a symmetric mask with 2 + 2 + 2 + 2 extra True cells
+    # rows may be shuffled, so check the structure: a symmetric mask with 2 + 2 + 2 + 2 extra True
+    # cells
     assert (positives == positives.T).all() and positives.sum() == 8
 
 
@@ -138,9 +145,8 @@ def test_forward_only_loss_is_weighted_and_needs_a_weight(tmp_path):
             )["cls_embedding"]
             for k in ("query", "passage")
         ]
-        expected = contrastive_retrieval_loss(
-            *embeddings, batch.labels["retrieval_positives"], 0.1
-        )
-        assert torch.isfinite(loss) and loss.item() == pytest.approx(0.25 * expected.item(), rel=1e-4)
+        expected = contrastive_retrieval_loss(*embeddings, batch.labels["retrieval_positives"], 0.1)
+        assert torch.isfinite(loss)
+        assert loss.item() == pytest.approx(0.25 * expected.item(), rel=1e-4)
         with pytest.raises(ValueError, match="loss_lambda_retrieval"):
             make(0.0)._forward("retrieval", ids, mask, batch.labels)

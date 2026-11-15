@@ -7,7 +7,12 @@ from dataclasses import asdict
 from typing import Optional, Sequence
 
 from laris.research.corpus.acquisition.common import MANIFEST_PATH, RAW_DIR, REPO_ROOT, DatasetEntry
-from laris.research.corpus.acquisition.registry import ENGLISH_ACQUIRERS, EXPANSION_ACQUIRERS, OCR_ACQUIRERS, SCIENCE_ACQUIRERS
+from laris.research.corpus.acquisition.registry import (
+    ENGLISH_ACQUIRERS,
+    EXPANSION_ACQUIRERS,
+    OCR_ACQUIRERS,
+    SCIENCE_ACQUIRERS,
+)
 from laris.research.corpus.acquisition.sources.cc100 import CC100_DEFAULT_MAX_DOCS, acquire_cc100_vi
 from laris.research.corpus.acquisition.sources.core_corpora import (
     acquire_all_nli,
@@ -45,13 +50,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--ocr-all",
         action="store_true",
-        help="Acquire every stage-3 PDF source of configs/data/ocr_sources.yaml and merge it into the manifest",
+        help="Acquire every stage-3 PDF source of configs/data/ocr_sources.yaml "
+        "and merge it into the manifest",
     )
     parser.add_argument(
         "--english-all",
         action="store_true",
-        help="Acquire every English stage-1 replacement source of configs/data/english_sources.yaml "
-        "and merge it into the existing manifest",
+        help="Acquire every English stage-1 replacement source of "
+        "configs/data/english_sources.yaml and merge it into the existing manifest",
     )
     parser.add_argument(
         "--cc100-max-docs",

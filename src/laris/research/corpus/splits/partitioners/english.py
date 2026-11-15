@@ -1,9 +1,10 @@
 """Leakage-safe partitioning of the English stage-1 sources (T177, D46 / ADR-022).
 
-Config-driven (``configs/data/english_partition.yaml``). Documents are split by a hash of their id (or text),
-long documents are cut into passages that stay in their document's split, exact duplicates are dropped across
-sources, and QA rows that share an article or context with the SQuAD v1 validation or test partition are removed.
-Reads raw files and writes processed files; nothing trains.
+Config-driven (``configs/data/english_partition.yaml``). Documents are split by a hash of their id
+(or text), long documents are cut into passages that stay in their document's split, exact
+duplicates are dropped across sources, and QA rows that share an article or context with the SQuAD
+v1 validation or test partition are removed. Reads raw files and writes processed files; nothing
+trains.
 """
 
 import gzip
@@ -66,7 +67,7 @@ def iter_rows(files: List[Path], columns: Optional[List[str]] = None) -> Iterato
 
 
 def chunk_text(text: str, chunk_chars: int, min_chars: int) -> List[str]:
-    """Cuts text into passages of at most ``chunk_chars`` at paragraph, then sentence, boundaries."""
+    """Cuts text into passages of at most ``chunk_chars`` at paragraph, then sentence, ends."""
     pieces: List[str] = []
     for paragraph in _PARAGRAPH.split(text):
         paragraph = paragraph.strip()
@@ -161,7 +162,8 @@ def partition_mlm_source(
 ) -> Tuple[PhysicalSplitResult, Dict[str, int]]:
     """Splits documents by id hash, chunks them and drops exact duplicates (``seen`` is shared).
 
-    An optional ``min_date: {field, value}`` in the spec drops rows whose ISO date field sorts below ``value``.
+    An optional ``min_date: {field, value}`` in the spec drops rows whose ISO date field sorts below
+    ``value``.
     """
     ratios = _ratios(config["mlm_ratios"])
     files = sorted(p for p in raw_dir.iterdir() if p.suffix in {".parquet", ".gz", ".jsonl"})

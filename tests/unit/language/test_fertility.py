@@ -188,4 +188,6 @@ def test_committed_report_is_a_complete_readiness_measurement():
     assert report["fit_corpus"]["lines_match_partition_train_counts"] is True
     gates = {g["id"]: g for g in assess_readiness([report], formal_config())["gates"]}
     assert gates["G10"]["status"] in {"PASS", "FAIL"}, gates["G10"]
-    assert gates["G11"]["status"] == "WITHDRAWN"  # D46: measured history stays in the report, the gate does not count
+    assert (
+        gates["G11"]["status"] == "WITHDRAWN"
+    )  # D46: measured history stays in the report, the gate does not count

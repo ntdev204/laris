@@ -1,7 +1,6 @@
 """Formal qualification tests using existing JSON-shaped data only; no model execution."""
 
 import copy
-import json
 from pathlib import Path
 
 import pytest
@@ -151,7 +150,11 @@ def test_gate_config_matches_normative_table(config):
         assert str(gate["threshold"]) in line
         for field in ("dataset", "metric"):
             assert f"| {gate[field]} |" in line
-        language = f"{gate['language']} (withdrawn, D46)" if gate.get("status") == "withdrawn" else gate["language"]
+        language = (
+            f"{gate['language']} (withdrawn, D46)"
+            if gate.get("status") == "withdrawn"
+            else gate["language"]
+        )
         assert f"| {language} |" in line
 
 

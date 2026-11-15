@@ -2,11 +2,11 @@
 """Partition the English stage-1 sources into data/processed and update the split manifest (T177).
 
 Reads data/raw and data/processed (Wikipedia and SQuAD v1, for deduplication and leakage), writes
-data/processed/<dir>/{train,val,test}.parquet and merges the entries into task_splits_manifest.json, dropping every
-withdrawn Vietnamese entry. It reads and writes files only; nothing trains or fits.
+data/processed/<dir>/{train,val,test}.parquet and merges the entries into task_splits_manifest.json,
+dropping every withdrawn Vietnamese entry. It reads and writes files only; nothing trains or fits.
 
-Retrieval pairs (T178) are partitioned in one pass over all retrieval sources so that duplicates are dropped across
-them; use --only with every retrieval id to repeat it.
+Retrieval pairs (T178) are partitioned in one pass over all retrieval sources so that duplicates are
+dropped across them; use --only with every retrieval id to repeat it.
 
 Usage: python scripts/partition_english.py [--only ID ...] [--max-docs N]
 """

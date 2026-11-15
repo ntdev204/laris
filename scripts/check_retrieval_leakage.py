@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Leakage scan of the partitioned retrieval pairs (T178).
 
-Re-reads every train/val/test file of the retrieval sources and counts rows that still contain held-out text
-(SQuAD v1 validation/test questions and paragraphs, STS-B validation/test sentences, SciFact claims, titles and
-abstracts), plus queries that sit in more than one split. Exits 1 unless the held-out counts and the within-source
-split overlaps are zero. Reads files and writes one report; nothing trains.
+Re-reads every train/val/test file of the retrieval sources and counts rows that still contain
+held-out text (SQuAD v1 validation/test questions and paragraphs, STS-B validation/test sentences,
+SciFact claims, titles and abstracts), plus queries that sit in more than one split. Exits 1 unless
+the held-out counts and the within-source split overlaps are zero. Reads files and writes one
+report; nothing trains.
 
-Usage: python scripts/check_retrieval_leakage.py [--out reports/verification/T178-retrieval-leakage.json]
+Usage:
+    python scripts/check_retrieval_leakage.py \
+        [--out reports/verification/T178-retrieval-leakage.json]
 """
 
 import argparse
@@ -29,7 +32,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--config", type=Path, default=E.DEFAULT_CONFIG)
     parser.add_argument("--raw", type=Path, default=REPO_ROOT / "data/raw")
     parser.add_argument("--processed", type=Path, default=REPO_ROOT / "data/processed")
-    parser.add_argument("--out", type=Path, default=REPO_ROOT / "reports/verification/T178-retrieval-leakage.json")
+    parser.add_argument(
+        "--out", type=Path, default=REPO_ROOT / "reports/verification/T178-retrieval-leakage.json"
+    )
     args = parser.parse_args(argv)
     config = E.load_partition_config(args.config)
     blocklist = R.build_blocklist(args.processed, args.raw, config)

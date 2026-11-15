@@ -1,9 +1,11 @@
-"""Bounded, resumable acquisition of open-access scientific PDFs from the PMC Open Access S3 bucket (stage 3).
+"""Bounded, resumable acquisition of open-access scientific PDFs from the PMC Open Access S3 bucket
+(stage 3).
 
-For each article the publisher PDF is kept together with the JATS XML and plain text (a *silver* text reference,
-not gold) and the article's own metadata. An article is kept only when its metadata declares one of the licence
-codes listed in ``configs/data/ocr_sources.yaml``. Sampling is deterministic (seeded id prefixes) and stops at a
-hard byte budget. Nothing here trains or fits a model.
+For each article the publisher PDF is kept together with the JATS XML and plain text (a *silver*
+text reference, not gold) and the article's own metadata. An article is kept only when its metadata
+declares one of the licence codes listed in ``configs/data/ocr_sources.yaml``. Sampling is
+deterministic (seeded id prefixes) and stops at a hard byte budget. Nothing here trains or fits a
+model.
 """
 
 import hashlib
@@ -86,12 +88,16 @@ def list_articles(prefix: str, config: Dict[str, Any]) -> List[str]:
 def fetch_article(
     article: str, config: Dict[str, Any], dest_root: Path
 ) -> Optional[Dict[str, Any]]:
-    """Downloads one article when its licence, size and flags qualify; returns its index record or None."""
+    """Downloads one article when its licence, size and flags qualify.
+
+    Returns its index record, or None when it does not qualify.
+    """
     base = f"{config['endpoint']}/{article}/{article}"
     folder = dest_root / article
     record_path = folder / "record.json"
     if record_path.is_file():
-        return json.loads(record_path.read_text(encoding="utf-8"))
+        record: Dict[str, Any] = json.loads(record_path.read_text(encoding="utf-8"))
+        return record
     try:
         meta = json.loads(_get(f"{base}.json", config)[0])
         if meta.get("license_code") not in config["licenses"] or not meta.get("is_pmc_openaccess"):
@@ -137,7 +143,7 @@ def _iter_batches(prefixes: List[str], config: Dict[str, Any]) -> Iterator[List[
 
 
 def acquire_pmc_pdf(config_path: Optional[Path] = None) -> DatasetEntry:
-    """Acquires a licence-filtered, seed-sampled set of PMC OA PDFs up to the configured byte budget."""
+    """Acquires a licence-filtered, seed-sampled set of PMC OA PDFs up to the byte budget."""
     config = load_pmc_config(config_path)
     print(f"\n--- Acquiring {PMC_ID} (<= {config['budget_gb']} GB) ---")
     dest_dir = RAW_DIR / "pmc_oa_pdf"
@@ -212,7 +218,8 @@ def acquire_pmc_pdf(config_path: Optional[Path] = None) -> DatasetEntry:
         complete=bool(kept),
         min_rows=1000,
         notes=(
-            f"{config['notes']} Seed {config['seed']}; {historical} of {len(kept)} are historical scans (degraded stratum). "
-            "Stage-3 input documents; OCR text and layout gold still need D05 (T105). Not a training run."
+            f"{config['notes']} Seed {config['seed']}; {historical} of {len(kept)} are "
+            "historical scans (degraded stratum). Stage-3 input documents; OCR text and layout "
+            "gold still need D05 (T105). Not a training run."
         ),
     )
