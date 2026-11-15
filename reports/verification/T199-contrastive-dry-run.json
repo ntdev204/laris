@@ -1,0 +1,29 @@
+{
+  "batches": 200,
+  "batch_size": 64,
+  "seed": 42,
+  "rows": {
+    "rows": 12800,
+    "drawn_share": {
+      "simcse": 0.24984375,
+      "entailment": 0.151796875,
+      "paraphrase_duplicate": 0.144375,
+      "adjacent_sentences": 0.09875,
+      "contradiction": 0.1553125,
+      "paws_non_paraphrase": 0.199921875
+    },
+    "target_share": {
+      "simcse": 0.25,
+      "entailment": 0.15,
+      "paraphrase_duplicate": 0.15,
+      "adjacent_sentences": 0.1,
+      "contradiction": 0.15,
+      "paws_non_paraphrase": 0.2
+    },
+    "empty_rows_skipped": 0
+  },
+  "hard_negatives_per_batch_mean": 22.735,
+  "anchor_width_mean": 47.68,
+  "known_positive_cells_beyond_targets_per_batch_mean": 2.825,
+  "mean_row_weight": 0.9259375
+}

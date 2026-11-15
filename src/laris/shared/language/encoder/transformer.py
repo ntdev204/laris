@@ -621,7 +621,7 @@ try:
 
             # 2. Layers
             self.layers = nn.ModuleList([
-                _PyTorchTransformerLayer(d, self.config.num_heads, d_ff)
+                _PyTorchTransformerLayer(d, self.config.num_heads, d_ff, self.config.dropout)
                 for _ in range(self.config.num_layers)
             ])
 
@@ -684,6 +684,7 @@ try:
             task: Optional[str] = None,
             mlm_positions: Optional[torch.Tensor] = None,
             with_order: bool = False,
+            stochastic: bool = False,
         ) -> Dict[str, torch.Tensor]:
             """Forward pass for inference/profiling or authorized training.
 
@@ -691,15 +692,19 @@ try:
             `mlm_positions` (B, S bool) restricts the vocabulary projection to those positions
             and `mlm_logits` becomes (N, V) instead of (B, S, V). `with_order` adds
             `order_logits` to a single-task pass (order labels ride on MLM batches, T194).
+            `stochastic` switches `config.dropout` on for this pass (T199): the layers drop only
+            when it is set and the module is in training mode, so every other pass is unchanged
+            (the model had no dropout before). SimCSE needs it: two passes of one sentence differ
+            only by their dropout masks.
             """
             if training_pass:
                 assert_training_authorized("PyTorch neural model forward pass with gradients")
                 return self._forward_impl(
-                    token_ids, attention_mask, task, mlm_positions, with_order
+                    token_ids, attention_mask, task, mlm_positions, with_order, stochastic
                 )
             with torch.no_grad():
                 return self._forward_impl(
-                    token_ids, attention_mask, task, mlm_positions, with_order
+                    token_ids, attention_mask, task, mlm_positions, with_order, stochastic
                 )
 
         def _forward_impl(
@@ -709,6 +714,7 @@ try:
             task: Optional[str] = None,
             mlm_positions: Optional[torch.Tensor] = None,
             with_order: bool = False,
+            stochastic: bool = False,
         ) -> Dict[str, torch.Tensor]:
             if task is not None and task not in _TASK_HEADS:
                 raise ValueError(f"Unknown task '{task}'; expected one of {sorted(_TASK_HEADS)}")
@@ -722,10 +728,10 @@ try:
                     and hasattr(torch.utils, "checkpoint")
                 ):
                     x = torch.utils.checkpoint.checkpoint(
-                        layer, x, attention_mask, use_reentrant=False
+                        layer, x, attention_mask, stochastic, use_reentrant=False
                     )
                 else:
-                    x = layer(x, attention_mask=attention_mask)
+                    x = layer(x, attention_mask=attention_mask, stochastic=stochastic)
 
             hidden_states = self.final_norm(x)
             cls_rep = hidden_states[:, 0, :]
@@ -763,20 +769,24 @@ try:
             ids_b: torch.Tensor,
             mask_b: torch.Tensor,
             training_pass: bool = False,
+            detach_embeddings: bool = False,
         ) -> Dict[str, torch.Tensor]:
             """Similarity as sigmoid(scale * cosine + bias) of two single-sentence CLS states.
 
             `similarity_cosine` (B,) is the raw cosine and `similarity_score` (B, 1) the value in
             [0, 1] every other path (loss, evaluator, predictor) reads. The cosine runs in fp32.
+            With `detach_embeddings` the two passes run without gradient, so a loss on the score
+            reaches only `sim_scale` and `sim_bias` (calibration, T199).
             """
             if self.config.similarity_head != "bi_encoder":
                 raise ValueError("bi_encoder_similarity needs similarity_head='bi_encoder'")
-            embeddings = [
-                self.forward(
-                    ids, attention_mask=mask, task="embedding", training_pass=training_pass
-                )["cls_embedding"]
-                for ids, mask in ((ids_a, mask_a), (ids_b, mask_b))
-            ]
+            with torch.set_grad_enabled(torch.is_grad_enabled() and not detach_embeddings):
+                embeddings = [
+                    self.forward(
+                        ids, attention_mask=mask, task="embedding", training_pass=training_pass
+                    )["cls_embedding"]
+                    for ids, mask in ((ids_a, mask_a), (ids_b, mask_b))
+                ]
             cosine = F.cosine_similarity(embeddings[0].float(), embeddings[1].float(), dim=-1)
             score = torch.sigmoid(self.sim_scale * cosine + self.sim_bias)
             return {"similarity_cosine": cosine, "similarity_score": score.unsqueeze(-1)}
@@ -832,8 +842,9 @@ try:
             return x * torch.rsqrt(var + self.eps) * self.weight
 
     class _PyTorchTransformerLayer(nn.Module):  # type: ignore[misc]
-        def __init__(self, d_model: int, num_heads: int, d_ff: int) -> None:
+        def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float = 0.0) -> None:
             super().__init__()
+            self.dropout_p = float(dropout)
             self.d_model = d_model
             self.num_heads = num_heads
             self.head_dim = d_model // num_heads
@@ -852,8 +863,12 @@ try:
             self,
             x: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
+            stochastic: bool = False,
         ) -> torch.Tensor:
             b, s, _ = x.shape
+            # Dropout (attention weights and both residual branches) runs only on a stochastic
+            # pass of a module in training mode; otherwise the layer is deterministic.
+            p = self.dropout_p if (stochastic and self.training) else 0.0
             # Pre-RMSNorm
             norm_x = self.attn_norm(x)
             q = self.q_proj(norm_x).view(b, s, self.num_heads, self.head_dim).transpose(1, 2)
@@ -865,9 +880,11 @@ try:
                 if attention_mask is not None:
                     # attention_mask: (b, s), expand to (b, 1, 1, s) boolean mask
                     attn_mask = attention_mask[:, None, None, :] == 1
-                    attn_out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
+                    attn_out = F.scaled_dot_product_attention(
+                        q, k, v, attn_mask=attn_mask, dropout_p=p
+                    )
                 else:
-                    attn_out = F.scaled_dot_product_attention(q, k, v)
+                    attn_out = F.scaled_dot_product_attention(q, k, v, dropout_p=p)
                 attn_out = attn_out.transpose(1, 2).contiguous().view(b, s, self.d_model)
             else:
                 scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
@@ -875,16 +892,16 @@ try:
                     # (b, 1, 1, s)
                     mask = (1.0 - attention_mask[:, None, None, :].float()) * -1e4
                     scores = scores + mask
-                attn = F.softmax(scores, dim=-1)
+                attn = F.dropout(F.softmax(scores, dim=-1), p=p)
                 attn_out = (
                     torch.matmul(attn, v).transpose(1, 2).contiguous().view(b, s, self.d_model)
                 )
-            x = x + self.o_proj(attn_out)
+            x = x + F.dropout(self.o_proj(attn_out), p=p)
 
             # Pre-RMSNorm FFN
             norm_ffn = self.ffn_norm(x)
             ffn_out = self.ffn_w2(F.gelu(self.ffn_w1(norm_ffn)))
-            x = x + ffn_out
+            x = x + F.dropout(ffn_out, p=p)
             return x
 
 except ImportError:

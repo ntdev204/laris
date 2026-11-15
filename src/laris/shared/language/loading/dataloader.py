@@ -13,17 +13,26 @@ import random
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow.parquet as pq
 
+from laris.shared.config.schemas import (
+    DEFAULT_CONTRASTIVE_ROW_SHARES,
+    DEFAULT_CONTRASTIVE_ROW_WEIGHTS,
+)
 from laris.shared.language.loading.balanced import (
     BALANCEABLE_TASKS,
     LabelBalancedSampler,
     label_counts,
     nli_label,
     paraphrase_label,
+)
+from laris.shared.language.loading.relations import (
+    RelationRowSampler,
+    relation_stream,
+    shuffled,
 )
 from laris.shared.language.loading.segments import (
     IGNORE_INDEX,
@@ -60,6 +69,10 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
 # Dense-retrieval pairs (T178). Kept out of TASK_DATASET_DIRS on purpose: the task exists only when
 # a run enables it (`include_retrieval_task`) and it has no per-dataset scorer in the evaluator.
 RETRIEVAL_TASK = "retrieval"
+# Contrastive similarity rows (T199): the relation pairs of T197, train split only; like retrieval,
+# the task exists only when a run enables it and has no per-dataset scorer.
+CONTRASTIVE_SIM_TASK = "contrastive_sim"
+CONTRASTIVE_SIM_DATASET_DIR = "relation_pairs_en"
 RETRIEVAL_DATASET_DIRS: List[str] = [
     "gooaq_en", "natural_questions_pairs_en", "msmarco_en", "eli5_en", "yahoo_answers_en",
     "stackexchange_duplicates_en", "specter_triplets_en", "altlex_en", "simple_wiki_en",
@@ -310,6 +323,11 @@ class StreamingParquetMultiTaskDataLoader:
         order_task: bool = False,
         order_class_shares: Tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3),
         label_balanced_tasks: Sequence[str] = (),
+        include_contrastive_sim_task: bool = False,
+        contrastive_sim_batch_size: Optional[int] = None,
+        contrastive_sim_max_sequence_length: Optional[int] = None,
+        contrastive_sim_row_shares: Optional[Mapping[str, float]] = None,
+        contrastive_sim_row_weights: Optional[Mapping[str, float]] = None,
     ) -> None:
         if length_pool_batches < 1:
             raise ValueError("length_pool_batches must be >= 1")
@@ -318,6 +336,23 @@ class StreamingParquetMultiTaskDataLoader:
         max_len = retrieval_max_sequence_length
         if max_len is not None and not 8 <= max_len <= seq_len:
             raise ValueError("retrieval_max_sequence_length must be between 8 and seq_len")
+        if contrastive_sim_batch_size is not None and contrastive_sim_batch_size < 2:
+            raise ValueError("contrastive_sim_batch_size must be >= 2 (in-batch negatives)")
+        sim_len = contrastive_sim_max_sequence_length
+        if sim_len is not None and not 8 <= sim_len <= seq_len:
+            raise ValueError("contrastive_sim_max_sequence_length must be between 8 and seq_len")
+        if include_contrastive_sim_task and split != "train":
+            raise ValueError("the contrastive similarity task requires the train split")
+        self.include_contrastive_sim_task = include_contrastive_sim_task
+        self.contrastive_sim_batch_size = contrastive_sim_batch_size or batch_size
+        self.contrastive_sim_seq_len = sim_len or seq_len
+        self.contrastive_sim_row_shares = dict(
+            contrastive_sim_row_shares or DEFAULT_CONTRASTIVE_ROW_SHARES
+        )
+        self.contrastive_sim_row_weights = {
+            **DEFAULT_CONTRASTIVE_ROW_WEIGHTS, **dict(contrastive_sim_row_weights or {})
+        }
+        self._relation_samplers: Dict[str, RelationRowSampler] = {}
         if require_real_data and (tokenizer is None or fallback_to_synthetic):
             raise ValueError(
                 "require_real_data needs a fitted tokenizer and forbids the synthetic fallback"
@@ -434,8 +469,25 @@ class StreamingParquetMultiTaskDataLoader:
         """Recreate per-task streams using the configured dataset count exponents."""
         self._task_iterators: Dict[str, Iterator[Dict[str, Any]]] = {}
         self._balanced = {}
+        self._relation_samplers = {}
         for task_name, path_list in self.task_paths.items():
-            if path_list and task_name in self.label_balanced_tasks:
+            if path_list and task_name == CONTRASTIVE_SIM_TASK:
+                buffer = max(self.buffer_size, self.contrastive_sim_batch_size) * 4
+                kinds = [k for k, w in self.contrastive_sim_row_shares.items() if w > 0]
+                self._relation_samplers[task_name] = RelationRowSampler(
+                    {
+                        kind: shuffled(
+                            relation_stream(path_list, None if kind == "simcse" else kind),
+                            buffer,
+                            random.Random(f"{self._seed}:{task_name}:{kind}"),
+                        )
+                        for kind in kinds
+                    },
+                    self.contrastive_sim_row_shares,
+                    random.Random(f"{self._seed}:{task_name}"),
+                )
+                self._task_iterators[task_name] = iter(())  # marks the task as available
+            elif path_list and task_name in self.label_balanced_tasks:
                 self._balanced[task_name] = self._balanced_sampler(task_name, path_list)
                 self._task_iterators[task_name] = iter(())  # marks the task as available
             elif path_list:
@@ -523,6 +575,12 @@ class StreamingParquetMultiTaskDataLoader:
             ]
             if retrieval:
                 self.task_paths[RETRIEVAL_TASK] = retrieval
+        if self.include_contrastive_sim_task:
+            pairs = sorted(
+                (self.data_dir / CONTRASTIVE_SIM_DATASET_DIR).glob(f"{self.split}*.parquet")
+            )
+            if pairs:
+                self.task_paths[CONTRASTIVE_SIM_TASK] = pairs
 
     @classmethod
     def _interleaved_stream(
@@ -946,6 +1004,55 @@ class StreamingParquetMultiTaskDataLoader:
             labels,
         )
 
+    def _format_contrastive_sim_batch(self, rows: List[Dict[str, Any]]) -> TaskBatch:
+        """Anchors, designated positives and hard negatives for in-batch InfoNCE (T199).
+
+        Candidate i (i < B) is the positive of anchor i: the partner sentence of a positive
+        relation, else the anchor itself (the trainer runs it as a second, independently dropped
+        pass). Hard negatives follow. `contrastive_sim_known_positives` marks every candidate
+        whose text equals the anchor's or its positive's, which the loss keeps out of the
+        denominator; `contrastive_sim_weights` carries the loss weight of each row's kind.
+        """
+        anchors, positives, negatives = [], [], []
+        for row in rows:
+            anchors.append(row["anchor"])
+            positives.append(row["positive"] if row["positive"] is not None else row["anchor"])
+            if row["negative"] is not None:
+                negatives.append(row["negative"])
+        encoded = []
+        for group in (anchors, positives, negatives):
+            tokens = [self._tokenize(text) for text in group]
+            if not all(tokens):
+                raise RuntimeError("A contrastive similarity row tokenized to nothing")
+            encoded.append([build_sequence(t, None, self.contrastive_sim_seq_len) for t in tokens])
+        labels: Dict[str, np.ndarray] = {}
+        for name, group in zip(("anchor", "positive", "negative"), encoded):
+            if group:
+                ids, masks = zip(*group)
+                width = max(map(sum, masks))
+                labels[f"contrastive_sim_{name}_ids"] = np.asarray(ids, dtype=np.int64)[:, :width]
+                labels[f"contrastive_sim_{name}_mask"] = np.asarray(masks, dtype=np.int64)[
+                    :, :width
+                ]
+        candidates = positives + negatives
+        labels["contrastive_sim_known_positives"] = np.asarray(
+            [[c == a or c == p for c in candidates] for a, p in zip(anchors, positives)],
+            dtype=np.bool_,
+        )
+        labels["contrastive_sim_weights"] = np.asarray(
+            [self.contrastive_sim_row_weights[row["kind"]] for row in rows], dtype=np.float32
+        )
+        return self._to_task_batch(
+            CONTRASTIVE_SIM_TASK,
+            labels["contrastive_sim_anchor_ids"],
+            labels["contrastive_sim_anchor_mask"],
+            labels,
+        )
+
+    def contrastive_sim_report(self) -> Dict[str, Any]:
+        """Row kinds drawn so far against their target shares (empty when the task is off)."""
+        return {t: sampler.report() for t, sampler in sorted(self._relation_samplers.items())}
+
     def _retrieval_labels(
         self, pairs: List[Tuple[List[int], List[int]]]
     ) -> Dict[str, np.ndarray]:
@@ -990,7 +1097,7 @@ class StreamingParquetMultiTaskDataLoader:
             attention_mask = np.ascontiguousarray(attention_mask[:, :seq_len])
             labels = {
                 k: np.ascontiguousarray(v[:, :seq_len])
-                if not k.startswith(("retrieval_", "sim_a_", "sim_b_"))
+                if not k.startswith(("retrieval_", "sim_a_", "sim_b_", "contrastive_sim_"))
                 and v.ndim == 2 and v.shape[1] == self.seq_len
                 else v
                 for k, v in labels.items()
@@ -1030,6 +1137,8 @@ class StreamingParquetMultiTaskDataLoader:
         """
         if task in self._balanced:
             return self._balanced[task].draw_batch(self.batch_size)
+        if task in self._relation_samplers:
+            return self._relation_samplers[task].draw_batch(self.contrastive_sim_batch_size)
         pending = self._pending.setdefault(task, [])
         if not pending:
             it = self._task_iterators[task]
@@ -1078,6 +1187,8 @@ class StreamingParquetMultiTaskDataLoader:
             return self._format_qa_batch(records)
         elif selected_task == RETRIEVAL_TASK:
             return self._format_retrieval_batch(records)
+        elif selected_task == CONTRASTIVE_SIM_TASK:
+            return self._format_contrastive_sim_batch(records)
         else:
             raise ValueError(f"Unknown task: {selected_task}")
 
