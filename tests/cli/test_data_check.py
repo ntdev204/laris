@@ -32,7 +32,7 @@ def _write_manifest(root: Path, entry: dict) -> None:
 def test_complete_data_and_matching_manifest_report_no_data_problems(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    names = ["wikipedia_vi", "vinli", "quora_duplicates", "vists", "viquad_v2"]
+    names = ["wikipedia_en", "all_nli", "quora_duplicates", "stsb", "squad"]  # one per task (D46)
     entry = _populate(tmp_path, names)
     _write_manifest(tmp_path, entry)
     main(["data", "check", "--data-dir", str(tmp_path), "--verify-sha256"])
@@ -43,7 +43,7 @@ def test_complete_data_and_matching_manifest_report_no_data_problems(
 def test_missing_task_and_manifest_are_reported(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _populate(tmp_path, ["vinli"])
+    _populate(tmp_path, ["all_nli"])
     assert main(["data", "check", "--data-dir", str(tmp_path)]) == 1
     out = capsys.readouterr().out
     assert "missing" in out and "task 'qa' has no train data" in out
@@ -52,7 +52,7 @@ def test_missing_task_and_manifest_are_reported(
 def test_size_mismatch_against_manifest_is_reported(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    entry = _populate(tmp_path, ["vinli"])
+    entry = _populate(tmp_path, ["all_nli"])
     entry["bytes"]["train"] += 1
     _write_manifest(tmp_path, entry)
     assert main(["data", "check", "--data-dir", str(tmp_path)]) == 1

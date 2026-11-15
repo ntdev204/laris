@@ -1,10 +1,9 @@
-from pathlib import Path
-
 """Registry mapping expansion dataset ids to their acquirers."""
+
+from pathlib import Path
 
 from laris.research.corpus.acquisition.sources.cc100 import acquire_cc100_vi
 from laris.research.corpus.acquisition.sources.english_hf import english_acquirers
-from laris.research.corpus.acquisition.sources.pmc_pdf import PMC_ID, acquire_pmc_pdf
 from laris.research.corpus.acquisition.sources.expansion import (
     acquire_fever,
     acquire_hotpotqa,
@@ -13,6 +12,7 @@ from laris.research.corpus.acquisition.sources.expansion import (
     acquire_viquad_v2,
     acquire_vists,
 )
+from laris.research.corpus.acquisition.sources.pmc_pdf import PMC_ID, acquire_pmc_pdf
 from laris.research.corpus.acquisition.sources.s2orc import acquire_s2orc
 
 EXPANSION_ACQUIRERS = {
@@ -28,14 +28,16 @@ EXPANSION_ACQUIRERS = {
 }
 
 
-# English stage-1 replacement sources (D46 / ADR-022); configured in configs/data/english_sources.yaml.
-# They are fetched only on request (--only ID ... or --english-all), never by a default full run.
+# English stage-1 replacement sources (D46 / ADR-022); configured in
+# configs/data/english_sources.yaml. They are fetched only on request (--only ID ... or
+# --english-all), never by a default full run.
 ENGLISH_ACQUIRERS = english_acquirers()
 
 # Stage-3 (scientific OCR) PDF sources; configured in configs/data/ocr_sources.yaml.
 OCR_CONFIG = Path(__file__).resolve().parents[5] / "configs" / "data" / "ocr_sources.yaml"
 OCR_ACQUIRERS = {**english_acquirers(OCR_CONFIG), PMC_ID: acquire_pmc_pdf}
 
-# Stage-2 sources beyond S2ORC (scientific text, claim verification, retrieval); configs/data/science_sources.yaml.
+# Stage-2 sources beyond S2ORC (scientific text, claim verification, retrieval);
+# configs/data/science_sources.yaml.
 SCIENCE_CONFIG = Path(__file__).resolve().parents[5] / "configs" / "data" / "science_sources.yaml"
 SCIENCE_ACQUIRERS = english_acquirers(SCIENCE_CONFIG)

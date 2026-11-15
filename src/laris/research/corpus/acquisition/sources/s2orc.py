@@ -118,13 +118,15 @@ def _stream_lines(url: str) -> Iterator[bytes]:
 
 
 def _index_one_file(idx: int, url: str, out: Path, stem: frozenset) -> int:
-    """Streams one `papers` shard and stores the corpus ids whose fields of study intersect `stem`."""
+    """Streams one `papers` shard; stores the corpus ids whose fields of study meet `stem`."""
     import numpy as np
 
     ids: List[int] = []
     for line in _stream_lines(url):
         row = json.loads(line)
-        fields = {f.get("category") for f in (row.get("s2fieldsofstudy") or []) if isinstance(f, dict)}
+        fields = {
+            f.get("category") for f in (row.get("s2fieldsofstudy") or []) if isinstance(f, dict)
+        }
         if fields & stem:
             ids.append(int(row["corpusid"]))
     np.save(out.with_suffix(".tmp.npy"), np.array(ids, dtype=np.int64))
@@ -144,7 +146,7 @@ def build_field_index(refresh_listing: bool = False) -> Path:
     config = load_fields_config()
     index_dir = REPO_ROOT / config["index_dir"]
     index_dir.mkdir(parents=True, exist_ok=True)
-    final = index_dir / "stem_ids.npy"
+    final: Path = index_dir / "stem_ids.npy"
     stem = frozenset(config["stem_fields"])
     base = os.environ.get(API_BASE_ENV, DEFAULT_API_BASE).rstrip("/")
     key = _api_key()
@@ -155,7 +157,8 @@ def build_field_index(refresh_listing: bool = False) -> Path:
             return json.loads(listing_path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
         release = _api_get(f"{base}/release/latest", key)
         time.sleep(1.1)
-        dataset = _api_get(f"{base}/release/{release['release_id']}/dataset/{config['dataset']}", key)
+        dataset_url = f"{base}/release/{release['release_id']}/dataset/{config['dataset']}"
+        dataset = _api_get(dataset_url, key)
         data = {"release_id": release["release_id"], "files": dataset["files"]}
         listing_path.write_text(json.dumps(data), encoding="utf-8")
         listing_path.chmod(0o600)
@@ -395,7 +398,7 @@ def acquire_s2orc(
         seen.update(pq.read_table(shard_file, columns=["corpusid"]).column("corpusid").to_pylist())
 
     import threading
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
     workers = int(os.environ.get("S2ORC_WORKERS", "6"))
     lock = threading.Lock()
@@ -438,7 +441,7 @@ def acquire_s2orc(
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         pending = list(queue)
-        running = set()
+        running: set[Future[Any]] = set()
         while pending or running:
             while pending and len(running) < workers and _dir_bytes(dest) < budget_bytes:
                 running.add(pool.submit(do_shard, pending.pop(0)))

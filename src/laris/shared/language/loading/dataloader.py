@@ -50,8 +50,8 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
     "qa": ["squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "qa"],
 }
 
-# Dense-retrieval pairs (T178). Kept out of TASK_DATASET_DIRS on purpose: the task exists only
-# when a run enables it (`include_retrieval_task`) and it has no per-dataset scorer in the evaluator.
+# Dense-retrieval pairs (T178). Kept out of TASK_DATASET_DIRS on purpose: the task exists only when
+# a run enables it (`include_retrieval_task`) and it has no per-dataset scorer in the evaluator.
 RETRIEVAL_TASK = "retrieval"
 RETRIEVAL_DATASET_DIRS: List[str] = [
     "gooaq_en", "natural_questions_pairs_en", "msmarco_en", "eli5_en", "yahoo_answers_en",

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Prepare the English tokenizer fit corpus from TRAIN splits only (T177).
 
-Writes one normalised passage per line up to a word budget per source (configs/data/english_partition.yaml,
-block ``tokenizer_fit``) and a report with per-source word counts and SHA-256 of every input shard. It never reads
-validation or test files and never fits a tokenizer: the fit is an owner run.
+Writes one normalised passage per line up to a word budget per source
+(configs/data/english_partition.yaml, block ``tokenizer_fit``) and a report with per-source word
+counts and SHA-256 of every input shard. It never reads validation or test files and never fits a
+tokenizer: the fit is an owner run.
 """
 
 import argparse
@@ -35,8 +36,9 @@ def sha256(path: Path) -> str:
 def split_utf8(line: str, limit: int) -> List[str]:
     """Splits a line at whitespace into pieces of at most ``limit`` UTF-8 bytes.
 
-    SentencePiece silently skips sentences longer than ``max_sentence_length`` bytes (4096 by default), and
-    formula-heavy or non-ASCII text exceeds that with 4,000 characters; splitting keeps those documents in the fit.
+    SentencePiece silently skips sentences longer than ``max_sentence_length`` bytes (4096 by
+    default), and formula-heavy or non-ASCII text exceeds that with 4,000 characters; splitting
+    keeps those documents in the fit.
     """
     if len(line.encode("utf-8")) <= limit:
         return [line]
@@ -106,7 +108,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     report["total_words"] = sum(s["words"] for s in report["sources"].values())
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(
-        f"corpus {out_path} ({out_path.stat().st_size / 1e9:.2f} GB), {report['total_words']:,} words"
+        f"corpus {out_path} ({out_path.stat().st_size / 1e9:.2f} GB), "
+        f"{report['total_words']:,} words"
     )
     return 0
 

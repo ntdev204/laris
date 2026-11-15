@@ -1,4 +1,7 @@
-"""Partitioning of the English sources: chunking, determinism, deduplication and SQuAD v1 leakage removal."""
+"""Partitioning of the English sources.
+
+Covers chunking, determinism, deduplication and SQuAD v1 leakage removal.
+"""
 
 import pyarrow as pa
 import pyarrow.parquet as pq

@@ -1,17 +1,21 @@
 """Leakage-safe partitioning of the retrieval-pair sources (T178, D46 / ADR-022).
 
-Each source becomes ``data/processed/<dir>/{train,val,test}.parquet`` with columns ``query``, ``positive`` and
-``source``. The dense-retrieval task trains on them with in-batch negatives only, so no hard negatives are kept.
+Each source becomes ``data/processed/<dir>/{train,val,test}.parquet`` with columns ``query``,
+``positive`` and ``source``. The dense-retrieval task trains on them with in-batch negatives only,
+so no hard negatives are kept.
 
 Rules (all config-driven, ``configs/data/english_partition.yaml``):
 
-* A pair is dropped when either side is empty or when its (query, positive) pair already appeared in any source.
-* Splits follow the normalised text of the query (asymmetric sources) or of the connected component of texts that
-  share a pair (symmetric sources such as caption pairs), so no query, and no chain of paraphrases, straddles splits.
-  The key does not include the source id, so the same query lands in the same split in every source.
-* Held-out data is protected: a pair is dropped when a side equals a SQuAD v1 validation/test question or paragraph,
-  an STS-B validation/test sentence, a SciFact claim, a SciFact title or abstract, or when the positive shares an
-  eight-word window with a SQuAD v1 held-out paragraph or a SciFact abstract. SciFact claims are never trained on.
+* A pair is dropped when either side is empty or when its (query, positive) pair already appeared in
+  any source.
+* Splits follow the normalised text of the query (asymmetric sources) or of the connected component
+  of texts that share a pair (symmetric sources such as caption pairs), so no query, and no chain of
+  paraphrases, straddles splits. The key does not include the source id, so the same query lands in
+  the same split in every source.
+* Held-out data is protected: a pair is dropped when a side equals a SQuAD v1 validation/test
+  question or paragraph, an STS-B validation/test sentence, a SciFact claim, a SciFact title or
+  abstract, or when the positive shares an eight-word window with a SQuAD v1 held-out paragraph or a
+  SciFact abstract. SciFact claims are never trained on.
 
 Reads files and writes files; nothing trains.
 """
@@ -51,7 +55,10 @@ def text_digest(text: str) -> int:
 
 
 def _shingles(normalised: str) -> Iterator[int]:
-    """64-bit keys (CRC-32 and Adler-32 of the bytes) of every eight-word window; stable across runs."""
+    """64-bit keys (CRC-32 and Adler-32 of the bytes) of every eight-word window.
+
+    The keys are stable across runs.
+    """
     words = normalised.split()
     for i in range(len(words) - SHINGLE_WORDS + 1):
         data = " ".join(words[i : i + SHINGLE_WORDS]).encode("utf-8")
@@ -94,7 +101,10 @@ class Blocklist:
 
 
 def build_blocklist(processed_root: Path, raw_root: Path, config: Dict[str, Any]) -> Blocklist:
-    """Held-out sets named in ``retrieval_blocklist``; a missing directory is an error, never skipped."""
+    """Held-out sets named in ``retrieval_blocklist``.
+
+    A missing directory is an error, never skipped.
+    """
     spec = config["retrieval_blocklist"]
     block = Blocklist()
     for split in ("val", "test"):
@@ -140,7 +150,10 @@ def _source_files(raw_dir: Path) -> List[Path]:
 
 
 def _components(spec: Dict[str, Any], files: List[Path], max_chars: int) -> Dict[int, int]:
-    """Union-find over the texts that share a pair; the root of a component is its smallest digest."""
+    """Union-find over the texts that share a pair.
+
+    The root of a component is its smallest digest.
+    """
     parent: Dict[int, int] = {}
 
     def find(x: int) -> int:
@@ -171,7 +184,10 @@ def partition_retrieval_source(
     seen_pairs: Set[int],
     max_pairs: Optional[int] = None,
 ) -> Tuple[PhysicalSplitResult, Dict[str, Any]]:
-    """Streams one source into train/val/test; ``seen_pairs`` is shared across sources (deduplication)."""
+    """Streams one source into train/val/test.
+
+    ``seen_pairs`` is shared across sources (deduplication).
+    """
     ratios = _ratios(config["retrieval_ratios"])
     max_chars = int(config["retrieval_max_chars"])
     files = _source_files(raw_dir)
@@ -241,5 +257,7 @@ def scan_split_isolation(paths: Dict[str, Iterable[Path]]) -> Dict[str, Any]:
                             within += 1
                         else:
                             across += 1
-    return {"queries_in_two_splits_within_source": within, "queries_in_two_splits_across_sources": across}
-
+    return {
+        "queries_in_two_splits_within_source": within,
+        "queries_in_two_splits_across_sources": across,
+    }
