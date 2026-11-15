@@ -39,7 +39,10 @@ from laris.shared.language.schemas import (
 ORDER_CLASS_COUNT = 3
 # Parameters a checkpoint written before a head existed may lack; they keep their fixed
 # initial values when such a checkpoint loads.
-OPTIONAL_HEAD_PREFIXES = ("order_head.",)
+OPTIONAL_HEAD_PREFIXES = ("order_head.", "sim_scale", "sim_bias")
+# Similarity output (T198): `cross` reads the pair input through a linear head on the CLS state;
+# `bi_encoder` is the cosine of two single-sentence CLS embeddings with a learned scale and bias.
+SIMILARITY_HEADS = ("cross", "bi_encoder")
 
 
 class ModelReadinessState(str, Enum):
@@ -73,8 +76,19 @@ class LanguageEncoderConfig:
     precision: str = "bf16"
     seed: int = 42
     gradient_checkpointing: bool = False
+    similarity_head: str = "cross"
+    similarity_initial_scale: float = 10.0
+    similarity_initial_bias: float = -7.5
 
     def __post_init__(self) -> None:
+        if self.similarity_head not in SIMILARITY_HEADS:
+            raise ValueError(
+                f"similarity_head must be one of {SIMILARITY_HEADS}, got '{self.similarity_head}'"
+            )
+        if not math.isfinite(self.similarity_initial_scale) or self.similarity_initial_scale <= 0:
+            raise ValueError("similarity_initial_scale must be finite and positive")
+        if not math.isfinite(self.similarity_initial_bias):
+            raise ValueError("similarity_initial_bias must be finite")
         if self.d_model not in ALLOWED_EMBEDDING_DIMENSIONS:
             raise EmbeddingDimensionMismatchError(
                 f"d_model {self.d_model} must be in {sorted(ALLOWED_EMBEDDING_DIMENSIONS)}"
@@ -114,6 +128,9 @@ class LanguageEncoderConfig:
             tie_embeddings=getattr(model_cfg, "tie_embeddings", True),
             precision=getattr(model_cfg, "precision", "bf16"),
             seed=getattr(model_cfg, "seed", 42),
+            similarity_head=getattr(model_cfg, "similarity_head", "cross"),
+            similarity_initial_scale=getattr(model_cfg, "similarity_initial_scale", 10.0),
+            similarity_initial_bias=getattr(model_cfg, "similarity_initial_bias", -7.5),
         )
 
     def calculate_backbone_parameter_count(self) -> int:
@@ -160,7 +177,9 @@ class LanguageEncoderConfig:
         sim_params = d * 1 + 1
         qa_params = d * 2 + 2
         order_params = d * ORDER_CLASS_COUNT + ORDER_CLASS_COUNT
-        return nli_params + para_params + sim_params + qa_params + order_params
+        # bi-encoder similarity (T198) adds a scalar scale and bias; the cross head stays in place
+        bi_params = 2 if self.similarity_head == "bi_encoder" else 0
+        return nli_params + para_params + sim_params + qa_params + order_params + bi_params
 
     def calculate_parameter_count(self, include_heads: bool = False) -> int:
         """Calculates parameter count according to architectural equations.
@@ -630,6 +649,13 @@ try:
             with torch.no_grad():
                 self.order_head.weight.zero_()
                 self.order_head.bias.zero_()
+            # Bi-encoder similarity (T198): a learned scale and bias on the cosine, also built
+            # without drawing from the RNG; a cross-head checkpoint loads into it.
+            if self.config.similarity_head == "bi_encoder":
+                scale = float(self.config.similarity_initial_scale)
+                bias = float(self.config.similarity_initial_bias)
+                self.sim_scale = nn.Parameter(torch.tensor(scale))
+                self.sim_bias = nn.Parameter(torch.tensor(bias))
             self.gradient_checkpointing = getattr(self.config, "gradient_checkpointing", False)
             self.eval()
 
@@ -717,13 +743,43 @@ try:
                 outputs["nli_logits"] = self.nli_head(cls_rep)
             if task in (None, "paraphrase"):
                 outputs["paraphrase_prob"] = torch.sigmoid(self.para_head(cls_rep))
-            if task in (None, "similarity"):
+            if task == "similarity" and self.config.similarity_head == "bi_encoder":
+                raise ValueError(
+                    "similarity_head bi_encoder scores two single-sentence inputs; "
+                    "call bi_encoder_similarity"
+                )
+            if task in (None, "similarity") and self.config.similarity_head == "cross":
                 outputs["similarity_score"] = torch.sigmoid(self.sim_head(cls_rep))
             if task in (None, "qa"):
                 outputs["qa_logits"] = self.qa_head(hidden_states)
             if task in (None, "order") or with_order:
                 outputs["order_logits"] = self.order_head(cls_rep)
             return outputs
+
+        def bi_encoder_similarity(
+            self,
+            ids_a: torch.Tensor,
+            mask_a: torch.Tensor,
+            ids_b: torch.Tensor,
+            mask_b: torch.Tensor,
+            training_pass: bool = False,
+        ) -> Dict[str, torch.Tensor]:
+            """Similarity as sigmoid(scale * cosine + bias) of two single-sentence CLS states.
+
+            `similarity_cosine` (B,) is the raw cosine and `similarity_score` (B, 1) the value in
+            [0, 1] every other path (loss, evaluator, predictor) reads. The cosine runs in fp32.
+            """
+            if self.config.similarity_head != "bi_encoder":
+                raise ValueError("bi_encoder_similarity needs similarity_head='bi_encoder'")
+            embeddings = [
+                self.forward(
+                    ids, attention_mask=mask, task="embedding", training_pass=training_pass
+                )["cls_embedding"]
+                for ids, mask in ((ids_a, mask_a), (ids_b, mask_b))
+            ]
+            cosine = F.cosine_similarity(embeddings[0].float(), embeddings[1].float(), dim=-1)
+            score = torch.sigmoid(self.sim_scale * cosine + self.sim_bias)
+            return {"similarity_cosine": cosine, "similarity_score": score.unsqueeze(-1)}
 
         def load_encoder_state(self, state: Dict[str, Any]) -> List[str]:
             """Loads a state dict; only parameters of heads added later may be missing.

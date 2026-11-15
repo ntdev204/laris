@@ -64,7 +64,7 @@ before any main run. Owner direction 2026-11-14: no training now, solve the data
 (two-segment self-supervision, contrastive similarity without bought labels, mixed batches, two-stage schedule), planned step by step.
 Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205, T206
 Execution order (each step needs the previous ones; no step before T204 trains): T192 data on disk (done) -> T193 audit (done) -> T206 data corrections (done) ->
-T194 two-segment builder (done) -> T195 order head (done) -> T196 balanced NLI and paraphrase (done) -> T197 relation pairs (done) -> T198 bi-encoder head ->
+T194 two-segment builder (done) -> T195 order head (done) -> T196 balanced NLI and paraphrase (done) -> T197 relation pairs (done) -> T198 bi-encoder head (done) ->
 T199 contrastive objective -> T200 paraphrase and QA data -> T201 mixed batches -> T202 owner profile -> T203 mixture and schedule ->
 T204 owner stage-2 and control runs -> T205 analysis and decision.
 Exit criteria:

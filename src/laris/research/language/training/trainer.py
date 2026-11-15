@@ -304,6 +304,17 @@ class LanguageEncoderTrainer:
                     "The retrieval task needs retrieval_loss_weight (loss_lambda_retrieval) > 0"
                 )
             return {"retrieval_loss": self._retrieval_loss(labels, training_pass)}
+        if task_type == "similarity" and self._bi_encoder_similarity():
+            # two single-sentence passes; the pair input of the batch is not used (T198)
+            sides = [
+                torch.as_tensor(labels[f"sim_{side}_{kind}"], device=self.device)
+                for side in ("a", "b")
+                for kind in ("ids", "mask")
+            ]
+            similarity: Dict[str, Any] = self.model.bi_encoder_similarity(
+                *sides, training_pass=training_pass
+            )
+            return similarity
         kwargs: Dict[str, Any] = {"attention_mask": attention_mask}
         if training_pass:
             kwargs["training_pass"] = True
@@ -324,6 +335,11 @@ class LanguageEncoderTrainer:
         ):
             outputs["retrieval_loss"] = self._retrieval_loss(labels, True)
         return outputs
+
+    def _bi_encoder_similarity(self) -> bool:
+        return getattr(getattr(self.model, "config", None), "similarity_head", "cross") == (
+            "bi_encoder"
+        )
 
     def _uses_order(self, task_type: str, labels: Dict[str, Any]) -> bool:
         """Order labels ride on MLM batches (T194); the loss runs only with a positive weight."""

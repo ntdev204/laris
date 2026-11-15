@@ -797,6 +797,9 @@ class StreamingParquetMultiTaskDataLoader:
         token_ids_list: List[List[int]] = []
         attention_mask_list: List[List[int]] = []
         sim_labels: List[float] = []
+        singles: Dict[str, List[List[int]]] = {
+            f"sim_{side}_{kind}": [] for side in ("a", "b") for kind in ("ids", "mask")
+        }
 
         for rec in records:
             s1 = rec.get("sentence1") or ""
@@ -819,12 +822,26 @@ class StreamingParquetMultiTaskDataLoader:
             token_ids_list.append(padded_seq)
             attention_mask_list.append(att_mask)
             sim_labels.append(score)
+            # single-sentence inputs for the bi-encoder similarity head (T198)
+            for side, toks in (("a", s1_toks), ("b", s2_toks)):
+                single_seq, single_mask = self._prepare_sequence(toks, None)
+                singles[f"sim_{side}_ids"].append(single_seq)
+                singles[f"sim_{side}_mask"].append(single_mask)
 
         tok_arr = np.array(token_ids_list, dtype=np.int64)
         att_arr = np.array(attention_mask_list, dtype=np.int64)
         lbl_arr = np.array(sim_labels, dtype=np.float32)
+        labels: Dict[str, Any] = {"sim_labels": lbl_arr}
+        for side in ("a", "b"):
+            ids = np.array(singles[f"sim_{side}_ids"], dtype=np.int64)
+            mask = np.array(singles[f"sim_{side}_mask"], dtype=np.int64)
+            if self.trim_padding and len(mask):
+                # each side trims to its own longest sequence (it can exceed the pair's)
+                width = min(self.seq_len, max(8, -(-int(mask.sum(axis=1).max()) // 8) * 8))
+                ids, mask = ids[:, :width], mask[:, :width]
+            labels[f"sim_{side}_ids"], labels[f"sim_{side}_mask"] = ids, mask
 
-        return self._to_task_batch("similarity", tok_arr, att_arr, {"sim_labels": lbl_arr})
+        return self._to_task_batch("similarity", tok_arr, att_arr, labels)
 
     def _locate_answer_span(
         self, rec: Dict[str, Any], context: str, q_toks: List[int]
@@ -973,7 +990,8 @@ class StreamingParquetMultiTaskDataLoader:
             attention_mask = np.ascontiguousarray(attention_mask[:, :seq_len])
             labels = {
                 k: np.ascontiguousarray(v[:, :seq_len])
-                if not k.startswith("retrieval_") and v.ndim == 2 and v.shape[1] == self.seq_len
+                if not k.startswith(("retrieval_", "sim_a_", "sim_b_"))
+                and v.ndim == 2 and v.shape[1] == self.seq_len
                 else v
                 for k, v in labels.items()
             }
