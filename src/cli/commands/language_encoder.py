@@ -320,6 +320,9 @@ def _run_memory_profile(
         include_retrieval_task=hyper.retrieval_task,
         retrieval_batch_size=hyper.retrieval_batch_size,
         retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
+        mlm_pair_fraction=hyper.mlm_pair_fraction,
+        order_task=hyper.order_task,
+        order_class_shares=hyper.order_class_shares,
     )
     expected = set(TASK_DATASET_DIRS) | ({"retrieval"} if hyper.retrieval_task else set())
     missing = sorted(expected - set(loader.task_paths))
@@ -384,6 +387,10 @@ def run(args: argparse.Namespace) -> int:
         hyper = _resolve_hyperparameters(args)
     except ValueError as exc:
         print(f"[ERROR] {exc}")
+        return 1
+    if hyper.order_task:
+        # The loader builds order labels (T194); the order head and its loss come with T195.
+        print("[ERROR] order_task needs the sentence-order head and loss, which are not built yet.")
         return 1
     args.micro_batch_size = hyper.micro_batch_size
     args.grad_accum_steps = hyper.gradient_accumulation_steps
@@ -492,6 +499,9 @@ def run(args: argparse.Namespace) -> int:
         include_retrieval_task=hyper.retrieval_task,
         retrieval_batch_size=hyper.retrieval_batch_size,
         retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
+        mlm_pair_fraction=hyper.mlm_pair_fraction,
+        order_task=hyper.order_task,
+        order_class_shares=hyper.order_class_shares,
         **common,  # type: ignore[arg-type]
     )
     eval_loader = StreamingParquetMultiTaskDataLoader(

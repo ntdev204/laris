@@ -18,6 +18,18 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 import numpy as np
 import pyarrow.parquet as pq
 
+from laris.shared.language.loading.segments import (
+    IGNORE_INDEX,
+    ORDER_CLASSES,
+    ORDER_OTHER_DOCUMENT,
+    ORDER_SWAPPED,
+    build_pair_sequence,
+    cut_two_segments,
+    document_id,
+    draw_order_class,
+    validate_shares,
+)
+
 logger = logging.getLogger(__name__)
 
 VALID_SPLITS = {"train", "val", "test"}
@@ -287,6 +299,9 @@ class StreamingParquetMultiTaskDataLoader:
         include_retrieval_task: bool = False,
         retrieval_batch_size: Optional[int] = None,
         retrieval_max_sequence_length: Optional[int] = None,
+        mlm_pair_fraction: float = 0.0,
+        order_task: bool = False,
+        order_class_shares: Tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3),
     ) -> None:
         if length_pool_batches < 1:
             raise ValueError("length_pool_batches must be >= 1")
@@ -299,7 +314,28 @@ class StreamingParquetMultiTaskDataLoader:
             raise ValueError(
                 "require_real_data needs a fitted tokenizer and forbids the synthetic fallback"
             )
+        if not 0.0 <= mlm_pair_fraction <= 1.0:
+            raise ValueError("mlm_pair_fraction must be between 0 and 1")
+        if order_task and mlm_pair_fraction <= 0.0:
+            raise ValueError(
+                "order_task labels two-segment MLM rows: it needs mlm_pair_fraction > 0"
+            )
+        self.mlm_pair_fraction = float(mlm_pair_fraction)
+        self.order_task = order_task
+        self.order_class_shares = validate_shares(order_class_shares)
+        # Second segments of earlier rows, the source of the other-document class; they come
+        # from this loader's split only, so no segment crosses train and validation.
+        self._other_segments: List[Tuple[str, List[int]]] = []
         self.stats = {"qa_total": 0, "qa_unanswerable": 0, "qa_answer_outside_window": 0}
+        self.stats.update(
+            {
+                "mlm_sequences": 0,
+                "mlm_pair_sequences": 0,
+                "mlm_pair_without_boundary": 0,
+                "order_other_document_unavailable": 0,
+                **{f"order_{name}": 0 for name in ORDER_CLASSES},
+            }
+        )
         if split not in VALID_SPLITS:
             raise ValueError(f"split must be one of {sorted(VALID_SPLITS)}, got '{split}'")
         self.split = split
@@ -397,6 +433,7 @@ class StreamingParquetMultiTaskDataLoader:
         self.rng = random.Random(self._seed)
         self.np_rng = np.random.default_rng(self._seed)
         self._pending.clear()
+        self._other_segments.clear()
         self._build_streams()
 
     def _count_rows(self) -> Dict[str, int]:
@@ -533,46 +570,128 @@ class StreamingParquetMultiTaskDataLoader:
         """Formats 1 or 2 token sequences with [CLS], [SEP], padding, and attention mask."""
         return build_sequence(tok_ids, second_tok_ids, self.seq_len)
 
-    def _format_mlm_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
-        """Formats records for Masked Language Modeling with 15% dynamic masking."""
-        s = self.seq_len
-        cls_id, sep_id, mask_id, pad_id = 2, 3, 4, 0
+    def _mask_tokens(self, padded_seq: List[int]) -> Tuple[List[int], List[int]]:
+        """Dynamic MLM masking (80 % [MASK], 10 % random, 10 % unchanged); special ids stay."""
+        mlm_labels = [IGNORE_INDEX] * len(padded_seq)
+        final_tokens = list(padded_seq)
+        for idx, tok in enumerate(padded_seq):
+            if tok in (CLS_ID, SEP_ID, PAD_ID):
+                continue
+            if self.rng.random() < self.mlm_mask_prob:
+                mlm_labels[idx] = tok
+                r = self.rng.random()
+                if r < 0.8:
+                    final_tokens[idx] = MASK_ID
+                elif r < 0.9:
+                    final_tokens[idx] = self.rng.randint(10, self.vocab_size - 1)
+                # 10% remains unchanged
+        return final_tokens, mlm_labels
 
+    def _two_segment_rows(
+        self, records: List[Dict[str, Any]]
+    ) -> List[Optional[Tuple[str, List[int], List[int]]]]:
+        """Per record (document, a, b) when it becomes a two-segment row, else None."""
+        rows: List[Optional[Tuple[str, List[int], List[int]]]] = []
+        for rec in records:
+            if self.mlm_pair_fraction <= 0.0 or self.rng.random() >= self.mlm_pair_fraction:
+                rows.append(None)
+                continue
+            text = rec.get("text") or rec.get("content") or rec.get("document") or ""
+            cut = cut_two_segments(text, self.rng)
+            if cut is None:
+                self.stats["mlm_pair_without_boundary"] += 1
+                rows.append(None)
+                continue
+            rows.append((document_id(rec), self._tokenize(cut[0]), self._tokenize(cut[1])))
+        return rows
+
+    def _other_segment(
+        self, doc: str, rows: List[Optional[Tuple[str, List[int], List[int]]]]
+    ) -> Optional[List[int]]:
+        """A second segment of another document: from this batch first, then earlier rows."""
+        in_batch = [row[2] for row in rows if row is not None and row[0] != doc]
+        if in_batch:
+            return in_batch[self.rng.randrange(len(in_batch))]
+        earlier = [seg for other, seg in self._other_segments if other != doc]
+        return earlier[self.rng.randrange(len(earlier))] if earlier else None
+
+    def _format_mlm_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
+        """Formats records for Masked Language Modeling with 15% dynamic masking.
+
+        With `mlm_pair_fraction` a share of the rows becomes `[CLS] a [SEP] b [SEP]` from two
+        consecutive segments of one passage; with `order_task` those rows carry an order label
+        (in order, swapped, other document) and the other rows carry the ignore index.
+        """
         token_ids_list: List[List[int]] = []
         attention_mask_list: List[List[int]] = []
         mlm_labels_list: List[List[int]] = []
+        order_labels: List[int] = []
 
-        for rec in records:
-            text = rec.get("text") or rec.get("content") or rec.get("document") or ""
-            tok_ids = self._tokenize(text)
-            padded_seq, att_mask = self._prepare_sequence(tok_ids)
-
-            # Apply dynamic MLM masking
-            mlm_labels = [-100] * s
-            final_tokens = list(padded_seq)
-
-            for idx in range(s):
-                tok = padded_seq[idx]
-                if tok in (cls_id, sep_id, pad_id):
-                    continue
-                if self.rng.random() < self.mlm_mask_prob:
-                    mlm_labels[idx] = tok
-                    r = self.rng.random()
-                    if r < 0.8:
-                        final_tokens[idx] = mask_id
-                    elif r < 0.9:
-                        final_tokens[idx] = self.rng.randint(10, self.vocab_size - 1)
-                    # 10% remains unchanged
-
+        rows = self._two_segment_rows(records)
+        for rec, row in zip(records, rows):
+            order = IGNORE_INDEX
+            if row is None:
+                text = rec.get("text") or rec.get("content") or rec.get("document") or ""
+                padded_seq, att_mask = self._prepare_sequence(self._tokenize(text))
+            else:
+                doc, first, second = row
+                if self.order_task:
+                    order = draw_order_class(self.rng, self.order_class_shares)
+                    if order == ORDER_SWAPPED:
+                        first, second = second, first
+                    elif order == ORDER_OTHER_DOCUMENT:
+                        other = self._other_segment(doc, rows)
+                        if other is None:
+                            self.stats["order_other_document_unavailable"] += 1
+                            order = draw_order_class(self.rng, self.order_class_shares[:2] + (0.0,))
+                            if order == ORDER_SWAPPED:
+                                first, second = second, first
+                        else:
+                            second = other
+                    self.stats[f"order_{ORDER_CLASSES[order]}"] += 1
+                padded_seq, att_mask = build_pair_sequence(
+                    first, second, self.seq_len, CLS_ID, SEP_ID, PAD_ID
+                )
+                self.stats["mlm_pair_sequences"] += 1
+            final_tokens, mlm_labels = self._mask_tokens(padded_seq)
             token_ids_list.append(final_tokens)
             attention_mask_list.append(att_mask)
             mlm_labels_list.append(mlm_labels)
+            order_labels.append(order)
+        self.stats["mlm_sequences"] += len(records)
 
+        for row in rows:
+            if row is not None:
+                self._other_segments.append((row[0], row[2]))
+        del self._other_segments[: max(0, len(self._other_segments) - self.buffer_size)]
+
+        labels = {"mlm_labels": np.array(mlm_labels_list, dtype=np.int64)}
+        if self.order_task:
+            labels["order_labels"] = np.array(order_labels, dtype=np.int64)
         tok_arr = np.array(token_ids_list, dtype=np.int64)
         att_arr = np.array(attention_mask_list, dtype=np.int64)
-        lbl_arr = np.array(mlm_labels_list, dtype=np.int64)
+        return self._to_task_batch("mlm", tok_arr, att_arr, labels)
 
-        return self._to_task_batch("mlm", tok_arr, att_arr, {"mlm_labels": lbl_arr})
+    def two_segment_report(self) -> Dict[str, Any]:
+        """Share of two-segment MLM rows and order-class shares among the rows drawn so far."""
+        total = self.stats["mlm_sequences"]
+        pairs = self.stats["mlm_pair_sequences"]
+        ordered = sum(self.stats[f"order_{name}"] for name in ORDER_CLASSES)
+        return {
+            "mlm_pair_fraction": self.mlm_pair_fraction,
+            "order_task": self.order_task,
+            "order_class_shares": list(self.order_class_shares),
+            "mlm_sequences": total,
+            "mlm_pair_sequences": pairs,
+            "mlm_pair_share": pairs / total if total else 0.0,
+            "mlm_pair_without_boundary": self.stats["mlm_pair_without_boundary"],
+            "order_other_document_unavailable": self.stats["order_other_document_unavailable"],
+            "order_counts": {name: self.stats[f"order_{name}"] for name in ORDER_CLASSES},
+            "order_shares": {
+                name: (self.stats[f"order_{name}"] / ordered if ordered else 0.0)
+                for name in ORDER_CLASSES
+            },
+        }
 
     def _format_nli_batch(self, records: List[Dict[str, Any]]) -> TaskBatch:
         """Formats premise/hypothesis records for 3-way NLI classification."""

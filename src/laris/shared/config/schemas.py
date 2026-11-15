@@ -118,6 +118,12 @@ class TrainingConfig(BaseModel):
     # Minimum share of the optimizer steps per task (T190); lifts a small task
     # above its temperature share.
     task_sampling_floor: dict[str, float] = Field(default_factory=dict)
+    # Two-segment MLM (T194): share of MLM rows cut into `[CLS] a [SEP] b [SEP]` from two
+    # consecutive segments of one passage; 0 keeps every MLM row single-segment.
+    mlm_pair_fraction: float = Field(default=0.0, ge=0.0, le=1.0, allow_inf_nan=False)
+    # Sentence-order labels on the two-segment rows (in order, swapped, other document).
+    order_task: bool = False
+    order_class_shares: tuple[float, float, float] = (1 / 3, 1 / 3, 1 / 3)
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":
@@ -128,6 +134,15 @@ class TrainingConfig(BaseModel):
             )
         if self.retrieval_task and self.loss_lambda_retrieval <= 0:
             raise ValueError("retrieval_task needs loss_lambda_retrieval > 0")
+        if self.order_task and self.mlm_pair_fraction <= 0:
+            raise ValueError(
+                "order_task labels two-segment MLM rows: it needs mlm_pair_fraction > 0"
+            )
+        shares = self.order_class_shares
+        if any(not 0.0 <= v < float("inf") for v in shares) or sum(shares) <= 0:
+            raise ValueError(
+                "order_class_shares needs three finite, non-negative values, not all 0"
+            )
         return self
 
 
