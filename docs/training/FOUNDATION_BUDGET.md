@@ -24,7 +24,7 @@ change_summary: "Records the owner profiling result and approved diagnostic budg
 
 Owner đã chạy profiling và chốt ngân sách chẩn đoán cho F04A. Các số model dưới đây lấy từ 512 dòng validation mỗi dataset theo thứ
 tự đọc hiện tại. Kết quả phụ thuộc mẫu và cần phép đo held-out đúng protocol tại F07.
-[Báo cáo F04](../../reports/language_encoder/foundation-error-analysis.json)
+Báo cáo F04 (`reports/language_encoder/foundation-error-analysis.json`, not on `laris-v2`)
 
 | Gate | Bằng chứng hiện tại | Mục tiêu | Việc cần giải quyết |
 | --- | --- | --- | --- |

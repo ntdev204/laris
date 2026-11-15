@@ -17,7 +17,6 @@ related_documents:
 decision_references:
   - "ADR-002"
   - "ADR-008"
-  - "ADR-013"
 change_summary: "G03 agent draft: preserves existing approvals and records missing source, human-gold and dependency decisions for owner handoff."
 ---
 

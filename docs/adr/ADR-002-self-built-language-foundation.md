@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md"
 decision_references:
   - "ADR-002"

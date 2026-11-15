@@ -10,10 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/adr/ADR-017-layers-and-capability-ladder.md"
-  - "docs/testing/TEST_STRATEGY.md"
 decision_references:
-  - "ADR-017"
 change_summary: "Scenarios that show the harness plans, tracks, reflects, completes, resumes and stays inside its limits, using a scripted provider."
 ---
 

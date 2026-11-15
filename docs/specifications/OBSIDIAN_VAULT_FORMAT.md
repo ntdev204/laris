@@ -10,10 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/AGENT_HARNESS.md"
-  - "docs/architecture/BRAIN_THREAT_MODEL.md"
 decision_references:
-  - "ADR-014"
 change_summary: "Defines the subset of the Obsidian vault format that LARIS reads and writes, the naming and property rules, and the behaviours that are verified or deliberately avoided."
 ---
 

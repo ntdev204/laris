@@ -10,18 +10,12 @@ owner: LARIS Architecture Team
 reviewers: []
 source_of_truth: true
 related_documents:
-- docs/architecture/DATA_FLOW.md
-- docs/architecture/EVIDENCE_AND_PROVENANCE.md
-- docs/architecture/SELECTIVE_COMPUTATION.md
-- docs/architecture/SYSTEM_OVERVIEW.md
 - docs/research/LANGUAGE_AND_MODEL_STRATEGY.md
 - docs/specifications/DATA_SCHEMAS.md
 - docs/testing/BENCHMARK_PROTOCOL.md
-- docs/testing/TEST_STRATEGY.md
 decision_references:
 - ADR-003
 - ADR-004
-- ADR-005
 - ADR-008
 change_summary: Merged EVALUATION_STRATEGY, SCIENTIFIC_NLP, HYBRID_RAG and RESEARCH_GAP_DISCOVERY
   into one research strategy; content unchanged.

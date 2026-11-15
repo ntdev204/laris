@@ -10,8 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/architecture/EVIDENCE_AND_PROVENANCE.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
   - "ADR-004"

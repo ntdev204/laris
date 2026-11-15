@@ -14,7 +14,6 @@ related_documents:
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
-  - "ADR-001"
   - "ADR-004"
   - "ADR-008"
 change_summary: "Formal specification for project-owned gold-standard benchmark (LARIS-GOLD) covering provenance, schema, double-blind curation, and leak-free evaluation splits."

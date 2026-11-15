@@ -10,9 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/specifications/MODULE_CONTRACTS.md"
-  - "docs/architecture/EVIDENCE_AND_PROVENANCE.md"
 decision_references:
   - "ADR-004"
 change_summary: "Field tables replace the verbose JSON Schema listings; required fields, enums and ranges are unchanged."

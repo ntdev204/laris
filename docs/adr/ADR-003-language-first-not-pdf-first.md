@@ -10,9 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/research/RESEARCH_STRATEGY.md"
-  - "docs/specifications/MODULE_CONTRACTS.md"
 decision_references:
   - "ADR-003"
 change_summary: "Adopted language-first representation hierarchy and document-agnostic scientific discourse processing."
