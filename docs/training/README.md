@@ -14,7 +14,6 @@ related_documents:
   - "docs/research/EMPIRICAL_STATUS.md"
 decision_references:
   - "ADR-008"
-  - "ADR-013"
 change_summary: "Indexes the current foundation-first preparation and owner-only training boundary."
 ---
 

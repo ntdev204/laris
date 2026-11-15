@@ -4,6 +4,8 @@ knows neither the loop nor the tools, and the loop carries no policy path or pro
 import ast
 from pathlib import Path
 
+import pytest
+
 SRC = Path(__file__).resolve().parents[3] / "src" / "laris"
 
 
@@ -17,6 +19,15 @@ def _imports(path: Path) -> set:
     return found
 
 
+# `laris-v2` removed the Python client, harness and policy modules (the Rust system replaces them,
+# ADR-021); these checks apply again if such modules return, and are skipped while they are absent.
+_NO_PYTHON_FRONT = pytest.mark.skipif(
+    not (SRC / "client/agent/loop.py").exists(),
+    reason="the Python client and policy layers are not on laris-v2 (ADR-021)",
+)
+
+
+@_NO_PYTHON_FRONT
 def test_prompt_layer_knows_neither_the_loop_nor_the_tools():
     names = _imports(SRC / "shared/policy/prompts.py")
     front = ("laris.client.agent", "laris.client.application", "laris.server.gateway")
@@ -24,6 +35,7 @@ def test_prompt_layer_knows_neither_the_loop_nor_the_tools():
     assert not {n for n in names if n.startswith("laris.shared.harness.runtime")}
 
 
+@_NO_PYTHON_FRONT
 def test_loop_carries_no_policy_path_or_prompt_text():
     for name in ("loop.py", "context.py", "tools.py"):
         text = (SRC / "client/agent" / name).read_text(encoding="utf-8")

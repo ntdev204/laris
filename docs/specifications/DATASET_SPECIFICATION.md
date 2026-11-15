@@ -15,7 +15,6 @@ related_documents:
   - "docs/specifications/LARIS_GOLD_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:
-  - "ADR-001"
   - "ADR-002"
   - "ADR-003"
   - "ADR-004"

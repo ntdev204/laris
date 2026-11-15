@@ -12,10 +12,8 @@ source_of_truth: false
 related_documents:
   - "docs/training/README.md"
   - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
-  - "docs/development/CLI.md"
 decision_references:
   - "ADR-008"
-  - "ADR-013"
 change_summary: "Adds section 7 (T99 round plan for the R1 encoder), section 8 (R3) and section 9 (English stage 1, D46); sections 7 and 8 are historical."
 ---
 

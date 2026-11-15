@@ -10,9 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
   - "docs/specifications/DATA_SCHEMAS.md"
-  - "docs/architecture/EVIDENCE_AND_PROVENANCE.md"
 decision_references:
   - "ADR-004"
 change_summary: "Formal specification of the default structured research report and on-demand manuscript format."

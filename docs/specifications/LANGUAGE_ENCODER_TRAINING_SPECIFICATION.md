@@ -11,18 +11,13 @@ owner: LARIS Architecture Team
 reviewers: []
 source_of_truth: true
 related_documents:
-- docs/plans/ROADMAP.md
 - docs/specifications/DATASET_SPECIFICATION.md
-- docs/specifications/MODULE_CONTRACTS.md
-- docs/architecture/LAYER_ARCHITECTURE.md
 - docs/specifications/DATA_SCHEMAS.md
 - docs/training/README.md
 - docs/research/EMPIRICAL_STATUS.md
 decision_references:
-- ADR-001
 - ADR-002
 - ADR-003
-- ADR-005
 - ADR-008
 - ADR-004
 change_summary: Separates formal stage gates from baseline checks and removes obsolete

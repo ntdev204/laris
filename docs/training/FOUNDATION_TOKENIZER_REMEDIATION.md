@@ -27,8 +27,8 @@ F06 đã dùng hết hai vòng chẩn đoán được duyệt. Checkpoint sampli
 Kết quả theo dataset đổi chiều. ANLI và ViNLI tăng macro F1 so với baseline,
 còn PAWS giảm. F07 đo lại fertility với cùng tokenizer được dùng trong checkpoint
 sampling. EN đạt 1,420 và VI đạt 1,363 so với ngưỡng 1,35.
-[Báo cáo F06](../../reports/language_encoder/foundation-owner-run.json) ·
-[Báo cáo F07](../../reports/language_encoder/foundation-qualification.json)
+Báo cáo F06 (`reports/language_encoder/foundation-owner-run.json`, not on `laris-v2`) ·
+Báo cáo F07 (`reports/language_encoder/foundation-qualification.json`, not on `laris-v2`)
 
 ## Corpus và mẫu validation đã khóa
 
@@ -44,7 +44,7 @@ Mẫu so sánh development lấy từ đúng bốn nguồn trên ở split val. 
 trùng toàn phần hoặc tiền tố 200 ký tự với một trong hai corpus fit. Hai
 tokenizer được so trên cùng các văn bản đã khóa và dùng cùng cách tính macro
 theo nguồn. Giữ test cho lần đánh giá ứng viên đã chốt.
-[Bằng chứng chuẩn bị](../../reports/tokenizer/foundation-r1-preparation.json)
+Bằng chứng chuẩn bị (`reports/tokenizer/foundation-r1-preparation.json`, not on `laris-v2`)
 
 Có thể tái tạo corpus và mẫu development trên workspace chưa có thư mục
 `artifacts/tokenizer/foundation-r1`.

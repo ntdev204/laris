@@ -10,14 +10,10 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/architecture/SYSTEM_OVERVIEW.md"
-  - "docs/architecture/SELECTIVE_COMPUTATION.md"
   - "docs/research/RESEARCH_STRATEGY.md"
 decision_references:
   - "ADR-002"
   - "ADR-003"
-  - "ADR-001"
-  - "ADR-005"
 change_summary: "Aligns fertility with canonical gates and labels historical architecture/compute proposals as unmeasured research alternatives."
 ---
 

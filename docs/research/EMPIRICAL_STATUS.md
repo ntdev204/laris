@@ -10,9 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
 related_documents:
-  - "docs/plans/ROADMAP.md"
   - "docs/testing/BENCHMARK_PROTOCOL.md"
-  - "docs/development/CLI.md"
 decision_references:
   - "ADR-008"
 change_summary: "Reconciles actual develop merge state while preserving historical measurements and no-training verification scope."
@@ -38,7 +36,7 @@ No test-set evaluation, additional training or threshold calibration was perform
 
 ## Encoder validation
 
-Source: [raw evaluation report](../../reports/language_encoder/compact-1024-04-best-val.json).
+Source: raw evaluation report (`reports/language_encoder/compact-1024-04-best-val.json`, not on `laris-v2`).
 The evaluation used 27,213 validation samples: up to 2,000 per dataset, batch 8,
 seed 42, 1,024-token checkpoint configuration, and CUDA inference on RTX 5070 Ti.
 Runtime was PyTorch 2.14.1+cu130. Total observed GPU usage during evaluation was

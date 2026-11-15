@@ -10,10 +10,7 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/development/CODING_STANDARDS.md"
   - "docs/development/DOCUMENTATION.md"
-  - "docs/plans/ROADMAP.md"
-  - "docs/plans/ROADMAP.md"
 decision_references:
   - "ADR-007"
   - "ADR-008"
