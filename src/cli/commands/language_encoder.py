@@ -86,6 +86,13 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Gradient accumulation steps per optimizer update (default: from --training-config)",
     )
     parser.add_argument(
+        "--tasks-per-step",
+        type=int,
+        default=None,
+        help="Different tasks whose losses are added in each micro-step (T201; default: from "
+        "--training-config, 1 = one task per micro-batch). Memory grows with this number",
+    )
+    parser.add_argument(
         "--max-seq-len",
         type=int,
         default=None,
@@ -228,6 +235,7 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
         "warmup_steps": args.warmup_steps,
         "max_steps": args.steps,
         "loss_lambda_retrieval": args.retrieval_loss_weight,
+        "tasks_per_step": args.tasks_per_step,
     }
     merged = {**training.model_dump(), **{k: v for k, v in overrides.items() if v is not None}}
     merged["batch_size"] = max(
@@ -366,17 +374,36 @@ def _run_memory_profile(
         contrastive_sim_temperature=hyper.contrastive_sim_temperature,
         similarity_calibration_only=hyper.similarity_calibration_only,
     )
-    profile = profile_training_memory(trainer, loader, MAX_VRAM_GB, with_training_step=with_step)
+    if hyper.tasks_per_step > len(loader.task_paths):
+        print(f"[ERROR] --tasks-per-step {hyper.tasks_per_step} exceeds the "
+              f"{len(loader.task_paths)} active tasks.")
+        return 1
+    profile = profile_training_memory(
+        trainer, loader, MAX_VRAM_GB, with_training_step=with_step,
+        tasks_per_step=hyper.tasks_per_step,
+    )
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
     for t in profile.tasks:
         print(
             f"  {t.task_type:<11} peak {t.peak_allocated_gb:6.2f} GB, "
             f"loss {'finite' if t.loss_finite else 'NOT FINITE'}"
         )
+    for g in profile.groups:
+        print(
+            f"  step of {'+'.join(g.tasks):<32} peak {g.peak_allocated_gb:6.2f} GB, "
+            f"loss {'finite' if g.loss_finite else 'NOT FINITE'}"
+        )
     if profile.error:
         print(f"[FAIL] {profile.error}")
         print("Lower --micro-batch-size (raise --grad-accum-steps to keep the effective batch).")
         return 1
+    if profile.groups:
+        worst = max(profile.groups, key=lambda g: g.peak_allocated_gb)
+        print(f"Worst mixed step:          {'+'.join(worst.tasks)} at "
+              f"{worst.peak_allocated_gb:.2f} GB ({hyper.tasks_per_step} tasks per step)")
+        if profile.seconds_per_group_step is not None:
+            print(f"Latency per mixed step:    {profile.seconds_per_group_step:.2f} s "
+                  "(one micro-step with that many tasks)")
     print(f"Measured peak:             {profile.peak_gb:.2f} GB (limit {MAX_VRAM_GB} GB)")
     per_update = profile.seconds_per_micro_batch * hyper.gradient_accumulation_steps
     print(
@@ -547,6 +574,10 @@ def run(args: argparse.Namespace) -> int:
     missing_val = sorted(
         set(loader.task_paths) - set(eval_loader.task_paths) - {CONTRASTIVE_SIM_TASK}
     )
+    if hyper.tasks_per_step > len(loader.task_paths):
+        print(f"[ERROR] tasks_per_step {hyper.tasks_per_step} exceeds the "
+              f"{len(loader.task_paths)} active tasks {sorted(loader.task_paths)}.")
+        return 1
     if missing_val:
         print(f"[ERROR] Tasks without validation shards: {missing_val}.")
         print("Run `laris data partition` first.")
@@ -625,8 +656,9 @@ def run(args: argparse.Namespace) -> int:
         ),
     }
     print(f"Run directory:             {run_dir}")
+    mixed = f", {hyper.tasks_per_step} tasks per micro-step" if hyper.tasks_per_step > 1 else ""
     print(f"Training for {hyper.max_steps} optimizer steps (effective batch "
-          f"{args.micro_batch_size * args.grad_accum_steps})...")
+          f"{args.micro_batch_size * args.grad_accum_steps} per task{mixed})...")
     result = run_training(
         trainer,
         loader,
@@ -637,6 +669,7 @@ def run(args: argparse.Namespace) -> int:
             save_interval=args.save_interval,
             patience=args.patience,
             log_interval=args.log_interval,
+            tasks_per_step=hyper.tasks_per_step,
         ),
         run_dir,
         eval_loader=eval_loader,

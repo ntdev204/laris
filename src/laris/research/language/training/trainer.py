@@ -11,7 +11,7 @@ Adheres to:
 import math
 import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -70,6 +70,9 @@ class TrainingMetricsSnapshot:
     grad_norm: Optional[float] = None
     # Unweighted sentence-order cross-entropy of this micro-batch (T195), when it had one
     order_loss: Optional[float] = None
+    # Weighted loss of every task of this micro-step (T201); `loss_value` is their sum and
+    # `task_type` joins the names with "+" when a mixed step carries more than one
+    task_losses: Optional[Dict[str, float]] = None
 
 
 class MultiTaskLossCalculator:
@@ -632,8 +635,50 @@ class LanguageEncoderTrainer:
             self.scheduler.step()
         return grad_norm
 
+    @staticmethod
+    def _as_batches(batch: Any) -> List[Any]:
+        """One batch or a sequence of batches of different tasks (a mixed step, T201)."""
+        batches = list(batch) if isinstance(batch, (list, tuple)) else [batch]
+        if not batches:
+            raise ValueError("a training step needs at least one batch")
+        names = [getattr(item, "task_type", "mlm") for item in batches]
+        if len(set(names)) != len(names):
+            raise ValueError(f"a mixed step needs different tasks, got {names}")
+        return batches
+
+    def _step_loss(
+        self, batches: List[Any], training_pass: bool = True
+    ) -> Tuple[Any, Dict[str, float], Optional[float]]:
+        """Forward passes of a micro-step: the summed loss, each task's loss, the order loss.
+
+        The graphs of every task stay alive in the sum until the caller's backward pass.
+        """
+        losses: List[Any] = []
+        task_losses: Dict[str, float] = {}
+        order_loss: Optional[float] = None
+        for item in batches:
+            name = getattr(item, "task_type", "mlm")
+            token_ids, attention_mask = self._to_device(item)
+            with self._autocast():
+                outputs = self._forward(
+                    name, token_ids, attention_mask, item.labels, training_pass=training_pass
+                )
+                task_loss = self._compute_torch_loss(name, outputs, item.labels, attention_mask)
+            task_losses[name] = float(task_loss.detach().float().item())
+            if name == "mlm":
+                order_loss = self._last_order_loss
+            losses.append(task_loss)
+        loss = losses[0]
+        for extra in losses[1:]:
+            loss = loss + extra
+        return loss, task_losses, order_loss
+
     def execute_training_step(self, batch: Any) -> TrainingMetricsSnapshot:
         """Executes a single optimization step under strict authorization governance.
+
+        `batch` is one task batch, or a sequence of batches of different tasks (a mixed step,
+        T201): their weighted losses are added and one backward pass covers the sum, so the
+        graphs of all its tasks are alive together (memory grows with the tasks per step).
 
         Performs:
         - Strict authorization assertion
@@ -645,21 +690,19 @@ class LanguageEncoderTrainer:
         """
         assert_training_authorized("Language encoder neural backpropagation and parameter update")
 
-        task_type = getattr(batch, "task_type", "mlm")
-        effective_batch_size = getattr(batch, "batch_size", 16) * self.grad_accum_steps
+        batches = self._as_batches(batch)
+        task_types = [getattr(item, "task_type", "mlm") for item in batches]
+        if len(set(task_types)) != len(task_types):
+            raise ValueError(f"a mixed step needs different tasks, got {task_types}")
+        task_type = "+".join(task_types)
+        effective_batch_size = (
+            sum(getattr(item, "batch_size", 16) for item in batches) * self.grad_accum_steps
+        )
 
         # Check if PyTorch neural execution is active
         if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
             self.model.train()
-            token_ids, attention_mask = self._to_device(batch)
-
-            with self._autocast():
-                outputs = self._forward(
-                    task_type, token_ids, attention_mask, batch.labels, training_pass=True
-                )
-                loss = self._compute_torch_loss(
-                    task_type, outputs, batch.labels, attention_mask
-                )
+            loss, task_losses, order_loss = self._step_loss(batches)
             loss_value = float(loss.detach().float().item())
 
             # Scaled backward pass; gradients accumulate across micro-batches (and tasks)
@@ -689,28 +732,34 @@ class LanguageEncoderTrainer:
                 optimizer_step=self.optimizer_steps,
                 learning_rate=lr_used,
                 grad_norm=grad_norm,
-                order_loss=self._last_order_loss if task_type == "mlm" else None,
+                order_loss=order_loss,
+                task_losses=task_losses,
             )
             self.step_history.append(snapshot)
             return snapshot
 
         # Fallback NumPy / test mock execution
-        outputs_np: Dict[str, Any] = {}
-        if hasattr(self.model, "forward"):
-            outputs_np = self.model.forward(batch.token_ids, attention_mask=batch.attention_mask)
-        elif callable(self.model):
-            outputs_np = self.model(batch.token_ids, attention_mask=batch.attention_mask)
-
-        labels_dict = getattr(batch, "labels", {})
         loss_val = 0.0
-        if outputs_np and labels_dict:
-            loss_val = self.loss_calculator.compute_loss_numpy(task_type, outputs_np, labels_dict)
+        np_losses: Dict[str, float] = {}
+        for item, name in zip(batches, task_types):
+            outputs_np: Dict[str, Any] = {}
+            if hasattr(self.model, "forward"):
+                outputs_np = self.model.forward(item.token_ids, attention_mask=item.attention_mask)
+            elif callable(self.model):
+                outputs_np = self.model(item.token_ids, attention_mask=item.attention_mask)
+            labels_dict = getattr(item, "labels", {})
+            value = 0.0
+            if outputs_np and labels_dict:
+                value = self.loss_calculator.compute_loss_numpy(name, outputs_np, labels_dict)
+            np_losses[name] = value
+            loss_val += value
 
         snapshot = TrainingMetricsSnapshot(
             step=len(self.step_history) + 1,
             task_type=task_type,
             loss_value=loss_val,
             effective_batch_size=effective_batch_size,
+            task_losses=np_losses,
         )
         self.step_history.append(snapshot)
         return snapshot
