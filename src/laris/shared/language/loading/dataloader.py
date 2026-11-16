@@ -188,6 +188,32 @@ class TemperatureSamplingScheduler:
         selected = chooser(self.tasks, weights=self.probabilities, k=1)
         return selected[0]
 
+    def sample_tasks(self, rng: Optional[random.Random], count: int) -> List[str]:
+        """`count` different tasks for one mixed step (T201), drawn without replacement.
+
+        Each draw follows the usual distribution renormalised over the tasks not yet drawn.
+        `count == 1` is exactly `sample_task` (same RNG use), so the default path is unchanged.
+        """
+        if count < 1:
+            raise ValueError(f"tasks per step must be >= 1, got {count}")
+        if count > len(self.tasks):
+            raise ValueError(
+                f"tasks per step ({count}) exceeds the {len(self.tasks)} active tasks "
+                f"{self.tasks}"
+            )
+        if count == 1:
+            return [self.sample_task(rng)]
+        chooser = rng.choices if rng else random.choices
+        remaining = list(zip(self.tasks, self.probabilities))
+        drawn: List[str] = []
+        for _ in range(count):
+            names = [name for name, _ in remaining]
+            weights = [max(weight, 1e-12) for _, weight in remaining]
+            pick = chooser(names, weights=weights, k=1)[0]
+            drawn.append(pick)
+            remaining = [item for item in remaining if item[0] != pick]
+        return drawn
+
     def get_task_probability(self, task_name: str) -> float:
         """Returns sampling probability for a given task."""
         if task_name not in self.task_counts:
@@ -268,6 +294,11 @@ class SyntheticMultiTaskDataLoader:
             batch_size=b,
             seq_len=s,
         )
+
+    def generate_step_batches(self, tasks_per_step: int = 1) -> List[TaskBatch]:
+        """One micro-step of `tasks_per_step` batches of different tasks (T201)."""
+        tasks = self.scheduler.sample_tasks(self.rng, tasks_per_step)
+        return [self.generate_batch(task_type=task) for task in tasks]
 
     def __iter__(self) -> Iterator[TaskBatch]:
         """Infinite generator of synthetic batches."""
@@ -1200,6 +1231,18 @@ class StreamingParquetMultiTaskDataLoader:
             return self._format_contrastive_sim_batch(records)
         else:
             raise ValueError(f"Unknown task: {selected_task}")
+
+    def generate_step_batches(self, tasks_per_step: int = 1) -> List[TaskBatch]:
+        """One micro-step of `tasks_per_step` batches of different tasks (T201).
+
+        With 1 this is exactly `[generate_batch()]` (same RNG draws). With more, the tasks are
+        drawn without replacement from the scheduler distribution, so a step never carries the
+        same task twice; each batch keeps its own size and sequence length.
+        """
+        if self._synthetic_fallback is not None:
+            return self._synthetic_fallback.generate_step_batches(tasks_per_step)
+        tasks = self.scheduler.sample_tasks(self.rng, tasks_per_step)
+        return [self.generate_batch(task_type=task) for task in tasks]
 
     def __iter__(self) -> Iterator[TaskBatch]:
         """Infinite generator yielding streaming TaskBatch instances."""

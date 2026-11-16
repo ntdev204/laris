@@ -168,6 +168,9 @@ class TrainingConfig(BaseModel):
     )
     # Graded STS pairs only calibrate `sim_scale` and `sim_bias`: the body is not updated by them.
     similarity_calibration_only: bool = False
+    # Mixed batches (T201): different tasks whose weighted losses are added in each micro-step
+    # (one backward pass); 1 keeps one task per micro-batch. Memory grows with this number.
+    tasks_per_step: int = Field(default=1, ge=1)
 
     @model_validator(mode="after")
     def validate_batch_hierarchy(self) -> "TrainingConfig":

@@ -3,9 +3,9 @@ document_id: "DOC-RUNBOOK-OWNER-001"
 title: "Owner-Executed Foundation Training and Evaluation"
 document_type: "specification"
 status: "DRAFT"
-version: "1.3.0"
+version: "1.4.0"
 created_at: "2026-11-10"
-updated_at: "2026-11-14"
+updated_at: "2026-11-16"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: false
@@ -14,7 +14,7 @@ related_documents:
   - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
 decision_references:
   - "ADR-008"
-change_summary: "Adds section 7 (T99 round plan for the R1 encoder), section 8 (R3) and section 9 (English stage 1, D46); sections 7 and 8 are historical."
+change_summary: "Adds section 10 (T202 profile of the pair-remediation tasks and mixed batches); adds section 7 (T99 round plan for the R1 encoder), section 8 (R3) and section 9 (English stage 1, D46); sections 7 and 8 are historical."
 ---
 
 # Owner runbook
@@ -647,3 +647,44 @@ more than twice the smoke-run time. The agent writes the intake check and the pe
 
 **Step 5 (after the pilot review): main run and T100.** Command, step count and time budget are fixed from the measured pilot throughput. T100
 (held-out evaluation, once per candidate) follows the main run.
+
+## 10. T202: memory and speed profile of the pair-remediation tasks and mixed batches (owner run, not started)
+
+Prepared by T201. The profile needs an optimizer step, so only the owner runs it. Nothing in this section authorises an agent to train.
+
+**What it measures.** Every task alone (MLM with the sentence-order labels and two-segment rows, NLI and paraphrase label-balanced, similarity
+with the bi-encoder head, QA, retrieval, contrastive similarity), then, when `--tasks-per-step` is 2 or 3, every combination of that many
+different tasks as one mixed step (the losses are added and one backward pass covers them, as in training). Each measurement has its own
+peak counter, so the worst group is a measurement, not an estimate. The config is `configs/language_encoder/english_r1_t202_profile.yaml`
+(english_r1 with the new tasks on; profile only, not a training mixture: T203 proposes that).
+
+**Estimate to replace (T201, derived from the T184 log, not measured).** Resident state of the 544 M model with fp32 AdamW is about 8.1 GiB
+(weights, gradients and two moments, 16 bytes per parameter). T184 peaks per task: MLM 8.85, NLI 10.32, paraphrase 10.33, similarity 10.33, QA 10.91,
+retrieval 11.39 GB, so activations are about 0.7, 2.2, 2.2, 2.2, 2.8 and 3.3 GB. Adding the most expensive tasks of one step gives about 11.4 GB for one
+task, **about 14.2 GB for two** (retrieval + QA; the limit is 14.5) and **about 16.4 GB for three** (does not fit). The T184 figures are running maxima,
+so the estimate errs high; allocator fragmentation is not modelled. The new tasks (order labels, bi-encoder similarity with two single-sentence passes, contrastive
+similarity at batch 64) are not in it. Expected reading: 2 is marginal for the worst pair and fine for the common ones; 3 needs a smaller micro-batch.
+
+```bash
+TOK=artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
+mkdir -p artifacts/profiles
+for N in 1 2 3; do
+  LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 900s .venv/bin/python -m cli.model train language-encoder \
+    --profile-only --model-size large --vocab-size 56000 --max-seq-len 1024 \
+    --training-config configs/language_encoder/english_r1_t202_profile.yaml --tasks-per-step $N \
+    --micro-batch-size 8 --grad-accum-steps 4 --gradient-checkpointing --precision bf16 --no-8bit-adam \
+    --tokenizer-model $TOK --normalize-input 2>&1 | tee artifacts/profiles/english-r1-t202-profile-n$N.log
+done
+```
+
+A run that ends in `CUDA out of memory` is a result, not a failure of the procedure: keep its log. The single-task part of the log comes first,
+then one line per mixed step, `Worst mixed step`, `Measured peak` and the latency per micro-batch and per mixed step.
+
+**Decision rule.** The largest `--tasks-per-step` whose log ends in `[SUCCESS]` (every task and every group finite, measured peak at most 14.5 GB)
+and whose peak leaves at least 0.3 GB below the limit (the data of a long run is longer than one profile sample). If 2 fails on the worst pair
+only, lower `retrieval_batch_size` (16) or `--micro-batch-size` (4, with `--grad-accum-steps 8`) before giving up on 2. A larger step also adds the loss
+of each of its tasks, so the gradient of a micro-step is about `tasks_per_step` times larger before clipping (`max_grad_norm` bounds it); the
+learning rate is not changed by this runbook.
+
+**Intake.** Return the three logs. The agent writes `reports/verification/T202-mixed-batch-profile.md` with the per-task and per-group peaks, the
+time per step and the chosen value, and replaces the estimate above with the numbers. T203 uses the chosen `tasks_per_step` in the stage-2 proposal.

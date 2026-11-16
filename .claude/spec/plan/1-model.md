@@ -65,13 +65,13 @@ before any main run. Owner direction 2026-11-14: no training now, solve the data
 Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205, T206
 Execution order (each step needs the previous ones; no step before T204 trains): T192 data on disk (done) -> T193 audit (done) -> T206 data corrections (done) ->
 T194 two-segment builder (done) -> T195 order head (done) -> T196 balanced NLI and paraphrase (done) -> T197 relation pairs (done) -> T198 bi-encoder head (done) ->
-T199 contrastive objective (done) -> T200 paraphrase and QA data (done) -> T201 mixed batches -> T202 owner profile -> T203 mixture and schedule ->
+T199 contrastive objective (done) -> T200 paraphrase and QA data (done) -> T201 mixed batches (done) -> T202 owner profile -> T203 mixture and schedule ->
 T204 owner stage-2 and control runs -> T205 analysis and decision.
 Exit criteria:
 - Extra raw data is on disk with provenance and licence status (T192) and the audit (T193) states per source the label prior, shortcut baselines, truncation, duplicates and held-out overlap.
 - Two-segment inputs (pair-format MLM and sentence order) exist behind options that default to off (T194, T195), and NLI and paraphrase batches can be source- and label-balanced (T196).
 - Similarity gets relation pairs and a bi-encoder head without bought labels, with a zero-hit leakage rescan against STS-B validation and test (T197 to T199); STS-B stays the only gate data.
-- QA and paraphrase formatters and re-weighting exist and are measured (T200); mixed batches exist behind `tasks_per_step` (T201).
+- QA and paraphrase formatters and re-weighting exist and are measured (T200); mixed batches exist behind `tasks_per_step` (T201, done; estimate only until the T202 owner profile).
 - No task before T204 runs training, tokenizer fitting or a backward step; T202 and T204 are owner runs started only on the owner's order. The foundation model stays NOT QUALIFIED.
 
 ### Phase 21 — Stage 2: scientific language

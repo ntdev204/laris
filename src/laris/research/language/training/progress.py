@@ -136,12 +136,16 @@ class TrainingProgress:
             print(text, file=self.stream, flush=True)
 
     def micro_batch(self, snapshot: Any) -> None:
-        """Folds one micro-batch loss (a single task) into that task's running average."""
-        task, value = snapshot.task_type, float(snapshot.loss_value)
-        previous = self.losses.get(task)
-        self.losses[task] = value if previous is None else (
-            (1.0 - self.smoothing) * previous + self.smoothing * value
-        )
+        """Folds the loss of each task of one micro-step into that task's running average."""
+        per_task = getattr(snapshot, "task_losses", None) or {
+            snapshot.task_type: snapshot.loss_value
+        }
+        for task, loss in per_task.items():
+            value = float(loss)
+            previous = self.losses.get(task)
+            self.losses[task] = value if previous is None else (
+                (1.0 - self.smoothing) * previous + self.smoothing * value
+            )
         self._accumulated += 1
         if self._bar is not None:
             self._refresh()

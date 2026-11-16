@@ -22,12 +22,16 @@ class TrainingRunConfig:
     patience: int = 5  # evaluations without improvement before stopping; 0 disables
     min_delta: float = 1e-4
     log_interval: int = 10
+    # Tasks added into each micro-step (T201); 1 keeps the one-task micro-batch of before
+    tasks_per_step: int = 1
 
     def __post_init__(self) -> None:
         if self.total_optimizer_steps < 1:
             raise ValueError("total_optimizer_steps must be >= 1")
         if self.eval_interval < 1 or self.save_interval < 1 or self.log_interval < 1:
             raise ValueError("eval/save/log intervals must be >= 1")
+        if self.tasks_per_step < 1:
+            raise ValueError("tasks_per_step must be >= 1")
 
 
 @dataclass
@@ -121,7 +125,11 @@ def run_training(
     try:
         while trainer.optimizer_steps < run_config.total_optimizer_steps and not stopped_early:
             before = trainer.optimizer_steps
-            snapshot = trainer.execute_training_step(train_loader.generate_batch())
+            if run_config.tasks_per_step == 1:
+                step_input: Any = train_loader.generate_batch()
+            else:
+                step_input = train_loader.generate_step_batches(run_config.tasks_per_step)
+            snapshot = trainer.execute_training_step(step_input)
             if progress is not None:
                 progress.micro_batch(snapshot)
             steps = trainer.optimizer_steps
