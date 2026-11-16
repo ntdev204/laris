@@ -32,7 +32,8 @@ DATASET_LANGUAGE = {
     "fineweb_edu_en": "en", "openwebtext_en": "en", "c4_en": "en", "gutenberg_en": "en",
     "cc_news_en": "en", "cnn_dailymail_en": "en", "xsum_en": "en", "wikipedia_simple_en": "en",
     "wanli_en": "en", "scitail_en": "en", "mrpc_en": "en", "sts_extra_en": "en",
-    "squad_v2_en": "en", "adversarial_qa_en": "en",
+    "squad_v2_en": "en", "adversarial_qa_en": "en", "duorc_en": "en", "ropes_en": "en",
+    "quoref_en": "en", "drop_en": "en", "paws_swap_en": "en", "paws_unlabeled_en": "en",
 }  # fmt: skip
 QA_MAX_ANSWER_TOKENS = 64  # longest decoded answer, in tokens
 QA_NULL_THRESHOLD = 0.0  # fixed no-answer margin; never tuned on held-out data
