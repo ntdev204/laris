@@ -61,9 +61,18 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
         "cc_news_en", "cnn_dailymail_en", "xsum_en", "wikipedia_simple_en", "mlm",
     ],
     "nli": ["all_nli", "anli", "fever", "wanli_en", "scitail_en", "nli"],
-    "paraphrase": ["quora", "paws", "quora_duplicates", "mrpc_en", "paraphrase"],
+    # paws_swap_en and paws_unlabeled_en (T200) are word-order sources with a train split only; the
+    # unlabeled labels are model-assigned (`label_source: model`).
+    "paraphrase": [
+        "quora", "paws", "quora_duplicates", "mrpc_en", "paws_swap_en", "paws_unlabeled_en",
+        "paraphrase",
+    ],
     "similarity": ["stsb", "sts_extra_en", "similarity"],
-    "qa": ["squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "qa"],
+    # duorc_en, ropes_en, quoref_en and drop_en (T200) have a train split only.
+    "qa": [
+        "squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "duorc_en", "ropes_en",
+        "quoref_en", "drop_en", "qa",
+    ],
 }
 
 # Dense-retrieval pairs (T178). Kept out of TASK_DATASET_DIRS on purpose: the task exists only when
