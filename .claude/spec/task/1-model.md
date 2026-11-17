@@ -531,11 +531,11 @@ returned logs, manifests and reports.
 - Deliverables:
   - The task shares and floors for stage 2 (pair tasks, order task, pair-format MLM, contrastive similarity, MLM kept near 20 % so it is not forgotten), the stage start steps, and the expected number of updates and passes per task for 5,000 and 20,000 steps, computed from the scheduler and the T193 counts; `configs/language_encoder/english_r1_stage2.yaml` proposal
   - The control branch: the same number of steps from the same checkpoint with the original mixture
-  - VitaminC train processed into `data/processed/vitaminc_en` (SUPPORTS entailment, REFUTES contradiction, NOT ENOUGH INFO neutral; the 6 claims matching FEVER held-out removed; VitaminC validation and test unused) and added to the NLI directories, per the T196 owner decision; whether the stage-2 mixture uses it and with which `label_balanced_tasks` setting is part of the proposal
+  - The proposal uses the T207 weights (`dataset_sampling_weights`) and decides whether similarity includes the T208 rows if they exist; VitaminC was processed in T207
 - Validation:
   - Unit tests of the schedule; the report lists expected updates per task (computed, not measured); no training
 - Status: pending
-- Note: Extends T190 (floor for similarity only). Stage 2 starts from `artifacts/checkpoints/language_encoder/english-r1-pilot2/best` (step 2,000, MLM learned) with a fresh optimizer. Pilot 2 gave the four pair tasks about 20 % of the steps (about 190 NLI and 60 similarity updates in 2,000 steps).
+- Note: Uses the T207 sampling weights and the VitaminC source (data decisions, ordered after T206 in the file). Extends T190 (floor for similarity only). Stage 2 starts from `artifacts/checkpoints/language_encoder/english-r1-pilot2/best` (step 2,000, MLM learned) with a fresh optimizer. Pilot 2 gave the four pair tasks about 20 % of the steps (about 190 NLI and 60 similarity updates in 2,000 steps).
 
 ### T204 — Stage-2 run and control run (owner run)
 - Requirements: SR-M3, SR-M6
@@ -568,6 +568,29 @@ returned logs, manifests and reports.
   - Precheck on all SICK rows of the old table (which raw column each score came from), postcheck on the rebuilt table, non-SICK rows unchanged, zero SQuAD v1 train pairs in SQuAD v2 held-out, untouched files byte-identical, r1 SQuAD checksums verify; fixture tests; no training
 - Status: done
 - Note: Owner decisions 2026-11-15: keep SICK, rebuilt from `relatedness_score` and marked by source (similarity has about 20 k rows, SICK is 8,389 of them; licence CC-BY-NC-SA-3.0, state APPROVED_BY_OWNER, where `license_approved: false` only records that the publisher licence is not open); remove the 9,280 duplicated SQuAD v1 training rows instead of re-splitting SQuAD 2.0, so the SQuAD validation and test splits that G06 and G07 use stay unchanged. Result: the precheck found all 8,389 SICK rows equal to the NLI label divided by 5; after the rebuild all 8,389 equal (relatedness - 1) / 4, non-SICK rows unchanged; `sts_extra_en` mean 0.628 (SICK 0.637, STS Companion 0.619, STS12 0.592), word-overlap Spearman 0.556 (SICK 0.587, was -0.136). SQuAD v1 train 87,599 -> 78,319 rows (9,280 removed, matched on the (question, context) pair, train only), 0 left in SQuAD v2 held-out. Still open for T197: the extra similarity label mean (0.628) is above STS-B validation (0.473).
+
+### T207 — Data decisions before the profile (weights, VitaminC, similarity route)
+- Requirements: SR-M4
+- Depends: T200, T206
+- Deliverables:
+  - Loader option `dataset_sampling_weights` (task to dataset directory to factor), plain stream and label-balanced sampler, validated, `TrainingConfig` field, applied with `--dataset-sampling-ablation`
+  - `scripts/measure_mixture_shares.py` solving the weights: QA no-answer share back to 0.132, model-labelled `paws_unlabeled_en` capped at 15 % of paraphrase, VitaminC at 10 % of NLI; weights written in `english_r1_t202_profile.yaml`
+  - `scripts/build_vitaminc.py` and `data/processed/vitaminc_en` (moved here from T203), in the NLI directories
+  - The similarity route decided on a measurement: derived graded scores rejected, LLM grading planned as T208
+- Validation:
+  - Fixture tests of the weights (shares, validation, train-only); the report and the numbers in `reports/verification/T207-data-decisions.md`; no training
+- Status: done
+- Note: Owner order 2026-11-17 (similarity gets more data, the rest by the most suitable route; "both" for similarity: conversion and LLM). Measured on SICK that class-constant scores from relations are not graded similarity (contradiction 0.651 above neutral 0.491, within-class std 0.09 to 0.23, positive relations near 0.89 against an STS-B train mean of 0.54), so the conversion branch was not built; only the LLM branch remains (T208). VitaminC kept 367,422 of 370,653 rows (3,225 duplicates, 6 FEVER held-out claims).
+
+### T208 — Graded similarity labels from an LLM (D47)
+- Requirements: SR-M4
+- Depends: T207
+- Deliverables:
+  - Pair selection from data on disk (NLI, paraphrase and caption pairs, leakage-scanned against STS-B validation and test), a labelling prompt with the 0-5 STS rubric, a script that writes `label_source: llm` rows, calibration of the grader on STS-B train (Spearman against the human scores) before any new row is used, and the owner-run command with API budget and row cap
+- Validation:
+  - Calibration Spearman reported; zero hits in a leakage rescan; label mean and spread reported against STS-B train (0.54) and validation (0.473); no training
+- Status: blocked
+- Note: Waiting for the owner: API key (environment only, never in the repository), budget and the model used as grader. Rows are reported as LLM-labelled, never as human similarity data; STS-B validation and test stay the only gate data (G05).
 
 ## Phase 21 — Stage 2: scientific language
 

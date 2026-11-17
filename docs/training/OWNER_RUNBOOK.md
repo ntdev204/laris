@@ -677,6 +677,10 @@ for N in 1 2 3; do
 done
 ```
 
+T207 (2026-11-17) added `dataset_sampling_weights` to the profile config (VitaminC in the NLI pool, `squad_v2_en` x1.695, `paws_unlabeled_en` x0.17). The
+profile does not pass `--dataset-sampling-ablation`, so it draws datasets by row count; its memory peaks do not depend on the weights. A stage-2 run (T204) passes
+the flag so the exponents and weights apply.
+
 A run that ends in `CUDA out of memory` is a result, not a failure of the procedure: keep its log. The single-task part of the log comes first,
 then one line per mixed step, `Worst mixed step`, `Measured peak` and the latency per micro-batch and per mixed step.
 

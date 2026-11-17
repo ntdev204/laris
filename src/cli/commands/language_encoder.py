@@ -168,7 +168,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--dataset-sampling-ablation",
         action="store_true",
-        help="Apply the YAML dataset count exponents to the train loader",
+        help="Apply the YAML dataset exponents and per-dataset weights to the train loader",
     )
     parser.add_argument(
         "--retrieval-loss-weight", type=float, default=None,
@@ -243,6 +243,7 @@ def _resolve_hyperparameters(args: argparse.Namespace) -> TrainingConfig:
     )
     if not args.dataset_sampling_ablation:
         merged["dataset_sampling_exponents"] = {}
+        merged["dataset_sampling_weights"] = {}
     elif not merged["dataset_sampling_exponents"]:
         raise ValueError("--dataset-sampling-ablation requires dataset exponents in the YAML")
     return TrainingConfig(**merged)
@@ -329,6 +330,7 @@ def _run_memory_profile(
         split="train",
         require_real_data=True,
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        dataset_sampling_weights=hyper.dataset_sampling_weights,
         alpha=hyper.task_sampling_alpha,
         task_sampling_floor=hyper.task_sampling_floor,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
@@ -543,6 +545,7 @@ def run(args: argparse.Namespace) -> int:
     loader = StreamingParquetMultiTaskDataLoader(
         split="train",
         dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+        dataset_sampling_weights=hyper.dataset_sampling_weights,
         alpha=hyper.task_sampling_alpha,
         task_sampling_floor=hyper.task_sampling_floor,
         include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,

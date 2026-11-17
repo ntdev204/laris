@@ -120,6 +120,7 @@ class LabelBalancedSampler:
         stream_factory: Callable[[List[Path]], Iterator[Dict[str, Any]]],
         rng: random.Random,
         dataset_exponent: float = 1.0,
+        source_weights: Optional[Mapping[str, float]] = None,
         queue_limit: int = 256,
         max_scan: int = 100_000,
         label_counts_by_source: Optional[Mapping[str, Mapping[int, int]]] = None,
@@ -149,8 +150,11 @@ class LabelBalancedSampler:
             self.label_counts[name] = counts
         self.sources = sorted(sources)
         self.label_sets = {name: sorted(self.label_counts[name]) for name in self.sources}
+        # `source_weights` multiplies the rows ** exponent weight of a source (T207).
+        multipliers = source_weights or {}
         self.weights = [
-            sum(self.label_counts[name].values()) ** dataset_exponent for name in self.sources
+            sum(self.label_counts[name].values()) ** dataset_exponent * multipliers.get(name, 1.0)
+            for name in self.sources
         ]
         self._streams = {name: stream_factory(list(sources[name])) for name in self.sources}
         self._queues: Dict[str, Dict[int, List[Dict[str, Any]]]] = {
