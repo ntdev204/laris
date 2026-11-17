@@ -522,8 +522,9 @@ returned logs, manifests and reports.
   - Prepared commands (runbook section) for a profile with `tasks_per_step` 1, 2 and 3, the order task and the contrastive task on, and the decision rule: largest configuration under the 14.5 GB limit; intake of the returned log
 - Validation:
   - The log shows every new task finite, the peak per configuration and the time per step; the numbers replace the estimate of T201
-- Status: pending
+- Status: done
 - Note: Owner run, optimizer step needed for the profile; the agent prepares the commands and reads the log. No training authorisation is enabled by the agent.
+- Note (result 2026-11-17): owner run, logs read by the agent. `tasks_per_step` 1: 11.39 GB `[SUCCESS]`; 2: 13.12 GB worst (similarity+retrieval, all 21 pairs finite) `[SUCCESS]`; 3: CUDA out of memory at 14.16 GB allocated after 9 of the groups (largest finished 13.81 GB). Chosen 2 by the decision rule. T201 estimate was high for 2 (14.2 GB) and right for 3 (16.4 GB). Per task alone: mlm 8.85, nli 10.32, paraphrase 10.33, similarity 11.39, qa 10.91, retrieval 11.39, contrastive_sim 10.05 GB. A 2-task micro-step 1.68 s against 0.88 s for one task. The profile did not apply the T207 weights (no `--dataset-sampling-ablation`); peaks do not depend on them. Report `reports/verification/T202-mixed-batch-profile.md`.
 
 ### T203 — Pair-task mixture and two-stage schedule from the real counts
 - Requirements: SR-M4, SR-M6
