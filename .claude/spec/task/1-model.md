@@ -586,11 +586,12 @@ returned logs, manifests and reports.
 - Requirements: SR-M4
 - Depends: T207
 - Deliverables:
-  - Pair selection from data on disk (NLI, paraphrase and caption pairs, leakage-scanned against STS-B validation and test), a labelling prompt with the 0-5 STS rubric, a script that writes `label_source: llm` rows, calibration of the grader on STS-B train (Spearman against the human scores) before any new row is used, and the owner-run command with API budget and row cap
+  - `scripts/llm_similarity.py`: blind calibration shards from STS-B train, pair selection stratified by word overlap and leakage-guarded, blind shards, merge into `label_source: llm` rows with a leakage rescan and the label spread
+  - Calibration of the grader on 300 STS-B train pairs before any new row is used; 3,000 new pairs graded (40 shards of 150 prepared, 20 graded) into `data/processed/similarity_llm_en` and added to the similarity directories
 - Validation:
-  - Calibration Spearman reported; zero hits in a leakage rescan; label mean and spread reported against STS-B train (0.54) and validation (0.473); no training
-- Status: blocked
-- Note: Waiting for the owner: API key (environment only, never in the repository), budget and the model used as grader. Rows are reported as LLM-labelled, never as human similarity data; STS-B validation and test stay the only gate data (G05).
+  - Calibration Spearman reported; zero hits in a leakage rescan; label mean and spread reported against STS-B train (0.54) and validation (0.473); fixture tests; no training
+- Status: done
+- Note: Owner order 2026-11-17: the agent grades with subagents (no API key needed). Grader Claude Sonnet subagents, blind shards. Calibration Spearman 0.914, MAE 0.099, grader 0.04 high (STS-B is public, so an upper estimate). 3,000 rows graded, 0 leakage hits, mean 0.526, std 0.252. Mean per origin relation: paraphrase 0.756, entailment 0.698, PAWS non-paraphrase 0.543, neutral 0.492, adjacent 0.284, contradiction 0.232. Shards 020-039 stay ungraded until T205 shows the rows help; no inter-grader agreement was measured. Report `reports/verification/T208-llm-similarity.md`.
 
 ## Phase 21 — Stage 2: scientific language
 
