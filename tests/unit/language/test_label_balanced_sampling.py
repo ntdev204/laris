@@ -200,3 +200,64 @@ def test_majority_label_is_skipped_at_a_full_queue_with_bounded_memory(tmp_path:
         for queue in queues.values()
     )
     assert sampler.skipped["anli"] > 0  # anli entailment is 62 % of its rows
+
+
+# --- T207: per-dataset sampling weights -------------------------------------------------------
+
+
+def test_source_weights_scale_the_balanced_source_share(tmp_path: Path) -> None:
+    weights = {"nli": {"anli": 0.25}}
+    loader = _loader(_data(tmp_path), dataset_sampling_weights=weights)
+    rows = {s: sum(v.values()) for s, v in NLI_SOURCES.items()}
+    scaled = {s: n * (0.25 if s == "anli" else 1.0) for s, n in rows.items()}
+    _draw(loader, "nli", 500)
+    report = loader.label_balance_report()["nli"]["sources"]
+    for source, w in scaled.items():
+        expected = w / sum(scaled.values())
+        assert report[source]["target_source_share"] == pytest.approx(expected)
+        assert report[source]["drawn_source_share"] == pytest.approx(expected, abs=0.03)
+
+
+def test_source_weights_scale_the_plain_stream_share(tmp_path: Path) -> None:
+    data = _data(tmp_path)
+    loader = StreamingParquetMultiTaskDataLoader(
+        data_dir=data,
+        batch_size=16,
+        seed=11,
+        dataset_sampling_weights={"paraphrase": {"mrpc_en": 4.0}},
+    )
+    drawn = Counter(_source(r) for batch in _draw(loader, "paraphrase", 300) for r in batch)
+    rows = {s: sum(v.values()) for s, v in PARA_SOURCES.items()}
+    expected = rows["mrpc_en"] * 4.0 / (rows["mrpc_en"] * 4.0 + rows["quora_duplicates"])
+    assert drawn["mrpc_en"] / sum(drawn.values()) == pytest.approx(expected, abs=0.03)
+
+
+@pytest.mark.parametrize(
+    "weights",
+    [
+        {"nonsense": {"anli": 1.0}},
+        {"nli": {"not_a_dataset": 1.0}},
+        {"nli": {"anli": 0.0}},
+        {"nli": {"anli": float("nan")}},
+        {"nli": {"anli": -1.0}},
+    ],
+)
+def test_source_weights_are_validated(tmp_path: Path, weights: dict) -> None:
+    with pytest.raises(ValueError, match="sampling weights"):
+        _loader(_data(tmp_path), dataset_sampling_weights=weights)
+
+
+def test_source_weights_need_the_train_split(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="train split"):
+        _loader(
+            _data(tmp_path),
+            split="val",
+            label_balanced_tasks=(),
+            dataset_sampling_weights={"nli": {"anli": 2.0}},
+        )
+
+
+def test_training_config_carries_the_weights() -> None:
+    config = TrainingConfig(dataset_sampling_weights={"qa": {"squad_v2_en": 1.695}})
+    assert config.dataset_sampling_weights["qa"]["squad_v2_en"] == 1.695
+    assert TrainingConfig().dataset_sampling_weights == {}

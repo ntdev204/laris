@@ -63,6 +63,18 @@ training:
     qa: 0.7
     retrieval: 0.5
 
+  # T207 per-dataset factors on the rows ** exponent weight (applied with --dataset-sampling-ablation, like the exponents);
+  # solved by scripts/measure_mixture_shares.py, report reports/verification/T207-mixture-shares.json:
+  # QA no-answer share 0.0996 -> 0.132 (squad_v2_en), model-labelled paws_unlabeled_en capped at 15 % of paraphrase,
+  # VitaminC at 10 % of NLI.
+  dataset_sampling_weights:
+    qa:
+      squad_v2_en: 1.695
+    paraphrase:
+      paws_unlabeled_en: 0.17
+    nli:
+      vitaminc_en: 0.375
+
   # --- T202 additions (profile only) ---
   mlm_pair_fraction: 0.5
   order_task: true

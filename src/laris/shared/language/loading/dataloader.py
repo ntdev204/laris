@@ -60,7 +60,7 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
         "wikipedia_en", "fineweb_edu_en", "openwebtext_en", "c4_en", "gutenberg_en",
         "cc_news_en", "cnn_dailymail_en", "xsum_en", "wikipedia_simple_en", "mlm",
     ],
-    "nli": ["all_nli", "anli", "fever", "wanli_en", "scitail_en", "nli"],
+    "nli": ["all_nli", "anli", "fever", "wanli_en", "scitail_en", "vitaminc_en", "nli"],
     # paws_swap_en and paws_unlabeled_en (T200) are word-order sources with a train split only; the
     # unlabeled labels are model-assigned (`label_source: model`).
     "paraphrase": [
@@ -355,6 +355,7 @@ class StreamingParquetMultiTaskDataLoader:
         trim_padding: bool = False,
         length_pool_batches: int = 1,
         dataset_sampling_exponents: Optional[Dict[str, float]] = None,
+        dataset_sampling_weights: Optional[Dict[str, Dict[str, float]]] = None,
         include_retrieval_pairs: bool = False,
         include_retrieval_task: bool = False,
         retrieval_batch_size: Optional[int] = None,
@@ -446,7 +447,26 @@ class StreamingParquetMultiTaskDataLoader:
             for task, power in self.dataset_sampling_exponents.items()
         ):
             raise ValueError("dataset sampling exponents require known tasks and positive powers")
-        if split != "train" and (self.dataset_sampling_exponents or include_retrieval_pairs):
+        # Per-source multipliers (T207): task -> {dataset directory -> factor on rows ** exponent}.
+        self.dataset_sampling_weights = {
+            task: dict(weights) for task, weights in (dataset_sampling_weights or {}).items()
+        }
+        for task, weights in self.dataset_sampling_weights.items():
+            known = set(TASK_DATASET_DIRS.get(task, [])) | (
+                set(RETRIEVAL_DATASET_DIRS) if task == RETRIEVAL_TASK else set()
+            )
+            if not known or any(
+                name not in known or not math.isfinite(w) or w <= 0 for name, w in weights.items()
+            ):
+                raise ValueError(
+                    "dataset sampling weights require a known task, its dataset directories "
+                    "and positive finite factors"
+                )
+        if split != "train" and (
+            self.dataset_sampling_exponents
+            or self.dataset_sampling_weights
+            or include_retrieval_pairs
+        ):
             raise ValueError("dataset resampling and retrieval pairs require the train split")
         unknown = sorted(set(label_balanced_tasks) - set(BALANCEABLE_TASKS))
         if unknown:
@@ -536,6 +556,7 @@ class StreamingParquetMultiTaskDataLoader:
                     self.buffer_size,
                     random.Random(f"{self._seed}:{task_name}"),
                     self.dataset_sampling_exponents.get(task_name, 1.0),
+                    self.dataset_sampling_weights.get(task_name),
                 )
 
     def _balanced_sampler(self, task: str, paths: List[Path]) -> LabelBalancedSampler:
@@ -558,6 +579,7 @@ class StreamingParquetMultiTaskDataLoader:
             lambda shard_paths: self._create_task_stream(shard_paths, self.buffer_size),
             random.Random(f"{self._seed}:{task}:balanced"),
             dataset_exponent=self.dataset_sampling_exponents.get(task, 1.0),
+            source_weights=self.dataset_sampling_weights.get(task),
             queue_limit=max(self.buffer_size, self.batch_size) * 4,
             label_counts_by_source=self._label_counts[task],
         )
@@ -624,7 +646,12 @@ class StreamingParquetMultiTaskDataLoader:
 
     @classmethod
     def _interleaved_stream(
-        cls, paths: List[Path], buffer_size: int, rng: random.Random, dataset_exponent: float = 1.0
+        cls,
+        paths: List[Path],
+        buffer_size: int,
+        rng: random.Random,
+        dataset_exponent: float = 1.0,
+        dataset_weights: Optional[Dict[str, float]] = None,
     ) -> Iterator[Dict[str, Any]]:
         """Draw a dataset by count exponent and a shard within it by row count.
 
@@ -642,8 +669,11 @@ class StreamingParquetMultiTaskDataLoader:
         dataset_counts: Dict[Path, int] = {}
         for path, count in zip(paths, row_counts):
             dataset_counts[path.parent] = dataset_counts.get(path.parent, 0) + count
+        multipliers = dataset_weights or {}
         weights = [
-            count * dataset_counts[path.parent] ** (dataset_exponent - 1)
+            count
+            * dataset_counts[path.parent] ** (dataset_exponent - 1)
+            * multipliers.get(path.parent.name, 1.0)
             for path, count in zip(paths, row_counts)
         ]
         streams = [cls._create_task_stream([p], buffer_size) for p in paths]

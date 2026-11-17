@@ -128,6 +128,8 @@ class TrainingConfig(BaseModel):
     retrieval_batch_size: Optional[int] = Field(default=None, ge=2)
     retrieval_max_sequence_length: Optional[int] = Field(default=None, ge=8)
     dataset_sampling_exponents: dict[str, float] = Field(default_factory=dict)
+    # T207: task -> {dataset directory -> factor on that dataset's rows ** exponent weight}.
+    dataset_sampling_weights: dict[str, dict[str, float]] = Field(default_factory=dict)
     task_sampling_alpha: float = Field(default=0.7, gt=0.0, le=1.0, allow_inf_nan=False)
     # Minimum share of the optimizer steps per task (T190); lifts a small task
     # above its temperature share.
