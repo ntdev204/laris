@@ -1,0 +1,8 @@
+{
+  "pairs_graded": 300,
+  "pairs_expected": 300,
+  "spearman": 0.9141,
+  "mean_human": 0.5046,
+  "mean_llm": 0.5433,
+  "mean_abs_error": 0.0992
+}

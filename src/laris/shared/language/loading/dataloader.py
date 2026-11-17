@@ -67,7 +67,7 @@ TASK_DATASET_DIRS: Dict[str, List[str]] = {
         "quora", "paws", "quora_duplicates", "mrpc_en", "paws_swap_en", "paws_unlabeled_en",
         "paraphrase",
     ],
-    "similarity": ["stsb", "sts_extra_en", "similarity"],
+    "similarity": ["stsb", "sts_extra_en", "similarity_llm_en", "similarity"],
     # duorc_en, ropes_en, quoref_en and drop_en (T200) have a train split only.
     "qa": [
         "squad", "hotpotqa", "squad_v2_en", "adversarial_qa_en", "duorc_en", "ropes_en",
