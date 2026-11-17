@@ -648,7 +648,7 @@ more than twice the smoke-run time. The agent writes the intake check and the pe
 **Step 5 (after the pilot review): main run and T100.** Command, step count and time budget are fixed from the measured pilot throughput. T100
 (held-out evaluation, once per candidate) follows the main run.
 
-## 10. T202: memory and speed profile of the pair-remediation tasks and mixed batches (owner run, not started)
+## 10. T202: memory and speed profile of the pair-remediation tasks and mixed batches (owner run, done 2026-11-17)
 
 Prepared by T201. The profile needs an optimizer step, so only the owner runs it. Nothing in this section authorises an agent to train.
 
@@ -658,12 +658,9 @@ different tasks as one mixed step (the losses are added and one backward pass co
 peak counter, so the worst group is a measurement, not an estimate. The config is `configs/language_encoder/english_r1_t202_profile.yaml`
 (english_r1 with the new tasks on; profile only, not a training mixture: T203 proposes that).
 
-**Estimate to replace (T201, derived from the T184 log, not measured).** Resident state of the 544 M model with fp32 AdamW is about 8.1 GiB
-(weights, gradients and two moments, 16 bytes per parameter). T184 peaks per task: MLM 8.85, NLI 10.32, paraphrase 10.33, similarity 10.33, QA 10.91,
-retrieval 11.39 GB, so activations are about 0.7, 2.2, 2.2, 2.2, 2.8 and 3.3 GB. Adding the most expensive tasks of one step gives about 11.4 GB for one
-task, **about 14.2 GB for two** (retrieval + QA; the limit is 14.5) and **about 16.4 GB for three** (does not fit). The T184 figures are running maxima,
-so the estimate errs high; allocator fragmentation is not modelled. The new tasks (order labels, bi-encoder similarity with two single-sentence passes, contrastive
-similarity at batch 64) are not in it. Expected reading: 2 is marginal for the worst pair and fine for the common ones; 3 needs a smaller micro-batch.
+**Result (2026-11-17, `reports/verification/T202-mixed-batch-profile.md`).** 1 task: 11.39 GB, `[SUCCESS]`. 2 tasks: 13.12 GB worst (similarity+retrieval),
+`[SUCCESS]`. 3 tasks: CUDA out of memory at 14.16 GB allocated after 9 groups (largest 13.81 GB). Chosen `--tasks-per-step 2`. The T201 estimate (about 14.2 GB
+for 2, 16.4 GB for 3) was high for 2 and right for 3. A 2-task micro-step takes 1.68 s against 0.88 s for one task.
 
 ```bash
 TOK=artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
@@ -690,5 +687,4 @@ only, lower `retrieval_batch_size` (16) or `--micro-batch-size` (4, with `--grad
 of each of its tasks, so the gradient of a micro-step is about `tasks_per_step` times larger before clipping (`max_grad_norm` bounds it); the
 learning rate is not changed by this runbook.
 
-**Intake.** Return the three logs. The agent writes `reports/verification/T202-mixed-batch-profile.md` with the per-task and per-group peaks, the
-time per step and the chosen value, and replaces the estimate above with the numbers. T203 uses the chosen `tasks_per_step` in the stage-2 proposal.
+**Intake.** Done: the three logs were returned and the report written. T203 uses `tasks_per_step: 2` in the stage-2 proposal.
