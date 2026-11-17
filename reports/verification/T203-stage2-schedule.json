@@ -1,0 +1,266 @@
+[
+  {
+    "config": "configs/language_encoder/english_r1_stage2.yaml",
+    "alpha": 0.7,
+    "floors": {
+      "nli": 0.17,
+      "paraphrase": 0.13,
+      "qa": 0.11,
+      "similarity": 0.08,
+      "contrastive_sim": 0.17
+    },
+    "tasks_per_step": 2,
+    "micro_batch_size": 8,
+    "grad_accum": 4,
+    "draws_per_optimizer_step": 8,
+    "tasks": {
+      "contrastive_sim": {
+        "train_rows": 1410056,
+        "scheduler_probability": 0.17,
+        "draw_share": 0.1686,
+        "rows_per_draw": 64,
+        "steps_5000": {
+          "draws": 6744.4,
+          "updates_with_task": 4035.2,
+          "rows_seen": 431643,
+          "passes": 0.306
+        },
+        "steps_20000": {
+          "draws": 26977.7,
+          "updates_with_task": 16140.7,
+          "rows_seen": 1726573,
+          "passes": 1.224
+        }
+      },
+      "mlm": {
+        "train_rows": 15500570,
+        "scheduler_probability": 0.2212,
+        "draw_share": 0.2107,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 8426.5,
+          "updates_with_task": 4439.3,
+          "rows_seen": 67412,
+          "passes": 0.004
+        },
+        "steps_20000": {
+          "draws": 33706.2,
+          "updates_with_task": 17757.3,
+          "rows_seen": 269649,
+          "passes": 0.017
+        }
+      },
+      "nli": {
+        "train_rows": 1670892,
+        "scheduler_probability": 0.17,
+        "draw_share": 0.1686,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 6744.4,
+          "updates_with_task": 4035.2,
+          "rows_seen": 53955,
+          "passes": 0.032
+        },
+        "steps_20000": {
+          "draws": 26977.7,
+          "updates_with_task": 16140.7,
+          "rows_seen": 215822,
+          "passes": 0.129
+        }
+      },
+      "paraphrase": {
+        "train_rows": 1039794,
+        "scheduler_probability": 0.13,
+        "draw_share": 0.1325,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 5301.5,
+          "updates_with_task": 3541.4,
+          "rows_seen": 42412,
+          "passes": 0.041
+        },
+        "steps_20000": {
+          "draws": 21206.1,
+          "updates_with_task": 14165.6,
+          "rows_seen": 169649,
+          "passes": 0.163
+        }
+      },
+      "qa": {
+        "train_rows": 442809,
+        "scheduler_probability": 0.11,
+        "draw_share": 0.1136,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 4542.7,
+          "updates_with_task": 3216.1,
+          "rows_seen": 36342,
+          "passes": 0.082
+        },
+        "steps_20000": {
+          "draws": 18170.9,
+          "updates_with_task": 12864.2,
+          "rows_seen": 145367,
+          "passes": 0.328
+        }
+      },
+      "retrieval": {
+        "train_rows": 6373045,
+        "scheduler_probability": 0.1188,
+        "draw_share": 0.1219,
+        "rows_per_draw": 32,
+        "steps_5000": {
+          "draws": 4877.9,
+          "updates_with_task": 3365.8,
+          "rows_seen": 156094,
+          "passes": 0.024
+        },
+        "steps_20000": {
+          "draws": 19511.7,
+          "updates_with_task": 13463.3,
+          "rows_seen": 624374,
+          "passes": 0.098
+        }
+      },
+      "similarity": {
+        "train_rows": 23163,
+        "scheduler_probability": 0.08,
+        "draw_share": 0.0841,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 3362.4,
+          "updates_with_task": 2605.5,
+          "rows_seen": 26899,
+          "passes": 1.161
+        },
+        "steps_20000": {
+          "draws": 13449.7,
+          "updates_with_task": 10422.1,
+          "rows_seen": 107598,
+          "passes": 4.645
+        }
+      }
+    }
+  },
+  {
+    "config": "configs/language_encoder/english_r1_stage2_control.yaml",
+    "alpha": 0.7,
+    "floors": {
+      "similarity": 0.03
+    },
+    "tasks_per_step": 2,
+    "micro_batch_size": 8,
+    "grad_accum": 4,
+    "draws_per_optimizer_step": 8,
+    "tasks": {
+      "mlm": {
+        "train_rows": 15500570,
+        "scheduler_probability": 0.4897,
+        "draw_share": 0.3977,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 15908.4,
+          "updates_with_task": 4991.2,
+          "rows_seen": 127267,
+          "passes": 0.008
+        },
+        "steps_20000": {
+          "draws": 63633.4,
+          "updates_with_task": 19965.0,
+          "rows_seen": 509068,
+          "passes": 0.033
+        }
+      },
+      "nli": {
+        "train_rows": 1670892,
+        "scheduler_probability": 0.103,
+        "draw_share": 0.1271,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 5085.0,
+          "updates_with_task": 3453.5,
+          "rows_seen": 40680,
+          "passes": 0.024
+        },
+        "steps_20000": {
+          "draws": 20339.9,
+          "updates_with_task": 13814.1,
+          "rows_seen": 162719,
+          "passes": 0.097
+        }
+      },
+      "paraphrase": {
+        "train_rows": 1039794,
+        "scheduler_probability": 0.0739,
+        "draw_share": 0.0925,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 3700.0,
+          "updates_with_task": 2794.0,
+          "rows_seen": 29600,
+          "passes": 0.028
+        },
+        "steps_20000": {
+          "draws": 14800.1,
+          "updates_with_task": 11176.2,
+          "rows_seen": 118401,
+          "passes": 0.114
+        }
+      },
+      "qa": {
+        "train_rows": 442809,
+        "scheduler_probability": 0.0406,
+        "draw_share": 0.0517,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 2066.0,
+          "updates_with_task": 1767.4,
+          "rows_seen": 16528,
+          "passes": 0.037
+        },
+        "steps_20000": {
+          "draws": 8264.0,
+          "updates_with_task": 7069.4,
+          "rows_seen": 66112,
+          "passes": 0.149
+        }
+      },
+      "retrieval": {
+        "train_rows": 6373045,
+        "scheduler_probability": 0.2628,
+        "draw_share": 0.2927,
+        "rows_per_draw": 32,
+        "steps_5000": {
+          "draws": 11708.8,
+          "updates_with_task": 4852.3,
+          "rows_seen": 374683,
+          "passes": 0.059
+        },
+        "steps_20000": {
+          "draws": 46835.4,
+          "updates_with_task": 19409.3,
+          "rows_seen": 1498732,
+          "passes": 0.235
+        }
+      },
+      "similarity": {
+        "train_rows": 23163,
+        "scheduler_probability": 0.03,
+        "draw_share": 0.0383,
+        "rows_per_draw": 8,
+        "steps_5000": {
+          "draws": 1531.8,
+          "updates_with_task": 1364.6,
+          "rows_seen": 12254,
+          "passes": 0.529
+        },
+        "steps_20000": {
+          "draws": 6127.2,
+          "updates_with_task": 5458.5,
+          "rows_seen": 49017,
+          "passes": 2.116
+        }
+      }
+    }
+  }
+]

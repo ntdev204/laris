@@ -1,0 +1,69 @@
+# T203 control for the stage-2 run (PROPOSAL, not run): the same checkpoint (pilot 2 `best`), steps, warmup, learning rate, batch sizes and
+# `tasks_per_step: 2` as english_r1_stage2.yaml, with the ORIGINAL mixture of english_r1.yaml (similarity floor 3 %, cross-input similarity
+# head, no two-segment MLM, no order task, no contrastive task, no T207 dataset weights, plain streams). It isolates what the new mixture, tasks and
+# data decisions add to the same compute. Not identical to pilot 2: `tasks_per_step 2` gives it twice the batch draws per step, and the similarity
+# directory now includes the T208 rows (the loader reads every directory of a task).
+# Run only on the owner's order (T204); nothing here authorises a run.
+config_version: "1.0.0"
+environment: "foundation-pretraining"
+
+model:
+  # 56k because the 32k fit measured fertility 1.41 on English validation text (gate 1.35); T182.
+  vocab_size: 56000
+  max_sequence_length: 1024
+  d_model: 1280
+  num_layers: 24
+  num_heads: 20
+  d_ff: 5120
+  dropout: 0.1
+  norm_type: "rmsnorm"
+  pos_encoding: "rope"
+  activation: "gelu"
+  tie_embeddings: true
+  precision: "bf16"
+  seed: 42
+
+training:
+  batch_size: 32
+  micro_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0002
+  warmup_steps: 300
+  max_steps: 5000
+  loss_lambda_mlm: 0.50
+  loss_lambda_nli: 0.20
+  loss_lambda_para: 0.10
+  loss_lambda_sim: 0.05
+  loss_lambda_qa: 0.15
+  # Dense-retrieval task (T178): query/positive pairs from GooAQ, Natural Questions, MS MARCO, ELI5, Yahoo Answers,
+  # Stack Exchange duplicates, SPECTER, AltLex, Simple-Wiki and COCO captions (data/processed, leakage-scanned
+  # against the G12 sources). In-batch negatives only; the weight multiplies the InfoNCE loss (about ln(batch) at
+  # the start), so it is a PROPOSAL to revisit after the profile and the pilot loss curves. With the task on, the
+  # QA auxiliary contrastive term (same weight) is also on.
+  retrieval_task: true
+  loss_lambda_retrieval: 0.20
+  retrieval_temperature: 0.07
+  # More in-batch negatives than the 8-pair micro-batch of the other tasks, and passages cut at 256 tokens (queries
+  # are short; the benchmark passages are paragraphs). The profile (runbook 9.2 step 2) measures the memory; lower
+  # the batch size if it does not fit.
+  retrieval_batch_size: 32
+  retrieval_max_sequence_length: 256
+  task_sampling_alpha: 0.7
+  # Similarity has 20 k rows: at alpha 0.7 it is drawn for 0.5 % of the steps (25 of 5,000), which did not move its loss
+  # in the first 980 pilot steps. A floor of 3 % (150 of 5,000 steps) is an unmeasured proposal.
+  task_sampling_floor:
+    similarity: 0.03
+  # Within a task, datasets are drawn with probability proportional to (rows ** exponent) / total, so one large
+  # source (FineWeb-Edu is 44 % of the MLM passages) does not take the whole task.
+  dataset_sampling_exponents:
+    mlm: 0.6
+    nli: 0.7
+    paraphrase: 0.7
+    qa: 0.7
+    retrieval: 0.5
+
+  tasks_per_step: 2
+
+hardware:
+  max_vram_gb: 14.5
+  target_device: "cuda"
