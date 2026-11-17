@@ -65,7 +65,7 @@ before any main run. Owner direction 2026-11-14: no training now, solve the data
 Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205, T206, T207, T208
 Execution order (each step needs the previous ones; no step before T204 trains): T192 data on disk (done) -> T193 audit (done) -> T206 data corrections (done) ->
 T194 two-segment builder (done) -> T195 order head (done) -> T196 balanced NLI and paraphrase (done) -> T197 relation pairs (done) -> T198 bi-encoder head (done) ->
-T199 contrastive objective (done) -> T200 paraphrase and QA data (done) -> T201 mixed batches (done) -> T207 data decisions (done) -> T202 owner profile (done, tasks_per_step 2) -> T208 LLM similarity labels (done) -> T203 mixture and schedule ->
+T199 contrastive objective (done) -> T200 paraphrase and QA data (done) -> T201 mixed batches (done) -> T207 data decisions (done) -> T202 owner profile (done, tasks_per_step 2) -> T208 LLM similarity labels (done) -> T203 mixture and schedule (done, proposal) ->
 T204 owner stage-2 and control runs -> T205 analysis and decision.
 Exit criteria:
 - Extra raw data is on disk with provenance and licence status (T192) and the audit (T193) states per source the label prior, shortcut baselines, truncation, duplicates and held-out overlap.

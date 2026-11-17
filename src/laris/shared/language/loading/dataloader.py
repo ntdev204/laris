@@ -222,6 +222,38 @@ class TemperatureSamplingScheduler:
         return self.probabilities[idx]
 
 
+def task_inclusion_probabilities(
+    tasks: List[str], probabilities: List[float], count: int
+) -> Dict[str, float]:
+    """Chance that each task is in one mixed step of `count` different tasks (T203).
+
+    Mirrors `TemperatureSamplingScheduler.sample_tasks` (successive draws without replacement,
+    each renormalised over the tasks left), computed exactly by enumeration; the values sum to
+    `count`. With `count == 1` they are the scheduler probabilities. Dividing by `count` gives
+    the share of the batch draws a task receives, which is not its scheduler probability once
+    `count > 1`: a large task is limited to one place in each step.
+    """
+    if len(tasks) != len(probabilities):
+        raise ValueError("tasks and probabilities differ in length")
+    if not 1 <= count <= len(tasks):
+        raise ValueError(f"count must be between 1 and {len(tasks)}, got {count}")
+    weights = [max(p, 1e-12) for p in probabilities]
+    included = {task: 0.0 for task in tasks}
+
+    def walk(left: List[int], chosen: List[int], mass: float) -> None:
+        if len(chosen) == count:
+            for index in chosen:
+                included[tasks[index]] += mass
+            return
+        total = sum(weights[i] for i in left)
+        for index in left:
+            rest = [i for i in left if i != index]
+            walk(rest, chosen + [index], mass * weights[index] / total)
+
+    walk(list(range(len(tasks))), [], 1.0)
+    return included
+
+
 class SyntheticMultiTaskDataLoader:
     """Mock/Synthetic multi-task data loader for contract testing and CPU verification.
 
