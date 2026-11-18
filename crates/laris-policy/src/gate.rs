@@ -8,6 +8,7 @@
 use crate::engine::{Engine, Remember, Verdict};
 use crate::hooks::{HookRunner, clean};
 use crate::preview::preview;
+use crate::shield::Shield;
 use laris_core::{Refusal, ToolGate, ToolRunner};
 use laris_tools::Registry;
 use serde_json::{Map, Value, json};
@@ -75,6 +76,7 @@ pub struct PolicyGate {
     engine: Arc<Engine>,
     writes: BTreeMap<String, bool>,
     hooks: Option<Arc<HookRunner>>,
+    shield: Option<Arc<Shield>>,
     approver: Box<dyn Approver>,
 }
 
@@ -89,6 +91,7 @@ impl PolicyGate {
             engine,
             writes,
             hooks: None,
+            shield: None,
             approver: Box::new(approver),
         }
     }
@@ -97,6 +100,14 @@ impl PolicyGate {
     #[must_use]
     pub fn with_hooks(mut self, hooks: Arc<HookRunner>) -> Self {
         self.hooks = Some(hooks);
+        self
+    }
+
+    /// Refuses injected requests (`injected_request`) whatever the rules and the mode say, before any hook or
+    /// question: see [`Shield`].
+    #[must_use]
+    pub fn with_shield(mut self, shield: Arc<Shield>) -> Self {
+        self.shield = Some(shield);
         self
     }
 }
@@ -117,6 +128,11 @@ impl ToolGate for PolicyGate {
                 "permission_denied",
                 format!("{name} is not permitted: {}", decision.reason),
             ));
+        }
+        if let Some(shield) = &self.shield
+            && let Some(refused) = shield.review(name, arguments)
+        {
+            return Some(refused);
         }
         if let Some(hooks) = &self.hooks {
             let mut payload = Map::new();
@@ -154,12 +170,24 @@ impl ToolGate for PolicyGate {
 pub struct HookedRunner<R> {
     inner: R,
     hooks: Arc<HookRunner>,
+    shield: Option<Arc<Shield>>,
 }
 
 impl<R: ToolRunner> HookedRunner<R> {
     /// Wraps `inner`.
     pub fn new(inner: R, hooks: Arc<HookRunner>) -> Self {
-        Self { inner, hooks }
+        Self {
+            inner,
+            hooks,
+            shield: None,
+        }
+    }
+
+    /// Hides credentials in what hooks add and watches it for orders to the model (hook output is untrusted).
+    #[must_use]
+    pub fn with_shield(mut self, shield: Arc<Shield>) -> Self {
+        self.shield = Some(shield);
+        self
     }
 
     /// The wrapped runner.
@@ -186,10 +214,45 @@ impl<R: ToolRunner> ToolRunner for HookedRunner<R> {
         if !notes.is_empty()
             && let Value::Object(map) = &mut result
         {
-            let notes: Vec<String> = notes.iter().map(|n| clean(n)).collect();
+            let notes: Vec<String> = notes
+                .iter()
+                .map(|n| {
+                    let n = clean(n);
+                    self.shield
+                        .as_ref()
+                        .map_or(n.clone(), |s| s.screen_text(&n))
+                })
+                .collect();
             map.insert("hook_context".to_owned(), json!(notes));
             map.insert("untrusted".to_owned(), Value::Bool(true));
         }
         result
+    }
+}
+
+/// A [`ToolRunner`] that finishes every result through the [`Shield`]: credentials hidden before the loop logs the
+/// result and the model reads it, untrusted content remembered and watched for orders. Put it directly around the
+/// registry, inside a [`HookedRunner`].
+pub struct ShieldedRunner<R> {
+    inner: R,
+    shield: Arc<Shield>,
+}
+
+impl<R: ToolRunner> ShieldedRunner<R> {
+    /// Wraps `inner`.
+    pub fn new(inner: R, shield: Arc<Shield>) -> Self {
+        Self { inner, shield }
+    }
+
+    /// The wrapped runner.
+    pub fn inner_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+}
+
+impl<R: ToolRunner> ToolRunner for ShieldedRunner<R> {
+    fn run(&mut self, name: &str, arguments: &Args) -> Value {
+        let result = self.inner.run(name, arguments);
+        self.shield.screen_value(&result)
     }
 }
