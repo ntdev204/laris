@@ -688,3 +688,37 @@ of each of its tasks, so the gradient of a micro-step is about `tasks_per_step` 
 learning rate is not changed by this runbook.
 
 **Intake.** Done: the three logs were returned and the report written. T203 uses `tasks_per_step: 2` in the stage-2 proposal.
+
+## 11. T209: memory profile with a shared GPU (owner run, prepared 2026-11-18)
+
+Prepared because the owner keeps CARLA (headless, about 2.3 GB, measured 2,285 MiB) running during training. `nvidia-smi` then shows about 12.6 GiB free of
+16,303 MiB (2,886 MiB used before any training). The T202 peaks do not fit: 2 tasks per step peaked at 13.12 GB, 1 task at 11.39 GB (both maximum allocated,
+without the CUDA context of about 0.3-0.5 GB). Nothing in this section authorises an agent to train; the profile needs an optimizer step, so only the owner runs it.
+
+**What changes.** `configs/language_encoder/english_r1_t209_shared_gpu_profile.yaml` is the T202 profile config with `retrieval_batch_size` 16 (was 32),
+`contrastive_sim_batch_size` 32 (was 64) and `max_vram_gb` 11.5. The command lowers the micro-batch to 4 and raises the accumulation to 8 (effective batch 32 as
+before). The resident state (about 8.1 GiB of weights, gradients and fp32 AdamW) does not shrink, so the room for activations is about 3.4 GB at best; whether 2
+tasks fit is the question this profile answers. Halving the retrieval and contrastive batches halves their in-batch negatives: a stage-1 rerun, the stage-2 run and
+its control must all use the same sizes, or the comparison is not like for like.
+
+```bash
+TOK=artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
+mkdir -p artifacts/profiles
+nvidia-smi --query-gpu=memory.used,memory.free --format=csv | tee artifacts/profiles/english-r1-t209-gpu-before.txt   # with CARLA running
+for N in 1 2; do
+  LARIS_TRAINING_AUTHORIZED=1 timeout -s KILL 900s .venv/bin/python -m cli.model train language-encoder \
+    --profile-only --model-size large --vocab-size 56000 --max-seq-len 1024 \
+    --training-config configs/language_encoder/english_r1_t209_shared_gpu_profile.yaml --tasks-per-step $N \
+    --micro-batch-size 4 --grad-accum-steps 8 --gradient-checkpointing --precision bf16 --no-8bit-adam \
+    --tokenizer-model $TOK --normalize-input 2>&1 | tee artifacts/profiles/english-r1-t209-profile-n$N.log
+done
+nvidia-smi --query-gpu=memory.used,memory.free --format=csv | tee artifacts/profiles/english-r1-t209-gpu-after.txt
+```
+
+**Decision rule.** Keep CARLA in its usual scene while profiling (its memory grows with sensors and map). The largest `--tasks-per-step` whose log ends in
+`[SUCCESS]` with a measured peak at most 11.5 GB wins; the margin to the free memory must stay at least 1 GiB, because CARLA can grow. If 2 fails, the
+stage-2 and control runs use `--tasks-per-step 1` (T203 then needs its floors recomputed: draw share equals the scheduler probability) or wait until the
+GPU is free. A log that ends in `CUDA out of memory` is a result: keep it. If both fail, do not train with CARLA running.
+
+**Not covered.** The profile samples a few batches per task. CARLA's memory is not constant: a heavier scene can take the margin and kill a run of hours.
+Speed is not comparable with T202 (the GPU is shared with CARLA's rendering and the micro-batch is half).
