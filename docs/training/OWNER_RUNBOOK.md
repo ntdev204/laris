@@ -849,3 +849,34 @@ tail -f artifacts/profiles/english-r1-stage1-rerun.log        # Ctrl-C leaves th
 **Stop rules** (as in the pilot): NaN loss, a task loss more than 10 % above its best for two evaluations, a step more than twice the first steps' time. `--no-evaluate-after` because the test splits are not on the VM and the sealed
 test split is never touched. Checkpoints are written under `artifacts/checkpoints/language_encoder/english-r1-stage1-rerun/{best,last}` (6.1 GB each): copy `best` and `last` and the log to Drive (`/content/drive/MyDrive/laris/runs/`) and
 `sync` **before** `colab stop`. Probes afterwards (forward only): `python3 -I scripts/diagnose_pair_path.py <best> $TOK 600`.
+
+## 16. T204: stage-2 run and control run on the A100 (prepared 2026-11-18)
+
+Both arms start from the clean stage-1 checkpoint of T212 (`english-r1-stage1-rerun/best`, step 2,000, val mean 0.6874; on the VM disk and on Drive in `runs/english-r1-stage1-rerun/`), with a fresh optimizer (`--init-from`).
+Same for both: micro-batch 32 x accumulation 1, 2 tasks per micro-step, 5,000 steps, warm-up 300, learning rate 2e-4, seed 42, evaluation and saving every 500 steps, retrieval batch 128, checkpointing on (T211), `--no-evaluate-after`
+(the test splits are not on the VM). They differ only in the config: `english_r1_stage2.yaml` (pair floors 0.66, pair-format MLM 0.5 with the order task, bi-encoder similarity, contrastive similarity, balanced NLI and paraphrase, T207 weights)
+against `english_r1_stage2_control.yaml` (the original mixture). The data and the T208 similarity rows are the same.
+
+**Commands (VM).** The code of the current commit must be on the VM (`scripts/colab/pack_code.sh`, upload `laris-code.tar.gz` and `artifacts/colab/COMMIT` to `/content/`, `tar -xzf`).
+```bash
+cd /content/laris
+export LARIS_TRAINING_AUTHORIZED=1                       # owner; the agent only with the owner's explicit permission for that run
+nohup bash scripts/colab/train_arm.sh stage2 > /dev/null 2>&1 &     # about 5.25 h
+# when it ends (log ends in [SUCCESS]):  bash scripts/colab/save_run.sh english-r1-stage2     # wait for SAVE_DONE
+nohup bash scripts/colab/train_arm.sh control > /dev/null 2>&1 &    # about 4.8 h
+# when it ends:                          bash scripts/colab/save_run.sh english-r1-control
+tr '\r' '\n' < artifacts/profiles/english-r1-stage2.log | grep -E "^\[Step|Validation|^ +[0-9]+ " | tail -5   # progress
+```
+Run the arms one after the other (one GPU). `save_run.sh` needs Drive mounted (`colab drivemount`, the owner's click, Enter after it) and prints `SAVE_DONE` only after `fsync`; do not stop the session before that.
+
+**Budget (derived, not measured).** Stage 2: 5,000 x 3.78 s = 5.25 h; control: 5,000 x 3.45 s = 4.8 h; evaluation and saving add a few minutes each time. At 6.73 units per hour that is about 35 and 32 units, about 70 in all, against a balance near 175.
+
+**Stop rules** (from the pilot): a non-finite loss; a task loss more than 10 % above its best for two evaluations (the run stops itself after `--patience 4` evaluations without improvement of the mean); a step slower than 7.6 s
+(twice the profiled 3.78 s); CUDA out of memory (the profile peak was 26.82 GB, a long batch may differ). A stopped run keeps its `best` and `last`; resume with `--resume <dir>`.
+
+**Probes after each arm (forward only, validation split):** `python3 -I scripts/diagnose_pair_path.py <run>/best $TOK 600` (similarity, NLI, paraphrase, sentence-order accuracy per source) and, for the stage-2 arm,
+`python3 -I scripts/measure_bi_encoder_head.py <run>/best $TOK` (check in T205 whether it scores the checkpoint's learned `sim_scale` and `sim_bias` or resets them), plus the evaluator on the validation split. Report each
+result as measured on the validation split.
+
+**Read before comparing.** (1) Stage 2 and the control differ in several things at once (mixture, tasks, heads, batch composition); the comparison separates the mixture from the compute, not each part. (2) Retrieval and
+contrastive batches are 4x larger than at 8 x 4, so their in-batch negatives differ from pilot-era runs. (3) The control reads the T208 similarity rows too. (4) The foundation model stays NOT QUALIFIED whatever these runs show.

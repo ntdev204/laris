@@ -548,6 +548,7 @@ returned logs, manifests and reports.
   - Logs and manifests match; probes and evaluator are reported per task for both runs; every result is stated as measured on the validation split
 - Status: pending
 - Note: Owner run, only on the owner's order and not before T193 to T203 are done. Stop rules as in the pilot: NaN, a task loss more than 10 % above its best for two evaluations, a step more than twice the smoke time.
+- Note (prepared 2026-11-18): `scripts/colab/train_arm.sh stage2|control` and `save_run.sh`, runbook section 16 (commands, budget about 70 compute units, stop rules, probes). Both arms start from `english-r1-stage1-rerun/best` (T212) with micro-batch 32 x 1, retrieval batch 128, 5,000 steps. Not started: it needs the owner's order or the owner's explicit permission for the agent to run it (the permission of 2026-11-18 covered only the T212 run).
 
 ### T205 — Analysis and decision after the stage-2 run
 - Requirements: SR-M4, SR-M6
