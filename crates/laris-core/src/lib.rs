@@ -22,6 +22,7 @@ mod driver;
 mod error;
 mod model;
 mod plan;
+pub mod prompt;
 mod record;
 mod recorder;
 mod replay;

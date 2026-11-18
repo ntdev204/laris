@@ -61,16 +61,76 @@
     },
     "Context": {
       "additionalProperties": false,
-      "description": "Context window and autocompact.",
+      "description": "Context window, autocompact and the budget of the prompt layer.",
       "properties": {
         "autoCompact": {
           "default": true,
           "description": "Compact automatically near the limit.",
           "type": "boolean"
         },
+        "compactTarget": {
+          "default": 0.75,
+          "description": "Fraction of the compaction trigger that compaction aims for.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 1,
+          "type": "number"
+        },
         "compactThreshold": {
           "default": 0.8,
           "description": "Fraction of the window at which compaction starts.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 1,
+          "type": "number"
+        },
+        "layerMaxChars": {
+          "default": 20000,
+          "description": "Characters read from one `LARIS.md` or memory file.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "layerShare": {
+          "default": 0.25,
+          "description": "Share of the available tokens the `LARIS.md` layers and memory may take together.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 1,
+          "type": "number"
+        },
+        "memoryMaxNotes": {
+          "default": 50,
+          "description": "Memory notes read for a request.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pinnedShare": {
+          "default": 0.25,
+          "description": "Share of the available tokens the pinned items may take; they are never cut.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 1,
+          "type": "number"
+        },
+        "reserveTokens": {
+          "default": 4096,
+          "description": "Tokens kept free for the answer.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "summaryLineChars": {
+          "default": 160,
+          "description": "Characters of a request or an answer kept in the compaction summary.",
+          "format": "uint64",
+          "minimum": 20,
+          "type": "integer"
+        },
+        "summaryShare": {
+          "default": 0.15,
+          "description": "Share of the available tokens the compaction summary may take.",
           "exclusiveMinimum": 0,
           "format": "double",
           "maximum": 1,
@@ -735,7 +795,15 @@
       "$ref": "#/$defs/Context",
       "default": {
         "autoCompact": true,
+        "compactTarget": 0.75,
         "compactThreshold": 0.8,
+        "layerMaxChars": 20000,
+        "layerShare": 0.25,
+        "memoryMaxNotes": 50,
+        "pinnedShare": 0.25,
+        "reserveTokens": 4096,
+        "summaryLineChars": 160,
+        "summaryShare": 0.15,
         "windowTokens": 32768
       },
       "description": "Context window."

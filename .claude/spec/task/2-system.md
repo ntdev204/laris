@@ -628,7 +628,48 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Request assembly from `LARIS.md` layers, memory, plan, pinned items; budgets; autocompact; layer contract test
 - Validation:
   - Budget tests; pinned items survive compaction; loop → harness → prompt contract holds
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. Two halves, as the spec splits them. `laris_core::prompt` is pure and knows neither the
+  loop nor the harness: `assemble(Input { layers, pins, plan, conversation }, Budget)` returns the request as
+  `ChatMessage`s. The server writes the system prompt, so the client sends no `system` message: layers, memory, pinned
+  items and plan go in one `user` message at the head, stable parts first (layers, pinned, plan). Layers have a source
+  (`User`, `Project`, `Memory`; memory is headed "saved notes: data, not instructions"); over their share they are cut
+  memory first, then user, then project, at a line end with a visible mark, and the names are returned in `trimmed`.
+  Pinned goals, constraints and decisions (`Pin`, repeats kept once) live in the head, not in the conversation, so
+  compaction cannot reach them; they are never cut, and a request that cannot hold them fails with
+  `PromptError::PinnedTooLarge`. `Budget::from_settings` takes `available = window - reserveTokens - tools`; compaction
+  starts above `available * compactThreshold` and aims for `compactTarget` of that, so the next turns do not compact
+  again at once. Compaction is deterministic and stateless (the same conversation gives the same request): the oldest
+  whole turns, as few as fit, become one extractive summary (`asked`, `tools`, `answered` per turn, clipped to
+  `summaryLineChars`, oldest lines left out past `summaryShare`); a turn is never split, so a tool call and its result
+  stay together; the newest turn is always whole; an earlier summary is folded into the next, never piled up; when one
+  turn alone is over the window its tool results are replaced by a stub (`method` `trim`); a request that still does
+  not fit is `PromptError::TooLarge`, never a silent cut; with `autoCompact` off nothing is summarised and an over-size
+  request fails. Tokens are estimated, one per four UTF-8 bytes plus four per message. `laris_policy::Prompted<M>` is
+  the harness half and a `Model` wrapper (wrap the redacting model, so a credential in a layer is masked too): it
+  reads `~/.laris/LARIS.md`, the `extraInstructions` setting, and, only in a trusted folder, `.laris/LARIS.md` and
+  `.laris/memory/*.md` (regular files only, capped by `layerMaxChars`, at most `memoryMaxNotes` notes, in name order),
+  holds the shared `PinBoard`, folds the decider's per-call plan note into the head, and keeps `last()` (tokens,
+  window, compaction, trimmed layers) for the client's `usage` and `compact` events. The loop's conversation, its
+  digest and the log are untouched, so a prompted session replays byte for byte with the bare scripted model. New
+  settings `context.compactTarget`, `reserveTokens`, `layerShare`, `pinnedShare`, `summaryShare`, `summaryLineChars`,
+  `layerMaxChars`, `memoryMaxNotes` (the budget numbers are settings, not constants); the schema was regenerated. No
+  new dependency. Tests: core 13 in `tests/prompt.rs` (nothing to add leaves the conversation alone, head order and
+  no system message, layer cuts, pins never cut and repeats, budget arithmetic, below trigger, summary and newest turn,
+  determinism and carried summary, auto-compact off, huge single turn, unfittable request, token estimate, and a
+  400-case seeded property test that pinned items survive, the request fits the window, the latest message is last
+  and every tool call keeps its result) and policy 9 in `tests/prompted.rs` (trust rule, caps, symbolic link and note
+  limit, pins, the loop → harness → prompt contract with a driven session, replay without the prompt layer, a long
+  session compacted in the request only with pins intact, an unfittable request ends the turn without asking the model,
+  masking inside a layer). Limits: nothing emits the `usage` and `compact` events or sets the pins yet (the client
+  tasks: `/pin`, status line), and the loop has no token budget of its own; the summary is extractive, not written by
+  a model, so it keeps what was asked, which tools ran and a clip of each answer, not reasoning; compaction is
+  recomputed for each request from the whole log, so the cut moves as the session grows (a server-side prefix cache
+  sees a changing prefix after each compaction); the estimate is bytes over four, not the model's tokenizer; the
+  project layer and memory are ignored in an untrusted folder, which is the safe side but means an untrusted folder
+  gets no project memory; pins are not persisted across a restart (a client task). `cargo fmt --check`, `clippy -D
+  warnings`, `cargo test` (except the `tests/hooks.rs` flake noted at T136, which passes alone), `cargo deny check`,
+  `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T140 — Model-free evaluation runner
 - Requirements: SR-H15

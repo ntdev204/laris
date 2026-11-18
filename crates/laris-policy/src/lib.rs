@@ -15,6 +15,10 @@
 //! * [`Shield`] is the injection defence: results of third-party content are marked, watched for orders to the
 //!   model, and a call that repeats such an order is refused as `injected_request` ([`PolicyGate::with_shield`]).
 //!
+//! * [`Prompted`] assembles each request with the prompt layer of `laris-core`: the `LARIS.md` layers and memory
+//!   ([`load_layers`], the project's only in a trusted folder), the pinned items ([`PinBoard`]) and the plan, inside
+//!   the model budget, with autocompact (SR-H3).
+//!
 //! * [`learning`] derives training examples from the event log and exports them as JSONL (SR-H11).
 //!
 //! Not here: the OS sandbox and the refusal of installs outside it (T135).
@@ -24,6 +28,7 @@ mod gate;
 mod hooks;
 pub mod learning;
 mod preview;
+mod prompted;
 mod redact;
 mod rule;
 mod shield;
@@ -36,6 +41,7 @@ pub use gate::{
 };
 pub use hooks::{HookOutcome, HookRunner, Notice, OUTPUT_CAP, clean};
 pub use preview::{diff, preview};
+pub use prompted::{PinBoard, Prompted, Report, Sources, load_layers};
 pub use redact::{MASK, RedactingModel, Redactor};
 pub use rule::{Rule, parse_rule, rule_matches, suggest_rule};
 pub use shield::{INJECTED_REQUEST, Shield};

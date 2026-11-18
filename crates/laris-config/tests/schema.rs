@@ -160,6 +160,14 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
             "agent.reflect.permanentErrors",
             "agent.reflect.permanentErrors[]",
             "agent.timeBudgetSeconds",
+            "context.compactTarget",
+            "context.layerMaxChars",
+            "context.layerShare",
+            "context.memoryMaxNotes",
+            "context.pinnedShare",
+            "context.reserveTokens",
+            "context.summaryLineChars",
+            "context.summaryShare",
             "learning.exportMinRating",
             "learning.maxToolResultChars",
             "learning.minAnswerChars",
@@ -189,6 +197,6 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
             "tools.skillMaxChars",
             "ui.language",
         ],
-        "settings added since generation 1 (server.* from T128, agent.* from T131, tools.* from T132, learning.* from T138)"
+        "settings added since generation 1 (server.* from T128, agent.* from T131, tools.* from T132, learning.* from T138, context.* budget keys from T139)"
     );
 }

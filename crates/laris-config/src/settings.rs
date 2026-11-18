@@ -218,7 +218,7 @@ pub enum Theme {
     Dark,
 }
 
-/// Context window and autocompact.
+/// Context window, autocompact and the budget of the prompt layer.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
 pub struct Context {
@@ -230,6 +230,28 @@ pub struct Context {
     /// Fraction of the window at which compaction starts.
     #[schemars(extend("exclusiveMinimum" = 0), range(max = 1))]
     pub compact_threshold: f64,
+    /// Fraction of the compaction trigger that compaction aims for.
+    #[schemars(extend("exclusiveMinimum" = 0), range(max = 1))]
+    pub compact_target: f64,
+    /// Tokens kept free for the answer.
+    pub reserve_tokens: u64,
+    /// Share of the available tokens the `LARIS.md` layers and memory may take together.
+    #[schemars(extend("exclusiveMinimum" = 0), range(max = 1))]
+    pub layer_share: f64,
+    /// Share of the available tokens the pinned items may take; they are never cut.
+    #[schemars(extend("exclusiveMinimum" = 0), range(max = 1))]
+    pub pinned_share: f64,
+    /// Share of the available tokens the compaction summary may take.
+    #[schemars(extend("exclusiveMinimum" = 0), range(max = 1))]
+    pub summary_share: f64,
+    /// Characters of a request or an answer kept in the compaction summary.
+    #[schemars(range(min = 20))]
+    pub summary_line_chars: u64,
+    /// Characters read from one `LARIS.md` or memory file.
+    #[schemars(range(min = 1))]
+    pub layer_max_chars: u64,
+    /// Memory notes read for a request.
+    pub memory_max_notes: u64,
 }
 
 impl Default for Context {
@@ -238,6 +260,14 @@ impl Default for Context {
             auto_compact: true,
             window_tokens: 32768,
             compact_threshold: 0.8,
+            compact_target: 0.75,
+            reserve_tokens: 4096,
+            layer_share: 0.25,
+            pinned_share: 0.25,
+            summary_share: 0.15,
+            summary_line_chars: 160,
+            layer_max_chars: 20000,
+            memory_max_notes: 50,
         }
     }
 }
