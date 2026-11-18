@@ -137,6 +137,12 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "same numbers; use it to fit a small VRAM budget",
     )
     parser.add_argument(
+        "--no-gradient-checkpointing",
+        action="store_true",
+        help="Large model only: keep every activation instead of recomputing it (T211). The "
+        "large model checkpoints by default; this needs more memory and is faster",
+    )
+    parser.add_argument(
         "--profile-only",
         action="store_true",
         help="Measure forward memory; with LARIS_TRAINING_AUTHORIZED=1 runs real optimizer steps",
@@ -476,7 +482,7 @@ def run(args: argparse.Namespace) -> int:
             **vocab_override,
             max_sequence_length=args.max_seq_len,
             precision=args.precision,
-            gradient_checkpointing=True,
+            gradient_checkpointing=not args.no_gradient_checkpointing,
             similarity_head=hyper.similarity_head,
             similarity_initial_scale=hyper.similarity_initial_scale,
             similarity_initial_bias=hyper.similarity_initial_bias,
