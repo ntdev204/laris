@@ -116,7 +116,17 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Commands and events, JSON-lines encoding, version in `ready`; the eleven Ink scenarios translated
 - Validation:
   - Round-trip per message; translated scenarios validate
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-protocol` has `events` (14 events and 8 commands of the E1 set as tagged enums,
+  unknown fields refused, version in `ready`, `check_ready` with the generation-1 message, `ends_command`, an
+  in-process `channel()`), `jsonl` (one object per line, `LineBuffer` that gives the same lines however bytes are cut,
+  unknown type is an error) and `scenario` (typed scenario with id pairing checks, and a replay through the JSON-lines
+  encoding). The schema export gained group `core` (`Event`, `Command`; committed file regenerated). Tests
+  (`tests/core.rs`): round trip and schema validation of every message in `tests/fixtures/core/*.jsonl` (authored, one
+  per type plus minimal forms) and of every message in the eleven scenarios of `tests/golden/ink_scenarios/`;
+  seeded faults fail both type and schema; the `mismatch` scenario is detected. Worked on v2 only; generation 1 was
+  not read for this task beyond the E1 field list already known. The test validator learned `minimum`.
+  `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard` pass. No new crates.
 
 ### T125 — laris-config and catalogue
 - Requirements: SR-L1

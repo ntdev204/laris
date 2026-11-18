@@ -1,7 +1,7 @@
 //! JSON Schema export of every wire type. The output is deterministic: keys are sorted and nothing
 //! depends on time, paths or the environment.
 
-use crate::{p1, p2, sse};
+use crate::{events, p1, p2, sse};
 use schemars::schema_for;
 use serde_json::{Map, Value, json};
 
@@ -33,6 +33,8 @@ pub fn export() -> Value {
         "p2" / "EmbedRequest" => p1::EmbedRequest,
         "p2" / "EmbedResponse" => p1::EmbedResponse,
         "sse" / "StreamError" => sse::StreamError,
+        "core" / "Event" => events::Event,
+        "core" / "Command" => events::Command,
     ];
     let mut groups: Map<String, Value> = Map::new();
     for (group, name, schema) in all {
