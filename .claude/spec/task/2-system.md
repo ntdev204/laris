@@ -503,7 +503,45 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - `laris-sandbox` for Linux, macOS, Windows; automatic `~/.laris/.venv` with `uv`
 - Validation:
   - Per platform: writes outside allowed roots fail; build on first use, repair, single build under two sessions
-- Status: pending
+- Status: in_progress
+- Note: Started 2026-11-18 on `feature/T135-sandbox`; Linux and the Python environment are done and tested, macOS is
+  written and tested as text only, **Windows is not built**, so the task is not closed. `laris-sandbox`: own `Policy`
+  (readable roots or whole disk, writable roots, hidden paths, protected names `.git` and `.laris`, network on/off;
+  replaces `codex-protocol`, T134 decision 1). Linux: `bwrap_args` builds the mounts in covering order (read-only
+  base, writable roots, protected names read-only, hidden paths last; `--unshare-user/pid/ipc/uts/net`,
+  `--die-with-parent`, `--new-session`); the `laris-sandbox-helper` binary runs inside and applies `no_new_privs`
+  (`rustix`, no `unsafe`) and a seccomp filter (ptrace, process_vm, bpf, io_uring, keyctl, perf, userfaultfd, kexec
+  refused; every non-local socket family refused when the network is off) and then `exec`s the command. Without a
+  usable `bwrap` the same helper applies a Landlock ruleset (read everywhere, write only the roots and `/dev`): weaker,
+  and `Sandbox::limits()` says so (protected names are writable, no private process namespace, no read hiding; a policy
+  that hides paths is refused there). Fail closed: no helper or no backend means the command does not run
+  (`Unavailable`, and `Bash` reports `sandbox_unavailable`); on Windows `Sandbox::detect` always refuses. macOS: the
+  Seatbelt base and network profiles are forked from codex (header and origin kept) and wrapped by an own generator
+  (writable roots minus protected names, hidden paths, network); `sandbox-exec` is taken from `/usr/bin` only; **never
+  run on macOS**. Python: `pyenv::ensure(home, settings)` builds `<home>/.venv` with `uv venv` and `uv pip install`
+  (`sandbox.python`, `.packages`, `.indexUrl`, `.pythonSource`), under an exclusive lock on `<home>/.venv.lock`, a
+  marker holding the settings fingerprint written last; a missing interpreter, a missing marker or changed settings
+  rebuild it; a failed build removes the folder. `uv` is `LARIS_UV` or `PATH`; `LARIS_SANDBOX_HELPER` names the helper,
+  else it is looked up beside the running program and in the folders above it. `laris-tools`: `Context::with_sandbox`
+  and `with_python_env`; `Bash` runs through the sandbox, puts the environment's `bin` first on `PATH` and sets
+  `VIRTUAL_ENV`; without a sandbox a package install (`pip`, `uv pip`/`add`/`sync`, `python -m pip`, `conda`, `apt`,
+  `brew`, `npm`/`pnpm`/`yarn install`) is refused as `install_outside_sandbox` (the generation-1 rule T133 left here;
+  it matches by words, so a command that merely contains `pip install` is refused too). Tests: 10 unit, 10 Linux
+  (write outside roots fails and inside works on both Linux backends, link out of the root, read-only policy, network
+  cut with local sockets kept and the network allowed again, ptrace, protected names and hidden paths and restricted
+  read under bubblewrap, fallback limits, missing helper, exit code), 6 Python (first build, reuse, repair of a broken
+  interpreter and of a missing marker, rebuild on changed settings, two concurrent sessions build once, a failed build
+  leaves nothing, the environment is read-only to a command), 5 `Bash` (sandboxed write, the time limit kills the group
+  inside bubblewrap, `PATH`, install rule, a sandbox that cannot start). New vendored crates: `landlock`, `seccompiler`,
+  `rustix` (approved in T119 / T134) and their transitive `enumflags2`, `enumflags2_derive`, `linux-raw-sys`, plus a
+  second `syn` 2.0.119 beside `syn` 3 for `enumflags2_derive` (`multiple-versions` warns). Not done: the Windows
+  restricted-token backend (about 9-10k codex lines; cannot be written or run on this Linux machine, and the Windows
+  Rust target is not installed), so SR-H6 "per platform" is unmet there; macOS untested; the bubblewrap tests need
+  unprivileged user namespaces (they run here, they fall back to Landlock only where `bwrap` is unusable); protected
+  names that do not exist yet can be created by a sandboxed command (only existing ones are mounted read-only);
+  nothing wires the sandbox into a running session (the client tasks); `rand` and `tempfile` stayed unapproved and
+  unused. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan` and
+  `xtask schema --check` pass.
 
 ### T136 — Redaction and injection defence
 - Requirements: SR-H10

@@ -54,9 +54,26 @@ fn run(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
     let limit = Duration::from_secs_f64(asked.min(max));
 
     let shell = shell();
-    let mut process = Command::new(&shell);
     // standard error joins standard output, as a terminal shows them
-    process.arg("-c").arg(format!("exec 2>&1\n{command}"));
+    let script = format!("exec 2>&1\n{command}");
+    let mut process = match &ctx.sandbox {
+        Some(sandbox) => sandbox
+            .command(&[shell.clone().into(), "-c".into(), script.into()], &cwd)
+            .map_err(|e| ToolError::new("sandbox_unavailable", e.to_string()))?,
+        None => {
+            if let Some(what) = install_command(command) {
+                return Err(ToolError::new(
+                    "install_outside_sandbox",
+                    format!(
+                        "{what} is refused: commands are not confined here, and installs belong inside the sandbox"
+                    ),
+                ));
+            }
+            let mut plain = Command::new(&shell);
+            plain.arg("-c").arg(script);
+            plain
+        }
+    };
     process
         .current_dir(&cwd)
         .stdin(Stdio::null())
@@ -73,6 +90,20 @@ fn run(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
         }
     }
     process.envs(&ctx.env);
+    if let Some(python) = &ctx.python_env {
+        let old = process
+            .get_envs()
+            .find(|(k, _)| *k == "PATH")
+            .and_then(|(_, v)| v.map(std::ffi::OsStr::to_owned))
+            .or_else(|| std::env::var_os("PATH"))
+            .unwrap_or_default();
+        let mut paths = vec![python.bin_dir()];
+        paths.extend(std::env::split_paths(&old));
+        if let Ok(joined) = std::env::join_paths(paths) {
+            process.env("PATH", joined);
+        }
+        process.env("VIRTUAL_ENV", &python.dir);
+    }
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
@@ -143,6 +174,29 @@ fn run(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
         "output": output,
         "cwd": match ctx.scope.display(&cwd) { d if d.is_empty() => ".".to_owned(), d => d },
     }))
+}
+
+/// The kind of install a command line tries (package managers), when it does; such a command may not run outside the
+/// sandbox. This is the generation-1 rule; inside the sandbox the same command simply fails to write.
+fn install_command(line: &str) -> Option<&'static str> {
+    use std::sync::OnceLock;
+    static RULES: OnceLock<Vec<(regex::Regex, &'static str)>> = OnceLock::new();
+    let rules = RULES.get_or_init(|| {
+        [
+            (r"(?:^|[\s;&|(`])(?:uv\s+)?pip3?\s+(?:--?\S+\s+)*install\b", "pip install"),
+            (r"(?:^|[\s;&|(`])uv\s+(?:add|sync|tool\s+install)\b", "uv install"),
+            (r"python[0-9.]*\s+-m\s+(?:uv\s+)?pip\s+install\b", "pip install"),
+            (r"(?:^|[\s;&|(`])(?:conda|mamba|apt|apt-get|dnf|yum|brew|pacman)\s+(?:-\S+\s+)*(?:install|add|-S)\b", "package install"),
+            (r"(?:^|[\s;&|(`])(?:npm|pnpm|yarn)\s+(?:install|i|add)\b", "package install"),
+        ]
+        .into_iter()
+        .filter_map(|(pattern, what)| regex::Regex::new(pattern).ok().map(|re| (re, what)))
+        .collect()
+    });
+    rules
+        .iter()
+        .find(|(re, _)| re.is_match(line))
+        .map(|(_, what)| *what)
 }
 
 /// The shell commands and hooks run in: `bash` where there is one, else `sh`.

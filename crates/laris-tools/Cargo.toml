@@ -10,6 +10,7 @@ publish.workspace = true
 laris-config = { path = "../laris-config", version = "2.0.0-dev" }
 laris-core = { path = "../laris-core", version = "2.0.0-dev" }
 laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+laris-sandbox = { path = "../laris-sandbox", version = "2.0.0-dev" }
 regex = "1"
 serde_json = "1"
 
