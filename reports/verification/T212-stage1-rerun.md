@@ -16,8 +16,11 @@ as in pilot 2: these losses are weighted and say nothing about the pair tasks be
 so no difference is attributed to a cause.
 
 ## Speed and resources
-1.3 to 1.4 s per optimizer step (320-350 ms per micro-batch of 8 rows), 45.6 min for 2,000 steps, peak 11.3 GB. The training process held one core at 100 % (load average 1.2 of 12 cores) and the GPU
-about 32 % busy: the single-threaded data path is the bottleneck (T213). About 5 compute units.
+1.3 to 1.4 s per optimizer step (320-350 ms per micro-batch of 8 rows), 45.6 min for 2,000 steps, peak 11.3 GB, about 5 compute units. During the run the training process showed one core at 100 % (load average
+1.2 of 12) and one `nvidia-smi` sample read the GPU about 32 % busy. **Correction (T213, measured afterwards):** these two readings did not show that the data path was the bottleneck. The loader alone takes
+11.6 ms per micro-step of 8 rows (about 3 % of the 350 ms), and a CPU thread waiting on a CUDA synchronisation also shows 100 %. The first draft of this report and of the T213 task named the data path as the cause; that was an
+inference, and it was wrong. Rough arithmetic (not a measurement): a micro-batch of 8 rows of up to 1,024 tokens costs about 6 x 544 M x 8,192 x 4/3 = 3.6e13 FLOPs with checkpointing, about 115 ms at the A100's 312 TFLOPs bf16
+peak, so 350 ms means about a third of peak if the rows are full length (lower if they are shorter). A large further gain from the loader is not available; kernel-level work (fused ops, `torch.compile`) is untested.
 
 ## Lineage
 The manifest recorded `git_commit: None` because the VM has no `.git`. Fixed after the run: `current_git_commit` falls back to `LARIS_GIT_COMMIT` (set it from `artifacts/colab/COMMIT`); for this run the commit is `00f3c60`
