@@ -722,3 +722,42 @@ GPU is free. A log that ends in `CUDA out of memory` is a result: keep it. If bo
 
 **Not covered.** The profile samples a few batches per task. CARLA's memory is not constant: a heavier scene can take the margin and kill a run of hours.
 Speed is not comparable with T202 (the GPU is shared with CARLA's rendering and the micro-batch is half).
+
+## 12. T210: running the owner runs on a Colab A100 (prepared 2026-11-18)
+
+Prepared because the local GPU is shared with CARLA (section 11) and the owner has a Colab A100 (40 GB, 83 GB RAM, 12 CPUs, 236 GB disk, driver 580 with
+CUDA 13.0, PyTorch 2.14.1+cu130 preinstalled; checked on 2026-11-18 with a 10 s session) and 191 compute units. Nothing in this section authorises an
+agent to train: the agent may prepare the VM and read logs over SSH, the owner starts every training command.
+
+**Why no config change.** 40 GB holds the stage-2 mixture (peak 13.12 GB at `tasks_per_step 2`, T202) and the 14.5 GB envelope of ADR-005 stays in the
+configs, so the Colab run uses the same files as a local one and its results stay comparable. Do not use the spare memory to change batch sizes or
+`tasks_per_step`: that changes the experiment. Speed and memory figures of T202 do not transfer to the A100; measure the first steps.
+
+**Cost guard.** Units are used while the runtime exists, not only while a command runs. Create a session only when the data is ready, check the rate in
+the Colab UI first, and end every session with `colab stop -s NAME` (or use `--rm` for a short check). `colab sessions` must list none when you stop working.
+Whether a running process keeps an SSH-less runtime alive is not verified: run long jobs with `nohup` and watch the log; keep a login that can reach the session.
+
+**Prerequisite the agent cannot settle.** Google Drive space for the data (28.1 GB) and at least one checkpoint (6.1 GB `best`, plus `last`): check the quota
+before uploading. A free Drive account (15 GB) is not enough.
+
+Steps (owner's machine unless it says VM):
+1. `colab` CLI v0.8.0 is installed (`uv tool install "google-colab-cli>=0.7.2"`, the PyPI 0.6.0 has no `ssh`). Log in once with `colab sessions` in a terminal.
+2. Stage the data: `.venv/bin/python -I scripts/colab/data_manifest.py --stage ~/laris-colab-data` hard-links the 74 train and val parquet files of the directories
+   the loader reads (28.10 GB; **test splits and unread directories such as `uspto_patents` are left out**) and writes `files.sha256`. Upload that folder's contents to
+   `MyDrive/laris/data/processed` (Drive for desktop or the web upload). The data carries SICK (CC-BY-NC-SA) and VitaminC (BIG-bench canary): uploading to the owner's own Drive is
+   the owner's decision, recorded 2026-11-18.
+3. Pack the code: `scripts/colab/pack_code.sh` (needs a clean tracked tree; writes `artifacts/colab/laris-code.tar.gz` of `git archive HEAD` and the 3 MB tokenizer archive;
+   the commit is in `artifacts/colab/COMMIT` and goes into the run manifest).
+4. Create the session and upload (the GPU is attached from `colab new`, so do this when the data is already on Drive):
+   `colab new -s laris --gpu A100`, then `colab upload artifacts/colab/laris-code.tar.gz /content/laris-code.tar.gz`, the same for `laris-tokenizer.tar.gz`, and
+   `scripts/colab/setup_vm.sh` to `/content/setup_vm.sh`; if a checkpoint is needed (stage 2 starts from one), upload the `best` folder to
+   `/content/laris/artifacts/checkpoints/language_encoder/<run>/best` (6.1 GB; or place it on Drive and copy).
+5. On the VM (`colab ssh -s laris`): `bash /content/setup_vm.sh` (installs the project with its `training` extra from `pyproject.toml`, no new package; prints Python, torch, CUDA and bf16),
+   `colab drivemount /content/drive` (from the owner's machine), then `bash /content/laris/scripts/colab/sync_data.sh` (copies Drive to `/content/laris/data/processed` and verifies `files.sha256`).
+6. Run the owner command of the task (T204 stage 2 and control, or the stage-1 rerun) from `/content/laris` with `--no-evaluate-after` (the test split is not on the VM; the sealed
+   test split is never touched), `nohup ... > artifacts/profiles/<run>.log 2>&1 &`, and `--save-interval` as the task says. The loader and trainer are unchanged.
+7. Bring back what matters **before** `colab stop`: the `best` and `last` folders and the log (`colab download`, or copy to `/content/drive/MyDrive/laris/runs/`). The VM disk is gone after the session ends.
+   Resume after a break uses `--resume` on the checkpoint, as in section 9.
+
+**Differences from the local environment (record them in the report).** Python 3.13 on the VM against 3.10 in `.venv`; the same PyTorch 2.14.1+cu130 as local. The run manifest records the
+versions, the commit and the GPU; a result is "measured on the Colab A100 with ...". Dependency pins are not locked in Git (`uv.lock` is untracked), so the VM resolves current compatible versions.
