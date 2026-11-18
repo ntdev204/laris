@@ -923,7 +923,39 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Contract tests against the Python model service (placeholder); first-chunk latency measured; scenario passes
   - Behind the T146 gateway: reasoning from the model service never appears in a chat body; the system prompt and
     the canary never leave
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19. New module `laris-server::model`: `ModelConfig` (`LARIS_SERVER__MODEL_URL`, `_NAME`,
+  `_MAX_CONCURRENT`, `_QUEUE_WAIT_MS`, `_CONNECT_TIMEOUT_MS`, `_HEADER_TIMEOUT_MS`, `_IDLE_MS`, `_MAX_EVENT_BYTES`;
+  no URL means no model and `main` keeps `NoBackend`, 502, with a line on stderr; `Debug` hides the address) and
+  `ModelBackend`, a `Backend` that speaks P2 (`/v1/chat/completions`, `/v1/embeddings`) with `reqwest`: no redirects,
+  no environment proxy. A semaphore bounds the calls open at once (chat and embed share it); a call waits
+  `queue_wait` and is then refused with the new `ApiError::Unavailable` (503); the place is held for the whole stream
+  and returns when the stream ends or is dropped (client gone, request to the model closed). Streaming is pulled
+  event by event (`SseDecoder`, no buffering of the answer); the first event is read before `chat` returns, so a
+  refusal, a 503, a first-event `error` or garbage is a status and not an empty stream; after that a model `error`
+  event, a stream cut without `[DONE]`, silence over `_IDLE_MS`, a broken event or an oversized one ends the stream
+  with one `StreamFailure` (kinds `model_error`, `model_truncated`, `model_idle`, `model_protocol`,
+  `model_connection`). Messages are fixed: neither the model's own text nor its address reaches a client. Only the
+  conversation, the tools and a numeric `temperature` go to the model; the `laris` block and unknown fields stay
+  behind. Reasoning stays in the chunk for the policy gateway. Tests (`tests/model.rs`, 17, plus 6 unit tests):
+  pass-through with usage, what reaches the model, embed, every failure before and after the first chunk, an
+  unreachable model, concurrency limit (third call refused after its wait, refused calls never reach the model, a
+  dropped stream frees its place, a waiting call gets a finished answer's place), first-chunk latency, behind the
+  gateway over HTTP (reasoning and `<think>` never in a chat body and kept for the operator; a model told to repeat
+  its system prompt is stopped, the canary never leaves; a dead model is a 502), the LLM-rung scenario (core loop ->
+  P1 client -> server with policy gateway -> `ModelBackend` -> model: answer, usage, prompt and reasoning stay
+  server-side, embed through the P1 client, a mid-answer failure ends the turn without the model's words) and a
+  contract test against the real Python model service with its placeholder backend. The Python test runs only when
+  `LARIS_TEST_MODEL_PYTHON` names a Python with the repository's dependencies; without it the test passes without
+  proving anything (as the PostgreSQL tests do); run here with `.venv/bin/python`: 20 chats parsed, a refused embed
+  (the placeholder has no encoder). First-chunk latency through the proxy on localhost, measured here: fake model
+  median 0.43 ms, P95 0.67 ms; Python placeholder median 1.2 ms, P95 2.3 ms; this is the proxy's own cost, not a
+  model's. Dependencies: `reqwest` 0.12 (rustls) and `bytes` 1 added to `laris-server`, both already vendored and
+  approved for the client. Limits: `/tools/{name}` is T149; one model address, no retry or failover (a failed call is
+  a failure, the client decides); the reservation of quota is unchanged (T143). The model is a script or a
+  placeholder, so only mechanics are proved; the foundation model is NOT QUALIFIED. `cargo fmt --check`,
+  `clippy -D warnings`, `cargo test` (without PostgreSQL), `cargo deny check`, `xtask guard`, `xtask scan` and
+  `xtask schema --check` pass.
 
 ## Phase 32 — Server: RAG
 

@@ -1,9 +1,10 @@
 //! Binary laris-server: reads `LARIS_SERVER__*` from the environment and serves until interrupted.
 
 use laris_server::access::{Access, deliver_key};
+use laris_server::model::{ModelBackend, ModelConfig};
 use laris_server::policy::{PgReasoning, Policy, PolicyConfig, PolicyGateway, integrity};
 use laris_server::storage::{RetentionHandle, Storage, StorageConfig};
-use laris_server::{AppState, NoBackend, ServerConfig, StderrSink, serve};
+use laris_server::{AppState, Backend, NoBackend, ServerConfig, StderrSink, serve};
 use std::collections::HashMap;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -113,11 +114,20 @@ async fn main() -> ExitCode {
         Err(e) => return fail(format!("cannot listen: {e}"), 1),
     };
     let reasoning = Arc::new(PgReasoning::new(storage.clone()));
-    let backend = Arc::new(PolicyGateway::new(
-        policy.clone(),
-        Arc::new(NoBackend),
-        reasoning.clone(),
-    ));
+    let model: Arc<dyn Backend> = match ModelConfig::from_env(&env) {
+        Ok(Some(c)) => match ModelBackend::new(c) {
+            Ok(m) => Arc::new(m),
+            Err(e) => return fail(e, 2),
+        },
+        Ok(None) => {
+            eprintln!(
+                "laris-server: LARIS_SERVER__MODEL_URL is not set; chat and embed answer 502"
+            );
+            Arc::new(NoBackend)
+        }
+        Err(e) => return fail(e, 2),
+    };
+    let backend = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
     let state = Arc::new(AppState::new(config, backend, access).with_policy(policy, reasoning));
     let stop = async {
         let _ = tokio::signal::ctrl_c().await;

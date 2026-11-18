@@ -47,6 +47,9 @@ pub enum ApiError {
     /// 502: the model service failed or is not connected.
     #[error("{0}")]
     BadGateway(String),
+    /// 503: the model service has no free place (or says it is busy); try again later.
+    #[error("{0}")]
+    Unavailable(String),
     /// 500: a fault of the server itself.
     #[error("internal error")]
     Internal,
@@ -67,6 +70,7 @@ impl ApiError {
             Self::UpgradeRequired(_) => StatusCode::UPGRADE_REQUIRED,
             Self::TooManyRequests { .. } => StatusCode::TOO_MANY_REQUESTS,
             Self::BadGateway(_) => StatusCode::BAD_GATEWAY,
+            Self::Unavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             Self::Internal => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -132,6 +136,7 @@ mod tests {
                 429,
             ),
             (ApiError::BadGateway("x".into()), 502),
+            (ApiError::Unavailable("x".into()), 503),
             (ApiError::Internal, 500),
         ];
         for (error, code) in cases {
