@@ -1,0 +1,8 @@
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {"content": "Perovskite is "}}]}
+
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {"content": "stable under encapsulation."}}]}
+
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+
+data: [DONE]
+

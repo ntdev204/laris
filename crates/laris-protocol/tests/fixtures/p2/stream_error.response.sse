@@ -1,0 +1,6 @@
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {"content": "Perovskite "}}]}
+
+data: {"error": {"message": "model died", "type": "ProviderError"}}
+
+data: [DONE]
+

@@ -1,0 +1,37 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Review this paper"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read_file",
+        "description": "Read a file",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      }
+    }
+  ],
+  "laris": {
+    "kind": "turn",
+    "session_id": "abc123",
+    "task": "Review this paper",
+    "workflow": {
+      "name": "citation-analysis",
+      "request": "Analyse my corpus"
+    }
+  }
+}

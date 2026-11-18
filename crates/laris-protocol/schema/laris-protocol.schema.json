@@ -1,0 +1,2029 @@
+{
+  "p1": {
+    "AccountResponse": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`GET /v1/laris/account`. Without metering only `role` is present.",
+      "properties": {
+        "permissions": {
+          "description": "Permissions of the key.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role of the key.",
+          "type": "string"
+        },
+        "token_limit": {
+          "default": null,
+          "description": "Token limit; `None` (null) means unlimited.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "tokens_left": {
+          "default": null,
+          "description": "Tokens left; `None` when unlimited.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "tokens_used": {
+          "description": "Tokens used.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "AccountResponse",
+      "type": "object"
+    },
+    "AdminReasoning": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "`GET /v1/admin/reasoning`: one `trace` (with `id`) or a list of `traces`. Off by default.",
+      "properties": {
+        "trace": {
+          "description": "One trace."
+        },
+        "traces": {
+          "description": "Recent traces.",
+          "items": true,
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "title": "AdminReasoning",
+      "type": "object"
+    },
+    "AdminUsage": {
+      "$defs": {
+        "UsageRow": {
+          "additionalProperties": true,
+          "description": "Usage of one key, as the admin route sums it.",
+          "properties": {
+            "completion": {
+              "default": null,
+              "description": "Completion tokens.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "key_id": {
+              "description": "Key id (never the key).",
+              "type": "string"
+            },
+            "prompt": {
+              "default": null,
+              "description": "Prompt tokens.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "requests": {
+              "default": 0,
+              "description": "Number of requests.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "key_id"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "`GET /v1/admin/usage`.",
+      "properties": {
+        "usage": {
+          "description": "One row per key.",
+          "items": {
+            "$ref": "#/$defs/UsageRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "usage"
+      ],
+      "title": "AdminUsage",
+      "type": "object"
+    },
+    "ChatRequest": {
+      "$defs": {
+        "ChatMessage": {
+          "additionalProperties": true,
+          "description": "One message of a conversation.",
+          "properties": {
+            "content": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Content"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text or parts; null for a pure tool-call turn."
+            },
+            "name": {
+              "description": "Optional author or tool name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "role": {
+              "$ref": "#/$defs/Role",
+              "description": "Who wrote it."
+            },
+            "tool_call_id": {
+              "description": "For `tool` messages: the call answered.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tool_calls": {
+              "description": "Calls the assistant made in this turn.",
+              "items": {
+                "$ref": "#/$defs/ToolCall"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "type": "object"
+        },
+        "Content": {
+          "anyOf": [
+            {
+              "description": "Plain text.",
+              "type": "string"
+            },
+            {
+              "description": "Structured parts.",
+              "items": true,
+              "type": "array"
+            }
+          ],
+          "description": "Message content: a string, or a list of parts (kept as JSON)."
+        },
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "InstructionLayer": {
+          "additionalProperties": true,
+          "description": "One of the client's own instruction files.",
+          "properties": {
+            "label": {
+              "default": "client",
+              "description": "Where it came from.",
+              "type": "string"
+            },
+            "text": {
+              "default": "",
+              "description": "Its text.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "Kind": {
+          "description": "Kind of a chat request.",
+          "oneOf": [
+            {
+              "const": "turn",
+              "description": "A normal turn.",
+              "type": "string"
+            },
+            {
+              "const": "summarize",
+              "description": "Summarise the conversation (compaction).",
+              "type": "string"
+            }
+          ]
+        },
+        "LarisRequest": {
+          "additionalProperties": true,
+          "description": "The `laris` block of a chat request (named `LarisMeta` in generation 1).",
+          "properties": {
+            "focus": {
+              "default": "",
+              "description": "What a summary should keep.",
+              "type": "string"
+            },
+            "kind": {
+              "$ref": "#/$defs/Kind",
+              "default": "turn",
+              "description": "Turn or summary."
+            },
+            "layers": {
+              "$ref": "#/$defs/Layers",
+              "description": "The user's own layers."
+            },
+            "session_id": {
+              "description": "Session id (4-64 of `A-Za-z0-9_-`); the server makes one when absent.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "task": {
+              "default": "",
+              "description": "The task in a few words, used for routing.",
+              "type": "string"
+            },
+            "workflow": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WorkflowRequest"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A workflow to run."
+            }
+          },
+          "type": "object"
+        },
+        "Layers": {
+          "description": "What belongs to the user and travels with a request.",
+          "properties": {
+            "extra": {
+              "description": "Extra text.",
+              "type": "string"
+            },
+            "instructions": {
+              "description": "The client's instruction files.",
+              "items": {
+                "$ref": "#/$defs/InstructionLayer"
+              },
+              "type": "array"
+            },
+            "memory": {
+              "description": "The user's memory.",
+              "type": "string"
+            },
+            "skills_index": {
+              "description": "Index of the user's skills.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "Role": {
+          "description": "Role of a message in a request.",
+          "oneOf": [
+            {
+              "const": "system",
+              "description": "Instructions; only the server writes the system prompt.",
+              "type": "string"
+            },
+            {
+              "const": "user",
+              "description": "The user's turn.",
+              "type": "string"
+            },
+            {
+              "const": "assistant",
+              "description": "The model's earlier turn.",
+              "type": "string"
+            },
+            {
+              "const": "tool",
+              "description": "A tool result.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolCall": {
+          "additionalProperties": true,
+          "description": "A tool call of the model.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolCallFunction",
+              "description": "What to call."
+            },
+            "id": {
+              "description": "Call id the tool result must echo.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "index": {
+              "description": "Position inside a streamed delta.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "ToolCallFunction": {
+          "additionalProperties": true,
+          "description": "Name and JSON-encoded arguments of a call. Chunks may carry partial text.",
+          "properties": {
+            "arguments": {
+              "default": "",
+              "description": "Arguments as a JSON string.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Tool name.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "ToolFunctionSchema": {
+          "additionalProperties": true,
+          "description": "Name, description and parameter schema of a tool.",
+          "properties": {
+            "description": {
+              "description": "What it does.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "parameters": {
+              "description": "JSON Schema of the arguments."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "ToolSchema": {
+          "additionalProperties": true,
+          "description": "A tool the client offers: JSON Schema of its parameters.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolFunctionSchema",
+              "description": "The function description."
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "WorkflowRequest": {
+          "additionalProperties": true,
+          "description": "A workflow the client asks to run.",
+          "properties": {
+            "name": {
+              "description": "Workflow name from `GET /v1/laris/workflows`.",
+              "type": "string"
+            },
+            "request": {
+              "default": "",
+              "description": "The user's request for it.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/laris/chat` request.",
+      "properties": {
+        "laris": {
+          "$ref": "#/$defs/LarisRequest",
+          "description": "The `laris` block."
+        },
+        "messages": {
+          "description": "The conversation; the system prompt is never accepted from a client.",
+          "items": {
+            "$ref": "#/$defs/ChatMessage"
+          },
+          "type": "array"
+        },
+        "stream": {
+          "default": true,
+          "description": "Stream the answer; defaults to true.",
+          "type": "boolean"
+        },
+        "tools": {
+          "description": "The client's tools.",
+          "items": {
+            "$ref": "#/$defs/ToolSchema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "messages"
+      ],
+      "title": "ChatRequest",
+      "type": "object"
+    },
+    "ChatResponseChunk": {
+      "$defs": {
+        "ChunkChoice": {
+          "additionalProperties": true,
+          "description": "One choice of a streamed event.",
+          "properties": {
+            "delta": {
+              "$ref": "#/$defs/ChunkDelta",
+              "description": "The increment."
+            },
+            "finish_reason": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FinishReason"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Set on the last event of a choice."
+            },
+            "index": {
+              "description": "Position.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "index",
+            "delta"
+          ],
+          "type": "object"
+        },
+        "ChunkDelta": {
+          "additionalProperties": true,
+          "description": "Increment of a streamed choice.",
+          "properties": {
+            "content": {
+              "description": "Visible text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reasoning_content": {
+              "description": "The model's private reasoning; P2 only, never forwarded to a client.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tool_calls": {
+              "description": "Tool calls.",
+              "items": {
+                "$ref": "#/$defs/ToolCall"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "ChunkObject": {
+          "description": "Constant `chat.completion.chunk`.",
+          "oneOf": [
+            {
+              "const": "chat.completion.chunk",
+              "description": "One streamed event.",
+              "type": "string"
+            }
+          ]
+        },
+        "FinishReason": {
+          "description": "Why a choice ended.",
+          "oneOf": [
+            {
+              "const": "stop",
+              "description": "Normal end.",
+              "type": "string"
+            },
+            {
+              "const": "tool_calls",
+              "description": "The turn is tool calls.",
+              "type": "string"
+            },
+            {
+              "const": "length",
+              "description": "A length limit cut the answer.",
+              "type": "string"
+            }
+          ]
+        },
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "LarisMeta": {
+          "additionalProperties": true,
+          "description": "The `laris` block of a response chunk: the evidence list of the system brain (note titles, never content).",
+          "properties": {
+            "brain": {
+              "default": [],
+              "description": "Titles of the guidance notes consulted for this turn, in the order they were opened.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "ToolCall": {
+          "additionalProperties": true,
+          "description": "A tool call of the model.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolCallFunction",
+              "description": "What to call."
+            },
+            "id": {
+              "description": "Call id the tool result must echo.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "index": {
+              "description": "Position inside a streamed delta.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "ToolCallFunction": {
+          "additionalProperties": true,
+          "description": "Name and JSON-encoded arguments of a call. Chunks may carry partial text.",
+          "properties": {
+            "arguments": {
+              "default": "",
+              "description": "Arguments as a JSON string.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Tool name.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "Usage": {
+          "additionalProperties": true,
+          "description": "Token counts of one request.",
+          "properties": {
+            "completion_tokens": {
+              "default": 0,
+              "description": "Tokens of the answer.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "prompt_tokens": {
+              "default": 0,
+              "description": "Tokens of the prompt.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "total_tokens": {
+              "default": 0,
+              "description": "Sum of both.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "One server-sent event of a chat answer: an OpenAI-style chunk, optionally with [`LarisMeta`] and usage.",
+      "properties": {
+        "choices": {
+          "default": [],
+          "description": "Choices; empty on the evidence and usage events.",
+          "items": {
+            "$ref": "#/$defs/ChunkChoice"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "Answer id.",
+          "type": "string"
+        },
+        "laris": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LarisMeta"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The brain evidence list, sent once before the text."
+        },
+        "model": {
+          "default": "",
+          "description": "Model name.",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/$defs/ChunkObject",
+          "default": "chat.completion.chunk",
+          "description": "Constant."
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tokens used, on the last event before `[DONE]`."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "ChatResponseChunk",
+      "type": "object"
+    },
+    "EmbedRequest": {
+      "$defs": {
+        "OneOrMany": {
+          "anyOf": [
+            {
+              "description": "One text.",
+              "type": "string"
+            },
+            {
+              "description": "Several texts.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "A string or a list of strings."
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/laris/embed` (P1) and `POST /v1/embeddings` (P2) request.",
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/OneOrMany",
+          "description": "Texts to embed."
+        },
+        "model": {
+          "default": "",
+          "description": "Model name; may be empty.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "input"
+      ],
+      "title": "EmbedRequest",
+      "type": "object"
+    },
+    "EmbedResponse": {
+      "$defs": {
+        "EmbeddingItem": {
+          "additionalProperties": true,
+          "description": "One vector of an embeddings response.",
+          "properties": {
+            "embedding": {
+              "description": "The vector.",
+              "items": {
+                "format": "double",
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "index": {
+              "description": "Position of the input text.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "object": {
+              "$ref": "#/$defs/EmbeddingObject",
+              "default": "embedding",
+              "description": "Constant."
+            }
+          },
+          "required": [
+            "index",
+            "embedding"
+          ],
+          "type": "object"
+        },
+        "EmbeddingObject": {
+          "description": "Constant `embedding`.",
+          "oneOf": [
+            {
+              "const": "embedding",
+              "description": "One vector.",
+              "type": "string"
+            }
+          ]
+        },
+        "ListObject": {
+          "description": "Constant `list`.",
+          "oneOf": [
+            {
+              "const": "list",
+              "description": "A list.",
+              "type": "string"
+            }
+          ]
+        },
+        "Usage": {
+          "additionalProperties": true,
+          "description": "Token counts of one request.",
+          "properties": {
+            "completion_tokens": {
+              "default": 0,
+              "description": "Tokens of the answer.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "prompt_tokens": {
+              "default": 0,
+              "description": "Tokens of the prompt.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "total_tokens": {
+              "default": 0,
+              "description": "Sum of both.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Embeddings response.",
+      "properties": {
+        "data": {
+          "description": "One item per input text.",
+          "items": {
+            "$ref": "#/$defs/EmbeddingItem"
+          },
+          "type": "array"
+        },
+        "model": {
+          "default": "",
+          "description": "Model name.",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/$defs/ListObject",
+          "default": "list",
+          "description": "Constant."
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tokens used when reported."
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "title": "EmbedResponse",
+      "type": "object"
+    },
+    "HelpResponse": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "`GET /v1/laris/help`.",
+      "properties": {
+        "text": {
+          "description": "Help text, printed verbatim.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "HelpResponse",
+      "type": "object"
+    },
+    "HttpError": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Body of an HTTP error (400, 401, 403, 404, 411, 413, 426, 429, 502): `{\"error\": \"message\"}`.",
+      "properties": {
+        "error": {
+          "description": "The message.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "HttpError",
+      "type": "object"
+    },
+    "ModelList": {
+      "$defs": {
+        "ListObject": {
+          "description": "Constant `list`.",
+          "oneOf": [
+            {
+              "const": "list",
+              "description": "A list.",
+              "type": "string"
+            }
+          ]
+        },
+        "ModelInfo": {
+          "additionalProperties": true,
+          "description": "A model the server offers.",
+          "properties": {
+            "id": {
+              "description": "Model id.",
+              "type": "string"
+            },
+            "object": {
+              "$ref": "#/$defs/ModelObject",
+              "default": "model",
+              "description": "Constant."
+            },
+            "owned_by": {
+              "default": "",
+              "description": "Owner label.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "ModelObject": {
+          "description": "Constant `model`.",
+          "oneOf": [
+            {
+              "const": "model",
+              "description": "A model.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "`GET /v1/models`.",
+      "properties": {
+        "data": {
+          "description": "The models.",
+          "items": {
+            "$ref": "#/$defs/ModelInfo"
+          },
+          "type": "array"
+        },
+        "object": {
+          "$ref": "#/$defs/ListObject",
+          "default": "list",
+          "description": "Constant."
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "title": "ModelList",
+      "type": "object"
+    },
+    "ToolRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/laris/tools/{name}`: run one of the model service's remote tools (new in generation 2).",
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "Arguments of the tool.",
+          "type": "object"
+        }
+      },
+      "title": "ToolRequest",
+      "type": "object"
+    },
+    "ToolResponse": {
+      "$defs": {
+        "ErrorDetail": {
+          "additionalProperties": true,
+          "description": "Message and type of a failure.",
+          "properties": {
+            "message": {
+              "description": "Human-readable message.",
+              "type": "string"
+            },
+            "type": {
+              "description": "Error class name or code.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Answer of a remote tool: a `result` or an `error`.",
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorDetail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What went wrong."
+        },
+        "result": {
+          "description": "The result, any JSON."
+        }
+      },
+      "title": "ToolResponse",
+      "type": "object"
+    },
+    "WorkflowsResponse": {
+      "$defs": {
+        "WorkflowInfo": {
+          "additionalProperties": true,
+          "description": "What the client needs to run a workflow's limits; phases and instructions stay on the server.",
+          "properties": {
+            "allowed_tools": {
+              "default": [],
+              "description": "Tools it may use.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "approval": {
+              "default": "",
+              "description": "Approval mode (`ask`, ...).",
+              "type": "string"
+            },
+            "description": {
+              "default": "",
+              "description": "One-sentence description.",
+              "type": "string"
+            },
+            "max_steps": {
+              "default": 0,
+              "description": "Step budget.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "name": {
+              "description": "Workflow name.",
+              "type": "string"
+            },
+            "output_sections": {
+              "default": [],
+              "description": "Sections the answer must contain.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "require_citations": {
+              "default": false,
+              "description": "Whether the answer must cite sources.",
+              "type": "boolean"
+            },
+            "triggers": {
+              "default": [],
+              "description": "Phrases that trigger it.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "`GET /v1/laris/workflows`.",
+      "properties": {
+        "workflows": {
+          "description": "The workflows.",
+          "items": {
+            "$ref": "#/$defs/WorkflowInfo"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "workflows"
+      ],
+      "title": "WorkflowsResponse",
+      "type": "object"
+    }
+  },
+  "p2": {
+    "ChatCompletion": {
+      "$defs": {
+        "CompletionChoice": {
+          "additionalProperties": true,
+          "description": "One choice of a full answer.",
+          "properties": {
+            "finish_reason": {
+              "$ref": "#/$defs/FinishReason",
+              "description": "Why it ended."
+            },
+            "index": {
+              "description": "Position.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "message": {
+              "$ref": "#/$defs/CompletionMessage",
+              "description": "The message."
+            }
+          },
+          "required": [
+            "index",
+            "message",
+            "finish_reason"
+          ],
+          "type": "object"
+        },
+        "CompletionMessage": {
+          "additionalProperties": true,
+          "description": "The assistant message of a full answer.",
+          "properties": {
+            "content": {
+              "default": null,
+              "description": "Text of the answer.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "role": {
+              "description": "Always `assistant`.",
+              "type": "string"
+            },
+            "tool_calls": {
+              "description": "Calls the model made.",
+              "items": {
+                "$ref": "#/$defs/ToolCall"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "type": "object"
+        },
+        "CompletionObject": {
+          "description": "Constant `chat.completion`.",
+          "oneOf": [
+            {
+              "const": "chat.completion",
+              "description": "A full answer.",
+              "type": "string"
+            }
+          ]
+        },
+        "FinishReason": {
+          "description": "Why a choice ended.",
+          "oneOf": [
+            {
+              "const": "stop",
+              "description": "Normal end.",
+              "type": "string"
+            },
+            {
+              "const": "tool_calls",
+              "description": "The turn is tool calls.",
+              "type": "string"
+            },
+            {
+              "const": "length",
+              "description": "A length limit cut the answer.",
+              "type": "string"
+            }
+          ]
+        },
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolCall": {
+          "additionalProperties": true,
+          "description": "A tool call of the model.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolCallFunction",
+              "description": "What to call."
+            },
+            "id": {
+              "description": "Call id the tool result must echo.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "index": {
+              "description": "Position inside a streamed delta.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "ToolCallFunction": {
+          "additionalProperties": true,
+          "description": "Name and JSON-encoded arguments of a call. Chunks may carry partial text.",
+          "properties": {
+            "arguments": {
+              "default": "",
+              "description": "Arguments as a JSON string.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Tool name.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "Usage": {
+          "additionalProperties": true,
+          "description": "Token counts of one request.",
+          "properties": {
+            "completion_tokens": {
+              "default": 0,
+              "description": "Tokens of the answer.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "prompt_tokens": {
+              "default": 0,
+              "description": "Tokens of the prompt.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "total_tokens": {
+              "default": 0,
+              "description": "Sum of both.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Non-streaming answer.",
+      "properties": {
+        "choices": {
+          "description": "Choices.",
+          "items": {
+            "$ref": "#/$defs/CompletionChoice"
+          },
+          "type": "array"
+        },
+        "created": {
+          "description": "Unix time.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "description": "Answer id.",
+          "type": "string"
+        },
+        "model": {
+          "description": "Model name.",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/$defs/CompletionObject",
+          "default": "chat.completion",
+          "description": "Constant."
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Token counts when the model reports them."
+        }
+      },
+      "required": [
+        "id",
+        "created",
+        "model",
+        "choices"
+      ],
+      "title": "ChatCompletion",
+      "type": "object"
+    },
+    "ChatCompletionChunk": {
+      "$defs": {
+        "ChunkChoice": {
+          "additionalProperties": true,
+          "description": "One choice of a streamed event.",
+          "properties": {
+            "delta": {
+              "$ref": "#/$defs/ChunkDelta",
+              "description": "The increment."
+            },
+            "finish_reason": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FinishReason"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Set on the last event of a choice."
+            },
+            "index": {
+              "description": "Position.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "index",
+            "delta"
+          ],
+          "type": "object"
+        },
+        "ChunkDelta": {
+          "additionalProperties": true,
+          "description": "Increment of a streamed choice.",
+          "properties": {
+            "content": {
+              "description": "Visible text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reasoning_content": {
+              "description": "The model's private reasoning; P2 only, never forwarded to a client.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tool_calls": {
+              "description": "Tool calls.",
+              "items": {
+                "$ref": "#/$defs/ToolCall"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "ChunkObject": {
+          "description": "Constant `chat.completion.chunk`.",
+          "oneOf": [
+            {
+              "const": "chat.completion.chunk",
+              "description": "One streamed event.",
+              "type": "string"
+            }
+          ]
+        },
+        "FinishReason": {
+          "description": "Why a choice ended.",
+          "oneOf": [
+            {
+              "const": "stop",
+              "description": "Normal end.",
+              "type": "string"
+            },
+            {
+              "const": "tool_calls",
+              "description": "The turn is tool calls.",
+              "type": "string"
+            },
+            {
+              "const": "length",
+              "description": "A length limit cut the answer.",
+              "type": "string"
+            }
+          ]
+        },
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolCall": {
+          "additionalProperties": true,
+          "description": "A tool call of the model.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolCallFunction",
+              "description": "What to call."
+            },
+            "id": {
+              "description": "Call id the tool result must echo.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "index": {
+              "description": "Position inside a streamed delta.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "ToolCallFunction": {
+          "additionalProperties": true,
+          "description": "Name and JSON-encoded arguments of a call. Chunks may carry partial text.",
+          "properties": {
+            "arguments": {
+              "default": "",
+              "description": "Arguments as a JSON string.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Tool name.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "Usage": {
+          "additionalProperties": true,
+          "description": "Token counts of one request.",
+          "properties": {
+            "completion_tokens": {
+              "default": 0,
+              "description": "Tokens of the answer.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "prompt_tokens": {
+              "default": 0,
+              "description": "Tokens of the prompt.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "total_tokens": {
+              "default": 0,
+              "description": "Sum of both.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "One P2 streaming event.",
+      "properties": {
+        "choices": {
+          "default": [],
+          "description": "Choices; empty on the usage event.",
+          "items": {
+            "$ref": "#/$defs/ChunkChoice"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "Answer id, equal on every event of a stream.",
+          "type": "string"
+        },
+        "model": {
+          "default": "",
+          "description": "Model name.",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/$defs/ChunkObject",
+          "default": "chat.completion.chunk",
+          "description": "Constant."
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Token counts, on the last event when reported."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "ChatCompletionChunk",
+      "type": "object"
+    },
+    "EmbedRequest": {
+      "$defs": {
+        "OneOrMany": {
+          "anyOf": [
+            {
+              "description": "One text.",
+              "type": "string"
+            },
+            {
+              "description": "Several texts.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "A string or a list of strings."
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/laris/embed` (P1) and `POST /v1/embeddings` (P2) request.",
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/OneOrMany",
+          "description": "Texts to embed."
+        },
+        "model": {
+          "default": "",
+          "description": "Model name; may be empty.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "input"
+      ],
+      "title": "EmbedRequest",
+      "type": "object"
+    },
+    "EmbedResponse": {
+      "$defs": {
+        "EmbeddingItem": {
+          "additionalProperties": true,
+          "description": "One vector of an embeddings response.",
+          "properties": {
+            "embedding": {
+              "description": "The vector.",
+              "items": {
+                "format": "double",
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "index": {
+              "description": "Position of the input text.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "object": {
+              "$ref": "#/$defs/EmbeddingObject",
+              "default": "embedding",
+              "description": "Constant."
+            }
+          },
+          "required": [
+            "index",
+            "embedding"
+          ],
+          "type": "object"
+        },
+        "EmbeddingObject": {
+          "description": "Constant `embedding`.",
+          "oneOf": [
+            {
+              "const": "embedding",
+              "description": "One vector.",
+              "type": "string"
+            }
+          ]
+        },
+        "ListObject": {
+          "description": "Constant `list`.",
+          "oneOf": [
+            {
+              "const": "list",
+              "description": "A list.",
+              "type": "string"
+            }
+          ]
+        },
+        "Usage": {
+          "additionalProperties": true,
+          "description": "Token counts of one request.",
+          "properties": {
+            "completion_tokens": {
+              "default": 0,
+              "description": "Tokens of the answer.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "prompt_tokens": {
+              "default": 0,
+              "description": "Tokens of the prompt.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "total_tokens": {
+              "default": 0,
+              "description": "Sum of both.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Embeddings response.",
+      "properties": {
+        "data": {
+          "description": "One item per input text.",
+          "items": {
+            "$ref": "#/$defs/EmbeddingItem"
+          },
+          "type": "array"
+        },
+        "model": {
+          "default": "",
+          "description": "Model name.",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/$defs/ListObject",
+          "default": "list",
+          "description": "Constant."
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tokens used when reported."
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "title": "EmbedResponse",
+      "type": "object"
+    },
+    "ModelChatRequest": {
+      "$defs": {
+        "ChatMessage": {
+          "additionalProperties": true,
+          "description": "One message of a conversation.",
+          "properties": {
+            "content": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Content"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text or parts; null for a pure tool-call turn."
+            },
+            "name": {
+              "description": "Optional author or tool name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "role": {
+              "$ref": "#/$defs/Role",
+              "description": "Who wrote it."
+            },
+            "tool_call_id": {
+              "description": "For `tool` messages: the call answered.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tool_calls": {
+              "description": "Calls the assistant made in this turn.",
+              "items": {
+                "$ref": "#/$defs/ToolCall"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "type": "object"
+        },
+        "Content": {
+          "anyOf": [
+            {
+              "description": "Plain text.",
+              "type": "string"
+            },
+            {
+              "description": "Structured parts.",
+              "items": true,
+              "type": "array"
+            }
+          ],
+          "description": "Message content: a string, or a list of parts (kept as JSON)."
+        },
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "Role": {
+          "description": "Role of a message in a request.",
+          "oneOf": [
+            {
+              "const": "system",
+              "description": "Instructions; only the server writes the system prompt.",
+              "type": "string"
+            },
+            {
+              "const": "user",
+              "description": "The user's turn.",
+              "type": "string"
+            },
+            {
+              "const": "assistant",
+              "description": "The model's earlier turn.",
+              "type": "string"
+            },
+            {
+              "const": "tool",
+              "description": "A tool result.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolCall": {
+          "additionalProperties": true,
+          "description": "A tool call of the model.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolCallFunction",
+              "description": "What to call."
+            },
+            "id": {
+              "description": "Call id the tool result must echo.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "index": {
+              "description": "Position inside a streamed delta.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        },
+        "ToolCallFunction": {
+          "additionalProperties": true,
+          "description": "Name and JSON-encoded arguments of a call. Chunks may carry partial text.",
+          "properties": {
+            "arguments": {
+              "default": "",
+              "description": "Arguments as a JSON string.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Tool name.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "ToolFunctionSchema": {
+          "additionalProperties": true,
+          "description": "Name, description and parameter schema of a tool.",
+          "properties": {
+            "description": {
+              "description": "What it does.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "parameters": {
+              "description": "JSON Schema of the arguments."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "ToolSchema": {
+          "additionalProperties": true,
+          "description": "A tool the client offers: JSON Schema of its parameters.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolFunctionSchema",
+              "description": "The function description."
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/chat/completions` request.",
+      "properties": {
+        "messages": {
+          "description": "The conversation.",
+          "items": {
+            "$ref": "#/$defs/ChatMessage"
+          },
+          "type": "array"
+        },
+        "model": {
+          "default": "",
+          "description": "Model name; may be empty.",
+          "type": "string"
+        },
+        "stream": {
+          "default": false,
+          "description": "Whether to answer as an event stream.",
+          "type": "boolean"
+        },
+        "temperature": {
+          "default": 0.0,
+          "description": "Sampling temperature.",
+          "format": "double",
+          "type": "number"
+        },
+        "tools": {
+          "description": "Tools the model may call.",
+          "items": {
+            "$ref": "#/$defs/ToolSchema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "messages"
+      ],
+      "title": "ModelChatRequest",
+      "type": "object"
+    }
+  },
+  "protocol": "1",
+  "sse": {
+    "StreamError": {
+      "$defs": {
+        "ErrorDetail": {
+          "additionalProperties": true,
+          "description": "Message and type of a failure.",
+          "properties": {
+            "message": {
+              "description": "Human-readable message.",
+              "type": "string"
+            },
+            "type": {
+              "description": "Error class name or code.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "The event sent when a stream fails after it started; `[DONE]` follows it.",
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/ErrorDetail",
+          "description": "The failure."
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "StreamError",
+      "type": "object"
+    }
+  }
+}

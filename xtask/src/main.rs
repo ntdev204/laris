@@ -1,9 +1,10 @@
 //! `cargo xtask <command>`: governance helpers of the workspace.
 //!
-//! Commands: `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
+//! Commands: `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
 //! no-training guard over the Rust sources and CI files.
 
 mod guard;
+mod schema;
 mod spec;
 
 use std::path::{Path, PathBuf};
@@ -22,9 +23,10 @@ fn main() -> ExitCode {
     let root = workspace_root();
     match args.next().as_deref() {
         Some("spec") => spec::run(&root),
+        Some("schema") => schema::run(&root, args.next().as_deref() == Some("--check")),
         Some("guard") => guard::run(&args.next().map_or(root, PathBuf::from)),
         _ => {
-            eprintln!("usage: cargo xtask <spec | guard [root]>");
+            eprintln!("usage: cargo xtask <spec | guard [root] | schema [--check]>");
             ExitCode::from(2)
         }
     }

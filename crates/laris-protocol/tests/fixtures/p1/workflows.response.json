@@ -1,0 +1,215 @@
+{
+  "workflows": [
+    {
+      "name": "citation-analysis",
+      "description": "Analyse who cites whom inside the user's corpus - edges, co-citation, coupling, influential papers - and list every reference that could not be matched.",
+      "triggers": [
+        "citation analysis",
+        "who cites",
+        "citation graph",
+        "co-citation",
+        "bibliographic coupling",
+        "influential papers",
+        "phân tích trích dẫn",
+        "đồ thị trích dẫn"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "citation_graph",
+        "search_corpus",
+        "read_file",
+        "save_analysis",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 8,
+      "require_citations": true,
+      "approval": "ask",
+      "output_sections": [
+        "Scope",
+        "Citation structure",
+        "Influential documents",
+        "Unresolved references",
+        "Caveats"
+      ]
+    },
+    {
+      "name": "document-intake",
+      "description": "Add user documents (text, PDF, scans) to the corpus after approval and report what was added.",
+      "triggers": [
+        "add documents",
+        "ingest folder",
+        "index these files"
+      ],
+      "allowed_tools": [
+        "list_files",
+        "read_file",
+        "ingest_path",
+        "corpus_status",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 6,
+      "require_citations": false,
+      "approval": "ask",
+      "output_sections": [
+        "Ingested",
+        "Skipped",
+        "Next step"
+      ]
+    },
+    {
+      "name": "evidence-review",
+      "description": "Extract claims, methods, results and limitations from corpus sources and compare them across sources.",
+      "triggers": [
+        "review the evidence",
+        "compare sources",
+        "claims and limitations"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "search_corpus",
+        "read_file",
+        "extract_discourse",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 7,
+      "require_citations": true,
+      "approval": "inherit",
+      "output_sections": [
+        "Claims",
+        "Methods",
+        "Limitations",
+        "Assumptions",
+        "Uncertainties",
+        "Next step",
+        "Sources"
+      ]
+    },
+    {
+      "name": "grounded-qa",
+      "description": "Answer a question strictly from the user's corpus with citations and stated uncertainty.",
+      "triggers": [
+        "question about the corpus",
+        "what does the corpus say"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "search_corpus",
+        "search_vault",
+        "read_file",
+        "answer_question",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 5,
+      "require_citations": true,
+      "approval": "inherit",
+      "output_sections": [
+        "Assumptions",
+        "Uncertainties",
+        "Next step",
+        "Sources"
+      ]
+    },
+    {
+      "name": "kg-explore",
+      "description": "Explore the scholarly knowledge graph of the user's vault and corpus - how concepts, methods, datasets, claims and papers connect - always showing where each link comes from.",
+      "triggers": [
+        "knowledge graph",
+        "how are these connected",
+        "path between",
+        "explore the graph",
+        "export the graph",
+        "đồ thị tri thức",
+        "kết nối giữa"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "kg_query",
+        "citation_graph",
+        "search_corpus",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 8,
+      "require_citations": true,
+      "approval": "ask",
+      "output_sections": [
+        "Graph size",
+        "Connections found",
+        "Provenance",
+        "Gaps"
+      ]
+    },
+    {
+      "name": "literature-map",
+      "description": "Map the user's corpus - size, years, trending terms, near-duplicates and topical groups - with the scope of every figure stated.",
+      "triggers": [
+        "literature map",
+        "map the literature",
+        "corpus overview",
+        "trending terms",
+        "find duplicates",
+        "group papers",
+        "bản đồ tài liệu",
+        "tổng quan kho tài liệu"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "corpus_overview",
+        "term_trends",
+        "find_duplicates",
+        "group_documents",
+        "save_analysis",
+        "search_corpus",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 8,
+      "require_citations": true,
+      "approval": "ask",
+      "output_sections": [
+        "Scope",
+        "Findings",
+        "Duplicates",
+        "Groups",
+        "Caveats"
+      ]
+    },
+    {
+      "name": "research-brief",
+      "description": "Produce a short written research brief from corpus evidence and save it to a file after approval.",
+      "triggers": [
+        "write a brief",
+        "summarise into a document"
+      ],
+      "allowed_tools": [
+        "corpus_status",
+        "search_corpus",
+        "read_file",
+        "extract_discourse",
+        "write_file",
+        "brain_consult",
+        "brain_open",
+        "brain_neighbors"
+      ],
+      "max_steps": 8,
+      "require_citations": true,
+      "approval": "ask",
+      "output_sections": [
+        "Assumptions",
+        "Uncertainties",
+        "Next step",
+        "Sources"
+      ]
+    }
+  ]
+}

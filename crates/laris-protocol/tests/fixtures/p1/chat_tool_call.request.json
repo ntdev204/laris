@@ -1,0 +1,33 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "please read the file notes/a.md"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read_file",
+        "description": "Read a file",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      }
+    }
+  ],
+  "laris": {
+    "kind": "turn",
+    "session_id": "abc123",
+    "task": "please read the file notes/a.md"
+  }
+}

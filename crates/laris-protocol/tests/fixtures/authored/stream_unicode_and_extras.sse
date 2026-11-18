@@ -1,0 +1,6 @@
+: keep-alive comment
+
+data: {"id": "chatcmpl-x", "object": "chat.completion.chunk", "model": "m", "future_field": {"a": 1}, "choices": [{"index": 0, "delta": {"content": "Tiếng Việt: nguồn #1 ✓"}, "logprobs": null}]}
+
+data: [DONE]
+

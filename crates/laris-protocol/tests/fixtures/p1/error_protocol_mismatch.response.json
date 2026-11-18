@@ -1,0 +1,3 @@
+{
+  "error": "unsupported protocol version ('9'); this server speaks X-Laris-Protocol: 1. Update the laris client."
+}

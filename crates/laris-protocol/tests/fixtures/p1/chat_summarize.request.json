@@ -1,0 +1,12 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarise the conversation."
+    }
+  ],
+  "laris": {
+    "kind": "summarize",
+    "focus": "decisions"
+  }
+}

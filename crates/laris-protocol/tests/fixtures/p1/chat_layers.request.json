@@ -1,0 +1,43 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Is perovskite stable?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read_file",
+        "description": "Read a file",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      }
+    }
+  ],
+  "laris": {
+    "kind": "turn",
+    "session_id": "abc123",
+    "task": "Is perovskite stable?",
+    "layers": {
+      "instructions": [
+        {
+          "label": "project",
+          "text": "Answer in Vietnamese."
+        }
+      ],
+      "skills_index": "- review: review a paper",
+      "memory": "The user studies solar cells."
+    }
+  }
+}

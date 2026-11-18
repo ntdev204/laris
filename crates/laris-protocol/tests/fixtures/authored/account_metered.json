@@ -1,0 +1,1 @@
+{"role": "user", "permissions": ["account", "chat", "embed", "help", "models", "workflows"], "token_limit": 100000, "tokens_used": 2500, "tokens_left": 97500}

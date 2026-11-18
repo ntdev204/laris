@@ -90,7 +90,24 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     version header; JSON Schema export; fixtures recorded from generation 1 and the Python model service
 - Validation:
   - Round-trip and schema tests on all fixtures; deterministic export
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-protocol` has the P1 types (chat request with the `laris` block, SSE chunk with the
+  brain evidence list `LarisMeta` and usage, embed, models, workflows, help, account, admin usage and reasoning, error
+  bodies), the P2 types (chat completion and chunk with `reasoning_content`, embeddings), the SSE decoder and encoder
+  (`error` event then `[DONE]`), the `X-Laris-Protocol` check with the generation-1 message, and the JSON Schema export
+  (`cargo xtask schema [--check]`; committed in `crates/laris-protocol/schema/`). Names: the request block is
+  `LarisRequest` and the response evidence block is `LarisMeta` (generation 1 used `LarisMeta` for the request).
+  Fixtures: 16 P1 and 16 P2 files recorded by `scripts/record_protocol_fixtures.py` from the real generation-1 server
+  (branch `laris-v1`, scripted model; includes the brain evidence list, a tool call, reasoning chunks, an error before and
+  after the stream started, 400/401/426); `tests/fixtures/authored/` holds hand-written ones (admin routes, metered
+  account, the `/tools/{name}` route, an SSE stream with a comment line and unknown fields) and says so. The tool route
+  is new in generation 2: its request and response shapes are this task's design, with no generation-1 recording.
+  Verified: round trip (no loss, stable) and schema validation (own small validator in the tests, since no validator
+  crate is approved) on every fixture; the decoder gives the same events however the bytes are cut; seeded faults fail
+  both the type and the schema; export deterministic and equal to the committed file; `cargo fmt --check`, `clippy -D
+  warnings`, `cargo test`, `cargo deny check`, `xtask guard` and `xtask spec` pass. Crates added within the T119 list:
+  serde, serde_json, schemars and their transitive crates (vendored; `deny.toml` and `THIRD_PARTY.md` updated). The P2
+  fixtures are from the Python service code with a scripted model, not from a trained model; the model is NOT QUALIFIED.
 
 ### T124 — Core event protocol
 - Requirements: SR-P3

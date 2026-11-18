@@ -1,0 +1,10 @@
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "laris": {"brain": ["Brain Index", "Citation Analysis", "Citation Analysis Playbook"]}, "choices": []}
+
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {"content": "Perovskite is stable under encapsulation."}}]}
+
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+
+data: {"id": "chatcmpl-fixture00", "object": "chat.completion.chunk", "model": "laris-test", "choices": [], "usage": {"prompt_tokens": 4269, "completion_tokens": 10, "total_tokens": 4279}}
+
+data: [DONE]
+

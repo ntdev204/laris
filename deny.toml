@@ -27,6 +27,9 @@ allow = [
     "landlock", "seccompiler", "windows-sys",
     # transitive crates of the approved ones, as resolved today
     "aho-corasick", "memchr", "regex-automata", "regex-syntax",
+    # transitive crates of serde, serde_json and schemars (T123)
+    "dyn-clone", "itoa", "proc-macro2", "quote", "ref-cast", "ref-cast-impl", "schemars_derive",
+    "serde_core", "serde_derive", "serde_derive_internals", "syn", "unicode-ident", "zmij",
 ]
 
 [sources]
