@@ -1,0 +1,20 @@
+{
+  "$schema": "https://example.org/settings.schema.json",
+  "server": {"url": "https://laris.example.org/v1/", "caFingerprint": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "timeoutSeconds": 45.5},
+  "model": "research-llm",
+  "ui": {"theme": "dark", "language": "vi", "markdown": false, "spinner": false, "showStatusLine": false},
+  "permissions": {"defaultMode": "acceptEdits", "allow": ["read_file"], "ask": ["write_file"], "deny": ["bash(rm *)"], "additionalDirectories": ["../shared"]},
+  "env": {"LARIS_EXAMPLE_FLAG": "1"},
+  "hooks": {
+    "PreToolUse": [{"matcher": "write_*", "hooks": [{"type": "command", "command": "./check.sh", "timeout": 12}]}],
+    "Stop": [{"hooks": [{"command": "./done.sh"}]}]
+  },
+  "statusLine": {"type": "command", "command": "./status.sh"},
+  "sandbox": {"python": "3.11", "packages": ["numpy"], "inheritEnv": true, "indexUrl": "", "pythonSource": ""},
+  "context": {"autoCompact": false, "windowTokens": 8192, "compactThreshold": 0.5},
+  "vault": {"autoRecord": false},
+  "learning": {"collect": false},
+  "extraInstructions": "Answer briefly.",
+  "cleanupPeriodDays": 7,
+  "autoUpdates": false
+}

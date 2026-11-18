@@ -1,0 +1,28 @@
+{
+  "config": {
+    "error": {
+      "unknown_setting": "thiết lập không tồn tại",
+      "expected_type": "cần {expected}, nhận được {found}",
+      "not_in_enum": "phải là một trong {allowed}",
+      "below_minimum": "phải từ {limit} trở lên",
+      "above_maximum": "phải từ {limit} trở xuống",
+      "not_above": "phải lớn hơn {limit}",
+      "not_below": "phải nhỏ hơn {limit}",
+      "too_short": "phải có ít nhất {min} ký tự",
+      "missing_required": "thiếu thiết lập bắt buộc {name}",
+      "no_match": "không khớp dạng nào được phép",
+      "not_allowed": "không được phép ở đây",
+      "invalid_json": "JSON không hợp lệ: {detail}",
+      "not_object": "tệp thiết lập phải là một đối tượng JSON",
+      "literal_secret": "trông như bí mật viết thẳng; đừng để bí mật trong tệp thiết lập, hãy dùng tệp thông tin xác thực hoặc biến môi trường",
+      "url_scheme": "phải bắt đầu bằng http:// hoặc https://",
+      "fingerprint_format": "phải là sha256: theo sau là 64 chữ số hex viết thường",
+      "unknown_hook_event": "sự kiện hook {event} không tồn tại (có: {known})",
+      "env_value": "không đọc được giá trị này như {expected}",
+      "unreadable": "không đọc được tệp: {detail}",
+      "too_large": "tệp lớn hơn {limit} byte",
+      "write_failed": "không ghi được tệp: {detail}"
+    },
+    "root": "(gốc)"
+  }
+}

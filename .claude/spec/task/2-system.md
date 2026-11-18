@@ -135,7 +135,26 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Settings precedence, JSON Schema validation, EN and VI catalogue
 - Validation:
   - Precedence and path-error tests; scan for hardcoded endpoints and secrets
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-config` has `settings` (the generation-1 settings document as typed Rust, camelCase,
+  unknown keys refused; one source of the JSON Schema, committed in `crates/laris-config/schema/settings.schema.json`,
+  checked by `cargo xtask schema --check`), `validate` (own JSON Schema validator, since no validator crate is
+  approved; errors name the JSON path, e.g. `hooks.PreToolUse[0].hooks[0].timeout`), `layers` (precedence `LARIS_*`
+  environment over settings file over packaged defaults over defaults; env names `LARIS_<SECTION>__<KEY>` matched to
+  keys ignoring case and underscores; values read as the type of their setting; an error in the merged value names the
+  variable that set it), `packaged` (build-time defaults file beside the binary or named by `LARIS_PACKAGED_DEFAULTS`,
+  or compiled in from `LARIS_BUILD_DEFAULTS`; only a well-formed address, fingerprint kept apart), `files` (strict read,
+  generation-1 flat files converted in memory without the API key, literal secrets refused, atomic validated write,
+  dotted-path get/set) and `catalogue` (English and Vietnamese JSON, `group.name` keys, `{placeholder}` templates,
+  fallback to English; tests require the same keys and placeholders in both and a message for every error kind).
+  `cargo xtask scan` (new; in CI) finds hardcoded endpoints and secrets in `crates/*/src`, `crates/*/catalogue` and
+  `xtask/src`; seeded faults are tested. A test compares the schema with generation 1's `settings.schema.json`: every
+  generation-1 setting keeps type, default and limits; the only addition is `ui.language` (`en` or `vi`, default `en`).
+  Decisions for the owner: that default (generation 1 spoke Vietnamese); the catalogue starts with the config messages
+  only, later tasks add keys in both languages (parity is tested); the YAML policy file `.laris/prompts/strings.yaml`
+  is untouched and not read (no YAML crate approved). The library reads neither the environment nor the home
+  directory; callers pass them. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`,
+  `xtask guard`, `xtask scan` and `xtask spec` pass. No new crates.
 
 ### T126 — laris-vault: parser and index
 - Requirements: SR-L2

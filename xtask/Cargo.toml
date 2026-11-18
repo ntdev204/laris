@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 regex = "1"
 laris-protocol = { path = "../crates/laris-protocol", version = "=2.0.0-dev" }
+laris-config = { path = "../crates/laris-config", version = "=2.0.0-dev" }
 
 [lints]
 workspace = true

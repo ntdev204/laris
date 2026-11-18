@@ -21,6 +21,10 @@ jobs:
         run: rustup show active-toolchain
       - name: No-training guard
         run: cargo xtask guard
+      - name: Hardcoded endpoint and secret scan
+        run: cargo xtask scan
+      - name: JSON Schema files are current
+        run: cargo xtask schema --check
       - name: Spec ledger
         run: cargo xtask spec
       - name: Format
