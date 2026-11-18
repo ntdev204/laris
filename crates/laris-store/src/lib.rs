@@ -236,6 +236,38 @@ impl Store {
         })
     }
 
+    /// The ids of all sessions, oldest first.
+    pub fn sessions(&self) -> Result<Vec<String>> {
+        let conn = self.connect()?;
+        let mut stmt = conn.prepare("SELECT id FROM sessions ORDER BY created, id")?;
+        let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    /// Keep one learning row (`data` is a JSON object with an `id`). `false` when a row of that kind and id exists.
+    pub fn put_learning(&self, kind: &str, created: f64, data: &str) -> Result<bool> {
+        self.transaction(|tx| {
+            let n = tx.execute(
+                "INSERT OR IGNORE INTO learning (kind, created, data) VALUES (?1, ?2, ?3)",
+                params![kind, created, data],
+            )?;
+            Ok(n > 0)
+        })
+    }
+
+    /// The learning rows of one kind, oldest first.
+    pub fn learning(&self, kind: &str) -> Result<Vec<String>> {
+        let conn = self.connect()?;
+        let mut stmt = conn.prepare("SELECT data FROM learning WHERE kind = ?1 ORDER BY id")?;
+        let rows = stmt.query_map([kind], |r| r.get::<_, String>(0))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    /// Delete every learning row and return how many there were.
+    pub fn purge_learning(&self) -> Result<usize> {
+        self.transaction(|tx| Ok(tx.execute("DELETE FROM learning", [])?))
+    }
+
     /// The events of a session after position `after` (0 for all), in order.
     pub fn events(&self, session: &str, after: i64) -> Result<Vec<StoredEvent>> {
         let conn = self.connect()?;

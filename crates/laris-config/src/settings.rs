@@ -440,12 +440,43 @@ impl Default for Vault {
 pub struct Learning {
     /// Derive learning examples from sessions.
     pub collect: bool,
+    /// Shortest final answer (characters) that becomes an example.
+    pub min_answer_chars: u32,
+    /// Longest tool result (characters) kept in an example; longer ones are cut.
+    pub max_tool_result_chars: u32,
+    /// Keep tool results in examples; otherwise they are replaced by `[omitted]`.
+    pub store_tool_results: bool,
+    /// Keep the passage text of retrieval examples; otherwise only identifiers and hashes.
+    pub store_passage_text: bool,
+    /// Rating an example needs to be exported (`none`: every one that was not rated down).
+    pub export_min_rating: ExportRating,
+    /// Names of the tools whose results are retrieval hits.
+    pub retrieval_tools: Vec<String>,
 }
 
 impl Default for Learning {
     fn default() -> Self {
-        Self { collect: true }
+        Self {
+            collect: true,
+            min_answer_chars: 40,
+            max_tool_result_chars: 3000,
+            store_tool_results: true,
+            store_passage_text: true,
+            export_min_rating: ExportRating::None,
+            retrieval_tools: vec!["search_corpus".to_owned()],
+        }
     }
+}
+
+/// Which rated examples `laris learn export` writes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ExportRating {
+    /// Everything that was not rated down.
+    #[default]
+    None,
+    /// Only what was rated up.
+    Up,
 }
 
 /// The settings document.

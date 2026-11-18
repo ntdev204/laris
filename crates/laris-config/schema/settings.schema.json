@@ -86,6 +86,21 @@
       },
       "type": "object"
     },
+    "ExportRating": {
+      "description": "Which rated examples `laris learn export` writes.",
+      "oneOf": [
+        {
+          "const": "none",
+          "description": "Everything that was not rated down.",
+          "type": "string"
+        },
+        {
+          "const": "up",
+          "description": "Only what was rated up.",
+          "type": "string"
+        }
+      ]
+    },
     "HookCommand": {
       "additionalProperties": false,
       "description": "A command hook.",
@@ -157,6 +172,45 @@
         "collect": {
           "default": true,
           "description": "Derive learning examples from sessions.",
+          "type": "boolean"
+        },
+        "exportMinRating": {
+          "$ref": "#/$defs/ExportRating",
+          "default": "none",
+          "description": "Rating an example needs to be exported (`none`: every one that was not rated down)."
+        },
+        "maxToolResultChars": {
+          "default": 3000,
+          "description": "Longest tool result (characters) kept in an example; longer ones are cut.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "minAnswerChars": {
+          "default": 40,
+          "description": "Shortest final answer (characters) that becomes an example.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "retrievalTools": {
+          "default": [
+            "search_corpus"
+          ],
+          "description": "Names of the tools whose results are retrieval hits.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "storePassageText": {
+          "default": true,
+          "description": "Keep the passage text of retrieval examples; otherwise only identifiers and hashes.",
+          "type": "boolean"
+        },
+        "storeToolResults": {
+          "default": true,
+          "description": "Keep tool results in examples; otherwise they are replaced by `[omitted]`.",
           "type": "boolean"
         }
       },
@@ -713,7 +767,15 @@
     "learning": {
       "$ref": "#/$defs/Learning",
       "default": {
-        "collect": true
+        "collect": true,
+        "exportMinRating": "none",
+        "maxToolResultChars": 3000,
+        "minAnswerChars": 40,
+        "retrievalTools": [
+          "search_corpus"
+        ],
+        "storePassageText": true,
+        "storeToolResults": true
       },
       "description": "Learning data."
     },

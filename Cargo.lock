@@ -536,6 +536,14 @@ dependencies = [
 [[package]]
 name = "laris-cli"
 version = "2.0.0-dev"
+dependencies = [
+ "laris-config",
+ "laris-core",
+ "laris-policy",
+ "laris-protocol",
+ "laris-store",
+ "serde_json",
+]
 
 [[package]]
 name = "laris-config"
@@ -589,11 +597,13 @@ version = "2.0.0-dev"
 dependencies = [
  "laris-config",
  "laris-core",
+ "laris-evidence",
  "laris-protocol",
  "laris-store",
  "laris-tools",
  "regex",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

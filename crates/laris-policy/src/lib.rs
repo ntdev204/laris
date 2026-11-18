@@ -15,11 +15,14 @@
 //! * [`Shield`] is the injection defence: results of third-party content are marked, watched for orders to the
 //!   model, and a call that repeats such an order is refused as `injected_request` ([`PolicyGate::with_shield`]).
 //!
+//! * [`learning`] derives training examples from the event log and exports them as JSONL (SR-H11).
+//!
 //! Not here: the OS sandbox and the refusal of installs outside it (T135).
 
 mod engine;
 mod gate;
 mod hooks;
+pub mod learning;
 mod preview;
 mod redact;
 mod rule;
