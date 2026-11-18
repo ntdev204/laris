@@ -38,3 +38,16 @@ An update also averages only 2 task batches instead of up to 8, so its gradient 
 
 ## Not measured
 Checkpointing off; micro-batch 32 with larger retrieval and contrastive batches; GPU utilisation and data-loader wait (the loader runs in the main process); TF32, fused AdamW and `torch.compile` (not in the training path).
+
+## Follow-up profile: option (b), owner run 2026-11-18 (runbook section 14)
+Micro-batch 32 x accumulation 1, `--tasks-per-step 2`, retrieval batch 128, contrastive batch 256 (stage 2 only; the control has no contrastive task), `LARIS_VRAM_CEILING_GB=36`, A100 40 GB.
+| config | checkpointing | worst mixed step | peak | latency per optimizer step |
+|---|---|---|---|---|
+| stage 2 | on (default) | similarity+retrieval | **26.82 GB** | **3.78 s** |
+| stage 2 | off (`--no-gradient-checkpointing`) | - | CUDA out of memory (39.33 GiB in use of 39.49) | - |
+| control | on (default) | qa+retrieval | **23.82 GB** | **3.45 s** |
+| control | off | - | CUDA out of memory (same figure) | - |
+Decision (rule of section 14): checkpointing **stays on** (off does not fit at micro-batch 32; this is also the first run where the new flag had an effect). Both peaks are at least 7 GB below the 34 GB limit, so
+the batches stay at retrieval 128 and contrastive 256 (no fall-back to 96/192). 5,000 steps take about 5.25 h for stage 2 and 4.8 h for the control (derived from the latency; evaluation and checkpoints not included),
+about 35 and 32 compute units at the 6.73 units per hour that `colab usage` showed (derived). Compared with 8 x 4 (4.60 s per step at the old retrieval batch) the larger batches cost 18 % less time and keep the passes of T203.
+Not measured: micro-batch 16 or 24 with checkpointing off (it might fit), TF32, fused AdamW, `torch.compile`, the data-loader wait.
