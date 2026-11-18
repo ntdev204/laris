@@ -15,7 +15,9 @@ pub mod gateway;
 pub mod guard;
 pub mod integrity;
 pub mod reasoning;
+pub mod reasoning_pg;
 mod routes;
+pub mod skills;
 pub mod workflows;
 pub mod yaml;
 
@@ -23,8 +25,13 @@ pub use compose::{Composed, Composer, PromptError, PromptSettings};
 pub use gateway::{PLAN_TOOL, Policy, PolicyGateway};
 pub use guard::{GuardSettings, LeakDetector, SecretRedactor, StreamGuard};
 pub use integrity::{IntegrityError, Snapshot};
-pub use reasoning::{MemoryReasoning, ReasoningRecord, ReasoningSink, ThinkSplitter};
+pub use reasoning::{
+    DiscardReasoning, MemoryReasoning, ReasoningRecord, ReasoningSink, ReasoningStore,
+    ThinkSplitter,
+};
+pub use reasoning_pg::PgReasoning;
 pub use routes::{help, reasoning as reasoning_route, workflows as workflows_route};
+pub use skills::{Selection, Skill, SkillSettings, Skills, Why};
 pub use workflows::{Workflow, WorkflowError, Workflows};
 
 use guard::Guard;
@@ -74,8 +81,8 @@ pub struct PolicyConfig {
     pub guard: GuardSettings,
     /// Tags that wrap inline reasoning (`LARIS_SERVER__THINK_TAGS`, JSON list of `[open, close]`).
     pub think_tags: Vec<(String, String)>,
-    /// Reasoning records kept in memory (`LARIS_SERVER__REASONING_KEEP`).
-    pub reasoning_keep: usize,
+    /// Choosing a skill for each turn.
+    pub skills: SkillSettings,
 }
 
 impl PolicyConfig {
@@ -86,7 +93,7 @@ impl PolicyConfig {
             prompt: PromptSettings::default(),
             guard: GuardSettings::default(),
             think_tags: vec![("<think>".to_owned(), "</think>".to_owned())],
-            reasoning_keep: 200,
+            skills: SkillSettings::default(),
         }
     }
 
@@ -192,8 +199,26 @@ impl PolicyConfig {
                 .filter(|s| !s.is_empty())
                 .collect();
         }
-        if let Some(n) = number("LARIS_SERVER__REASONING_KEEP", 1)? {
-            cfg.reasoning_keep = n;
+        if let Some(b) = flag("LARIS_SERVER__SKILL_SELECTION")? {
+            cfg.skills.enabled = b;
+        }
+        if let Some(n) = number("LARIS_SERVER__SKILL_MAX_CHARS", 1)? {
+            cfg.skills.max_chars = n;
+        }
+        for (name, slot) in [
+            ("LARIS_SERVER__SKILL_MIN_SCORE", &mut cfg.skills.min_score),
+            ("LARIS_SERVER__SKILL_MARGIN", &mut cfg.skills.margin),
+        ] {
+            if let Some(v) = get(name) {
+                *slot = v
+                    .parse::<f64>()
+                    .ok()
+                    .filter(|n| n.is_finite() && *n >= 0.0)
+                    .ok_or(PolicyError::Invalid {
+                        name,
+                        reason: "expected a number of 0 or more",
+                    })?;
+            }
         }
         if let Some(text) = get("LARIS_SERVER__THINK_TAGS") {
             cfg.think_tags = serde_json::from_str::<Vec<(String, String)>>(text).map_err(|_| {
@@ -239,9 +264,11 @@ impl Policy {
             .ok()
             .and_then(|b| b.try_into().ok())
             .ok_or(PolicyError::Random)?;
+        let skills = Skills::load(&config.root, config.skills.clone());
         Ok(Self {
             composer,
             workflows,
+            skills,
             help,
             guard: Guard::new(Arc::new(redactor), leak, config.guard.stream_holdback_chars),
             canary_enabled: config.guard.canary_enabled,

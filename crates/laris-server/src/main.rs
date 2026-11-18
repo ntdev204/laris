@@ -1,7 +1,7 @@
 //! Binary laris-server: reads `LARIS_SERVER__*` from the environment and serves until interrupted.
 
 use laris_server::access::{Access, deliver_key};
-use laris_server::policy::{MemoryReasoning, Policy, PolicyConfig, PolicyGateway, integrity};
+use laris_server::policy::{PgReasoning, Policy, PolicyConfig, PolicyGateway, integrity};
 use laris_server::storage::{RetentionHandle, Storage, StorageConfig};
 use laris_server::{AppState, NoBackend, ServerConfig, StderrSink, serve};
 use std::collections::HashMap;
@@ -112,7 +112,7 @@ async fn main() -> ExitCode {
         Ok(l) => l,
         Err(e) => return fail(format!("cannot listen: {e}"), 1),
     };
-    let reasoning = Arc::new(MemoryReasoning::new(policy_config.reasoning_keep));
+    let reasoning = Arc::new(PgReasoning::new(storage.clone()));
     let backend = Arc::new(PolicyGateway::new(
         policy.clone(),
         Arc::new(NoBackend),

@@ -33,7 +33,7 @@ pub struct AppState {
     /// The policy (workflows and help routes). `None` serves neither.
     pub policy: Option<Arc<crate::policy::Policy>>,
     /// Where the operator reads the model's reasoning. `None` serves no such route.
-    pub reasoning: Option<Arc<crate::policy::MemoryReasoning>>,
+    pub reasoning: Option<Arc<dyn crate::policy::ReasoningStore>>,
 }
 
 impl AppState {
@@ -52,7 +52,7 @@ impl AppState {
     pub fn with_policy(
         mut self,
         policy: Arc<crate::policy::Policy>,
-        reasoning: Arc<crate::policy::MemoryReasoning>,
+        reasoning: Arc<dyn crate::policy::ReasoningStore>,
     ) -> Self {
         self.policy = Some(policy);
         self.reasoning = Some(reasoning);
@@ -142,7 +142,11 @@ async fn chat_inner(
     validate_chat(&body)?;
     let session = body.laris.session_id.clone().unwrap_or_default();
     let meter = reserve_for(state, principal.as_ref(), length, "chat", session).await?;
-    let stream = match state.backend.chat(body).await {
+    let stream = match state
+        .backend
+        .chat_for(body, principal.as_ref().map(|p| p.key_id.as_str()))
+        .await
+    {
         Ok(stream) => stream,
         Err(error) => {
             if let Some(m) = &meter {
