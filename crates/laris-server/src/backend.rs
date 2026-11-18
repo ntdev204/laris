@@ -1,0 +1,49 @@
+//! The seam to the model (T144 fills it). T141 owns the HTTP side only; whatever answers a chat or an embed
+//! request implements [`Backend`].
+
+use crate::error::ApiError;
+use futures_util::future::BoxFuture;
+use futures_util::stream::BoxStream;
+use laris_protocol::p1::{ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse};
+
+/// A failure after the answer stream started. It is sent as an `error` event followed by `[DONE]`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StreamFailure {
+    /// Message for the client; it must not carry request or answer content.
+    pub message: String,
+    /// Error class name or code.
+    pub kind: String,
+}
+
+/// The chunks of one answer.
+pub type ChunkStream = BoxStream<'static, Result<ChatResponseChunk, StreamFailure>>;
+
+/// What answers requests.
+pub trait Backend: Send + Sync + 'static {
+    /// Starts an answer. An `Err` here is an HTTP status; failures after this returns go in the stream.
+    fn chat(&self, request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>>;
+    /// Embeds texts.
+    fn embed(&self, request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>>;
+}
+
+/// The backend of a server with no model connected: every call is a 502.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct NoBackend;
+
+impl Backend for NoBackend {
+    fn chat(&self, _request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        Box::pin(async {
+            Err(ApiError::BadGateway(
+                "the model service is not connected".into(),
+            ))
+        })
+    }
+
+    fn embed(&self, _request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>> {
+        Box::pin(async {
+            Err(ApiError::BadGateway(
+                "the model service is not connected".into(),
+            ))
+        })
+    }
+}

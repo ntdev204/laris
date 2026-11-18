@@ -690,7 +690,42 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - axum app, configuration, health, body validation, trusted proxies, content-free logs, mid-stream error events
 - Validation:
   - Tests for 400, 411, 413, mid-stream error, slow client, proxy rules
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-server` is now a library plus the binary. `config`: `ServerConfig::from_env` reads
+  `LARIS_SERVER__*` passed in by `main` (the library never reads the environment); `BIND` is required and has no
+  default; body limit, trusted proxies, header, body and stream-idle timeouts, connection limit, embed input limit and
+  shutdown grace have defaults in code and are settings; an error names the variable, never the value. `proxy`:
+  `Cidr`, `TrustedProxies::client_ip` (an untrusted peer is the client and `X-Forwarded-For` is ignored; from a trusted
+  peer the chain is read from the right, trusted hops skipped, the first other address is the client; garbage ends the
+  walk at the address a trusted proxy vouched for; IPv4-mapped IPv6 is normalised). `app`: routes `GET /health`,
+  `POST /v1/laris/chat`, `POST /v1/laris/embed`; JSON 404 and 405; order of checks `X-Laris-Protocol` (426), no
+  `Content-Length` or `Transfer-Encoding` (411), non-number (400), over the limit (413, decided from the header before
+  any body byte is read), content type (400), body read under a total deadline (408), parse and rules (400: empty
+  messages, system role, `stream:false`, session id form, embed input empty or over the limit); error bodies are
+  `{"error": ...}` as in generation 1. `ApiError` carries all of 400, 401, 403, 404, 405, 408, 411, 413, 426, 429
+  (with `Retry-After`), 500, 502; 401, 403 and 429 are produced from T143 on, the tests only prove the mapping through a
+  refusing backend. `backend::Backend` is the seam to the model (chat stream, embed); `NoBackend` answers 502 until T144.
+  A failure inside the answer stream, or silence longer than `stream_idle`, becomes an `error` event then `[DONE]`
+  (status 200 already sent). `log`: one record per request (id, method, route name, status, body bytes, duration,
+  client address, outcome), written once even for a client that leaves (status 499, `client_gone`); there is no field
+  for path, query, header, body, key or message text, and the route is a fixed name, so `unmatched` stands for any
+  unknown URL; `X-Request-Id` is made by the server. `serve`: own accept loop on hyper (header read timeout, 32 KiB
+  header buffer, connection limit that sheds the extra connection, graceful stop with grace). Tests: 19 over real
+  sockets in `tests/api.rs` (raw bytes: 400 cases, 411 for missing length and chunked, 413 answered before the body is
+  sent and exactly at the limit, 426, mid-stream error and idle stream with the event sequence, client leaving,
+  slow body 408, slow headers cut, connection limit, trusted and untrusted proxy, no marker from body, key, cookie,
+  query, path or message in the log, unique server-made ids, shutdown), `tests/config.rs` 4, `tests/proxy.rs` 6,
+  `tests/log.rs` 2, `error` unit tests 2. Dependencies (approved in T119): `axum` 0.8.9 with `http1` and `tokio` only;
+  `cargo vendor` added `axum`, `axum-core`, `matchit`, `mime`, `httpdate`, `errno`, `signal-hook-registry` (listed in
+  `deny.toml` and `THIRD_PARTY.md`); `hyper` and `hyper-util` (already vendored) are used directly for the header
+  timeout, not on the T119 direct list (owner to confirm); `futures-util`, `tokio` (`signal`, `rt-multi-thread`),
+  `thiserror`, `serde`, `serde_json` as before. Limits: no TLS (Caddy in front, SR-S1); no keys, roles, quotas or
+  storage yet (T143, T142); the model is behind `Backend` and `NoBackend` (T144); the slow-client rule covers a slow
+  sender, not a slow reader of the answer stream (a client that stops reading is held by the connection limit and
+  `stream_idle` only while the backend is silent); only `/health`, `chat` and `embed` exist, the other P1 routes come
+  with their tasks; `stream:false` is refused with 400 (generation 1 had no recorded non-streaming chat); the
+  access log goes to standard error as JSON lines, no subscriber crate. `cargo fmt --check`, `clippy -D warnings`,
+  `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T142 — PostgreSQL storage
 - Requirements: SR-S3
