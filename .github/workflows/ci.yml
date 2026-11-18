@@ -40,6 +40,46 @@ jobs:
       - name: Deny
         run: cargo deny check
 
+  security:
+    # T154: the security suite of the threat model (docs/architecture/THREAT_MODEL.md, tests/security/suite.json).
+    # Every threat row must have its tests; the PostgreSQL tests run against a throwaway service (no password: the
+    # container trusts only this job's own network).
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      LARIS_TEST_PG_DSN: postgres://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup show active-toolchain
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked --version 0.20.2
+      - name: Security suite
+        run: cargo xtask security
+
+  performance:
+    # T154: budgets were fixed on the development workstation (reports/performance/rust_budgets.json). A shared runner
+    # can be slower, so this job reports and does not block until the owner has seen its first figures.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup show active-toolchain
+      - name: Budgets
+        run: cargo xtask bench --runs 3 --out /tmp/rust_bench.json
+
   model-block:
     # T94: checks of the Python model block. The guard inside the script excludes every test that
     # trains or profiles with an optimizer; nothing here authorizes training.

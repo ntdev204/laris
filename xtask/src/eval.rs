@@ -343,7 +343,7 @@ fn judge(m: &Measured, baseline: &Value, seed: f64) -> (Value, bool) {
         "metrics": metrics,
         "problems": problems,
         "notRun": [
-            "benchmarks (budgets are fixed from measurements in T154)",
+            "benchmarks (`cargo xtask bench`, T154: they measure time and memory, not correctness)",
             "any trained model: scripted model only, so no scientific capability is shown"
         ],
     });

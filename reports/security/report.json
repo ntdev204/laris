@@ -1,0 +1,372 @@
+{
+  "complete": false,
+  "counts": {
+    "deferred": 2,
+    "partial": 1,
+    "passed": 27
+  },
+  "model": "none: the suite runs the workspace tests; the foundation model is NOT QUALIFIED",
+  "notRun": [
+    "docker/verify-images.sh and docker/smoke_test.sh (they need built images; the owner or T153's smoke run does it)",
+    "the macOS and Windows sandbox backends (their own platforms)"
+  ],
+  "passed": true,
+  "problems": [],
+  "results": {
+    "SEC-BRAIN-01": {
+      "deferredTo": {
+        "reason": "the main brain and its single write gate are programme 3",
+        "task": "T164"
+      },
+      "owners": [
+        "T164"
+      ],
+      "ran": [],
+      "status": "deferred",
+      "threat": "TM-28"
+    },
+    "SEC-DATA-01": {
+      "owners": [
+        "T138"
+      ],
+      "ran": [
+        "laris-policy::learning (4 tests)",
+        "laris-cli::learn (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-26"
+    },
+    "SEC-DATA-02": {
+      "owners": [
+        "T127",
+        "T129"
+      ],
+      "ran": [
+        "laris-vault::writer_fs (4 tests)",
+        "laris-store::store (3 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-27"
+    },
+    "SEC-DATA-03": {
+      "deferredTo": {
+        "reason": "sealed splits, manifests and the seeded model-generated example belong to the data pipeline of programme 3",
+        "task": "T168"
+      },
+      "owners": [
+        "T168"
+      ],
+      "ran": [],
+      "status": "deferred",
+      "threat": "TM-29"
+    },
+    "SEC-DEP-01": {
+      "imageCheck": "docker/verify-images.sh checks the built images; the owner or the smoke test runs it",
+      "owners": [
+        "T153"
+      ],
+      "ran": [
+        "laris-server::deployment (4 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-05"
+    },
+    "SEC-EVID-01": {
+      "owners": [
+        "T137"
+      ],
+      "ran": [
+        "laris-evidence::gate (7 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-23"
+    },
+    "SEC-HTTP-01": {
+      "owners": [
+        "T141"
+      ],
+      "ran": [
+        "laris-server::api (4 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-10"
+    },
+    "SEC-HTTP-02": {
+      "owners": [
+        "T141",
+        "T144"
+      ],
+      "ran": [
+        "laris-server::api (5 tests)",
+        "laris-server::model (2 tests)",
+        "laris-server::access (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-11"
+    },
+    "SEC-HTTP-03": {
+      "owners": [
+        "T141"
+      ],
+      "ran": [
+        "laris-server::api (2 tests)",
+        "laris-server::proxy (3 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-12"
+    },
+    "SEC-HTTP-04": {
+      "owners": [
+        "T144"
+      ],
+      "ran": [
+        "laris-server::api (2 tests)",
+        "laris-server::model (4 tests)",
+        "laris-model-client::client (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-13"
+    },
+    "SEC-INJ-01": {
+      "owners": [
+        "T136"
+      ],
+      "ran": [
+        "laris-policy::shield (5 tests)",
+        "laris-policy::gate (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-16"
+    },
+    "SEC-INJ-02": {
+      "owners": [
+        "T136"
+      ],
+      "ran": [
+        "laris-policy::redact (5 tests)",
+        "laris-policy::shield (1 tests)",
+        "laris-server::policy (2 tests)",
+        "laris-tools::tools (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-17"
+    },
+    "SEC-INJ-03": {
+      "owners": [
+        "T132",
+        "T149"
+      ],
+      "ran": [
+        "laris-policy::shield (1 tests)",
+        "laris-policy::gate (2 tests)",
+        "laris-server::tools (1 tests)",
+        "laris-tools::tools (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-25"
+    },
+    "SEC-INT-01": {
+      "owners": [
+        "T146"
+      ],
+      "ran": [
+        "laris-server::policy (5 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-04"
+    },
+    "SEC-KEY-01": {
+      "owners": [
+        "T143"
+      ],
+      "ran": [
+        "laris-server::access (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-06"
+    },
+    "SEC-KEY-02": {
+      "owners": [
+        "T141"
+      ],
+      "ran": [
+        "laris-server::access (1 tests)",
+        "laris-server::api (1 tests)",
+        "laris-server::config (2 tests)",
+        "laris-model-client::client (1 tests)",
+        "laris-server::storage (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-07"
+    },
+    "SEC-KEY-03": {
+      "owners": [
+        "T143"
+      ],
+      "ran": [
+        "laris-server::access (5 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-09"
+    },
+    "SEC-KEY-04": {
+      "owners": [
+        "T143",
+        "T149"
+      ],
+      "ran": [
+        "laris-server::access (2 tests)",
+        "laris-server::tools (1 tests)",
+        "laris-server::policy (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-14"
+    },
+    "SEC-LEAK-01": {
+      "owners": [
+        "T146"
+      ],
+      "ran": [
+        "laris-server::policy (7 tests)",
+        "laris-server::model (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-01"
+    },
+    "SEC-LEAK-02": {
+      "owners": [
+        "T146"
+      ],
+      "ran": [
+        "laris-server::policy (3 tests)",
+        "laris-server::model (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-02"
+    },
+    "SEC-LEAK-03": {
+      "owners": [
+        "T147"
+      ],
+      "ran": [
+        "laris-server::policy (2 tests)",
+        "laris-server::brain (3 tests)",
+        "laris-server::traces (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-03"
+    },
+    "SEC-NET-01": {
+      "owners": [
+        "T128",
+        "T153"
+      ],
+      "ran": [
+        "laris-model-client::pin (4 tests)",
+        "laris-model-client::client (2 tests)",
+        "laris-model-client::wire (1 tests)",
+        "laris-server::deployment (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-15"
+    },
+    "SEC-PERM-01": {
+      "owners": [
+        "T133"
+      ],
+      "ran": [
+        "laris-policy::hooks (7 tests)",
+        "laris-policy::trust (1 tests)",
+        "laris-policy::shield (1 tests)",
+        "laris-policy::gate (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-18"
+    },
+    "SEC-PERM-02": {
+      "owners": [
+        "T133"
+      ],
+      "ran": [
+        "laris-policy::trust (6 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-19"
+    },
+    "SEC-PERM-03": {
+      "owners": [
+        "T132",
+        "T133"
+      ],
+      "ran": [
+        "laris-policy::gate (2 tests)",
+        "laris-policy::modes (3 tests)",
+        "laris-policy::rules (3 tests)",
+        "laris-tools::tools (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-20"
+    },
+    "SEC-PERM-04": {
+      "owners": [
+        "T132"
+      ],
+      "ran": [
+        "laris-tools::tools (4 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-24"
+    },
+    "SEC-QUOTA-01": {
+      "owners": [
+        "T143"
+      ],
+      "ran": [
+        "laris-server::access (4 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-08"
+    },
+    "SEC-SBX-01": {
+      "owners": [
+        "T134",
+        "T135"
+      ],
+      "platform": "linux: the macOS and Windows backends have their own test targets (macos.rs, windows.rs) that run on those systems; this report covers the system it ran on",
+      "ran": [
+        "laris-sandbox::linux (6 tests)",
+        "laris-tools::sandboxed_bash (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-21"
+    },
+    "SEC-SBX-02": {
+      "owners": [
+        "T135"
+      ],
+      "ran": [
+        "laris-sandbox::pyenv (5 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-22"
+    },
+    "SEC-SUP-01": {
+      "owners": [
+        "T121",
+        "T159"
+      ],
+      "partial": {
+        "reason": "release signing and the signed install do not exist yet",
+        "task": "T159"
+      },
+      "ran": [
+        "cargo xtask guard",
+        "cargo xtask scan",
+        "cargo deny check"
+      ],
+      "status": "partial",
+      "threat": "TM-30"
+    }
+  },
+  "threats": 30
+}

@@ -9,7 +9,9 @@ Reports describe a particular run and do not automatically qualify a model.
   results, including manual extraction failures. This is not model 02 completion.
 - `model_free/`: output of `laris-server evaluate suite` (retrieval, citation, extraction, leak,
   injection and vault round-trip on fixtures). Reproducible; says nothing about the core model.
-- `performance/`: output of `scripts/benchmark_vault.py` (10,000-note vault) and its budgets.
+- `performance/`: output of `scripts/benchmark_vault.py` (10,000-note vault) and its budgets; `rust_bench.json` and
+  `rust_budgets.json` are the figures and budgets of `cargo xtask bench` (server, redactor, evidence gate, retrieval).
+- `security/`: `report.json` of `cargo xtask security`, one verdict per threat-model test id.
 - `verification/`: preparation-task checks. These record engineering verification,
   never training results or capability promotion.
 
