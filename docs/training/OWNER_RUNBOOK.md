@@ -790,3 +790,33 @@ logs are copied back.
 
 **Cost.** Six profiles are a few minutes each on a model that does not train; with the rate in the Colab UI the owner can bound the units before starting. Not measured: any
 A100 figure (speed, peak). The T202 figures belong to the RTX 5070 Ti.
+
+## 14. T211 option (b): profile of micro-batch 32 with retrieval batch 128 and contrastive batch 256 (owner run, prepared 2026-11-18)
+
+Owner decision 2026-11-18 after the A100 profile (`reports/verification/T211-a100-speed-profile.md`): train at **micro-batch 32, accumulation 1** (3.00 s per optimizer step, peak 23.93 GB at the
+old retrieval and contrastive batches) and raise `retrieval_batch_size` to 128 and `contrastive_sim_batch_size` to 256, so retrieval and contrastive similarity see the same rows per step as at 8 x 4
+(computed: 0.024 and 0.306 passes at 5,000 steps). The cost is 4x more in-batch negatives for those two tasks, which changes their objective, and every update averages two task batches. Both
+`english_r1_stage2.yaml` and `english_r1_stage2_control.yaml` now carry these values (the control's retrieval batch too, so the comparison stays like for like).
+
+**Not measured:** the peak with retrieval 128 (256-token passages) and contrastive 256 (128-token sentences) next to a 32-row task; the speed of those steps; the saving of turning
+checkpointing off. Estimate only: the peak may approach the 36 GB ceiling; this profile decides.
+
+```bash
+cd /content/laris
+export LARIS_TRAINING_AUTHORIZED=1 LARIS_VRAM_CEILING_GB=36
+TOK=artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
+for CFG in english_r1_stage2 english_r1_stage2_control; do
+  for CK in "" "--no-gradient-checkpointing"; do
+    tag=$([ -z "$CK" ] && echo ckpton || echo ckptoff)
+    timeout -s KILL 1500s python3 -m cli.model train language-encoder --profile-only \
+      --model-size large --vocab-size 56000 --max-seq-len 1024 \
+      --training-config configs/language_encoder/$CFG.yaml --tasks-per-step 2 \
+      --micro-batch-size 32 --grad-accum-steps 1 $CK \
+      --precision bf16 --no-8bit-adam --tokenizer-model $TOK --normalize-input \
+      2>&1 | tee artifacts/profiles/optb-$CFG-$tag.log | grep -E "Worst mixed|Latency per mixed|Measured peak|SUCCESS|FAIL|out of memory"
+  done
+done
+```
+Four runs of a few minutes each. **Decision rule.** Per config, take the checkpointing setting with the lower latency whose peak is at least 2 GB below 36 GB (34 GB). If checkpointing "on" at stage 2
+exceeds 34 GB, lower `retrieval_batch_size` to 96 (then 64) and `contrastive_sim_batch_size` to 192 (then 128) in both configs and profile again; the report records every value tried. Whatever is chosen is used by the
+stage-1 rerun, the stage-2 run and the control alike, and `scripts/plan_stage2_schedule.py` (it now reads the micro-batch, accumulation and batch sizes from the YAML) recomputes the draws and passes.

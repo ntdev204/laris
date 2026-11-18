@@ -73,3 +73,10 @@ NLI 1.33x, paraphrase 1.43x, QA 2.2x, similarity 2.2x the control's draws at 5,0
 sum to `tasks_per_step`, agree with `sample_tasks` by Monte Carlo (30,000 draws, 0.01); every stage-2 floor binds exactly, pair tasks total 0.66, MLM draw share
 between 0.18 and 0.25, no task below 0.07; the control equals the original mixture and has the same steps, warm-up, learning rate, batch sizes and
 `tasks_per_step` as stage 2; every pair task has more draws in stage 2 than in the control.
+
+## Addendum 2026-11-18 (T211): batch sizes of the A100 runs
+The tables above are for micro-batch 8, accumulation 4 and the retrieval and contrastive batches of 32 and 64. Owner decision after the A100 profile: micro-batch 32, accumulation 1, retrieval batch 128, contrastive batch 256
+(both configs). Draws per task fall 4x (one micro-step of two batches per optimizer step), rows per draw rise 4x, so the **passes are unchanged** at 5,000 and 20,000 steps (recomputed by
+`scripts/plan_stage2_schedule.py`, `T203-stage2-schedule.json`): stage 2 at 5,000 steps has NLI 1,686 draws (0.032 passes), paraphrase 1,325 (0.041), QA 1,136 (0.082), similarity 841 (1.161), retrieval 1,220 (0.024),
+contrastive 1,686 (0.306), MLM 2,107 (0.004); the control has NLI 1,271, paraphrase 925, QA 516, similarity 383, retrieval 2,927 (0.059), MLM 3,977. What changes is not the exposure but the update: each optimizer step averages one
+two-task micro-step instead of four, and retrieval and contrastive similarity use 4x more in-batch negatives. Peak memory with the larger batches is not measured (runbook section 14).
