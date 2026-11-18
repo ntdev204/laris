@@ -1,6 +1,7 @@
 //! Binary laris-server: reads `LARIS_SERVER__*` from the environment and serves until interrupted.
 
 use laris_server::access::{Access, deliver_key};
+use laris_server::policy::{MemoryReasoning, Policy, PolicyConfig, PolicyGateway, integrity};
 use laris_server::storage::{RetentionHandle, Storage, StorageConfig};
 use laris_server::{AppState, NoBackend, ServerConfig, StderrSink, serve};
 use std::collections::HashMap;
@@ -12,11 +13,57 @@ fn fail(message: impl std::fmt::Display, code: u8) -> ExitCode {
     ExitCode::from(code)
 }
 
+/// `laris-server policy verify|lock`: checks the policy against `integrity.lock`, or writes a new lock after the
+/// owner approved a change.
+fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
+    let config = match PolicyConfig::from_env(env) {
+        Ok(c) => c,
+        Err(e) => return fail(e, 2),
+    };
+    match action {
+        "verify" => match integrity::verified(&config.root) {
+            Ok(_) => {
+                println!("policy intact");
+                ExitCode::SUCCESS
+            }
+            Err(e) => fail(e, 1),
+        },
+        "lock" => match integrity::write_lock(&config.root) {
+            Ok(_) => {
+                println!("integrity.lock written");
+                ExitCode::SUCCESS
+            }
+            Err(e) => fail(e, 1),
+        },
+        _ => fail("usage: laris-server [policy verify|lock]", 2),
+    }
+}
+
 #[tokio::main]
 async fn main() -> ExitCode {
     let env: HashMap<String, String> = std::env::vars()
         .filter(|(k, _)| k.starts_with(laris_server::config::ENV_PREFIX))
         .collect();
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("policy") {
+        return policy_command(args.get(1).map_or("", String::as_str), &env);
+    }
+    if !args.is_empty() {
+        return fail("usage: laris-server [policy verify|lock]", 2);
+    }
+    let policy_config = match PolicyConfig::from_env(&env) {
+        Ok(c) => c,
+        Err(e) => return fail(e, 2),
+    };
+    // a policy that differs from its lock stops the server before it listens
+    let policy = match Policy::load(
+        &policy_config,
+        std::env::vars(),
+        std::env::var("HOME").ok().as_deref(),
+    ) {
+        Ok(p) => Arc::new(p),
+        Err(e) => return fail(e, 1),
+    };
     let config = match ServerConfig::from_env(&env) {
         Ok(c) => c,
         Err(e) => return fail(e, 2),
@@ -65,7 +112,13 @@ async fn main() -> ExitCode {
         Ok(l) => l,
         Err(e) => return fail(format!("cannot listen: {e}"), 1),
     };
-    let state = Arc::new(AppState::new(config, Arc::new(NoBackend), access));
+    let reasoning = Arc::new(MemoryReasoning::new(policy_config.reasoning_keep));
+    let backend = Arc::new(PolicyGateway::new(
+        policy.clone(),
+        Arc::new(NoBackend),
+        reasoning.clone(),
+    ));
+    let state = Arc::new(AppState::new(config, backend, access).with_policy(policy, reasoning));
     let stop = async {
         let _ = tokio::signal::ctrl_c().await;
     };

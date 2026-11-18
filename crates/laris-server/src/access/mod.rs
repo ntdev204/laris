@@ -12,6 +12,7 @@ mod meter;
 mod roles;
 
 pub use keys::{KeyError, KeyRecord, LABEL_MAX, NewKey, PREFIX, SERVER_RULE};
+pub(crate) use master::random_bytes;
 pub use master::{MIN_MASTER_CHARS, Master, MasterError};
 pub use meter::{Refusal, Reservation, ReserveError, Used};
 pub use roles::{Roles, RolesError, perm};

@@ -14,6 +14,7 @@ pub mod backend;
 pub mod config;
 pub mod error;
 pub mod log;
+pub mod policy;
 pub mod proxy;
 mod serve;
 mod stall;

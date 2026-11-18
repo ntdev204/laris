@@ -30,6 +30,10 @@ pub struct AppState {
     /// Keys, roles and quotas. `None` serves every request without a key: only [`AppState::open`] makes that, for
     /// tests of the HTTP layer; `main` always builds the access layer.
     pub access: Option<Arc<Access>>,
+    /// The policy (workflows and help routes). `None` serves neither.
+    pub policy: Option<Arc<crate::policy::Policy>>,
+    /// Where the operator reads the model's reasoning. `None` serves no such route.
+    pub reasoning: Option<Arc<crate::policy::MemoryReasoning>>,
 }
 
 impl AppState {
@@ -39,7 +43,20 @@ impl AppState {
             config,
             backend,
             access: Some(access),
+            policy: None,
+            reasoning: None,
         }
+    }
+
+    /// The same state serving the policy's workflows and help, and the operator's reasoning route.
+    pub fn with_policy(
+        mut self,
+        policy: Arc<crate::policy::Policy>,
+        reasoning: Arc<crate::policy::MemoryReasoning>,
+    ) -> Self {
+        self.policy = Some(policy);
+        self.reasoning = Some(reasoning);
+        self
     }
 
     /// State that accepts every caller. For tests of the HTTP layer only.
@@ -48,6 +65,8 @@ impl AppState {
             config,
             backend,
             access: None,
+            policy: None,
+            reasoning: None,
         }
     }
 }
@@ -67,6 +86,9 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/laris/chat", post(chat))
         .route("/v1/laris/embed", post(embed))
         .route("/v1/laris/account", get(crate::admin::account))
+        .route("/v1/laris/workflows", get(crate::policy::workflows_route))
+        .route("/v1/laris/help", get(crate::policy::help))
+        .route("/v1/admin/reasoning", get(crate::policy::reasoning_route))
         .route("/v1/admin/usage", get(crate::admin::usage))
         .route(
             "/v1/admin/keys",
