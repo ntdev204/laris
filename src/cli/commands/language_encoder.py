@@ -50,6 +50,7 @@ from laris.shared.language.loading.dataloader import (
     TASK_DATASET_DIRS,
     StreamingParquetMultiTaskDataLoader,
 )
+from laris.shared.language.loading.prefetch import PrefetchingLoader
 from laris.shared.language.tokenization.normalized import (
     NORMALIZATION_ID,
     NormalizedSentencePiece,
@@ -135,6 +136,20 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Recompute activations in the backward pass (compact only): less memory, slower, "
         "same numbers; use it to fit a small VRAM budget",
+    )
+    parser.add_argument(
+        "--loader-workers",
+        type=int,
+        default=0,
+        help="Background processes that prepare training batches (T213); 0 keeps the "
+        "single-process loader. Seeds differ per worker, the order of batches follows process "
+        "timing and a run is not bit-reproducible; the validation loader is never prefetched",
+    )
+    parser.add_argument(
+        "--loader-prefetch",
+        type=int,
+        default=4,
+        help="Ready micro-steps kept per worker (default: 4)",
     )
     parser.add_argument(
         "--stop-after-steps",
@@ -579,27 +594,29 @@ def run(args: argparse.Namespace) -> int:
     # train split only; validation uses the held-out val split, never test
     # training and validation drop padding and group similar lengths (results are unchanged)
     common.update(trim_padding=True, length_pool_batches=8)
-    loader = StreamingParquetMultiTaskDataLoader(
-        split="train",
-        dataset_sampling_exponents=hyper.dataset_sampling_exponents,
-        dataset_sampling_weights=hyper.dataset_sampling_weights,
-        alpha=hyper.task_sampling_alpha,
-        task_sampling_floor=hyper.task_sampling_floor,
-        include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
-        include_retrieval_task=hyper.retrieval_task,
-        retrieval_batch_size=hyper.retrieval_batch_size,
-        retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
-        mlm_pair_fraction=hyper.mlm_pair_fraction,
-        order_task=hyper.order_task,
-        order_class_shares=hyper.order_class_shares,
-        label_balanced_tasks=hyper.label_balanced_tasks,
-        include_contrastive_sim_task=hyper.contrastive_sim_task,
-        contrastive_sim_batch_size=hyper.contrastive_sim_batch_size,
-        contrastive_sim_max_sequence_length=hyper.contrastive_sim_max_sequence_length,
-        contrastive_sim_row_shares=hyper.contrastive_sim_row_shares,
-        contrastive_sim_row_weights=hyper.contrastive_sim_row_weights,
-        **common,  # type: ignore[arg-type]
-    )
+    def build_train_loader(seed: int) -> StreamingParquetMultiTaskDataLoader:
+        return StreamingParquetMultiTaskDataLoader(
+            split="train",
+            dataset_sampling_exponents=hyper.dataset_sampling_exponents,
+            dataset_sampling_weights=hyper.dataset_sampling_weights,
+            alpha=hyper.task_sampling_alpha,
+            task_sampling_floor=hyper.task_sampling_floor,
+            include_retrieval_pairs=hyper.loss_lambda_retrieval > 0,
+            include_retrieval_task=hyper.retrieval_task,
+            retrieval_batch_size=hyper.retrieval_batch_size,
+            retrieval_max_sequence_length=hyper.retrieval_max_sequence_length,
+            mlm_pair_fraction=hyper.mlm_pair_fraction,
+            order_task=hyper.order_task,
+            order_class_shares=hyper.order_class_shares,
+            label_balanced_tasks=hyper.label_balanced_tasks,
+            include_contrastive_sim_task=hyper.contrastive_sim_task,
+            contrastive_sim_batch_size=hyper.contrastive_sim_batch_size,
+            contrastive_sim_max_sequence_length=hyper.contrastive_sim_max_sequence_length,
+            contrastive_sim_row_shares=hyper.contrastive_sim_row_shares,
+            contrastive_sim_row_weights=hyper.contrastive_sim_row_weights,
+            **{**common, "seed": seed},  # type: ignore[arg-type]
+        )
+    loader = build_train_loader(args.seed)
     eval_loader = StreamingParquetMultiTaskDataLoader(
         split="val",
         include_retrieval_task=hyper.retrieval_task,
@@ -707,9 +724,20 @@ def run(args: argparse.Namespace) -> int:
     mixed = f", {hyper.tasks_per_step} tasks per micro-step" if hyper.tasks_per_step > 1 else ""
     print(f"Training for {hyper.max_steps} optimizer steps (effective batch "
           f"{args.micro_batch_size * args.grad_accum_steps} per task{mixed})...")
+    train_source: Any = loader
+    if args.loader_workers > 0:
+        train_source = PrefetchingLoader(
+            lambda index: build_train_loader(args.seed + index),
+            loader,
+            args.loader_workers,
+            hyper.tasks_per_step,
+            args.loader_prefetch,
+            args.seed,
+        )
+        print(f"Loader workers:            {args.loader_workers} (prefetch {args.loader_prefetch})")
     result = run_training(
         trainer,
-        loader,
+        train_source,
         TrainingRunConfig(
             total_optimizer_steps=hyper.max_steps,
             eval_interval=args.eval_interval,
@@ -730,6 +758,8 @@ def run(args: argparse.Namespace) -> int:
             log_interval=args.log_interval,
         ),
     )
+    if isinstance(train_source, PrefetchingLoader):
+        train_source.close()
     status = "stopped early" if result.stopped_early else "completed"
     print(f"\n[SUCCESS] Training {status} at optimizer step {result.optimizer_steps}.")
     if result.best_dir is not None:
