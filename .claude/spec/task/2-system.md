@@ -280,7 +280,33 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     learning examples, vault index cache
 - Validation:
   - A generation-1 database migrates without loss; two writers lose nothing
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-store` holds `Store` (one SQLite file; `open`, `open_space`, `connect`, `transaction`,
+  `version`, `migrate`, `get_meta`/`set_meta`, `create_session`, `append_event`, `events`), `slug_of`, `fingerprint_of`
+  and `space_path` (`<home>/projects/<slug>/<key-fp>.sqlite`, the generation-1 layout and the same slug: folder name
+  plus the first 8 hex digits of the SHA-256 of the resolved path, checked against the generation-1 function). WAL,
+  `synchronous=NORMAL`, a busy timeout (default 5000 ms), one short-lived connection per operation, every write in
+  `BEGIN IMMEDIATE`. Migrations 1 and 2 are the generation-1 ones verbatim (`chunks` = passages with spans,
+  `embeddings`, `conversations`, `learning` with its unique index, `vault_index`, `meta`, `schema_version`), so a
+  generation-1 file already records them and only 3 runs; migration 3 adds `sessions` and `events` (primary key
+  `(session_id, seq)`, `WITHOUT ROWID`, triggers that abort UPDATE and DELETE: append-only). A file whose
+  `schema_version` is newer than the build is refused (`TooNew`). `append_event` reads the next position and writes in one
+  immediate transaction, so positions are gapless and distinct across writers; the payload is stored as the caller's
+  string, byte for byte (T130 serialises). Tests (7): a real generation-1 database made by the generation-1 `Store`
+  (fixture `tests/fixtures/generation1.sqlite`, rows in every table, a float32 vector, Vietnamese text) migrates with
+  every row and value intact, the unique index still bites, a second open applies nothing; empty file gets all
+  migrations and a newer one is refused; two `Store` values on one file written from two threads (150 events and 150
+  learning rows each) lose nothing, with gapless sequence and each writer's order kept; events cannot be updated or
+  deleted, an unknown session is refused, creating a session twice changes nothing; a failed transaction leaves nothing;
+  paths and slugs. Dependencies (owner approved `rusqlite` in T119): `rusqlite` 0.41.1 with `bundled` (SQLite 3.54.1),
+  `sha2`, `thiserror`; `cargo vendor` added 11 crates (`libsqlite3-sys`, `hashlink`, `hashbrown`, `foldhash`,
+  `fallible-iterator`, `fallible-streaming-iterator`, `pkg-config`, `vcpkg`, `rsqlite-vfs`, `sqlite-wasm-rs`), listed in
+  `deny.toml`. rusqlite 0.37 was tried first and dropped: `cargo deny` reports RUSTSEC-2026-0459 for the SQLite it
+  bundles (before 3.54.0), fixed in 0.41. `deny.toml` also allows the licence Zlib, which comes with `foldhash`
+  (owner to confirm). Not covered: opening a generation-1 file while a generation-1 process writes it (same SQLite
+  locking, not exercised); passages, embeddings, learning and vault-cache access have no typed API yet (the tables exist;
+  T131-T138 and T126 callers add what they need). `cargo fmt --check`, `clippy -D warnings`, `cargo test`,
+  `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T130 — Event log and replay
 - Requirements: SR-H2
@@ -341,7 +367,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   all four points (own policy type replacing `codex-protocol`; Windows option A, restricted token only; common drops incl.
   no managed proxy, no `mxc-sandbox`, no bundled `bwrap`; new crates `rustix`, `dunce`, `which`, `indexmap`; `rand` and
   `tempfile` stay unapproved: not needed under option A). `deny.toml` gains them when T135 vendors them.
-  Taken out of plan order at the owner's request (T129-T133 still pending; T134 depends only on T121).
+  Taken out of plan order at the owner's request (T129 done since; T130-T133 still pending; T134 depends only on T121).
 
 ### T135 — Sandbox integration and Python environment
 - Requirements: SR-H6
