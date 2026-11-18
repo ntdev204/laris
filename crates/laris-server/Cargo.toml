@@ -16,7 +16,9 @@ axum = { version = "0.8", default-features = false, features = ["http1", "tokio"
 hyper = { version = "1", default-features = false, features = ["http1", "server"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio", "service", "server"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
+bytes = "1"
 hmac = "0.12"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-native-roots", "stream"] }
 regex = "1"
 toml = { version = "0.9", default-features = false, features = ["parse", "serde"] }
 serde = "1"
