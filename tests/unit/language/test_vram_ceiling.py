@@ -48,3 +48,15 @@ def test_raising_needs_a_visible_cuda_device() -> None:
 def test_bad_values_are_rejected(bad: str) -> None:
     with pytest.raises(ValueError):
         vram_ceiling_from_environment(A100, {ENV_VAR: bad})
+
+
+def test_large_model_checkpointing_can_be_turned_off() -> None:
+    """T211: the profile showed `--gradient-checkpointing` had no effect on the large model."""
+    import argparse
+
+    from cli.commands.language_encoder import add_arguments
+
+    parser = argparse.ArgumentParser()
+    add_arguments(parser)
+    assert parser.parse_args([]).no_gradient_checkpointing is False  # large keeps checkpointing
+    assert parser.parse_args(["--no-gradient-checkpointing"]).no_gradient_checkpointing is True

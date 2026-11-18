@@ -3,6 +3,7 @@
 # steps on a discarded randomly initialised model, so it needs LARIS_TRAINING_AUTHORIZED=1 from the owner. Run ON THE VM.
 # Usage: LARIS_TRAINING_AUTHORIZED=1 bash scripts/colab/speed_profile.sh [CONFIG] [TASKS_PER_STEP]
 #   CONFIG default: configs/language_encoder/english_r1_stage2.yaml ; TASKS_PER_STEP default: 2
+# The large model checkpoints by default (`--no-gradient-checkpointing` turns it off, T211; before that the flag had no effect on it).
 # For micro-batch 8, 16, 32 (accumulation 4, 2, 1: effective batch 32 in all) and gradient checkpointing on and off it runs
 # `--profile-only` and keeps one log per combination in artifacts/profiles/. Peak and latency are printed at the end of each log.
 set -uo pipefail
@@ -16,7 +17,7 @@ nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv | tee artif
 for mb in 8 16 32; do
   acc=$((32 / mb))
   for ckpt in on off; do
-    flag=""; [ "$ckpt" = on ] && flag="--gradient-checkpointing"
+    flag=""; [ "$ckpt" = off ] && flag="--no-gradient-checkpointing"
     log="artifacts/profiles/speed-t${tasks}-mb${mb}-ckpt${ckpt}.log"
     echo "== micro-batch $mb, accumulation $acc, checkpointing $ckpt -> $log"
     timeout -s KILL 1500s python3 -m cli.model train language-encoder \
