@@ -772,7 +772,28 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - BM25, graph expansion, fusion, span provenance, dense channel interface (not qualified); benchmark report
 - Validation:
   - Rankings equal generation 1 on the fixture; metrics computed; P95 measured
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-retrieval` (depends only on `laris-vault`; no new crate) holds `search` (`NoteSearch`:
+  Okapi BM25 over body and title, title words count three times, k1 1.5, b 0.75, inverted index, terms summed in
+  sorted order so every score is built as generation 1 builds it), `graph` (`GraphRetriever`: BM25 seeds plus the
+  notes linked around them with the decayed score; folder filter), `fusion` (`fuse_with_corpus` with generation 1's
+  Source-note naming rule, and `fuse_ranked`, a weighted reciprocal-rank fusion over any channels with ties by id),
+  `provenance` (`cite` gives each result the best paragraph as a byte range of the note body with the verbatim text
+  and the note's SHA-256; `verify_span` fails closed on a missing note, a changed note, a bad range or a different
+  text), `dense` (`DenseChannel` trait, `NoDense`; `qualified()` is `false` by default and a fused result lists
+  `unqualified_channels`, so an answer that used a dense hit carries the label until stage 1 passes G12) and
+  `metrics` (recall@k, MRR, nDCG@k, `evaluate`). Parity: `tests/golden/retrieval/cases.json` is written by
+  `generate.py` from the generation-1 code on `tests/fixtures/retrieval/` (15 queries of BM25, 90 graph cases over
+  three configurations, corpus fusion, metrics); the Rust output equals it on every order and every number. Checked
+  beyond the committed tests (not committed): 200 queries on a deterministic 800-note vault gave no difference
+  from generation 1 in BM25 or graph results. Metrics on the fixture qrels, k=5: graph expansion recall 1.0, MRR 1.0, nDCG 1.0 (BM25 alone
+  recall 0.5833, MRR 1.0, nDCG 0.6739). Benchmark (`cargo run --release -p laris-retrieval --example bench`, outside the test suite, report
+  `reports/performance/retrieval.json`): 10 000 notes, 200 queries, BM25 P95 1.25 ms and graph expansion P95 1.28 ms
+  against the 300 ms target; index build 0.21 s, search index 0.10 s; measured on the development workstation.
+  Known differences from generation 1: `tokens` lower-cases with Rust's Unicode tables (Python's differ for a few
+  special letters); `source_title` reproduces pathlib's stem rule for POSIX separators only. The dense channel is an
+  interface: nothing embeds yet (the model block, T144). `cargo fmt --check`, `clippy -D warnings`, `cargo test`,
+  `cargo deny check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
 
 ### T146 — Policy gateway, integrity lock, leak guard
 - Requirements: SR-S4

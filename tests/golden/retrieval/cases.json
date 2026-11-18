@@ -1,0 +1,2925 @@
+{
+ "tokens": [
+  [
+   "Hello, World_42!",
+   [
+    "hello",
+    "world",
+    "42"
+   ]
+  ],
+  [
+   "ÉLECTROLYTE naïve",
+   [
+    "électrolyte",
+    "naïve"
+   ]
+  ],
+  [
+   "a_b c-d",
+   [
+    "a",
+    "b",
+    "c",
+    "d"
+   ]
+  ],
+  [
+   "٣ ١٢ x²",
+   [
+    "٣",
+    "١٢",
+    "x²"
+   ]
+  ],
+  [
+   "",
+   []
+  ],
+  [
+   "   ",
+   []
+  ]
+ ],
+ "search": [
+  {
+   "query": "perovskite solar",
+   "hits": [
+    [
+     "Perovskite solar cells.md",
+     7.41908699
+    ]
+   ]
+  },
+  {
+   "query": "silicon heterojunction devices",
+   "hits": [
+    [
+     "Silicon heterojunction.md",
+     9.45960783
+    ],
+    [
+     "Stability protocol.md",
+     1.52603112
+    ]
+   ]
+  },
+  {
+   "query": "lithium electrolyte",
+   "hits": [
+    [
+     "Lithium electrolytes.md",
+     6.05431545
+    ]
+   ]
+  },
+  {
+   "query": "transformer attention",
+   "hits": [
+    [
+     "Transformer models.md",
+     5.05093579
+    ],
+    [
+     "Positional encoding.md",
+     1.67558771
+    ]
+   ]
+  },
+  {
+   "query": "Perovskite SOLAR cells",
+   "hits": [
+    [
+     "Perovskite solar cells.md",
+     10.25113862
+    ],
+    [
+     "Lithium electrolytes.md",
+     1.63551609
+    ]
+   ]
+  },
+  {
+   "query": "stability",
+   "hits": [
+    [
+     "Stability protocol.md",
+     2.63033855
+    ],
+    [
+     "Perovskite solar cells.md",
+     1.46083676
+    ]
+   ]
+  },
+  {
+   "query": "encapsulation of cells",
+   "hits": [
+    [
+     "Perovskite solar cells.md",
+     4.29288838
+    ],
+    [
+     "Encapsulation methods.md",
+     2.73555209
+    ],
+    [
+     "Lithium electrolytes.md",
+     1.63551609
+    ]
+   ]
+  },
+  {
+   "query": "wafer",
+   "hits": [
+    [
+     "Wafer texturing.md",
+     2.77251901
+    ],
+    [
+     "Silicon heterojunction.md",
+     1.63551609
+    ]
+   ]
+  },
+  {
+   "query": "meeting",
+   "hits": [
+    [
+     "Meeting notes.md",
+     3.83908311
+    ]
+   ]
+  },
+  {
+   "query": "positional encoding for attention models",
+   "hits": [
+    [
+     "Transformer models.md",
+     8.51102924
+    ],
+    [
+     "Positional encoding.md",
+     7.22062573
+    ],
+    [
+     "Stability protocol.md",
+     1.99886145
+    ]
+   ]
+  },
+  {
+   "query": "nothing matches this zzzz",
+   "hits": [
+    [
+     "Meeting notes.md",
+     2.43322169
+    ]
+   ]
+  },
+  {
+   "query": "the of and",
+   "hits": [
+    [
+     "Lithium electrolytes.md",
+     1.7400367
+    ],
+    [
+     "Interphase growth.md",
+     1.50688218
+    ],
+    [
+     "Positional encoding.md",
+     1.07820018
+    ],
+    [
+     "Wafer texturing.md",
+     1.07820018
+    ],
+    [
+     "Meeting notes.md",
+     0.78101091
+    ],
+    [
+     "Citation analysis.md",
+     0.704469
+    ],
+    [
+     "Encapsulation methods.md",
+     0.68762165
+    ],
+    [
+     "Stability protocol.md",
+     0.64159078
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.61418105
+    ]
+   ]
+  },
+  {
+   "query": "Électrolyte lithium",
+   "hits": [
+    [
+     "Lithium electrolytes.md",
+     3.91204587
+    ]
+   ]
+  },
+  {
+   "query": "solar-cell/stability_protocol 42",
+   "hits": [
+    [
+     "Perovskite solar cells.md",
+     6.63121701
+    ],
+    [
+     "Stability protocol.md",
+     5.2606771
+    ]
+   ]
+  },
+  {
+   "query": "",
+   "hits": []
+  }
+ ],
+ "graph": [
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "perovskite solar",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "perovskite solar",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "silicon heterojunction devices",
+   "k": 3,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.32,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.16132076,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "silicon heterojunction devices",
+   "k": 10,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.32,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.16132076,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.05162264,
+     "link",
+     "Stability protocol.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "lithium electrolyte",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "lithium electrolyte",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "transformer attention",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.33173807,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "transformer attention",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.33173807,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Lithium electrolytes.md",
+     0.15954482,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Interphase growth.md",
+     0.05105434,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "stability",
+   "k": 3,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.55537975,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.17772152,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "stability",
+   "k": 10,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.55537975,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.17772152,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "encapsulation of cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.6372288,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Lithium electrolytes.md",
+     0.38098267,
+     "bm25",
+     "",
+     "rank 3"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "encapsulation of cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.6372288,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Lithium electrolytes.md",
+     0.38098267,
+     "bm25",
+     "",
+     "rank 3"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Interphase growth.md",
+     0.12191446,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "wafer",
+   "k": 3,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.58990257,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "wafer",
+   "k": 10,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.58990257,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "meeting",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "meeting",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "positional encoding for attention models",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.84838455,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Stability protocol.md",
+     0.23485543,
+     "bm25",
+     "",
+     "rank 3"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "positional encoding for attention models",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.84838455,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Stability protocol.md",
+     0.23485543,
+     "bm25",
+     "",
+     "rank 3"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.07515374,
+     "link",
+     "Stability protocol.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "nothing matches this zzzz",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "nothing matches this zzzz",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "the of and",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.86600598,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Positional encoding.md",
+     0.61964221,
+     "bm25",
+     "",
+     "rank 3"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "the of and",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.86600598,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Positional encoding.md",
+     0.61964221,
+     "bm25",
+     "",
+     "rank 3"
+    ],
+    [
+     "Wafer texturing.md",
+     0.61964221,
+     "bm25",
+     "",
+     "rank 4"
+    ],
+    [
+     "Meeting notes.md",
+     0.44884738,
+     "bm25",
+     "",
+     "rank 5"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.19828551,
+     "link",
+     "Wafer texturing.md",
+     "linked"
+    ],
+    [
+     "Transformer models.md",
+     0.19828551,
+     "link",
+     "Positional encoding.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Électrolyte lithium",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Électrolyte lithium",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Stability protocol.md",
+     0.79332,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Stability protocol.md",
+     0.79332,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "",
+   "k": 3,
+   "results": []
+  },
+  {
+   "config": {
+    "seeds": 5,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "",
+   "k": 10,
+   "results": []
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "perovskite solar",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "perovskite solar",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "silicon heterojunction devices",
+   "k": 3,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.32,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "silicon heterojunction devices",
+   "k": 10,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.32,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "lithium electrolyte",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "lithium electrolyte",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "transformer attention",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.32,
+     "link",
+     "Transformer models.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "transformer attention",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.32,
+     "link",
+     "Transformer models.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "stability",
+   "k": 3,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.32,
+     "link",
+     "Stability protocol.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "stability",
+   "k": 10,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.32,
+     "link",
+     "Stability protocol.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "encapsulation of cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "encapsulation of cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "wafer",
+   "k": 3,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.32,
+     "link",
+     "Wafer texturing.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "wafer",
+   "k": 10,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.32,
+     "link",
+     "Wafer texturing.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "meeting",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "meeting",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "positional encoding for attention models",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.32,
+     "link",
+     "Transformer models.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "positional encoding for attention models",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.32,
+     "link",
+     "Transformer models.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "nothing matches this zzzz",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "nothing matches this zzzz",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "the of and",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "the of and",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Électrolyte lithium",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "Électrolyte lithium",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.32,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.32,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "",
+   "k": 3,
+   "results": []
+  },
+  {
+   "config": {
+    "seeds": 1,
+    "link_weight": 0.4,
+    "decay": 0.8
+   },
+   "query": "",
+   "k": 10,
+   "results": []
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "perovskite solar",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "perovskite solar",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "silicon heterojunction devices",
+   "k": 3,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.5,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.16132076,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "silicon heterojunction devices",
+   "k": 10,
+   "results": [
+    [
+     "Silicon heterojunction.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Wafer texturing.md",
+     0.5,
+     "link",
+     "Silicon heterojunction.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.16132076,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.08066038,
+     "link",
+     "Stability protocol.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "lithium electrolyte",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.5,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "lithium electrolyte",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.5,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "transformer attention",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.33173807,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "transformer attention",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.33173807,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "Perovskite SOLAR cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Lithium electrolytes.md",
+     0.15954482,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Interphase growth.md",
+     0.07977241,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "stability",
+   "k": 3,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.55537975,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.27768987,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "stability",
+   "k": 10,
+   "results": [
+    [
+     "Stability protocol.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Perovskite solar cells.md",
+     0.55537975,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.27768987,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "encapsulation of cells",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.6372288,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "encapsulation of cells",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.6372288,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Stability protocol.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "wafer",
+   "k": 3,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.58990257,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "wafer",
+   "k": 10,
+   "results": [
+    [
+     "Wafer texturing.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Silicon heterojunction.md",
+     0.58990257,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "meeting",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "meeting",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "positional encoding for attention models",
+   "k": 3,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.84838455,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "positional encoding for attention models",
+   "k": 10,
+   "results": [
+    [
+     "Transformer models.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Positional encoding.md",
+     0.84838455,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "nothing matches this zzzz",
+   "k": 3,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "nothing matches this zzzz",
+   "k": 10,
+   "results": [
+    [
+     "Meeting notes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "the of and",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.86600598,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "the of and",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.86600598,
+     "bm25",
+     "",
+     "rank 2"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "Électrolyte lithium",
+   "k": 3,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.5,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "Électrolyte lithium",
+   "k": 10,
+   "results": [
+    [
+     "Lithium electrolytes.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Interphase growth.md",
+     0.5,
+     "link",
+     "Lithium electrolytes.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Stability protocol.md",
+     0.79332,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "solar-cell/stability_protocol 42",
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     1.0,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Stability protocol.md",
+     0.79332,
+     "bm25",
+     "",
+     "rank 2"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.5,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "",
+   "k": 3,
+   "results": []
+  },
+  {
+   "config": {
+    "seeds": 2,
+    "link_weight": 1.0,
+    "decay": 0.5
+   },
+   "query": "",
+   "k": 10,
+   "results": []
+  }
+ ],
+ "fuse": [
+  {
+   "sources": [
+    "Papers/Perovskite review.pdf",
+    "Papers/Stability protocol.pdf"
+   ],
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Sources/Perovskite review (source).md",
+     0.0163934426,
+     "corpus",
+     "",
+     "Papers/Perovskite review.pdf"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "sources": [
+    "Papers/Perovskite review.pdf",
+    "Papers/Stability protocol.pdf"
+   ],
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Sources/Perovskite review (source).md",
+     0.0163934426,
+     "corpus",
+     "",
+     "Papers/Perovskite review.pdf"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Sources/Stability protocol (source).md",
+     0.0161290323,
+     "corpus",
+     "",
+     "Papers/Stability protocol.pdf"
+    ],
+    [
+     "Stability protocol.md",
+     0.0158730159,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "sources": [
+    "a/Lithium electrolytes (source).md",
+    "a/Lithium electrolytes (source).md",
+    "b/Other.txt"
+   ],
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Sources/Lithium electrolytes (source) (source).md",
+     0.0163934426,
+     "corpus",
+     "",
+     "a/Lithium electrolytes (source).md"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "sources": [
+    "a/Lithium electrolytes (source).md",
+    "a/Lithium electrolytes (source).md",
+    "b/Other.txt"
+   ],
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Sources/Lithium electrolytes (source) (source).md",
+     0.0163934426,
+     "corpus",
+     "",
+     "a/Lithium electrolytes (source).md"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Sources/Other (source).md",
+     0.0158730159,
+     "corpus",
+     "",
+     "b/Other.txt"
+    ],
+    [
+     "Stability protocol.md",
+     0.0158730159,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "sources": [],
+   "k": 3,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.0158730159,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  },
+  {
+   "sources": [],
+   "k": 10,
+   "results": [
+    [
+     "Perovskite solar cells.md",
+     0.0163934426,
+     "bm25",
+     "",
+     "rank 1"
+    ],
+    [
+     "Encapsulation methods.md",
+     0.0161290323,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ],
+    [
+     "Stability protocol.md",
+     0.0158730159,
+     "link",
+     "Perovskite solar cells.md",
+     "linked"
+    ]
+   ]
+  }
+ ],
+ "metrics": {
+  "qrels": {
+   "perovskite solar": [
+    "Perovskite solar cells.md",
+    "Stability protocol.md",
+    "Encapsulation methods.md"
+   ],
+   "silicon heterojunction devices": [
+    "Silicon heterojunction.md",
+    "Wafer texturing.md"
+   ],
+   "lithium electrolyte": [
+    "Lithium electrolytes.md",
+    "Interphase growth.md"
+   ],
+   "transformer attention": [
+    "Transformer models.md",
+    "Positional encoding.md"
+   ]
+  },
+  "by_graph": {
+   "recall@5": 1.0,
+   "mrr": 1.0,
+   "ndcg@5": 1.0
+  },
+  "by_bm25": {
+   "recall@5": 0.5833,
+   "mrr": 1.0,
+   "ndcg@5": 0.6739
+  },
+  "single": [
+   {
+    "ranked": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "relevant": [
+     "b",
+     "d",
+     "z"
+    ],
+    "k": 3,
+    "recall": 0.3333333333333333,
+    "mrr": 0.5,
+    "ndcg": 0.2960819109658652
+   }
+  ]
+ }
+}

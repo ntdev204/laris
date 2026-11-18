@@ -1,0 +1,11 @@
+{
+  "bm25_median_ms": 1.159,
+  "bm25_p95_ms": 1.251,
+  "graph_median_ms": 1.202,
+  "graph_p95_ms": 1.282,
+  "index_build_s": 0.211,
+  "notes": 10000,
+  "queries": 200,
+  "search_build_s": 0.104,
+  "target_p95_ms": 300.0
+}
