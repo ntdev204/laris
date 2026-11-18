@@ -1,0 +1,1082 @@
+{
+  "ambiguous": [
+    [
+      "Links/Forms.md",
+      "Twin"
+    ],
+    [
+      "Notes/Alpha.md",
+      "Twin"
+    ]
+  ],
+  "backlinks": {
+    ".hidden/Secret.md": [],
+    "Alt/Twin.md": [
+      "Links/Forms.md"
+    ],
+    "Code/Fenced.md": [],
+    "Links/Forms.md": [],
+    "Lonely.md": [],
+    "Notes/Alpha.md": [
+      "Code/Fenced.md",
+      "Links/Forms.md",
+      "Notes/Beta.md",
+      "Props/Empty.md",
+      "Props/Zoo.md"
+    ],
+    "Notes/Beta.md": [
+      ".hidden/Secret.md",
+      "Links/Forms.md",
+      "Notes/Alpha.md",
+      "Props/Bad Yaml.md",
+      "Props/Deep.md",
+      "Props/Unclosed.md",
+      "Props/Zoo.md",
+      "Windows.md"
+    ],
+    "Notes/Empty File.md": [],
+    "Notes/Gamma.md": [
+      "Links/Forms.md",
+      "Notes/Alpha.md",
+      "Props/Zoo.md"
+    ],
+    "Notes/No Newline.md": [],
+    "Notes/Only Properties.md": [],
+    "Notes/Twin.md": [],
+    "Props/Anchors.md": [],
+    "Props/Bad Yaml.md": [],
+    "Props/Comment Only.md": [],
+    "Props/Deep.md": [],
+    "Props/Empty.md": [],
+    "Props/List Root.md": [],
+    "Props/Unclosed.md": [],
+    "Props/Zoo.md": [
+      "Links/Forms.md"
+    ],
+    "Unicode/Ghi chú.md": [],
+    "Unicode/ghi chú nhanh.md": [
+      "Unicode/Ghi chú.md"
+    ],
+    "Windows.md": []
+  },
+  "neighbours": {
+    ".hidden/Secret.md": [
+      "Notes/Beta.md"
+    ],
+    "Alt/Twin.md": [
+      "Links/Forms.md"
+    ],
+    "Code/Fenced.md": [
+      "Notes/Alpha.md"
+    ],
+    "Links/Forms.md": [
+      "Alt/Twin.md",
+      "Notes/Alpha.md",
+      "Notes/Beta.md",
+      "Notes/Gamma.md",
+      "Props/Zoo.md"
+    ],
+    "Lonely.md": [],
+    "Notes/Alpha.md": [
+      "Code/Fenced.md",
+      "Links/Forms.md",
+      "Notes/Beta.md",
+      "Notes/Gamma.md",
+      "Props/Empty.md",
+      "Props/Zoo.md"
+    ],
+    "Notes/Beta.md": [
+      ".hidden/Secret.md",
+      "Links/Forms.md",
+      "Notes/Alpha.md",
+      "Props/Bad Yaml.md",
+      "Props/Deep.md",
+      "Props/Unclosed.md",
+      "Props/Zoo.md",
+      "Windows.md"
+    ],
+    "Notes/Empty File.md": [],
+    "Notes/Gamma.md": [
+      "Links/Forms.md",
+      "Notes/Alpha.md",
+      "Props/Zoo.md"
+    ],
+    "Notes/No Newline.md": [],
+    "Notes/Only Properties.md": [],
+    "Notes/Twin.md": [],
+    "Props/Anchors.md": [],
+    "Props/Bad Yaml.md": [
+      "Notes/Beta.md"
+    ],
+    "Props/Comment Only.md": [],
+    "Props/Deep.md": [
+      "Notes/Beta.md"
+    ],
+    "Props/Empty.md": [
+      "Notes/Alpha.md"
+    ],
+    "Props/List Root.md": [],
+    "Props/Unclosed.md": [
+      "Notes/Beta.md"
+    ],
+    "Props/Zoo.md": [
+      "Links/Forms.md",
+      "Notes/Alpha.md",
+      "Notes/Beta.md",
+      "Notes/Gamma.md"
+    ],
+    "Unicode/Ghi chú.md": [
+      "Unicode/ghi chú nhanh.md"
+    ],
+    "Unicode/ghi chú nhanh.md": [
+      "Unicode/Ghi chú.md"
+    ],
+    "Windows.md": [
+      "Notes/Beta.md"
+    ]
+  },
+  "notes": {
+    ".hidden/Secret.md": {
+      "blocks": [],
+      "body": "secret [[Beta]]\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": ".hidden/Secret.md",
+      "props": {},
+      "sha256": "cb3ca3af5bd086766d4b9bbd0dbe2f51d1919b233347e57cd47beba8fc5c0f00",
+      "tags": [],
+      "title": "Secret"
+    },
+    "Alt/Twin.md": {
+      "blocks": [],
+      "body": "second twin\n",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Alt/Twin.md",
+      "props": {},
+      "sha256": "a0e2026afa457779a740059a960455acf57b9fc683ae0f37cb95f89791c5cd0c",
+      "tags": [],
+      "title": "Twin"
+    },
+    "Code/Fenced.md": {
+      "blocks": [],
+      "body": "Real link [[Alpha]].\n\n`[[Inline Code]]` is not a link.\n\n```\n[[Fenced Code]] #notatag\n```\n\n%% [[Commented Out]] %%\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "Alpha",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Code/Fenced.md",
+      "props": {
+        "type": "concept"
+      },
+      "sha256": "9121c9ea4f7f382d94ff9b3f448079ad1db34a6883c7387f3c19e2edfc8bae31",
+      "tags": [],
+      "title": "Fenced"
+    },
+    "Links/Forms.md": {
+      "blocks": [
+        "anchor",
+        "second-id"
+      ],
+      "body": "# Heading with trailing hashes ##\n\n#### Fourth level #tag-in-heading\n\nCase: [[alpha]] and [[ALPHA.md]] and [[Notes/Alpha.md]].\nSelf: [[#Heading with trailing hashes]] and [[Forms#^anchor]].\nAlias with heading: [[Notes/Gamma#Results|see results]].\nEmbed of a missing file: ![[diagram.png]] and a note embed ![[Notes/Beta]].\nEmpty forms: [[]] [[ ]] [[|alias only]].\nFolder suffix: [[Alt/Twin]] and ambiguous [[Twin]].\nMarkdown links: [one](Notes/Beta.md) [two](Notes/Gamma.md#Results) ![image](Notes/Alpha.md) [web](http://example.com/guide.md) [spaced](My Note.md).\nImage then link: ![a [b](Notes/Beta.md)\n\nTags: #topic #topic/sub #with-dash #_no a#b word#c &#amp /#slash #9digit #ünï.\nHash at end of line #end\nA line with a block id ^anchor\nAnother ^second-id  \n\n~~~\n[[In Tilde Fence]] #fenced\n~~~\n\n%% [[Comment Link]] #commented %%\n\n`[[Inline]]` and ``double`` tick.\n",
+      "errors": [],
+      "headings": [
+        "Heading with trailing hashes",
+        "Fourth level #tag-in-heading"
+      ],
+      "links": [
+        [
+          "Props/Zoo",
+          "",
+          "",
+          false,
+          "property",
+          "related"
+        ],
+        [
+          "Alpha",
+          "",
+          "",
+          false,
+          "property",
+          "parent"
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "property",
+          "children"
+        ],
+        [
+          "Missing Child",
+          "",
+          "",
+          false,
+          "property",
+          "children"
+        ],
+        [
+          "alpha",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "ALPHA.md",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Notes/Alpha.md",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "",
+          "Heading with trailing hashes",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Forms",
+          "^anchor",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Notes/Gamma",
+          "Results",
+          "see results",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "diagram.png",
+          "",
+          "",
+          true,
+          "body",
+          ""
+        ],
+        [
+          "Notes/Beta",
+          "",
+          "",
+          true,
+          "body",
+          ""
+        ],
+        [
+          "Alt/Twin",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Twin",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Gamma",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "guide",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Links/Forms.md",
+      "props": {
+        "children": [
+          "[[Beta]]",
+          "[[Missing Child]]"
+        ],
+        "parent": "[[Alpha]]",
+        "related": "[[Props/Zoo]]",
+        "type": "concept"
+      },
+      "sha256": "13f2e6df38dc9c67de700e429a8fc3e1d7de17d05985b8b9e65d596a2b6a3bf5",
+      "tags": [
+        "Heading",
+        "end",
+        "tag-in-heading",
+        "topic",
+        "topic/sub",
+        "with-dash"
+      ],
+      "title": "Forms"
+    },
+    "Lonely.md": {
+      "blocks": [],
+      "body": "Nobody links here.\n",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Lonely.md",
+      "props": {},
+      "sha256": "a111abbb494d0cf78a4e92a32cdc74ce5fa60e1cec922b86f6fec56657100584",
+      "tags": [],
+      "title": "Lonely"
+    },
+    "Notes/Alpha.md": {
+      "blocks": [],
+      "body": "# Alpha\n\nWikilink [[Beta]], folder form [[Notes/Gamma]], heading [[Gamma#Results]], block [[Gamma#^key]],\nalias [[Beta|the second note]], embed ![[Beta]] and a Markdown link [g](Notes/Gamma.md).\nInline tag #inline and nested #topic/sub-topic. Unresolved: [[Missing Note]].\nAmbiguous: [[Twin]].\n",
+      "errors": [],
+      "headings": [
+        "Alpha"
+      ],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "property",
+          "related"
+        ],
+        [
+          "Notes/Gamma",
+          "",
+          "",
+          false,
+          "property",
+          "related"
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Notes/Gamma",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Gamma",
+          "Results",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Gamma",
+          "^key",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Beta",
+          "",
+          "the second note",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          true,
+          "body",
+          ""
+        ],
+        [
+          "Missing Note",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Twin",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Gamma",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Notes/Alpha.md",
+      "props": {
+        "aliases": [
+          "A"
+        ],
+        "related": [
+          "[[Beta]]",
+          "[[Notes/Gamma]]"
+        ],
+        "tags": [
+          "physics",
+          "review/2026"
+        ],
+        "type": "concept"
+      },
+      "sha256": "272e44a5e6527380fe16b08db818760bfaa25d1fbffa96b07bb7b2ee45847df5",
+      "tags": [
+        "inline",
+        "physics",
+        "review/2026",
+        "topic/sub-topic"
+      ],
+      "title": "Alpha"
+    },
+    "Notes/Beta.md": {
+      "blocks": [],
+      "body": "Back to [[Alpha]].\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "Alpha",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Notes/Beta.md",
+      "props": {
+        "type": "concept"
+      },
+      "sha256": "17b2dd660b16ebc1432d51326d30f90fe318bb64db52299f43314678edccd2b1",
+      "tags": [],
+      "title": "Beta"
+    },
+    "Notes/Empty File.md": {
+      "blocks": [],
+      "body": "",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Notes/Empty File.md",
+      "props": {},
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tags": [],
+      "title": "Empty File"
+    },
+    "Notes/Gamma.md": {
+      "blocks": [
+        "key"
+      ],
+      "body": "# Results\n\nA key sentence. ^key\n",
+      "errors": [],
+      "headings": [
+        "Results"
+      ],
+      "links": [],
+      "path": "Notes/Gamma.md",
+      "props": {
+        "trust": "untrusted",
+        "type": "source"
+      },
+      "sha256": "3e87b8b5e14afcfe6c36b192a3f90d4b403d8a572ef6a3601e5470dbda638e45",
+      "tags": [],
+      "title": "Gamma"
+    },
+    "Notes/No Newline.md": {
+      "blocks": [],
+      "body": "no newline at end",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Notes/No Newline.md",
+      "props": {},
+      "sha256": "fb6a17a09578175d2f04634b6639304ab0efdaf4ff2f94078797653a61a1fd62",
+      "tags": [],
+      "title": "No Newline"
+    },
+    "Notes/Only Properties.md": {
+      "blocks": [],
+      "body": "",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Notes/Only Properties.md",
+      "props": {
+        "type": "concept"
+      },
+      "sha256": "89f373f2c0f4696020cfc982c53370c1ee6c6090efa432fe48299abe9d768c87",
+      "tags": [],
+      "title": "Only Properties"
+    },
+    "Notes/Twin.md": {
+      "blocks": [],
+      "body": "first twin\n",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Notes/Twin.md",
+      "props": {},
+      "sha256": "6e12ea4cf8618d899772a300b65424a5fc9009e9fd7c98fc3be1a28493f8a97c",
+      "tags": [],
+      "title": "Twin"
+    },
+    "Props/Anchors.md": {
+      "blocks": [],
+      "body": "body\n",
+      "errors": [
+        "properties must not use YAML anchors or aliases"
+      ],
+      "headings": [],
+      "links": [],
+      "path": "Props/Anchors.md",
+      "props": {},
+      "sha256": "69b3ce9a1dcd3da535dced1738e8032f451f7d7398dcc5f982d61450de6a512c",
+      "tags": [],
+      "title": "Anchors"
+    },
+    "Props/Bad Yaml.md": {
+      "blocks": [],
+      "body": "body [[Beta]]\n",
+      "errors": [
+        "properties are not valid YAML"
+      ],
+      "headings": [],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Props/Bad Yaml.md",
+      "props": {},
+      "sha256": "bcc771b16a56380cb1f43beff789435409a058de0ecb87b9ae9ab846672ef6e1",
+      "tags": [],
+      "title": "Bad Yaml"
+    },
+    "Props/Comment Only.md": {
+      "blocks": [],
+      "body": "body\n",
+      "errors": [
+        "properties must be a mapping"
+      ],
+      "headings": [],
+      "links": [],
+      "path": "Props/Comment Only.md",
+      "props": {},
+      "sha256": "28e3f77c77f9f685ee43301b2ba674bd5c6e8d4fbd72c2d82425d395cc499374",
+      "tags": [],
+      "title": "Comment Only"
+    },
+    "Props/Deep.md": {
+      "blocks": [],
+      "body": "Deep [[Beta]].\n",
+      "errors": [
+        "properties are nested too deeply"
+      ],
+      "headings": [],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Props/Deep.md",
+      "props": {},
+      "sha256": "39c28b8e04679f95a84471f7411d3757a389c794df8dfe03656415433a02e02f",
+      "tags": [],
+      "title": "Deep"
+    },
+    "Props/Empty.md": {
+      "blocks": [],
+      "body": "empty properties [[Alpha]]\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "Alpha",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Props/Empty.md",
+      "props": {},
+      "sha256": "160fb8bd870308cc00c522b041b9a6034bd414d93eacb645d213c67a11eeaf61",
+      "tags": [],
+      "title": "Empty"
+    },
+    "Props/List Root.md": {
+      "blocks": [],
+      "body": "body\n",
+      "errors": [
+        "properties must be a mapping"
+      ],
+      "headings": [],
+      "links": [],
+      "path": "Props/List Root.md",
+      "props": {},
+      "sha256": "5703174897588bc7f50a554e878c10dc6ee1d6b97168d148a02a51b6e45bd1d8",
+      "tags": [],
+      "title": "List Root"
+    },
+    "Props/Unclosed.md": {
+      "blocks": [],
+      "body": "---\ntype: concept\nNever closed [[Beta]]\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Props/Unclosed.md",
+      "props": {},
+      "sha256": "e26e1d211de333e3d9e1b4fd16fa6b166e433fa3d568b766baa3a70ac24dba7d",
+      "tags": [],
+      "title": "Unclosed"
+    },
+    "Props/Zoo.md": {
+      "blocks": [],
+      "body": "# Zoo\n\nBody text.\n",
+      "errors": [],
+      "headings": [
+        "Zoo"
+      ],
+      "links": [
+        [
+          "Notes/Alpha",
+          "",
+          "",
+          false,
+          "property",
+          "block_list"
+        ],
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "property",
+          "related"
+        ],
+        [
+          "Gamma",
+          "Results",
+          "",
+          false,
+          "property",
+          "related"
+        ]
+      ],
+      "path": "Props/Zoo.md",
+      "props": {
+        "block_list": [
+          "one",
+          "two words",
+          "[[Notes/Alpha]]"
+        ],
+        "count": 42,
+        "day": {
+          "__date__": "2026-11-13"
+        },
+        "dup": "second",
+        "empty": null,
+        "escaped": "tab\there é \"q\"",
+        "flow_map": {
+          "a": 1,
+          "b": [
+            2,
+            3
+          ],
+          "c": {
+            "d": "e"
+          }
+        },
+        "folded": "folded text continues here",
+        "half": 0.5,
+        "hex": 31,
+        "indented_list": [
+          "x",
+          "y"
+        ],
+        "literal": "line one\nline two\n",
+        "negative": -7,
+        "nested": {
+          "inner": {
+            "deeper": "value"
+          },
+          "other": 1
+        },
+        "nothing": null,
+        "octal": 493,
+        "off_flag": false,
+        "offset": {
+          "__datetime__": "2026-11-13T10:30:00.500000+07:00"
+        },
+        "plain": "Tom & Jerry, 50% off",
+        "ratio": 3.14,
+        "related": [
+          "[[Beta]]",
+          "[[Gamma#Results]]"
+        ],
+        "sci": "1e3",
+        "signed_sci": 1500.0,
+        "single": "it's single",
+        "stamp": {
+          "__datetime__": "2026-11-13T10:30:00"
+        },
+        "tags": [
+          "alpha",
+          "#beta",
+          "gamma"
+        ],
+        "tilde": null,
+        "time_like": 630,
+        "title": "Quoted: with colon",
+        "truthy": true,
+        "type": "concept",
+        "underscored": 1000,
+        "url": "http://example.com/a:b",
+        "version": "1.0.0",
+        "wrapped": "a plain scalar that wraps onto the next line",
+        "yes_flag": true,
+        "zulu": {
+          "__datetime__": "2026-11-13T10:30:00+00:00"
+        },
+        "éclair": "unicode key"
+      },
+      "sha256": "b92dd7e45e55f0b53b4ebadf995cf1bfb6e9dce22091d6227667089b65f881a4",
+      "tags": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
+      "title": "Zoo"
+    },
+    "Unicode/Ghi chú.md": {
+      "blocks": [],
+      "body": "Vietnamese note [[ghi chú nhanh]] and [[Ghi Chú]] #ý-tưởng #idea\n",
+      "errors": [],
+      "headings": [],
+      "links": [
+        [
+          "ghi chú nhanh",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ],
+        [
+          "Ghi Chú",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Unicode/Ghi chú.md",
+      "props": {},
+      "sha256": "da3e176109195f672aa9f3c140062cf3aa9b1af297ce648583117d4e322d63aa",
+      "tags": [
+        "idea"
+      ],
+      "title": "Ghi chú"
+    },
+    "Unicode/ghi chú nhanh.md": {
+      "blocks": [],
+      "body": "quick note\n",
+      "errors": [],
+      "headings": [],
+      "links": [],
+      "path": "Unicode/ghi chú nhanh.md",
+      "props": {},
+      "sha256": "7536cafdc1c00ad127291cb7f296d30d0d23be17ea8725de3e4edc3b38d62fa9",
+      "tags": [],
+      "title": "ghi chú nhanh"
+    },
+    "Windows.md": {
+      "blocks": [
+        "win"
+      ],
+      "body": "# Windows\n\nLink [[Beta]] and ^win\n",
+      "errors": [],
+      "headings": [
+        "Windows"
+      ],
+      "links": [
+        [
+          "Beta",
+          "",
+          "",
+          false,
+          "body",
+          ""
+        ]
+      ],
+      "path": "Windows.md",
+      "props": {
+        "tags": [
+          "crlf"
+        ],
+        "type": "concept"
+      },
+      "sha256": "3009cabe9ca90536d6c0518ed742a5f5a408fe96d7999f19a7754a842ad92986",
+      "tags": [
+        "crlf"
+      ],
+      "title": "Windows"
+    }
+  },
+  "orphans": [
+    "Lonely.md",
+    "Notes/Empty File.md",
+    "Notes/No Newline.md",
+    "Notes/Only Properties.md",
+    "Notes/Twin.md",
+    "Props/Anchors.md",
+    "Props/Comment Only.md",
+    "Props/List Root.md"
+  ],
+  "outgoing": {
+    ".hidden/Secret.md": [
+      [
+        "Notes/Beta.md",
+        "body"
+      ]
+    ],
+    "Alt/Twin.md": [],
+    "Code/Fenced.md": [
+      [
+        "Notes/Alpha.md",
+        "body"
+      ]
+    ],
+    "Links/Forms.md": [
+      [
+        "Props/Zoo.md",
+        "related"
+      ],
+      [
+        "Notes/Alpha.md",
+        "parent"
+      ],
+      [
+        "Notes/Beta.md",
+        "children"
+      ],
+      [
+        "Notes/Gamma.md",
+        "body"
+      ],
+      [
+        "Alt/Twin.md",
+        "body"
+      ]
+    ],
+    "Lonely.md": [],
+    "Notes/Alpha.md": [
+      [
+        "Notes/Beta.md",
+        "related"
+      ],
+      [
+        "Notes/Gamma.md",
+        "related"
+      ]
+    ],
+    "Notes/Beta.md": [
+      [
+        "Notes/Alpha.md",
+        "body"
+      ]
+    ],
+    "Notes/Empty File.md": [],
+    "Notes/Gamma.md": [],
+    "Notes/No Newline.md": [],
+    "Notes/Only Properties.md": [],
+    "Notes/Twin.md": [],
+    "Props/Anchors.md": [],
+    "Props/Bad Yaml.md": [
+      [
+        "Notes/Beta.md",
+        "body"
+      ]
+    ],
+    "Props/Comment Only.md": [],
+    "Props/Deep.md": [
+      [
+        "Notes/Beta.md",
+        "body"
+      ]
+    ],
+    "Props/Empty.md": [
+      [
+        "Notes/Alpha.md",
+        "body"
+      ]
+    ],
+    "Props/List Root.md": [],
+    "Props/Unclosed.md": [
+      [
+        "Notes/Beta.md",
+        "body"
+      ]
+    ],
+    "Props/Zoo.md": [
+      [
+        "Notes/Alpha.md",
+        "block_list"
+      ],
+      [
+        "Notes/Beta.md",
+        "related"
+      ],
+      [
+        "Notes/Gamma.md",
+        "related"
+      ]
+    ],
+    "Unicode/Ghi chú.md": [
+      [
+        "Unicode/ghi chú nhanh.md",
+        "body"
+      ]
+    ],
+    "Unicode/ghi chú nhanh.md": [],
+    "Windows.md": [
+      [
+        "Notes/Beta.md",
+        "body"
+      ]
+    ]
+  },
+  "unlinked": [
+    ".hidden/Secret.md",
+    "Code/Fenced.md",
+    "Links/Forms.md",
+    "Lonely.md",
+    "Notes/Empty File.md",
+    "Notes/No Newline.md",
+    "Notes/Only Properties.md",
+    "Notes/Twin.md",
+    "Props/Anchors.md",
+    "Props/Bad Yaml.md",
+    "Props/Comment Only.md",
+    "Props/Deep.md",
+    "Props/Empty.md",
+    "Props/List Root.md",
+    "Props/Unclosed.md",
+    "Unicode/Ghi chú.md",
+    "Windows.md"
+  ],
+  "unresolved": [
+    [
+      "Links/Forms.md",
+      "Missing Child"
+    ],
+    [
+      "Links/Forms.md",
+      "diagram.png"
+    ],
+    [
+      "Links/Forms.md",
+      "guide"
+    ],
+    [
+      "Notes/Alpha.md",
+      "Missing Note"
+    ]
+  ]
+}
