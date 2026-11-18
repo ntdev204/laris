@@ -1281,7 +1281,30 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Agent-rung scenarios mixing local tools (files, shell in sandbox) and remote tools (brain, scientific) end to end
 - Validation:
   - Scenarios pass; traces show tool names only
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T151-agent-rung`. Scenario suite `laris-server/tests/agent_rung.rs` (3 tests,
+  Linux), in one process like the RAG rung: the core loop with the permission gate (`PolicyGate`, rules `allow Read`,
+  `deny Write(secret/**)`, everything else asked), the real local tools with `Bash` inside the OS sandbox
+  (`laris-sandbox`, bubblewrap or Landlock, helper built on demand), the HTTP server with the policy gateway and the
+  system brain, `GET /v1/laris/tools` and `POST /v1/laris/tools/{name}`, `MemoryTraces`, and a scripted model. The
+  registry holds the local tools and a test-side `RemoteTools` over the server's tool routes (the client's own
+  `RemoteTools` is the client programme), so the loop treats both kinds alike. Scenario 1: the brain (index, then the
+  Playbook, server side only), `Read`, `extract_discourse`, `normalize_quantities`, `Write report.md`, a `Write` into
+  `secret/` (refused by the rule, never written), `Bash` (`wc`, output seen) and `Bash` that tries to write outside the
+  project (the file does not exist afterwards), then the answer. Checked: the order of what ran; asks only for
+  remote tools, writes and commands; remote results equal the recorded tool-box outputs and are marked untrusted; the
+  model was offered local and remote schemas and saw the extraction; nothing of the brain reached the client; one
+  trace row per request with the tool names of the model's calls (`Read`, `extract_discourse`, ... one per request),
+  one `tools` row per remote call with its name, the brain titles on the first row, and a dump of every row holding
+  none of the paper text, the report, the shell text, the denied text, file names, the question or the brain's text.
+  Scenario 2: nothing approved, so nothing ran, no call reached the server and no `tools` row names a tool. Scenario 3:
+  a refusal by the tool box is a typed, untrusted result and the loop ends with its answer. The remote answers are the
+  outputs recorded by the real tool box (`tests/tools.rs` proves the real service reproduces them), not a live service.
+  New dev-dependencies of `laris-server`: `laris-policy`, `laris-sandbox` (workspace crates only). 623 workspace tests
+  pass (without PostgreSQL); `fmt`, `clippy -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`.
+  Not done, by design: the report of the suite against the compose stack (T153/T154); the Agent rung with a qualified
+  model; the client's `RemoteTools`. The backend is a script, so this proves mechanics only; the foundation model is
+  NOT QUALIFIED.
 
 ## Phase 34 — Server: Agentic
 
