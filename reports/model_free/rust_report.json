@@ -1,4 +1,5 @@
 {
+  "backend": "ladder suites: scripted model and recorded tool-box outputs in one process (the compose stack is T153); mechanics only, no capability is shown",
   "metrics": {
     "retrieval.bm25.mrr": {
       "ok": true,
@@ -63,7 +64,7 @@
     "golden": {
       "failed": 0,
       "ok": true,
-      "passed": 41,
+      "passed": 45,
       "targets": {
         "laris-protocol::core": {
           "failed": 0,
@@ -71,15 +72,15 @@
         },
         "laris-protocol::fixtures": {
           "failed": 0,
-          "passed": 8
+          "passed": 11
         },
-        "laris-retrieval::golden": {
+        "laris-retrieval::recorded": {
           "failed": 0,
           "passed": 6
         },
         "laris-store::store": {
           "failed": 0,
-          "passed": 7
+          "passed": 8
         },
         "laris-vault::golden": {
           "failed": 0,
@@ -107,6 +108,25 @@
         "laris-policy::trust": {
           "failed": 0,
           "passed": 7
+        }
+      }
+    },
+    "ladder": {
+      "failed": 0,
+      "ok": true,
+      "passed": 12,
+      "targets": {
+        "laris-server::agent_rung": {
+          "failed": 0,
+          "passed": 3
+        },
+        "laris-server::agentic_rung": {
+          "failed": 0,
+          "passed": 5
+        },
+        "laris-server::rag_rung": {
+          "failed": 0,
+          "passed": 4
         }
       }
     },
