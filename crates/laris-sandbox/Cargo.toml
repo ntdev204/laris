@@ -6,5 +6,39 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
-[lints]
-workspace = true
+[[bin]]
+name = "laris-sandbox-helper"
+path = "src/bin/helper.rs"
+
+[dependencies]
+thiserror = "2"
+laris-config = { path = "../laris-config", version = "2.0.0-dev" }
+serde_json = "1"
+sha2 = "0.10"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+landlock = "0.4"
+seccompiler = "0.5"
+rustix = { version = "1", features = ["thread"] }
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Console",
+    "Win32_System_JobObjects",
+    "Win32_System_Memory",
+    "Win32_System_Threading",
+] }
+
+# The workspace forbids `unsafe`. The Windows backend calls raw Win32 and cannot avoid it, so this crate (alone) denies
+# it instead and `src/windows.rs` is the one module that allows it (T135; confirmed by the owner 2026-11-18).
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }

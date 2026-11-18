@@ -3,7 +3,7 @@ document_id: "DOC-ARCH-SANDBOX-001"
 title: "Sandbox Measurement: Cutting the codex Sandbox"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-11-18"
 updated_at: "2026-11-18"
 owner: "LARIS Architecture Team"
@@ -194,3 +194,11 @@ the codex `NOTICE` names only Ratatui, which is not forked.
 3. Common drops (no managed network proxy, no `mxc-sandbox`, no bundled `bwrap`): approved.
 4. New crates `rustix`, `dunce`, `which`, `indexmap`: approved. `rand` and `tempfile` are not approved (elevated
    backend and tests only); `anyhow` is replaced by `thiserror`.
+
+## 11. What T135 built (2026-11-18)
+
+Linux (bubblewrap, seccomp, Landlock fallback) and the `uv` Python environment are built and tested; the macOS
+Seatbelt profile is generated and tested as text only; the Windows restricted-token backend is written (about 330 own lines, `cargo check` and clippy for the MSVC target) but **has never run on Windows** (T214). The Linux
+code was rewritten against the LARIS `Policy` after the codex approach (about 700 lines, not the 4-5k estimated in
+section 4, because the proxy, launcher re-exec and WSL parts are gone); only the two `.sbpl` profiles are copied
+verbatim. Details and limits: task T135 in `.claude/spec/task/2-system.md`.

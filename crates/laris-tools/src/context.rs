@@ -6,8 +6,10 @@ use crate::error::ToolError;
 use crate::scope::Scope;
 use laris_config::Settings;
 use laris_config::settings::Tools;
+use laris_sandbox::{PythonEnv, Sandbox};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Hides credentials in text before a tool writes it (T136 supplies the real one).
 pub type Redactor = Box<dyn Fn(&str) -> String + Send + Sync>;
@@ -28,6 +30,10 @@ pub struct Context {
     pub memory_dir: Option<PathBuf>,
     /// Folders holding `<name>/SKILL.md`; a project folder is passed only when the folder is trusted (T133).
     pub skill_dirs: Vec<PathBuf>,
+    /// Confines `Bash` (T135). `None` runs commands unconfined, and then installs are refused.
+    pub sandbox: Option<Arc<Sandbox>>,
+    /// The Python environment (`~/.laris/.venv`); its `bin` folder leads `PATH` for `Bash`.
+    pub python_env: Option<PythonEnv>,
     /// Applied to what `Write`, `Edit` and `save_memory` persist.
     pub redact: Redactor,
 }
@@ -49,6 +55,8 @@ impl Context {
             checkpoints: None,
             memory_dir: None,
             skill_dirs: Vec::new(),
+            sandbox: None,
+            python_env: None,
             redact: Box::new(str::to_owned),
         })
     }
@@ -72,6 +80,20 @@ impl Context {
     #[must_use]
     pub fn with_skill_dirs(mut self, folders: Vec<PathBuf>) -> Self {
         self.skill_dirs = folders;
+        self
+    }
+
+    /// Runs `Bash` inside `sandbox`.
+    #[must_use]
+    pub fn with_sandbox(mut self, sandbox: Arc<Sandbox>) -> Self {
+        self.sandbox = Some(sandbox);
+        self
+    }
+
+    /// Puts the Python environment on the `PATH` of `Bash`.
+    #[must_use]
+    pub fn with_python_env(mut self, env: PythonEnv) -> Self {
+        self.python_env = Some(env);
         self
     }
 

@@ -26,7 +26,7 @@ allow = [
     "tokio", "axum", "tower-http", "rustls", "reqwest", "serde", "serde_json", "schemars",
     "sqlx", "rusqlite", "ratatui", "crossterm", "clap", "tracing", "thiserror", "sha2", "hmac",
     "uuid", "time", "regex", "globset", "ignore", "similar", "pulldown-cmark", "syntect",
-    "landlock", "seccompiler", "windows-sys",
+    "landlock", "seccompiler", "windows-sys", "rustix",
     # transitive crates of the approved ones, as resolved today
     "aho-corasick", "memchr", "regex-automata", "regex-syntax",
     # transitive crates of serde, serde_json and schemars (T123)
@@ -58,6 +58,8 @@ allow = [
     "pkg-config", "vcpkg",
     # transitive crates of axum and tokio signal (T141)
     "axum-core", "errno", "httpdate", "matchit", "mime", "signal-hook-registry",
+    # transitive crates of landlock and rustix (T135)
+    "enumflags2", "enumflags2_derive", "linux-raw-sys",
 ]
 
 [sources]
