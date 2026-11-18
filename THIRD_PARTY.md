@@ -48,6 +48,12 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 | mime, httpdate | 0.3.18 / 1.0.3 | MIT OR Apache-2.0 | axum, hyper | T141 |
 | errno, signal-hook-registry | 0.3.15 / 1.4.8 | MIT OR Apache-2.0 | tokio (`signal`) | T141 |
 | hyper, hyper-util | already vendored (T128) | MIT | `laris-server` uses them directly for the connection loop (header timeout); owner confirmed 2026-11-18 | T141 |
+| sqlx | 0.8.6 | MIT OR Apache-2.0 | `laris-server` storage (features `runtime-tokio`, `postgres`; no TLS, no macros, no migrate) | T142 |
+| sqlx-core, sqlx-postgres | 0.8.6 | MIT OR Apache-2.0 | sqlx | T142 |
+| md-5, hkdf, rand 0.8.8, rand_chacha, rand_core 0.6.4, ppv-lite86, zerocopy | 0.10.6 / 0.12.4 / 0.8.8 / 0.3.1 / 0.6.4 / 0.2.21 / 0.8.63 | MIT OR Apache-2.0 (zerocopy also BSD-2-Clause) | sqlx-postgres (SCRAM login) | T142 |
+| whoami, etcetera, home, libredox, redox_syscall, wasite, stringprep, unicode-bidi, unicode-normalization, unicode-properties, tinyvec | various | MIT OR Apache-2.0 (whoami also BSL-1.0) | sqlx-postgres (user name, password file, SASLprep) | T142 |
+| atoi, byteorder, crc, crc-catalog, dotenvy, either, hex, indexmap, equivalent, num-traits, autocfg, allocator-api2 | various | MIT OR Apache-2.0 (atoi, dotenvy MIT) | sqlx-core | T142 |
+| parking_lot, parking_lot_core, lock_api, scopeguard, parking, event-listener, futures-intrusive, crossbeam-queue, crossbeam-utils, tokio-stream, tracing-attributes, plain | various | MIT OR Apache-2.0 | sqlx-core (pool, listeners) | T142 |
 | landlock | 0.4.7 | MIT OR Apache-2.0 | `laris-sandbox` (Linux) | T135 |
 | seccompiler | 0.5.0 | Apache-2.0 OR BSD-3-Clause | `laris-sandbox` (Linux) | T135 |
 | rustix | 1.1.6 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | `laris-sandbox` (Linux, `no_new_privs`) | T135 |

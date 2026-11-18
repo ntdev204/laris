@@ -834,7 +834,36 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Migrations continuing generation 1, pool, partitions, retention, daily summary
 - Validation:
   - Tests under `LARIS_TEST_PG_DSN`; generation-1 dump migrates without loss
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. Module `laris_server::storage`. `migrate`: `0001` to `0003` are the generation-1 files byte
+  for byte (`crates/laris-server/migrations/`), the version table is the same `schema_version`, the advisory lock id is
+  generation 1's (7260001), so a generation-1 database is already at version 3 and a restored dump is continued, never
+  rewritten; each migration and its version row commit together; a database with a version this build does not know
+  (newer server) or a version recorded under another file name is refused and left untouched. There is no `0004`: the
+  generation-1 schema already holds the daily summary and what T143 needs; the next task that needs a column adds it.
+  `StorageConfig::from_env` (`LARIS_SERVER__DATABASE_URL` required, `DATABASE_SCHEMA`, `DB_POOL_MAX`,
+  `DB_ACQUIRE_TIMEOUT_MS`, `USAGE_RETENTION_DAYS` 90, `TRACE_RETENTION_DAYS` 30, `RETENTION_INTERVAL_S` 3600); `Debug`
+  hides the connection string and no error text holds address, user or password. `Storage::connect` opens a bounded
+  `sqlx` pool (`runtime-tokio` and `postgres` only: no TLS, since PostgreSQL sits on the compose network; no macros, no
+  `migrate`), migrates and makes the partitions of the previous, this and the next two months;
+  `ensure_current_partitions` repeats it once per month per process and `begin` calls it before a transaction.
+  `Maintenance`: `ensure_partitions`, `partitions`, `summarise` (one `usage_daily` row per key and UTC day, rebuilt
+  from the last summarised day, idempotent), `daily`, `purge` (drops whole months before the cutoff, summarising usage
+  first, then trims the straddling month; usage 90 days, traces 30), `run_once`; `RetentionHandle::spawn` repeats a
+  round every interval, keeps the last error in `Storage::last_retention_error` and stops on request. Every maintenance
+  step takes the generation-1 advisory lock 7260002. Tests: 13 in `tests/storage.rs` against PostgreSQL 16 (fresh
+  database, concurrent start applies once, dump at version 2 (before partitioning) migrates with every usage, trace and
+  key row equal and the id sequence continuing, dump at version 3 taken as it is with `applied_at` unchanged, newer
+  version and renamed version refused, partitions and the missing-month failure, summary at the UTC day boundary and
+  re-run, retention keeping the summary, retention task, pool bound and timeout, unreachable error without secrets,
+  settings), 3 unit tests. The two dumps are `pg_dump` output of synthetic rows built from the generation-1 SQL by
+  `tests/fixtures/make_gen1_dumps.sh`; the real trial database was not touched. Without `LARIS_TEST_PG_DSN` the
+  PostgreSQL tests print a notice and pass, so they prove nothing there: run them with a throwaway PostgreSQL 16
+  (`docker run --rm -e POSTGRES_PASSWORD=... -p 127.0.0.1:55432:5432 postgres:16`). Dependencies (sqlx approved in
+  T119): `sqlx` 0.8.6 vendored with its transitive crates (about 60 new directories in `vendor/`) (`deny.toml`, `THIRD_PARTY.md`). Limits: storage is not wired
+  into `main` or `AppState` yet (T143 needs it); no key, usage or trace store yet (T143, T144); the real
+  generation-1 dump of the trial server is restored by the owner at deployment (T160 range), the fixtures stand in for
+  it. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check` and `xtask spec` pass.
 
 ### T143 — Keys, roles, quotas, admin
 - Requirements: SR-S2
