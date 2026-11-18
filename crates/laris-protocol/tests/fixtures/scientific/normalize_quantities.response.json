@@ -1,0 +1,100 @@
+{
+ "result": [
+  {
+   "raw_text": "87.5%",
+   "numeric_value": 87.5,
+   "raw_unit": "%",
+   "canonical_value": 0.875,
+   "canonical_unit": "dimensionless",
+   "dimension": {
+    "length": 0,
+    "mass": 0,
+    "time": 0,
+    "electric_current": 0,
+    "temperature": 0,
+    "amount_of_substance": 0,
+    "luminous_intensity": 0
+   },
+   "scale_factor": 0.01,
+   "offset": 0.0,
+   "uncertainty": null,
+   "coordinate": {
+    "coordinate_id": "paper:q:182-187",
+    "document_id": "paper",
+    "document_sha256": "",
+    "page_number": 1,
+    "section_identifier": "body",
+    "paragraph_index": 0,
+    "sentence_index": 0,
+    "char_start": 182,
+    "char_end": 187,
+    "verbatim_snippet": "87.5%",
+    "extraction_confidence": 0.95
+   }
+  },
+  {
+   "raw_text": "300 K",
+   "numeric_value": 300.0,
+   "raw_unit": "K",
+   "canonical_value": 300.0,
+   "canonical_unit": "K",
+   "dimension": {
+    "length": 0,
+    "mass": 0,
+    "time": 0,
+    "electric_current": 0,
+    "temperature": 1,
+    "amount_of_substance": 0,
+    "luminous_intensity": 0
+   },
+   "scale_factor": 1.0,
+   "offset": 0.0,
+   "uncertainty": null,
+   "coordinate": {
+    "coordinate_id": "paper:q:344-349",
+    "document_id": "paper",
+    "document_sha256": "",
+    "page_number": 1,
+    "section_identifier": "body",
+    "paragraph_index": 0,
+    "sentence_index": 0,
+    "char_start": 344,
+    "char_end": 349,
+    "verbatim_snippet": "300 K",
+    "extraction_confidence": 0.95
+   }
+  },
+  {
+   "raw_text": "2.5 GPa",
+   "numeric_value": 2.5,
+   "raw_unit": "GPa",
+   "canonical_value": 2500000000.0,
+   "canonical_unit": "Pa",
+   "dimension": {
+    "length": -1,
+    "mass": 1,
+    "time": -2,
+    "electric_current": 0,
+    "temperature": 0,
+    "amount_of_substance": 0,
+    "luminous_intensity": 0
+   },
+   "scale_factor": 1000000000.0,
+   "offset": 0.0,
+   "uncertainty": null,
+   "coordinate": {
+    "coordinate_id": "paper:q:356-363",
+    "document_id": "paper",
+    "document_sha256": "",
+    "page_number": 1,
+    "section_identifier": "body",
+    "paragraph_index": 0,
+    "sentence_index": 0,
+    "char_start": 356,
+    "char_end": 363,
+    "verbatim_snippet": "2.5 GPa",
+    "extraction_confidence": 0.95
+   }
+  }
+ ]
+}

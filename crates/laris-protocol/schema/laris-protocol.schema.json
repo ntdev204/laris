@@ -1821,6 +1821,78 @@
       "title": "ModelList",
       "type": "object"
     },
+    "ToolList": {
+      "$defs": {
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolFunctionSchema": {
+          "additionalProperties": true,
+          "description": "Name, description and parameter schema of a tool.",
+          "properties": {
+            "description": {
+              "description": "What it does.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "parameters": {
+              "description": "JSON Schema of the arguments."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "ToolSchema": {
+          "additionalProperties": true,
+          "description": "A tool the client offers: JSON Schema of its parameters.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolFunctionSchema",
+              "description": "The function description."
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`GET /v1/laris/tools` (and P2's `GET /v1/tools`): the remote tools on offer, sorted by name.",
+      "properties": {
+        "tools": {
+          "default": [],
+          "description": "One schema per tool.",
+          "items": {
+            "$ref": "#/$defs/ToolSchema"
+          },
+          "type": "array"
+        }
+      },
+      "title": "ToolList",
+      "type": "object"
+    },
     "ToolRequest": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": true,
@@ -2811,9 +2883,937 @@
       ],
       "title": "ModelChatRequest",
       "type": "object"
+    },
+    "ToolList": {
+      "$defs": {
+        "FunctionKind": {
+          "description": "The only kind of tool call the wire knows.",
+          "oneOf": [
+            {
+              "const": "function",
+              "description": "A function call.",
+              "type": "string"
+            }
+          ]
+        },
+        "ToolFunctionSchema": {
+          "additionalProperties": true,
+          "description": "Name, description and parameter schema of a tool.",
+          "properties": {
+            "description": {
+              "description": "What it does.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "parameters": {
+              "description": "JSON Schema of the arguments."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "ToolSchema": {
+          "additionalProperties": true,
+          "description": "A tool the client offers: JSON Schema of its parameters.",
+          "properties": {
+            "function": {
+              "$ref": "#/$defs/ToolFunctionSchema",
+              "description": "The function description."
+            },
+            "type": {
+              "$ref": "#/$defs/FunctionKind",
+              "default": "function",
+              "description": "Always `function`."
+            }
+          },
+          "required": [
+            "function"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`GET /v1/laris/tools` (and P2's `GET /v1/tools`): the remote tools on offer, sorted by name.",
+      "properties": {
+        "tools": {
+          "default": [],
+          "description": "One schema per tool.",
+          "items": {
+            "$ref": "#/$defs/ToolSchema"
+          },
+          "type": "array"
+        }
+      },
+      "title": "ToolList",
+      "type": "object"
+    },
+    "ToolRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "`POST /v1/laris/tools/{name}`: run one of the model service's remote tools.",
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "Arguments of the tool.",
+          "type": "object"
+        }
+      },
+      "title": "ToolRequest",
+      "type": "object"
+    },
+    "ToolResponse": {
+      "$defs": {
+        "ErrorDetail": {
+          "additionalProperties": true,
+          "description": "Message and type of a failure.",
+          "properties": {
+            "message": {
+              "description": "Human-readable message.",
+              "type": "string"
+            },
+            "type": {
+              "description": "Error class name or code.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Answer of a remote tool: a `result` or an `error`.",
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorDetail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What went wrong."
+        },
+        "result": {
+          "description": "The result, any JSON."
+        }
+      },
+      "title": "ToolResponse",
+      "type": "object"
     }
   },
   "protocol": "1",
+  "scientific": {
+    "AnalyseCitationsArgs": {
+      "$defs": {
+        "CitationKind": {
+          "description": "What `analyse_citations` reports.",
+          "oneOf": [
+            {
+              "const": "summary",
+              "description": "Counts and degrees, plus the edges.",
+              "type": "string"
+            },
+            {
+              "const": "edges",
+              "description": "The edges only.",
+              "type": "string"
+            },
+            {
+              "const": "cocitation",
+              "description": "Co-citation counts.",
+              "type": "string"
+            },
+            {
+              "const": "coupling",
+              "description": "Bibliographic coupling counts.",
+              "type": "string"
+            },
+            {
+              "const": "centrality",
+              "description": "In-degree and PageRank.",
+              "type": "string"
+            },
+            {
+              "const": "unresolved",
+              "description": "References that did not resolve.",
+              "type": "string"
+            }
+          ]
+        },
+        "DocumentInput": {
+          "description": "A document sent to a scholarly tool.",
+          "properties": {
+            "id": {
+              "description": "Unique id within the call.",
+              "type": "string"
+            },
+            "text": {
+              "description": "The full text; a reference list ends it.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "text"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `analyse_citations`.",
+      "properties": {
+        "documents": {
+          "description": "The documents to resolve against each other.",
+          "items": {
+            "$ref": "#/$defs/DocumentInput"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CitationKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The report (default `summary`)."
+        }
+      },
+      "required": [
+        "documents"
+      ],
+      "title": "AnalyseCitationsArgs",
+      "type": "object"
+    },
+    "BibliographyResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Result of `parse_bibliography`: a field not stated in the text is empty (`year` is `null`).",
+      "properties": {
+        "arxiv": {
+          "default": "",
+          "description": "The arXiv id.",
+          "type": "string"
+        },
+        "authors": {
+          "default": [],
+          "description": "The authors, in order.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "doi": {
+          "default": "",
+          "description": "The DOI, lower case.",
+          "type": "string"
+        },
+        "evidence": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Where each field was read from.",
+          "type": "object"
+        },
+        "properties": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "The non-empty fields as note properties.",
+          "type": "object"
+        },
+        "title": {
+          "default": "",
+          "description": "The title.",
+          "type": "string"
+        },
+        "year": {
+          "default": null,
+          "description": "The year of publication.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "title": "BibliographyResult",
+      "type": "object"
+    },
+    "CitationResult": {
+      "$defs": {
+        "CitationEdge": {
+          "description": "One citation edge: `citing` lists `cited` in its references.",
+          "properties": {
+            "cited": {
+              "description": "Id of the cited document.",
+              "type": "string"
+            },
+            "citing": {
+              "description": "Id of the citing document.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "citing",
+            "cited"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Result of `analyse_citations`. `scope` says what was computed over; the other fields depend on `kind`: `summary`\n(with `edges`), `edges`, `cocitation`, `coupling`, `centrality` or `unresolved`.",
+      "properties": {
+        "edges": {
+          "description": "The edges (`summary` only).",
+          "items": {
+            "$ref": "#/$defs/CitationEdge"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "scope": {
+          "additionalProperties": true,
+          "description": "Documents, references and how many resolved.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "title": "CitationResult",
+      "type": "object"
+    },
+    "DetectLimitationsArgs": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `detect_limitations`.",
+      "properties": {
+        "document_id": {
+          "description": "Name used in evidence coordinates (default `doc`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strip_headers": {
+          "description": "Ignore heading lines.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "text": {
+          "description": "The text to read.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "DetectLimitationsArgs",
+      "type": "object"
+    },
+    "DiscourseExtraction": {
+      "$defs": {
+        "DiscourseEntity": {
+          "additionalProperties": true,
+          "description": "One thing found in the text. The fields that differ by kind (`claim_id`, `name`, `latex_source`, ...) are in\n`fields`.",
+          "properties": {
+            "confidence": {
+              "description": "How sure the extractor is, from 0 to 1.",
+              "format": "double",
+              "type": "number"
+            },
+            "coordinate": {
+              "$ref": "#/$defs/EvidenceCoordinate",
+              "description": "Where it was found."
+            }
+          },
+          "required": [
+            "confidence",
+            "coordinate"
+          ],
+          "type": "object"
+        },
+        "EvidenceCoordinate": {
+          "additionalProperties": true,
+          "description": "Where in the text something was found.",
+          "properties": {
+            "char_end": {
+              "description": "One past the last character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "char_start": {
+              "description": "First character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "coordinate_id": {
+              "description": "`<document>:<kind>:<start>-<end>`.",
+              "type": "string"
+            },
+            "document_id": {
+              "description": "The document name that was sent.",
+              "type": "string"
+            },
+            "document_sha256": {
+              "default": "",
+              "description": "SHA-256 of the text, empty where the tool does not compute it.",
+              "type": "string"
+            },
+            "extraction_confidence": {
+              "description": "How sure the extractor is, from 0 to 1.",
+              "format": "double",
+              "type": "number"
+            },
+            "verbatim_snippet": {
+              "description": "The text of the range, verbatim.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "coordinate_id",
+            "document_id",
+            "char_start",
+            "char_end",
+            "verbatim_snippet",
+            "extraction_confidence"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Result of `extract_discourse`.",
+      "properties": {
+        "assumptions": {
+          "default": [],
+          "description": "Assumptions.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "claims": {
+          "default": [],
+          "description": "Sentences that state a finding or a contribution.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "datasets": {
+          "default": [],
+          "description": "Datasets and corpora.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "document_id": {
+          "description": "The document name.",
+          "type": "string"
+        },
+        "extraction_id": {
+          "description": "`ext-<document>-<hash prefix>`.",
+          "type": "string"
+        },
+        "formulas": {
+          "default": [],
+          "description": "Formulas.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "limitations": {
+          "default": [],
+          "description": "Limitations.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "methods": {
+          "default": [],
+          "description": "Methods and procedures.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "metrics": {
+          "default": [],
+          "description": "Measures with values.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "provenance_manifest_sha256": {
+          "default": "",
+          "description": "Digest of the coordinate ids.",
+          "type": "string"
+        },
+        "results": {
+          "default": [],
+          "description": "Reported results.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "timestamp_iso": {
+          "default": "",
+          "description": "When the extraction ran (the only field that differs between two runs on the same text).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "extraction_id"
+      ],
+      "title": "DiscourseExtraction",
+      "type": "object"
+    },
+    "ExtractDiscourseArgs": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `extract_discourse`.",
+      "properties": {
+        "document_id": {
+          "description": "Name used in evidence coordinates (default `doc`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text": {
+          "description": "The text to read.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "ExtractDiscourseArgs",
+      "type": "object"
+    },
+    "LimitationReport": {
+      "$defs": {
+        "DiscourseEntity": {
+          "additionalProperties": true,
+          "description": "One thing found in the text. The fields that differ by kind (`claim_id`, `name`, `latex_source`, ...) are in\n`fields`.",
+          "properties": {
+            "confidence": {
+              "description": "How sure the extractor is, from 0 to 1.",
+              "format": "double",
+              "type": "number"
+            },
+            "coordinate": {
+              "$ref": "#/$defs/EvidenceCoordinate",
+              "description": "Where it was found."
+            }
+          },
+          "required": [
+            "confidence",
+            "coordinate"
+          ],
+          "type": "object"
+        },
+        "EvidenceCoordinate": {
+          "additionalProperties": true,
+          "description": "Where in the text something was found.",
+          "properties": {
+            "char_end": {
+              "description": "One past the last character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "char_start": {
+              "description": "First character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "coordinate_id": {
+              "description": "`<document>:<kind>:<start>-<end>`.",
+              "type": "string"
+            },
+            "document_id": {
+              "description": "The document name that was sent.",
+              "type": "string"
+            },
+            "document_sha256": {
+              "default": "",
+              "description": "SHA-256 of the text, empty where the tool does not compute it.",
+              "type": "string"
+            },
+            "extraction_confidence": {
+              "description": "How sure the extractor is, from 0 to 1.",
+              "format": "double",
+              "type": "number"
+            },
+            "verbatim_snippet": {
+              "description": "The text of the range, verbatim.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "coordinate_id",
+            "document_id",
+            "char_start",
+            "char_end",
+            "verbatim_snippet",
+            "extraction_confidence"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Result of `detect_limitations`.",
+      "properties": {
+        "assumptions": {
+          "default": [],
+          "description": "Assumptions.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "category_counts": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "How many were found in each category.",
+          "type": "object"
+        },
+        "document_id": {
+          "description": "The document name.",
+          "type": "string"
+        },
+        "limitations": {
+          "default": [],
+          "description": "Limitations.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "negative_findings": {
+          "default": [],
+          "description": "Negative findings.",
+          "items": {
+            "$ref": "#/$defs/DiscourseEntity"
+          },
+          "type": "array"
+        },
+        "uncertainty_distribution": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "How many were found at each uncertainty level.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "document_id"
+      ],
+      "title": "LimitationReport",
+      "type": "object"
+    },
+    "MineLiteratureArgs": {
+      "$defs": {
+        "DocumentInput": {
+          "description": "A document sent to a scholarly tool.",
+          "properties": {
+            "id": {
+              "description": "Unique id within the call.",
+              "type": "string"
+            },
+            "text": {
+              "description": "The full text; a reference list ends it.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "text"
+          ],
+          "type": "object"
+        },
+        "MiningKind": {
+          "description": "What `mine_literature` reports.",
+          "oneOf": [
+            {
+              "const": "overview",
+              "description": "Counts, year range, identifiers.",
+              "type": "string"
+            },
+            {
+              "const": "term_trends",
+              "description": "Terms by year.",
+              "type": "string"
+            },
+            {
+              "const": "near_duplicates",
+              "description": "Pairs above a shingle similarity.",
+              "type": "string"
+            },
+            {
+              "const": "groups",
+              "description": "Single-link similarity groups.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `mine_literature`.",
+      "properties": {
+        "documents": {
+          "description": "The documents.",
+          "items": {
+            "$ref": "#/$defs/DocumentInput"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MiningKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The report (default `overview`)."
+        },
+        "min_docs": {
+          "description": "Fewest documents a term must appear in for `term_trends` (default 2).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "threshold": {
+          "description": "Similarity from 0 to 1 for `near_duplicates` (default 0.8) and `groups` (default 0.25).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "top": {
+          "description": "Most terms for `term_trends` (default 10).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "documents"
+      ],
+      "title": "MineLiteratureArgs",
+      "type": "object"
+    },
+    "NormalizeQuantitiesArgs": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `normalize_quantities`.",
+      "properties": {
+        "document_id": {
+          "description": "Name used in evidence coordinates (default `doc`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text": {
+          "description": "The text to read.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "NormalizeQuantitiesArgs",
+      "type": "object"
+    },
+    "ParseBibliographyArgs": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Arguments of `parse_bibliography`.",
+      "properties": {
+        "metadata": {
+          "additionalProperties": true,
+          "description": "File metadata that fills what the text does not say.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "text": {
+          "description": "The head of the paper (only its first 3000 characters are read).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "ParseBibliographyArgs",
+      "type": "object"
+    },
+    "Quantities": {
+      "$defs": {
+        "EvidenceCoordinate": {
+          "additionalProperties": true,
+          "description": "Where in the text something was found.",
+          "properties": {
+            "char_end": {
+              "description": "One past the last character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "char_start": {
+              "description": "First character, counted in Unicode scalar values.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "coordinate_id": {
+              "description": "`<document>:<kind>:<start>-<end>`.",
+              "type": "string"
+            },
+            "document_id": {
+              "description": "The document name that was sent.",
+              "type": "string"
+            },
+            "document_sha256": {
+              "default": "",
+              "description": "SHA-256 of the text, empty where the tool does not compute it.",
+              "type": "string"
+            },
+            "extraction_confidence": {
+              "description": "How sure the extractor is, from 0 to 1.",
+              "format": "double",
+              "type": "number"
+            },
+            "verbatim_snippet": {
+              "description": "The text of the range, verbatim.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "coordinate_id",
+            "document_id",
+            "char_start",
+            "char_end",
+            "verbatim_snippet",
+            "extraction_confidence"
+          ],
+          "type": "object"
+        },
+        "Quantity": {
+          "additionalProperties": true,
+          "description": "One quantity of `normalize_quantities`.",
+          "properties": {
+            "canonical_unit": {
+              "description": "The canonical unit.",
+              "type": "string"
+            },
+            "canonical_value": {
+              "description": "The value in the canonical (SI) unit.",
+              "format": "double",
+              "type": "number"
+            },
+            "coordinate": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceCoordinate"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Where it was found."
+            },
+            "dimension": {
+              "additionalProperties": true,
+              "description": "Exponent of each base dimension.",
+              "type": "object"
+            },
+            "numeric_value": {
+              "description": "The number as written.",
+              "format": "double",
+              "type": "number"
+            },
+            "raw_text": {
+              "description": "The text as written.",
+              "type": "string"
+            },
+            "raw_unit": {
+              "description": "The unit as written.",
+              "type": "string"
+            },
+            "uncertainty": {
+              "default": null,
+              "description": "Uncertainty, in the written unit, when stated.",
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "raw_text",
+            "numeric_value",
+            "raw_unit",
+            "canonical_value",
+            "canonical_unit",
+            "dimension"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Result of `normalize_quantities`: the quantities found, in text order.",
+      "items": {
+        "$ref": "#/$defs/Quantity"
+      },
+      "title": "Quantities",
+      "type": "array"
+    }
+  },
   "sse": {
     "StreamError": {
       "$defs": {

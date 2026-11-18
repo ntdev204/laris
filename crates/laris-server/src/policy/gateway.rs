@@ -22,6 +22,7 @@ use laris_protocol::chat::{
 };
 use laris_protocol::p1::{
     ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, Kind, LarisMeta, LarisRequest,
+    ToolList, ToolRequest, ToolResponse,
 };
 use laris_protocol::p2::{ChunkChoice, ChunkDelta, ChunkObject};
 use serde_json::Map;
@@ -396,6 +397,18 @@ impl Backend for PolicyGateway {
 
     fn embed(&self, request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>> {
         self.inner.embed(request)
+    }
+
+    fn tools(&self) -> BoxFuture<'static, Result<ToolList, ApiError>> {
+        self.inner.tools()
+    }
+
+    fn tool(
+        &self,
+        name: String,
+        request: ToolRequest,
+    ) -> BoxFuture<'static, Result<ToolResponse, ApiError>> {
+        self.inner.tool(name, request)
     }
 }
 

@@ -1,7 +1,7 @@
 //! JSON Schema export of every wire type. The output is deterministic: keys are sorted and nothing
 //! depends on time, paths or the environment.
 
-use crate::{events, p1, p2, sse};
+use crate::{events, p1, p2, scientific, sse};
 use schemars::schema_for;
 use serde_json::{Map, Value, json};
 
@@ -24,6 +24,7 @@ pub fn export() -> Value {
         "p1" / "AccountResponse" => p1::AccountResponse,
         "p1" / "AdminUsage" => p1::AdminUsage,
         "p1" / "AdminReasoning" => p1::AdminReasoning,
+        "p1" / "ToolList" => p1::ToolList,
         "p1" / "ToolRequest" => p1::ToolRequest,
         "p1" / "ToolResponse" => p1::ToolResponse,
         "p1" / "HttpError" => p1::HttpError,
@@ -32,6 +33,20 @@ pub fn export() -> Value {
         "p2" / "ChatCompletionChunk" => p2::ChatCompletionChunk,
         "p2" / "EmbedRequest" => p1::EmbedRequest,
         "p2" / "EmbedResponse" => p1::EmbedResponse,
+        "p2" / "ToolList" => p1::ToolList,
+        "p2" / "ToolRequest" => p1::ToolRequest,
+        "p2" / "ToolResponse" => p1::ToolResponse,
+        "scientific" / "ExtractDiscourseArgs" => scientific::ExtractDiscourseArgs,
+        "scientific" / "DetectLimitationsArgs" => scientific::DetectLimitationsArgs,
+        "scientific" / "NormalizeQuantitiesArgs" => scientific::NormalizeQuantitiesArgs,
+        "scientific" / "ParseBibliographyArgs" => scientific::ParseBibliographyArgs,
+        "scientific" / "AnalyseCitationsArgs" => scientific::AnalyseCitationsArgs,
+        "scientific" / "MineLiteratureArgs" => scientific::MineLiteratureArgs,
+        "scientific" / "DiscourseExtraction" => scientific::DiscourseExtraction,
+        "scientific" / "LimitationReport" => scientific::LimitationReport,
+        "scientific" / "Quantities" => scientific::Quantities,
+        "scientific" / "BibliographyResult" => scientific::BibliographyResult,
+        "scientific" / "CitationResult" => scientific::CitationResult,
         "sse" / "StreamError" => sse::StreamError,
         "core" / "Event" => events::Event,
         "core" / "Command" => events::Command,

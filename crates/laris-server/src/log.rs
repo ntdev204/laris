@@ -15,7 +15,7 @@ pub struct AccessRecord {
     pub id: String,
     /// HTTP method.
     pub method: String,
-    /// Name of the matched route: `health`, `chat`, `embed` or `unmatched`.
+    /// Name of the matched route: `health`, `chat`, `embed`, `tools` or `unmatched`.
     pub route: &'static str,
     /// Status sent; 499 when the client left before an answer.
     pub status: u16,

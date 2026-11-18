@@ -19,7 +19,10 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use futures_util::future::BoxFuture;
 use futures_util::stream::BoxStream;
-use laris_protocol::p1::{ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse};
+use laris_protocol::p1::{
+    ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, ToolList, ToolRequest,
+    ToolResponse,
+};
 use laris_protocol::p2::{ChatCompletionChunk, ModelChatRequest};
 use laris_protocol::sse::{P2Event, SseDecoder};
 use std::collections::{HashMap, VecDeque};
@@ -294,22 +297,97 @@ impl Backend for ModelBackend {
             if !response.status().is_success() {
                 return Err(refusal(response.status()));
             }
-            let mut body = response.bytes_stream();
-            let mut bytes: Vec<u8> = Vec::new();
-            loop {
-                match tokio::time::timeout(config.idle, body.next()).await {
-                    Ok(Some(Ok(piece))) => {
-                        if bytes.len() + piece.len() > config.max_event_bytes {
-                            return Err(ApiError::BadGateway(FAILED.into()));
-                        }
-                        bytes.extend_from_slice(&piece);
-                    }
-                    Ok(None) => break,
-                    _ => return Err(ApiError::BadGateway(FAILED.into())),
-                }
-            }
+            let bytes = read_body(response, &config).await?;
             serde_json::from_slice(&bytes).map_err(|_| ApiError::BadGateway(FAILED.into()))
         })
+    }
+
+    fn tools(&self) -> BoxFuture<'static, Result<ToolList, ApiError>> {
+        let http = self.http.clone();
+        let config = self.config.clone();
+        let places = self.places.clone();
+        Box::pin(async move {
+            let _place = place(&places, config.queue_wait).await?;
+            let sent = http
+                .get(format!("{}/v1/tools", config.base_url))
+                .header("Accept", "application/json")
+                .send();
+            let response = match tokio::time::timeout(config.header_timeout, sent).await {
+                Ok(Ok(r)) => r,
+                _ => {
+                    return Err(ApiError::BadGateway(
+                        "the model service is not reachable".into(),
+                    ));
+                }
+            };
+            if !response.status().is_success() {
+                return Err(refusal(response.status()));
+            }
+            let bytes = read_body(response, &config).await?;
+            serde_json::from_slice(&bytes).map_err(|_| ApiError::BadGateway(FAILED.into()))
+        })
+    }
+
+    fn tool(
+        &self,
+        name: String,
+        request: ToolRequest,
+    ) -> BoxFuture<'static, Result<ToolResponse, ApiError>> {
+        let http = self.http.clone();
+        let config = self.config.clone();
+        let places = self.places.clone();
+        Box::pin(async move {
+            let _place = place(&places, config.queue_wait).await?;
+            // only the arguments go to the tool: fields of a newer client are not passed on
+            let body = serde_json::to_vec(&serde_json::json!({"arguments": request.arguments}))
+                .map_err(|_| ApiError::Internal)?;
+            let sent = http
+                .post(format!("{}/v1/tools/{name}", config.base_url))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .body(body)
+                .send();
+            let response = match tokio::time::timeout(config.header_timeout, sent).await {
+                Ok(Ok(r)) => r,
+                _ => {
+                    return Err(ApiError::BadGateway(
+                        "the model service is not reachable".into(),
+                    ));
+                }
+            };
+            if response.status() == reqwest::StatusCode::NOT_FOUND {
+                return Err(ApiError::NotFound);
+            }
+            if !response.status().is_success() {
+                return Err(refusal(response.status()));
+            }
+            let bytes = read_body(response, &config).await?;
+            let answer: ToolResponse =
+                serde_json::from_slice(&bytes).map_err(|_| ApiError::BadGateway(FAILED.into()))?;
+            // exactly one of `result` and `error`; the service's own error text is a tool's message, passed on
+            match (&answer.result, &answer.error) {
+                (Some(_), None) | (None, Some(_)) => Ok(answer),
+                _ => Err(ApiError::BadGateway(FAILED.into())),
+            }
+        })
+    }
+}
+
+/// The body of a successful answer, at most `max_event_bytes`, with `idle` as the longest silence.
+async fn read_body(response: reqwest::Response, config: &ModelConfig) -> Result<Vec<u8>, ApiError> {
+    let mut body = response.bytes_stream();
+    let mut bytes: Vec<u8> = Vec::new();
+    loop {
+        match tokio::time::timeout(config.idle, body.next()).await {
+            Ok(Some(Ok(piece))) => {
+                if bytes.len() + piece.len() > config.max_event_bytes {
+                    return Err(ApiError::BadGateway(FAILED.into()));
+                }
+                bytes.extend_from_slice(&piece);
+            }
+            Ok(None) => return Ok(bytes),
+            _ => return Err(ApiError::BadGateway(FAILED.into())),
+        }
     }
 }
 

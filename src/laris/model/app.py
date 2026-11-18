@@ -1,9 +1,11 @@
 """FastAPI application of the model block (protocol P2).
 
 Routes: `GET /health`, `GET /v1/models`, `POST /v1/chat/completions` (JSON, or SSE with
-`stream: true`), `POST /v1/embeddings`. There is no authentication: the service is reachable only on
-the internal network. A failure after a stream has started is sent as an `error` event followed by
-`[DONE]`, never as a second response.
+`stream: true`), `POST /v1/embeddings`, `GET /v1/tools` and `POST /v1/tools/{name}` (scientific
+tools, SR-M2: `{"arguments": {...}}` in, `{"result": ...}` or `{"error": {"message", "type"}}`
+out). There is no authentication: the service is reachable only on the internal network. A failure
+after a stream has started is sent as an `error` event followed by `[DONE]`, never as a second
+response.
 """
 
 import json
@@ -15,6 +17,7 @@ from starlette.concurrency import run_in_threadpool
 
 from laris.model.gpu_queue import QueueFull, QueueTimeout
 from laris.model.service import ModelService
+from laris.model.tools import ToolError, UnknownTool
 from laris.protocol import ProviderError, encode_done, encode_event
 from laris.shared.core.errors import HardwareBudgetExceededError
 
@@ -98,5 +101,25 @@ def create_app(service: ModelService, max_body_bytes: int) -> FastAPI:
             raise HTTPException(504, str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+
+    @app.get("/v1/tools")
+    def tool_list() -> Dict[str, Any]:
+        return {"tools": [] if service.tools is None else service.tools.schemas()}
+
+    @app.post("/v1/tools/{name}")
+    async def tool_call(name: str, request: Request) -> JSONResponse:
+        body = await read_json(request)
+        if service.tools is None:
+            raise HTTPException(404, "no such tool")
+        extra = sorted(set(body) - {"arguments"})
+        if extra:
+            raise HTTPException(400, f"unknown field: {extra[0]}")
+        try:
+            result = await run_in_threadpool(service.tools.call, name, body.get("arguments"))
+        except UnknownTool:
+            raise HTTPException(404, "no such tool") from None
+        except ToolError as exc:  # a refusal the model can read, not a transport failure
+            return JSONResponse({"error": {"message": exc.message, "type": exc.code}})
+        return JSONResponse({"result": result})
 
     return app

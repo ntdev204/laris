@@ -9,6 +9,8 @@ pub mod perm {
     pub const CHAT: &str = "chat";
     /// Embed.
     pub const EMBED: &str = "embed";
+    /// List and run the model service's remote tools.
+    pub const TOOLS: &str = "tools";
     /// Read the model list.
     pub const MODELS: &str = "models";
     /// Read workflows.
@@ -44,7 +46,15 @@ fn set(items: &[&str]) -> BTreeSet<String> {
 
 impl Default for Roles {
     fn default() -> Self {
-        let user = ["chat", "embed", "models", "workflows", "help", "account"];
+        let user = [
+            "chat",
+            "embed",
+            "tools",
+            "models",
+            "workflows",
+            "help",
+            "account",
+        ];
         let mut roles = BTreeMap::new();
         roles.insert("user".to_string(), set(&user));
         roles.insert(
@@ -149,6 +159,10 @@ mod tests {
         assert!(r.of("readonly").len() == 4 && !r.of("readonly").contains("chat"));
         assert!(r.of("auditor").contains("reasoning.read") && !r.of("auditor").contains("chat"));
         assert!(r.of("admin").contains("keys.manage") && r.of("admin").contains("chat"));
+        for role in ["user", "admin"] {
+            assert!(r.of(role).contains(perm::TOOLS), "{role} runs remote tools");
+        }
+        assert!(!r.of("readonly").contains(perm::TOOLS) && !r.of("auditor").contains(perm::TOOLS));
     }
 
     #[test]

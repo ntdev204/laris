@@ -11,6 +11,7 @@ pub mod p1;
 pub mod p2;
 pub mod scenario;
 pub mod schema;
+pub mod scientific;
 pub mod sse;
 pub mod version;
 
@@ -24,8 +25,8 @@ pub use events::{
 pub use p1::{
     AccountResponse, AdminReasoning, AdminUsage, ChatRequest, ChatResponseChunk, EmbedRequest,
     EmbedResponse, EmbeddingItem, HelpResponse, HttpError, InstructionLayer, Kind, LarisMeta,
-    LarisRequest, Layers, ModelInfo, ModelList, ToolRequest, ToolResponse, UsageRow, WorkflowInfo,
-    WorkflowRequest, WorkflowsResponse,
+    LarisRequest, Layers, ModelInfo, ModelList, ToolList, ToolRequest, ToolResponse, UsageRow,
+    WorkflowInfo, WorkflowRequest, WorkflowsResponse,
 };
 pub use p2::{ChatCompletion, ChatCompletionChunk, ModelChatRequest};
 pub use sse::{ErrorDetail, P1Event, P2Event, SseDecoder, SseError, StreamError};

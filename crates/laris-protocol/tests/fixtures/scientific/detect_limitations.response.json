@@ -1,0 +1,61 @@
+{
+ "result": {
+  "document_id": "paper",
+  "limitations": [
+   {
+    "limitation_id": "lim-232-320",
+    "description": "A limitation of this study is that only English papers (café, naïve, α-helix) were used.",
+    "confidence": 0.85,
+    "coordinate": {
+     "coordinate_id": "paper:p1:232-320",
+     "document_id": "paper",
+     "document_sha256": "223c828e88a24444ea140aefcc2e9d326ef3c3205aa351d2df72c9b5b7320624",
+     "page_number": 1,
+     "section_identifier": "body",
+     "paragraph_index": 0,
+     "sentence_index": 0,
+     "char_start": 232,
+     "char_end": 320,
+     "verbatim_snippet": "A limitation of this study is that only English papers (café, naïve, α-helix) were used.",
+     "extraction_confidence": 0.85
+    },
+    "scope": "general",
+    "is_author_disclosed": true,
+    "category": "GENERAL",
+    "uncertainty_score": 0.1
+   }
+  ],
+  "assumptions": [
+   {
+    "assumption_id": "asm-189-231",
+    "statement": "We assume that references are well formed.",
+    "confidence": 0.86,
+    "coordinate": {
+     "coordinate_id": "paper:p1:189-231",
+     "document_id": "paper",
+     "document_sha256": "223c828e88a24444ea140aefcc2e9d326ef3c3205aa351d2df72c9b5b7320624",
+     "page_number": 1,
+     "section_identifier": "body",
+     "paragraph_index": 0,
+     "sentence_index": 0,
+     "char_start": 189,
+     "char_end": 231,
+     "verbatim_snippet": "We assume that references are well formed.",
+     "extraction_confidence": 0.86
+    },
+    "is_explicit": true,
+    "domain": "general",
+    "uncertainty_score": 0.1
+   }
+  ],
+  "negative_findings": [],
+  "uncertainty_distribution": {
+   "low": 2,
+   "medium": 0,
+   "high": 0
+  },
+  "category_counts": {
+   "GENERAL": 1
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "result": {
+  "scope": {
+   "documents": 4,
+   "documents_with_year": 4,
+   "year_range": [
+    2019,
+    2022
+   ]
+  },
+  "chars_total": 1501,
+  "chars_mean": 375.2,
+  "with_doi": 1,
+  "with_arxiv": 0,
+  "per_year": {
+   "2019": 1,
+   "2020": 1,
+   "2021": 1,
+   "2022": 1
+  },
+  "note": "documents without a stated year are counted in 'documents' only"
+ }
+}

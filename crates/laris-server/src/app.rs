@@ -8,13 +8,13 @@ use crate::log::RequestScope;
 use axum::Extension;
 use axum::Router;
 use axum::body::{Body, Bytes};
-use axum::extract::{Request, State};
+use axum::extract::{Path, Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::Response;
 use axum::routing::{get, post};
 use futures_util::StreamExt;
 use laris_protocol::chat::Role;
-use laris_protocol::p1::{ChatRequest, EmbedRequest};
+use laris_protocol::p1::{ChatRequest, EmbedRequest, ToolRequest};
 use laris_protocol::sse::{ErrorDetail, P1Event, StreamError};
 use laris_protocol::version::{PROTOCOL_HEADER, check_version};
 use serde::de::DeserializeOwned;
@@ -85,6 +85,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/health", get(health))
         .route("/v1/laris/chat", post(chat))
         .route("/v1/laris/embed", post(embed))
+        .route("/v1/laris/tools", get(tool_list))
+        .route("/v1/laris/tools/{name}", post(tool_call))
         .route("/v1/laris/account", get(crate::admin::account))
         .route("/v1/laris/workflows", get(crate::policy::workflows_route))
         .route("/v1/laris/help", get(crate::policy::help))
@@ -212,6 +214,49 @@ async fn embed_inner(
     }
     let bytes = serde_json::to_vec(&answer).map_err(|_| ApiError::Internal)?;
     Ok(json_response(StatusCode::OK, bytes))
+}
+
+async fn tool_list(State(state): Shared, Extension(scope): Scope, headers: HeaderMap) -> Response {
+    scope.set_route("tools");
+    let result = async {
+        gate(&state, &scope, &headers, perm::TOOLS).await?;
+        let list = state.backend.tools().await?;
+        let bytes = serde_json::to_vec(&list).map_err(|_| ApiError::Internal)?;
+        Ok(json_response(StatusCode::OK, bytes))
+    }
+    .await;
+    result.unwrap_or_else(ApiError::into_response)
+}
+
+/// A tool name as the model service spells them: lower-case letters, digits and `_`. Anything else is a name nobody
+/// serves, and never reaches the model service's address.
+fn valid_tool_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 64
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+}
+
+async fn tool_call(
+    State(state): Shared,
+    Extension(scope): Scope,
+    Path(name): Path<String>,
+    request: Request,
+) -> Response {
+    scope.set_route("tools");
+    let result = async {
+        let (body, _principal, _length) =
+            read_json::<ToolRequest>(&state, &scope, request, perm::TOOLS).await?;
+        if !valid_tool_name(&name) {
+            return Err(ApiError::NotFound);
+        }
+        let answer = state.backend.tool(name, body).await?;
+        let bytes = serde_json::to_vec(&answer).map_err(|_| ApiError::Internal)?;
+        Ok(json_response(StatusCode::OK, bytes))
+    }
+    .await;
+    result.unwrap_or_else(ApiError::into_response)
 }
 
 /// Checks the headers, then reads and parses the body. Nothing is read before the checks pass, so a body that is

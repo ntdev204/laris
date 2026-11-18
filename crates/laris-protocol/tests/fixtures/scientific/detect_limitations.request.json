@@ -1,0 +1,6 @@
+{
+ "arguments": {
+  "text": "We propose a novel framework for citation parsing. We trained a BiLSTM with AdamW on the PubMed corpus. Our results indicate that the model achieves an accuracy of 0.91 and an F1 of 87.5%. We assume that references are well formed. A limitation of this study is that only English papers (café, naïve, α-helix) were used. Samples were heated to 300 K under 2.5 GPa. The energy is $E = mc^2$.",
+  "document_id": "paper"
+ }
+}

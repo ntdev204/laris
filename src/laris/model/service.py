@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional
 
 from laris.model.gpu_queue import GpuQueue, ModelSpec
+from laris.model.tools import ToolBox
 from laris.protocol import ChatProvider
 from laris.protocol.openai import completion_response, embeddings_response, stream_chunks, texts_of
 
@@ -92,7 +93,9 @@ class ModelService:
         model_name: str,
         embedder: Optional[Embedder] = None,
         queue: Optional[GpuQueue] = None,
+        tools: Optional[ToolBox] = None,
     ) -> None:
+        self.tools = tools
         self.backend = backend
         self.model_name = model_name
         self.embedder = embedder
@@ -110,6 +113,7 @@ class ModelService:
             "model": self.model_name,
             "backend": self.backend.name,
             "embeddings": self.embedder is not None,
+            "tools": 0 if self.tools is None else len(self.tools.schemas()),
         }
         if self.queue is not None:
             info["gpu"] = self.queue.status()
