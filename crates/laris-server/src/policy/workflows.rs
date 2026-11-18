@@ -1,11 +1,10 @@
 //! Workflows: declarative procedures that can only narrow what a session may do (rules W-1 to W-4).
 //!
-//! `.laris/workflows/<name>.yaml` lists ordered phases and limits the server enforces: the tools the turn may offer
+//! `.laris/workflows/<name>.toml` lists ordered phases and limits the server enforces: the tools the turn may offer
 //! the model, a step cap, a stricter approval mode, required citations and the sections the answer must contain.
 //! The phases and instructions stay on the server; the client learns only the limits (`GET /v1/laris/workflows`).
 
 use super::integrity::Snapshot;
-use super::yaml;
 use laris_protocol::p1::WorkflowInfo;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -241,11 +240,11 @@ pub struct Workflows {
 }
 
 impl Workflows {
-    /// Reads `.laris/workflows/*.yaml`. A file that does not load stops the server: a workflow that silently
+    /// Reads `.laris/workflows/*.toml`. A file that does not load stops the server: a workflow that silently
     /// vanished would widen what a turn may do.
     pub fn load(snapshot: &Snapshot) -> Result<Self, WorkflowError> {
         let mut by_name = BTreeMap::new();
-        for label in snapshot.labels_in(DIR, ".yaml") {
+        for label in snapshot.labels_in(DIR, ".toml") {
             let file = label.rsplit('/').next().unwrap_or(label).to_owned();
             let fail = |reason: String| WorkflowError {
                 file: file.clone(),
@@ -255,8 +254,8 @@ impl Workflows {
                 .text(label)
                 .and_then(Result::ok)
                 .ok_or_else(|| fail("not readable text".into()))?;
-            let value = yaml::parse(source).map_err(|e| fail(e.to_string()))?;
-            let stem = file.trim_end_matches(".yaml");
+            let value: Value = toml::from_str(source).map_err(|e| fail(e.message().to_owned()))?;
+            let stem = file.trim_end_matches(".toml");
             let workflow = Workflow::from_value(stem, &value).map_err(fail)?;
             by_name.insert(workflow.name.clone(), workflow);
         }

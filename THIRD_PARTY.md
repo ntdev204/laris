@@ -60,6 +60,7 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 | enumflags2, enumflags2_derive | 0.7.12 | MIT OR Apache-2.0 | landlock | T135 |
 | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | rustix | T135 |
 | syn (second version) | 2.0.119 | MIT OR Apache-2.0 | enumflags2_derive (the workspace uses syn 3) | T135 |
+| toml, toml_datetime, toml_parser, serde_spanned, winnow | 0.9.12, 0.7.5, 1.1.5, 1.1.3, 0.7.15 | MIT OR Apache-2.0 | `laris-server` (the policy files of `.laris/`) | T146 |
 
 Crates approved in T119 but not yet used are listed in `deny.toml`; each row is added here when its task vendors it.
 

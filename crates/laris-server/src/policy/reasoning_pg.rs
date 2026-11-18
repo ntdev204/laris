@@ -1,4 +1,4 @@
-//! Reasoning records in PostgreSQL: the generation-1 `traces` table, whose `reasoning` column is what SR-S4 keeps
+//! Reasoning records in PostgreSQL: the `traces` table, whose `reasoning` column is what SR-S4 keeps
 //! for the operator. A row is written when an answer ends, fails or is dropped; it holds the key id, the session,
 //! the model, the hash of the prompt and the reasoning, and no answer text. Writing is best effort and never holds
 //! up an answer: a failure is counted, not retried (traces and their retention are T150).

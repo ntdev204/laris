@@ -1,0 +1,26 @@
+name = "kg-explore"
+version = "2.0.0"
+description = "Explore how concepts in the user's notes connect, following links from a starting note."
+triggers = ["how are these concepts connected", "explore the links"]
+allowed_tools = ["Grep", "Glob", "Read", "update_plan"]
+max_steps = 8
+require_citations = true
+approval = "inherit"
+output_sections = ["Path", "Evidence", "Uncertainties", "Sources"]
+stop_conditions = ["the starting note does not exist"]
+
+[[phases]]
+id = "orient"
+goal = "Find the note the user means and read it."
+exit = "One starting note, or a question back to the user when several fit."
+
+[[phases]]
+id = "follow"
+goal = "Follow the links that lead toward the question, reading each note you reach."
+instructions = "Stop at three steps from the start unless a link clearly leads on."
+exit = "A path of notes, or a statement that none was found."
+
+[[phases]]
+id = "report"
+goal = "Describe the path and cite the note behind each step."
+instructions = "A link says two notes are related, not why. Do not state a reason a note does not give."

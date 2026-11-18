@@ -13,7 +13,7 @@ fn fail(message: impl std::fmt::Display, code: u8) -> ExitCode {
     ExitCode::from(code)
 }
 
-/// `laris-server policy verify|lock`: checks the policy against `integrity.lock`, or writes a new lock after the
+/// `laris-server policy verify|lock`: checks the policy against `integrity.toml`, or writes a new lock after the
 /// owner approved a change.
 fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
     let config = match PolicyConfig::from_env(env) {
@@ -30,7 +30,7 @@ fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
         },
         "lock" => match integrity::write_lock(&config.root) {
             Ok(_) => {
-                println!("integrity.lock written");
+                println!("integrity.toml written");
                 ExitCode::SUCCESS
             }
             Err(e) => fail(e, 1),

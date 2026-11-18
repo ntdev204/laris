@@ -1,0 +1,31 @@
+name = "evidence-review"
+version = "2.0.0"
+description = "Collect what the material says about a claim, compare the sources and report agreement and conflict."
+triggers = ["is this claim supported", "compare the evidence"]
+allowed_tools = ["Grep", "Glob", "Read", "update_plan"]
+max_steps = 8
+require_citations = true
+approval = "inherit"
+output_sections = ["Claim", "Supporting", "Conflicting", "Uncertainties", "Sources"]
+stop_conditions = ["the material to search is empty"]
+
+[[phases]]
+id = "collect"
+goal = "Find passages that bear on the claim, for and against."
+instructions = "Search for the opposite of the claim as well. A claim is not supported because nothing was found against it."
+exit = "Passages from at least two sources, or a statement that fewer exist."
+
+[[phases]]
+id = "extract"
+goal = "Note for each passage what it states, under which conditions and with what evidence."
+exit = "Every collected passage has a one-line finding."
+
+[[phases]]
+id = "compare"
+goal = "Set the findings side by side and name where they agree, conflict or differ in conditions."
+exit = "Each conflict has a stated possible reason."
+
+[[phases]]
+id = "report"
+goal = "Report the verdict with its strength and what would change it."
+instructions = "State the scope searched. Do not turn absence of evidence into evidence of absence."

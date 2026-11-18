@@ -1026,6 +1026,38 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   not sent. A secret spelled out letter by letter is not redacted (only internal text is checked that way). The
   brain consult, the brain tools, the `LarisMeta` evidence list and the brain texts in the guard are T147. Guard
   messages are English constants by design (default English); `strings.yaml` is read by nothing on the server.
+  Independence from generation 1 (same day, branch `feature/T146-independent-policy`, owner decision in the ADR-021
+  addendum): `.laris/` was rewritten and `LARIS.md`, `prompts/manifest.yaml`, the Vietnamese runtime strings, the
+  YAML workflows, `help/how-to-use.md` and `integrity.lock` were removed. New layout: `policy.toml` (sections, order,
+  variables, optional and confidential sections), `prompts/*.md` (12 sections), `rules/*.md` (8 files, rule ids
+  `PREC`, `CONF`, `UNT`, `EVD`, `TOOL`, `OUT`, `MEM`, `LIM`), `workflows/*.toml` (the same seven ideas, written
+  again, limited to tools that exist: `Read`, `Grep`, `Glob`, `Write`, `update_plan`; T148 adds the corpus tools),
+  `help.md`, `integrity.toml` (TOML, covers `policy.toml`, `help.md`, `prompts`, `rules`, `workflows`). The YAML
+  reader is deleted. Crate approved by the owner: `toml` 0.9 with `toml_datetime`, `toml_parser`, `serde_spanned`,
+  `winnow` (`deny.toml` and `THIRD_PARTY.md` updated). Skills are read as `skill.md` with a TOML front matter
+  between `+++` lines; no skill exists in this format yet, so no skill is chosen until the owner defines them.
+  The policy text is new, written by the assistant and not yet reviewed by the owner: review it before relying on it.
+  `.laris/skills`, `.laris/brain` and `.laris/vault` still hold generation-1 content, unread by the server and
+  outside the lock; T215 and T147 deal with them. 519 tests pass with PostgreSQL (one `laris-policy` hook test,
+  `control_characters_cannot_reach_the_terminal`, failed once under load and passed in isolation and on the
+  previous commit: a flaky test of an earlier task, not investigated).
+
+### T215 — Remove generation-1 coupling
+- Requirements: SR-S3, SR-L2, SR-L3, SR-H8
+- Depends: T146
+- Deliverables:
+  - Remove what ties generation 2 to generation 1 and fix the spec to match: the generation-1 migrations and dump
+    fixtures of `laris-server` (T142), the generation-1 key digest forms (T143), the generation-1 parity fixtures and
+    `generate.py` of `laris-retrieval` (T145), the generation-1 P1/P2 fixtures and wording in `laris-protocol` (T124),
+    the legacy flat `settings.json` conversion in `laris-config` (T125), the generation-1 vault adoption in T148 and
+    in `laris-vault`, `.laris/skills`, `.laris/brain` and `.laris/vault` (generation-1 content, rewritten with T147
+    and the skills task), the Python tests that read the old `.laris/` files, and every requirement in `spec.md`
+    that cites generation 1
+- Validation:
+  - `grep -ri "generation" crates xtask` finds nothing that is not history; `cargo xtask spec` passes; all Rust
+    checks pass
+- Status: pending
+- Note: Created 2026-11-18 from the owner's decision that generation 2 stands alone (ADR-021 addendum). Not started.
 
 ### T147 — System brain service
 - Requirements: SR-S5

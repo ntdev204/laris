@@ -1,0 +1,36 @@
+# The policy of the LARIS server: which prompt sections exist, in what order, and which variables they may use.
+# Everything under `.laris/` except `skills/`, `brain/` and `vault/` is covered by `integrity.toml`; the server
+# does not start when a file differs from it. Changes need the owner's approval, a new `version` and
+# `laris-server policy lock`.
+
+version = "2.0.0"
+
+[prompt]
+# A section may use only these `{{variable}}` placeholders; any other is an error.
+variables = [
+  "assistant_name", "reply_language", "date", "skills_index", "memory",
+  "workflow", "preferences", "session_id", "integrity_token",
+]
+# `internal_policy` is not a file: the server fills it from `rules/`.
+order = [
+  "identity", "principles", "internal_policy", "confidentiality", "untrusted", "tools",
+  "skills", "memory", "workflow", "output", "preferences", "environment", "session",
+]
+# Left out of a prompt when one of their variables is empty.
+optional = ["skills", "memory", "workflow", "preferences"]
+# Text that must never leave the server, besides the rules.
+confidential = ["identity", "principles", "confidentiality", "untrusted", "tools", "output"]
+
+[prompt.modules]
+identity = "identity.md"
+principles = "principles.md"
+confidentiality = "confidentiality.md"
+untrusted = "untrusted.md"
+tools = "tools.md"
+skills = "skills.md"
+memory = "memory.md"
+workflow = "workflow.md"
+output = "output.md"
+preferences = "preferences.md"
+environment = "environment.md"
+session = "session.md"

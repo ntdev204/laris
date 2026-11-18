@@ -1,0 +1,32 @@
+name = "grounded-qa"
+version = "2.0.0"
+description = "Answer a question strictly from the user's material, with citations and stated uncertainty."
+triggers = ["question about my documents", "what do my notes say"]
+allowed_tools = ["Grep", "Glob", "Read", "update_plan"]
+max_steps = 5
+require_citations = true
+approval = "inherit"
+output_sections = ["Assumptions", "Uncertainties", "Next step", "Sources"]
+stop_conditions = ["the material to search is empty", "no relevant passage after two different queries"]
+
+[[phases]]
+id = "scope"
+goal = "Restate the question as search terms and check that there is material to search."
+instructions = "Do not guess an answer first."
+exit = "The material exists, or the user has been told it is empty."
+
+[[phases]]
+id = "retrieve"
+goal = "Search with one to three different queries."
+instructions = "Change the terms, not just the wording. Never repeat a query."
+exit = "At least one relevant passage, or two queries without one."
+
+[[phases]]
+id = "verify"
+goal = "Read the text around the strongest passage when the excerpt is ambiguous."
+exit = "Each claim to be made is backed by a cited passage."
+
+[[phases]]
+id = "answer"
+goal = "Write the answer with citations as [source #rank]."
+instructions = "Keep excerpt, supported claim and hypothesis apart. Mark unsupported statements Assumed."

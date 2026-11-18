@@ -1,14 +1,13 @@
-//! The system prompt (ADR-004: only the server writes it), composed from the versioned modules of
-//! `.laris/prompts/`, the instruction files (`LARIS.md`, then `.laris/rules/*.md`), the active workflow and what the
-//! client sent that belongs to the user.
+//! The system prompt (only the server writes it), composed from the sections named in `.laris/policy.toml`, the
+//! rules in `.laris/rules/`, the active workflow, the selected skill and what the client sent that belongs to the
+//! user.
 //!
-//! Modules are plain Markdown with `{{variable}}` placeholders; a placeholder the manifest does not declare is an
+//! Sections are plain Markdown with `{{variable}}` placeholders; a placeholder the manifest does not declare is an
 //! error, so a typo cannot ship silently. The composed prompt is hashed, so a trace can say *which* prompt ran
 //! without keeping it. The client's own instruction files come before the protected rules: a rule is always the
 //! later, stronger text.
 
-use super::integrity::{ROOT_FILE, Snapshot};
-use super::yaml;
+use super::integrity::{MANIFEST_FILE, Snapshot};
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
@@ -16,19 +15,7 @@ use std::sync::LazyLock;
 
 const PROMPTS_DIR: &str = ".laris/prompts";
 const RULES_DIR: &str = ".laris/rules";
-const MANIFEST: &str = ".laris/prompts/manifest.yaml";
 const POLICY_SECTION: &str = "internal_policy";
-/// Sections left out when one of their variables is empty.
-const OPTIONAL: [&str; 4] = ["skills", "memory", "workflow", "user_preferences"];
-/// Sections whose text must never leave the server.
-const CONFIDENTIAL: [&str; 6] = [
-    "identity",
-    "principles",
-    "confidentiality",
-    "untrusted_content",
-    "tools_protocol",
-    "output_format",
-];
 
 static PLACEHOLDER: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"\{\{\s*([a-z_]+)\s*\}\}").expect("the placeholder pattern is valid")
@@ -53,8 +40,7 @@ pub enum PromptError {
     PolicyTooLong(usize),
 }
 
-/// Limits and names of the prompt. Each one comes from the environment (`LARIS_SERVER__...`) with the generation-1
-/// default.
+/// Limits and names of the prompt. Each one comes from the environment (`LARIS_SERVER__...`) with a default.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PromptSettings {
     /// The assistant's name.
@@ -125,18 +111,20 @@ pub struct Composed {
     pub confidential: Vec<String>,
 }
 
-/// The manifest, the modules and the protected instruction files.
+/// The manifest, the sections and the protected rules.
 #[derive(Debug, Clone)]
 pub struct Composer {
     settings: PromptSettings,
     version: String,
     order: Vec<String>,
+    optional: BTreeSet<String>,
+    confidential: BTreeSet<String>,
     modules: BTreeMap<String, String>,
     policy: Vec<(String, String)>,
 }
 
-fn strings(value: &serde_json::Value, key: &str) -> Vec<String> {
-    value
+fn names(table: &serde_json::Value, key: &str) -> Vec<String> {
+    table
         .get(key)
         .and_then(|v| v.as_array())
         .map(|a| {
@@ -160,22 +148,28 @@ fn clean_label(label: &str) -> String {
 }
 
 impl Composer {
-    /// Reads the manifest and every module it names, and the instruction files.
+    /// Reads the manifest, every section it names and the rules.
     pub fn new(snapshot: &Snapshot, settings: PromptSettings) -> Result<Self, PromptError> {
         let source = snapshot
-            .text(MANIFEST)
-            .ok_or_else(|| bad("manifest.yaml is missing"))?
-            .map_err(|_| bad("manifest.yaml is not text"))?;
-        let manifest = yaml::parse(source).map_err(|e| bad(e.to_string()))?;
+            .text(MANIFEST_FILE)
+            .ok_or_else(|| bad("policy.toml is missing"))?
+            .map_err(|_| bad("policy.toml is not text"))?;
+        let manifest: serde_json::Value =
+            toml::from_str(source).map_err(|e| bad(e.message().to_owned()))?;
         let version = manifest
             .get("version")
             .and_then(|v| v.as_str())
             .unwrap_or_default()
             .to_owned();
-        let allowed: BTreeSet<String> = strings(&manifest, "variables").into_iter().collect();
-        let order = strings(&manifest, "order");
+        let prompt = manifest
+            .get("prompt")
+            .ok_or_else(|| bad("[prompt] is missing"))?;
+        let allowed: BTreeSet<String> = names(prompt, "variables").into_iter().collect();
+        let order = names(prompt, "order");
+        let optional: BTreeSet<String> = names(prompt, "optional").into_iter().collect();
+        let confidential: BTreeSet<String> = names(prompt, "confidential").into_iter().collect();
         let mut modules = BTreeMap::new();
-        for (name, file) in manifest
+        for (name, file) in prompt
             .get("modules")
             .and_then(|m| m.as_object())
             .into_iter()
@@ -183,23 +177,27 @@ impl Composer {
         {
             let file = file
                 .as_str()
-                .ok_or_else(|| bad("a module path is not text"))?;
+                .ok_or_else(|| bad("a section path is not text"))?;
             if file.contains("..") || file.starts_with('/') {
-                return Err(bad("a module path leaves the prompts folder"));
+                return Err(bad("a section path leaves the prompts folder"));
             }
             let label = format!("{PROMPTS_DIR}/{file}");
             let text = snapshot
                 .text(&label)
-                .ok_or_else(|| bad(format!("module '{name}' is missing")))?
-                .map_err(|_| bad(format!("module '{name}' is not text")))?;
+                .ok_or_else(|| bad(format!("section '{name}' is missing")))?
+                .map_err(|_| bad(format!("section '{name}' is not text")))?;
             modules.insert(name.clone(), text.trim().to_owned());
         }
         if version.is_empty()
             || order
                 .iter()
                 .any(|n| n != POLICY_SECTION && !modules.contains_key(n))
+            || optional
+                .iter()
+                .chain(&confidential)
+                .any(|n| !modules.contains_key(n))
         {
-            return Err(bad("version or order is invalid"));
+            return Err(bad("version, order or a section list is invalid"));
         }
         for (module, text) in &modules {
             for found in PLACEHOLDER.captures_iter(text) {
@@ -213,12 +211,7 @@ impl Composer {
         }
         let mut policy = Vec::new();
         let mut budget = settings.max_instruction_chars as i64;
-        let mut files: Vec<&str> = Vec::new();
-        if snapshot.get(ROOT_FILE).is_some() {
-            files.push(ROOT_FILE);
-        }
-        files.extend(snapshot.labels_in(RULES_DIR, ".md"));
-        for label in files {
+        for label in snapshot.labels_in(RULES_DIR, ".md") {
             let text = snapshot
                 .text(label)
                 .and_then(Result::ok)
@@ -237,6 +230,8 @@ impl Composer {
             settings,
             version,
             order,
+            optional,
+            confidential,
             modules,
             policy,
         })
@@ -285,7 +280,7 @@ impl Composer {
             ),
             ("memory", cut(input.memory, s.max_memory_chars)),
             (
-                "extra_instructions",
+                "preferences",
                 cut(input.extra.trim(), s.user_preferences_max_chars),
             ),
             ("workflow", input.workflow.to_owned()),
@@ -328,7 +323,7 @@ impl Composer {
                 confidential.extend(self.policy.iter().map(|(_, t)| t.clone()));
             } else {
                 let template = &self.modules[name];
-                if OPTIONAL.contains(&name.as_str())
+                if self.optional.contains(name)
                     && PLACEHOLDER
                         .captures_iter(template)
                         .any(|c| variables.get(&c[1]).is_none_or(String::is_empty))
@@ -339,7 +334,7 @@ impl Composer {
                     variables.get(&c[1]).cloned().unwrap_or_default()
                 });
                 sections.push(format!("<{name}>\n{body}\n</{name}>"));
-                if CONFIDENTIAL.contains(&name.as_str()) {
+                if self.confidential.contains(name) {
                     confidential.push(body.into_owned());
                 }
             }

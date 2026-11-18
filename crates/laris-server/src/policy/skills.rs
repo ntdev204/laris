@@ -1,6 +1,7 @@
 //! System skills chosen by context (SR-S4).
 //!
-//! `.laris/skills/<name>/SKILL.md` holds task knowledge: when to use it, how to do it. The server does not put the
+//! `.laris/skills/<name>/skill.md` holds task knowledge: when to use it, how to do it. It starts with a TOML front
+//! matter between `+++` lines giving `name` and `description`. The server does not put the
 //! skills, or a list of them, in the prompt. For each turn it reads the user's request, picks the one skill that
 //! fits and adds only that skill's text, marked as low authority; when none fits clearly, the prompt carries none.
 //!
@@ -10,10 +11,9 @@
 //!   score reaches the minimum and beats the runner-up by the margin. Matching is by words, so a request in a
 //!   language the descriptions are not written in only reaches a skill by name.
 //!
-//! Skills are outside `integrity.lock` (generation 1 left them out: they are data, lowest authority, changed
-//! without the owner's review). Nothing in a skill can change a rule: the section says so and sits below the policy.
+//! Skills are outside `integrity.toml`: they are data of the lowest authority. Nothing in a skill can change a
+//! rule: the section says so and sits below the policy. A folder without `skill.md` is not a skill and is ignored.
 
-use super::yaml;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
@@ -105,23 +105,24 @@ fn valid_name(name: &str) -> bool {
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 
-/// `(front matter, body)` of a `---` fenced document.
+/// `(front matter, body)` of a document that starts with a `+++` fenced TOML block.
 fn split_front_matter(text: &str) -> Option<(&str, &str)> {
-    let rest = text.strip_prefix("---\n")?;
-    let end = rest.find("\n---")?;
+    let rest = text.strip_prefix("+++\n")?;
+    let end = rest.find("\n+++")?;
     let after = &rest[end + 4..];
     Some((&rest[..end], after.strip_prefix('\n').unwrap_or(after)))
 }
 
 fn read_skill(dir: &Path, name: &str, max_chars: usize) -> Result<Skill, String> {
-    let path = dir.join("SKILL.md");
-    let meta = fs::symlink_metadata(&path).map_err(|_| "no SKILL.md".to_owned())?;
+    let path = dir.join("skill.md");
+    let meta = fs::symlink_metadata(&path).map_err(|_| "no skill.md".to_owned())?;
     if !meta.is_file() || meta.len() > MAX_FILE {
-        return Err("SKILL.md is not a regular file of reasonable size".into());
+        return Err("skill.md is not a regular file of reasonable size".into());
     }
-    let text = fs::read_to_string(&path).map_err(|_| "SKILL.md is not text".to_owned())?;
+    let text = fs::read_to_string(&path).map_err(|_| "skill.md is not text".to_owned())?;
     let (front, body) = split_front_matter(&text).ok_or("no front matter")?;
-    let value = yaml::parse(front).map_err(|e| format!("front matter: {e}"))?;
+    let value: serde_json::Value =
+        toml::from_str(front).map_err(|e| format!("front matter: {}", e.message()))?;
     if value.get("name").and_then(|v| v.as_str()) != Some(name) {
         return Err("name differs from the folder".into());
     }
@@ -160,6 +161,9 @@ impl Skills {
             }
             if !valid_name(&name) {
                 problems.push(format!("{name}: not a skill name"));
+                continue;
+            }
+            if !entry.path().join("skill.md").exists() {
                 continue;
             }
             match read_skill(&entry.path(), &name, settings.max_chars) {

@@ -1,0 +1,29 @@
+name = "literature-map"
+version = "2.0.0"
+description = "Map the documents on a topic into themes, methods and open questions, with a source for each point."
+triggers = ["map the literature", "what themes are in my papers"]
+allowed_tools = ["Grep", "Glob", "Read", "Write", "update_plan"]
+max_steps = 10
+require_citations = true
+approval = "ask"
+output_sections = ["Themes", "Methods", "Open questions", "Sources"]
+stop_conditions = ["the material to search is empty", "the user declines to write the map"]
+
+[[phases]]
+id = "survey"
+goal = "List the documents that concern the topic and read the abstract or first page of each."
+exit = "Every relevant document has a one-line summary."
+
+[[phases]]
+id = "group"
+goal = "Group the documents into themes and note the method each one uses."
+exit = "Each document sits in one theme, or is marked unclassified."
+
+[[phases]]
+id = "gaps"
+goal = "Name open questions the documents themselves state or leave unanswered."
+instructions = "Report only questions the sources raise; do not announce a gap from absence alone."
+
+[[phases]]
+id = "write"
+goal = "Offer to write the map to a file and summarise it in the chat."

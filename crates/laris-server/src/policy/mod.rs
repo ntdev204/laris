@@ -2,13 +2,12 @@
 //! and are composed on the server only; the integrity lock is checked before the server listens; what the model
 //! says is guarded on its way out; the model's reasoning is kept for the operator and never sent to a client.
 //!
-//! * [`integrity`]: the lock, compatible with the generation-1 `integrity.lock`.
+//! * [`integrity`]: the lock, `.laris/integrity.toml`.
 //! * [`compose`]: the system prompt.
 //! * [`workflows`]: narrowing procedures.
 //! * [`guard`]: secrets, leaks, the canary.
 //! * [`reasoning`]: where the reasoning goes.
 //! * [`gateway`]: the [`PolicyGateway`] backend that puts them around the model.
-//! * [`yaml`]: a reader for the YAML subset the policy files use.
 
 pub mod compose;
 pub mod gateway;
@@ -19,7 +18,6 @@ pub mod reasoning_pg;
 mod routes;
 pub mod skills;
 pub mod workflows;
-pub mod yaml;
 
 pub use compose::{Composed, Composer, PromptError, PromptSettings};
 pub use gateway::{PLAN_TOOL, Policy, PolicyGateway};
@@ -86,7 +84,7 @@ pub struct PolicyConfig {
 }
 
 impl PolicyConfig {
-    /// A configuration with the generation-1 defaults.
+    /// A configuration with the defaults.
     pub fn with_root(root: impl Into<PathBuf>) -> Self {
         Self {
             root: root.into(),
