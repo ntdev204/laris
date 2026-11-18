@@ -1,5 +1,6 @@
 //! The router and its handlers: body validation before any work, then the backend.
 
+use crate::access::{Access, Principal, Reservation, Used, perm};
 use crate::backend::{Backend, ChunkStream, StreamFailure};
 use crate::config::ServerConfig;
 use crate::error::ApiError;
@@ -26,6 +27,29 @@ pub struct AppState {
     pub config: ServerConfig,
     /// Answers chat and embed requests.
     pub backend: Arc<dyn Backend>,
+    /// Keys, roles and quotas. `None` serves every request without a key: only [`AppState::open`] makes that, for
+    /// tests of the HTTP layer; `main` always builds the access layer.
+    pub access: Option<Arc<Access>>,
+}
+
+impl AppState {
+    /// State with keys, roles and quotas.
+    pub fn new(config: ServerConfig, backend: Arc<dyn Backend>, access: Arc<Access>) -> Self {
+        Self {
+            config,
+            backend,
+            access: Some(access),
+        }
+    }
+
+    /// State that accepts every caller. For tests of the HTTP layer only.
+    pub fn open(config: ServerConfig, backend: Arc<dyn Backend>) -> Self {
+        Self {
+            config,
+            backend,
+            access: None,
+        }
+    }
 }
 
 /// Marks a response whose access record the answer stream writes when it ends.
@@ -42,6 +66,14 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/health", get(health))
         .route("/v1/laris/chat", post(chat))
         .route("/v1/laris/embed", post(embed))
+        .route("/v1/laris/account", get(crate::admin::account))
+        .route("/v1/admin/usage", get(crate::admin::usage))
+        .route(
+            "/v1/admin/keys",
+            get(crate::admin::keys_list).post(crate::admin::keys_create),
+        )
+        .route("/v1/admin/keys/{id}/revoke", post(crate::admin::key_revoke))
+        .route("/v1/admin/keys/{id}/limit", post(crate::admin::key_limit))
         .fallback(unmatched)
         .method_not_allowed_fallback(wrong_method)
         .with_state(state)
@@ -83,13 +115,25 @@ async fn chat_inner(
     scope: &Arc<RequestScope>,
     request: Request,
 ) -> Result<Response, ApiError> {
-    let body: ChatRequest = read_json(state, scope, request).await?;
+    let (body, principal, length) =
+        read_json::<ChatRequest>(state, scope, request, perm::CHAT).await?;
     validate_chat(&body)?;
-    let stream = state.backend.chat(body).await?;
+    let session = body.laris.session_id.clone().unwrap_or_default();
+    let meter = reserve_for(state, principal.as_ref(), length, "chat", session).await?;
+    let stream = match state.backend.chat(body).await {
+        Ok(stream) => stream,
+        Err(error) => {
+            if let Some(m) = &meter {
+                let _ = m.reservation.release().await;
+            }
+            return Err(error);
+        }
+    };
     Ok(sse_response(
         stream,
         state.config.stream_idle,
         scope.clone(),
+        meter,
     ))
 }
 
@@ -106,7 +150,8 @@ async fn embed_inner(
     scope: &Arc<RequestScope>,
     request: Request,
 ) -> Result<Response, ApiError> {
-    let body: EmbedRequest = read_json(state, scope, request).await?;
+    let (body, principal, length) =
+        read_json::<EmbedRequest>(state, scope, request, perm::EMBED).await?;
     let count = match &body.input {
         laris_protocol::p1::OneOrMany::One(_) => 1,
         laris_protocol::p1::OneOrMany::Many(v) => v.len(),
@@ -122,21 +167,37 @@ async fn embed_inner(
             state.config.embed_max_inputs
         )));
     }
-    let answer = state.backend.embed(body).await?;
+    let meter = reserve_for(state, principal.as_ref(), length, "embed", String::new()).await?;
+    let answer = match state.backend.embed(body).await {
+        Ok(answer) => answer,
+        Err(error) => {
+            if let Some(m) = &meter {
+                let _ = m.reservation.release().await;
+            }
+            return Err(error);
+        }
+    };
+    if let Some(m) = meter {
+        let (prompt, completion) = match &answer.usage {
+            Some(u) => (to_i64(u.prompt_tokens), to_i64(u.completion_tokens)),
+            None => (m.prompt_estimate, 0),
+        };
+        m.settle_detached(prompt, completion);
+    }
     let bytes = serde_json::to_vec(&answer).map_err(|_| ApiError::Internal)?;
     Ok(json_response(StatusCode::OK, bytes))
 }
 
 /// Checks the headers, then reads and parses the body. Nothing is read before the checks pass, so a body that is
 /// refused (411, 413) is never accepted into memory.
-async fn read_json<T: DeserializeOwned>(
+pub(crate) async fn read_json<T: DeserializeOwned>(
     state: &AppState,
     scope: &RequestScope,
     request: Request,
-) -> Result<T, ApiError> {
+    permission: &'static str,
+) -> Result<(T, Option<Principal>, u64), ApiError> {
     let (parts, body) = request.into_parts();
-    let sent = header_text(&parts.headers, PROTOCOL_HEADER);
-    check_version(sent).map_err(|e| ApiError::UpgradeRequired(e.to_string()))?;
+    let principal = gate(state, scope, &parts.headers, permission).await?;
     if parts.headers.contains_key(header::TRANSFER_ENCODING) {
         return Err(ApiError::LengthRequired);
     }
@@ -163,7 +224,76 @@ async fn read_json<T: DeserializeOwned>(
         .map_err(|_| ApiError::RequestTimeout)?
         .map_err(|_| ApiError::BadRequest("the request body could not be read".into()))?;
     scope.set_bytes_in(bytes.len() as u64);
-    serde_json::from_slice(&bytes).map_err(|e| ApiError::BadRequest(invalid(&e.to_string())))
+    let parsed = serde_json::from_slice(&bytes)
+        .map_err(|e| ApiError::BadRequest(invalid(&e.to_string())))?;
+    Ok((parsed, principal, bytes.len() as u64))
+}
+
+/// The checks every route starts with: protocol version (426), then who the caller is (401) and whether they may
+/// (403). Nothing of the body is read before they pass.
+pub(crate) async fn gate(
+    state: &AppState,
+    scope: &RequestScope,
+    headers: &HeaderMap,
+    permission: &str,
+) -> Result<Option<Principal>, ApiError> {
+    check_version(header_text(headers, PROTOCOL_HEADER))
+        .map_err(|e| ApiError::UpgradeRequired(e.to_string()))?;
+    let Some(access) = &state.access else {
+        return Ok(None);
+    };
+    let principal = access
+        .authenticate(header_text(headers, "authorization"), scope.client())
+        .await?;
+    access.require(&principal, permission)?;
+    Ok(Some(principal))
+}
+
+fn to_i64(n: u64) -> i64 {
+    i64::try_from(n).unwrap_or(i64::MAX)
+}
+
+/// Tokens set aside for one request, and what is needed to settle them.
+pub(crate) struct Meter {
+    access: Arc<Access>,
+    pub(crate) reservation: Arc<Reservation>,
+    prompt_estimate: i64,
+    kind: &'static str,
+    session: String,
+}
+
+impl Meter {
+    /// Settles without waiting (the answer is already on its way).
+    fn settle_detached(self, prompt: i64, completion: i64) {
+        let used = Used {
+            prompt_tokens: prompt,
+            completion_tokens: completion,
+            kind: self.kind.to_string(),
+            session_id: self.session,
+        };
+        self.reservation.settle_detached(used, crate::access::now());
+    }
+}
+
+async fn reserve_for(
+    state: &AppState,
+    principal: Option<&Principal>,
+    length: u64,
+    kind: &'static str,
+    session: String,
+) -> Result<Option<Meter>, ApiError> {
+    let (Some(access), Some(principal)) = (&state.access, principal) else {
+        return Ok(None);
+    };
+    let estimate = access.estimate_tokens(length);
+    let reservation = access.reserve(principal, estimate).await?;
+    Ok(Some(Meter {
+        access: access.clone(),
+        reservation,
+        prompt_estimate: estimate,
+        kind,
+        session,
+    }))
 }
 
 fn invalid(detail: &str) -> String {
@@ -220,10 +350,35 @@ struct EndGuard {
     scope: Arc<RequestScope>,
     finished: bool,
     outcome: Option<&'static str>,
+    meter: Option<Meter>,
+    answer_chars: u64,
+    reported: Option<(i64, i64)>,
+}
+
+impl EndGuard {
+    /// Counts what one chunk carried: the model's own token counts when it gives them, else visible characters.
+    fn observe(&mut self, chunk: &laris_protocol::p1::ChatResponseChunk) {
+        if let Some(u) = &chunk.usage {
+            self.reported = Some((to_i64(u.prompt_tokens), to_i64(u.completion_tokens)));
+        }
+        for choice in &chunk.choices {
+            if let Some(text) = &choice.delta.content {
+                self.answer_chars += text.chars().count() as u64;
+            }
+        }
+    }
 }
 
 impl Drop for EndGuard {
     fn drop(&mut self) {
+        // billed whether the answer ended, failed or the client left: what was produced is what is charged
+        if let Some(meter) = self.meter.take() {
+            let (prompt, completion) = self.reported.unwrap_or((
+                meter.prompt_estimate,
+                meter.access.estimate_tokens(self.answer_chars),
+            ));
+            meter.settle_detached(prompt, completion);
+        }
         let outcome = if self.finished {
             self.outcome
         } else {
@@ -237,6 +392,7 @@ fn sse_response(
     stream: ChunkStream,
     idle: std::time::Duration,
     scope: Arc<RequestScope>,
+    meter: Option<Meter>,
 ) -> Response {
     let state = StreamState {
         inner: Some(stream),
@@ -247,6 +403,9 @@ fn sse_response(
             scope,
             finished: false,
             outcome: None,
+            meter,
+            answer_chars: 0,
+            reported: None,
         },
     };
     let body = futures_util::stream::unfold(state, |mut st| async move {
@@ -261,7 +420,10 @@ fn sse_response(
         }
         let inner = st.inner.as_mut()?;
         match tokio::time::timeout(st.idle, inner.next()).await {
-            Ok(Some(Ok(chunk))) => Some((Ok(Bytes::from(P1Event::Chunk(chunk).encode())), st)),
+            Ok(Some(Ok(chunk))) => {
+                st.guard.observe(&chunk);
+                Some((Ok(Bytes::from(P1Event::Chunk(chunk).encode())), st))
+            }
             Ok(None) => {
                 st.inner = None;
                 st.guard.finished = true;

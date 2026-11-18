@@ -872,7 +872,47 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Digest-only keys, roles, quota reservation and settlement, expiry, revocation, admin and account routes
 - Validation:
   - 401, 403, 429; parallel quota test; no key printed
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. Module `laris_server::access`, routes in `admin`. Keys: `lk_<id>_<secret>` (4 random bytes of
+  id, 24 of secret from `/dev/urandom`, Unix only like the container); the table is the generation-1 `keys` table, the
+  stored digest is `HMAC-SHA256` under a lookup key derived from the master secret with the generation-1 steps, so keys
+  made by generation 1 verify (checked against a digest computed by the generation-1 Python); a plain SHA-256 digest of
+  an older key is accepted once and rewritten keyed. No encrypted copy of a key is kept (`secret_enc` stays NULL): a
+  key is shown once, in the answer that creates it, and cannot be revealed later; a generation-1 `keys reveal` has no
+  counterpart. The master secret comes from `LARIS_SERVER__MASTER_FILE` (a Docker secret) or `LARIS_SERVER__MASTER`,
+  at least 16 characters, never in the database, `Debug` or an error. Roles are generation 1's (`user`, `readonly`,
+  `auditor`, `admin`) as defaults in code, replaced by `LARIS_SERVER__ROLES` (JSON); privileged permissions
+  (`usage.read`, `reasoning.read`, `keys.manage`) go to privileged roles only. Order of checks on every route: 426,
+  then the key (401: missing, wrong scheme, unknown id, wrong secret, revoked, expired and a forbidden address answer
+  with the same body; the same digests are computed whether or not the id exists), then the permission (403), then the
+  body rules, then the reservation (429). Address rules (`allowed_ips`, CIDR or `@server` = loopback plus
+  `LARIS_SERVER__SERVER_IPS`) use the client address of T141's trusted-proxy logic. Quota: `access::reserve` is one
+  `UPDATE` that adds to `tokens_reserved` only while `tokens_used + tokens_reserved + need <= token_limit` and the key
+  is not revoked or expired; `settle` writes the usage row and frees the reservation in one transaction; `release` frees
+  it; a reservation dropped without either is released in the background; chat is settled when its stream ends,
+  fails or the client leaves (what was produced is charged: the model's own `usage` when a chunk carries it, else the
+  prompt estimate plus visible characters over `LARIS_SERVER__CHARS_PER_TOKEN`, default 4); a model failure before the
+  stream, or a refused embed, charges nothing. Routes: `GET /v1/laris/account` (role, permissions, limit, used, left),
+  `GET /v1/admin/usage` (`usage.read`), `GET` and `POST /v1/admin/keys`, `POST /v1/admin/keys/{id}/revoke` and
+  `/limit` (set, add, lift) (`keys.manage`); the listings never hold a digest or key text. First start: `main` makes
+  the built-in admin key (every permission, no limit, `@server` only) when none exists and writes it to
+  `LARIS_SERVER__FIRST_ADMIN_FILE` (0600), refusing to start without that variable until a key exists; the text is not
+  printed. `main` now connects storage, runs the retention task and builds the access layer; `AppState::open` (no keys)
+  exists for the T141 HTTP tests only. Tests: `tests/access.rs` 14 against PostgreSQL 16 (digest-only storage and
+  master separation; generation-1 keyed and plain digests; expiry and revocation; six kinds of invalid key give one
+  401 body; 403 by role and extras; 429 and nothing charged; 40 parallel reservations of 10 against a limit of 95
+  give exactly 9; 16 parallel HTTP chats against a quota for 4 give 4 and 12 429s; model down releases, a client that
+  leaves is charged for what it was sent, embed settles with reported usage; account; the admin life of a key with
+  400, 404 and 405; address rules; no key text in answers, access log or `Debug`; settings), 8 unit tests, the 21 T141
+  API tests unchanged. Without `LARIS_TEST_PG_DSN` the PostgreSQL tests pass without proving anything (see T142).
+  Dependencies: `hmac` 0.12 and `sha2` 0.10 (approved, already vendored). Limits: no key-lookup cache (every request
+  reads the database; the generation-1 TTL cache is not rebuilt, so a revocation applies at once); the reservation is
+  the prompt estimate only, so one request can pass a limit by what the answer adds beyond it (the ADR-018 rule: one
+  request may overshoot); `@server` does not discover the machine's own addresses (list them in
+  `LARIS_SERVER__SERVER_IPS`); reasoning routes and `/v1/models`, workflows and help come with their tasks (T144 and
+  later); the Python model service is not involved yet. `cargo fmt --check`, `clippy -D warnings`, `cargo test`
+  (470 tests with PostgreSQL), `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and
+  `xtask spec` pass.
 
 ### T144 — Model proxy and the LLM rung
 - Requirements: SR-S6, SR-M1, SR-S9
