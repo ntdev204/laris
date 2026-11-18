@@ -512,7 +512,39 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Redaction before P1; untrusted data handling; policy refusal of injected command requests
 - Validation:
   - Security tests: secrets in output, injected document, hostile hook output
-- Status: pending
+- Status: done
+- Note: Built in `laris-policy` (no new crate or dependency; `laris-protocol` became a normal dependency of it).
+  `Redactor` hides private key blocks (also cut short), AWS, GitHub, GitLab, OpenAI/Anthropic-style, Slack, Google,
+  Stripe keys, JWTs, bearer headers, passwords in URLs and `secret = value` assignments (name kept, value masked as
+  `[REDACTED]`), plus the exact values of secrets held in the environment (`from_process_env`, names with `KEY`,
+  `TOKEN`, `SECRET`, `PASSWORD`, ...; eight characters or more). It is applied where text is kept or leaves: to what
+  `Write`, `Edit` and `save_memory` persist (`Redactor::for_tools`), to every tool result before the loop logs it
+  (`ShieldedRunner`, so the event log never holds the secret), and to the whole conversation and the note just before
+  a request goes to the model service (`RedactingModel`; the loop's own conversation and its digest are unchanged,
+  and a message that cannot be redacted is not sent). `Shield` is the injection defence: a result marked
+  `untrusted` (local tools, remote tools) is remembered and searched for text that gives orders (ignore earlier
+  instructions, new instructions, speaking as the system, role markers, run the following command, hide this from the
+  user, reveal secrets, download into a shell; English and Vietnamese); such a result gets an `injection_warning`.
+  After that alarm a call is refused as `injected_request`, whatever the rules, mode or saved approvals allow, when
+  it repeats a command, address or path from untrusted content that the user did not write (`Shield::user_says`), or
+  when a Bash command reaches beyond the project (download piped into a shell, `sudo`, `~/.ssh` and other key
+  stores, `.env`, upload to an address, `rm` of `/` or `~`, edits to the sandbox or rules). What the user typed
+  authorises; with no alarm the shield does nothing and the permission rules stay in charge. `PolicyGate::with_shield`
+  puts it ahead of hooks and questions. Hook output (`HookedRunner::with_shield`) is redacted, watched for orders and
+  carries a warning line. Tests (18): redact 9 (shapes, names kept, ordinary text untouched, idempotent, literal and
+  environment secrets, JSON, secret in `Read` and `Bash` output and in an error, what `Write` persists, the request
+  that leaves); shield 9 (clean session untouched, injected README flagged and its command refused even with
+  `Bash(*)` allowed, user's own words authorised, escapes refused after an alarm, no alarm no refusal, secret and
+  injection in one file, address argument, hostile remote tool, hostile hook output). These are the tests for
+  SEC-INJ-01 to SEC-INJ-03 of the threat model; T154 collects them. Limits: a filter and a text rule, not a proof; a
+  secret in a shape nobody listed passes, a hostile document that matches no pattern and whose words the model does
+  not repeat is not caught, and the assignment rule also masks harmless values such as `password: required`;
+  nothing wires the shield, `RedactingModel` or `user_says` into a running session yet (the client tasks); the
+  escape patterns are for Bash and the address rule covers arguments that look like a URL or path. Found, not
+  fixed (T133): `tests/hooks.rs` is flaky on the baseline too (one of `control_characters_cannot_reach_the_terminal`,
+  `a_json_decision_blocks`, `output_that_is_not_utf8_is_a_warning_not_a_crash` fails in about one run in three with
+  `getcwd: cannot access parent directories`). `cargo fmt --check`, `clippy -D warnings`, `cargo test` (except that
+  flake), `cargo deny check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
 
 ### T137 — Evidence gate
 - Requirements: SR-H7
