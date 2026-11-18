@@ -72,7 +72,13 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - `docs/architecture/THREAT_MODEL.md` (spec section 9) with controls and test ids
 - Validation:
   - Every threat maps to a control and a test id
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `docs/architecture/THREAT_MODEL.md` (DRAFT 0.1.0) lists 9 assets, 8 attackers, the trust
+  boundaries and 30 threats (TM-01 to TM-30); each row has a control, requirement, owning task and a unique test id
+  `SEC-<area>-<nn>`. Checked by script: every requirement and task id cited exists, ids and test ids are unique.
+  `validate_docs.py` and `cargo xtask spec` pass. The controls and tests are PLANNED: the owning tasks (T127-T149,
+  T153, T159, T164, T168) create them and T154 collects them; only `SEC-SUP-01` is partly exercised today (`cargo deny`
+  and the guard, T121). Residual risks are listed in the document. No code changed; model unchanged, NOT QUALIFIED.
 
 ## Phase 27 — Protocol and shared libraries
 
