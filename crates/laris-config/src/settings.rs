@@ -242,6 +242,111 @@ impl Default for Context {
     }
 }
 
+/// When the agent makes a visible plan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum PlanMode {
+    /// No plan, and `update_plan` is not offered.
+    Off,
+    /// A plan for requests of at least `minRequestWords` words.
+    #[default]
+    Auto,
+    /// A plan for every request.
+    Always,
+}
+
+/// Agentic planning: a visible, tracked plan for goals that take several steps.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct PlanSettings {
+    /// When a plan is made.
+    pub mode: PlanMode,
+    /// `auto`: requests with at least this many words count as multi-step.
+    #[schemars(range(min = 1))]
+    pub min_request_words: u32,
+    /// Most steps in a plan.
+    #[schemars(range(min = 1, max = 30))]
+    pub max_steps: u32,
+    /// Longest text of a step, in characters.
+    #[schemars(range(min = 20))]
+    pub step_chars: u32,
+}
+
+impl Default for PlanSettings {
+    fn default() -> Self {
+        Self {
+            mode: PlanMode::Auto,
+            min_request_words: 12,
+            max_steps: 12,
+            step_chars: 240,
+        }
+    }
+}
+
+/// After each tool result the loop checks progress; a failed or empty step allows a bounded replan, and a goal
+/// closes only when its plan is done.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Reflect {
+    /// Check progress and completion.
+    pub enabled: bool,
+    /// Replans allowed in one turn.
+    #[schemars(range(max = 5))]
+    pub max_replans: u32,
+    /// Times a goal with open steps is sent back to the model before it is reported open.
+    #[schemars(range(max = 3))]
+    pub completion_retries: u32,
+    /// Error codes no change of approach can fix: the loop says so once instead of asking for a replan.
+    pub permanent_errors: Vec<String>,
+    /// Result keys whose empty value means the step found nothing.
+    pub empty_keys: Vec<String>,
+}
+
+impl Default for Reflect {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_replans: 2,
+            completion_retries: 2,
+            permanent_errors: vec!["no_documents".to_owned()],
+            empty_keys: ["hits", "passages", "results", "matches", "items"]
+                .map(str::to_owned)
+                .to_vec(),
+        }
+    }
+}
+
+/// Limits of the agent loop.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Agent {
+    /// Model calls in one turn (the orchestration specification caps it at 10).
+    #[schemars(range(min = 1, max = 10))]
+    pub max_steps: u32,
+    /// Longest time of one turn, in seconds.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub time_budget_seconds: f64,
+    /// Tool calls run in one model step; more are refused.
+    #[schemars(range(min = 1, max = 16))]
+    pub max_tool_calls_per_step: u32,
+    /// Planning.
+    pub plan: PlanSettings,
+    /// Reflection and completion check.
+    pub reflect: Reflect,
+}
+
+impl Default for Agent {
+    fn default() -> Self {
+        Self {
+            max_steps: 10,
+            time_budget_seconds: 180.0,
+            max_tool_calls_per_step: 4,
+            plan: PlanSettings::default(),
+            reflect: Reflect::default(),
+        }
+    }
+}
+
 /// Vault recording.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
@@ -295,6 +400,8 @@ pub struct Settings {
     pub sandbox: Sandbox,
     /// Context window.
     pub context: Context,
+    /// Agent loop limits.
+    pub agent: Agent,
     /// Vault recording.
     pub vault: Vault,
     /// Learning data.
@@ -320,6 +427,7 @@ impl Default for Settings {
             status_line: None,
             sandbox: Sandbox::default(),
             context: Context::default(),
+            agent: Agent::default(),
             vault: Vault::default(),
             learning: Learning::default(),
             extra_instructions: String::new(),

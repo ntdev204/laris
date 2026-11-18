@@ -1,7 +1,7 @@
 //! Replay: fold a log again with a model in place of the real one and compare the outputs byte for byte.
 
 use crate::error::CoreError;
-use crate::model::Model;
+use crate::model::{Model, ModelRequest};
 use crate::record::{Record, decode_record, encode_record};
 use crate::session::Session;
 use laris_protocol::Event;
@@ -60,12 +60,15 @@ pub fn replay(
             return Err(CoreError::MissingOutputs { seq: stored.seq });
         }
         if let (Record::ModelAnswer { answer, .. }, Some(model)) = (&record, model.as_deref_mut()) {
-            let given = model
-                .answer(session.messages())
-                .map_err(|source| CoreError::Model {
-                    seq: stored.seq,
-                    source,
-                })?;
+            let request = ModelRequest {
+                messages: session.messages(),
+                note: session.asked_note(),
+                tools: &[],
+            };
+            let given = model.answer(&request).map_err(|source| CoreError::Model {
+                seq: stored.seq,
+                source,
+            })?;
             if &given != answer {
                 return Err(CoreError::Diverged {
                     seq: stored.seq,

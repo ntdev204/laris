@@ -1,7 +1,8 @@
 //! The event log: byte-identical replay with a scripted model, refusal of divergence, resume after a killed process.
 
 use laris_core::{
-    CoreError, Model, ModelAnswer, ModelError, Pending, Record, Recorder, ScriptedModel, replay,
+    Action, CoreError, Model, ModelAnswer, ModelError, ModelRequest, Pending, Record, Recorder,
+    ScriptedModel, replay,
 };
 use laris_protocol::{ChatMessage, Command, Event, ToolCall, ToolCallFunction};
 use laris_store::{DEFAULT_BUSY_TIMEOUT, Store, StoredEvent};
@@ -57,15 +58,53 @@ fn answer(rec: &Recorder, text: &str, calls: Vec<ToolCall>) -> Record {
     }
 }
 
-/// One turn with a tool call, as the loop will drive it.
+fn decide(rec: &mut Recorder, action: Action, now: f64) {
+    rec.record(Record::Decision { action }, now)
+        .expect("decision");
+}
+
+fn ask(rec: &mut Recorder, now: f64) {
+    decide(rec, Action::AskModel { note: None }, now);
+}
+
+fn close_step(rec: &mut Recorder, now: f64) {
+    decide(
+        rec,
+        Action::Reflect {
+            marks: Vec::new(),
+            notices: Vec::new(),
+        },
+        now,
+    );
+}
+
+fn finish(rec: &mut Recorder, now: f64) {
+    decide(
+        rec,
+        Action::Finish {
+            warning: String::new(),
+        },
+        now,
+    );
+}
+
+/// One turn with a tool call, as the loop drives it: 9 inputs and 5 outputs.
 fn tool_turn(rec: &mut Recorder, n: usize, now: f64) {
     rec.record(user(&format!("question {n}")), now)
         .expect("user");
+    ask(rec, now);
     let a = answer(rec, "looking", vec![call("read", r#"{"path":"notes.md"}"#)]);
     rec.record(a, now).expect("answer");
     let Pending::Tools(open) = rec.session().pending().clone() else {
         panic!("tool calls expected");
     };
+    decide(
+        rec,
+        Action::RunTool {
+            id: open[0].clone(),
+        },
+        now,
+    );
     rec.record(
         Record::ToolOutcome {
             id: open[0].clone(),
@@ -75,8 +114,11 @@ fn tool_turn(rec: &mut Recorder, n: usize, now: f64) {
         now,
     )
     .expect("tool");
+    close_step(rec, now);
+    ask(rec, now);
     let a = answer(rec, &format!("answer {n} — ok"), Vec::new());
     rec.record(a, now).expect("final");
+    finish(rec, now);
 }
 
 fn stored(store: &Store, id: &str) -> Vec<StoredEvent> {
@@ -101,7 +143,7 @@ fn replay_with_a_scripted_model_is_byte_identical() {
         tool_turn(&mut rec, n, 1.0 + n as f64);
     }
     let events = stored(rec.store(), "s1");
-    assert_eq!(events.len(), 3 * 9);
+    assert_eq!(events.len(), 3 * 14);
     let mut model = ScriptedModel::from_records(
         events
             .iter()
@@ -145,7 +187,11 @@ fn replay_refuses_a_changed_conversation_or_output() {
         extra: Map::new(),
     }];
     assert!(matches!(
-        script.answer(&other),
+        script.answer(&ModelRequest {
+            messages: &other,
+            note: None,
+            tools: &[]
+        }),
         Err(ModelError::RequestDiverged { .. })
     ));
 
@@ -237,19 +283,19 @@ fn a_log_cut_between_an_input_and_its_outputs_is_repaired_on_open() {
     // The same run, but the process dies after each input before its outputs: write the inputs only.
     let store = open_store(&dir);
     store.create_session("s1", "t", 1.0).expect("session");
-    // Cut after the first output of the model answer: the `tool_call` output is lost.
-    for e in reference.iter().take_while(|e| e.seq <= 3) {
+    // Cut after the decision to run the tool: its `tool_call` output is lost.
+    for e in reference.iter().take_while(|e| e.seq <= 5) {
         store
             .append_event("s1", &e.kind, 1.0, &e.data)
             .expect("append");
     }
-    assert_eq!(reference[1].kind, "model_answer");
-    assert_eq!(reference[3].kind, "event");
+    assert_eq!(reference[4].kind, "decision");
+    assert_eq!(reference[5].kind, "event");
     let cut = stored(&store, "s1");
-    assert_eq!(cut.len(), 3); // user, model answer, one output (the text); tool_call output is missing
+    assert_eq!(cut.len(), 5); // user, ask, answer, its text, run_tool; the tool_call output is missing
 
     let (mut rec, resumed) = Recorder::open(store, "s1", "t", 9.0).expect("resume");
-    assert_eq!(resumed.events, 3);
+    assert_eq!(resumed.events, 5);
     assert_eq!(resumed.repaired, 1);
     // Continue the same run: the log now equals the clean one, byte for byte.
     let Pending::Tools(open) = rec.session().pending().clone() else {
@@ -264,8 +310,11 @@ fn a_log_cut_between_an_input_and_its_outputs_is_repaired_on_open() {
         1.0,
     )
     .expect("tool");
+    close_step(&mut rec, 1.0);
+    ask(&mut rec, 1.0);
     let a = answer(&rec, "answer 1 — ok", Vec::new());
     rec.record(a, 1.0).expect("final");
+    finish(&mut rec, 1.0);
     let resumed_log: Vec<(String, String)> = stored(rec.store(), "s1")
         .into_iter()
         .map(|e| (e.kind, e.data))
@@ -290,6 +339,7 @@ fn child_writer() {
                 rec.record(user(&format!("question {n}")), now)
                     .expect("user");
             }
+            Pending::Model if rec.session().asked().is_none() => ask(&mut rec, now),
             Pending::Model => {
                 let last_is_tool = rec
                     .session()
@@ -310,6 +360,15 @@ fn child_writer() {
                 };
                 rec.record(a, now).expect("answer");
             }
+            Pending::Tools(open) if !rec.session().turn().is_cleared(&open[0]) => {
+                decide(
+                    &mut rec,
+                    Action::RunTool {
+                        id: open[0].clone(),
+                    },
+                    now,
+                );
+            }
             Pending::Tools(open) => {
                 rec.record(
                     Record::ToolOutcome {
@@ -321,6 +380,8 @@ fn child_writer() {
                 )
                 .expect("tool");
             }
+            Pending::Reflect => close_step(&mut rec, now),
+            Pending::Check => finish(&mut rec, now),
         }
         println!("step {step}");
     }

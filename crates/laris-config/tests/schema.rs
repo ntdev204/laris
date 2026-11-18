@@ -143,6 +143,23 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
     assert_eq!(
         added,
         [
+            "agent",
+            "agent.maxSteps",
+            "agent.maxToolCallsPerStep",
+            "agent.plan",
+            "agent.plan.maxSteps",
+            "agent.plan.minRequestWords",
+            "agent.plan.mode",
+            "agent.plan.stepChars",
+            "agent.reflect",
+            "agent.reflect.completionRetries",
+            "agent.reflect.emptyKeys",
+            "agent.reflect.emptyKeys[]",
+            "agent.reflect.enabled",
+            "agent.reflect.maxReplans",
+            "agent.reflect.permanentErrors",
+            "agent.reflect.permanentErrors[]",
+            "agent.timeBudgetSeconds",
             "server.caCertificateFile",
             "server.idleTimeoutSeconds",
             "server.maxResponseBytes",
@@ -151,6 +168,6 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
             "server.retryBackoffSeconds",
             "ui.language",
         ],
-        "settings added since generation 1 (server.* from T128)"
+        "settings added since generation 1 (server.* from T128, agent.* from T131)"
     );
 }

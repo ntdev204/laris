@@ -24,5 +24,32 @@
       "write_failed": "cannot write the file: {detail}"
     },
     "root": "(root)"
+  },
+  "plan": {
+    "header": "[Current plan - internal, do not quote verbatim]",
+    "required": "This goal needs several steps. Before calling any other tool, call update_plan with short steps (initial status pending), then update their status (in_progress, done, failed, skipped) as you work.",
+    "resumed": "The plan from the previous turn still has open steps. If the new request has the same goal, continue those steps and do not repeat steps that are done. If the goal is different, call update_plan with a new plan.",
+    "auto_step": "Call tool {tool}",
+    "incomplete": "The plan still has open steps: {open}. Finish them, or update their status (done, skipped, failed) with a reason through update_plan, or say clearly which part could not be done.",
+    "incomplete_warning": "Not complete: {open}.",
+    "invalid": "Invalid plan: {reason}."
+  },
+  "reflect": {
+    "step_failed": "The last step did not get anywhere: {issues}. {left} replans left. Change approach (other keywords, another tool, another source) and update the plan through update_plan, or conclude clearly that no evidence was found.",
+    "permanent": "{issues}. Other keywords or tools cannot help. Do not call that tool again. Answer directly and say clearly that there is no data to answer from, with how to fix it (for example ingest documents).",
+    "budget_out": "The replans are used up. Do not retry the same way. Answer with what you have and say clearly what is missing and why.",
+    "empty": "{tool} returned nothing",
+    "error": "{tool} failed with {code}"
+  },
+  "loop": {
+    "tool_not_allowed": "This tool is not allowed in the active workflow.",
+    "too_many_calls": "Too many calls in one step.",
+    "cyclic_call": "The same call was repeated.",
+    "approval_denied": "This action was not approved.",
+    "cyclic": "Stopped: the same tool call was repeated.",
+    "max_steps": "Stopped: the allowed steps ran out before a final answer. Say whether to continue.",
+    "timeout": "Stopped: the time for one turn ran out.",
+    "provider_error": "The model API could not be reached. Check the model server and try again.",
+    "interrupted": "The call was cut off before its result was recorded; it may or may not have run."
   }
 }

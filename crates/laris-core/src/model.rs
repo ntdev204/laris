@@ -1,7 +1,7 @@
 //! The model as the loop sees it, and the scripted model used for replay and tests.
 
 use crate::record::{ModelAnswer, Record};
-use laris_protocol::ChatMessage;
+use laris_protocol::{ChatMessage, ToolSchema};
 use sha2::{Digest, Sha256};
 use std::collections::VecDeque;
 
@@ -24,11 +24,33 @@ pub enum ModelError {
     Failed(String),
 }
 
-/// Anything that answers a conversation. The loop reaches a model only through this; the P1 client and the scripted
-/// model are its implementations.
+/// What the model is asked.
+#[derive(Clone, Copy, Debug)]
+pub struct ModelRequest<'a> {
+    /// The conversation. The answer is bound to its digest.
+    pub messages: &'a [ChatMessage],
+    /// A note for this call only (the current plan); not part of the conversation.
+    pub note: Option<&'a str>,
+    /// The tools offered.
+    pub tools: &'a [ToolSchema],
+}
+
+/// What a [`ScriptedModel`] was asked, kept so a test can see what the model saw.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Seen {
+    /// The conversation.
+    pub messages: Vec<ChatMessage>,
+    /// The note.
+    pub note: Option<String>,
+    /// Names of the tools offered.
+    pub tools: Vec<String>,
+}
+
+/// Anything that answers a conversation. The loop reaches a model only through this, and only after a decided
+/// action; the P1 client and the scripted model are its implementations.
 pub trait Model {
-    /// The answer to `messages`.
-    fn answer(&mut self, messages: &[ChatMessage]) -> Result<ModelAnswer, ModelError>;
+    /// The answer to `request`.
+    fn answer(&mut self, request: &ModelRequest<'_>) -> Result<ModelAnswer, ModelError>;
 }
 
 /// SHA-256 (hex) of a conversation as serialised for the wire.
@@ -44,6 +66,7 @@ pub fn digest_of(messages: &[ChatMessage]) -> String {
 #[derive(Clone, Debug, Default)]
 pub struct ScriptedModel {
     script: VecDeque<(Option<String>, ModelAnswer)>,
+    seen: Vec<Seen>,
 }
 
 impl ScriptedModel {
@@ -51,6 +74,7 @@ impl ScriptedModel {
     pub fn new(answers: impl IntoIterator<Item = ModelAnswer>) -> Self {
         Self {
             script: answers.into_iter().map(|a| (None, a)).collect(),
+            seen: Vec::new(),
         }
     }
 
@@ -67,7 +91,15 @@ impl ScriptedModel {
                 _ => None,
             })
             .collect();
-        Self { script }
+        Self {
+            script,
+            seen: Vec::new(),
+        }
+    }
+
+    /// Every request so far, oldest first.
+    pub fn seen(&self) -> &[Seen] {
+        &self.seen
     }
 
     /// Answers still in the script.
@@ -77,10 +109,19 @@ impl ScriptedModel {
 }
 
 impl Model for ScriptedModel {
-    fn answer(&mut self, messages: &[ChatMessage]) -> Result<ModelAnswer, ModelError> {
+    fn answer(&mut self, request: &ModelRequest<'_>) -> Result<ModelAnswer, ModelError> {
+        self.seen.push(Seen {
+            messages: request.messages.to_vec(),
+            note: request.note.map(str::to_owned),
+            tools: request
+                .tools
+                .iter()
+                .map(|t| t.function.name.clone())
+                .collect(),
+        });
         let (digest, answer) = self.script.pop_front().ok_or(ModelError::Exhausted)?;
         if let Some(expected) = digest {
-            let found = digest_of(messages);
+            let found = digest_of(request.messages);
             if expected != found {
                 return Err(ModelError::RequestDiverged { expected, found });
             }
