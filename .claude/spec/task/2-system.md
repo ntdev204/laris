@@ -541,7 +541,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   (nothing copied from codex's 25k) plus `winargs.rs` (helper arguments, MSVC command-line quoting, capability SID: text,
   unit-tested on Linux). Policies it cannot enforce are refused (hidden or limited reads, network off: the policy must allow
   the network on Windows). `laris-sandbox` now sets its own lints (`unsafe_code = deny`, not the workspace `forbid`) and only
-  `windows.rs` allows `unsafe`: **owner to confirm**. `windows-sys` 0.61 features added to the crate only. Verified: `cargo
+  `windows.rs` allows `unsafe`: confirmed by the owner 2026-11-18. `windows-sys` 0.61 features added to the crate only. Verified: `cargo
   check` and `clippy -D warnings --all-targets` for `x86_64-pc-windows-msvc` (target added with `rustup target add`), 4
   Linux unit tests for the text parts and the command shape. **Not verified: it has never run on Windows**; `tests/windows.rs`
   (write inside/outside, `.git` read-only, exit code, refusals) is written for the owner to run there (`cargo test -p

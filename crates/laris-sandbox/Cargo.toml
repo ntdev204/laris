@@ -35,7 +35,7 @@ windows-sys = { version = "0.61", features = [
 ] }
 
 # The workspace forbids `unsafe`. The Windows backend calls raw Win32 and cannot avoid it, so this crate (alone) denies
-# it instead and `src/windows.rs` is the one module that allows it (T135; owner to confirm).
+# it instead and `src/windows.rs` is the one module that allows it (T135; confirmed by the owner 2026-11-18).
 [lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"
