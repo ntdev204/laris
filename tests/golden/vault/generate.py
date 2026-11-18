@@ -7,13 +7,18 @@ is what generation 1's `yaml.safe_load` gives for each snippet of `YAML_CASES`. 
 reproduce both. This script only reads the fixture and writes the two JSON files; it runs no model code.
 """
 
+import datetime
 import json
+import re
 from pathlib import Path
 
 import yaml
 
 from laris.shared.vault.index import VaultIndex
+from laris.shared.vault.lint import lint_content, lint_format, lint_hierarchy
 from laris.shared.vault.notes import _encode, note_to_dict
+from laris.shared.vault.schema import Schema, lint_schema
+from laris.shared.vault.writer import render_note, upsert_block, safe_title
 
 HERE = Path(__file__).parent
 
@@ -100,6 +105,65 @@ YAML_CASES = [
 ]
 
 
+D = datetime.date
+DT = datetime.datetime
+
+WRITER_PROPS = [
+    {},
+    {"type": "source", "trust": "untrusted", "created": D(2026, 11, 18), "source": "paper.pdf"},
+    {"type": "answer", "sources": ["[[Paper (source)]]", "[[Other]]"], "session": "[[sess-0001]]"},
+    {"a": "true", "b": "null", "c": "123", "d": "1.5", "e": "2026-01-02", "f": "yes", "g": "~", "h": ""},
+    {"a": True, "b": False, "c": None, "d": 0, "e": -7, "f": 3.5, "g": 1e20, "h": 1e-5, "i": 0.1, "j": 100.0},
+    {"when": DT(2026, 11, 18, 10, 30, 0), "tz": DT(2026, 11, 18, 10, 30, 0, tzinfo=datetime.timezone.utc)},
+    {"a": "x: y", "b": "x #y", "c": "#x", "d": "- x", "e": "-x", "f": "? x", "g": "a, b", "h": "[x]"},
+    {"a": " lead", "b": "trail ", "c": "two  spaces", "d": "it's", "e": 'say "hi"', "f": "100%", "g": "@at"},
+    {"a": "line one\nline two", "b": "a\n\nb", "c": "trail\n", "d": "\nlead", "e": "a \nb", "f": "a\n b"},
+    {"a": "tab\there", "b": "bell\x07", "c": "nul\x00", "d": "quote's\ttab"},
+    {"vi": "Tiếng Việt", "emoji": "🙂 ok", "mixed": "Ghi chú: một", "cjk": "漢字"},
+    {"empty": [], "one": ["x"], "many": ["a b", "true", "1", "", "- x", "[[Note]]", "x: y"]},
+    {"---": 1, "<<": 2, "=": 3, "a b": 4, "yes": 5, "1": 6, "x-y_z": 7, "é": 8},
+    {"long": "word " * 100, "n": "9" * 30, "hex": "0x1F", "oct": "0755", "sex": "1:30", "inf": ".inf", "nan": ".nan"},
+    {"dash": "-", "dots": "...", "ddd": "--- x", "colon": ":", "q": "?", "star": "*a", "amp": "&a", "bang": "!a"},
+]
+
+BLOCK_STEPS = [
+    ("# Title\n\nmine\n", "facts", "one"),
+    ("", "facts", "one"),
+    ("\n\n", "facts", "one\n"),
+    ("text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end a -->\n", "a", "y"),
+    ("text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end b -->\n", "a", "y"),
+]
+
+
+def block_cases():
+    out = []
+    for text, name, content in BLOCK_STEPS:
+        new, status = upsert_block(text, name, content)
+        again, status2 = upsert_block(new, name, content)
+        changed, status3 = upsert_block(new, name, content + " more")
+        out.append({"text": text, "name": name, "content": content, "new": new, "status": status,
+                    "again": again, "status2": status2, "changed": changed, "status3": status3})
+    return out
+
+
+def lint_cases():
+    index = VaultIndex.build(HERE / "fixture")
+    brain = VaultIndex.build(HERE / "brain")
+    redact = lambda text: (re.sub(r"[A-Za-z]+\[\[", "<secret>[[", text),)  # noqa: E731
+    problems = lambda ps: [[p.path, p.code, p.message] for p in ps]  # noqa: E731
+    return {
+        "format": problems(lint_format(index)),
+        "schema": problems(lint_schema(index, Schema.builtin())),
+        "content": problems(lint_content(index, 120, 25, redact)),
+        "content_plain": problems(lint_content(index, 120, 25)),
+        "hierarchy": problems(
+            lint_hierarchy(brain, "Root", 2, 2, ["summary", "level"], 60, ["requires", "uses"])
+        ),
+        "hierarchy_no_root": problems(lint_hierarchy(brain, "Missing", 2, 2, [], 60)),
+        "brain_format": problems(lint_format(brain)),
+    }
+
+
 def main() -> None:
     index = VaultIndex.build(HERE / "fixture")
     export = {
@@ -126,7 +190,21 @@ def main() -> None:
             cases.append({"yaml": source, "error": True, "crash": type(exc).__name__})
     text = json.dumps(cases, sort_keys=True, ensure_ascii=False, indent=2) + "\n"
     (HERE / "yaml_cases.json").write_text(text, encoding="utf-8")
-    print(f"{len(index.notes)} notes, {len(cases)} yaml cases")
+
+    writer = [
+        {"props": [[k, _encode(v)] for k, v in props.items()], "text": render_note(props, "Body text.")}
+        for props in WRITER_PROPS
+    ]
+    titles = ["a/b:c", "  x.  ", "", "..", "x" * 150, "Tiếng #Việt|x", "tab\there", "a\n b"]
+    out = {
+        "render": writer,
+        "blocks": block_cases(),
+        "titles": [[t, safe_title(t)] for t in titles],
+        "lint": lint_cases(),
+    }
+    text = json.dumps(out, sort_keys=True, ensure_ascii=False, indent=2) + "\n"
+    (HERE / "writer_lint.json").write_text(text, encoding="utf-8")
+    print(f"{len(index.notes)} notes, {len(cases)} yaml cases, {len(writer)} writer cases")
 
 
 if __name__ == "__main__":

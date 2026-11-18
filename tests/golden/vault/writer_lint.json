@@ -1,0 +1,897 @@
+{
+  "blocks": [
+    {
+      "again": "# Title\n\nmine\n\n<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "changed": "# Title\n\nmine\n\n<!-- laris:begin facts sha=58094382d8457966 -->\none more\n<!-- laris:end facts -->\n",
+      "content": "one",
+      "name": "facts",
+      "new": "# Title\n\nmine\n\n<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "status": "created",
+      "status2": "unchanged",
+      "status3": "updated",
+      "text": "# Title\n\nmine\n"
+    },
+    {
+      "again": "<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "changed": "<!-- laris:begin facts sha=58094382d8457966 -->\none more\n<!-- laris:end facts -->\n",
+      "content": "one",
+      "name": "facts",
+      "new": "<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "status": "created",
+      "status2": "unchanged",
+      "status3": "updated",
+      "text": ""
+    },
+    {
+      "again": "<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "changed": "<!-- laris:begin facts sha=a0cf864966b76036 -->\none\n more\n<!-- laris:end facts -->\n",
+      "content": "one\n",
+      "name": "facts",
+      "new": "<!-- laris:begin facts sha=7692c3ad3540bb80 -->\none\n<!-- laris:end facts -->\n",
+      "status": "created",
+      "status2": "unchanged",
+      "status3": "updated",
+      "text": "\n\n"
+    },
+    {
+      "again": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end a -->\n",
+      "changed": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end a -->\n",
+      "content": "y",
+      "name": "a",
+      "new": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end a -->\n",
+      "status": "conflict",
+      "status2": "conflict",
+      "status3": "conflict",
+      "text": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end a -->\n"
+    },
+    {
+      "again": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end b -->\n\n<!-- laris:begin a sha=a1fce4363854ff88 -->\ny\n<!-- laris:end a -->\n",
+      "changed": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end b -->\n\n<!-- laris:begin a sha=a1fce4363854ff88 -->\ny\n<!-- laris:end a -->\n",
+      "content": "y",
+      "name": "a",
+      "new": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end b -->\n\n<!-- laris:begin a sha=a1fce4363854ff88 -->\ny\n<!-- laris:end a -->\n",
+      "status": "created",
+      "status2": "conflict",
+      "status3": "conflict",
+      "text": "text\n<!-- laris:begin a sha=0000000000000000 -->\nx\n<!-- laris:end b -->\n"
+    }
+  ],
+  "lint": {
+    "brain_format": [
+      [
+        "Gamma Hub.md",
+        "link",
+        "unresolved link: [[Nowhere]]"
+      ]
+    ],
+    "content": [
+      [
+        "Links/Forms.md",
+        "oversize",
+        "note is longer than 120 chars"
+      ],
+      [
+        "Links/Forms.md",
+        "oversize",
+        "property children is very long"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "note is longer than 120 chars"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "property tags is very long"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "property related is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property offset is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property tags is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property block_list is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property flow_map is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property nested is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property folded is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property wrapped is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property related is very long"
+      ]
+    ],
+    "content_plain": [
+      [
+        "Links/Forms.md",
+        "oversize",
+        "note is longer than 120 chars"
+      ],
+      [
+        "Links/Forms.md",
+        "oversize",
+        "property children is very long"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "note is longer than 120 chars"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "property tags is very long"
+      ],
+      [
+        "Notes/Alpha.md",
+        "oversize",
+        "property related is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property offset is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property tags is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property block_list is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property flow_map is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property nested is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property folded is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property wrapped is very long"
+      ],
+      [
+        "Props/Zoo.md",
+        "oversize",
+        "property related is very long"
+      ]
+    ],
+    "format": [
+      [
+        "Notes/Alpha.md",
+        "property-type",
+        "related is list here, str elsewhere"
+      ],
+      [
+        "Props/Anchors.md",
+        "properties",
+        "properties must not use YAML anchors or aliases"
+      ],
+      [
+        "Props/Bad Yaml.md",
+        "properties",
+        "properties are not valid YAML"
+      ],
+      [
+        "Props/Comment Only.md",
+        "properties",
+        "properties must be a mapping"
+      ],
+      [
+        "Props/Deep.md",
+        "properties",
+        "properties are nested too deeply"
+      ],
+      [
+        "Props/List Root.md",
+        "properties",
+        "properties must be a mapping"
+      ],
+      [
+        "Props/Zoo.md",
+        "property-nested",
+        "flow_map must not be nested"
+      ],
+      [
+        "Props/Zoo.md",
+        "property-nested",
+        "nested must not be nested"
+      ],
+      [
+        "Props/Zoo.md",
+        "property-type",
+        "related is list here, str elsewhere"
+      ],
+      [
+        "Props/Zoo.md",
+        "property-name",
+        "unsafe property name: éclair"
+      ],
+      [
+        "Links/Forms.md",
+        "link",
+        "unresolved link: [[Missing Child]]"
+      ],
+      [
+        "Links/Forms.md",
+        "link",
+        "unresolved link: [[diagram.png]]"
+      ],
+      [
+        "Links/Forms.md",
+        "link",
+        "unresolved link: [[guide]]"
+      ],
+      [
+        "Notes/Alpha.md",
+        "link",
+        "unresolved link: [[Missing Note]]"
+      ],
+      [
+        "Links/Forms.md",
+        "link",
+        "ambiguous link: [[Twin]]"
+      ],
+      [
+        "Notes/Alpha.md",
+        "link",
+        "ambiguous link: [[Twin]]"
+      ]
+    ],
+    "hierarchy": [
+      [
+        "Gamma Hub.md",
+        "property",
+        "missing property: summary"
+      ],
+      [
+        "Leaf Two.md",
+        "summary",
+        "summary is too long"
+      ],
+      [
+        "Leaf Two.md",
+        "parents",
+        "more than one parent lists this note"
+      ],
+      [
+        "Gamma Hub.md",
+        "relation",
+        "requires target missing: [[Nowhere]]"
+      ],
+      [
+        "Root.md",
+        "wide-hub",
+        "3 children (max 2)"
+      ],
+      [
+        "Root.md",
+        "hub-body",
+        "child [[Gamma Hub]] is not described in the body"
+      ],
+      [
+        "Deep Three.md",
+        "depth",
+        "depth 4 exceeds 2"
+      ],
+      [
+        "Deep Two.md",
+        "depth",
+        "depth 3 exceeds 2"
+      ],
+      [
+        "Gamma Hub.md",
+        "parent",
+        "parent does not match the listing hub"
+      ],
+      [
+        "Gamma Hub.md",
+        "level",
+        "level should be 1"
+      ],
+      [
+        "Leaf Two.md",
+        "parent",
+        "parent does not match the listing hub"
+      ],
+      [
+        "Stray.md",
+        "orphan",
+        "not reachable from the root through children"
+      ]
+    ],
+    "hierarchy_no_root": [
+      [
+        "Missing",
+        "root",
+        "root note is missing"
+      ]
+    ],
+    "schema": [
+      [
+        "Code/Fenced.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Code/Fenced.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Links/Forms.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Links/Forms.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Notes/Alpha.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Notes/Alpha.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Notes/Beta.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Notes/Beta.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Notes/Gamma.md",
+        "schema-required",
+        "source needs property source"
+      ],
+      [
+        "Notes/Gamma.md",
+        "schema-required",
+        "source needs property created"
+      ],
+      [
+        "Notes/Gamma.md",
+        "schema-folder",
+        "source notes live in Sources/"
+      ],
+      [
+        "Notes/Only Properties.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Notes/Only Properties.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Props/Zoo.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Props/Zoo.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ],
+      [
+        "Windows.md",
+        "schema-required",
+        "concept needs property created"
+      ],
+      [
+        "Windows.md",
+        "schema-folder",
+        "concept notes live in Concepts/"
+      ]
+    ]
+  },
+  "render": [
+    {
+      "props": [],
+      "text": "---\n{}\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "type",
+          "source"
+        ],
+        [
+          "trust",
+          "untrusted"
+        ],
+        [
+          "created",
+          {
+            "__date__": "2026-11-18"
+          }
+        ],
+        [
+          "source",
+          "paper.pdf"
+        ]
+      ],
+      "text": "---\ntype: source\ntrust: untrusted\ncreated: 2026-11-18\nsource: paper.pdf\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "type",
+          "answer"
+        ],
+        [
+          "sources",
+          [
+            "[[Paper (source)]]",
+            "[[Other]]"
+          ]
+        ],
+        [
+          "session",
+          "[[sess-0001]]"
+        ]
+      ],
+      "text": "---\ntype: answer\nsources:\n- '[[Paper (source)]]'\n- '[[Other]]'\nsession: '[[sess-0001]]'\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          "true"
+        ],
+        [
+          "b",
+          "null"
+        ],
+        [
+          "c",
+          "123"
+        ],
+        [
+          "d",
+          "1.5"
+        ],
+        [
+          "e",
+          "2026-01-02"
+        ],
+        [
+          "f",
+          "yes"
+        ],
+        [
+          "g",
+          "~"
+        ],
+        [
+          "h",
+          ""
+        ]
+      ],
+      "text": "---\na: 'true'\nb: 'null'\nc: '123'\nd: '1.5'\ne: '2026-01-02'\nf: 'yes'\ng: '~'\nh: ''\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          true
+        ],
+        [
+          "b",
+          false
+        ],
+        [
+          "c",
+          null
+        ],
+        [
+          "d",
+          0
+        ],
+        [
+          "e",
+          -7
+        ],
+        [
+          "f",
+          3.5
+        ],
+        [
+          "g",
+          1e+20
+        ],
+        [
+          "h",
+          1e-05
+        ],
+        [
+          "i",
+          0.1
+        ],
+        [
+          "j",
+          100.0
+        ]
+      ],
+      "text": "---\na: true\nb: false\nc: null\nd: 0\ne: -7\nf: 3.5\ng: 1.0e+20\nh: 1.0e-05\ni: 0.1\nj: 100.0\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "when",
+          {
+            "__datetime__": "2026-11-18T10:30:00"
+          }
+        ],
+        [
+          "tz",
+          {
+            "__datetime__": "2026-11-18T10:30:00+00:00"
+          }
+        ]
+      ],
+      "text": "---\nwhen: 2026-11-18 10:30:00\ntz: 2026-11-18 10:30:00+00:00\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          "x: y"
+        ],
+        [
+          "b",
+          "x #y"
+        ],
+        [
+          "c",
+          "#x"
+        ],
+        [
+          "d",
+          "- x"
+        ],
+        [
+          "e",
+          "-x"
+        ],
+        [
+          "f",
+          "? x"
+        ],
+        [
+          "g",
+          "a, b"
+        ],
+        [
+          "h",
+          "[x]"
+        ]
+      ],
+      "text": "---\na: 'x: y'\nb: 'x #y'\nc: '#x'\nd: '- x'\ne: -x\nf: '? x'\ng: a, b\nh: '[x]'\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          " lead"
+        ],
+        [
+          "b",
+          "trail "
+        ],
+        [
+          "c",
+          "two  spaces"
+        ],
+        [
+          "d",
+          "it's"
+        ],
+        [
+          "e",
+          "say \"hi\""
+        ],
+        [
+          "f",
+          "100%"
+        ],
+        [
+          "g",
+          "@at"
+        ]
+      ],
+      "text": "---\na: ' lead'\nb: 'trail '\nc: two  spaces\nd: it's\ne: say \"hi\"\nf: 100%\ng: '@at'\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          "line one\nline two"
+        ],
+        [
+          "b",
+          "a\n\nb"
+        ],
+        [
+          "c",
+          "trail\n"
+        ],
+        [
+          "d",
+          "\nlead"
+        ],
+        [
+          "e",
+          "a \nb"
+        ],
+        [
+          "f",
+          "a\n b"
+        ]
+      ],
+      "text": "---\na: 'line one\n\n  line two'\nb: 'a\n\n\n  b'\nc: 'trail\n\n  '\nd: '\n\n  lead'\ne: \"a \\nb\"\nf: \"a\\n b\"\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "a",
+          "tab\there"
+        ],
+        [
+          "b",
+          "bell\u0007"
+        ],
+        [
+          "c",
+          "nul\u0000"
+        ],
+        [
+          "d",
+          "quote's\ttab"
+        ]
+      ],
+      "text": "---\na: \"tab\\there\"\nb: \"bell\\a\"\nc: \"nul\\0\"\nd: \"quote's\\ttab\"\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "vi",
+          "Tiếng Việt"
+        ],
+        [
+          "emoji",
+          "🙂 ok"
+        ],
+        [
+          "mixed",
+          "Ghi chú: một"
+        ],
+        [
+          "cjk",
+          "漢字"
+        ]
+      ],
+      "text": "---\nvi: Tiếng Việt\nemoji: 🙂 ok\nmixed: 'Ghi chú: một'\ncjk: 漢字\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "empty",
+          []
+        ],
+        [
+          "one",
+          [
+            "x"
+          ]
+        ],
+        [
+          "many",
+          [
+            "a b",
+            "true",
+            "1",
+            "",
+            "- x",
+            "[[Note]]",
+            "x: y"
+          ]
+        ]
+      ],
+      "text": "---\nempty: []\none:\n- x\nmany:\n- a b\n- 'true'\n- '1'\n- ''\n- '- x'\n- '[[Note]]'\n- 'x: y'\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "---",
+          1
+        ],
+        [
+          "<<",
+          2
+        ],
+        [
+          "=",
+          3
+        ],
+        [
+          "a b",
+          4
+        ],
+        [
+          "yes",
+          5
+        ],
+        [
+          "1",
+          6
+        ],
+        [
+          "x-y_z",
+          7
+        ],
+        [
+          "é",
+          8
+        ]
+      ],
+      "text": "---\n'---': 1\n'<<': 2\n'=': 3\na b: 4\n'yes': 5\n'1': 6\nx-y_z: 7\né: 8\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "long",
+          "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+        ],
+        [
+          "n",
+          "999999999999999999999999999999"
+        ],
+        [
+          "hex",
+          "0x1F"
+        ],
+        [
+          "oct",
+          "0755"
+        ],
+        [
+          "sex",
+          "1:30"
+        ],
+        [
+          "inf",
+          ".inf"
+        ],
+        [
+          "nan",
+          ".nan"
+        ]
+      ],
+      "text": "---\nlong: 'word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\nn: '999999999999999999999999999999'\nhex: '0x1F'\noct: '0755'\nsex: '1:30'\ninf: '.inf'\nnan: '.nan'\n---\n\nBody text.\n"
+    },
+    {
+      "props": [
+        [
+          "dash",
+          "-"
+        ],
+        [
+          "dots",
+          "..."
+        ],
+        [
+          "ddd",
+          "--- x"
+        ],
+        [
+          "colon",
+          ":"
+        ],
+        [
+          "q",
+          "?"
+        ],
+        [
+          "star",
+          "*a"
+        ],
+        [
+          "amp",
+          "&a"
+        ],
+        [
+          "bang",
+          "!a"
+        ]
+      ],
+      "text": "---\ndash: '-'\ndots: '...'\nddd: '--- x'\ncolon: ':'\nq: '?'\nstar: '*a'\namp: '&a'\nbang: '!a'\n---\n\nBody text.\n"
+    }
+  ],
+  "titles": [
+    [
+      "a/b:c",
+      "a b c"
+    ],
+    [
+      "  x.  ",
+      "x"
+    ],
+    [
+      "",
+      "Untitled"
+    ],
+    [
+      "..",
+      "Untitled"
+    ],
+    [
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ],
+    [
+      "Tiếng #Việt|x",
+      "Tiếng Việt x"
+    ],
+    [
+      "tab\there",
+      "tab here"
+    ],
+    [
+      "a\n b",
+      "a b"
+    ]
+  ]
+}
