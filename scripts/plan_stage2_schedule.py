@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -35,8 +35,12 @@ from laris.shared.language.loading.dataloader import (  # noqa: E402
 )
 
 
-def plan_config(path: Path, steps: List[int], micro_batch: int, grad_accum: int) -> Dict[str, Any]:
+def plan_config(
+    path: Path, steps: List[int], micro_batch: Optional[int], grad_accum: Optional[int]
+) -> Dict[str, Any]:
     hyper = TrainingConfig(**yaml.safe_load(path.read_text())["training"])
+    micro_batch = micro_batch or hyper.micro_batch_size  # the YAML unless given on the command line
+    grad_accum = grad_accum or hyper.gradient_accumulation_steps
     loader = StreamingParquetMultiTaskDataLoader(
         split="train",
         include_retrieval_task=hyper.retrieval_task,
@@ -92,8 +96,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", action="append", required=True, type=Path)
     parser.add_argument("--steps", type=int, nargs="+", default=[5000, 20000])
-    parser.add_argument("--micro-batch-size", type=int, default=8)
-    parser.add_argument("--grad-accum-steps", type=int, default=4)
+    parser.add_argument("--micro-batch-size", type=int, default=None, help="default: from the YAML")
+    parser.add_argument("--grad-accum-steps", type=int, default=None, help="default: from the YAML")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     result = [

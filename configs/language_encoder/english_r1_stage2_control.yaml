@@ -3,6 +3,8 @@
 # head, no two-segment MLM, no order task, no contrastive task, no T207 dataset weights, plain streams). It isolates what the new mixture, tasks and
 # data decisions add to the same compute. Not identical to pilot 2: `tasks_per_step 2` gives it twice the batch draws per step, and the similarity
 # directory now includes the T208 rows (the loader reads every directory of a task).
+# T211 option (b), owner decision 2026-11-18: micro-batch 32 x accumulation 1 (A100 profile: 3.00 s per step, peak 23.93 GB) with retrieval batch 128 and
+# contrastive batch 256, so retrieval and contrastive rows per step match the 8 x 4 schedule (4x more in-batch negatives). Peak with these batches: NOT MEASURED.
 # Run only on the owner's order (T204); nothing here authorises a run.
 config_version: "1.0.0"
 environment: "foundation-pretraining"
@@ -25,8 +27,8 @@ model:
 
 training:
   batch_size: 32
-  micro_batch_size: 8
-  gradient_accumulation_steps: 4
+  micro_batch_size: 32
+  gradient_accumulation_steps: 1
   learning_rate: 0.0002
   warmup_steps: 300
   max_steps: 5000
@@ -46,7 +48,7 @@ training:
   # More in-batch negatives than the 8-pair micro-batch of the other tasks, and passages cut at 256 tokens (queries
   # are short; the benchmark passages are paragraphs). The profile (runbook 9.2 step 2) measures the memory; lower
   # the batch size if it does not fit.
-  retrieval_batch_size: 32
+  retrieval_batch_size: 128
   retrieval_max_sequence_length: 256
   task_sampling_alpha: 0.7
   # Similarity has 20 k rows: at alpha 0.7 it is drawn for 0.5 % of the steps (25 of 5,000), which did not move its loss

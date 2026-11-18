@@ -117,3 +117,13 @@ def test_stage2_gives_each_pair_task_more_draws_than_the_control() -> None:
     for task in ("nli", "paraphrase", "qa", "similarity"):
         assert d2[task] > dc[task]
     assert d2["mlm"] < dc["mlm"]
+
+
+def test_stage2_and_control_share_the_a100_batch_sizes() -> None:
+    """T211 option (b): micro-batch 32 x 1, retrieval batch 128, contrastive batch 256."""
+    stage2 = _training("english_r1_stage2.yaml")
+    control = _training("english_r1_stage2_control.yaml")
+    for hyper in (stage2, control):
+        assert (hyper.micro_batch_size, hyper.gradient_accumulation_steps) == (32, 1)
+        assert hyper.retrieval_batch_size == 128
+    assert stage2.contrastive_sim_batch_size == 256
