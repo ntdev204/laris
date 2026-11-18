@@ -315,7 +315,27 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Event types, append-only store, replay with a scripted model, resume
 - Validation:
   - Byte-identical replay; resume after a killed process
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-core` holds the event log. `Record` (stored as one JSON object, kind column
+  `command`, `model_answer`, `tool_outcome`, `event`): three inputs (an interface `Command`; a `ModelAnswer` bound to the
+  SHA-256 of the conversation it answered; a `ToolOutcome`, never re-run on replay) and one output (`Emitted` core
+  `Event`). `Session::apply` is the pure fold of inputs into state (conversation, `Pending` = idle / model / open tool
+  ids, turns, closed) and returns the events; an input that does not fit is refused and the state stays as it was. T130
+  covers user message (busy while a turn runs), interrupt, shutdown, model answer (text, tool calls, `done`) and tool
+  outcome; plan, tools, reflection, budgets and the decider are T131. `Recorder::open` creates or resumes a session by
+  folding its log, and first writes the outputs lost between the last input and a kill; `record` appends the input,
+  then its outputs. `replay(events, Some(&mut ScriptedModel))` folds again, asks the scripted model for every recorded
+  answer (it refuses a different conversation, an exhausted script or a different answer) and compares each recorded
+  output with the regenerated one byte for byte. `Model` is the trait the loop will use; the P1 client is not wired to
+  it yet (T131). Tests (6): byte-identical replay of three tool turns with non-ASCII text, twice; divergence refused
+  (changed conversation, tampered output at its position, different or exhausted script); refused inputs leave no
+  trace, `busy`, interrupt; a log cut between an input and its outputs is repaired and then equals the clean log byte for
+  byte; three rounds of a child process driving the session and killed with SIGKILL after 40 steps, each followed by
+  gapless-log, replay and resume checks, the child continuing from the resumed state. Not covered: a kill is not
+  steered into the gap between an input and its outputs (the deterministic cut test covers that case); no log
+  compaction or retention; `Emitted` records are stored with the input, so a log is about twice the inputs. Dependencies:
+  none new (`serde`, `serde_json`, `sha2`, `thiserror` and the two path crates). `cargo fmt --check`,
+  `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` pass.
 
 ### T131 — Core loop and decider seam
 - Requirements: SR-H1, SR-H14
