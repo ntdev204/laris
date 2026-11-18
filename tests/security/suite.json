@@ -1,0 +1,688 @@
+{
+  "note": "Test ids of docs/architecture/THREAT_MODEL.md and the tests that exercise them. `cargo xtask security` runs every entry and fails when a threat row has no entry, a named test does not exist, or an entry marked deferred belongs to a task that is already done. A run lists exact test names: renaming a test breaks the suite on purpose.",
+  "tests": {
+    "SEC-BRAIN-01": {
+      "deferred": {
+        "task": "T164",
+        "reason": "the main brain and its single write gate are programme 3"
+      }
+    },
+    "SEC-DATA-01": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "learning",
+          "tests": [
+            "collected_data_does_not_reach_a_request_or_the_log",
+            "nothing_is_read_or_written_when_collection_is_off",
+            "an_export_never_lands_inside_a_repository",
+            "the_repository_holds_no_collected_data"
+          ]
+        },
+        {
+          "package": "laris-cli",
+          "target": "learn",
+          "tests": [
+            "an_export_inside_a_git_work_tree_is_refused",
+            "nothing_is_collected_when_the_setting_is_off"
+          ]
+        }
+      ]
+    },
+    "SEC-DATA-02": {
+      "runs": [
+        {
+          "package": "laris-vault",
+          "target": "writer_fs",
+          "tests": [
+            "user_edits_survive_100_rewrites",
+            "a_failed_replacement_keeps_the_old_file_at_every_stage",
+            "a_killed_process_keeps_the_old_file",
+            "an_edit_inside_a_block_is_a_conflict_and_the_note_stays_as_it_is"
+          ]
+        },
+        {
+          "package": "laris-store",
+          "target": "store",
+          "tests": [
+            "two_writers_lose_nothing",
+            "a_failed_transaction_leaves_nothing_behind",
+            "events_are_appended_in_order_and_cannot_be_changed"
+          ]
+        }
+      ]
+    },
+    "SEC-DATA-03": {
+      "deferred": {
+        "task": "T168",
+        "reason": "sealed splits, manifests and the seeded model-generated example belong to the data pipeline of programme 3"
+      }
+    },
+    "SEC-DEP-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "deployment",
+          "tests": [
+            "images_copy_no_policy_no_weights_and_no_secrets",
+            "policy_and_weights_are_mounted_read_only_and_never_published",
+            "secrets_are_files_and_not_environment_values",
+            "both_images_run_as_a_non_root_user"
+          ]
+        }
+      ],
+      "image_check": "docker/verify-images.sh checks the built images; the owner or the smoke test runs it"
+    },
+    "SEC-EVID-01": {
+      "runs": [
+        {
+          "package": "laris-evidence",
+          "target": "gate",
+          "tests": [
+            "a_valid_answer_comes_back_unchanged",
+            "a_fabricated_citation_is_caught_and_marked",
+            "a_missing_span_is_caught",
+            "an_unsupported_claim_is_caught_and_marked",
+            "brain_citations_are_checked_against_larismeta",
+            "absence_of_a_hit_is_not_evidence_of_absence",
+            "several_findings_are_marked_in_place_and_in_order"
+          ]
+        }
+      ]
+    },
+    "SEC-HTTP-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "api",
+          "tests": [
+            "bad_bodies_are_400",
+            "length_required_is_411",
+            "oversize_is_413_before_the_body_is_read",
+            "protocol_version_is_checked_first"
+          ]
+        }
+      ]
+    },
+    "SEC-HTTP-02": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "api",
+          "tests": [
+            "slow_body_is_cut_with_408",
+            "slow_headers_are_cut",
+            "connection_limit_sheds_the_extra_connection",
+            "client_that_stops_reading_is_cut_and_its_slot_freed",
+            "slow_but_steady_reader_is_not_cut"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "model",
+          "tests": [
+            "the_concurrency_limit_holds_and_a_place_returns_when_a_stream_is_dropped",
+            "a_waiting_call_gets_the_place_a_finished_answer_leaves"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "a_key_without_tokens_gets_429_and_the_request_costs_nothing"
+          ],
+          "needs": "postgres"
+        }
+      ]
+    },
+    "SEC-HTTP-03": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "api",
+          "tests": [
+            "untrusted_peer_cannot_set_its_address",
+            "trusted_proxy_forwards_the_client_address"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "proxy",
+          "tests": [
+            "untrusted_peer_ignores_header",
+            "trusted_peer_reads_chain_from_the_right",
+            "garbage_stops_the_walk_at_the_vouched_address"
+          ]
+        }
+      ]
+    },
+    "SEC-HTTP-04": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "api",
+          "tests": [
+            "failure_inside_the_stream_is_an_error_event_then_done",
+            "stalled_stream_ends_with_an_error_event"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "model",
+          "tests": [
+            "a_failure_after_the_first_chunk_ends_the_stream_with_a_failure_event",
+            "rung::a_model_that_fails_mid_answer_ends_the_turn_without_its_own_words",
+            "an_unreachable_model_is_a_502_that_does_not_name_it",
+            "a_failure_before_the_first_chunk_is_a_status_without_the_model_text"
+          ]
+        },
+        {
+          "package": "laris-model-client",
+          "target": "client",
+          "tests": [
+            "the_midstream_error_arrives_as_an_event_then_done"
+          ]
+        }
+      ]
+    },
+    "SEC-INJ-01": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "shield",
+          "tests": [
+            "an_injected_document_is_flagged_and_its_command_is_refused",
+            "what_the_user_wrote_is_authorised_even_when_a_document_repeats_it",
+            "an_escape_is_refused_after_an_alarm_even_when_the_words_are_new",
+            "a_hostile_address_argument_is_refused_when_it_comes_from_the_document",
+            "without_an_alarm_the_shield_leaves_the_rules_in_charge"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "gate",
+          "tests": [
+            "a_tool_the_gate_does_not_know_is_taken_to_change_state"
+          ]
+        }
+      ]
+    },
+    "SEC-INJ-02": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "redact",
+          "tests": [
+            "known_shapes_are_hidden",
+            "a_secret_in_tool_output_never_reaches_the_loop",
+            "the_conversation_is_redacted_before_it_leaves",
+            "what_tools_persist_is_redacted",
+            "literal_secrets_are_replaced_by_value"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "shield",
+          "tests": [
+            "a_secret_in_a_poisoned_file_is_redacted_and_still_flagged"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "credentials_are_hidden_and_a_secret_in_the_environment_never_leaves",
+            "the_servers_own_secrets_are_hidden_by_name"
+          ]
+        },
+        {
+          "package": "laris-tools",
+          "target": "tools",
+          "tests": [
+            "read_refuses_secrets_binary_missing_large_folders_and_other_places",
+            "write_runs_the_redactor_before_anything_is_stored"
+          ]
+        }
+      ]
+    },
+    "SEC-INJ-03": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "shield",
+          "tests": [
+            "remote_tool_output_is_marked_and_watched_like_a_document"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "gate",
+          "tests": [
+            "a_remote_tool_is_asked_about_until_a_rule_allows_it",
+            "a_post_tool_hook_adds_context_marked_untrusted"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "tools",
+          "tests": [
+            "failures_of_the_service_are_statuses_without_its_text_or_address"
+          ]
+        },
+        {
+          "package": "laris-tools",
+          "target": "tools",
+          "tests": [
+            "bash_output_is_cut_and_a_noisy_command_does_not_hang",
+            "read_never_returns_more_lines_than_the_setting_allows"
+          ]
+        }
+      ]
+    },
+    "SEC-INT-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "the_repository_policy_matches_its_lock",
+            "a_changed_added_or_missing_file_is_named_and_stops_the_load",
+            "a_missing_or_broken_lock_stops_the_load",
+            "a_link_inside_a_protected_folder_is_refused",
+            "a_workflow_that_does_not_load_stops_the_server"
+          ]
+        }
+      ]
+    },
+    "SEC-KEY-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "a_key_is_stored_as_a_digest_only_and_needs_the_master_secret"
+          ],
+          "needs": "postgres"
+        }
+      ]
+    },
+    "SEC-KEY-02": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "no_key_appears_in_the_log_an_error_or_a_debug_print"
+          ],
+          "needs": "postgres"
+        },
+        {
+          "package": "laris-server",
+          "target": "api",
+          "tests": [
+            "log_holds_no_content"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "config",
+          "tests": [
+            "errors_name_the_variable_and_not_the_value",
+            "database_url_comes_from_a_secret_file_and_a_direct_value_wins"
+          ]
+        },
+        {
+          "package": "laris-model-client",
+          "target": "client",
+          "tests": [
+            "the_key_never_shows_in_debug_output"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "storage",
+          "tests": [
+            "an_unreachable_database_error_holds_neither_address_nor_password"
+          ],
+          "needs": "postgres"
+        }
+      ]
+    },
+    "SEC-KEY-03": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "expiry_and_revocation_end_a_key",
+            "every_way_of_not_being_a_valid_key_answers_401_alike",
+            "the_admin_routes_run_a_key_through_its_life",
+            "a_role_without_the_permission_gets_403_and_extras_follow_the_privilege_rule",
+            "address_rules_make_a_key_look_unknown_from_other_addresses"
+          ],
+          "needs": "postgres"
+        }
+      ]
+    },
+    "SEC-KEY-04": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "a_role_without_the_permission_gets_403_and_extras_follow_the_privilege_rule",
+            "the_admin_routes_run_a_key_through_its_life"
+          ],
+          "needs": "postgres"
+        },
+        {
+          "package": "laris-server",
+          "target": "tools",
+          "tests": [
+            "a_name_nobody_serves_is_a_404_and_a_bad_name_never_reaches_the_model"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "a_workflow_narrows_the_tools_and_unknown_ones_are_refused",
+            "a_client_cannot_offer_a_tool_named_like_the_servers"
+          ]
+        }
+      ]
+    },
+    "SEC-LEAK-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "the_confidentiality_suite_leaks_no_run_of_internal_text_above_the_limit",
+            "the_canary_token_is_stopped_even_without_any_prompt_text",
+            "a_tool_call_that_repeats_internal_text_is_dropped",
+            "disguised_copies_of_internal_text_are_stopped_too",
+            "ordinary_text_is_not_mistaken_for_a_disguise",
+            "a_system_message_from_a_client_is_dropped_not_obeyed",
+            "workflows_and_help_tell_the_client_the_limits_and_nothing_more"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "model",
+          "tests": [
+            "the_system_prompt_and_the_canary_never_leave"
+          ]
+        }
+      ]
+    },
+    "SEC-LEAK-02": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "reasoning_never_reaches_the_client_whatever_form_it_takes",
+            "no_reasoning_in_a_chat_body_and_the_operator_can_read_it",
+            "reasoning_is_kept_even_when_the_client_leaves"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "model",
+          "tests": [
+            "reasoning_from_the_model_service_never_appears_in_a_chat_body"
+          ]
+        }
+      ]
+    },
+    "SEC-LEAK-03": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "policy",
+          "tests": [
+            "the_brain_text_cannot_leave_in_an_answer_or_a_tool_call",
+            "brain_notes_are_not_in_the_prompt_unless_a_brief_names_them"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "brain",
+          "tests": [
+            "a_brief_is_summaries_only_and_inside_its_budget",
+            "results_report_the_budget_and_the_budget_holds",
+            "there_is_no_write_path_into_the_brain"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "traces",
+          "tests": [
+            "an_answer_leaves_one_trace_with_names_and_numbers"
+          ]
+        }
+      ]
+    },
+    "SEC-NET-01": {
+      "runs": [
+        {
+          "package": "laris-model-client",
+          "target": "pin",
+          "tests": [
+            "a_matching_authority_is_accepted_and_a_different_one_is_a_pin_mismatch",
+            "a_server_signed_by_the_pinned_authority_is_trusted",
+            "a_server_not_signed_by_the_pinned_authority_is_refused",
+            "the_system_store_does_not_trust_a_private_authority"
+          ]
+        },
+        {
+          "package": "laris-model-client",
+          "target": "client",
+          "tests": [
+            "a_426_is_a_version_error_and_is_not_retried",
+            "an_answer_with_another_protocol_version_is_refused_even_on_200"
+          ]
+        },
+        {
+          "package": "laris-model-client",
+          "target": "wire",
+          "tests": [
+            "a_redirect_is_an_error_and_the_key_is_not_sent_on"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "deployment",
+          "tests": [
+            "the_gateway_ends_tls_and_keeps_keys_out_of_its_log"
+          ]
+        }
+      ]
+    },
+    "SEC-PERM-01": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "hooks",
+          "tests": [
+            "a_timeout_kills_the_group_and_does_not_block",
+            "failures_and_malformed_output_warn_but_never_block",
+            "a_flood_of_output_is_cut_and_does_not_stall",
+            "control_characters_cannot_reach_the_terminal",
+            "output_that_is_not_utf8_is_a_warning_not_a_crash",
+            "no_hooks_means_nothing_runs",
+            "hooks_run_in_the_project_with_a_clean_environment"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "trust",
+          "tests": [
+            "planted_hooks_never_run"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "shield",
+          "tests": [
+            "hostile_hook_output_is_redacted_marked_and_watched"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "gate",
+          "tests": [
+            "a_pre_tool_hook_cannot_grant_a_permission"
+          ]
+        }
+      ]
+    },
+    "SEC-PERM-02": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "trust",
+          "tests": [
+            "planted_project_settings_are_ignored",
+            "planted_hooks_never_run",
+            "planted_rules_grant_nothing",
+            "an_untrusted_folder_uses_no_project_skills_or_commands",
+            "trusting_a_folder_changes_no_permission",
+            "trust_is_per_folder_and_only_true_means_trusted"
+          ]
+        }
+      ]
+    },
+    "SEC-PERM-03": {
+      "runs": [
+        {
+          "package": "laris-policy",
+          "target": "gate",
+          "tests": [
+            "a_denied_path_is_never_written_however_it_is_spelled",
+            "deny_beats_an_approval_that_would_have_said_yes"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "modes",
+          "tests": [
+            "deny_holds_in_every_mode_and_against_session_and_project_allows",
+            "bypass_needs_the_policy_and_never_beats_deny_or_ask",
+            "plan_mode_is_read_only_and_no_rule_changes_that"
+          ]
+        },
+        {
+          "package": "laris-policy",
+          "target": "rules",
+          "tests": [
+            "path_rules_follow_the_resolved_path_not_the_spelling",
+            "an_allow_rule_for_one_command_does_not_allow_a_chain",
+            "a_deny_or_ask_rule_fits_any_command_of_a_chain"
+          ]
+        },
+        {
+          "package": "laris-tools",
+          "target": "tools",
+          "tests": [
+            "write_and_edit_never_touch_forbidden_places",
+            "write_cannot_follow_a_link_out_of_the_project"
+          ]
+        }
+      ]
+    },
+    "SEC-PERM-04": {
+      "runs": [
+        {
+          "package": "laris-tools",
+          "target": "tools",
+          "tests": [
+            "rewind_undoes_edits_newest_first_and_removes_files_that_were_created",
+            "rewind_never_writes_where_a_tool_could_not_and_checkpoints_are_capped",
+            "rewind_without_checkpoints_is_a_typed_error",
+            "write_creates_overwrites_redacts_and_checkpoints"
+          ]
+        }
+      ]
+    },
+    "SEC-QUOTA-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "access",
+          "tests": [
+            "parallel_reservations_never_pass_the_limit",
+            "parallel_requests_over_http_get_exactly_what_the_quota_covers",
+            "a_key_without_tokens_gets_429_and_the_request_costs_nothing",
+            "a_request_that_fails_or_a_client_that_leaves_is_settled_or_released"
+          ],
+          "needs": "postgres"
+        }
+      ]
+    },
+    "SEC-SBX-01": {
+      "runs": [
+        {
+          "package": "laris-sandbox",
+          "target": "linux",
+          "tests": [
+            "writes_outside_the_allowed_roots_fail_and_inside_succeed",
+            "a_symbolic_link_out_of_the_root_does_not_open_the_target",
+            "read_only_policy_writes_nothing",
+            "the_network_is_cut",
+            "ptrace_is_refused",
+            "a_missing_helper_means_no_sandbox_not_an_unconfined_command"
+          ]
+        },
+        {
+          "package": "laris-tools",
+          "target": "sandboxed_bash",
+          "tests": [
+            "a_sandboxed_command_writes_in_the_project_and_not_outside",
+            "a_sandbox_that_cannot_start_stops_the_command"
+          ]
+        }
+      ],
+      "platform": "linux: the macOS and Windows backends have their own test targets (macos.rs, windows.rs) that run on those systems; this report covers the system it ran on"
+    },
+    "SEC-SBX-02": {
+      "runs": [
+        {
+          "package": "laris-sandbox",
+          "target": "pyenv",
+          "tests": [
+            "built_on_first_use_and_reused_after",
+            "a_broken_environment_is_repaired",
+            "two_sessions_build_it_once",
+            "the_environment_is_outside_the_sandbox_write_roots",
+            "a_failed_build_leaves_no_environment"
+          ]
+        }
+      ]
+    },
+    "SEC-SUP-01": {
+      "commands": [
+        [
+          "cargo",
+          "xtask",
+          "guard"
+        ],
+        [
+          "cargo",
+          "xtask",
+          "scan"
+        ],
+        [
+          "cargo",
+          "deny",
+          "check"
+        ]
+      ],
+      "partial": {
+        "task": "T159",
+        "reason": "release signing and the signed install do not exist yet"
+      }
+    }
+  }
+}

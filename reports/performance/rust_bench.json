@@ -1,0 +1,70 @@
+{
+  "backend": "scripted backend in one process and a generated 10,000-note vault; the cost of the system around a model, never of a model",
+  "figures": {
+    "evidence.gate_p95_ms": {
+      "budget": 2.0,
+      "median": 0.03,
+      "ok": true,
+      "worst": 0.031
+    },
+    "policy.redact_64k_p95_ms": {
+      "budget": 2.0,
+      "median": 0.495,
+      "ok": true,
+      "worst": 0.503
+    },
+    "process.peak_rss_mb": {
+      "budget": 32.0,
+      "median": 9.594,
+      "ok": true,
+      "worst": 9.684
+    },
+    "retrieval.bm25_p95_ms": {
+      "budget": 3.588,
+      "median": 1.175,
+      "ok": true,
+      "worst": 1.186
+    },
+    "retrieval.graph_p95_ms": {
+      "budget": 3.687,
+      "median": 1.2,
+      "ok": true,
+      "worst": 1.227
+    },
+    "retrieval.index_build_s": {
+      "budget": 1.0,
+      "median": 0.14,
+      "ok": true,
+      "worst": 0.145
+    },
+    "retrieval.search_build_s": {
+      "budget": 1.0,
+      "median": 0.096,
+      "ok": true,
+      "worst": 0.098
+    },
+    "server.chat_p95_ms": {
+      "budget": 2.0,
+      "median": 0.076,
+      "ok": true,
+      "worst": 0.085
+    },
+    "server.chat_parallel_p95_ms": {
+      "budget": 39.942,
+      "median": 10.004,
+      "ok": true,
+      "worst": 17.446
+    },
+    "server.health_p95_ms": {
+      "budget": 2.0,
+      "median": 0.083,
+      "ok": true,
+      "worst": 0.086
+    }
+  },
+  "model": "none: the foundation model is NOT QUALIFIED",
+  "passed": true,
+  "problems": [],
+  "runs": 5,
+  "seededSlowdown": 1.0
+}

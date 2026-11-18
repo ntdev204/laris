@@ -1375,7 +1375,30 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Security suite for every threat row in CI; budgets fixed from measurements
 - Validation:
   - Suite and budgets pass
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T154-security-suite-budgets`. Security: `cargo xtask security` reads the 30
+  threat rows of `docs/architecture/THREAT_MODEL.md` and `tests/security/suite.json` (exact test names per test id, plus
+  commands), runs them and writes `reports/security/report.json`. It fails on a threat without an entry, an entry
+  without a threat, a named test that does not exist or fails, a PostgreSQL test that was skipped (`not_run`; allowed only
+  with `--without-postgres`), and a deferral to a task that is already done. Result: 27 passed, 1 partial (`SEC-SUP-01`:
+  `cargo deny`, guard and scan run; release signing is T159), 2 deferred to programme 3 (`SEC-BRAIN-01` T164, `SEC-DATA-03`
+  T168). New test file `crates/laris-server/tests/deployment.rs` (`SEC-DEP-01`, static half of `SEC-NET-01`: no policy,
+  weights or secrets copied into an image, read-only mounts, one published port, secrets as files, non-root users, TLS
+  at the gateway, no `Authorization` in its log). Seeded faults caught: a Caddyfile that logs keys, a Dockerfile that
+  copies weights, a renamed test, no database. Performance: `cargo xtask bench` runs `laris-server --example
+  server_bench` (HTTP health and chat stream, 32 parallel streams, the redactor on 64 KiB, the evidence gate on 40
+  citations, peak memory) and the retrieval benchmark (10,000 notes), five runs each; a figure is the median; a budget is
+  the worst run times 3, never below a floor per unit (2 ms, 1 s, 32 MB) and never above the specification target
+  (`reports/performance/rust_budgets.json`, `rust_bench.json`). Measured on the development workstation: chat stream
+  p95 0.08 ms, 32 parallel streams p95 9 ms, redactor 0.5 ms, evidence gate 0.03 ms, retrieval p95 1.2 ms, peak 9.6 MB.
+  A seeded slowdown of 50 times fails. CI: job `security` with a throwaway PostgreSQL service; job `performance`
+  (non-blocking until the owner has seen its figures on the runner). 644 workspace tests pass with PostgreSQL;
+  `fmt`, `clippy -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`. One flaky test seen once:
+  `laris-policy` `hooks::control_characters_cannot_reach_the_terminal` failed in a parallel workspace run (the shell's
+  working folder had disappeared), passed alone six times and in the rerun; not changed here. Not done, by design: the
+  suite against the compose stack (`docker/verify-images.sh`, `smoke_test.sh` need built images; the owner runs them),
+  the macOS and Windows sandbox backends, the Agentic-rung suite against the compose stack, benchmarks of a model. The
+  figures are the cost of the system around a scripted backend; the foundation model is NOT QUALIFIED.
 
 ## Phase 35 — Client (after the model is finished)
 

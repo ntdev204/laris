@@ -3,9 +3,9 @@ document_id: "DOC-ARCH-THREAT-001"
 title: "LARIS Generation-2 Threat Model"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-18"
-updated_at: "2026-11-18"
+updated_at: "2026-11-19"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -78,7 +78,7 @@ access; defects of the operating system kernel beyond the sandbox mechanisms LAR
 
 ## 4. Threats, controls and tests
 
-Test ids are `SEC-<area>-<nn>`. A test id names a test that the owning task creates; T154 collects them in one suite.
+Test ids are `SEC-<area>-<nn>`. A test id names a test that the owning task creates; T154 collects them in one suite (section 5).
 Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds the control and its test.
 
 ### 4.1 Confidentiality of policy and brain (A1, A2)
@@ -141,8 +141,16 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
 - Every row has one control entry, an owning task and one test id; test ids are unique.
 - A test id is reserved by this document and created by its owning task. T154 fails if a listed id has no test.
 - A feature that adds an asset, attacker or trust boundary changes this document in the same task.
-- Present state: `SEC-SUP-01` is partly exercised today by `cargo deny check` and `cargo xtask guard` (T121, seeded
-  faults verified locally; release signing waits for T159). All other test ids are pending.
+- Present state (T154, 2026-11-19): `cargo xtask security` runs every test id through `tests/security/suite.json`
+  (exact test names per id; a renamed or missing test fails the run) and writes `reports/security/report.json`. Of the
+  30 ids, 27 pass, `SEC-SUP-01` passes as **partial** (`cargo deny`, the guard and the scan run; release signing waits
+  for T159) and two are **deferred** to programme 3 because their owning tasks are pending: `SEC-BRAIN-01` (T164) and
+  `SEC-DATA-03` (T168). A deferral to a task that is already done fails the suite. The PostgreSQL tests (`SEC-KEY-01`
+  to `SEC-KEY-04`, `SEC-QUOTA-01`, part of `SEC-KEY-02` and `SEC-HTTP-02`) need `LARIS_TEST_PG_DSN`; without it they
+  are reported `not_run` and the suite fails, unless `--without-postgres` is given. `SEC-DEP-01` and `SEC-NET-01` are
+  checked statically in CI (`crates/laris-server/tests/deployment.rs`); `docker/verify-images.sh` and
+  `docker/smoke_test.sh` check the built images and are run by the owner. `SEC-SBX-01` covers the system the suite
+  ran on (Linux); the macOS and Windows backends have their own test targets.
 
 ## 6. Residual risks (accepted, not mitigated)
 
