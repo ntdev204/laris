@@ -11,19 +11,29 @@
 //! outputs equal the recorded ones byte for byte. [`Recorder::open`] resumes a session after a killed process: it
 //! rebuilds the state from the log and writes any outputs that were lost between the last input and the kill.
 //!
-//! The loop of T131 (plan, tools, reflection, budgets) and its decider seam are built on this: the loop chooses the
-//! next input, the fold stays the same.
+//! T131 builds the loop on this. A [`Decider`] chooses each step from the closed set of [`Action`]s; the step is
+//! recorded as a decision before it is applied, and a model answer or a tool outcome is accepted only after the
+//! decision that permits it. [`FollowModel`] is the generation-1 policy (plan, tool gate, reflection, completion
+//! check, step and time budgets); [`Driver`] runs it against a [`Model`] and a [`ToolRunner`].
 
+mod action;
+mod decider;
+mod driver;
 mod error;
 mod model;
+mod plan;
 mod record;
 mod recorder;
 mod replay;
 mod session;
 
+pub use action::{Action, AutoStep, Mark, Notice, NoticeKind, PlanChange};
+pub use decider::{Clock, Decider, FollowModel, OpenGate, Refusal, ToolGate};
+pub use driver::{Driver, ToolRunner};
 pub use error::CoreError;
-pub use model::{Model, ModelError, ScriptedModel, digest_of};
+pub use model::{Model, ModelError, ModelRequest, ScriptedModel, Seen, digest_of};
+pub use plan::{PLAN_TOOL, PlanStep, StepStatus, open_steps, parse_plan, plan_event, render};
 pub use record::{ModelAnswer, Record, decode_record, encode_record};
 pub use recorder::{Recorder, Resumed};
 pub use replay::{Replayed, replay};
-pub use session::{Pending, Session};
+pub use session::{Pending, Session, StepResult, Turn, call_key};

@@ -345,7 +345,38 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     generation-1 policy as its only implementation
 - Validation:
   - Translated Agentic scenarios pass with a scripted model; no model call outside a decided action
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-core` holds the loop. The decider chooses each step from the closed `Action` set
+  (`ask_model`, `run_tool`, `reject_tool`, `set_plan`, `auto_plan`, `reflect`, `retry`, `finish`, `stop`); the step is
+  written to the log as a new input record `decision` before it is applied, and it carries everything the decider
+  looked at (clock, limits, gate, rendered messages), so replay needs no decider. The fold (`Session::apply`) refuses a
+  model answer that no `ask_model` cleared and a tool outcome that no `run_tool` cleared: that is the "no model call
+  outside a decided action" rule, enforced in the state and not only in the driver. `Driver` runs decider, model
+  (`Model`, now taking a `ModelRequest` with the conversation, a per-call plan note and the offered tools) and
+  `ToolRunner` (T132 supplies the registry); events are emitted when a call is decided (`tool_call`) and answered
+  (`tool_result`), as in generation 1. `FollowModel` is the generation-1 policy and the only `Decider`: step and time
+  budgets, a plan the model keeps through `update_plan` (strict parse, typed `invalid_plan`) or the loop records itself
+  when a long request acts without one, per-step call cap, workflow tool set, `ToolGate` (T133 supplies approvals),
+  repeat detection (`cyclic`), progress check after each step (typed error or empty answer: bounded replan, a
+  permanent error such as `no_documents` said once and spending no replan, "stop retrying" said once), completion
+  check (open steps send the model back `completionRetries` times, then the answer carries "Not complete: ..." and
+  the goal event says open), interrupt (every open call is answered `interrupted`, so the conversation stays valid)
+  and resume (a call cleared to run whose outcome was lost in a kill is answered `interrupted`, never run again).
+  Settings `agent.*` (maxSteps <= 10, timeBudgetSeconds, maxToolCallsPerStep, plan.*, reflect.*) are new in
+  `laris-config` with the schema regenerated; the messages are catalogue keys `plan.*`, `reflect.*`, `loop.*` in
+  English and Vietnamese. T130 tests were updated for the decision records (a turn is now 14 records). Tests: 20 in
+  `tests/agentic.rs` (the generation-1 scenarios 1-4, 6 and 2b translated: plan before the first call and tracked, auto
+  plan, short question, planning off, replan that succeeds, bounded replanning, goal held open, unfinished goal
+  reported, plan resumed across a reopened log without repeating a step, approval, step ceiling, bad plan, empty
+  corpus; plus call cap, tool set, cyclic, time budget, reflection off, interrupt, a scripted decider, undecided answer
+  and outcome refused, killed call); each scenario log is replayed byte for byte from the log alone. Not covered:
+  scenario 5 (the finished goal and plan written to the vault) belongs to the vault and learning tasks, not the loop;
+  answer verification (citations, `verify`) is T136; the `usage` and `compact` events and context compaction are not
+  emitted yet and there is no token budget (SR-H1 names one; it needs the usage of the answers and the context estimate); the model trait is `Model`, not `ModelClient` as SR-H1 words it; the P1 `ModelClient` (async) is not wired to the synchronous `Model` trait, so nothing drives a real
+  server yet; a `ModelError` is not told apart as auth or quota (one `provider_error` stop); time is measured per
+  process, so a resumed turn restarts its clock. `cargo fmt --check`, `clippy -D warnings`, `cargo test`,
+  `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass. No new dependency
+  (`laris-config` is a workspace crate).
 
 ## Phase 29 — System: harness
 

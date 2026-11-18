@@ -7,6 +7,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+laris-config = { path = "../laris-config", version = "2.0.0-dev" }
 laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
 laris-store = { path = "../laris-store", version = "2.0.0-dev" }
 serde = { version = "1", features = ["derive"] }

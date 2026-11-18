@@ -1,5 +1,6 @@
 //! The records of the event log and their stored form.
 
+use crate::action::Action;
 use laris_protocol::{Command, Event, ToolCall, Usage};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -27,6 +28,12 @@ pub enum Record {
     Command {
         /// The command.
         command: Command,
+    },
+    /// Input: a step chosen by the decider. It permits what follows (a model call, a tool run) and carries
+    /// everything the decider looked at, so replay needs no decider.
+    Decision {
+        /// The action.
+        action: Action,
     },
     /// Input: the model's answer.
     ModelAnswer {
@@ -56,6 +63,7 @@ impl Record {
     pub fn kind(&self) -> &'static str {
         match self {
             Self::Command { .. } => "command",
+            Self::Decision { .. } => "decision",
             Self::ModelAnswer { .. } => "model_answer",
             Self::ToolOutcome { .. } => "tool_outcome",
             Self::Emitted { .. } => "event",

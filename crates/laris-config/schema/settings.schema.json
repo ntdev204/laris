@@ -1,5 +1,64 @@
 {
   "$defs": {
+    "Agent": {
+      "additionalProperties": false,
+      "description": "Limits of the agent loop.",
+      "properties": {
+        "maxSteps": {
+          "default": 10,
+          "description": "Model calls in one turn (the orchestration specification caps it at 10).",
+          "format": "uint32",
+          "maximum": 10,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxToolCallsPerStep": {
+          "default": 4,
+          "description": "Tool calls run in one model step; more are refused.",
+          "format": "uint32",
+          "maximum": 16,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "plan": {
+          "$ref": "#/$defs/PlanSettings",
+          "default": {
+            "maxSteps": 12,
+            "minRequestWords": 12,
+            "mode": "auto",
+            "stepChars": 240
+          },
+          "description": "Planning."
+        },
+        "reflect": {
+          "$ref": "#/$defs/Reflect",
+          "default": {
+            "completionRetries": 2,
+            "emptyKeys": [
+              "hits",
+              "passages",
+              "results",
+              "matches",
+              "items"
+            ],
+            "enabled": true,
+            "maxReplans": 2,
+            "permanentErrors": [
+              "no_documents"
+            ]
+          },
+          "description": "Reflection and completion check."
+        },
+        "timeBudgetSeconds": {
+          "default": 180.0,
+          "description": "Longest time of one turn, in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "Context": {
       "additionalProperties": false,
       "description": "Context window and autocompact.",
@@ -164,6 +223,112 @@
         "deny": {
           "default": [],
           "description": "Rules that deny.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "PlanMode": {
+      "description": "When the agent makes a visible plan.",
+      "oneOf": [
+        {
+          "const": "off",
+          "description": "No plan, and `update_plan` is not offered.",
+          "type": "string"
+        },
+        {
+          "const": "auto",
+          "description": "A plan for requests of at least `minRequestWords` words.",
+          "type": "string"
+        },
+        {
+          "const": "always",
+          "description": "A plan for every request.",
+          "type": "string"
+        }
+      ]
+    },
+    "PlanSettings": {
+      "additionalProperties": false,
+      "description": "Agentic planning: a visible, tracked plan for goals that take several steps.",
+      "properties": {
+        "maxSteps": {
+          "default": 12,
+          "description": "Most steps in a plan.",
+          "format": "uint32",
+          "maximum": 30,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "minRequestWords": {
+          "default": 12,
+          "description": "`auto`: requests with at least this many words count as multi-step.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "$ref": "#/$defs/PlanMode",
+          "default": "auto",
+          "description": "When a plan is made."
+        },
+        "stepChars": {
+          "default": 240,
+          "description": "Longest text of a step, in characters.",
+          "format": "uint32",
+          "minimum": 20,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "Reflect": {
+      "additionalProperties": false,
+      "description": "After each tool result the loop checks progress; a failed or empty step allows a bounded replan, and a goal\ncloses only when its plan is done.",
+      "properties": {
+        "completionRetries": {
+          "default": 2,
+          "description": "Times a goal with open steps is sent back to the model before it is reported open.",
+          "format": "uint32",
+          "maximum": 3,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "emptyKeys": {
+          "default": [
+            "hits",
+            "passages",
+            "results",
+            "matches",
+            "items"
+          ],
+          "description": "Result keys whose empty value means the step found nothing.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Check progress and completion.",
+          "type": "boolean"
+        },
+        "maxReplans": {
+          "default": 2,
+          "description": "Replans allowed in one turn.",
+          "format": "uint32",
+          "maximum": 5,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "permanentErrors": {
+          "default": [
+            "no_documents"
+          ],
+          "description": "Error codes no change of approach can fix: the loop says so once instead of asking for a replan.",
           "items": {
             "type": "string"
           },
@@ -367,6 +532,36 @@
         "string",
         "null"
       ]
+    },
+    "agent": {
+      "$ref": "#/$defs/Agent",
+      "default": {
+        "maxSteps": 10,
+        "maxToolCallsPerStep": 4,
+        "plan": {
+          "maxSteps": 12,
+          "minRequestWords": 12,
+          "mode": "auto",
+          "stepChars": 240
+        },
+        "reflect": {
+          "completionRetries": 2,
+          "emptyKeys": [
+            "hits",
+            "passages",
+            "results",
+            "matches",
+            "items"
+          ],
+          "enabled": true,
+          "maxReplans": 2,
+          "permanentErrors": [
+            "no_documents"
+          ]
+        },
+        "timeBudgetSeconds": 180.0
+      },
+      "description": "Agent loop limits."
     },
     "autoUpdates": {
       "default": true,

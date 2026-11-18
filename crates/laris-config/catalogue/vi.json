@@ -24,5 +24,32 @@
       "write_failed": "không ghi được tệp: {detail}"
     },
     "root": "(gốc)"
+  },
+  "plan": {
+    "header": "[Kế hoạch hiện tại - nội bộ, không trích nguyên văn]",
+    "required": "Mục tiêu này cần nhiều bước. Trước khi gọi công cụ khác, hãy gọi update_plan với các bước ngắn gọn (trạng thái ban đầu pending), rồi cập nhật trạng thái (in_progress, done, failed, skipped) khi làm.",
+    "resumed": "Kế hoạch từ lượt trước còn bước chưa xong. Nếu yêu cầu mới vẫn cùng mục tiêu, làm tiếp đúng các bước đó, không lặp lại bước đã done. Nếu khác mục tiêu, gọi update_plan với kế hoạch mới.",
+    "auto_step": "Gọi công cụ {tool}",
+    "incomplete": "Kế hoạch còn bước chưa xong: {open}. Hãy hoàn thành chúng, hoặc cập nhật trạng thái (done, skipped, failed) kèm lý do bằng update_plan, hoặc nói rõ phần nào chưa làm được.",
+    "incomplete_warning": "Chưa hoàn thành: {open}.",
+    "invalid": "Kế hoạch không hợp lệ: {reason}."
+  },
+  "reflect": {
+    "step_failed": "Bước vừa rồi chưa đạt: {issues}. Còn {left} lần lập lại kế hoạch. Hãy đổi cách (từ khóa khác, công cụ khác, nguồn khác) và cập nhật kế hoạch bằng update_plan, hoặc kết luận rõ rằng chưa tìm thấy bằng chứng.",
+    "permanent": "{issues}. Đổi từ khóa hay công cụ cũng không giúp được. Đừng gọi lại công cụ đó. Trả lời trực tiếp và nói rõ rằng chưa có dữ liệu để trả lời, kèm cách khắc phục (ví dụ nạp tài liệu bằng ingest).",
+    "budget_out": "Đã hết số lần lập lại kế hoạch. Đừng thử lại cách cũ. Trả lời bằng những gì đã có, nói rõ phần nào còn thiếu và vì sao.",
+    "empty": "{tool} không trả kết quả",
+    "error": "{tool} lỗi {code}"
+  },
+  "loop": {
+    "tool_not_allowed": "Công cụ này không được phép trong quy trình đang chạy.",
+    "too_many_calls": "Quá nhiều lệnh gọi trong một bước.",
+    "cyclic_call": "Lệnh gọi giống hệt bị lặp lại.",
+    "approval_denied": "Hành động này chưa được duyệt.",
+    "cyclic": "Đã dừng: cùng một lệnh gọi công cụ bị lặp lại.",
+    "max_steps": "Đã dừng: hết số bước cho phép trước khi có câu trả lời cuối. Hãy cho biết có muốn tiếp tục không.",
+    "timeout": "Đã dừng: hết thời gian cho một lượt xử lý.",
+    "provider_error": "Không gọi được API mô hình. Kiểm tra server mô hình rồi thử lại.",
+    "interrupted": "Lệnh gọi bị cắt ngang trước khi ghi được kết quả; có thể nó đã chạy hoặc chưa."
   }
 }
