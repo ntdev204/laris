@@ -330,7 +330,18 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     `THIRD_PARTY.md` entries (origin `aa5f492`, licence, files to modify)
 - Validation:
   - Owner reviews and approves the cut
-- Status: pending
+- Status: done
+- Note: Measured 2026-11-18 against codex `aa5f492031f7edb75a40973d19eda8efb9512c61`; report
+  `docs/architecture/SANDBOX_MEASUREMENT.md` (DRAFT 0.1.0), origin and planned files in `THIRD_PARTY.md`. Uncut closure
+  is about 135-140k code lines (28-30 crates); confinement crates are 36.7k, of which Windows is 25.2k. Proposed cut:
+  replace `codex-protocol` by an own policy type, drop network-proxy, otel, mxc and pty crates; about 4-5k lines Linux,
+  3k macOS, 9-10k Windows with the restricted-token backend (option A, recommended), about 30k in total with the
+  elevated Windows backend (B). Finding: the restricted-token path cannot do read-only restriction. NOT verified:
+  nothing compiled; macOS and Windows read from source only (Linux machine); estimates are +/-25%. Owner decision 2026-11-18: approved
+  all four points (own policy type replacing `codex-protocol`; Windows option A, restricted token only; common drops incl.
+  no managed proxy, no `mxc-sandbox`, no bundled `bwrap`; new crates `rustix`, `dunce`, `which`, `indexmap`; `rand` and
+  `tempfile` stay unapproved: not needed under option A). `deny.toml` gains them when T135 vendors them.
+  Taken out of plan order at the owner's request (T129-T133 still pending; T134 depends only on T121).
 
 ### T135 — Sandbox integration and Python environment
 - Requirements: SR-H6
