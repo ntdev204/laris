@@ -58,6 +58,13 @@ allow = [
     "pkg-config", "vcpkg",
     # transitive crates of axum and tokio signal (T141)
     "axum-core", "errno", "httpdate", "matchit", "mime", "signal-hook-registry",
+    # transitive crates of sqlx with PostgreSQL, no TLS, no macros (T142)
+    "allocator-api2", "atoi", "autocfg", "byteorder", "crc", "crc-catalog", "crossbeam-queue", "crossbeam-utils",
+    "dotenvy", "either", "equivalent", "etcetera", "event-listener", "futures-intrusive", "hex", "hkdf", "home",
+    "indexmap", "libredox", "lock_api", "md-5", "num-traits", "parking", "parking_lot", "parking_lot_core", "plain",
+    "ppv-lite86", "rand", "rand_chacha", "rand_core", "redox_syscall", "scopeguard", "sqlx-core", "sqlx-postgres",
+    "stringprep", "tinyvec", "tokio-stream", "tracing-attributes", "unicode-bidi", "unicode-normalization",
+    "unicode-properties", "wasite", "whoami", "zerocopy",
     # transitive crates of landlock and rustix (T135)
     "enumflags2", "enumflags2_derive", "linux-raw-sys",
 ]
