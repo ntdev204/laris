@@ -323,7 +323,7 @@ returned logs, manifests and reports.
 - Validation:
   - Every licence statement links its source; nothing downloaded; the owner records the chosen source(s) and whether
     NER is a separate fine-tune (proposal) or part of the stage-1 mixture (would change T100's protocol: not proposed)
-- Status: pending
+- Status: done
 - Note: Pre-check 2026-11-14 (to be re-verified in the task): CoNLL-2003 English is built from the Reuters Corpus (RCV1);
   the shared task only publishes the annotations ("because of copyright reasons"), and the text requires the
   organisational and individual Reuters agreements filed with NIST, so it is not used unless the owner signs them
@@ -333,6 +333,7 @@ returned logs, manifests and reports.
   official page to check. MultiNERD: non-commercial (the repository says both CC BY-NC-SA 4.0 and CC BY-NC 4.0).
   WikiANN: licence `unknown`, silver labels. OntoNotes 5.0: LDC licence. Proposal: Few-NERD coarse types for training
   and held-out test, WNUT-17 as a second, out-of-domain test if its licence is confirmed.
+- Note: 2026-11-18: report written (`reports/verification/T185-ner-licence-review.md`), six candidates, every statement linked; nothing downloaded. Re-verification confirmed the pre-check and added: WNUT-17 is CC-BY 4.0 on the publisher's GitHub README (the official page states none; its social-media text may carry platform terms); the CoNLL-2003 primary page is gone (404), so its terms rest on the HF card; MultiNERD wording is inconsistent but means CC BY-NC-SA 4.0; WikiANN's data licence could not be verified (HF 401); OntoNotes is LDC non-commercial with no redistribution. Recommendation unchanged (Few-NERD coarse for train and test, WNUT-17 as out-of-domain test). Open: the owner's source choice, label set, and separate fine-tune versus mixture; T187 downloads nothing before that.
 
 ### T186 — TF-IDF and word vectors as model-block functions
 - Requirements: SR-M2, SR-M3
