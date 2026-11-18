@@ -595,6 +595,16 @@ returned logs, manifests and reports.
 - Status: done
 - Note: Owner order 2026-11-17: the agent grades with subagents (no API key needed). Grader Claude Sonnet subagents, blind shards. Calibration Spearman 0.914, MAE 0.099, grader 0.04 high (STS-B is public, so an upper estimate). 3,000 rows graded, 0 leakage hits, mean 0.526, std 0.252. Mean per origin relation: paraphrase 0.756, entailment 0.698, PAWS non-paraphrase 0.543, neutral 0.492, adjacent 0.284, contradiction 0.232. Shards 020-039 stay ungraded until T205 shows the rows help; no inter-grader agreement was measured. Report `reports/verification/T208-llm-similarity.md`.
 
+### T209 — Memory profile with a shared GPU (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T202, T203
+- Deliverables:
+  - `configs/language_encoder/english_r1_t209_shared_gpu_profile.yaml` and runbook section 11: the T202 profile with retrieval batch 16, contrastive similarity batch 32, micro-batch 4 and accumulation 8, limit 11.5 GB, for a GPU shared with CARLA (about 2.3 GB); the decision rule and intake of the returned logs
+- Validation:
+  - The logs show the peak per `tasks_per_step` 1 and 2 against the free memory with CARLA running; the report states which runs fit and what the halved negatives change
+- Status: pending
+- Note: Owner decision 2026-11-18: CARLA stays running during training. `nvidia-smi` showed 12,956 MiB free of 16,303 MiB; the T202 peaks (11.39 GB for one task, 13.12 GB for two) leave no margin for one task and do not fit for two. Prepared by the agent; only the owner runs it. Stage 1 rerun, T204 and the control use the sizes this profile settles.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
