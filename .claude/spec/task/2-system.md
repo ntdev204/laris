@@ -1348,7 +1348,25 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Validation:
   - `docker compose config`; smoke test; no policy or weights in images; trial-server volumes (`caddy_data`, PostgreSQL)
     survive the upgrade (owner runs it)
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T153-docker-deployment`. Files in `docker/`: `compose.yaml` (project `laris`,
+  volumes `caddy_data`, `caddy_config`, `pgdata` so the trial server's `laris_*` volumes are reused; only Caddy publishes
+  ports; the internal network has no route out; read-only root file systems, dropped capabilities), `server.Dockerfile`
+  (musl static binary on distroless `nonroot`, vendored offline build), `model.Dockerfile` (Python, uid 10001, code and
+  `configs/` only), `Caddyfile` (TLS, SSE without buffering, authority endpoint for pinning, no `Authorization` in logs),
+  `init-secrets.sh`, `backup.sh`, `restore.sh`, `verify-images.sh`, `smoke_test.sh`, and `.dockerignore` (no `.laris`,
+  weights, data or secrets in the build context). Runbook: `docs/deployment/RUNBOOK.md`. Code: `laris-server` reads
+  `LARIS_SERVER__DATABASE_URL_FILE` (Docker secret; a direct URL wins; errors never name the content) and has
+  `laris-server probe HOST:PORT/PATH` for the container health check (the image has no shell); one new test. Generation 2
+  uses the schema `laris2` of the same database, so generation 1's tables stay untouched. Measured: `docker compose
+  config` valid; both images built; `verify-images.sh` finds no policy, weights or secrets and both run non-root;
+  `smoke_test.sh` (separate project `laris-smoke`, own volumes, ports 28080/28443) passes: only Caddy publishes ports,
+  health, first admin key (works only from the edge gateway, i.e. the machine itself), user key, a streamed chat answer
+  from the placeholder backend, account, a trace without message text, policy lock. 629 workspace tests pass (without
+  PostgreSQL); `fmt`, `clippy -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`. Not done, by
+  design: the upgrade of the trial server (owner runs it; the old `laris-caddy-1` container was already stopped, the
+  volumes were not touched), the ladder suites against the compose stack (T154 reports), GPU override. The backend is
+  the placeholder, so this proves mechanics only; the foundation model is NOT QUALIFIED.
 
 ### T154 — Security suite and performance budgets
 - Requirements: SR-G5, SR-H15

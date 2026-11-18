@@ -37,21 +37,59 @@ fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
             }
             Err(e) => fail(e, 1),
         },
-        _ => fail("usage: laris-server [policy verify|lock]", 2),
+        _ => fail(
+            "usage: laris-server [policy verify|lock | probe HOST:PORT/PATH]",
+            2,
+        ),
+    }
+}
+
+/// `laris-server probe HOST:PORT`: asks `GET /health` over plain HTTP and exits 0 only on a 200. The image has no
+/// shell and no `curl`, so the container's health check is the binary itself.
+async fn probe(address: &str) -> ExitCode {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let address = address.trim_start_matches("http://");
+    let (host_port, path) = address
+        .split_once('/')
+        .map_or((address, ""), |(h, p)| (h, p));
+    let attempt = async {
+        let mut stream = tokio::net::TcpStream::connect(host_port).await.ok()?;
+        let request =
+            format!("GET /{path} HTTP/1.1\r\nHost: {host_port}\r\nConnection: close\r\n\r\n");
+        stream.write_all(request.as_bytes()).await.ok()?;
+        let mut head = [0_u8; 12];
+        stream.read_exact(&mut head).await.ok()?;
+        Some(head.starts_with(b"HTTP/1.1 200"))
+    };
+    match tokio::time::timeout(std::time::Duration::from_secs(3), attempt).await {
+        Ok(Some(true)) => ExitCode::SUCCESS,
+        _ => ExitCode::from(1),
     }
 }
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    let env: HashMap<String, String> = std::env::vars()
+    let mut env: HashMap<String, String> = std::env::vars()
         .filter(|(k, _)| k.starts_with(laris_server::config::ENV_PREFIX))
         .collect();
+    if let Err(e) = laris_server::config::resolve_secret_files(&mut env) {
+        return fail(e, 2);
+    }
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("probe") {
+        let Some(target) = args.get(1) else {
+            return fail("usage: laris-server probe HOST:PORT/PATH", 2);
+        };
+        return probe(target).await;
+    }
     if args.first().map(String::as_str) == Some("policy") {
         return policy_command(args.get(1).map_or("", String::as_str), &env);
     }
     if !args.is_empty() {
-        return fail("usage: laris-server [policy verify|lock]", 2);
+        return fail(
+            "usage: laris-server [policy verify|lock | probe HOST:PORT/PATH]",
+            2,
+        );
     }
     let policy_config = match PolicyConfig::from_env(&env) {
         Ok(c) => c,

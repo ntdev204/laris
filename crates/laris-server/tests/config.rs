@@ -82,3 +82,33 @@ fn errors_name_the_variable_and_not_the_value() {
         assert!(!e.contains("SECRETVALUE"), "{e}");
     }
 }
+
+#[test]
+fn database_url_comes_from_a_secret_file_and_a_direct_value_wins() {
+    use laris_server::config::resolve_secret_files;
+    let dir = std::env::temp_dir().join(format!("laris-secret-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("database_url");
+    std::fs::write(&file, "postgresql://a:b@db/x\n").unwrap();
+
+    let mut env = std::collections::HashMap::new();
+    env.insert(
+        "LARIS_SERVER__DATABASE_URL_FILE".to_owned(),
+        file.display().to_string(),
+    );
+    resolve_secret_files(&mut env).unwrap();
+    assert_eq!(env["LARIS_SERVER__DATABASE_URL"], "postgresql://a:b@db/x");
+
+    env.insert("LARIS_SERVER__DATABASE_URL".to_owned(), "direct".to_owned());
+    resolve_secret_files(&mut env).unwrap();
+    assert_eq!(env["LARIS_SERVER__DATABASE_URL"], "direct");
+
+    let mut missing = std::collections::HashMap::new();
+    missing.insert(
+        "LARIS_SERVER__DATABASE_URL_FILE".to_owned(),
+        dir.join("none").display().to_string(),
+    );
+    let err = resolve_secret_files(&mut missing).unwrap_err().to_string();
+    assert!(err.contains("DATABASE_URL_FILE") && !err.contains("none"));
+    std::fs::remove_dir_all(&dir).ok();
+}

@@ -11,6 +11,31 @@ use std::time::Duration;
 /// Prefix of every server variable.
 pub const ENV_PREFIX: &str = "LARIS_SERVER__";
 
+/// Name of the variable that points at a file holding the database URL (a Docker secret); the URL itself is
+/// `LARIS_SERVER__DATABASE_URL`.
+pub const ENV_DATABASE_URL_FILE: &str = "LARIS_SERVER__DATABASE_URL_FILE";
+
+/// Fills `LARIS_SERVER__DATABASE_URL` from the file named by `LARIS_SERVER__DATABASE_URL_FILE`, so the password
+/// lives in a Docker secret and not in the environment. A URL given directly wins. The message names the
+/// variable, never the file's content.
+pub fn resolve_secret_files(env: &mut HashMap<String, String>) -> Result<(), ConfigError> {
+    let Some(path) = env.get(ENV_DATABASE_URL_FILE).map(|v| v.trim().to_owned()) else {
+        return Ok(());
+    };
+    if path.is_empty() || env.contains_key("LARIS_SERVER__DATABASE_URL") {
+        return Ok(());
+    }
+    let text = std::fs::read_to_string(&path).map_err(|_| ConfigError::Invalid {
+        name: ENV_DATABASE_URL_FILE,
+        reason: "the file cannot be read",
+    })?;
+    env.insert(
+        "LARIS_SERVER__DATABASE_URL".to_owned(),
+        text.trim().to_owned(),
+    );
+    Ok(())
+}
+
 /// A setting that could not be used. The message names the variable, never its value.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ConfigError {
