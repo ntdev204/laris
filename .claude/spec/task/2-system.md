@@ -150,9 +150,10 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `cargo xtask scan` (new; in CI) finds hardcoded endpoints and secrets in `crates/*/src`, `crates/*/catalogue` and
   `xtask/src`; seeded faults are tested. A test compares the schema with generation 1's `settings.schema.json`: every
   generation-1 setting keeps type, default and limits; the only addition is `ui.language` (`en` or `vi`, default `en`).
-  Decisions for the owner: that default (generation 1 spoke Vietnamese); the catalogue starts with the config messages
-  only, later tasks add keys in both languages (parity is tested); the YAML policy file `.laris/prompts/strings.yaml`
-  is untouched and not read (no YAML crate approved). The library reads neither the environment nor the home
+  Owner decisions of 2026-11-18, all confirmed: the default language is English everywhere and Vietnamese appears only
+  when the user sets `ui.language` to `vi`; the catalogue starts with the config messages only, later tasks add keys in
+  both languages (parity is tested); the YAML policy file `.laris/prompts/strings.yaml` is untouched and not read (no
+  YAML crate approved). The library reads neither the environment nor the home
   directory; callers pass them. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`,
   `xtask guard`, `xtask scan` and `xtask spec` pass. No new crates.
 
