@@ -273,3 +273,12 @@ def test_run_training_renders_progress_and_validation_table(
     assert text.count("[Step ") == 4 and "eta " in text and "gn=" in text and "lr=" in text
     assert text.count("Validation (val split)") == 1  # one header, then a row per evaluation
     assert "* step 2" in text
+
+
+def test_stop_after_steps_is_validated() -> None:
+    """T212: a cut of a run at a step must lie inside the schedule."""
+    assert TrainingRunConfig(total_optimizer_steps=5000, stop_after_steps=2000).stop_after_steps == 2000
+    assert TrainingRunConfig(total_optimizer_steps=5000).stop_after_steps is None
+    for bad in (0, 5001):
+        with pytest.raises(ValueError):
+            TrainingRunConfig(total_optimizer_steps=5000, stop_after_steps=bad)

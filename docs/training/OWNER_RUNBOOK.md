@@ -823,3 +823,29 @@ stage-1 rerun, the stage-2 run and the control alike, and `scripts/plan_stage2_s
 
 **Result (2026-11-18).** Stage 2 with checkpointing: 26.82 GB, 3.78 s per optimizer step; control with checkpointing: 23.82 GB, 3.45 s; both "off" runs: CUDA out of memory. Checkpointing stays on and the batches stay at
 128 and 256 (`reports/verification/T211-a100-speed-profile.md`). Use `--micro-batch-size 32 --grad-accum-steps 1` for the stage-2 run and the control, without `--no-gradient-checkpointing`.
+
+## 15. T212: stage-1 rerun on the corrected data (owner run, prepared 2026-11-18)
+
+Why: `english-r1-pilot2` (2026-11-14) trained on data later corrected (T206 SICK scores and 9,280 SQuAD rows that also sit in SQuAD v2 held-out, T207 weights and VitaminC, T208 similarity rows). Its body learned MLM and
+retrieval only (pair tasks at chance, re-measured 2026-11-18), so the effect of the old data is small, but the lineage of a checkpoint that may become the foundation should not carry held-out rows. The rerun gives the
+clean starting point of the stage-2 run and its control (T204). Config `configs/language_encoder/english_r1_stage1_rerun.yaml` = pilot 2 (warm-up 500, 5,000-step cosine, learning rate 2e-4, micro-batch 8 x accumulation 4, one task per micro-step,
+similarity floor 3 %, seed 42, evaluation and saving every 500 steps, patience 4) plus the T207 weights, applied with `--dataset-sampling-ablation` (pilot 2 did not pass it). `--stop-after-steps 2000` ends the run
+at step 2,000 with the schedule of the 5,000-step cosine, as pilot 2 did when it was stopped by hand; the final validation and `best` and `last` are written. Micro-batch 8 x 4 stays (a single-task update at 32 x 1 would change the experiment).
+Estimate (not measured): about 2.5 s per optimizer step on the A100, so about 1.4 h plus validation, about 10 compute units at 6.73 units per hour.
+
+On the VM, after the code of this commit is uploaded (`scripts/colab/pack_code.sh`, `colab upload`, `tar -xzf`):
+```bash
+cd /content/laris
+export LARIS_TRAINING_AUTHORIZED=1
+TOK=artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model
+nohup python3 -m cli.model train language-encoder --model-size large --vocab-size 56000 --max-seq-len 1024 \
+  --training-config configs/language_encoder/english_r1_stage1_rerun.yaml --dataset-sampling-ablation \
+  --micro-batch-size 8 --grad-accum-steps 4 --steps 5000 --stop-after-steps 2000 \
+  --eval-interval 500 --eval-batches 16 --save-interval 500 --patience 4 --seed 42 \
+  --precision bf16 --no-8bit-adam --tokenizer-model $TOK --normalize-input --no-evaluate-after \
+  --run-id english-r1-stage1-rerun > artifacts/profiles/english-r1-stage1-rerun.log 2>&1 &
+tail -f artifacts/profiles/english-r1-stage1-rerun.log        # Ctrl-C leaves the run going
+```
+**Stop rules** (as in the pilot): NaN loss, a task loss more than 10 % above its best for two evaluations, a step more than twice the first steps' time. `--no-evaluate-after` because the test splits are not on the VM and the sealed
+test split is never touched. Checkpoints are written under `artifacts/checkpoints/language_encoder/english-r1-stage1-rerun/{best,last}` (6.1 GB each): copy `best` and `last` and the log to Drive (`/content/drive/MyDrive/laris/runs/`) and
+`sync` **before** `colab stop`. Probes afterwards (forward only): `python3 -I scripts/diagnose_pair_path.py <best> $TOK 600`.

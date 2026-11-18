@@ -593,4 +593,4 @@ The authoritative status of every task is in the task files. Programme 1: Phase 
 Phase 21: T101-T104. Phase 22: T105-T107. Phase 23: T108-T110. Phase 24: T111-T112. Phase 25: T113-T118.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T189 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T211 (pair-task remediation; programme 1).
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T189 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T212 (pair-task remediation; programme 1).
