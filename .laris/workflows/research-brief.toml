@@ -1,0 +1,25 @@
+name = "research-brief"
+version = "2.0.0"
+description = "Write a short brief on a topic from the user's material: what is known, what is disputed, what to read first."
+triggers = ["write a brief", "summarise what I have on"]
+allowed_tools = ["Grep", "Glob", "Read", "Write", "update_plan"]
+max_steps = 10
+require_citations = true
+approval = "ask"
+output_sections = ["Known", "Disputed", "Read first", "Uncertainties", "Sources"]
+stop_conditions = ["the material to search is empty", "the user declines to write the brief"]
+
+[[phases]]
+id = "gather"
+goal = "Search for the topic with several different queries and read the strongest passages."
+exit = "Enough passages to say what is known, or a statement that there are not."
+
+[[phases]]
+id = "synthesise"
+goal = "Separate what the sources agree on from what they dispute."
+instructions = "Cite each point. Mark a point that only one source makes."
+exit = "Known and Disputed lists, each point with its source."
+
+[[phases]]
+id = "deliver"
+goal = "Rank what to read first and offer to write the brief to a file."

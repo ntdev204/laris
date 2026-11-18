@@ -12,7 +12,8 @@ Version 2.0.0-draft · 2026-11-13 · Implements [spec.md](../spec.md) sections 5
 - One task, one feature branch cut from `laris-v2` (`feature/Txx-<slug>`), one session; report each step.
 - A task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, the spec check
   and a pull request into `laris-v2`. No dependency without the owner's approval (T119).
-- Generation-1 behaviour on `laris-v1` is the reference; when unsure, read it and keep the behaviour.
+- Generation 2 does not depend on generation 1 (owner decision 2026-11-18). `laris-v1` may be read for ideas; nothing
+  from it is reused or kept compatible.
 - With the placeholder backend, scenarios prove mechanics only; capability claims wait for a qualified model.
 
 ## 2. Phases
@@ -58,7 +59,7 @@ Exit criteria:
 
 ### Phase 32 — Server: RAG
 Goal: grounded answers from workspace retrieval and the system brain.
-Tasks: T145, T146, T147, T148
+Tasks: T145, T146, T215, T147, T148
 Exit criteria:
 - Retrieval parity with generation 1; confidentiality suite passes; brain navigation within budget; the RAG-rung
   scenario passes with the evidence gate.

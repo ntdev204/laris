@@ -22,9 +22,10 @@ plan and task together, and run `python scripts/validate_spec.py` before startin
 - Keep source and configuration names functional (ADR-013). Keep experiments outside
   the automated test suite, measured reports outside normative specifications, and
   local model weights/datasets (and collected fine-tune data) outside Git.
-- Policy lives in `.laris/` (`prompts/`, `rules/`, `workflows/`, `help/`) and `LARIS.md`; it is covered
-  by `integrity.lock`. Change it only with the owner's approval; `integrity.lock` is refreshed by
-  the Rust harness once it provides verify and lock (the generation-1 `laris harness` commands no longer exist).
+- Generation 2 stands alone (owner decision 2026-11-18, ADR-021 addendum): do not reuse, migrate or stay compatible
+  with generation 1. `laris-v1` is frozen and may be read for ideas only.
+- Policy lives in `.laris/` (`policy.toml`, `prompts/`, `rules/`, `workflows/`, `help.md`) and is covered by
+  `integrity.toml`. Change it only with the owner's approval, then refresh the lock with `laris-server policy lock`.
   No tunable, endpoint or secret is hardcoded: configuration and environment only.
 - Preserve measured evidence and existing changes. Push, tag and release only within explicit owner
   authorization; merging a finished task into `laris-v2` follows the branch rule above.

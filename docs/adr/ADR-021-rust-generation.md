@@ -90,3 +90,13 @@ Neither tool is installed or used before T121 and neither becomes a dependency o
 
 ## 6. Owner decision
 2026-11-13: D28 and D35-D42 confirmed as proposed; release tools as chosen in section 4 (delegated).
+
+## Addendum 2026-11-18: independence from generation 1
+
+The owner decided that generation 2 is a complete upgrade and must not depend on generation 1: no shared wire
+format, database schema, vault format, lock format or policy files. The ideas stay; nothing is reused. This
+supersedes D35 (wire compatibility), D43 (generation-1 data stays readable) and every requirement that asks for
+migration, adoption or parity with generation 1. `.laris/` is rewritten (Markdown for text, TOML for structure) and
+the TOML format, with the `toml` crate and its transitive crates, was approved for it. Work already done under the
+old rule (T142 migrations, T143 key digests, T145 parity fixtures, the P1/P2 fixtures) is listed in T215 for removal.
+`laris-v1` itself stays frozen and untouched.

@@ -1,12 +1,10 @@
-//! The integrity lock of the protected policy files (SR-S4; rule G-3).
+//! The integrity lock of the protected policy files (SR-S4).
 //!
-//! `.laris/integrity.lock` holds a SHA-256 per file of `LARIS.md`, the help text and everything under `.laris/prompts`,
-//! `rules`, `workflows`, `brain` and `vault`. The format and the set of files are those of generation 1, so the lock
-//! the Python harness wrote verifies here and the other way round.
-//!
-//! The server reads every protected file once into a [`Snapshot`], hashes those bytes, compares them with the lock,
-//! and builds everything it serves from the same bytes: a file that changes on disk after the check cannot slip into
-//! the prompt. A problem is reported by name and kind only, never by content.
+//! `.laris/integrity.toml` holds a SHA-256 per file of `policy.toml`, `help.md` and everything under
+//! `.laris/prompts`, `rules` and `workflows`. The server reads every protected file once into a [`Snapshot`], hashes
+//! those bytes, compares them with the lock, and builds everything it serves from the same bytes: a file that
+//! changes on disk after the check cannot slip into the prompt. A problem is reported by name and kind only, never
+//! by content.
 
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -14,19 +12,13 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// The lock file, relative to the project root.
-pub const LOCK_FILE: &str = ".laris/integrity.lock";
-/// The root instruction file.
-pub const ROOT_FILE: &str = "LARIS.md";
+pub const LOCK_FILE: &str = ".laris/integrity.toml";
+/// The manifest of the prompt.
+pub const MANIFEST_FILE: &str = ".laris/policy.toml";
 /// The prepared user guide.
-pub const HELP_FILE: &str = ".laris/help/how-to-use.md";
+pub const HELP_FILE: &str = ".laris/help.md";
 /// Folders whose files are protected.
-pub const PROTECTED_DIRS: [&str; 5] = [
-    ".laris/prompts",
-    ".laris/rules",
-    ".laris/workflows",
-    ".laris/brain",
-    ".laris/vault",
-];
+pub const PROTECTED_DIRS: [&str; 3] = [".laris/prompts", ".laris/rules", ".laris/workflows"];
 
 /// Largest protected file, and the most bytes in all: a bigger tree is refused rather than half read.
 const MAX_FILE: u64 = 8 << 20;
@@ -70,7 +62,7 @@ impl Snapshot {
         let mut snapshot = Self::default();
         let mut total = 0u64;
         let mut paths = Vec::new();
-        for single in [ROOT_FILE, HELP_FILE] {
+        for single in [MANIFEST_FILE, HELP_FILE] {
             let path = root.join(single);
             if path.is_file() {
                 paths.push(path);
@@ -99,7 +91,7 @@ impl Snapshot {
         Ok(snapshot)
     }
 
-    /// The bytes of one protected file by its label (`.laris/prompts/manifest.yaml`).
+    /// The bytes of one protected file by its label (`.laris/prompts/identity.md`).
     pub fn get(&self, label: &str) -> Option<&[u8]> {
         self.files.get(label).map(Vec::as_slice)
     }
@@ -159,27 +151,12 @@ impl Snapshot {
         out
     }
 
-    /// The text of a new lock for these files, byte for byte what generation 1 wrote
-    /// (`json.dumps(indent=2, sort_keys=True)` and a newline).
+    /// The text of a new lock for these files.
     pub fn render_lock(&self) -> String {
-        let mut out = String::from("{\n  \"algorithm\": \"sha256\",\n  \"files\": {");
-        let digests = self.digests();
-        if digests.is_empty() {
-            out.push('}');
-        } else {
-            out.push('\n');
-            let last = digests.len() - 1;
-            for (i, (name, digest)) in digests.iter().enumerate() {
-                out.push_str(&format!(
-                    "    {}: \"{digest}\"{}\n",
-                    ascii_json(name),
-                    if i == last { "" } else { "," }
-                ));
-            }
-            out.push_str("  ");
-            out.push('}');
+        let mut out = String::from("algorithm = \"sha256\"\n\n[files]\n");
+        for (name, digest) in self.digests() {
+            out.push_str(&format!("{} = \"{digest}\"\n", toml_string(&name)));
         }
-        out.push_str("\n}\n");
         out
     }
 }
@@ -230,9 +207,13 @@ fn walk(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Integrity
 }
 
 fn parse_lock(text: &str) -> Option<BTreeMap<String, String>> {
-    let value: serde_json::Value = serde_json::from_str(text).ok()?;
-    let files = value.get("files")?.as_object()?;
-    files
+    let value: serde_json::Value = toml::from_str(text).ok()?;
+    if value.get("algorithm")?.as_str()? != "sha256" {
+        return None;
+    }
+    value
+        .get("files")?
+        .as_object()?
         .iter()
         .map(|(k, v)| Some((k.clone(), v.as_str()?.to_owned())))
         .collect()
@@ -242,23 +223,17 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// A JSON string with every non-ASCII character escaped, as Python's `ensure_ascii` writes it.
-fn ascii_json(text: &str) -> String {
+/// A TOML basic string.
+fn toml_string(text: &str) -> String {
     let mut out = String::from("\"");
     for c in text.chars() {
         match c {
             '"' => out.push_str("\\\""),
             '\\' => out.push_str("\\\\"),
             '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
             '\t' => out.push_str("\\t"),
-            '\u{8}' => out.push_str("\\b"),
-            '\u{c}' => out.push_str("\\f"),
-            c if (c as u32) < 0x20 || (c as u32) > 0x7e => {
-                let mut units = [0u16; 2];
-                for unit in c.encode_utf16(&mut units) {
-                    out.push_str(&format!("\\u{unit:04x}"));
-                }
+            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
+                out.push_str(&format!("\\u{:04x}", c as u32))
             }
             c => out.push(c),
         }
@@ -272,9 +247,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn keys_are_escaped_like_python() {
-        assert_eq!(ascii_json("a/b \"c\""), r#""a/b \"c\"""#);
-        assert_eq!(ascii_json("é😀"), r#""\u00e9\ud83d\ude00""#);
-        assert_eq!(ascii_json("\u{7f}"), r#""\u007f""#);
+    fn keys_are_written_as_toml_strings_and_read_back() {
+        let name = "dir/we\"ird\\name é.md";
+        let text = format!(
+            "algorithm = \"sha256\"\n\n[files]\n{} = \"ab\"\n",
+            toml_string(name)
+        );
+        assert_eq!(
+            parse_lock(&text).unwrap().get(name).map(String::as_str),
+            Some("ab")
+        );
+    }
+
+    #[test]
+    fn a_lock_of_another_algorithm_is_unreadable() {
+        assert!(parse_lock("algorithm = \"md5\"\n[files]\n").is_none());
     }
 }

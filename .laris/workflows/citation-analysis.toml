@@ -1,0 +1,26 @@
+name = "citation-analysis"
+version = "2.0.0"
+description = "Extract the references of the user's documents and report who cites whom and which works recur."
+triggers = ["analyse the citations", "which papers cite each other"]
+allowed_tools = ["Grep", "Glob", "Read", "update_plan"]
+max_steps = 8
+require_citations = true
+approval = "inherit"
+output_sections = ["References found", "Recurring works", "Limits", "Sources"]
+stop_conditions = ["no document has a reference list"]
+
+[[phases]]
+id = "scope"
+goal = "Find the documents that have a reference list."
+exit = "The documents with references are listed, or the user is told there are none."
+
+[[phases]]
+id = "analyse"
+goal = "Extract the references, merge entries that are the same work and count how often each recurs."
+instructions = "Treat a parsed reference as a lead: say how sure the match is."
+exit = "A table of works with counts."
+
+[[phases]]
+id = "report"
+goal = "Report the recurring works, the citation links among the documents and what could not be parsed."
+instructions = "Counts of citations say how often a work is cited here, not how good it is."
