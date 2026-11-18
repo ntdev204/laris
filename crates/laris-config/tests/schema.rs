@@ -166,8 +166,22 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
             "server.maxRetries",
             "server.retryBackoffMaxSeconds",
             "server.retryBackoffSeconds",
+            "tools",
+            "tools.bashDefaultTimeoutSeconds",
+            "tools.bashMaxTimeoutSeconds",
+            "tools.bashOutputMaxChars",
+            "tools.checkpointKeep",
+            "tools.deniedFiles",
+            "tools.deniedFiles[]",
+            "tools.editMaxBytes",
+            "tools.globMaxResults",
+            "tools.grepMaxFileBytes",
+            "tools.grepMaxResults",
+            "tools.readMaxLines",
+            "tools.resultMaxChars",
+            "tools.skillMaxChars",
             "ui.language",
         ],
-        "settings added since generation 1 (server.* from T128, agent.* from T131)"
+        "settings added since generation 1 (server.* from T128, agent.* from T131, tools.* from T132)"
     );
 }
