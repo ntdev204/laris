@@ -747,9 +747,8 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     report outside the specifications
 - Validation:
   - Reproducible run; seeded regression fails
-- Status: in_progress
-- Note: Built and verified 2026-11-18, **not closed**: the ledger refuses `done` while its dependency T135 is
-  `in_progress` (the Windows sandbox backend is not built); nothing else is open. `cargo xtask eval [--out FILE] [--baseline FILE] [--write-baseline] [--seed-regression
+- Status: done
+- Note: Closed 2026-11-18. `cargo xtask eval [--out FILE] [--baseline FILE] [--write-baseline] [--seed-regression
   PERCENT]` (`xtask/src/eval.rs`, no new crate) runs the model-free suites as the workspace's own test targets, one
   `cargo test -p P --test T -- --test-threads=1` each (one thread, because `tests/hooks.rs` flakes under parallel
   runs, T136), and sums the `test result` lines. Suites: golden (protocol fixtures and core events, vault index and
@@ -770,7 +769,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   baseline is the Linux development machine (a platform that runs fewer sandbox tests must not use it); a passed
   count only has to stay within the tolerance, so a lost test below 20 percent is not caught, a new test needs a
   baseline refresh with `--write-baseline` only to raise the floor; a scripted model plays the model, so nothing
-  shows capability of the foundation model, which is NOT QUALIFIED. The sandbox suite covers Linux only. `cargo fmt --check`, `clippy -D warnings`, `cargo test` for
+  shows capability of the foundation model, which is NOT QUALIFIED. The sandbox suite covers Linux only (macOS and Windows runs are T214). `cargo fmt --check`, `clippy -D warnings`, `cargo test` for
   `xtask`, `cargo deny check`, `xtask guard` and `xtask scan` pass.
 
 ## Phase 31 — Server: LLM
