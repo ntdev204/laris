@@ -140,5 +140,17 @@ fn every_generation_one_setting_is_kept_with_its_type_default_and_limits() {
         }
     }
     let added: Vec<&String> = new.keys().filter(|p| !old.contains_key(*p)).collect();
-    assert_eq!(added, ["ui.language"], "settings added since generation 1");
+    assert_eq!(
+        added,
+        [
+            "server.caCertificateFile",
+            "server.idleTimeoutSeconds",
+            "server.maxResponseBytes",
+            "server.maxRetries",
+            "server.retryBackoffMaxSeconds",
+            "server.retryBackoffSeconds",
+            "ui.language",
+        ],
+        "settings added since generation 1 (server.* from T128)"
+    );
 }

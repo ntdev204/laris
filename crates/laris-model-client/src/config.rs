@@ -2,6 +2,7 @@
 //! `laris-config`); nothing here is a built-in endpoint, key or limit.
 
 use crate::error::ClientError;
+use laris_config::settings::Server;
 use std::fmt;
 use std::time::Duration;
 
@@ -65,6 +66,27 @@ pub struct ClientConfig {
 }
 
 impl ClientConfig {
+    /// The client configuration of the `server` block of the settings; the key comes from the credentials.
+    pub fn from_server(server: &Server, api_key: Option<ApiKey>) -> Result<Self, ClientError> {
+        let seconds = |name: &str, value: f64| {
+            Duration::try_from_secs_f64(value).map_err(|_| {
+                ClientError::Config(format!("server.{name} is not a usable number of seconds"))
+            })
+        };
+        Ok(Self {
+            base_url: server.url.clone(),
+            api_key,
+            request_timeout: seconds("timeoutSeconds", server.timeout_seconds)?,
+            idle_timeout: seconds("idleTimeoutSeconds", server.idle_timeout_seconds)?,
+            max_retries: server.max_retries,
+            backoff_base: seconds("retryBackoffSeconds", server.retry_backoff_seconds)?,
+            backoff_max: seconds("retryBackoffMaxSeconds", server.retry_backoff_max_seconds)?,
+            max_body_bytes: usize::try_from(server.max_response_bytes).map_err(|_| {
+                ClientError::Config("server.maxResponseBytes is too large".to_owned())
+            })?,
+        })
+    }
+
     /// Checks the values and returns the address without a trailing slash.
     pub(crate) fn validated_base(&self) -> Result<String, ClientError> {
         let base = self.base_url.trim().trim_end_matches('/');
@@ -76,6 +98,11 @@ impl ClientConfig {
         if self.request_timeout.is_zero() || self.idle_timeout.is_zero() {
             return Err(ClientError::Config(
                 "timeouts must be above zero".to_owned(),
+            ));
+        }
+        if self.backoff_base > self.backoff_max {
+            return Err(ClientError::Config(
+                "the first retry wait is longer than the longest one".to_owned(),
             ));
         }
         if self.max_body_bytes == 0 {

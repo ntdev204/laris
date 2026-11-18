@@ -258,11 +258,16 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `stream`, `json`), `rustls` (ring, std, tls12), `tokio`, `serde`, `serde_json`, `sha2`, `thiserror`, `laris-protocol`;
   `cargo vendor` added 138 crates (the transitive trees of reqwest, tokio and rustls, wasm and Windows targets
   included, since `cargo deny` checks every target) and `deny.toml` lists each of them; `cpufeatures` 0.3.1 sits beside
-  the old 0.2.17. Two points need the owner: (1) `deny.toml` now allows the licences ISC and BSD-3-Clause, which come
-  with ring, rustls-webpki, untrusted and subtle and cannot be avoided with rustls; (2) the retry, timeout and body
-  limits are fields of `ClientConfig` with no defaults, and the settings schema holds only `server.url`,
-  `server.caFingerprint` and `server.timeoutSeconds`, so the other entries (and where the authority certificate is
-  read from) belong with the task that wires the client into the loop (T131) and the settings (T145). Not covered: a
+  the old 0.2.17. Decisions taken on the open points (owner delegated them, 2026-11-18): the vendor size (about 190 MB, 138
+  crates) is accepted as the cost of the approved HTTP stack; `deny.toml` allows the licences ISC and BSD-3-Clause, which
+  come with ring, rustls-webpki, untrusted and subtle and cannot be avoided with rustls (comment in the file); the client
+  is wired to the settings: `server` gains `caCertificateFile` (PEM or DER, empty for none), `idleTimeoutSeconds` (60),
+  `maxRetries` (3), `retryBackoffSeconds` (1), `retryBackoffMaxSeconds` (30) and `maxResponseBytes` (16 MiB), next to
+  `timeoutSeconds` (the wait for answer headers), with the schema regenerated and the T125 added-settings test updated;
+  `ClientConfig::from_server` and `Trust::from_server` build the client from the block (a pin without a certificate file,
+  an unreadable or non-matching file, a non-finite number and a first wait above the longest wait are configuration
+  errors; 8 tests in `tests/settings.rs`, PEM and DER both load). The API key still comes from the credentials file or
+  `LARIS_API_KEY`, never from the settings. Not covered: a
   test of a pinned server whose certificate chain is presented without the authority (the pin names the authority, which
   the caller supplies). `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`,
   `xtask scan`, `xtask schema --check` and `xtask spec` pass.
