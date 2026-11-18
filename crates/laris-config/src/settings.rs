@@ -29,9 +29,26 @@ pub struct Server {
     pub url: String,
     /// `sha256:<hex>` of the pinned private certificate; empty for none.
     pub ca_fingerprint: String,
-    /// Request timeout in seconds.
+    /// File holding the certificate of the pinned authority (PEM or DER); empty for none. Needed when
+    /// `caFingerprint` is set: the fingerprint is checked against this file.
+    pub ca_certificate_file: String,
+    /// Longest wait for the answer headers of one attempt, in seconds.
     #[schemars(extend("exclusiveMinimum" = 0))]
     pub timeout_seconds: f64,
+    /// Longest silence inside a streamed or downloaded body, in seconds.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub idle_timeout_seconds: f64,
+    /// Extra attempts after the first, before a stream has started.
+    pub max_retries: u32,
+    /// Wait before the first retry, in seconds; doubles each time.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub retry_backoff_seconds: f64,
+    /// Longest wait between retries, in seconds; a `Retry-After` of the server is cut to this.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub retry_backoff_max_seconds: f64,
+    /// Largest accepted stream event or JSON answer, in bytes.
+    #[schemars(extend("minimum" = 1))]
+    pub max_response_bytes: u64,
 }
 
 impl Default for Server {
@@ -39,7 +56,13 @@ impl Default for Server {
         Self {
             url: String::new(),
             ca_fingerprint: String::new(),
+            ca_certificate_file: String::new(),
             timeout_seconds: 120.0,
+            idle_timeout_seconds: 60.0,
+            max_retries: 3,
+            retry_backoff_seconds: 1.0,
+            retry_backoff_max_seconds: 30.0,
+            max_response_bytes: 16 * 1024 * 1024,
         }
     }
 }

@@ -5,6 +5,8 @@
 //! only trust anchor of the connection. A certificate that does not match is refused before any connection exists.
 
 use crate::error::ClientError;
+use laris_config::settings::Server;
+use rustls::pki_types::{CertificateDer, pem::PemObject};
 use sha2::{Digest, Sha256};
 
 /// A parsed `sha256:<hex>` pin.
@@ -81,4 +83,38 @@ impl Trust {
         }
         Ok(Self::Pinned { pin, authority_der })
     }
+}
+
+impl Trust {
+    /// The trust of the `server` block: the system store without a pin; with a pin, the authority certificate read
+    /// from `server.caCertificateFile` (PEM or DER) and checked against `server.caFingerprint`.
+    pub fn from_server(server: &Server) -> Result<Self, ClientError> {
+        if server.ca_fingerprint.is_empty() {
+            return Ok(Self::System);
+        }
+        if server.ca_certificate_file.is_empty() {
+            return Err(ClientError::Config(
+                "server.caFingerprint is set but server.caCertificateFile is not: the pin needs the authority certificate"
+                    .to_owned(),
+            ));
+        }
+        let bytes = std::fs::read(&server.ca_certificate_file).map_err(|e| {
+            ClientError::Config(format!(
+                "cannot read the authority certificate {}: {e}",
+                server.ca_certificate_file
+            ))
+        })?;
+        Self::pinned(&server.ca_fingerprint, certificate_der(&bytes)?)
+    }
+}
+
+/// One certificate as DER, from PEM text or from DER itself.
+fn certificate_der(bytes: &[u8]) -> Result<Vec<u8>, ClientError> {
+    if bytes.windows(10).any(|w| w == b"-----BEGIN") {
+        let cert = CertificateDer::from_pem_slice(bytes).map_err(|e| {
+            ClientError::Config(format!("the authority certificate is not valid PEM: {e}"))
+        })?;
+        return Ok(cert.as_ref().to_vec());
+    }
+    Ok(bytes.to_vec())
 }

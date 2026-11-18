@@ -211,14 +211,54 @@
       "additionalProperties": false,
       "description": "Server connection.",
       "properties": {
+        "caCertificateFile": {
+          "default": "",
+          "description": "File holding the certificate of the pinned authority (PEM or DER); empty for none. Needed when\n`caFingerprint` is set: the fingerprint is checked against this file.",
+          "type": "string"
+        },
         "caFingerprint": {
           "default": "",
           "description": "`sha256:<hex>` of the pinned private certificate; empty for none.",
           "type": "string"
         },
+        "idleTimeoutSeconds": {
+          "default": 60.0,
+          "description": "Longest silence inside a streamed or downloaded body, in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
+        "maxResponseBytes": {
+          "default": 16777216,
+          "description": "Largest accepted stream event or JSON answer, in bytes.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxRetries": {
+          "default": 3,
+          "description": "Extra attempts after the first, before a stream has started.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "retryBackoffMaxSeconds": {
+          "default": 30.0,
+          "description": "Longest wait between retries, in seconds; a `Retry-After` of the server is cut to this.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
+        "retryBackoffSeconds": {
+          "default": 1.0,
+          "description": "Wait before the first retry, in seconds; doubles each time.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
         "timeoutSeconds": {
           "default": 120.0,
-          "description": "Request timeout in seconds.",
+          "description": "Longest wait for the answer headers of one attempt, in seconds.",
           "exclusiveMinimum": 0,
           "format": "double",
           "type": "number"
@@ -410,7 +450,13 @@
     "server": {
       "$ref": "#/$defs/Server",
       "default": {
+        "caCertificateFile": "",
         "caFingerprint": "",
+        "idleTimeoutSeconds": 60.0,
+        "maxResponseBytes": 16777216,
+        "maxRetries": 3,
+        "retryBackoffMaxSeconds": 30.0,
+        "retryBackoffSeconds": 1.0,
         "timeoutSeconds": 120.0,
         "url": ""
       },
