@@ -605,6 +605,16 @@ returned logs, manifests and reports.
 - Status: pending
 - Note: Owner decision 2026-11-18: CARLA stays running during training. `nvidia-smi` showed 12,956 MiB free of 16,303 MiB; the T202 peaks (11.39 GB for one task, 13.12 GB for two) leave no margin for one task and do not fit for two. Prepared by the agent; only the owner runs it. Stage 1 rerun, T204 and the control use the sizes this profile settles.
 
+### T210 — Colab A100 for the owner runs (SSH, data and code transfer)
+- Requirements: SR-M3, SR-M6
+- Depends: T203
+- Deliverables:
+  - Runbook section 12; `scripts/colab/data_manifest.py` (train and val files the loader reads, test splits and unread directories left out, `--stage` hard-links them with `files.sha256`), `pack_code.sh`, `setup_vm.sh`, `sync_data.sh`; the Colab CLI (`google-colab-cli` 0.8.0, SSH needs 0.7.2 or later) installed by the agent as a `uv tool` with the owner's approval of 2026-11-18
+- Validation:
+  - A 10 s A100 session checked the VM (40 GB, 83 GB RAM, 236 GB disk, driver 580, PyTorch 2.14.1+cu130, Python 3.13) and was stopped; fixture test of the manifest; the data copy and a forward-only check on the VM wait for the data on Drive; no training
+- Status: pending
+- Note: Owner decisions 2026-11-18: keep CARLA running locally, use the Colab A100 (191 compute units), upload the 28.10 GB of training data to the owner's Drive. Open: the Drive quota (28.1 GB data plus 6.1 GB per checkpoint), the units per hour of the plan (read it in the Colab UI), and whether the stage-1 rerun is its own task. The agent does not train; the owner starts each run.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
