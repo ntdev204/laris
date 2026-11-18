@@ -27,4 +27,10 @@ thiserror = "2"
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "time", "sync", "net", "io-util", "signal"] }
 
 [dev-dependencies]
+laris-config = { path = "../laris-config", version = "2.0.0-dev" }
+laris-core = { path = "../laris-core", version = "2.0.0-dev" }
+laris-evidence = { path = "../laris-evidence", version = "2.0.0-dev" }
+laris-model-client = { path = "../laris-model-client", version = "2.0.0-dev" }
+laris-store = { path = "../laris-store", version = "2.0.0-dev" }
+laris-tools = { path = "../laris-tools", version = "2.0.0-dev" }
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "time", "sync", "net", "io-util", "test-util"] }

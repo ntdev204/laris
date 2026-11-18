@@ -179,10 +179,19 @@ fn lint_of_the_golden_vaults_equals_the_recorded_results() {
 }
 
 #[test]
-fn builtin_schema_equals_the_project_file() {
-    let file = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.laris/vault/schema.yaml");
-    let from_file = Schema::load(Some(&file)).expect("file");
-    assert_eq!(from_file, Schema::builtin());
+fn the_builtin_schema_is_the_default_and_a_file_can_replace_it() {
+    let dir = std::env::temp_dir().join(format!("laris-schema-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("schema.yaml");
+    std::fs::write(&file, BUILTIN_YAML).unwrap();
+    assert_eq!(Schema::load(Some(&file)).expect("file"), Schema::builtin());
+    std::fs::write(
+        &file,
+        "version: 1\ntypes:\n  note: {required: [type], folder: Notes}\n",
+    )
+    .unwrap();
+    let own = Schema::load(Some(&file)).expect("own");
+    assert_eq!(own.folder_of("note"), "Notes");
     assert!(BUILTIN_YAML.contains("knowledge-hub"));
     assert_eq!(
         Schema::load(Some(Path::new("/nonexistent/schema.yaml"))).expect("fallback"),

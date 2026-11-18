@@ -90,11 +90,12 @@ impl<'a> GraphRetriever<'a> {
     }
 
     fn allowed(&self, path: &str) -> bool {
-        self.folders.is_empty()
-            || self
-                .folders
-                .iter()
-                .any(|f| path.split('/').next() == Some(f))
+        !crate::search::in_inbox(path)
+            && (self.folders.is_empty()
+                || self
+                    .folders
+                    .iter()
+                    .any(|f| path.split('/').next() == Some(f)))
     }
 
     /// The best `k` notes for `query`: score (rounded to ten places) descending, then path ascending.

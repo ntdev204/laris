@@ -450,17 +450,41 @@ impl Default for Tools {
     }
 }
 
-/// Vault recording.
+/// The project vault: recording, writing and ingestion.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
 pub struct Vault {
     /// Record sessions in the vault.
     pub auto_record: bool,
+    /// Longest note or note block LARIS writes, in characters.
+    #[schemars(range(min = 1))]
+    pub max_note_chars: u32,
+    /// Note writes allowed in a minute; 0 for no limit.
+    pub max_writes_per_minute: u32,
+    /// Keep the text of a replaced block under `.laris/backups`.
+    pub backup: bool,
+    /// Largest document ingested, in bytes.
+    #[schemars(range(min = 1))]
+    pub ingest_max_bytes: u64,
+    /// Longest passage cut from a document, in characters.
+    #[schemars(range(min = 50))]
+    pub passage_max_chars: u32,
+    /// Passages `search_corpus` returns at most.
+    #[schemars(range(min = 1))]
+    pub search_max_results: u32,
 }
 
 impl Default for Vault {
     fn default() -> Self {
-        Self { auto_record: true }
+        Self {
+            auto_record: true,
+            max_note_chars: 60_000,
+            max_writes_per_minute: 120,
+            backup: true,
+            ingest_max_bytes: 20_000_000,
+            passage_max_chars: 1200,
+            search_max_results: 10,
+        }
     }
 }
 

@@ -727,12 +727,52 @@
     },
     "Vault": {
       "additionalProperties": false,
-      "description": "Vault recording.",
+      "description": "The project vault: recording, writing and ingestion.",
       "properties": {
         "autoRecord": {
           "default": true,
           "description": "Record sessions in the vault.",
           "type": "boolean"
+        },
+        "backup": {
+          "default": true,
+          "description": "Keep the text of a replaced block under `.laris/backups`.",
+          "type": "boolean"
+        },
+        "ingestMaxBytes": {
+          "default": 20000000,
+          "description": "Largest document ingested, in bytes.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxNoteChars": {
+          "default": 60000,
+          "description": "Longest note or note block LARIS writes, in characters.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxWritesPerMinute": {
+          "default": 120,
+          "description": "Note writes allowed in a minute; 0 for no limit.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "passageMaxChars": {
+          "default": 1200,
+          "description": "Longest passage cut from a document, in characters.",
+          "format": "uint32",
+          "minimum": 50,
+          "type": "integer"
+        },
+        "searchMaxResults": {
+          "default": 10,
+          "description": "Passages `search_corpus` returns at most.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
         }
       },
       "type": "object"
@@ -943,7 +983,13 @@
     "vault": {
       "$ref": "#/$defs/Vault",
       "default": {
-        "autoRecord": true
+        "autoRecord": true,
+        "backup": true,
+        "ingestMaxBytes": 20000000,
+        "maxNoteChars": 60000,
+        "maxWritesPerMinute": 120,
+        "passageMaxChars": 1200,
+        "searchMaxResults": 10
       },
       "description": "Vault recording."
     }

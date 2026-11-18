@@ -3,9 +3,10 @@
 
 use crate::checkpoints::Checkpoints;
 use crate::error::ToolError;
+use crate::knowledge::Knowledge;
 use crate::scope::Scope;
 use laris_config::Settings;
-use laris_config::settings::Tools;
+use laris_config::settings::{Tools, Vault};
 use laris_sandbox::{PythonEnv, Sandbox};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -36,6 +37,10 @@ pub struct Context {
     pub python_env: Option<PythonEnv>,
     /// Applied to what `Write`, `Edit` and `save_memory` persist.
     pub redact: Redactor,
+    /// Limits of the vault and of ingestion.
+    pub vault: Vault,
+    /// The project vault and database; `None` leaves the knowledge tools out.
+    pub knowledge: Option<Arc<Knowledge>>,
 }
 
 impl Context {
@@ -58,6 +63,8 @@ impl Context {
             sandbox: None,
             python_env: None,
             redact: Box::new(str::to_owned),
+            vault: settings.vault.clone(),
+            knowledge: None,
         })
     }
 
@@ -94,6 +101,13 @@ impl Context {
     #[must_use]
     pub fn with_python_env(mut self, env: PythonEnv) -> Self {
         self.python_env = Some(env);
+        self
+    }
+
+    /// Turns the knowledge tools on: the vault of the project and its database.
+    #[must_use]
+    pub fn with_knowledge(mut self, knowledge: Knowledge) -> Self {
+        self.knowledge = Some(Arc::new(knowledge));
         self
     }
 

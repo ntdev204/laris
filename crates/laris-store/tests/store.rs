@@ -210,3 +210,45 @@ fn slugs_are_the_folder_name_and_a_path_digest() {
     assert_eq!(slug_of(Path::new("/tmp")), "tmp-e9671acd");
     assert_eq!(slug_of(Path::new("/home/vth/ws/laris")), "laris-73ab3b33");
 }
+
+#[test]
+fn passages_are_replaced_per_document_and_listed_by_source_and_position() {
+    let dir = temp_dir("chunks");
+    let store = Store::open(dir.join("c.sqlite"), DEFAULT_BUSY_TIMEOUT).expect("open");
+    assert!(store.chunks().expect("empty").is_empty());
+    let first = vec![(0, 5, "alpha".to_owned()), (7, 11, "beta".to_owned())];
+    assert_eq!(
+        store
+            .replace_document("d1", "b.md", "B", &first)
+            .expect("d1"),
+        2
+    );
+    store
+        .replace_document("d2", "a.md", "A", &[(0, 3, "one".to_owned())])
+        .expect("d2");
+    let rows = store.chunks().expect("rows");
+    assert_eq!(
+        rows.iter()
+            .map(|r| (r.source.as_str(), r.chunk_id.as_str()))
+            .collect::<Vec<_>>(),
+        [("a.md", "d2#0"), ("b.md", "d1#0"), ("b.md", "d1#1")]
+    );
+    assert_eq!(
+        (
+            rows[2].start,
+            rows[2].end,
+            rows[2].text.as_str(),
+            rows[2].ordinal
+        ),
+        (7, 11, "beta", 1)
+    );
+    // the same document again: replaced, not doubled
+    store
+        .replace_document("d1", "b.md", "B", &[(0, 5, "alpha".to_owned())])
+        .expect("again");
+    assert_eq!(store.chunks().expect("rows").len(), 2);
+    assert_eq!(store.remove_document("d1").expect("remove"), 1);
+    assert_eq!(store.remove_document("d1").expect("none"), 0);
+    assert_eq!(store.chunks().expect("rows").len(), 1);
+    std::fs::remove_dir_all(dir).ok();
+}

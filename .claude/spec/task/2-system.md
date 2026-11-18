@@ -1060,7 +1060,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Remove what ties generation 2 to generation 1 and fix the spec to match: the generation-1 migrations and dump
     fixtures of `laris-server` (T142), the generation-1 key digest forms (T143), the generation-1 parity fixtures and
     `generate.py` of `laris-retrieval` (T145), the generation-1 P1/P2 fixtures and wording in `laris-protocol` (T124),
-    the legacy flat `settings.json` conversion in `laris-config` (T125), the generation-1 vault adoption in T148 and
+    the legacy flat `settings.json` conversion in `laris-config` (T125), and
     in `laris-vault`, `.laris/skills`, `.laris/brain` and `.laris/vault` (generation-1 content, rewritten with T147
     and the skills task), the Python tests that read the old `.laris/` files, and every requirement in `spec.md`
     that cites generation 1
@@ -1137,8 +1137,33 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Ingestion (text, Markdown, PDF text layer), Source notes, vault lifecycle, memory, proposals inbox; RAG-rung scenario
     through server and system with the evidence gate
 - Validation:
-  - Generation-1 vault adopted unchanged; passages equal generation 1; scenario passes
-- Status: pending
+  - An existing vault is adopted byte for byte; every passage is exactly the characters its span points at; the
+    scenario passes (a faithful answer clean, a made-up citation caught)
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T148-ingestion-vault-rag`. Code lives in `laris-tools` (the crate list of
+  the spec is fixed): `ingest` (text, Markdown, PDF; `read_document`, `split`), `project_vault` (`ProjectVault`),
+  `knowledge` (tools). New edges `laris-tools` -> `laris-vault`, `laris-retrieval`, `laris-store`; no third-party
+  crate. PDF reader written in house (owner's choice): own zlib/DEFLATE, xref tables and streams, object streams,
+  content-stream text operators, ToUnicode and WinAnsi; scans (no text layer, stage-3 OCR), encryption, other
+  filters (LZW ...), fonts without a map and damaged files are refused with a message, never guessed; stream size and
+  page count are limited, and every prefix and byte flip of a fixture runs without a panic. Passages: paragraphs
+  merged up to `vault.passage_max_chars`, a heading starts one, long paragraphs cut at a sentence, a space, then
+  anywhere; spans in characters and exact (test). Passages live in the `chunks` table (`Store::replace_document`,
+  `chunks`); the same file again replaces them. `ProjectVault::init` refuses to nest a vault in another or around
+  one, writes only `.obsidian/app.json` and `Index.md` in a new vault and nothing in an existing one; Source notes in
+  `Sources/` (collision gets its own note), the managed block `laris` (a person's text around it survives, an edit
+  inside it is a conflict), memory in `Memory/`, schema enforced, titles cannot leave the vault. Proposals go to
+  `_inbox/` (`propose`, `accept`, `reject`); accept never overwrites. `_inbox` is invisible to `NoteSearch` and
+  to link expansion. Tools: `ingest_document`, `search_corpus` (passages and notes fused with `fuse_ranked`; hits
+  `{source, rank, text, ...}`, marked untrusted), `write_vault_note`, `propose_note`; registered only when the
+  context has a vault and a database (`Context::with_knowledge`). Settings `vault.*` (note size, write rate,
+  backup, ingest size, passage size, result count). `.laris/vault/schema.yaml` removed (identical to the built-in
+  table; the test now checks that a file can replace it). RAG scenario `laris-server/tests/rag_rung.rs`: HTTP server
+  with policy gateway and brain, `laris-model-client`, the core loop with the real tools, scripted model, evidence
+  gate; 4 tests (faithful answer, made-up citation and unlisted note, injected document plus leak guard, empty
+  corpus). 570 tests pass with PostgreSQL 16; `fmt`, `clippy -D warnings`, `cargo deny check`, `cargo xtask spec`,
+  `guard`, `scan`, `schema --check`. Not done, by design: OCR (stage 3); the model proxy is T144, so the model is a
+  script and only mechanics are proved; the foundation model is NOT QUALIFIED.
 
 ## Phase 33 — Server: Agent
 

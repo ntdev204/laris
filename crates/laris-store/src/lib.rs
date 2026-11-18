@@ -65,6 +65,27 @@ pub struct StoredEvent {
     pub data: String,
 }
 
+/// One passage of an ingested document, as stored.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChunkRow {
+    /// `<doc_id>#<ordinal>`.
+    pub chunk_id: String,
+    /// The document.
+    pub doc_id: String,
+    /// Where the document came from (a path).
+    pub source: String,
+    /// The document's title.
+    pub title: String,
+    /// The passage text.
+    pub text: String,
+    /// Character offset of the first character in the document text.
+    pub start: i64,
+    /// Character offset after the last character.
+    pub end: i64,
+    /// Position of the passage in the document.
+    pub ordinal: i64,
+}
+
 /// A private space: one SQLite file.
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -127,6 +148,66 @@ impl Store {
         let value = work(&tx)?;
         tx.commit()?;
         Ok(value)
+    }
+
+    /// Replaces every passage of a document with `chunks` (`start`, `end`, `text`, in order), in one transaction.
+    /// Returns how many passages the document has now.
+    pub fn replace_document(
+        &self,
+        doc_id: &str,
+        source: &str,
+        title: &str,
+        chunks: &[(usize, usize, String)],
+    ) -> Result<usize> {
+        self.transaction(|tx| {
+            tx.execute("DELETE FROM chunks WHERE doc_id = ?1", params![doc_id])?;
+            for (ordinal, (start, end, text)) in chunks.iter().enumerate() {
+                tx.execute(
+                    "INSERT INTO chunks (chunk_id, doc_id, source, title, text, start, \"end\", ordinal) \
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                    params![
+                        format!("{doc_id}#{ordinal}"),
+                        doc_id,
+                        source,
+                        title,
+                        text,
+                        *start as i64,
+                        *end as i64,
+                        ordinal as i64
+                    ],
+                )?;
+            }
+            Ok(chunks.len())
+        })
+    }
+
+    /// Removes a document's passages; returns how many were removed.
+    pub fn remove_document(&self, doc_id: &str) -> Result<usize> {
+        self.transaction(|tx| {
+            Ok(tx.execute("DELETE FROM chunks WHERE doc_id = ?1", params![doc_id])?)
+        })
+    }
+
+    /// Every passage, by source then position.
+    pub fn chunks(&self) -> Result<Vec<ChunkRow>> {
+        let conn = self.connect()?;
+        let mut statement = conn.prepare(
+            "SELECT chunk_id, doc_id, source, title, text, start, \"end\", ordinal FROM chunks \
+             ORDER BY source, start, chunk_id",
+        )?;
+        let rows = statement.query_map([], |r| {
+            Ok(ChunkRow {
+                chunk_id: r.get(0)?,
+                doc_id: r.get(1)?,
+                source: r.get(2)?,
+                title: r.get(3)?,
+                text: r.get(4)?,
+                start: r.get(5)?,
+                end: r.get(6)?,
+                ordinal: r.get(7)?,
+            })
+        })?;
+        Ok(rows.collect::<std::result::Result<Vec<_>, _>>()?)
     }
 
     /// Highest migration applied (0 for an empty file).
