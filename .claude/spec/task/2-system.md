@@ -229,7 +229,43 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - P1 client: SSE, version check, key, pinning, timeouts, bounded retries, interrupt
 - Validation:
   - Fixture tests; version and pin mismatch; interrupted stream
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-model-client` holds the P1 client: `ModelClient<T: Transport>` (`chat`, `get_json`,
+  `post_json`), `ChatStream` (pull-based: bytes are read only when `next` asks, so a slow consumer slows the server; an
+  event or body above `max_body_bytes` is cut off), `Interrupt` (one handle ends a connect, a backoff wait or a stream at
+  once; `biased` selects so an interrupt already set wins over ready data), `ApiKey` (bearer token, `Debug` prints
+  `ApiKey(***)`, `LARIS_API_KEY`), `Pin` and `Trust`, and `ReqwestTransport` (reqwest 0.12.28 on rustls 0.23.46 with
+  the ring provider; redirects are never followed, so the key cannot leave the configured server). Behaviour: every
+  request carries `X-Laris-Protocol: 1`; a 426 or an answer with another version is a `Version` error; 401 and 403 are
+  `Unauthorized`; 429, 502, 503, 504, a connection failure and a missing answer within `request_timeout` are retried up
+  to `max_retries` with doubling backoff capped at `backoff_max` (a `Retry-After` is honoured up to the cap) and only
+  before the stream has started; silence for `idle_timeout` inside a body, a body that ends before `[DONE]` and a
+  malformed event are errors after which the stream is finished and nothing is resent; an error event then `[DONE]` is
+  delivered as events. Pin: `server.caFingerprint` is the SHA-256 of the private authority certificate; the caller
+  supplies that certificate (DER), `Trust::pinned` refuses it with `PinMismatch` unless its fingerprint equals the pin,
+  and the connection then trusts that authority and nothing else (no system store). Without a pin the system store is
+  used. Tests (35): 26 on a scripted transport over the generation-1 P1 fixtures of `laris-protocol` (all seven chat
+  streams equal the reference decode at chunk sizes 1, 7, 64 and whole; midstream error; request headers and forced
+  `stream: true`; 426, header mismatch, 401, 400 not retried; retry timing under paused time, bound, cap and
+  `Retry-After`; answer timeout; idle timeout; truncation; interrupt while waiting, while connecting, while backing off,
+  before any request and with events already queued; backpressure by counting pulled chunks; size limit; JSON routes
+  decode their fixtures), 5 on pinning including a real TLS handshake against a local rustls server (pinned authority
+  accepted; another authority and the system store refused with a certificate error and no request reaching the server),
+  and 4 over a plain socket through `ReqwestTransport` (chunked SSE cut mid-event, headers and body on the wire, 426,
+  redirect refused, connection refused). Test certificates and the key of the local test server are in
+  `crates/laris-model-client/tests/fixtures/tls/` (made with openssl, protect nothing). Dependencies, with the owner's
+  approval of the HTTP stack (2026-11-18: vendor reqwest, tokio and rustls): `reqwest` (features `rustls-tls-native-roots`,
+  `stream`, `json`), `rustls` (ring, std, tls12), `tokio`, `serde`, `serde_json`, `sha2`, `thiserror`, `laris-protocol`;
+  `cargo vendor` added 138 crates (the transitive trees of reqwest, tokio and rustls, wasm and Windows targets
+  included, since `cargo deny` checks every target) and `deny.toml` lists each of them; `cpufeatures` 0.3.1 sits beside
+  the old 0.2.17. Two points need the owner: (1) `deny.toml` now allows the licences ISC and BSD-3-Clause, which come
+  with ring, rustls-webpki, untrusted and subtle and cannot be avoided with rustls; (2) the retry, timeout and body
+  limits are fields of `ClientConfig` with no defaults, and the settings schema holds only `server.url`,
+  `server.caFingerprint` and `server.timeoutSeconds`, so the other entries (and where the authority certificate is
+  read from) belong with the task that wires the client into the loop (T131) and the settings (T145). Not covered: a
+  test of a pinned server whose certificate chain is presented without the authority (the pin names the authority, which
+  the caller supplies). `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`,
+  `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T129 — laris-store: client SQLite
 - Requirements: SR-H9

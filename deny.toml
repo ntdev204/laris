@@ -10,7 +10,8 @@ ignore = []
 
 [licenses]
 version = 2
-allow = ["Apache-2.0", "MIT", "Unicode-3.0"]
+# ISC and BSD-3-Clause come with the approved TLS stack (ring, rustls-webpki, untrusted, subtle); added in T128, owner to confirm.
+allow = ["Apache-2.0", "MIT", "Unicode-3.0", "ISC", "BSD-3-Clause"]
 confidence-threshold = 0.9
 
 [bans]
@@ -33,6 +34,23 @@ allow = [
     # transitive crates of sha2 (T126)
     "block-buffer", "cfg-if", "cpufeatures", "crypto-common", "digest", "generic-array", "libc", "typenum",
     "version_check",
+    # transitive crates of reqwest (rustls, ring, no default TLS), tokio and rustls (T128)
+    "atomic-waker", "base64", "bitflags", "bumpalo", "bytes", "cc", "displaydoc", "find-msvc-tools",
+    "form_urlencoded", "futures-channel", "futures-core", "futures-io", "futures-macro", "futures-sink",
+    "futures-task", "futures-util", "getrandom", "http", "httparse", "http-body", "http-body-util", "hyper",
+    "hyper-rustls", "hyper-util", "icu_collections", "icu_locale_core", "icu_normalizer", "icu_normalizer_data",
+    "icu_properties", "icu_properties_data", "icu_provider", "idna", "idna_adapter", "ipnet", "js-sys", "litemap",
+    "log", "mio", "once_cell", "percent-encoding", "pin-project-lite", "potential_utf", "ring", "rustls-pki-types",
+    "rustls-webpki", "rustversion", "ryu", "serde_urlencoded", "shlex", "slab", "smallvec", "socket2",
+    "stable_deref_trait", "subtle", "sync_wrapper", "synstructure", "thiserror-impl", "tinystr", "tokio-macros",
+    "tokio-rustls", "tokio-util", "tower", "tower-layer", "tower-service", "tracing-core", "try-lock", "untrusted",
+    "url", "utf8_iter", "utf_types", "want", "wasi", "wasm-bindgen", "wasm-bindgen-futures", "wasm-bindgen-macro",
+    "wasm-bindgen-macro-support", "wasm-bindgen-shared", "wasm-streams", "web-sys", "windows_aarch64_gnullvm",
+    "windows_aarch64_msvc", "windows_i686_gnu", "windows_i686_gnullvm", "windows_i686_msvc", "windows-link",
+    "windows-targets", "windows_x86_64_gnu", "windows_x86_64_gnullvm", "windows_x86_64_msvc", "writeable", "yoke",
+    "yoke-derive", "zerofrom", "zerofrom-derive", "zeroize", "zerotrie", "zerovec", "zerovec-derive",    # rustls-native-certs, the system trust store of reqwest (T128)
+    "core-foundation", "core-foundation-sys", "openssl-probe", "rustls-native-certs", "schannel", "security-framework",
+    "security-framework-sys",
 ]
 
 [sources]

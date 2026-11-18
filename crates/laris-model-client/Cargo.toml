@@ -8,3 +8,16 @@ publish.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+serde = "1"
+serde_json = "1"
+sha2 = "0.10"
+thiserror = "2"
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "time", "sync", "net", "io-util"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-native-roots", "stream", "json"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "time", "sync", "net", "io-util", "test-util"] }
