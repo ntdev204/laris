@@ -347,6 +347,79 @@ impl Default for Agent {
     }
 }
 
+/// Limits of the local tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `save_memory`, skills) and of every
+/// tool result.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Tools {
+    /// Time a `Bash` command gets when it names none, in seconds.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub bash_default_timeout_seconds: f64,
+    /// Longest time a `Bash` command may ask for, in seconds.
+    #[schemars(extend("exclusiveMinimum" = 0))]
+    pub bash_max_timeout_seconds: f64,
+    /// Characters of `Bash` output kept.
+    #[schemars(range(min = 1))]
+    pub bash_output_max_chars: u32,
+    /// Lines `Read` returns at most.
+    #[schemars(range(min = 1))]
+    pub read_max_lines: u32,
+    /// Files `Glob` lists at most.
+    #[schemars(range(min = 1))]
+    pub glob_max_results: u32,
+    /// Matches `Grep` returns at most.
+    #[schemars(range(min = 1))]
+    pub grep_max_results: u32,
+    /// Files larger than this are not searched by `Grep`, in bytes.
+    #[schemars(range(min = 1))]
+    pub grep_max_file_bytes: u64,
+    /// Largest file `Read`, `Write` and `Edit` handle, in bytes.
+    #[schemars(range(min = 1))]
+    pub edit_max_bytes: u64,
+    /// Edits kept for `/rewind`.
+    #[schemars(range(min = 1))]
+    pub checkpoint_keep: u32,
+    /// Characters of one tool result, local or remote, passed to the model; more is cut.
+    #[schemars(range(min = 1))]
+    pub result_max_chars: u32,
+    /// Characters of a skill's instructions kept.
+    #[schemars(range(min = 1))]
+    pub skill_max_chars: u32,
+    /// File names (`*` and `?` match) that no tool reads or writes: secrets and keys.
+    pub denied_files: Vec<String>,
+}
+
+impl Default for Tools {
+    fn default() -> Self {
+        Self {
+            bash_default_timeout_seconds: 120.0,
+            bash_max_timeout_seconds: 600.0,
+            bash_output_max_chars: 30_000,
+            read_max_lines: 2000,
+            glob_max_results: 500,
+            grep_max_results: 200,
+            grep_max_file_bytes: 2_000_000,
+            edit_max_bytes: 2_000_000,
+            checkpoint_keep: 200,
+            result_max_chars: 60_000,
+            skill_max_chars: 20_000,
+            denied_files: [
+                ".env",
+                ".env.*",
+                "*.pem",
+                "*.key",
+                "id_rsa",
+                "id_ed25519",
+                ".netrc",
+                ".npmrc",
+                ".pypirc",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
+        }
+    }
+}
+
 /// Vault recording.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
@@ -402,6 +475,8 @@ pub struct Settings {
     pub context: Context,
     /// Agent loop limits.
     pub agent: Agent,
+    /// Limits of the local tools and of tool results.
+    pub tools: Tools,
     /// Vault recording.
     pub vault: Vault,
     /// Learning data.
@@ -428,6 +503,7 @@ impl Default for Settings {
             sandbox: Sandbox::default(),
             context: Context::default(),
             agent: Agent::default(),
+            tools: Tools::default(),
             vault: Vault::default(),
             learning: Learning::default(),
             extra_instructions: String::new(),

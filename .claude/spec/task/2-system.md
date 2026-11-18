@@ -388,7 +388,41 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     errors; limits; untrusted marking; checkpoints and rewind
 - Validation:
   - Tests per tool; `Edit` uniqueness; rewind; local and remote tools identical to the loop
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-tools` holds one `Registry` (the `ToolRunner` of T131) with the eight local tools
+  `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `save_memory`, `use_skill` and any number of `RemoteTools` sources
+  (the trait T149 implements over `POST /v1/laris/tools/{name}`). Every call is checked against the tool's schema
+  (`invalid_arguments`) and every result, local or remote, is finished in one place: a failure becomes the typed error
+  `{"error": {"code", "message"}}`, a result over `tools.resultMaxChars` becomes `{"truncated", "chars", "preview"}`,
+  and `Read`, `Grep`, `Bash` and every remote tool mark their output `"untrusted": true` (a remote error too, an error
+  of ours not). A remote tool is taken to change state, so the permission rules (T133) ask about it. Names cannot be
+  registered twice, so a remote tool cannot shadow a local one. `Scope` resolves a path before judging it (`..`,
+  symbolic links, dangling links), keeps tools inside the project folder and `permissions.additionalDirectories`,
+  refuses secrets by file name (`tools.deniedFiles`) and never writes `.git` or `.laris`. `Write`, `Edit` and
+  `save_memory` save the old content to `Checkpoints` first (JSON-lines index and blobs, capped by
+  `tools.checkpointKeep`, a failed change discards its checkpoint); `Registry::rewind` restores newest first and skips a
+  path a tool could not write now. Files are replaced by temporary file and rename, keeping the mode. `Bash` runs
+  `bash -c` in its own process group with a clean environment (`PATH`, `HOME`, `env`; everything only when
+  `sandbox.inheritEnv`), standard error merged, a time limit that kills the group, and a capped output read on another
+  thread. `use_skill` reads `<folder>/<name>/SKILL.md` from the folders the caller passes. New settings group `tools.*`
+  in `laris-config` (13 keys, schema regenerated): the generation-1 `agent.coding` limits plus `resultMaxChars`,
+  `skillMaxChars`, `deniedFiles`. Tests (34): per tool (ranges, caps, refusals, secrets, links out of the project,
+  atomic write and mode, `Edit` uniqueness and `replace_all`, glob and grep patterns and cut-offs, `Bash` exit code,
+  merged output, kill of a child at the time limit, noisy output, environment, memory and skill cases), rewind (order,
+  created files removed, cap, a planted index pointing at `.git/config` skipped), argument checks, marking, limits,
+  remote tools, and the contract test: a scripted turn calls a local and a remote tool through `Driver`, both answer
+  with the same typed shapes, and the log replays byte for byte. Not covered: permissions, modes, hooks and folder trust
+  (T133); the OS sandbox and the `uv` Python environment for `Bash` (T135, so `Bash` is not confined here and install
+  commands are not refused); redaction is a `Redactor` hook that does nothing until T136; the diff preview for
+  approvals (T133); no generic per-tool timeout (`Bash` has its own, the remote client of T149 will have one);
+  `Grep` uses the `regex` crate, so look-around and back-references of the generation-1 `re` are not supported; `~` in
+  a tool path is not expanded (it is for `additionalDirectories`); skill front matter is parsed as `key: value` lines
+  (folded blocks allowed), not full YAML, and `save_skill`, ingestion and vault tools are not here (T127 and the
+  learning tasks); `save_memory` writes a plain file, not a vault note; `/rewind` as a command is the client's (T158);
+  Linux only was run: the Windows and macOS branches of `Bash` (`taskkill`) are not compiled or tested. No new
+  dependency (`regex` was approved; `laris-core`, `laris-config` and `laris-protocol` are workspace crates). `cargo fmt
+  --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check`
+  and `xtask spec` pass.
 
 ### T133 — Permissions, hooks and folder trust
 - Requirements: SR-H5

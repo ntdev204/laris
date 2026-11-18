@@ -477,6 +477,108 @@
         }
       ]
     },
+    "Tools": {
+      "additionalProperties": false,
+      "description": "Limits of the local tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `save_memory`, skills) and of every\ntool result.",
+      "properties": {
+        "bashDefaultTimeoutSeconds": {
+          "default": 120.0,
+          "description": "Time a `Bash` command gets when it names none, in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
+        "bashMaxTimeoutSeconds": {
+          "default": 600.0,
+          "description": "Longest time a `Bash` command may ask for, in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
+        "bashOutputMaxChars": {
+          "default": 30000,
+          "description": "Characters of `Bash` output kept.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "checkpointKeep": {
+          "default": 200,
+          "description": "Edits kept for `/rewind`.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "deniedFiles": {
+          "default": [
+            ".env",
+            ".env.*",
+            "*.pem",
+            "*.key",
+            "id_rsa",
+            "id_ed25519",
+            ".netrc",
+            ".npmrc",
+            ".pypirc"
+          ],
+          "description": "File names (`*` and `?` match) that no tool reads or writes: secrets and keys.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "editMaxBytes": {
+          "default": 2000000,
+          "description": "Largest file `Read`, `Write` and `Edit` handle, in bytes.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "globMaxResults": {
+          "default": 500,
+          "description": "Files `Glob` lists at most.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "grepMaxFileBytes": {
+          "default": 2000000,
+          "description": "Files larger than this are not searched by `Grep`, in bytes.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "grepMaxResults": {
+          "default": 200,
+          "description": "Matches `Grep` returns at most.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "readMaxLines": {
+          "default": 2000,
+          "description": "Lines `Read` returns at most.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "resultMaxChars": {
+          "default": 60000,
+          "description": "Characters of one tool result, local or remote, passed to the model; more is cut.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "skillMaxChars": {
+          "default": 20000,
+          "description": "Characters of a skill's instructions kept.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "Ui": {
       "additionalProperties": false,
       "description": "Terminal interface.",
@@ -668,6 +770,34 @@
       ],
       "default": null,
       "description": "Status line command."
+    },
+    "tools": {
+      "$ref": "#/$defs/Tools",
+      "default": {
+        "bashDefaultTimeoutSeconds": 120.0,
+        "bashMaxTimeoutSeconds": 600.0,
+        "bashOutputMaxChars": 30000,
+        "checkpointKeep": 200,
+        "deniedFiles": [
+          ".env",
+          ".env.*",
+          "*.pem",
+          "*.key",
+          "id_rsa",
+          "id_ed25519",
+          ".netrc",
+          ".npmrc",
+          ".pypirc"
+        ],
+        "editMaxBytes": 2000000,
+        "globMaxResults": 500,
+        "grepMaxFileBytes": 2000000,
+        "grepMaxResults": 200,
+        "readMaxLines": 2000,
+        "resultMaxChars": 60000,
+        "skillMaxChars": 20000
+      },
+      "description": "Limits of the local tools and of tool results."
     },
     "ui": {
       "$ref": "#/$defs/Ui",

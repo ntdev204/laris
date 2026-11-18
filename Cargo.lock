@@ -615,6 +615,14 @@ dependencies = [
 [[package]]
 name = "laris-tools"
 version = "2.0.0-dev"
+dependencies = [
+ "laris-config",
+ "laris-core",
+ "laris-protocol",
+ "laris-store",
+ "regex",
+ "serde_json",
+]
 
 [[package]]
 name = "laris-tui"
