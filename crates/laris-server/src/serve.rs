@@ -3,6 +3,7 @@
 use crate::app::{AppState, Deferred, router};
 use crate::log::{LogSink, RequestScope};
 use crate::stall::StallGuard;
+use crate::trace::TraceSink;
 use axum::body::Body;
 use axum::http::{HeaderValue, Request, Response};
 use hyper::body::Incoming;
@@ -70,12 +71,21 @@ impl Service<Request<Incoming>> for Conn {
                 .config
                 .trusted_proxies
                 .client_ip(peer.ip(), forwarded);
-            let scope = Arc::new(RequestScope::new(
-                id.clone(),
-                request.method().as_str().to_owned(),
-                client,
-                shared.sink.clone(),
-            ));
+            let scope = Arc::new(
+                RequestScope::new(
+                    id.clone(),
+                    request.method().as_str().to_owned(),
+                    client,
+                    shared.sink.clone(),
+                )
+                .with_traces(
+                    shared
+                        .state
+                        .traces
+                        .as_ref()
+                        .map(|t| t.clone() as Arc<dyn TraceSink>),
+                ),
+            );
             request.extensions_mut().insert(scope.clone());
             let mut abandoned = Abandoned(scope.clone(), false);
             let result = inner.call(request).await;

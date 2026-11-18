@@ -21,11 +21,18 @@ pub struct Migration {
 }
 
 /// Every migration this build knows, in order.
-pub const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "0001_initial.sql",
-    sql: include_str!("../../migrations/0001_initial.sql"),
-}];
+pub const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "0001_initial.sql",
+        sql: include_str!("../../migrations/0001_initial.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "0002_request_traces.sql",
+        sql: include_str!("../../migrations/0002_request_traces.sql"),
+    },
+];
 
 /// Applies the pending migrations and returns how many ran.
 ///

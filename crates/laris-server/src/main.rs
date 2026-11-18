@@ -4,6 +4,7 @@ use laris_server::access::{Access, deliver_key};
 use laris_server::model::{ModelBackend, ModelConfig};
 use laris_server::policy::{PgReasoning, Policy, PolicyConfig, PolicyGateway, integrity};
 use laris_server::storage::{RetentionHandle, Storage, StorageConfig};
+use laris_server::trace::PgTraces;
 use laris_server::{AppState, Backend, NoBackend, ServerConfig, StderrSink, serve};
 use std::collections::HashMap;
 use std::process::ExitCode;
@@ -128,11 +129,17 @@ async fn main() -> ExitCode {
         Err(e) => return fail(e, 2),
     };
     let backend = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
-    let state = Arc::new(AppState::new(config, backend, access).with_policy(policy, reasoning));
+    let traces = Arc::new(PgTraces::spawn(storage.clone()));
+    let state = Arc::new(
+        AppState::new(config, backend, access)
+            .with_policy(policy, reasoning)
+            .with_traces(traces.clone()),
+    );
     let stop = async {
         let _ = tokio::signal::ctrl_c().await;
     };
     let result = serve(listener, state, Arc::new(StderrSink), stop).await;
+    traces.flush().await;
     retention.stop().await;
     storage.close().await;
     match result {

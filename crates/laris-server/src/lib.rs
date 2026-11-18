@@ -20,6 +20,7 @@ pub mod proxy;
 mod serve;
 mod stall;
 pub mod storage;
+pub mod trace;
 
 pub use app::{AppState, router};
 pub use backend::{Backend, ChunkStream, NoBackend, StreamFailure};

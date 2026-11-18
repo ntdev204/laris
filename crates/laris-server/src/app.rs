@@ -34,6 +34,8 @@ pub struct AppState {
     pub policy: Option<Arc<crate::policy::Policy>>,
     /// Where the operator reads the model's reasoning. `None` serves no such route.
     pub reasoning: Option<Arc<dyn crate::policy::ReasoningStore>>,
+    /// Where the operator reads the traces, and where each request's trace goes. `None` keeps none.
+    pub traces: Option<Arc<dyn crate::trace::TraceStore>>,
 }
 
 impl AppState {
@@ -45,6 +47,7 @@ impl AppState {
             access: Some(access),
             policy: None,
             reasoning: None,
+            traces: None,
         }
     }
 
@@ -59,6 +62,12 @@ impl AppState {
         self
     }
 
+    /// The same state keeping a content-free trace of each request and serving them to the operator.
+    pub fn with_traces(mut self, traces: Arc<dyn crate::trace::TraceStore>) -> Self {
+        self.traces = Some(traces);
+        self
+    }
+
     /// State that accepts every caller. For tests of the HTTP layer only.
     pub fn open(config: ServerConfig, backend: Arc<dyn Backend>) -> Self {
         Self {
@@ -67,6 +76,7 @@ impl AppState {
             access: None,
             policy: None,
             reasoning: None,
+            traces: None,
         }
     }
 }
@@ -91,6 +101,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/laris/workflows", get(crate::policy::workflows_route))
         .route("/v1/laris/help", get(crate::policy::help))
         .route("/v1/admin/reasoning", get(crate::policy::reasoning_route))
+        .route("/v1/admin/traces", get(crate::admin::traces))
         .route("/v1/admin/usage", get(crate::admin::usage))
         .route(
             "/v1/admin/keys",
@@ -143,6 +154,7 @@ async fn chat_inner(
         read_json::<ChatRequest>(state, scope, request, perm::CHAT).await?;
     validate_chat(&body)?;
     let session = body.laris.session_id.clone().unwrap_or_default();
+    scope.trace(|t| t.set_session(&session));
     let meter = reserve_for(state, principal.as_ref(), length, "chat", session).await?;
     let stream = match state
         .backend
@@ -210,6 +222,7 @@ async fn embed_inner(
             Some(u) => (to_i64(u.prompt_tokens), to_i64(u.completion_tokens)),
             None => (m.prompt_estimate, 0),
         };
+        scope.trace(|t| t.set_tokens(prompt, completion));
         m.settle_detached(prompt, completion);
     }
     let bytes = serde_json::to_vec(&answer).map_err(|_| ApiError::Internal)?;
@@ -251,7 +264,9 @@ async fn tool_call(
         if !valid_tool_name(&name) {
             return Err(ApiError::NotFound);
         }
-        let answer = state.backend.tool(name, body).await?;
+        let answer = state.backend.tool(name.clone(), body).await?;
+        // only a name the service served is kept; an unknown one is a 404 above and leaves no text in a row
+        scope.trace(|t| t.add_tool(&name));
         let bytes = serde_json::to_vec(&answer).map_err(|_| ApiError::Internal)?;
         Ok(json_response(StatusCode::OK, bytes))
     }
@@ -316,6 +331,7 @@ pub(crate) async fn gate(
     let principal = access
         .authenticate(header_text(headers, "authorization"), scope.client())
         .await?;
+    scope.trace(|t| t.set_key(&principal.key_id));
     access.require(&principal, permission)?;
     Ok(Some(principal))
 }
@@ -424,6 +440,7 @@ struct EndGuard {
     meter: Option<Meter>,
     answer_chars: u64,
     reported: Option<(i64, i64)>,
+    model: String,
 }
 
 impl EndGuard {
@@ -432,7 +449,20 @@ impl EndGuard {
         if let Some(u) = &chunk.usage {
             self.reported = Some((to_i64(u.prompt_tokens), to_i64(u.completion_tokens)));
         }
+        if self.model.is_empty() && !chunk.model.is_empty() {
+            self.model.clone_from(&chunk.model);
+        }
+        if let Some(meta) = &chunk.laris
+            && !meta.brain.is_empty()
+        {
+            self.scope.trace(|t| t.set_brain(&meta.brain));
+        }
         for choice in &chunk.choices {
+            for call in &choice.delta.tool_calls {
+                if !call.function.name.is_empty() {
+                    self.scope.trace(|t| t.add_tool(&call.function.name));
+                }
+            }
             if let Some(text) = &choice.delta.content {
                 self.answer_chars += text.chars().count() as u64;
             }
@@ -443,13 +473,22 @@ impl EndGuard {
 impl Drop for EndGuard {
     fn drop(&mut self) {
         // billed whether the answer ended, failed or the client left: what was produced is what is charged
+        let mut tokens = self.reported;
         if let Some(meter) = self.meter.take() {
             let (prompt, completion) = self.reported.unwrap_or((
                 meter.prompt_estimate,
                 meter.access.estimate_tokens(self.answer_chars),
             ));
+            tokens = Some((prompt, completion));
             meter.settle_detached(prompt, completion);
         }
+        self.scope.trace(|t| {
+            t.set_model(&self.model);
+            t.set_answer_chars(self.answer_chars);
+            if let Some((prompt, completion)) = tokens {
+                t.set_tokens(prompt, completion);
+            }
+        });
         let outcome = if self.finished {
             self.outcome
         } else {
@@ -477,6 +516,7 @@ fn sse_response(
             meter,
             answer_chars: 0,
             reported: None,
+            model: String::new(),
         },
     };
     let body = futures_util::stream::unfold(state, |mut st| async move {

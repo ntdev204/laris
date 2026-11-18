@@ -1245,7 +1245,34 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Content-free trace per request; operator query; retention
 - Validation:
   - Trace on success, error, disconnect; no message text in rows
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19. One row per request in the existing partitioned `traces` table (migration
+  `0002_request_traces.sql` adds `kind`, `request_id`, `route`, `status`, `outcome`, `duration_ms`, `prompt_tokens`,
+  `completion_tokens`; the SR-S4 reasoning rows keep `kind = 'reasoning'`, request rows are `'request'`, and the
+  reasoning route still shows only reasoning). Retention is the existing T142 task (`LARIS_SERVER__TRACE_RETENTION_DAYS`,
+  default 30), proved on request rows too. `laris_server::trace`: `TraceRecord` (request id, key id, route, status,
+  outcome, duration, session id, model, tokens, tool names, brain titles, answer length: no field can hold text),
+  `TraceDraft` (collects what a request learns; a tool name or brain title with characters outside plain letters,
+  digits and `_-.:/` (brain titles also spaces), or past 64/120 characters, is dropped whole, never cut; at most 32 tools
+  and 64 titles), `TraceSink`/`TraceStore`, `MemoryTraces`, and `PgTraces`: a bounded queue (1024) and one writer task,
+  so a request never waits for the database and a flood loses rows (`dropped()`, `failures()`) instead of memory;
+  `flush()` is called at shutdown. `RequestScope::finish` writes the trace together with the access record, so a
+  success, an error before or after the stream starts (`midstream_error`, `stream_idle`) and a client that leaves
+  (`client_gone`, 499 before an answer) all leave one row; `health` and unknown paths are not traced. The key id is set
+  by the gate, so 401 (empty key) and 403 (the key that was refused) are traced. Tokens are what the key was charged
+  (reported, else estimated) and for an open server what the model reported; model and brain titles come from the
+  stream, tool names from the model's calls to client tools and from `/tools/{name}` only when the service served the
+  name (an unknown name is 404 and leaves nothing). `GET /v1/admin/traces` (new permission `traces.read`, privileged;
+  roles `admin` and `auditor`) filters by `key_id`, `route`, `outcome`, `since`, `until` and `limit` (1 to 500,
+  default 50); an unknown parameter or a malformed value is 400. Tests (`tests/traces.rs`, 9): memory traces for
+  success, failed request, failed stream, disconnect, tool naming, untraced routes and query validation; with
+  PostgreSQL 16 the same through real keys, the whole `traces` table dumped as text and searched for the question, the
+  answer, the tool arguments, a hostile tool name and the key text (none found), the operator permissions and filters,
+  and the purge of an old request row. 196 `laris-server` tests pass with PostgreSQL 16; `fmt`, `clippy -D warnings`,
+  `cargo deny check`, `xtask guard`, `scan`, `schema --check`. Not done, by design: tool names of the brain and skill
+  calls the gateway answers itself (the brain titles are in the row; per-tool traces of local tools are the Agent rung,
+  T151), per-call arguments or results (never kept), the target key of an admin action (the route and the acting key
+  are), metrics export. The foundation model is NOT QUALIFIED; nothing here measures it.
 
 ### T151 — The Agent rung
 - Requirements: SR-S9, SR-H4
