@@ -585,7 +585,39 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Example derivation; `laris learn export` JSONL
 - Validation:
   - Export matches the fixture; no collected data in P1 requests or the repository
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris_policy::learning` (new dependencies: the workspace crates `laris-evidence`, and
+  `sha2`, already in the workspace) folds a session's log with `Session`, exactly as replay does, and each `done`
+  event closes a turn. A completed turn that passes the gate gives up to three examples with content-derived ids
+  (first 16 hex digits of a SHA-256) and `ts` taken from the log, so the same log gives the same bytes: `sft` (the
+  conversation up to the answer, without the loop's own retry and notice messages and without drafts the loop sent
+  back; tool results kept, cut or `[omitted]` by settings), `retrieval` (query of a retrieval tool, cited-source hits
+  as positives, up to five others as negatives, passage text or only its SHA-256) and `preference` (a draft sent back
+  against the answer that stood). The gate leaves a turn out as `not_completed`, `injection_flag` (a tool result with
+  an `injection_warning`), `sensitive` (anything the `Redactor` would hide: rejected, not repaired), `unverified` (the
+  T137 `Gate` marks the answer: fabricated citation, missing span, unsupported or absence claim) or `short_answer`.
+  `collect(store, session, ..)` keeps the rows in the `learning` table of the client store (new `Store::put_learning`,
+  `learning`, `purge_learning`, `sessions`; the unique index of migration 2 makes a repeat a duplicate); with
+  `learning.collect` off it reads and writes nothing. `rate`, `ratings`, `stats`, `export` (JSONL plus manifest with
+  count, rating rule and SHA-256; a down-rated example never leaves, `exportMinRating: up` keeps only up-rated ones,
+  pairs follow the example they came from) and `purge`. `write_export` refuses a path inside a Git work tree.
+  Settings `learning.*` gain `minAnswerChars` (40), `maxToolResultChars` (3000), `storeToolResults` (true),
+  `storePassageText` (true), `exportMinRating` (none) and `retrievalTools` (`search_corpus`), the generation-1
+  values; the schema was regenerated. `laris-cli` becomes a library and the `laris` binary with `laris learn stats |
+  collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID
+  up|down | purge --yes` (home `~/.laris`, project the working folder, settings `~/.laris/settings.json`).
+  Tests: policy 12 (export equals the fixtures `tests/fixtures/learning/expected-*.jsonl`, same bytes from the same
+  log, cited and uncited passages and the draft pair, drafts and retry messages out of the conversation, hashes only,
+  injection flag / leaked key / fabricated citation / short answer / interrupted turn left out, off does nothing,
+  repeat is a duplicate, ratings, collected text absent from what the model is shown in a later session and the log
+  unchanged by collecting, export refused inside a work tree, no collected-data file in the repository) and CLI 4
+  (collect, export, rate, purge flow; refusal in a work tree; settings off; bad arguments). Limits: rows come from the
+  log alone, so `prompt_version` and `workflow` of generation 1 are not recorded; "unverified" is the T137 text
+  rules, not entailment; the `Redactor` finds only the shapes it knows; the retrieval tool names are a setting, and
+  no such tool exists before the server tasks; nothing calls `collect` at the end of a live session yet (the client
+  tasks); the `.git` check looks for a `.git` entry in a parent folder, not at `git check-ignore`. `cargo fmt
+  --check`, `clippy -D warnings`, `cargo test` (except the `tests/hooks.rs` flake noted at T136), `cargo deny check`,
+  `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ## Phase 30 — System: prompt
 
