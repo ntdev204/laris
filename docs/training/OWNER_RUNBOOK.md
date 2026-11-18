@@ -820,3 +820,6 @@ done
 Four runs of a few minutes each. **Decision rule.** Per config, take the checkpointing setting with the lower latency whose peak is at least 2 GB below 36 GB (34 GB). If checkpointing "on" at stage 2
 exceeds 34 GB, lower `retrieval_batch_size` to 96 (then 64) and `contrastive_sim_batch_size` to 192 (then 128) in both configs and profile again; the report records every value tried. Whatever is chosen is used by the
 stage-1 rerun, the stage-2 run and the control alike, and `scripts/plan_stage2_schedule.py` (it now reads the micro-batch, accumulation and batch sizes from the YAML) recomputes the draws and passes.
+
+**Result (2026-11-18).** Stage 2 with checkpointing: 26.82 GB, 3.78 s per optimizer step; control with checkpointing: 23.82 GB, 3.45 s; both "off" runs: CUDA out of memory. Checkpointing stays on and the batches stay at
+128 and 256 (`reports/verification/T211-a100-speed-profile.md`). Use `--micro-batch-size 32 --grad-accum-steps 1` for the stage-2 run and the control, without `--no-gradient-checkpointing`.
