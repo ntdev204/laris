@@ -6,5 +6,16 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[dependencies]
+laris-config = { path = "../laris-config", version = "2.0.0-dev" }
+laris-core = { path = "../laris-core", version = "2.0.0-dev" }
+laris-store = { path = "../laris-store", version = "2.0.0-dev" }
+laris-tools = { path = "../laris-tools", version = "2.0.0-dev" }
+regex = "1"
+serde_json = "1"
+
+[dev-dependencies]
+laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+
 [lints]
 workspace = true
