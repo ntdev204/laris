@@ -24,6 +24,9 @@ class TrainingRunConfig:
     log_interval: int = 10
     # Tasks added into each micro-step (T201); 1 keeps the one-task micro-batch of before
     tasks_per_step: int = 1
+    # Stop after this many optimizer steps while the schedule (warm-up, cosine) still follows
+    # `total_optimizer_steps`; the final validation and `best` / `last` are written as usual (T212).
+    stop_after_steps: Optional[int] = None
 
     def __post_init__(self) -> None:
         if self.total_optimizer_steps < 1:
@@ -32,6 +35,10 @@ class TrainingRunConfig:
             raise ValueError("eval/save/log intervals must be >= 1")
         if self.tasks_per_step < 1:
             raise ValueError("tasks_per_step must be >= 1")
+        if self.stop_after_steps is not None and not (
+            1 <= self.stop_after_steps <= self.total_optimizer_steps
+        ):
+            raise ValueError("stop_after_steps must be between 1 and total_optimizer_steps")
 
 
 @dataclass
@@ -123,7 +130,8 @@ def run_training(
     if progress is not None:
         progress.start(trainer.optimizer_steps)
     try:
-        while trainer.optimizer_steps < run_config.total_optimizer_steps and not stopped_early:
+        last_step = run_config.stop_after_steps or run_config.total_optimizer_steps
+        while trainer.optimizer_steps < last_step and not stopped_early:
             before = trainer.optimizer_steps
             if run_config.tasks_per_step == 1:
                 step_input: Any = train_loader.generate_batch()

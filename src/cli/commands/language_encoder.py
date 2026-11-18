@@ -137,6 +137,13 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "same numbers; use it to fit a small VRAM budget",
     )
     parser.add_argument(
+        "--stop-after-steps",
+        type=int,
+        default=None,
+        help="Stop after N optimizer steps while the LR schedule still follows --steps "
+        "(the final validation and checkpoints are written); for a pilot cut at a step (T212)",
+    )
+    parser.add_argument(
         "--no-gradient-checkpointing",
         action="store_true",
         help="Large model only: keep every activation instead of recomputing it (T211). The "
@@ -711,6 +718,7 @@ def run(args: argparse.Namespace) -> int:
             patience=args.patience,
             log_interval=args.log_interval,
             tasks_per_step=hyper.tasks_per_step,
+            stop_after_steps=args.stop_after_steps,
         ),
         run_dir,
         eval_loader=eval_loader,
