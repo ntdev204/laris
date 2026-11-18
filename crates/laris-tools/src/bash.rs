@@ -177,7 +177,7 @@ fn run(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
 }
 
 /// The kind of install a command line tries (package managers), when it does; such a command may not run outside the
-/// sandbox. This is the generation-1 rule; inside the sandbox the same command simply fails to write.
+/// sandbox. Inside the sandbox the same command simply fails to write.
 fn install_command(line: &str) -> Option<&'static str> {
     use std::sync::OnceLock;
     static RULES: OnceLock<Vec<(regex::Regex, &'static str)>> = OnceLock::new();

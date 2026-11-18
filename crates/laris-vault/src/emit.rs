@@ -1,10 +1,9 @@
-//! Writing properties as YAML, the way generation 1 did (`yaml.safe_dump(props, sort_keys=False, allow_unicode=True,
-//! width=1000)`), for the flat shape the vault format allows: a mapping of scalars and lists of scalars.
+//! Writing properties as YAML, in the form PyYAML's `safe_dump(sort_keys=False, allow_unicode=True, width=1000)` writes, for the flat shape the vault format allows: a mapping of scalars and lists of scalars.
 //!
 //! Plain text stays plain; text that would read back as something else (`true`, `42`, `2026-01-01`, `null`, empty) or
 //! that holds indicators, edge spaces, tabs or line breaks is quoted, single first, double when it holds characters a
 //! single-quoted scalar cannot carry. The result is read back by [`crate::yaml::parse`] to the same values (a test
-//! checks it), and by PyYAML to the same values (checked against generation 1 on 40 000 random documents).
+//! checks it), and by PyYAML to the same values (checked on 40 000 random documents).
 //!
 //! Differences from PyYAML, all harmless for reading back: a scalar is never folded at column 1000; text with the
 //! Unicode line breaks (U+0085, U+2028, U+2029) is double-quoted with escapes, because PyYAML's single-quoted form reads

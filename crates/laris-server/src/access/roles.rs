@@ -143,7 +143,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn defaults_match_generation_1() {
+    fn role_defaults_are_the_documented_ones() {
         let r = Roles::default();
         assert!(r.of("user").contains("chat") && !r.of("user").contains("keys.manage"));
         assert!(r.of("readonly").len() == 4 && !r.of("readonly").contains("chat"));

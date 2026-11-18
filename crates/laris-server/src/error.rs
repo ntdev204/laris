@@ -5,7 +5,7 @@ use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::Response;
 use laris_protocol::p1::HttpError;
 
-/// A failure with its HTTP status. The body is `{"error": "message"}` (generation-1 shape).
+/// A failure with its HTTP status. The body is `{"error": "message"}`.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ApiError {
     /// 400: the request is malformed or breaks a rule.

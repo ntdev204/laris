@@ -13,7 +13,7 @@
 //! never touched. A file is replaced atomically: the new text goes to a temporary file in the same folder, is flushed
 //! to disk and renamed over the old one, so a crash leaves the old file or the new one, never a mixture.
 //!
-//! Differences from generation 1, all refusals: a block name must match `[\w.-]+`, a block text must not hold a LARIS
+//! Refusals: a block name must match `[\w.-]+`, a block text must not hold a LARIS
 //! marker, and property names must be plain lines of text (the properties are written by [`crate::emit`]).
 
 use std::collections::BTreeSet;
@@ -266,7 +266,7 @@ struct Found {
     end: usize,
 }
 
-/// The blocks of a text, left to right, as generation 1's pattern finds them: a begin marker with its first end marker.
+/// The blocks of a text, left to right, as the pattern finds them: a begin marker with its first end marker.
 fn find_blocks(text: &str) -> Vec<Found> {
     let mut found = Vec::new();
     let mut from = 0;

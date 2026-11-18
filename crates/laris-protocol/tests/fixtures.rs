@@ -1,5 +1,5 @@
-//! Round-trip and schema tests on every fixture (T123). P1 and P2 fixtures were recorded from the
-//! generation-1 server; `authored/` holds hand-written ones (see its README).
+//! Round-trip and schema tests on every fixture (T123). `p1/` and `p2/` hold request and response pairs;
+//! `authored/` holds hand-written ones (see its README).
 
 mod common;
 
@@ -133,7 +133,7 @@ fn p1_requests_round_trip_and_validate() {
                 assert_schema("p1", "EmbedRequest", &v, &what);
             }
             "error_invalid_request" => {
-                // generation 1 refused it (400: messages required); so must the Rust type
+                // the server refuses it (400: messages required); so must the Rust type
                 assert!(
                     serde_json::from_value::<ChatRequest>(v.clone()).is_err(),
                     "{what} must be refused"

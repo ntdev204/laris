@@ -1,8 +1,7 @@
 //! BM25, graph expansion and fusion over a vault (SR-L3).
 //!
-//! Generation 1 is the reference: the rankings, the scores and the metrics of `laris.shared.vault.search`
-//! and `laris.shared.vault.retrieval` are reproduced number for number on `tests/fixtures/retrieval/`
-//! (`tests/golden/retrieval/cases.json`).
+//! The rankings, the scores and the metrics on `tests/fixtures/retrieval/` are pinned by the recorded expectations in
+//! `tests/fixtures/retrieval/expected.json`, so a change of the algorithm shows as a failing test.
 //!
 //! * [`NoteSearch`]: Okapi BM25 over a note's body and title (a title word counts three times).
 //! * [`GraphRetriever`]: BM25 seeds plus the notes linked around them, with a decayed score.

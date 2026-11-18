@@ -1069,7 +1069,7 @@
         },
         "LarisRequest": {
           "additionalProperties": true,
-          "description": "The `laris` block of a chat request (named `LarisMeta` in generation 1).",
+          "description": "The `laris` block of a chat request.",
           "properties": {
             "focus": {
               "default": "",
@@ -1824,7 +1824,7 @@
     "ToolRequest": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": true,
-      "description": "`POST /v1/laris/tools/{name}`: run one of the model service's remote tools (new in generation 2).",
+      "description": "`POST /v1/laris/tools/{name}`: run one of the model service's remote tools.",
       "properties": {
         "arguments": {
           "additionalProperties": true,

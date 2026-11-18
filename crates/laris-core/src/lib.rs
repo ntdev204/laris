@@ -13,7 +13,7 @@
 //!
 //! T131 builds the loop on this. A [`Decider`] chooses each step from the closed set of [`Action`]s; the step is
 //! recorded as a decision before it is applied, and a model answer or a tool outcome is accepted only after the
-//! decision that permits it. [`FollowModel`] is the generation-1 policy (plan, tool gate, reflection, completion
+//! decision that permits it. [`FollowModel`] is the default policy (plan, tool gate, reflection, completion
 //! check, step and time budgets); [`Driver`] runs it against a [`Model`] and a [`ToolRunner`].
 
 mod action;

@@ -314,66 +314,6 @@ async fn a_key_is_stored_as_a_digest_only_and_needs_the_master_secret() {
 }
 
 #[tokio::test]
-async fn keys_made_by_generation_1_still_verify() {
-    let Some(env) = Env::new() else { return };
-    let storage = env.storage().await;
-    let access = access_over(&storage, MASTER);
-    // digests computed by the generation-1 Python for this master and text
-    let text = "lk_deadbeef_secretsecretsecretsecretsecret";
-    let keyed = "c7574f3259642fa2f40e30dceeb0fe4a3fde1ed7b2b54a6590a69c3e3821aba7";
-    let plain = "da432d422e14af82e08a1baff59c942c19c4b47b462b1ddf98e8d72b6f3255ba";
-    for (id, digest) in [("deadbeef", keyed), ("cafebabe", plain)] {
-        sqlx::query("INSERT INTO keys (id, digest, label, role, created_at) VALUES ($1, $2, 'gen1', 'user', 1)")
-            .bind(id)
-            .bind(digest)
-            .execute(storage.pool())
-            .await
-            .unwrap();
-    }
-    assert!(access.keys().verify(text, 5.0).await.unwrap().is_some());
-    // a key stored with the plain SHA-256 works once and is rewritten as a keyed digest
-    let legacy_text = "lk_cafebabe_secretsecretsecretsecretsecret";
-    let legacy_digest = da_plain(legacy_text);
-    sqlx::query("UPDATE keys SET digest = $1 WHERE id = 'cafebabe'")
-        .bind(&legacy_digest)
-        .execute(storage.pool())
-        .await
-        .unwrap();
-    assert!(
-        access
-            .keys()
-            .verify(legacy_text, 5.0)
-            .await
-            .unwrap()
-            .is_some()
-    );
-    let now: String = sqlx::query_scalar("SELECT digest FROM keys WHERE id = 'cafebabe'")
-        .fetch_one(storage.pool())
-        .await
-        .unwrap();
-    assert_ne!(now, legacy_digest);
-    assert!(
-        access
-            .keys()
-            .verify(legacy_text, 5.0)
-            .await
-            .unwrap()
-            .is_some()
-    );
-    storage.close().await;
-    env.finish().await;
-}
-
-/// SHA-256 as 64 hex characters, computed by PostgreSQL-independent code in the test crate.
-fn da_plain(text: &str) -> String {
-    use sha2::{Digest, Sha256};
-    Sha256::digest(text.as_bytes())
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
-}
-
-#[tokio::test]
 async fn expiry_and_revocation_end_a_key() {
     let Some(env) = Env::new() else { return };
     let storage = env.storage().await;

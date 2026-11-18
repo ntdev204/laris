@@ -1,10 +1,7 @@
-//! PostgreSQL storage of the server (SR-S3): numbered migrations that continue generation 1, a pool, monthly
+//! PostgreSQL storage of the server (SR-S3): numbered migrations, a pool, monthly
 //! partitions, retention and the daily usage summary.
 //!
-//! The schema is the generation-1 schema: migrations `0001` to `0003` are the generation-1 files byte for byte and
-//! the version table is the same `schema_version`, so a generation-1 database is already at version 3 and a
-//! generation-1 dump restored into a fresh database migrates to the same state without a rewrite. A database that
-//! holds a version this build does not know (a newer server wrote it) is refused, never changed.
+//! A database that holds a version this build does not know (a newer server wrote it) is refused, never changed.
 //!
 //! Nothing here prints a connection string; errors name the failing step, not the address or the password.
 

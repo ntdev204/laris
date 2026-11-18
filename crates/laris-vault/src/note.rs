@@ -1,6 +1,5 @@
 //! Parse one note: properties (YAML front matter), wikilinks, embeds, Markdown links, tags, headings, block ids and a
-//! content hash. The rules are those of `docs/specifications/OBSIDIAN_VAULT_FORMAT.md` and give the same result as the
-//! generation-1 parser; a port keeps its patterns so that every form it read, this reads.
+//! content hash. The rules are those of `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`.
 
 use std::collections::BTreeSet;
 use std::sync::OnceLock;
@@ -123,7 +122,7 @@ impl Note {
     }
 
     /// The JSON form used by the index export and the cache. Dates are `{"__date__": ...}` and
-    /// `{"__datetime__": ...}`, as in generation 1.
+    /// `{"__datetime__": ...}`.
     pub fn to_json(&self) -> Json {
         let mut props = Map::new();
         for (k, v) in &self.props {
@@ -490,7 +489,7 @@ pub fn parse_note(text: &str, path: &str) -> Note {
     }
 }
 
-/// A falsy value in the generation-1 sense: it skips the depth check.
+/// A falsy value (empty, zero, false): it skips the depth check.
 fn is_empty_value(v: &Value) -> bool {
     match v {
         Value::Null => true,

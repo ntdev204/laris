@@ -4,7 +4,7 @@
 //! `usage_daily` row per key and UTC day from the raw rows; `purge` drops whole partitions that lie entirely before
 //! the retention cutoff (usage only after its days are summarised) and deletes the older rows of the month that
 //! straddles it. Every step runs under an advisory lock, so several server processes can run it at once.
-//! Timestamps are seconds since the epoch, as in the generation-1 tables.
+//! Timestamps are seconds since the epoch.
 
 use super::{Storage, StorageError};
 use sqlx::Row;

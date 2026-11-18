@@ -7,9 +7,9 @@ use laris_vault::writer::safe_title;
 use crate::graph::{RetrievalResult, Via};
 use crate::text::round_to;
 
-/// Smoothing constant of the reciprocal rank. Generation 1 value.
+/// Smoothing constant of the reciprocal rank. Standard value.
 pub const RRF_K: f64 = 60.0;
-/// The suffix generation 1 gives a Source note, so it stays distinct from a concept of the same word.
+/// The suffix of a Source note, so it stays distinct from a concept of the same word.
 pub const SOURCE_SUFFIX: &str = " (source)";
 
 /// The note name for a source path: its stem made safe, plus the suffix. Ingest and answers use the same rule so

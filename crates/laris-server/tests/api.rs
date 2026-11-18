@@ -322,7 +322,7 @@ async fn bad_bodies_are_400() {
             "{name}"
         );
     }
-    // the generation-1 fixture message for a missing field
+    // the message for a missing field
     let r = h
         .send(&post("/v1/laris/chat", r#"{"stream":true}"#, ""))
         .await;

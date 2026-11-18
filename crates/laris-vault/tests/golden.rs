@@ -1,5 +1,5 @@
-//! The generation-1 index is the reference: `tests/golden/vault/index.json` and `yaml_cases.json` were written by
-//! `tests/golden/vault/generate.py` from the generation-1 implementation, and this crate must reproduce them.
+//! Recorded expectations: `tests/golden/vault/index.json` is the index of the fixture vault and `yaml_cases.json`
+//! holds property documents with the values PyYAML reads from them; this crate must reproduce both.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,7 +14,7 @@ fn golden() -> PathBuf {
 }
 
 #[test]
-fn index_of_the_fixture_vault_equals_the_generation_1_index_byte_for_byte() {
+fn index_of_the_fixture_vault_equals_the_recorded_index_byte_for_byte() {
     let index = VaultIndex::build(&golden().join("fixture"), None).expect("build");
     let expected = fs::read_to_string(golden().join("index.json")).expect("golden");
     assert_eq!(index.export_string(), expected);
@@ -61,7 +61,7 @@ fn fixture_covers_every_row_of_the_format_spec() {
         Some("Links/Forms.md")
     );
     assert!(index.orphans().contains(&"Lonely.md".to_string()));
-    // generation 1's own assertions on the original fixture still hold
+    // assertions on the original fixture
     assert_eq!(index.notes["Code/Fenced.md"].links.len(), 1);
     assert!(index.notes["Code/Fenced.md"].tags.is_empty());
 }
@@ -89,7 +89,7 @@ fn rerun_is_byte_identical_and_the_cache_round_trips() {
 }
 
 #[test]
-fn yaml_reader_gives_the_values_of_generation_1() {
+fn yaml_reader_gives_the_values_pyyaml_gives() {
     let text = fs::read_to_string(golden().join("yaml_cases.json")).expect("cases");
     let cases: Vec<Json> = serde_json::from_str(&text).expect("json");
     assert!(cases.len() > 50);
@@ -99,16 +99,12 @@ fn yaml_reader_gives_the_values_of_generation_1() {
         let got = yaml::parse(source);
         if case.get("error").is_some() {
             if got.is_ok() {
-                failures.push(format!(
-                    "{source:?}: generation 1 refuses it, this read {got:?}"
-                ));
+                failures.push(format!("{source:?}: PyYAML refuses it, this read {got:?}"));
             }
             continue;
         }
         match got {
-            Err(e) => failures.push(format!(
-                "{source:?}: generation 1 reads it, this fails: {e}"
-            )),
+            Err(e) => failures.push(format!("{source:?}: PyYAML reads it, this fails: {e}")),
             Ok(value) => {
                 if value_to_json(&value) != case["value"] {
                     failures.push(format!(
@@ -125,7 +121,7 @@ fn yaml_reader_gives_the_values_of_generation_1() {
 
 #[test]
 fn forms_that_stay_refused_or_text_on_purpose() {
-    // generation 1 reads these; this reader refuses or keeps text, and says so in the module documentation
+    // PyYAML reads these; this reader refuses or keeps text, and says so in the module documentation
     assert!(yaml::parse("a: !!str 1").is_err());
     assert!(yaml::parse("? complex\n: key").is_err());
     assert!(yaml::parse("a: [a: 1]").is_err());

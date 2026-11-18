@@ -1,5 +1,5 @@
-//! The generation-1 writer, schema and lint are the reference: `tests/golden/vault/writer_lint.json` was written by
-//! `tests/golden/vault/generate.py` from the generation-1 code, and this crate must reproduce every entry.
+//! Recorded expectations: `tests/golden/vault/writer_lint.json` holds rendered notes, managed blocks, safe titles and
+//! lint results, and this crate must reproduce every entry.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,7 +29,7 @@ fn problems(list: &[Problem]) -> Json {
 }
 
 #[test]
-fn rendered_notes_equal_generation_1_text_for_text() {
+fn rendered_notes_equal_the_recorded_text() {
     let data = load();
     for case in data["render"].as_array().expect("cases") {
         let props: Vec<(String, yaml::Value)> = case["props"]
@@ -66,7 +66,7 @@ fn rendered_notes_equal_generation_1_text_for_text() {
 }
 
 #[test]
-fn managed_blocks_behave_as_in_generation_1() {
+fn managed_blocks_behave_as_recorded() {
     let data = load();
     for case in data["blocks"].as_array().expect("cases") {
         let text = case["text"].as_str().expect("text");
@@ -107,7 +107,7 @@ fn managed_blocks_behave_as_in_generation_1() {
 }
 
 #[test]
-fn safe_titles_equal_generation_1() {
+fn safe_titles_equal_the_recorded_ones() {
     for pair in load()["titles"].as_array().expect("titles") {
         let (raw, expected) = (
             pair[0].as_str().expect("raw"),
@@ -118,7 +118,7 @@ fn safe_titles_equal_generation_1() {
 }
 
 #[test]
-fn lint_of_the_golden_vaults_equals_generation_1() {
+fn lint_of_the_golden_vaults_equals_the_recorded_results() {
     let data = load();
     let lint = &data["lint"];
     let fixture = VaultIndex::build(&golden().join("fixture"), None).expect("build");
@@ -133,7 +133,7 @@ fn lint_of_the_golden_vaults_equals_generation_1() {
         problems(&lint_content(&fixture, 120, 25, None)),
         lint["content_plain"]
     );
-    // the stub redactor of generate.py: letters in front of `[[` become a marker
+    // a stub redactor: letters in front of `[[` become a marker
     let redact = |t: &str| {
         let mut out = String::new();
         let chars: Vec<char> = t.chars().collect();

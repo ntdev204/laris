@@ -1,4 +1,4 @@
-//! Where a private space lives: `<home>/projects/<slug>/<key-fingerprint>.sqlite` (generation-1 layout).
+//! Where a private space lives: `<home>/projects/<slug>/<key-fingerprint>.sqlite`.
 
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};

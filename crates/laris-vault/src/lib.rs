@@ -5,7 +5,7 @@
 //! and deterministically; [`yaml`] is the small reader for the properties, since no YAML crate is approved. The
 //! writer ([`writer`]: atomic, managed blocks, conflict detection, properties written by [`emit`]), schema registry
 //! ([`schema`]) and lint ([`lint`]: format, hub tree, content) complete SR-L2. The format is `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`; the
-//! golden fixture under `tests/golden/vault/` is the generation-1 index of a vault that uses every form in it.
+//! recorded index under `tests/golden/vault/` pins the index of a vault that uses every form in it.
 
 pub mod emit;
 pub mod index;

@@ -4,7 +4,7 @@
 //!     cargo run --release -p laris-retrieval --example bench -- --notes 500 --keep DIR --dump FILE
 //!
 //! `--keep` leaves the vault in DIR and `--dump` writes every query with its BM25 and graph results (tab separated),
-//! so the generation-1 implementation can be run on the same vault and compared.
+//! so another implementation can be run on the same vault and compared.
 //!
 //! Reports the index build, BM25 and graph-expansion latency (median and P95 over 200 queries), and the fixture
 //! metrics. This is an experiment, not a test; timings depend on the machine.

@@ -1,4 +1,4 @@
-//! What the user decided about one folder: `<home>/projects/<slug>/state.json` (generation-1 layout).
+//! What the user decided about one folder: `<home>/projects/<slug>/state.json`.
 //!
 //! It holds whether the folder is trusted (its own commands and skills may then be used) and the approvals the user
 //! saved for it. The file is in the user's home, never in the project, so a cloned repository cannot write it. A

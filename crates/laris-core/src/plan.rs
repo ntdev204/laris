@@ -1,8 +1,7 @@
 //! The plan: a short list of steps with a status, shown to the user and kept across turns.
 //!
 //! The plan belongs to the loop, not to a prompt: the model changes it through the `update_plan` tool, the loop shows
-//! it, keeps it in the session and refuses to call a goal finished while steps are still open (generation-1
-//! `laris.shared.plan`).
+//! it, keeps it in the session and refuses to call a goal finished while steps are still open.
 
 use laris_protocol::Event;
 use serde::{Deserialize, Serialize};

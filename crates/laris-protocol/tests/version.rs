@@ -1,4 +1,4 @@
-//! Version header behaviour (T123): a mismatch gives a clear error with the generation-1 message.
+//! Version header behaviour (T123): a mismatch gives a clear error with the fixture message.
 
 use laris_protocol::{PROTOCOL_HEADER, PROTOCOL_VERSION, check_version};
 
@@ -11,7 +11,7 @@ fn accepts_only_the_current_version() {
 }
 
 #[test]
-fn message_equals_generation_one() {
+fn message_equals_the_fixture() {
     let fixture = std::fs::read_to_string(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/tests/fixtures/p1/error_protocol_mismatch.response.json"

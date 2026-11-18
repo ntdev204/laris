@@ -1,4 +1,4 @@
-//! Behaviour that generation 1 does not pin: folders, span provenance, fusion of channels, the dense interface.
+//! Behaviour the recorded expectations do not pin: folders, span provenance, fusion of channels, the dense interface.
 
 use std::fs;
 use std::path::PathBuf;

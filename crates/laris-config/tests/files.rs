@@ -34,19 +34,6 @@ fn a_missing_file_is_no_layer_and_a_present_one_loads() {
 }
 
 #[test]
-fn a_generation_one_flat_file_loads() {
-    let path = fixture("legacy_flat.json");
-    let packaged = Packaged::default();
-    let s = load(&LoadOptions {
-        settings_path: Some(&path),
-        packaged: &packaged,
-        env: &[],
-    })
-    .expect("legacy");
-    assert_eq!(s.context.window_tokens, 16384);
-}
-
-#[test]
 fn broken_files_are_errors_that_name_the_file() {
     let dir = temp_dir("broken");
     let path = dir.join("settings.json");

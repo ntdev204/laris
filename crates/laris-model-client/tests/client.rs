@@ -1,4 +1,4 @@
-//! Fixture tests of the P1 client against a scripted transport (generation-1 fixtures of `laris-protocol`).
+//! Fixture tests of the P1 client against a scripted transport (fixtures of `laris-protocol`).
 
 mod common;
 

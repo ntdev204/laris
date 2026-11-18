@@ -1,6 +1,6 @@
-//! Generation 1 is the reference: `tests/golden/retrieval/cases.json` was written by `generate.py` from the
-//! generation-1 `NoteSearch`, `GraphRetriever`, `fuse_with_corpus` and `evaluate`; this crate must reproduce every
-//! order and every number on `tests/fixtures/retrieval/`.
+//! Recorded expectations: `tests/fixtures/retrieval/expected.json` holds every order and every number of
+//! `NoteSearch`, `GraphRetriever`, `fuse_with_corpus` and `evaluate` on `tests/fixtures/retrieval/vault`. A change
+//! of the algorithm must change the file deliberately.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -19,7 +19,7 @@ fn root() -> PathBuf {
 
 fn cases() -> Value {
     let text =
-        fs::read_to_string(root().join("tests/golden/retrieval/cases.json")).expect("golden");
+        fs::read_to_string(root().join("tests/fixtures/retrieval/expected.json")).expect("golden");
     serde_json::from_str(&text).expect("json")
 }
 
@@ -32,7 +32,7 @@ fn row(r: &RetrievalResult) -> Value {
 }
 
 #[test]
-fn tokens_equal_generation_1() {
+fn tokens_match_the_recorded_expectations() {
     for case in cases()["tokens"].as_array().unwrap() {
         let text = case[0].as_str().unwrap();
         let expected: Vec<String> = case[1]
@@ -46,7 +46,7 @@ fn tokens_equal_generation_1() {
 }
 
 #[test]
-fn bm25_rankings_and_scores_equal_generation_1() {
+fn bm25_rankings_and_scores_match_the_recorded_expectations() {
     let index = index();
     let search = NoteSearch::new(&index, &[]);
     for case in cases()["search"].as_array().unwrap() {
@@ -61,7 +61,7 @@ fn bm25_rankings_and_scores_equal_generation_1() {
 }
 
 #[test]
-fn graph_expansion_equals_generation_1() {
+fn graph_expansion_matches_the_recorded_expectations() {
     let index = index();
     let mut n = 0;
     for case in cases()["graph"].as_array().unwrap() {
@@ -85,7 +85,7 @@ fn graph_expansion_equals_generation_1() {
 }
 
 #[test]
-fn corpus_fusion_equals_generation_1() {
+fn corpus_fusion_matches_the_recorded_expectations() {
     let index = index();
     let notes =
         GraphRetriever::new(&index, &[], GraphConfig::default()).retrieve("perovskite solar", 10);
@@ -131,7 +131,7 @@ fn as_map(v: &Value) -> BTreeMap<String, f64> {
 }
 
 #[test]
-fn metrics_equal_generation_1() {
+fn metrics_match_the_recorded_expectations() {
     let index = index();
     let golden = cases();
     let m = &golden["metrics"];

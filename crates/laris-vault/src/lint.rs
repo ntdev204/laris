@@ -45,7 +45,7 @@ impl fmt::Display for Problem {
     }
 }
 
-/// Python's name for the type of a property value, as generation 1 compared them.
+/// Python's name for the type of a property value.
 fn type_name(value: &Value) -> &'static str {
     match value {
         Value::Null => "NoneType",

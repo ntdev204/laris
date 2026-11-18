@@ -1,8 +1,8 @@
 //! Reader for the YAML subset that note properties use.
 //!
-//! No YAML crate is approved (ADR-021), so this is a small, strict reader written to give the same values as the
-//! generation-1 reader (PyYAML `safe_load`) on everything LARIS writes or a person plausibly types: block mappings
-//! and sequences (a sequence may sit at the indent of its key, as the generation-1 writer emits it), flow
+//! No YAML crate is approved (ADR-021), so this is a small, strict reader written to give the same values as
+//! PyYAML `safe_load` on everything LARIS writes or a person plausibly types: block mappings
+//! and sequences (a sequence may sit at the indent of its key, as PyYAML's writer emits it), flow
 //! collections, plain, single- and double-quoted scalars that continue over lines, `|` and `>` block scalars, and
 //! comments. Plain scalars resolve as in YAML 1.1 (`yes` and `off` are booleans, `~` is null, `2026-11-13` is a date).
 //!
@@ -1033,7 +1033,7 @@ fn days_in(year: u32, month: u32) -> u32 {
     }
 }
 
-/// `YYYY-MM-DD` and `YYYY-M-D[T ]h:mm:ss[.f][ ][Z|±h[:mm]]`. An impossible date is an error, as in generation 1.
+/// `YYYY-MM-DD` and `YYYY-M-D[T ]h:mm:ss[.f][ ][Z|±h[:mm]]`. An impossible date is an error.
 fn resolve_timestamp(s: &str) -> R<Option<Value>> {
     let bad = || err("impossible date or time");
     let Some((date, time)) = s.split_once(['T', 't', ' ', '\t']) else {

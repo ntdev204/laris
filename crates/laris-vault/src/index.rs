@@ -15,7 +15,7 @@ use serde_json::{Map, Value as Json, json};
 
 use crate::note::{Link, Note, link_name, parse_note};
 
-/// Folders that are never scanned (spec section 2, plus `.laris` and `_templates`, which generation 1 also skips).
+/// Folders that are never scanned (spec section 2, plus `.laris` and `_templates`).
 pub const IGNORED_DIRS: [&str; 6] = [
     ".obsidian",
     ".git",
@@ -97,7 +97,7 @@ fn ignored(name: &str) -> bool {
     IGNORED_DIRS.contains(&name)
 }
 
-/// Text as generation 1 read it: lossy UTF-8 and universal newlines.
+/// Text as read from disk: lossy UTF-8 and universal newlines.
 fn read_text(path: &Path) -> std::io::Result<String> {
     let bytes = fs::read(path)?;
     let text = String::from_utf8_lossy(&bytes);
@@ -385,7 +385,7 @@ impl VaultIndex {
             .collect()
     }
 
-    /// Everything the index knows, without file times: the form compared with the generation-1 index.
+    /// Everything the index knows, without file times: the form compared with the recorded index.
     pub fn export(&self) -> Json {
         let mut notes = Map::new();
         let mut outgoing = Map::new();

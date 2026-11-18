@@ -1,8 +1,8 @@
 # LARIS — System specification (generation 2)
 
 Version 2.0.0-draft · 2026-11-13 · Status: ledger established (task T92 done) · The single specification of the
-whole system: model, system (harness), server, client and brain. Replaces the generation-1 ledger, which stays on the
-frozen branch `laris-v1`.
+whole system: model, system (harness), server, client and brain. It stands alone: the earlier Python system lives on
+the frozen branch `laris-v1`, which this ledger does not depend on.
 
 Plans and tasks are split by programme (section 2):
 
@@ -16,9 +16,9 @@ Run `python scripts/validate_spec.py` after any change to these files (programme
 
 ## 1. Purpose and scope
 
-LARIS is a system for scientific work in English and Vietnamese. Generation 1 (Python, release 2.2.0) delivered a
-terminal client, an agent harness, an Obsidian-compatible brain, a policy gateway server and a model service.
-Generation 2 has three goals, in the owner's order (2026-11-13):
+LARIS is a system for scientific work in English and Vietnamese: a terminal client, an agent harness, an
+Obsidian-compatible brain, a policy gateway server and a model service. Its three goals, in the owner's order
+(2026-11-13):
 
 1. **Finish the model** (ResearchLLM): the self-built language foundation and its specialist stages up to a
    generative research advisor, each stage qualified on held-out gates. Highest priority.
@@ -33,9 +33,7 @@ third-party language model as a dependency (ADR-002); claiming any capability th
 held-out gate (ADR-008); a direct mode in which the client calls a model provider without the server; any dependency
 on the Obsidian desktop application.
 
-Requirement ids restart in this generation; a generation-1 requirement is cited as `v1:SR-xx` and read from the
-`laris-v1` branch. Task ids continue the global sequence (T91 was the last task of generation 1) and are unique across
-all task files.
+Task ids continue one global sequence and are unique across all task files.
 
 ## 2. Programmes and their order
 
@@ -70,7 +68,7 @@ values. One requirement has one implementation (owner decision: no duplication).
   OCR and manuscript stages, and the stage-6 generative and verification specialists that act as the research advisor.
 - **System** (harness): everything that turns model output into work: the loop (state machine, event log), the
   harness (tools, policy, sandbox, evidence, memory, storage) and the prompt layer (context assembly). The loop runs
-  inside the harness and the harness composes the prompt; the prompt layer knows neither (v1:SR-H8).
+  inside the harness and the harness composes the prompt; the prompt layer knows neither.
 - **Capability ladder**: LLM (chat through the server) → RAG (answers grounded in retrieved evidence and the brain) →
   Agent (tool use) → Agentic (plan, progress, reflection, completion check, memory, bounded autonomy) (v1 ADR-017).
 - **System brain**: the curated Obsidian-format knowledge base in `.laris/brain/`, held by the server, confidential.
@@ -157,7 +155,7 @@ changes in the ADR named in the task.
 | D32 | Ownership | One owner per requirement (section 3) | decided |
 | D33 | Programme order | Model first; system and server in the owner's waiting time; client after the model; brain last (section 2) | decided |
 | D34 | Install | One static binary per platform, one-line install, npm as a thin wrapper | decided |
-| D35 | Wire compatibility | P1 and P2 keep the generation-1 wire format; additions versioned by `X-Laris-Protocol` | confirmed 2026-11-13 (ADR-021) |
+| D35 | Wire compatibility | P1 and P2 are versioned by `X-Laris-Protocol`; a change of the wire format changes the version | confirmed 2026-11-13 (ADR-021) |
 | D36 | Process model | Interface and core in one process; core events serialisable for headless mode and a later daemon | confirmed 2026-11-13 (ADR-021) |
 | D37 | Direct mode | None | confirmed 2026-11-13 (ADR-021) |
 | D38 | Core design | Event-sourced core with a decider seam, so programme 3 replaces the decider, not the core | confirmed 2026-11-13 (ADR-021) |
@@ -165,7 +163,7 @@ changes in the ADR named in the task.
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | confirmed 2026-11-13 (ADR-021) |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | confirmed 2026-11-13 (ADR-021) |
 | D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 3.0.0 | confirmed 2026-11-13 (ADR-021) |
-| D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided |
+| D43 | Stands alone | No reading, migration or compatibility with the earlier Python system; its data, formats and fixtures are not carried over | owner decision 2026-11-18 (ADR-021 addendum) |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
 | D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, English data acquired and STS-B leakage check built in T175, document and config sweep in T176, partition and wiring in T177, retrieval-pair task in T178, then tokenizer fit and retraining (owner) |
@@ -203,7 +201,7 @@ Acceptance: release checklist recorded in the task note; `laris-v1` untouched.
 
 ### SR-G5 — Threat model and security suite
 Owner: governance
-The generation-2 threat model lists assets, attackers, threats, controls and test ids (section 9); a security suite in CI
+The threat model lists assets, attackers, threats, controls and test ids (section 9); a security suite in CI
 covers every row.
 Acceptance: every threat maps to a control and a test.
 
@@ -214,7 +212,7 @@ Owner: protocol
 `POST /v1/laris/chat` (SSE), `/embed`, `/workflows`, `/help`, `/account`, `/tools/{name}` and admin routes, defined once
 as Rust types with JSON Schema export and versioned by `X-Laris-Protocol`; `LarisMeta` carries usage and the brain evidence
 list; an error after a stream started is an `error` event then `[DONE]`.
-Acceptance: generation-1 SSE fixtures and new fixtures validate; version mismatch gives a clear error; export is deterministic.
+Acceptance: the committed SSE and JSON fixtures validate; version mismatch gives a clear error; export is deterministic.
 
 ### SR-P2 — P2, server to model
 Owner: protocol
@@ -224,7 +222,7 @@ Acceptance: Rust types round-trip real chunks of the Python model service.
 
 ### SR-P3 — Core event protocol
 Owner: protocol
-Interface commands and core events (generation-1 E1 set) as Rust types, a channel in one process and JSON lines for
+Interface commands and core events as Rust types, a channel in one process and JSON lines for
 headless `stream-json` and a later daemon.
 Acceptance: round-trip test per message; the eleven scenarios of `tests/golden/ink_scenarios/` translated and replayed.
 
@@ -239,15 +237,15 @@ Acceptance: precedence and schema tests; a scan finds no hardcoded endpoint or s
 ### SR-L2 — Obsidian vault format
 Owner: shared
 One implementation of `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`: parser, deterministic incremental index, atomic
-writer with managed blocks and user-edit detection, schema registry, hub-tree lint (v1:SR-V1, V2, V4, V5, SR-B6).
-Acceptance: the golden fixture vault yields the generation-1 index; byte-identical rerun; user edits survive 100 rewrites;
+writer with managed blocks and user-edit detection, schema registry, hub-tree lint.
+Acceptance: the fixture vault yields the recorded index; byte-identical rerun; user edits survive 100 rewrites;
 crash mid-write keeps the old file; lint fails on seeded faults.
 
 ### SR-L3 — Retrieval
 Owner: shared
 BM25, link-neighbourhood expansion and deterministic fusion with span provenance; a dense channel fed by the model block,
 labelled not qualified until stage 1 passes G12.
-Acceptance: rankings on `tests/fixtures/retrieval/` equal generation 1; recall@k, MRR, nDCG computed; P95 under 300 ms at
+Acceptance: rankings on `tests/fixtures/retrieval/` equal the recorded expectations; recall@k, MRR, nDCG computed; P95 under 300 ms at
 10,000 notes measured.
 
 ### 7.4 System: loop, harness, prompt
@@ -256,7 +254,7 @@ Acceptance: rankings on `tests/fixtures/retrieval/` equal generation 1; recall@k
 Owner: harness
 `laris-core` runs multi-turn work as a state machine: plan, tool calls, reflection with bounded replanning, completion
 check, turn, token and time budgets, interrupt; it reaches the model only through the `ModelClient` trait.
-Acceptance: translated generation-1 Agentic scenarios pass with a scripted model; an interrupt leaves a consistent session.
+Acceptance: the Agentic scenarios pass with a scripted model; an interrupt leaves a consistent session.
 
 ### SR-H2 — Event log
 Owner: harness
@@ -279,14 +277,14 @@ Acceptance: tests per tool; local and remote tools identical to the loop (contra
 ### SR-H5 — Permissions, hooks and folder trust
 Owner: harness
 Modes `default`, `acceptEdits`, `plan`, `bypass` (policy permitting); rules `allow`, `ask`, `deny` with patterns, deny
-wins; hooks declared only in global settings; project commands and skills only in trusted folders (v1:SR-C3, C4, C5).
+wins; hooks declared only in global settings; project commands and skills only in trusted folders.
 Acceptance: mode and precedence tests; denied path never written; hook allow, block, timeout, malformed; planted project
 settings ignored.
 
 ### SR-H6 — Sandbox
 Owner: harness
 Agent commands run under OS confinement forked from codex on Linux, macOS and Windows, with the automatic Python
-environment `~/.laris/.venv/` (v1:SR-C8).
+environment `~/.laris/.venv/`.
 Acceptance: per platform, writes outside allowed roots fail; the environment builds on first use, is repaired after
 deletion and is built once by two parallel sessions.
 
@@ -299,14 +297,14 @@ Acceptance: fabricated citation, missing span and unsupported claim are caught; 
 ### SR-H8 — Project vault lifecycle and memory
 Owner: harness
 Vault init (idempotent, never overwrites, no nesting), write-through notes with provenance, memory in the vault, domain
-hubs, proposals inbox excluded from retrieval (v1:SR-V3, V4, V6, SR-B5).
-Acceptance: init twice changes nothing; a generation-1 vault adopted unchanged; proposals invisible to retrieval.
+hubs, proposals inbox excluded from retrieval.
+Acceptance: init twice changes nothing; an existing vault is adopted unchanged; proposals invisible to retrieval.
 
 ### SR-H9 — Client storage
 Owner: harness
-SQLite per project and key fingerprint in `~/.laris/projects/<slug>/` (WAL, migrations continuing generation 1): sessions,
+SQLite per project and key fingerprint in `~/.laris/projects/<slug>/` (WAL, numbered migrations): sessions,
 event log, passages, embedding cache, learning examples, vault index cache.
-Acceptance: a generation-1 database migrates without loss; two writers lose nothing.
+Acceptance: a fresh database gets every migration once and a newer one is refused; two writers lose nothing.
 
 ### SR-H10 — Redaction and injection defence
 Owner: harness
@@ -330,7 +328,7 @@ Acceptance: tests on recorded fixtures, version and pin mismatch, interrupted st
 Owner: harness
 Text, Markdown and PDF with a text layer into passages with spans and Source notes; scanned documents wait for the stage-3
 OCR model and say so.
-Acceptance: passages equal generation 1 for text and Markdown; PDF fixtures produce spans; scanned input gives a clear message.
+Acceptance: passages of text and Markdown point to the exact source characters; PDF fixtures produce spans; scanned input gives a clear message.
 
 ### SR-H14 — Decider seam
 Owner: harness
@@ -355,13 +353,13 @@ Acceptance: tests per status code, mid-stream error, slow client, trusted and un
 ### SR-S2 — Keys, roles and quotas
 Owner: server
 Digest-only keys with a master secret outside the database, roles, permissions, quotas reserved atomically and settled in
-one transaction, expiry, revocation, admin routes (v1:SR-H9).
+one transaction, expiry, revocation, admin routes.
 Acceptance: lifecycle tests; parallel requests never exceed a limit by more than one reservation.
 
 ### SR-S3 — Server storage on PostgreSQL
 Owner: server
-Numbered migrations continuing the generation-1 schema, pool, monthly partitions, retention, daily usage summary.
-Acceptance: tests under `LARIS_TEST_PG_DSN`; a generation-1 database migrates without loss.
+Numbered migrations, pool, monthly partitions, retention, daily usage summary.
+Acceptance: tests under `LARIS_TEST_PG_DSN`; a fresh database gets every migration once; a newer one is refused.
 
 ### SR-S4 — Policy gateway
 Owner: server
@@ -410,19 +408,18 @@ Acceptance: translated golden scenarios pass through the interface; render tests
 
 ### SR-C2 — Commands and input
 Owner: client
-Built-in and custom slash commands (generation-1 set plus `/rewind`), `@path` completion, `!command`, `# note`, pasted text.
+Built-in and custom slash commands (including `/rewind`), `@path` completion, `!command`, `# note`, pasted text.
 Acceptance: registry and input tests; every command in the guide.
 
 ### SR-C3 — Global home and settings
 Owner: client
-`~/.laris/` layout and Claude-Code-style `settings.json` of generation 1 (v1:SR-C6); a project `./.laris/` holds only
+`~/.laris/` layout and Claude-Code-style `settings.json`; a project `./.laris/` holds only
 `LARIS.md`, `skills/`, `commands/`, `memory/`.
-Acceptance: schema tests; empty home creates the layout; a generation-1 home works unchanged.
+Acceptance: schema tests; empty home creates the layout.
 
 ### SR-C4 — Start with nothing to configure
 Owner: client
-Packaged default server at build time; login form inside the interface; key saved (0600) only after the server accepts it
-(v1:SR-C9).
+Packaged default server at build time; login form inside the interface; key saved (0600) only after the server accepts it.
 Acceptance: fresh home reaches a chat turn after the key is entered; a wrong key shows the form again.
 
 ### SR-C5 — Headless mode
@@ -447,9 +444,9 @@ Acceptance: the Rust server's P2 contract tests pass against the running service
 
 ### SR-M2 — Scientific tools as remote tools
 Owner: model
-Scientific extraction and scholarly parsing served as tool routes so the client has no NLP; generation-1 call sites
-inventoried first.
-Acceptance: route schemas in `laris-protocol`; fixture tests reproduce generation-1 results.
+Scientific extraction and scholarly parsing served as tool routes so the client has no NLP; the call sites of the
+Python code are inventoried first.
+Acceptance: route schemas in `laris-protocol`; fixture tests reproduce the extraction results.
 
 ### SR-M3 — Model boundary and owner runs
 Owner: model
@@ -576,8 +573,7 @@ Acceptance: one command produces the report; results stated as system measuremen
   dependency without approval.
 - Policy in `.laris/` and `LARIS.md` changes only with the owner's approval and stays under the integrity lock.
 - Every limit, path, endpoint and message is configuration or catalogue (SR-L1).
-- Nothing on `laris-v1` is deleted. Generation 2 does not depend on it (owner decision 2026-11-18, ADR-021 addendum):
-  requirements below that cite generation 1 (migration, adoption, parity) are void and are removed by T215.
+- Nothing on `laris-v1` is deleted. This system does not depend on it (owner decision 2026-11-18, ADR-021 addendum).
 - No gate threshold is relaxed; a missing metric is NOT VERIFIED, never a pass (ADR-008).
 
 ## 9. Threat model summary
