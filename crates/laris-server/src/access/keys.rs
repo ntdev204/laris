@@ -1,7 +1,7 @@
 //! Keys in PostgreSQL (SR-S2): create, verify, revoke, limit, list. Only digests are stored; the key text exists
-//! once, in the answer to the call that created it. The columns are the generation-1 `keys` table.
+//! once, in the answer to the call that created it.
 
-use super::master::{Master, legacy_digest, random_bytes, same};
+use super::master::{Master, random_bytes, same};
 use super::roles::Roles;
 use crate::proxy::Cidr;
 use crate::storage::{Storage, StorageError};
@@ -265,20 +265,10 @@ impl KeyStore {
         };
         let stored: String = match &row {
             Some(r) => r.try_get("digest")?,
-            None => legacy_digest("no such key"),
+            None => self.master.digest("no such key"),
         };
-        let keyed = same(&self.master.digest(text), &stored);
-        let plain = same(&legacy_digest(text), &stored);
-        if row.is_none() || !(keyed || plain) {
+        if row.is_none() || !same(&self.master.digest(text), &stored) {
             return Ok(None);
-        }
-        if plain && !keyed {
-            // a key from before digests were keyed: keep it working and store it keyed from now on
-            sqlx::query("UPDATE keys SET digest = $1 WHERE id = $2")
-                .bind(self.master.digest(text))
-                .bind(id)
-                .execute(self.storage.pool())
-                .await?;
         }
         let record = self.get(id).await?;
         if record.revoked_at.is_some() || record.expires_at.is_some_and(|e| e <= now) {

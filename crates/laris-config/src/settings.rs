@@ -1,8 +1,8 @@
-//! The settings document (`~/.laris/settings.json`), shaped like Claude Code's and compatible with generation 1.
+//! The settings document (`~/.laris/settings.json`), shaped like Claude Code's.
 //!
 //! These types are the one source of the JSON Schema ([`schema`]); the committed copy lives in
 //! `schema/settings.schema.json` and `cargo xtask schema --check` keeps it current. The file holds no secrets:
-//! the API key is in the credentials file. Keys are camelCase as in generation 1.
+//! the API key is in the credentials file. Keys are camelCase.
 
 use crate::catalogue::Language;
 use crate::error::{ConfigError, ErrorKind};
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-/// Hook events, in generation-1 order.
+/// Hook events, in firing order.
 pub const HOOK_EVENTS: [&str; 5] = [
     "SessionStart",
     "UserPromptSubmit",
@@ -574,7 +574,7 @@ impl Default for Settings {
     }
 }
 
-/// JSON Schema of [`Settings`]: deterministic (sorted keys), with generation-1's title.
+/// JSON Schema of [`Settings`]: deterministic (sorted keys).
 pub fn schema() -> Value {
     let mut value = serde_json::to_value(schema_for!(Settings)).unwrap_or(Value::Null);
     if let Some(map) = value.as_object_mut() {

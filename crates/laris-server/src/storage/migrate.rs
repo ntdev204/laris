@@ -1,8 +1,6 @@
 //! Numbered SQL migrations, each applied once in the same transaction as its `schema_version` row.
 //!
-//! `0001` to `0003` are the generation-1 files. A transaction-level advisory lock makes two processes that start
-//! together apply them in turn. The lock id is the one generation 1 used, so a generation-1 process and a Rust
-//! process also wait for each other.
+//! A transaction-level advisory lock makes two processes that start together apply them in turn.
 
 use super::StorageError;
 use sqlx::postgres::{PgConnection, PgPool};
@@ -14,7 +12,7 @@ const LOCK: i64 = 7_260_001;
 /// One numbered migration.
 #[derive(Debug, Clone, Copy)]
 pub struct Migration {
-    /// Version, counted 1, 2, 3 without gaps.
+    /// Version, counted from 1 without gaps.
     pub version: i32,
     /// File name, recorded in `schema_version`.
     pub name: &'static str,
@@ -23,23 +21,11 @@ pub struct Migration {
 }
 
 /// Every migration this build knows, in order.
-pub const MIGRATIONS: &[Migration] = &[
-    Migration {
-        version: 1,
-        name: "0001_initial.sql",
-        sql: include_str!("../../migrations/0001_initial.sql"),
-    },
-    Migration {
-        version: 2,
-        name: "0002_reserved_tokens.sql",
-        sql: include_str!("../../migrations/0002_reserved_tokens.sql"),
-    },
-    Migration {
-        version: 3,
-        name: "0003_partitions.sql",
-        sql: include_str!("../../migrations/0003_partitions.sql"),
-    },
-];
+pub const MIGRATIONS: &[Migration] = &[Migration {
+    version: 1,
+    name: "0001_initial.sql",
+    sql: include_str!("../../migrations/0001_initial.sql"),
+}];
 
 /// Applies the pending migrations and returns how many ran.
 ///

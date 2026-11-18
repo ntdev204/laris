@@ -1,5 +1,5 @@
 //! The decider seam (SR-H14, ADR-021 D38): the next step of the loop is chosen here, from the closed set of
-//! [`Action`]s, given the state. [`FollowModel`] is the generation-1 policy and the only implementation in
+//! [`Action`]s, given the state. [`FollowModel`] is the default policy and the only implementation in
 //! programme 2: it follows what the model proposed, under the limits of the settings and a [`ToolGate`]. Programme 3
 //! replaces it with the decision network; nothing else in the core changes.
 
@@ -59,7 +59,7 @@ impl ToolGate for OpenGate {
     }
 }
 
-/// The generation-1 policy: follow the model's proposal under limits.
+/// The default policy: follow the model's proposal under limits.
 ///
 /// Per model step it asks for an answer while steps and time remain; it clears, refuses or applies each proposed
 /// tool call (the plan tool, too many calls, a tool outside the workflow, the gate, an identical repeat); it checks

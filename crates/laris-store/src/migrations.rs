@@ -1,5 +1,4 @@
-//! Numbered migrations. 1 and 2 are the generation-1 migrations, verbatim; a database written by generation 1
-//! already records them in `schema_version`, so only the later ones run.
+//! Numbered migrations. A database records the ones it has in `schema_version`, so only the later ones run.
 
 /// One numbered migration.
 #[derive(Clone, Copy, Debug)]

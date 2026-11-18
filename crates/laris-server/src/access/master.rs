@@ -1,11 +1,11 @@
 //! The master secret and the key digest (SR-S2).
 //!
 //! Key digests are keyed: `HMAC-SHA256(lookup key, key text)`, the lookup key derived from the master secret with
-//! the generation-1 HKDF-style steps, so a key made by generation 1 verifies here and a stolen database cannot be
-//! used to test guesses without the master secret. The master secret never enters the database.
+//! HKDF-style steps, so a stolen database cannot be used to test guesses without the master secret. The master
+//! secret never enters the database.
 
 use hmac::{Hmac, Mac};
-use sha2::{Digest, Sha256};
+use sha2::Sha256;
 use std::fmt;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -60,11 +60,6 @@ impl Master {
     }
 }
 
-/// The digest generation 1 used before keys were keyed: plain SHA-256. Accepted once and upgraded.
-pub(crate) fn legacy_digest(key: &str) -> String {
-    hex(&Sha256::digest(key.as_bytes()))
-}
-
 fn hex(bytes: &[u8]) -> String {
     const DIGITS: &[u8; 16] = b"0123456789abcdef";
     let mut out = String::with_capacity(bytes.len() * 2);
@@ -100,17 +95,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn digest_matches_generation_1() {
-        // computed with the generation-1 Python (`SecretBox.lookup_digest`)
+    fn digest_is_stable() {
+        // a recorded value: a change of the derivation would invalidate every stored key
         let m = Master::new("0123456789abcdef0123456789abcdef").unwrap();
         let key = "lk_deadbeef_secretsecretsecretsecretsecret";
         assert_eq!(
             m.digest(key),
             "c7574f3259642fa2f40e30dceeb0fe4a3fde1ed7b2b54a6590a69c3e3821aba7"
-        );
-        assert_eq!(
-            legacy_digest(key),
-            "da432d422e14af82e08a1baff59c942c19c4b47b462b1ddf98e8d72b6f3255ba"
         );
     }
 

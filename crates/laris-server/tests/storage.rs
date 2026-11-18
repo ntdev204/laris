@@ -67,13 +67,6 @@ impl Case {
             .unwrap()
     }
 
-    /// Restores a generation-1 dump (see `tests/fixtures/make_gen1_dumps.sh`) into the case schema.
-    async fn restore(&self, dump: &str) {
-        let sql = dump.replace("__schema__", &self.schema);
-        let mut c = self.admin().await;
-        sqlx::raw_sql(&sql).execute(&mut c).await.unwrap();
-    }
-
     async fn finish(self) {
         let mut c = self.admin().await;
         sqlx::raw_sql(&format!(
@@ -84,46 +77,6 @@ impl Case {
         .await
         .unwrap();
     }
-}
-
-type UsageRow = (i64, String, f64, String, String, i64, i64);
-type TraceRow = (
-    i64,
-    String,
-    f64,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    i32,
-);
-type KeyRow = (String, String, String, String, i64, i64, i64);
-
-async fn usage_rows(pool: &PgPool) -> Vec<UsageRow> {
-    sqlx::query_as("SELECT id, key_id, ts, session_id, kind, prompt_tokens, completion_tokens FROM usage ORDER BY id")
-        .fetch_all(pool)
-        .await
-        .unwrap()
-}
-
-async fn trace_rows(pool: &PgPool) -> Vec<TraceRow> {
-    sqlx::query_as(
-        "SELECT id, key_id, ts, session_id, model, prompt_sha256, task, reasoning, tool_calls, brain, answer_chars \
-         FROM traces ORDER BY id",
-    )
-    .fetch_all(pool)
-    .await
-    .unwrap()
-}
-
-async fn key_rows(pool: &PgPool) -> Vec<KeyRow> {
-    sqlx::query_as("SELECT id, digest, label, role, tokens_used, tokens_reserved, created_at::bigint FROM keys ORDER BY id")
-        .fetch_all(pool)
-        .await
-        .unwrap()
 }
 
 async fn versions(pool: &PgPool) -> Vec<(i32, String)> {
@@ -185,87 +138,6 @@ async fn a_fresh_database_gets_every_migration_once() {
     let again = Storage::connect(&case.config()).await.unwrap();
     assert_eq!(versions(again.pool()).await, want);
     again.close().await;
-    case.finish().await;
-}
-
-#[tokio::test]
-async fn generation_1_database_before_partitioning_migrates_without_loss() {
-    let Some(case) = Case::new() else { return };
-    case.restore(include_str!("fixtures/gen1_v2.sql")).await;
-    let raw = case.raw_pool().await;
-    assert_eq!(versions(&raw).await.len(), 2);
-    let (usage, traces, keys) = (
-        usage_rows(&raw).await,
-        trace_rows(&raw).await,
-        key_rows(&raw).await,
-    );
-    assert_eq!((usage.len(), traces.len(), keys.len()), (4, 2, 2));
-
-    let storage = Storage::connect(&case.config()).await.unwrap();
-    assert_eq!(versions(storage.pool()).await.len(), 3);
-    assert_eq!(usage_rows(storage.pool()).await, usage);
-    assert_eq!(trace_rows(storage.pool()).await, traces);
-    assert_eq!(key_rows(storage.pool()).await, keys);
-    // the rows live in their months' partitions and the old tables are gone
-    let m = storage.maintenance();
-    let parts = m.partitions("usage").await.unwrap();
-    assert!(parts.contains(&"usage_202608".to_string()), "{parts:?}");
-    assert!(parts.contains(&"usage_202609".to_string()), "{parts:?}");
-    assert!(parts.contains(&"usage_202610".to_string()), "{parts:?}");
-    let old: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM pg_tables WHERE schemaname = $1 AND tablename LIKE '%\\_old'",
-    )
-    .bind(&case.schema)
-    .fetch_one(storage.pool())
-    .await
-    .unwrap();
-    assert_eq!(old, 0);
-    // numbering continues after the largest id
-    let ts = epoch(storage.pool(), "2026-10-02 00:00:00+00").await;
-    add_usage(storage.pool(), "k1", ts, 1, 1).await;
-    let ids: Vec<i64> = usage_rows(storage.pool())
-        .await
-        .iter()
-        .map(|r| r.0)
-        .collect();
-    assert_eq!(ids, vec![1, 2, 3, 4, 5]);
-    storage.close().await;
-    case.finish().await;
-}
-
-#[tokio::test]
-async fn generation_1_database_already_partitioned_is_taken_as_it_is() {
-    let Some(case) = Case::new() else { return };
-    case.restore(include_str!("fixtures/gen1_v3.sql")).await;
-    let raw = case.raw_pool().await;
-    let (usage, traces, keys) = (
-        usage_rows(&raw).await,
-        trace_rows(&raw).await,
-        key_rows(&raw).await,
-    );
-    let stamps: Vec<String> =
-        sqlx::query_scalar("SELECT applied_at::text FROM schema_version ORDER BY version")
-            .fetch_all(&raw)
-            .await
-            .unwrap();
-    assert_eq!(usage.len(), 5);
-    assert_eq!(migrate(&raw).await.unwrap(), 0);
-
-    let storage = Storage::connect(&case.config()).await.unwrap();
-    assert_eq!(usage_rows(storage.pool()).await, usage);
-    assert_eq!(trace_rows(storage.pool()).await, traces);
-    assert_eq!(key_rows(storage.pool()).await, keys);
-    let after: Vec<String> =
-        sqlx::query_scalar("SELECT applied_at::text FROM schema_version ORDER BY version")
-            .fetch_all(storage.pool())
-            .await
-            .unwrap();
-    assert_eq!(after, stamps, "no migration ran again");
-    // the next id follows the dump's sequence
-    let ts = epoch(storage.pool(), "2026-10-03 00:00:00+00").await;
-    add_usage(storage.pool(), "k2", ts, 2, 2).await;
-    assert_eq!(usage_rows(storage.pool()).await.last().unwrap().0, 6);
-    storage.close().await;
     case.finish().await;
 }
 

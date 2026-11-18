@@ -90,7 +90,7 @@ fn rebuild_reads_only_what_changed_and_equals_a_fresh_build() {
 }
 
 #[test]
-fn line_endings_are_normalised_before_hashing_as_in_generation_1() {
+fn line_endings_are_normalised_before_hashing() {
     let temp = Temp::new("crlf");
     temp.write(
         "Win.md",

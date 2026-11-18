@@ -426,7 +426,7 @@ fn turn(
             if options.store_passage_text {
                 item["text"] = Value::String(hit.text.clone());
             }
-            // generation 1 judged by source: a passage of a cited source is a positive
+            // judged by source: a passage of a cited source is a positive
             let is_cited = cited.iter().any(|(source, _)| source == &hit.source);
             if is_cited {
                 positives.push(item);

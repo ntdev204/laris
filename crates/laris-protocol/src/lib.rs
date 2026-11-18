@@ -1,7 +1,6 @@
 //! P1 (client to server), P2 (server to model) and their server-sent events, defined once as Rust types.
 //!
-//! The types follow the generation-1 wire format byte for byte where it exists (fixtures recorded from the
-//! generation-1 server in `tests/fixtures/`). Every wire struct keeps unknown fields in `extra`, so a newer
+//! The wire format is pinned byte for byte by the fixtures in `tests/fixtures/`. Every wire struct keeps unknown fields in `extra`, so a newer
 //! peer does not break an older one inside one protocol version, and a message survives a round trip.
 //! [`schema::export`] produces the JSON Schema of every type, deterministically.
 

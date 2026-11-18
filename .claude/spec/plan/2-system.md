@@ -29,8 +29,8 @@ Exit criteria:
 Goal: one schema source and the libraries both binaries use.
 Tasks: T123, T124, T125, T126, T127
 Exit criteria:
-- Generation-1 SSE chunks and Ink scenarios validate against the Rust types.
-- The golden vault yields the generation-1 index; writer property tests pass.
+- The committed SSE fixtures and Ink scenarios validate against the Rust types.
+- The fixture vault yields the recorded index; writer property tests pass.
 
 ### Phase 28 — System: loop
 Goal: the state machine runs headless with a scripted model and records everything.
@@ -55,20 +55,20 @@ Exit criteria:
 Goal: `laris-server` serves chat through the model service with keys, quotas and storage.
 Tasks: T141, T142, T143, T144
 Exit criteria:
-- Status-code, quota and storage tests pass; a generation-1 database migrates; the LLM-rung scenario passes.
+- Status-code, quota and storage tests pass; a fresh database gets every migration; the LLM-rung scenario passes.
 
 ### Phase 32 — Server: RAG
 Goal: grounded answers from workspace retrieval and the system brain.
 Tasks: T145, T146, T215, T147, T148
 Exit criteria:
-- Retrieval parity with generation 1; confidentiality suite passes; brain navigation within budget; the RAG-rung
+- Retrieval matches the recorded expectations; confidentiality suite passes; brain navigation within budget; the RAG-rung
   scenario passes with the evidence gate.
 
 ### Phase 33 — Server: Agent
 Goal: local and remote tools end to end.
 Tasks: T149, T150, T151
 Exit criteria:
-- Scientific remote tools reproduce generation-1 results; traces hold no content; the Agent-rung scenario passes.
+- Scientific remote tools reproduce the extraction results; traces hold no content; the Agent-rung scenario passes.
 
 ### Phase 34 — Server: Agentic
 Goal: the full ladder on the deployed stack.
@@ -84,7 +84,7 @@ Exit criteria:
 - Golden scenarios pass through the interface; owner screenshot review; one-command install per platform.
 
 ### Phase 36 — Parity and release 3.0.0
-Goal: generation 2 replaces generation 1.
+Goal: the Rust system replaces the Python one.
 Tasks: T160, T161
 Exit criteria:
-- Parity checklist complete; generation-1 data works unchanged; release 3.0.0 merged with the owner's authorisation.
+- Parity checklist complete; release 3.0.0 merged with the owner's authorisation.

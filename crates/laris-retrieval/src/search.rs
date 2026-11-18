@@ -11,7 +11,7 @@ const B: f64 = 0.75;
 /// A title word counts as this many body words.
 const TITLE_WEIGHT: usize = 3;
 
-/// A note and its score (rounded to eight places, as generation 1 returns it).
+/// A note and its score (rounded to eight places).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Hit {
     /// Vault-relative path.
@@ -90,7 +90,7 @@ impl NoteSearch {
         let mut scores = vec![0.0_f64; self.paths.len()];
         let mut touched: Vec<u32> = Vec::new();
         let mut seen = vec![false; self.paths.len()];
-        // terms are visited in sorted order, so every note's sum is built in the order generation 1 uses
+        // terms are visited in sorted order, so every note's sum is built in a fixed order
         for term in &terms {
             let Some(posting) = self.postings.get(term) else {
                 continue;

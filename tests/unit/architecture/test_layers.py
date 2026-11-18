@@ -39,7 +39,7 @@ def test_prompt_layer_knows_neither_the_loop_nor_the_tools():
 def test_loop_carries_no_policy_path_or_prompt_text():
     for name in ("loop.py", "context.py", "tools.py"):
         text = (SRC / "client/agent" / name).read_text(encoding="utf-8")
-        for needle in (".laris", "manifest.yaml", "integrity.lock", "internal_policy"):
+        for needle in (".laris", "policy.toml", "integrity.toml", "internal_policy"):
             assert needle not in text, (name, needle)
 
 

@@ -2,7 +2,7 @@
 
 mod common;
 
-use laris_config::files::{from_legacy, is_legacy, reject_literal_secrets};
+use laris_config::files::reject_literal_secrets;
 use laris_config::{Catalogue, ConfigError, ErrorKind, Language, Settings};
 use serde_json::{Value, json};
 
@@ -190,33 +190,4 @@ fn literal_secrets_are_refused_but_names_and_numbers_are_not() {
     assert!(
         reject_literal_secrets(&json!({"context": {"windowTokens": 4096}, "apiKey": ""})).is_ok()
     );
-}
-
-#[test]
-fn a_generation_one_flat_file_converts_without_the_key() {
-    let flat = common::json_file(&common::fixture("legacy_flat.json"));
-    let map = flat.as_object().expect("object");
-    assert!(is_legacy(map));
-    let nested = from_legacy(map);
-    assert!(
-        nested.pointer("/api_key").is_none() && !nested.to_string().contains("not-carried-over")
-    );
-    let s = Settings::from_value(&nested).expect("converted");
-    assert_eq!(s.server.url, "https://laris.example.org/v1");
-    assert_eq!(s.model, "research-llm");
-    assert!(!s.context.auto_compact);
-    assert_eq!(s.context.window_tokens, 16384);
-    assert_eq!(s.context.compact_threshold, 0.7);
-    assert_eq!(
-        s.permissions.default_mode,
-        laris_config::settings::PermissionMode::AcceptEdits
-    );
-    assert!(!s.learning.collect && !s.vault.auto_record);
-    assert_eq!(s.extra_instructions, "Be brief.");
-    // a nested file is not legacy
-    assert!(!is_legacy(
-        common::json_file(&common::fixture("full.json"))
-            .as_object()
-            .expect("object")
-    ));
 }

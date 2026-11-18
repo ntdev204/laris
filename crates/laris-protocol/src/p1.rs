@@ -68,7 +68,7 @@ pub struct Layers {
     pub extra: String,
 }
 
-/// The `laris` block of a chat request (named `LarisMeta` in generation 1).
+/// The `laris` block of a chat request.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct LarisRequest {
     /// Turn or summary.
@@ -385,7 +385,7 @@ pub struct AdminReasoning {
     pub traces: Option<Vec<Value>>,
 }
 
-/// `POST /v1/laris/tools/{name}`: run one of the model service's remote tools (new in generation 2).
+/// `POST /v1/laris/tools/{name}`: run one of the model service's remote tools.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ToolRequest {
     /// Arguments of the tool.

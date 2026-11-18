@@ -1,4 +1,4 @@
-//! Tokens and rounding, as generation 1 does them.
+//! Tokens and rounding, with eight places.
 
 /// Lower-cased runs of letters and digits (`[^\W_]+` in Unicode mode): `_` and punctuation separate words.
 pub fn tokens(text: &str) -> Vec<String> {

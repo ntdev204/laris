@@ -20,7 +20,7 @@ pub enum Via {
 }
 
 impl Via {
-    /// The label generation 1 uses: `bm25`, `link`, `corpus`.
+    /// The label of the channel: `bm25`, `link`, `corpus`.
     pub fn as_str(self) -> &'static str {
         match self {
             Via::Bm25 => "bm25",
@@ -45,7 +45,7 @@ pub struct RetrievalResult {
     pub detail: String,
 }
 
-/// Tunables of the graph expansion. Generation 1 defaults.
+/// Tunables of the graph expansion. Defaults.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GraphConfig {
     /// BM25 notes used as seeds.

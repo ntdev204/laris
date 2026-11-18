@@ -1,4 +1,4 @@
-//! The settings file on disk: strict read, generation-1 flat files converted in memory, atomic validated write,
+//! The settings file on disk: strict read, atomic validated write,
 //! and dotted-path access for a settings panel.
 
 use crate::error::{ConfigError, ErrorKind};
@@ -9,42 +9,6 @@ use std::path::Path;
 
 /// Larger settings files are refused.
 pub const MAX_BYTES: u64 = 1_048_576;
-
-/// Keys of a generation-1 flat `settings.json` and the nested path each becomes.
-const LEGACY: [(&str, &str); 8] = [
-    ("base_url", "server.url"),
-    ("model", "model"),
-    ("auto_compact", "context.autoCompact"),
-    ("context_window", "context.windowTokens"),
-    ("compact_threshold", "context.compactThreshold"),
-    ("learning_enabled", "learning.collect"),
-    ("vault_record", "vault.autoRecord"),
-    ("extra_instructions", "extraInstructions"),
-];
-/// Legacy keys that are dropped (`api_key` is never carried over) or converted by hand (`allow_write`).
-const LEGACY_OTHER: [&str; 4] = ["api_key", "api_key_env", "ca_file", "allow_write"];
-
-/// Whether `data` is a generation-1 flat file: it has legacy keys and nothing but legacy keys (and `$schema`).
-pub fn is_legacy(data: &Map<String, Value>) -> bool {
-    let known =
-        |k: &String| LEGACY.iter().any(|(l, _)| l == k) || LEGACY_OTHER.contains(&k.as_str());
-    data.keys().any(known) && data.keys().all(|k| known(k) || k == "$schema")
-}
-
-/// A generation-1 flat file as the nested shape. The API key is not carried over.
-pub fn from_legacy(flat: &Map<String, Value>) -> Value {
-    let mut out = Value::Object(Map::new());
-    for (old, path) in LEGACY {
-        if let Some(value) = flat.get(old) {
-            set_path_unchecked(&mut out, path, value.clone());
-        }
-    }
-    if let Some(Value::Bool(allow)) = flat.get("allow_write") {
-        let mode = if *allow { "acceptEdits" } else { "default" };
-        set_path_unchecked(&mut out, "permissions.defaultMode", Value::from(mode));
-    }
-    out
-}
 
 const SECRET_MARKERS: [&str; 5] = ["password", "secret", "token", "key", "credential"];
 
@@ -122,11 +86,7 @@ pub fn read_settings(path: &Path) -> Result<Option<Value>, ConfigError> {
     let Value::Object(map) = parsed else {
         return Err(ConfigError::at("", ErrorKind::NotObject).from_source(name));
     };
-    let layer = if is_legacy(&map) {
-        from_legacy(&map)
-    } else {
-        Value::Object(map)
-    };
+    let layer = Value::Object(map);
     reject_literal_secrets(&layer).map_err(|e| e.from_source(name))?;
     Ok(Some(layer))
 }

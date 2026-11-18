@@ -1,4 +1,4 @@
-//! Store behaviour: generation-1 migration, concurrent writers, the event log, paths.
+//! Store behaviour: migrations, concurrent writers, the event log, paths.
 
 use laris_store::{DEFAULT_BUSY_TIMEOUT, MIGRATIONS, Store, StoreError, slug_of, space_path};
 use rusqlite::Connection;
@@ -11,67 +11,33 @@ fn temp_dir(name: &str) -> PathBuf {
     dir
 }
 
-fn fixture_copy(dir: &Path) -> PathBuf {
-    let from = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/generation1.sqlite");
-    let to = dir.join("generation1.sqlite");
-    std::fs::copy(from, &to).expect("copy fixture");
-    to
-}
-
 fn count(conn: &Connection, table: &str) -> i64 {
     conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
         .expect("count")
 }
 
 #[test]
-fn generation1_database_migrates_without_loss() {
-    let dir = temp_dir("gen1");
-    let path = fixture_copy(&dir);
-    let store = Store::open(&path, DEFAULT_BUSY_TIMEOUT).expect("open");
+fn a_fresh_store_has_every_table_and_the_unique_learning_index() {
+    let dir = temp_dir("fresh-tables");
+    let store = Store::open(dir.join("fresh.sqlite"), DEFAULT_BUSY_TIMEOUT).expect("open");
     assert_eq!(store.version().expect("version"), 3);
     let conn = store.connect().expect("connect");
-    assert_eq!(count(&conn, "chunks"), 2);
-    assert_eq!(count(&conn, "embeddings"), 1);
-    assert_eq!(count(&conn, "conversations"), 1);
-    assert_eq!(count(&conn, "learning"), 1);
-    assert_eq!(count(&conn, "vault_index"), 1);
-    let (text, start, end): (String, i64, i64) = conn
-        .query_row(
-            "SELECT text, start, \"end\" FROM chunks WHERE chunk_id = 'c2'",
-            [],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-        )
-        .expect("chunk");
-    assert_eq!((text.as_str(), start, end), ("beta text", 10, 19));
-    let vector: Vec<u8> = conn
-        .query_row(
-            "SELECT vector FROM embeddings WHERE chunk_id = 'c1'",
-            [],
-            |r| r.get(0),
-        )
-        .expect("vector");
-    let floats: Vec<f32> = vector
-        .chunks(4)
-        .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-        .collect();
-    assert_eq!(floats, [1.0, 2.0, 3.5]);
-    let (title, data): (String, String) = conn
-        .query_row(
-            "SELECT title, data FROM conversations WHERE id = 's1'",
-            [],
-            |r| Ok((r.get(0)?, r.get(1)?)),
-        )
-        .expect("conversation");
-    assert_eq!(title, "First chat");
-    assert!(data.contains("xin chào"));
-    assert_eq!(
-        store
-            .get_meta("workspace_version")
-            .expect("meta")
-            .as_deref(),
-        Some("7")
-    );
-    // The generation-1 unique index on learning rows survives.
+    for table in [
+        "chunks",
+        "embeddings",
+        "conversations",
+        "learning",
+        "vault_index",
+        "sessions",
+        "events",
+    ] {
+        assert_eq!(count(&conn, table), 0, "{table}");
+    }
+    conn.execute(
+        "INSERT INTO learning(kind, created, data) VALUES ('example', 1.0, '{\"id\":\"e1\"}')",
+        [],
+    )
+    .expect("first row");
     assert!(
         conn.execute(
             "INSERT INTO learning(kind, created, data) VALUES ('example', 2.0, '{\"id\":\"e1\"}')",
@@ -79,7 +45,6 @@ fn generation1_database_migrates_without_loss() {
         )
         .is_err()
     );
-    // Opening again applies nothing.
     assert_eq!(store.migrate().expect("again"), 0);
     std::fs::remove_dir_all(dir).ok();
 }
@@ -209,7 +174,7 @@ fn a_failed_transaction_leaves_nothing_behind() {
 }
 
 #[test]
-fn paths_follow_the_generation1_layout() {
+fn paths_follow_the_documented_layout() {
     let dir = temp_dir("paths");
     let project = dir.join("My Project!");
     std::fs::create_dir_all(&project).expect("project");
@@ -239,8 +204,8 @@ fn paths_follow_the_generation1_layout() {
 }
 
 #[test]
-fn slugs_equal_generation1_slugs() {
-    // Computed with the generation-1 `slug_of`: the folder name plus the first 8 hex digits of the SHA-256 of the
+fn slugs_are_the_folder_name_and_a_path_digest() {
+    // Recorded values: the folder name plus the first 8 hex digits of the SHA-256 of the
     // resolved path.
     assert_eq!(slug_of(Path::new("/tmp")), "tmp-e9671acd");
     assert_eq!(slug_of(Path::new("/home/vth/ws/laris")), "laris-73ab3b33");

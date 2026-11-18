@@ -1067,8 +1067,25 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Validation:
   - `grep -ri "generation" crates xtask` finds nothing that is not history; `cargo xtask spec` passes; all Rust
     checks pass
-- Status: pending
-- Note: Created 2026-11-18 from the owner's decision that generation 2 stands alone (ADR-021 addendum). Not started.
+- Status: done
+- Note: Closed 2026-11-18, branch `feature/T215-remove-generation-1`. `laris-server`: the three migrations became one
+  `0001_initial.sql` (partitioned `usage` and `traces` from the start, `tokens_reserved` in `keys`); the dump fixtures
+  `gen1_v2.sql`, `gen1_v3.sql`, `make_gen1_dumps.sh` and their two tests are gone; key digests are the keyed form
+  only (plain SHA-256 acceptance and upgrade removed, one test removed); the dummy digest for an unknown key is
+  keyed. `laris-config`: the flat `settings.json` conversion, its fixture and tests, and the test that compared the
+  schema with generation 1's schema file are gone. `laris-retrieval`: `generate.py` removed, `cases.json` moved to
+  `tests/fixtures/retrieval/expected.json` and `tests/golden.rs` renamed `recorded.rs`: they stay as recorded
+  expectations (regression snapshots, measured evidence kept), no longer called parity. `laris-vault`: `generate.py`
+  removed, `tests/golden/vault/*.json` stay as recorded expectations (index, writer, lint; the YAML cases are PyYAML's
+  values). `laris-store`: the `generation1.sqlite` fixture and test replaced by a fresh-store test; migrations 1 and 2
+  stay as the schema. `laris-protocol`: `scripts/record_protocol_fixtures.py` removed, the committed P1/P2 fixtures
+  stay as the wire fixtures; wording fixed in every crate. Python: the `project` fixture and
+  `test_brain_leak_adversarial.py` (read the old `.laris/`) removed, `test_layers.py` needles updated. `spec.md`,
+  `plan` and these tasks no longer cite generation 1 as a requirement. 520 tests pass with PostgreSQL 16 (throwaway
+  container), `fmt`, `clippy -D warnings`, `cargo deny check`, `cargo xtask spec`, `grep -ri generation crates xtask`
+  empty. Left for later, by design: `.laris/brain` is rewritten in T147, `.laris/vault/schema.yaml` in T148, `.laris/skills` in the skills task (owner's
+  content); T149 and T160/T161 and the closed-task notes above still tell the history; the Python source tree
+  `src/laris` (generation 1 code) is untouched.
 
 ### T147 — System brain service
 - Requirements: SR-S5
@@ -1095,9 +1112,9 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Requirements: SR-M2, SR-S6
 - Depends: T144
 - Deliverables:
-  - Inventory of generation-1 call sites; tool routes in the Python model service; server `/tools/{name}`; schemas
+  - Inventory of the Python call sites; tool routes in the Python model service; server `/tools/{name}`; schemas
 - Validation:
-  - Fixture tests reproduce generation-1 extraction results through the server
+  - Fixture tests reproduce the extraction results through the server
 - Status: pending
 
 ### T150 — Traces and audit

@@ -2,7 +2,7 @@
 //! interface. The same messages travel over a channel inside one process ([`channel`]) and as JSON
 //! lines ([`crate::jsonl`]) for headless `stream-json` and a later daemon.
 //!
-//! The message set is the generation-1 E1 set. Both ends are built from one version, so unknown fields are
+//! Both ends are built from one version, so unknown fields are
 //! refused; the version in [`Event::Ready`] guards against mixed builds ([`check_ready`]).
 
 use schemars::JsonSchema;

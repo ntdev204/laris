@@ -1,4 +1,4 @@
-//! The generation-1 Agentic scenarios (`docs/testing/AGENTIC_SCENARIOS.md`) translated to the Rust loop, and the
+//! The Agentic scenarios (`docs/testing/AGENTIC_SCENARIOS.md`) translated to the Rust loop, and the
 //! decider seam. A scripted model plays the model, so nothing here says anything about the quality of a trained
 //! model: the foundation model is NOT QUALIFIED.
 

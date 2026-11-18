@@ -1,11 +1,11 @@
 //! Client SQLite store (SR-H9, ADR-021 D43).
 //!
-//! One file per project and API key at `<home>/projects/<slug>/<key-fingerprint>.sqlite`, the same path and the same
-//! numbered migrations as generation 1, so a generation-1 database opens without loss. WAL journal, a busy timeout,
+//! One file per project and API key at `<home>/projects/<slug>/<key-fingerprint>.sqlite`, with numbered
+//! migrations. WAL journal, a busy timeout,
 //! one short-lived connection per operation and `BEGIN IMMEDIATE` for every write: writers queue on the timeout and
 //! none loses its data.
 //!
-//! Tables: `chunks` (passages with character spans), `embeddings`, `conversations` (generation 1, kept as they are),
+//! Tables: `chunks` (passages with character spans), `embeddings`, `conversations`,
 //! `learning` (examples), `vault_index` (disposable cache), `meta`, and, from migration 3, `sessions` and the
 //! append-only `events` log.
 
@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-/// Default wait for a locked database, as in generation 1.
+/// Default wait for a locked database.
 pub const DEFAULT_BUSY_TIMEOUT: Duration = Duration::from_millis(5000);
 
 /// Errors of the store.

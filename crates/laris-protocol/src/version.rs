@@ -1,4 +1,4 @@
-//! Protocol version of P1. A client and a server that disagree refuse each other (generation-1 D12).
+//! Protocol version of P1. A client and a server that disagree refuse each other.
 
 use std::fmt;
 
@@ -29,7 +29,7 @@ impl fmt::Display for VersionError {
 
 impl std::error::Error for VersionError {}
 
-/// Accepts exactly [`PROTOCOL_VERSION`]; the message equals the generation-1 server's.
+/// Accepts exactly [`PROTOCOL_VERSION`]
 pub fn check_version(sent: Option<&str>) -> Result<(), VersionError> {
     if sent == Some(PROTOCOL_VERSION) {
         Ok(())
