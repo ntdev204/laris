@@ -145,7 +145,8 @@ fn run(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
     }))
 }
 
-fn shell() -> String {
+/// The shell commands and hooks run in: `bash` where there is one, else `sh`.
+pub fn shell() -> String {
     if cfg!(windows) {
         return "bash".to_owned();
     }
@@ -158,7 +159,7 @@ fn shell() -> String {
 }
 
 /// Ends the command and everything it started.
-fn kill_tree(child: &mut std::process::Child) {
+pub fn kill_tree(child: &mut std::process::Child) {
     let pid = child.id().to_string();
     #[cfg(unix)]
     let group = Command::new("kill")

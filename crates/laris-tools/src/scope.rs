@@ -106,6 +106,29 @@ impl Scope {
         Ok(path)
     }
 
+    /// `raw` (relative to the project folder) as a resolved path, without judging it: for the permission rules,
+    /// which must match the path a tool would touch and never its spelling. `None` when it cannot be resolved.
+    pub fn locate(&self, raw: &str) -> Option<PathBuf> {
+        let given = Path::new(raw);
+        let joined = if given.is_absolute() {
+            given.to_path_buf()
+        } else {
+            self.root().join(given)
+        };
+        real(&normalise(&joined)).ok()
+    }
+
+    /// `path` relative to the project folder, with `/` separators; `None` outside it.
+    pub fn relative_to_root(&self, path: &Path) -> Option<String> {
+        path.strip_prefix(self.root()).ok().map(|relative| {
+            relative
+                .components()
+                .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+                .join("/")
+        })
+    }
+
     fn never_written(&self, path: &Path) -> bool {
         self.roots.iter().any(|root| {
             path.strip_prefix(root).is_ok_and(|relative| {

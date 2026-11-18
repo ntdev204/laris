@@ -24,6 +24,7 @@ mod scope;
 mod search;
 
 pub use args::{object_schema, validate};
+pub use bash::{kill_tree, shell};
 pub use checkpoints::{Checkpoints, Rewound};
 pub use context::{Context, Redactor};
 pub use error::ToolError;

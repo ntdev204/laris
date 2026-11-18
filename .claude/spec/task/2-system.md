@@ -431,7 +431,49 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Modes, rules, saved approvals, hooks with JSON stdin and timeouts, folder trust
 - Validation:
   - Mode and precedence tests; denied path never written; hook cases; planted project settings ignored
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-policy` holds four parts. `Engine` decides one call, first match wins: a `deny`
+  rule refuses; `plan` mode refuses a call that changes state (no rule makes a plan writable); an `ask` rule asks, even
+  in `bypass`; an `allow` rule allows; then the mode (`bypass` allows, `acceptEdits` allows `Write` and `Edit`,
+  `default` asks for a call that changes state, a read is allowed). Rules are `Tool` or `Tool(pattern)`, tool names
+  compared without case, from the settings (`permissions.*`), the folder's saved answers and the session's; a path
+  pattern is matched against the resolved path (`..`, symbolic links and absolute spellings do not dodge it), a command
+  pattern is not let through by chaining (`allow` must fit every command of a line and refuses substitutions and
+  redirections unless the rule spells the whole line out; `deny` and `ask` fit when any command does). `bypass` exists
+  only when the installation's policy passes `allow_bypass`; a setting alone is ignored. "Always" answers are kept for
+  the session, the folder (`<home>/projects/<slug>/state.json`, mode 0600, damaged file read as empty) or everywhere
+  (`permissions.allow` of the settings file, other keys kept). `PolicyGate` is the loop's `ToolGate`: engine, then the
+  `PreToolUse` hooks (a hook can block, never grant), then the `Approver` (the front end; `NoApprover` refuses); the
+  refusals are the typed errors `permission_denied`, `hook_blocked`, `approval_denied`; a tool the gate does not know is
+  taken to change state, so remote tools are asked about; an approval carries the rule an "always" answer would save
+  and a diff preview (own line diff, no new crate). `HookRunner` runs `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+  `PostToolUse`, `Stop` from the user's settings only: `bash -c` in the project folder, clean environment plus
+  `settings.env` and `LARIS_HOOK_EVENT`, `LARIS_PROJECT_DIR`, `LARIS_SESSION_ID`, JSON on standard input (a hook that
+  never reads it does not stall), exit 2 or `{"decision": "block"}` blocks, any other failure, a timeout (the process
+  group is killed) or non-JSON output warns and carries on, output cut at 64,000 characters and stripped of control
+  characters. `HookedRunner` wraps a `ToolRunner` and puts what a `PostToolUse` hook adds under `hook_context` with the
+  result marked untrusted. Folder trust: `ProjectState` (in the home, not the project) and `skill_dirs` and
+  `command_dirs`, which add the project's `.laris/skills` and `.laris/commands` only for a trusted folder. A project
+  folder has no settings layer, so planted `.laris/`, `.claude/`, `settings.json` and `configs/default.yaml` files
+  change nothing. `laris-tools` gained `Scope::locate`, `Scope::relative_to_root` and the exports `shell` and
+  `kill_tree` (no behaviour change). Tests (59): rules 6 (syntax, matching table, resolved paths with a symbolic
+  link, chained allow and deny); modes 15 (each mode, precedence, deny against every mode and against saved allows,
+  bypass bounds, settings changes, cycling, answers kept three ways, bad rule); gate 14 (a denied path never written
+  under five spellings and a link, deny beats a yes and is not asked, diff and approval, previews, always, plan mode,
+  unknown and remote tools, hook blocks, hook cannot grant, a denied call runs no hook, post hook context, a loop turn
+  refused through the gate whose log replays byte for byte); hooks 17 (allow with context and JSON input, exit 2,
+  JSON block, matcher and first block, timeout, malformed and failing output, notices, non-UTF-8, flood, ignored
+  input, lingering child, control characters, environment); trust 7 (planted settings, hooks and rules ignored,
+  untrusted folder without project skills, trust per folder, trust grants no permission). These are the tests for
+  SEC-PERM-01 to SEC-PERM-03 of the threat model; T154 collects them. Not covered: the refusal of installs outside the
+  sandbox (v1 built-in rule) belongs to T135, which has the sandbox; redaction and the injection defence are T136;
+  `allow_bypass` is a constructor argument, no setting or policy file supplies it yet (the client task T155 does);
+  nothing wires the gate, the hook events other than `PreToolUse` and `PostToolUse`, or the approver into a running
+  session yet (the client tasks); the hook tests are Unix only (Windows `bash` is not run);
+  quoted words in a command are split on white space when suggesting a rule; rules over remote tool arguments match
+  the first text argument only. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`,
+  `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass. No new dependency (`regex` was approved;
+  the others are workspace crates).
 
 ### T134 — Sandbox measurement: cut the codex sandbox
 - Requirements: SR-H6
