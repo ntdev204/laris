@@ -12,6 +12,7 @@ use super::reasoning::{ReasoningRecord, ReasoningSink, TagPair, ThinkSplitter};
 use super::skills::SKILL_TOOL;
 use super::workflows::Workflows;
 use crate::backend::{Backend, ChunkStream, StreamFailure};
+use crate::brain::{BRAIN_TOOL, Consulted};
 use crate::error::ApiError;
 use futures_util::StreamExt;
 use futures_util::future::BoxFuture;
@@ -47,6 +48,7 @@ pub struct Policy {
     pub(crate) composer: Composer,
     pub(crate) workflows: Workflows,
     pub(crate) skills: super::skills::Skills,
+    pub(crate) brain: crate::brain::Brain,
     pub(crate) help: String,
     pub(crate) guard: Guard,
     pub(crate) canary_enabled: bool,
@@ -63,6 +65,11 @@ impl Policy {
     /// The system skills.
     pub fn skills(&self) -> &super::skills::Skills {
         &self.skills
+    }
+
+    /// The system brain.
+    pub fn brain(&self) -> &crate::brain::Brain {
+        &self.brain
     }
 
     /// The prepared user guide.
@@ -255,6 +262,12 @@ impl PolicyGateway {
         } else {
             laris.layers.skills_index.clone()
         };
+        let brain_tool_allowed = policy.brain.offered()
+            && workflow.is_none_or(|w| w.allowed_tools.iter().any(|t| t == BRAIN_TOOL));
+        let brief = laris
+            .workflow
+            .as_ref()
+            .and_then(|w| policy.brain.brief(&w.name));
         let own: Vec<(String, String)> = laris
             .layers
             .instructions
@@ -271,12 +284,13 @@ impl PolicyGateway {
             memory: &laris.layers.memory,
             own: &own,
             skill: named.map(|k| (k.name.as_str(), k.body.as_str())),
+            brain: brief.as_ref().map(|b| (b.route.as_str(), b.text.as_str())),
         });
         let mut tools: Vec<_> = request
             .tools
             .into_iter()
             // the server's own tool is the server's: a client cannot offer one under that name
-            .filter(|t| t.function.name != SKILL_TOOL)
+            .filter(|t| t.function.name != SKILL_TOOL && t.function.name != BRAIN_TOOL)
             .filter(|t| {
                 workflow.is_none_or(|w| {
                     t.function.name == PLAN_TOOL || w.allowed_tools.contains(&t.function.name)
@@ -285,6 +299,10 @@ impl PolicyGateway {
             .collect();
         if skill_tool_allowed
             && let Ok(schema) = serde_json::from_value(policy.skills.tool_schema())
+        {
+            tools.push(schema);
+        }
+        if brain_tool_allowed && let Ok(schema) = serde_json::from_value(policy.brain.tool_schema())
         {
             tools.push(schema);
         }
@@ -303,6 +321,8 @@ impl PolicyGateway {
         let mut prepared = self.prepared(session, composed.sha256, &canary, true, caller);
         prepared.skills = named.map(|k| k.name.clone()).into_iter().collect();
         prepared.skill_tool = skill_tool_allowed;
+        prepared.brain_tool = brain_tool_allowed;
+        prepared.brain = brief.map(|b| b.titles).unwrap_or_default();
         Ok((sent, prepared))
     }
 
@@ -327,6 +347,8 @@ impl PolicyGateway {
             tags: self.policy.think_tags.clone(),
             skills: Vec::new(),
             skill_tool: false,
+            brain_tool: false,
+            brain: Vec::new(),
             tools,
         }
     }
@@ -343,6 +365,10 @@ struct Prepared {
     skills: Vec<String>,
     /// Whether the model may load system skills.
     skill_tool: bool,
+    /// Whether the model may consult the system brain.
+    brain_tool: bool,
+    /// Titles of the brain notes the brief in the prompt drew on.
+    brain: Vec<String>,
     /// Whether tool calls may be passed on (a summary has none).
     tools: bool,
 }
@@ -563,7 +589,9 @@ impl Filter {
                 if c.name.is_empty() || self.prepared.guard.leak.leaked(&c.arguments) {
                     continue;
                 }
-                if self.prepared.skill_tool && c.name == SKILL_TOOL {
+                if (self.prepared.skill_tool && c.name == SKILL_TOOL)
+                    || (self.prepared.brain_tool && c.name == BRAIN_TOOL)
+                {
                     mine.push(c);
                     continue;
                 }
@@ -626,6 +654,7 @@ struct Run {
     id: String,
     steps: usize,
     loads: usize,
+    consulted: Consulted,
     usage: Option<Usage>,
     reasoning: String,
     model: String,
@@ -657,7 +686,8 @@ impl Run {
             object: ChunkObject::default(),
             model: String::new(),
             laris: Some(LarisMeta {
-                brain: Vec::new(),
+                // the whole list so far: a client keeps the last one it saw
+                brain: self.consulted.titles().to_vec(),
                 extra,
             }),
             choices: Vec::new(),
@@ -672,31 +702,40 @@ impl Run {
         let mut asked = Vec::new();
         let mut answers = Vec::new();
         let mut loaded = Vec::new();
+        let before = self.consulted.titles().len();
         for (n, call) in calls.into_iter().enumerate() {
             let id = call
                 .id
                 .clone()
-                .unwrap_or_else(|| format!("skill-{}-{n}", self.steps));
+                .unwrap_or_else(|| format!("server-{}-{n}", self.steps));
             let args: serde_json::Value =
                 serde_json::from_str(&call.arguments).unwrap_or(serde_json::Value::Null);
-            let name = args
-                .get("name")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default();
-            let reference = args.get("reference").and_then(|v| v.as_str());
-            let result = if self.loads >= self.policy.skills.max_loads() {
-                Err(super::skills::LoadError(
-                    "Error: the limit of skills for this answer is reached; answer with what you have.".into(),
-                ))
+            let (tool, result) = if call.name == BRAIN_TOOL {
+                (
+                    BRAIN_TOOL,
+                    self.policy.brain.consult(&args, &mut self.consulted),
+                )
             } else {
-                self.policy.skills.text_of(name, reference)
-            };
-            self.loads += 1;
-            let content = match result {
-                Ok(text) => {
+                let name = args
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
+                let reference = args.get("reference").and_then(|v| v.as_str());
+                let result = if self.loads >= self.policy.skills.max_loads() {
+                    Err(super::skills::LoadError(
+                        "Error: the limit of skills for this answer is reached; answer with what you have.".into(),
+                    ))
+                } else {
+                    self.policy.skills.text_of(name, reference)
+                };
+                self.loads += 1;
+                if result.is_ok() {
                     loaded.push(name.to_owned());
-                    text
                 }
+                (SKILL_TOOL, result)
+            };
+            let content = match result {
+                Ok(text) => text,
                 Err(e) => e.0,
             };
             asked.push(ToolCall {
@@ -704,7 +743,7 @@ impl Run {
                 id: Some(id.clone()),
                 kind: FunctionKind::Function,
                 function: ToolCallFunction {
-                    name: SKILL_TOOL.to_owned(),
+                    name: tool.to_owned(),
                     arguments: call.arguments,
                     extra: Map::new(),
                 },
@@ -715,7 +754,7 @@ impl Run {
                 content: Some(Content::Text(content)),
                 tool_calls: Vec::new(),
                 tool_call_id: Some(id),
-                name: Some(SKILL_TOOL.to_owned()),
+                name: Some(tool.to_owned()),
                 extra: Map::new(),
             });
         }
@@ -728,12 +767,14 @@ impl Run {
             extra: Map::new(),
         });
         self.request.messages.extend(answers);
-        if !loaded.is_empty() {
+        if !loaded.is_empty() || self.consulted.titles().len() > before {
             let meta = self.meta(&loaded);
             self.queue.push_back(Ok(meta));
         }
         self.steps += 1;
-        if self.steps > self.policy.skills.max_loads() + 1 {
+        // a brain call earns one more step, up to the brain's own limit; skills keep theirs
+        let brain_steps = self.consulted.calls().min(self.policy.brain.max_calls());
+        if self.steps > self.policy.skills.max_loads() + brain_steps + 1 {
             let done = self
                 .filter
                 .chunk(ChunkDelta::default(), Some(FinishReason::Stop));
@@ -762,7 +803,7 @@ impl Drop for Run {
     fn drop(&mut self) {
         // written whether the answer ended, failed or the client left
         self.absorb();
-        if self.reasoning.is_empty() {
+        if self.reasoning.is_empty() && self.consulted.titles().is_empty() {
             return;
         }
         self.sink.record(ReasoningRecord {
@@ -771,6 +812,7 @@ impl Drop for Run {
             model: self.model.clone(),
             prompt_sha256: self.filter.prepared.prompt_sha256.clone(),
             reasoning: std::mem::take(&mut self.reasoning),
+            brain: self.consulted.titles().to_vec(),
             at: crate::access::now(),
         });
     }
@@ -789,6 +831,7 @@ fn filtered(
         .unwrap_or_else(|_| prepared.session.clone());
     let id = format!("chatcmpl-{id}");
     let named = prepared.skills.clone();
+    let seeded = Consulted::seeded(&prepared.brain);
     let mut run = Run {
         inner: Some(inner),
         filter: Filter::new(prepared, id.clone()),
@@ -800,12 +843,13 @@ fn filtered(
         id,
         steps: 0,
         loads: 0,
+        consulted: seeded,
         usage: None,
         reasoning: String::new(),
         model: String::new(),
     };
-    if !named.is_empty() {
-        // which skill the user named, before the text (names only)
+    if !named.is_empty() || !run.consulted.titles().is_empty() {
+        // which skill the user named and which brain notes the brief drew on, before the text (names only)
         let meta = run.meta(&named);
         run.queue.push_back(Ok(meta));
     }

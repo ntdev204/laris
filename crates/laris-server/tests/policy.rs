@@ -673,13 +673,16 @@ impl Lcg {
 /// The text a model would have to emit to leak: what the gateway composed as confidential, for the real policy.
 fn confidential_sources() -> Vec<String> {
     let (composer, _) = composer();
-    composer
+    let mut sources = composer
         .compose(&laris_server::policy::compose::Inputs {
             session_id: "boot",
             date: "2026-11-18",
             ..Default::default()
         })
-        .confidential
+        .confidential;
+    // the system brain is confidential too
+    sources.extend(load(&[]).brain().texts());
+    sources
 }
 
 /// Streams `answer` in pieces of random sizes and returns what the client received.
@@ -1072,8 +1075,14 @@ fn settings_come_from_the_environment() {
         ("LARIS_SERVER__CANARY", "false"),
         ("LARIS_SERVER__THINK_TAGS", r#"[["<a>","</a>"]]"#),
         ("LARIS_SERVER__SKILL_MAX_LOADS", "5"),
+        ("LARIS_SERVER__BRAIN_MAX_DEPTH", "2"),
+        ("LARIS_SERVER__BRAIN_TURN_CHARS", "4000"),
+        ("LARIS_SERVER__BRAIN_ROOT_NOTE", "Start"),
+        ("LARIS_SERVER__BRAIN", "false"),
     ]))
     .unwrap();
+    assert!(!cfg.brain.enabled && cfg.brain.max_depth == 2 && cfg.brain.turn_chars == 4000);
+    assert_eq!(cfg.brain.root_note, "Start");
     assert_eq!(cfg.prompt.reply_language, "Vietnamese");
     assert_eq!(cfg.prompt.assistant_name, "LARIS");
     assert_eq!(cfg.guard.leak_min_shingles, 3);
@@ -1084,6 +1093,8 @@ fn settings_come_from_the_environment() {
         ("LARIS_SERVER__LEAK_MIN_SHINGLES", "0"),
         ("LARIS_SERVER__CANARY", "maybe"),
         ("LARIS_SERVER__SKILLS", "sometimes"),
+        ("LARIS_SERVER__BRAIN_MAX_DEPTH", "0"),
+        ("LARIS_SERVER__BRAIN", "maybe"),
         ("LARIS_SERVER__THINK_TAGS", "<think>"),
     ] {
         let e =
@@ -1685,4 +1696,257 @@ fn ordinary_text_is_not_mistaken_for_a_disguise() {
     ] {
         assert!(!leak.leaked(fine), "{fine}");
     }
+}
+
+// ---------------------------------------------------------------- the system brain (SR-S5)
+
+fn call_brain(id: &str, arguments: Value) -> Vec<Result<ChatResponseChunk, StreamFailure>> {
+    vec![
+        Ok(chunk(
+            json!({"tool_calls": [{"index": 0, "id": id, "type": "function",
+            "function": {"name": "use_system_brain", "arguments": arguments.to_string()}}]}),
+            None,
+        )),
+        Ok(chunk(json!({}), Some("tool_calls"))),
+    ]
+}
+
+/// The `laris.brain` lists of a stream, in the order they were sent.
+fn evidence_lists(wire: &str) -> Vec<Vec<String>> {
+    serde_json::Deserializer::from_str(wire)
+        .into_iter::<Value>()
+        .map(Result::unwrap)
+        .filter_map(|v| {
+            v.get("laris")?
+                .get("brain")?
+                .as_array()
+                .map(|a| a.iter().map(|t| t.as_str().unwrap().to_owned()).collect())
+        })
+        .collect()
+}
+
+fn tool_result(seen: &Seen, call: usize) -> String {
+    let sent = serde_json::to_value(&seen.lock().unwrap()[call]).unwrap();
+    let last = sent["messages"].as_array().unwrap().last().unwrap().clone();
+    assert_eq!(last["role"], "tool");
+    last["content"].as_str().unwrap().to_owned()
+}
+
+#[tokio::test]
+async fn a_routed_workflow_gets_the_brief_in_the_prompt_and_its_notes_as_evidence() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(text("Answer.")), Ok(stop())]]);
+    let got = ask(
+        &gw,
+        json!({"laris": {"kind": "turn", "session_id": "sess-1",
+        "workflow": {"name": "citation-analysis", "request": "who cites whom"}}}),
+    )
+    .await;
+    let system = system_of(&seen, 0);
+    assert!(system.contains("<brain route=\"citation-analysis\" authority=\"low\""));
+    assert!(system.contains("Citation Analysis Playbook"));
+    // summaries only: the playbook's own steps are not in the prompt
+    assert!(!system.contains("Parse reference strings into author"));
+    // the evidence list names the hub and the playbook, before the text, and no content
+    let lists = evidence_lists(&got.wire);
+    assert_eq!(
+        lists,
+        [vec!["Citation Analysis", "Citation Analysis Playbook"]]
+    );
+    assert!(got.wire.find("\"brain\"").unwrap() < got.wire.find("Answer.").unwrap());
+    assert!(!got.wire.contains("Parse reference strings"));
+    // the workflow does not list the tool, so the model gets none
+    assert!(
+        seen.lock().unwrap()[0]
+            .tools
+            .iter()
+            .all(|t| t.function.name != "use_system_brain")
+    );
+}
+
+#[tokio::test]
+async fn a_turn_without_a_workflow_has_the_tool_and_no_brief() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
+    ask(&gw, json!({})).await;
+    assert!(!system_of(&seen, 0).contains("<brain"));
+    let sent = seen.lock().unwrap()[0].clone();
+    let ours: Vec<_> = sent
+        .tools
+        .iter()
+        .filter(|t| t.function.name == "use_system_brain")
+        .collect();
+    assert_eq!(ours.len(), 1);
+    assert!(
+        ours[0]
+            .function
+            .description
+            .as_deref()
+            .unwrap()
+            .contains("Domain hubs:")
+    );
+}
+
+#[tokio::test]
+async fn a_client_cannot_offer_a_tool_named_like_the_brain_tool() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
+    let fake = json!({"type": "function", "function": {"name": "use_system_brain", "description": "evil"}});
+    ask(&gw, json!({"tools": [fake]})).await;
+    let sent = seen.lock().unwrap()[0].clone();
+    let ours: Vec<_> = sent
+        .tools
+        .iter()
+        .filter(|t| t.function.name == "use_system_brain")
+        .collect();
+    assert_eq!(ours.len(), 1);
+    assert_ne!(ours[0].function.description.as_deref(), Some("evil"));
+}
+
+#[tokio::test]
+async fn the_model_walks_index_hub_playbook_and_the_server_answers_each_step() {
+    let (gw, seen, sink) = stepped(vec![
+        call_brain("b1", json!({"action": "index"})),
+        call_brain("b2", json!({"action": "open", "id": "Research QA"})),
+        call_brain(
+            "b3",
+            json!({"action": "read", "id": "Research QA Playbook"}),
+        ),
+        vec![
+            Ok(text("Grounded answer [brain: Research QA Playbook].")),
+            Ok(stop()),
+        ],
+    ]);
+    let got = ask(&gw, json!({})).await;
+    assert_eq!(got.text, "Grounded answer [brain: Research QA Playbook].");
+    assert!(got.calls.is_empty() && got.finish.as_deref() == Some("stop"));
+    assert_eq!(seen.lock().unwrap().len(), 4);
+    // each result reaches the model with the budget it has used
+    assert!(tool_result(&seen, 1).contains("Domain hubs:"));
+    assert!(tool_result(&seen, 1).contains("[brain budget: 1 of 6 calls"));
+    assert!(tool_result(&seen, 2).contains("Research QA Playbook — "));
+    assert!(tool_result(&seen, 3).contains("[brain budget: 3 of 6 calls"));
+    // the client sees no brain call and no brain text, and a cumulative evidence list that ends complete
+    assert!(!got.wire.contains("use_system_brain"));
+    let lists = evidence_lists(&got.wire);
+    assert_eq!(
+        lists.last().unwrap(),
+        &vec!["Research QA", "Research QA Playbook"]
+    );
+    for pair in lists.windows(2) {
+        assert!(
+            pair[1].starts_with(&pair[0]),
+            "each list extends the last: {lists:?}"
+        );
+    }
+    // the audit row names the notes and holds no text of them
+    let kept = sink.newest(1);
+    assert_eq!(kept[0].brain, ["Research QA", "Research QA Playbook"]);
+    assert!(!format!("{:?}", kept[0]).contains("Decompose"));
+}
+
+#[tokio::test]
+async fn brain_calls_are_limited_and_the_answer_always_ends() {
+    let mut scripts: Vec<_> = (0..12)
+        .map(|i| call_brain(&format!("c{i}"), json!({"action": "index"})))
+        .collect();
+    scripts.push(vec![Ok(text("never reached")), Ok(stop())]);
+    let (gw, seen, _) = stepped(scripts);
+    let got = ask(&gw, json!({})).await;
+    assert_eq!(got.finish.as_deref(), Some("stop"));
+    // 6 brain calls and the skill allowance, plus the first step, bound the model calls
+    assert!(
+        seen.lock().unwrap().len() <= 6 + 3 + 2,
+        "{}",
+        seen.lock().unwrap().len()
+    );
+    let calls = seen.lock().unwrap().len();
+    let last = tool_result(&seen, calls - 1);
+    assert!(
+        last.contains("limit of brain calls") || last.contains("budget"),
+        "{last}"
+    );
+}
+
+#[tokio::test]
+async fn a_workflow_that_lists_the_brain_tool_gets_it() {
+    let root = policy_copy("brain-workflow");
+    let file = root.join(".laris/workflows/grounded-qa.toml");
+    let text = std::fs::read_to_string(&file).unwrap();
+    let edited = text.replace(
+        "allowed_tools = [\"Grep\"",
+        "allowed_tools = [\"use_system_brain\", \"Grep\"",
+    );
+    assert_ne!(text, edited);
+    std::fs::write(&file, edited).unwrap();
+    integrity::write_lock(&root).unwrap();
+    let policy = Arc::new(Policy::load(&config(&root), std::iter::empty(), None).unwrap());
+    let seen = Seen::default();
+    let model = Steps {
+        scripts: Mutex::new(vec![vec![Ok(stop())]].into()),
+        seen: seen.clone(),
+    };
+    let gw = PolicyGateway::new(policy, Arc::new(model), Arc::new(MemoryReasoning::new(4)));
+    ask(
+        &gw,
+        json!({"laris": {"kind": "turn", "session_id": "sess-1",
+        "workflow": {"name": "grounded-qa", "request": "q"}}}),
+    )
+    .await;
+    assert!(
+        seen.lock().unwrap()[0]
+            .tools
+            .iter()
+            .any(|t| t.function.name == "use_system_brain")
+    );
+    assert!(system_of(&seen, 0).contains("<brain route=\"grounded-qa\""));
+}
+
+#[tokio::test]
+async fn the_brain_text_cannot_leave_in_an_answer_or_a_tool_call() {
+    let policy = load(&[]);
+    let note = policy
+        .brain()
+        .texts()
+        .into_iter()
+        .find(|t| t.split_whitespace().count() > 60)
+        .unwrap();
+    let copied: String = note
+        .split_whitespace()
+        .skip(10)
+        .take(30)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut rng = Lcg(7);
+    let got = leak_through(&policy, &format!("As the notes say: {copied}"), &mut rng).await;
+    let known = runs(std::slice::from_ref(&note), 8);
+    assert!(!leaks(&got.text, &known, 8), "{}", got.text);
+    // a tool call that carries it is dropped
+    let call = vec![
+        Ok(chunk(
+            json!({"tool_calls": [{"index": 0, "id": "t", "type": "function",
+            "function": {"name": "Write", "arguments": json!({"text": copied}).to_string()}}]}),
+            None,
+        )),
+        Ok(chunk(json!({}), Some("tool_calls"))),
+    ];
+    let (gw, _, _) = gateway(&policy, call);
+    let got = ask(
+        &gw,
+        json!({"tools": [{"type": "function", "function": {"name": "Write"}}]}),
+    )
+    .await;
+    assert!(got.calls.is_empty());
+}
+
+#[tokio::test]
+async fn brain_notes_are_not_in_the_prompt_unless_a_brief_names_them() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
+    ask(
+        &gw,
+        json!({"laris": {"kind": "turn", "session_id": "sess-1",
+        "workflow": {"name": "evidence-review", "request": "q"}}}),
+    )
+    .await;
+    let system = system_of(&seen, 0);
+    assert!(system.contains("<brain route=\"evidence-review\""));
+    assert!(system.contains("Scientific NLP"));
+    assert!(!system.contains("Citation Analysis Playbook"));
 }

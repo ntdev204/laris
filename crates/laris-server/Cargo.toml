@@ -11,6 +11,7 @@ workspace = true
 
 [dependencies]
 laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+laris-vault = { path = "../laris-vault", version = "2.0.0-dev" }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 hyper = { version = "1", default-features = false, features = ["http1", "server"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio", "service", "server"] }

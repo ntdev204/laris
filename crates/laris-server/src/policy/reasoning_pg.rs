@@ -43,8 +43,8 @@ impl ReasoningSink for PgReasoning {
             let write = async {
                 let mut tx = storage.begin().await.map_err(|_| ())?;
                 sqlx::query(
-                    "INSERT INTO traces (key_id, ts, session_id, model, prompt_sha256, reasoning) \
-                     VALUES ($1, $2, $3, $4, $5, $6)",
+                    "INSERT INTO traces (key_id, ts, session_id, model, prompt_sha256, reasoning, brain) \
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)",
                 )
                 .bind(&record.key_id)
                 .bind(record.at)
@@ -52,6 +52,7 @@ impl ReasoningSink for PgReasoning {
                 .bind(&record.model)
                 .bind(&record.prompt_sha256)
                 .bind(&record.reasoning)
+                .bind(serde_json::to_string(&record.brain).unwrap_or_else(|_| "[]".to_owned()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|_| ())?;
@@ -69,7 +70,7 @@ impl ReasoningStore for PgReasoning {
         Box::pin(async move {
             let limit = i64::try_from(limit).unwrap_or(500);
             let rows = sqlx::query(
-                "SELECT key_id, ts, session_id, model, prompt_sha256, reasoning FROM traces \
+                "SELECT key_id, ts, session_id, model, prompt_sha256, reasoning, brain FROM traces \
                  WHERE reasoning <> '' ORDER BY ts DESC, id DESC LIMIT $1",
             )
             .bind(limit)
@@ -83,6 +84,7 @@ impl ReasoningStore for PgReasoning {
                     model: r.get("model"),
                     prompt_sha256: r.get("prompt_sha256"),
                     reasoning: r.get("reasoning"),
+                    brain: serde_json::from_str(&r.get::<String, _>("brain")).unwrap_or_default(),
                     at: r.get("ts"),
                 })
                 .collect()
