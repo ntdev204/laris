@@ -8,6 +8,7 @@ A checkpoint directory contains:
 
 import hashlib
 import json
+import os
 import random
 import shutil
 import subprocess
@@ -43,7 +44,9 @@ def current_git_commit(repo_root: Optional[Path] = None) -> Optional[str]:
         )
         return out.stdout.strip() or None
     except (OSError, subprocess.CalledProcessError):
-        return None
+        # No repository (a Colab VM runs an unpacked `git archive`): the owner passes the commit
+        # that `scripts/colab/pack_code.sh` wrote to `artifacts/colab/COMMIT` (T212).
+        return os.environ.get("LARIS_GIT_COMMIT", "").strip() or None
 
 
 def capture_rng_state() -> Dict[str, Any]:
