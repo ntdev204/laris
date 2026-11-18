@@ -226,7 +226,8 @@ pub fn value_to_json(v: &Value) -> Json {
     }
 }
 
-fn value_from_json(j: &Json) -> Option<Value> {
+/// The property value a [`value_to_json`] form stands for (`None` for a shape no property has).
+pub fn value_from_json(j: &Json) -> Option<Value> {
     Some(match j {
         Json::Null => Value::Null,
         Json::Bool(b) => Value::Bool(*b),

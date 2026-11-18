@@ -193,7 +193,32 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Atomic writer with managed blocks; schema registry; filename rules; hub-tree lint
 - Validation:
   - User edits survive 100 rewrites; crash mid-write keeps the old file; lint fails on seeded faults
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-vault` gains `emit` (properties written as YAML in PyYAML's style: plain text stays
+  plain, text that would read back as another type, or holds indicators, edge spaces, tabs or line breaks, is quoted;
+  flat shape only), `writer` (`safe_title`, `resolve_inside` against `..`, absolute paths and symlink escapes,
+  `atomic_write` = temporary file in the same folder, flush, rename, directory flush, with stage hooks for tests and
+  `sweep_stale_temp` for the file a killed write leaves; managed blocks `upsert_block` with SHA-256 prefix, conflict
+  detection, `conflicts` and `accept_edits`; `VaultWriter` with size limit, injection scan, redactor, backups under
+  `.laris/backups`, per-minute rate limit on an injectable clock; a refused call consumes no quota and writes
+  nothing), `schema` (registry read from `.laris/vault/schema.yaml` or the built-in copy; a test keeps them equal) and
+  `lint` (`lint_format`, `lint_hierarchy` with `HierarchyRules`, `lint_content`; same problems in the same order as
+  generation 1). Limits are arguments; nothing is hardcoded. Golden: `tests/golden/vault/writer_lint.json` and
+  `brain/` (a ten-note hub tree with seeded faults) are written by `generate.py` from the generation-1 code, and the
+  Rust output equals them: 14 rendered property sets, block upserts, titles, format, schema, content and hierarchy
+  lint. Validation tests: user edits (appended, prepended, changed) survive 100 rewrites with order kept and 100
+  backups; an edit inside a block is a conflict that leaves the whole note untouched; a failed replacement at each
+  stage and a real killed process (child aborted after the temporary file is written, and after it is flushed) both
+  keep the old file byte for byte; lint reports every one of ten seeded faults plus three two-note faults. Checked
+  beyond the committed tests (not committed): 39 806 random property sets: 35 749 equal to PyYAML text for text, and
+  the other 4 057 all hold U+0085, U+2028, U+2029 or U+00A0, the cases listed below. Known differences from generation 1: a block name must match `[\w.-]+`, a
+  block text may not hold a LARIS marker and a property set may not be nested or repeat a name (all refusals, where
+  generation 1 wrote a note it could not update again); a stored hash of 8 to 63 digits is taken as a prefix (the
+  format spec) where generation 1 reported a conflict; text with U+0085, U+2028 or U+2029, or Unicode white space at an
+  edge, is quoted differently (PyYAML's own output reads back wrong there); long text is not folded at column 1000;
+  files that are not UTF-8 are refused, not rewritten. The brain limits of `lint_hierarchy` come from the caller; the
+  settings schema has none yet (T145). No new crates. `cargo fmt --check`, `clippy -D warnings`, `cargo test`,
+  `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ## Phase 28 — System: loop
 
