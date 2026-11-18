@@ -6,5 +6,10 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[dependencies]
+laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+regex = "1"
+serde_json = "1"
+
 [lints]
 workspace = true

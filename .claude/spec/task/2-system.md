@@ -554,7 +554,29 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     unsupported-statement marking
 - Validation:
   - Fabricated citation, missing span and unsupported claim caught; valid answers unchanged
-- Status: pending
+- Status: done
+- Note: Built in `laris-evidence` (new dependencies: `laris-protocol`, and `regex` and `serde_json`, already in the
+  workspace). `Evidence` holds what the turn received: hits read from retrieval tool results (`absorb_text` for lines
+  `[source #rank] title: excerpt`, `absorb_json` for objects with `source`, `rank` and `text`/`excerpt`/`snippet`/
+  `content` at any depth) and the brain titles of `LarisMeta` (`set_brain`). `citation::parse` reads `[source #rank]`
+  (rule E-2) and `[brain: Title]`, plus the verbatim quote standing right before a citation; code is not read.
+  `Gate::check(answer, &evidence)` returns a `Verdict` with findings and the answer marked in place: a citation that
+  names no hit or no listed brain note (`fabricated_citation`); a quote of eight characters or more that is not in the
+  cited hit after case, whitespace and typography are folded, an ellipsis standing for text left out (`span_missing`);
+  a sentence of six words or more that cites nothing and is not marked assumed, speculative, a hypothesis or
+  unverified (`unsupported_statement`; only when the turn retrieved evidence or the answer cites, or with
+  `Gate::strict`); a conclusion of absence or of a research gap that does not say what was searched (`absence_claim`,
+  rule E-5; the same sentence with a scope word is a report of the search and passes). Headings, tables, questions,
+  first-person and "here is" sentences and the closing blocks (Assumptions, Uncertainties, Next step, Sources) are
+  not statements. An answer without findings is returned byte for byte unchanged. Tests (15): valid answer
+  unchanged, valid quote after folding, fabricated citation, missing span, unsupported claim, assumed statements,
+  chat left alone, absence rule, brain citations, JSON results, parser, code skipped, abbreviation and citation full
+  stops, non-statements, several findings marked in order. Limits: it proves that cited places exist, not that they
+  entail the claim (that is the model block's NLI, D41); ranks repeat across searches, so a citation matches any hit
+  with that source and rank; "statement" is a sentence of some length, the patterns are English and Vietnamese
+  text rules; nothing wires the gate into a session yet (the client tasks); `Config` and `Marks` take their defaults
+  until the client reads them from settings. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny
+  check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
 
 ### T138 — Learning data from the event log
 - Requirements: SR-H11
