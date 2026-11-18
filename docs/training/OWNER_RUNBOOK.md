@@ -761,3 +761,32 @@ Steps (owner's machine unless it says VM):
 
 **Differences from the local environment (record them in the report).** Python 3.13 on the VM against 3.10 in `.venv`; the same PyTorch 2.14.1+cu130 as local. The run manifest records the
 versions, the commit and the GPU; a result is "measured on the Colab A100 with ...". Dependency pins are not locked in Git (`uv.lock` is untracked), so the VM resolves current compatible versions.
+
+## 13. T211: speed profile and ceiling on the Colab A100 (owner run, prepared 2026-11-18)
+
+Owner order 2026-11-18: use the A100 to train as fast as possible. **ADR-023** lets the owner raise the VRAM ceiling above 14.5 GB on a GPU of 24 GB or more with
+`LARIS_VRAM_CEILING_GB`; on the RTX 5070 Ti the value is refused. Use `export LARIS_VRAM_CEILING_GB=36` on the Colab VM (95 % of the 39.5 GiB PyTorch sees is 37.5). The ceiling is
+printed at the start, used by the profile, and written to the checkpoint provenance with the GPU name.
+
+**Levers, in the order of how little they change the experiment.**
+1. Gradient checkpointing off (`--gradient-checkpointing` omitted): the same mathematics, about 25-35 % less recompute (expectation, not measured here).
+2. A larger micro-batch with fewer accumulation steps (16 x 2 or 32 x 1; effective batch 32 as before). Each micro-step then has fewer draws per optimizer step (accumulation x
+   `tasks_per_step`), so the draws and passes of reports/verification/T203-stage2-mixture.md change: recompute them with
+   `scripts/plan_stage2_schedule.py --micro-batch-size M --grad-accum-steps A` before a run, and use the same values in the stage-2 run and its control.
+   Retrieval (32) and contrastive similarity (64) keep their own batch sizes, so their rows per optimizer step fall with the accumulation.
+3. `--tasks-per-step 3` fits in 40 GB but changes the experiment decided in T202; not used unless the owner says so.
+
+**Procedure (VM, after section 12 step 5; the owner starts it).**
+```bash
+cd /content/laris
+export LARIS_TRAINING_AUTHORIZED=1 LARIS_VRAM_CEILING_GB=36
+bash scripts/colab/speed_profile.sh configs/language_encoder/english_r1_stage2.yaml 2      # six profiles of a few minutes
+bash scripts/colab/speed_profile.sh configs/language_encoder/english_r1.yaml 1             # for the stage-1 rerun, optional
+```
+**Decision rule.** Among the combinations whose log shows every task and every group finite and a peak at least 2 GB below the ceiling, choose the one with the lowest
+`Latency per mixed step` x accumulation (seconds per effective batch of 32). Report the table and the choice; then recompute the T203 schedule for that micro-batch and accumulation and
+use it in the stage-1 rerun, the stage-2 run and the control alike. A profile ending in `CUDA out of memory` is a result: keep its log. Stop the session (`colab stop`) as soon as the
+logs are copied back.
+
+**Cost.** Six profiles are a few minutes each on a model that does not train; with the rate in the Colab UI the owner can bound the units before starting. Not measured: any
+A100 figure (speed, peak). The T202 figures belong to the RTX 5070 Ti.
