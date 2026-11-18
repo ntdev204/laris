@@ -929,6 +929,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "laris-protocol",
+ "laris-vault",
  "regex",
  "serde",
  "serde_json",

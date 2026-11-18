@@ -121,6 +121,8 @@ pub struct ReasoningRecord {
     pub prompt_sha256: String,
     /// The reasoning.
     pub reasoning: String,
+    /// Titles of the brain notes the answer consulted: ids only, never their text.
+    pub brain: Vec<String>,
     /// Unix seconds.
     pub at: f64,
 }
@@ -258,6 +260,7 @@ mod tests {
                 model: String::new(),
                 prompt_sha256: String::new(),
                 reasoning: String::new(),
+                brain: Vec::new(),
                 at: 0.0,
             });
         }

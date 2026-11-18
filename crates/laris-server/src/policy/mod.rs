@@ -32,6 +32,7 @@ pub use routes::{help, reasoning as reasoning_route, workflows as workflows_rout
 pub use skills::{LoadError, SKILL_TOOL, Skill, SkillSettings, Skills};
 pub use workflows::{Workflow, WorkflowError, Workflows};
 
+use crate::brain::{Brain, BrainSettings};
 use guard::Guard;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -81,6 +82,8 @@ pub struct PolicyConfig {
     pub think_tags: Vec<(String, String)>,
     /// System skills.
     pub skills: SkillSettings,
+    /// The system brain.
+    pub brain: BrainSettings,
 }
 
 impl PolicyConfig {
@@ -92,6 +95,7 @@ impl PolicyConfig {
             guard: GuardSettings::default(),
             think_tags: vec![("<think>".to_owned(), "</think>".to_owned())],
             skills: SkillSettings::default(),
+            brain: BrainSettings::default(),
         }
     }
 
@@ -206,6 +210,30 @@ impl PolicyConfig {
         if let Some(n) = number("LARIS_SERVER__SKILL_MAX_LOADS", 0)? {
             cfg.skills.max_loads = n;
         }
+        if let Some(b) = flag("LARIS_SERVER__BRAIN")? {
+            cfg.brain.enabled = b;
+        }
+        if let Some(v) = get("LARIS_SERVER__BRAIN_ROOT_NOTE") {
+            cfg.brain.root_note = v.to_owned();
+        }
+        let b = &mut cfg.brain;
+        for (name, slot, min) in [
+            ("LARIS_SERVER__BRAIN_MAX_DEPTH", &mut b.max_depth, 1),
+            (
+                "LARIS_SERVER__BRAIN_SUMMARY_CHARS",
+                &mut b.summary_chars,
+                20,
+            ),
+            ("LARIS_SERVER__BRAIN_INDEX_CHARS", &mut b.index_chars, 100),
+            ("LARIS_SERVER__BRAIN_OPEN_CHARS", &mut b.open_chars, 100),
+            ("LARIS_SERVER__BRAIN_TURN_CHARS", &mut b.turn_chars, 100),
+            ("LARIS_SERVER__BRAIN_BRIEF_CHARS", &mut b.brief_chars, 100),
+            ("LARIS_SERVER__BRAIN_MAX_CALLS", &mut b.max_calls, 0),
+        ] {
+            if let Some(n) = number(name, min)? {
+                *slot = n;
+            }
+        }
         if let Some(text) = get("LARIS_SERVER__THINK_TAGS") {
             cfg.think_tags = serde_json::from_str::<Vec<(String, String)>>(text).map_err(|_| {
                 PolicyError::Invalid {
@@ -242,7 +270,15 @@ impl Policy {
             date: &gateway::today(),
             ..compose::Inputs::default()
         });
-        let leak = LeakDetector::new(&config.guard, boot.confidential.iter().map(String::as_str));
+        let brain = Brain::load(&config.root, config.brain.clone());
+        let brain_texts = brain.texts();
+        let leak = LeakDetector::new(
+            &config.guard,
+            boot.confidential
+                .iter()
+                .chain(&brain_texts)
+                .map(String::as_str),
+        );
         let root_text = config.root.to_string_lossy();
         let redactor = SecretRedactor::new(&config.guard, environ, Some(&root_text), home)
             .map_err(|e| PolicyError::Guard(e.to_string()))?;
@@ -255,6 +291,7 @@ impl Policy {
             composer,
             workflows,
             skills,
+            brain,
             help,
             guard: Guard::new(Arc::new(redactor), leak, config.guard.stream_holdback_chars),
             canary_enabled: config.guard.canary_enabled,

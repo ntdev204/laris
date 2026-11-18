@@ -1094,7 +1094,41 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Progressive-disclosure operations over `.laris/brain/`, budgets, brain brief, evidence list in `LarisMeta`, brain tools
 - Validation:
   - Each direction reaches its playbook within `brain.max_depth`; no write path
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18, branch `feature/T147-brain-service`. Module `laris_server::brain` (new dependency edge
+  `laris-server` -> `laris-vault`, a workspace crate; no new third-party crate). `Brain::load(root, settings)` reads
+  `.laris/brain/` with `VaultIndex`, finds `Brain Index`, parses its `route: name -> [[Hub]]` lines and the depth of
+  every note through `children`; a missing folder, root or route is a named problem, never a crash. Operations:
+  `brief(route)` (hub, its children and playbook, summaries only, cut to `brief_chars`), and the tool
+  `use_system_brain` with `index`, `open <id>` (summary, parent, children, uses, feeds, sections; no body) and
+  `read <id>` (text). An id is a title or `[[link]]`; a note deeper than `max_depth` or outside the tree, an unknown
+  id and an unknown action are answered with an error text the model reads. Budgets per answer: `max_calls` (6),
+  `turn_chars` (6000), one result `open_chars` (3500), `index_chars` (2500), `brief_chars` (2200); every result ends
+  with `[brain budget: n of m calls, x of y characters]`. Settings: `LARIS_SERVER__BRAIN`, `BRAIN_ROOT_NOTE`,
+  `BRAIN_MAX_DEPTH` (3), `BRAIN_SUMMARY_CHARS`, `BRAIN_INDEX_CHARS`, `BRAIN_OPEN_CHARS`, `BRAIN_TURN_CHARS`,
+  `BRAIN_BRIEF_CHARS`, `BRAIN_MAX_CALLS`. Gateway: a workflow with a route gets `<brain route=... authority="low">`
+  (the brief) after the skill's place in the prompt; the tool is offered when no workflow is active or the workflow
+  lists `use_system_brain` (none of the seven workflows does yet: that is a policy change, the owner's); the server
+  answers the call itself and runs the next step in the same stream, like skills; a client cannot offer a tool of
+  that name; a brain call earns one more model step up to `max_calls`, skills keep their own limit. The evidence
+  list is the cumulative `LarisMeta.brain` (titles of the notes in the brief and every note opened, in order), sent
+  before the text and again whenever it grows; the client gate keeps the last one. The audit record
+  (`ReasoningRecord.brain`, column `traces.brain`) holds the titles only, and is written even when there is no
+  reasoning. The text of every note is added to the leak detector (all 65 fit the default budget; a test fails when
+  it truncates), so a copy of 8 words in an answer or a tool call is stopped. No write path: `Brain` holds a
+  `VaultIndex` and only reads; a test consults every note with `open` and `read` and compares the folder byte for
+  byte, and another refuses file-writing calls in `brain.rs`. `Brain Index` got the routes `literature-map` and
+  `kg-explore` so that each of the seven workflows has one (test). Tests: 13 in `tests/brain.rs` (tree within
+  `max_depth`, `lint_hierarchy` clean, every route reaches hub and playbook in at most `max_depth` calls, budgets,
+  depth refusal, no write, missing and broken brain, bad route, guard budget) and 9 in `tests/policy.rs` (brief,
+  tool offer, client name clash, index-hub-playbook walk with evidence and audit, call limit, a workflow that lists
+  the tool after a lock refresh, leak of brain text, environment settings). 541 tests pass with PostgreSQL 16,
+  `fmt`, `clippy -D warnings`, `cargo deny check`. Not done, by design: the brain notes were not rewritten (they
+  already follow the vault format and pass the hub-tree lint; rewriting their prose is the owner's call); adding
+  `use_system_brain` to the workflows and any prompt text about the brain needs the owner's approval and
+  `laris-server policy lock`; `/v1/admin/reasoning` does not show the brain ids yet (T150, traces). The model never
+  saw this service: with the placeholder backend the tests prove mechanics only, and the foundation model is NOT
+  QUALIFIED.
 
 ### T148 — Ingestion, project vault and the RAG rung
 - Requirements: SR-H8, SR-H13, SR-S9

@@ -42,6 +42,7 @@ Entry point of the system brain. Pick one domain hub by route, then follow child
 ## Routing table
 Machine-read: a workflow name or task type selects one hub.
 route: literature-mining -> [[Literature Mining]]
+route: literature-map -> [[Literature Mining]]
 route: research-brief -> [[Literature Mining]]
 route: research-qa -> [[Research QA]]
 route: grounded-qa -> [[Research QA]]
@@ -49,6 +50,7 @@ route: citation-analysis -> [[Citation Analysis]]
 route: scientific-rag -> [[Scientific RAG]]
 route: document-intake -> [[Scientific RAG]]
 route: knowledge-graph -> [[Knowledge Graph]]
+route: kg-explore -> [[Knowledge Graph]]
 route: scientific-nlp -> [[Scientific NLP]]
 route: evidence-review -> [[Scientific NLP]]
 route: tools -> [[Tools and Workflows]]

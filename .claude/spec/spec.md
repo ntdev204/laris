@@ -372,7 +372,11 @@ chat bodies.
 ### SR-S5 — System brain service
 Owner: server
 Progressive disclosure from `Brain Index` with budgets; ids only in audit; evidence list in `LarisMeta`; no runtime writes.
-Acceptance: each direction reaches its playbook within `brain.max_depth` steps without search; budgets reported.
+The model gets a brief (the hub a workflow routes to, summaries only) in the prompt and one tool, `use_system_brain`
+(`index`, `open`, `read`); a note deeper than `brain.max_depth` steps from the root is refused; the notes are
+confidential and covered by the leak guard.
+Acceptance: each direction reaches its playbook within `brain.max_depth` steps without search; budgets reported; the
+brain folder is unchanged after every operation.
 
 ### SR-S6 — Model proxy and remote tools
 Owner: server
