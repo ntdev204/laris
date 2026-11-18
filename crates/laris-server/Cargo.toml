@@ -16,6 +16,7 @@ hyper = { version = "1", default-features = false, features = ["http1", "server"
 hyper-util = { version = "0.1", default-features = false, features = ["tokio", "service", "server"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 hmac = "0.12"
+regex = "1"
 serde = "1"
 sha2 = "0.10"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres"] }

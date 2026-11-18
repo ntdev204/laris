@@ -921,6 +921,8 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - P2 client with bounded concurrency and stream passthrough; `/chat` and `/embed` end to end; LLM-rung scenario
 - Validation:
   - Contract tests against the Python model service (placeholder); first-chunk latency measured; scenario passes
+  - Behind the T146 gateway: reasoning from the model service never appears in a chat body; the system prompt and
+    the canary never leave
 - Status: pending
 
 ## Phase 32 — Server: RAG
@@ -957,13 +959,58 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 
 ### T146 — Policy gateway, integrity lock, leak guard
 - Requirements: SR-S4
-- Depends: T144
+- Depends: T141
 - Deliverables:
   - Composition from `.laris/`, integrity lock compatible with `integrity.lock`, leak guard, private reasoning,
     `/workflows` and `/help`
 - Validation:
   - Confidentiality suite; changed policy stops the server; no reasoning in chat bodies
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18, before T144. `Depends` was T144 and is now T141: the gateway is a `Backend` that wraps
+  another `Backend`, so it needs the T141 seam and not the P2 client, and its validation ran against a scripted
+  model; T144 puts the P2 client behind it and repeats the "no reasoning in chat bodies" check with the real model
+  service (added to T144's validation)
+  (`main` wraps `NoBackend` for now, so a running server still answers 502 until T144). No new crate (`regex`,
+  already vendored for `laris-policy`, added to `laris-server`). New module `laris-server::policy`: `integrity`
+  (reads every protected file once into a `Snapshot`, hashes those bytes, compares with `.laris/integrity.lock`, and
+  everything served is built from the same bytes, so a file changed after the check cannot reach the prompt; the
+  protected set is generation 1's: `LARIS.md`, help, `prompts`, `rules`, `workflows`, `brain`, `vault`; symlinks and
+  oversized trees are refused; `render_lock` reproduces the committed lock byte for byte, which a test asserts, so
+  the Python harness and this one read each other's locks), `yaml` (a reader for the YAML subset the policy files
+  use; no YAML crate is approved, so unsupported syntax is an error, never a guess; owner may later replace it with
+  an approved crate), `compose` (manifest, modules, `LARIS.md` then `rules/*.md` inside `internal_policy`, the
+  client's own layers before the rules, undeclared placeholder is an error, instruction files over the limit fail
+  closed, client text is not re-expanded and a label cannot break its comment), `workflows` (the seven
+  workflows; every file must load; phases and instructions stay on the server), `guard` (`SecretRedactor`:
+  environment secrets by name marker, with `MASTER` and `DSN` added so the server's own secrets are covered, token
+  shapes, own paths; `LeakDetector`: hashed 7-word shingles, two hits make a leak, plus a per-session HMAC canary;
+  `StreamGuard`: 160-character hold-back, a leak ends the answer), `reasoning` (`ThinkSplitter` for inline tags cut
+  anywhere, `reasoning_content` and `reasoning`/`thinking`/`thoughts` keys diverted, `ReasoningSink`,
+  `MemoryReasoning` bounded ring), `gateway` (`Policy::load`, `PolicyGateway`: one system message from the server,
+  a client `system` message dropped, tools narrowed to the workflow list with `update_plan` kept, summary kind has no
+  tools, tool calls assembled and dropped if their arguments repeat internal text, reasoning recorded when the
+  answer ends, fails or the client leaves) and `routes` (`GET /v1/laris/workflows`, `GET /v1/laris/help`, `GET
+  /v1/admin/reasoning` with `reasoning.read`). `main` loads the policy before it listens and exits 1 if it differs
+  from the lock; `laris-server policy verify|lock` checks and refreshes the lock (the owner runs `lock` after
+  approving a policy change). Settings: `LARIS_SERVER__POLICY_ROOT` (required), `ASSISTANT_NAME`, `REPLY_LANGUAGE`
+  (default English), `THINK_TAGS`, `REASONING_KEEP`, the prompt limits and the guard numbers, each with its
+  generation-1 default. Tests: `tests/policy.rs` 28 (lock identity with generation 1; changed, added, missing, broken
+  lock and link; the owner's relock; composition; the gateway over a scripted model; the confidentiality suite of 336
+  attacks (verbatim, upper-case, spaced, fenced, inside and after `<think>`, delivered in random 1 to 40 character
+  pieces, from every confidential source) in which every attack was blocked and no run of 8 words of internal text
+  reached the client; with leak detection switched off the suite fails, checked once by hand), 7 unit tests in
+  `yaml`, `reasoning`, `integrity` and `gateway`. `cargo fmt --check`, `clippy -D warnings`, `cargo test` (511 pass,
+  no PostgreSQL in this run), `cargo deny check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
+  Limits: the guard is a rule over text. It stops verbatim and lightly altered copies of the internal text; a
+  paraphrase, a translation, spelling the text out letter by letter or an encoding is not stopped, so the
+  confidentiality limit is "no run of 8 words", not "no information". Reasoning is kept in memory (200 records)
+  without the key id and is lost at restart: `Backend::chat` carries no principal, so T150 (traces) decides the
+  stored form and adds the key. System skills (`.laris/skills`) are not composed into the prompt: the client's
+  skills index is, as in generation 1, and `skills/` is outside the lock. The brain consult, the brain tools and the
+  `LarisMeta` evidence list are T147. The guard messages are English constants in the server, not the Vietnamese
+  `strings.yaml` entries, so a default server speaks English; `strings.yaml` is still read by nothing here. The
+  canary and the guard hold only the confidential prompt modules and rules, not `brain/` (T147). Not run: the
+  PostgreSQL tests of T142 and T143 (no `LARIS_TEST_PG_DSN`); T146 touches no table.
 
 ### T147 — System brain service
 - Requirements: SR-S5
