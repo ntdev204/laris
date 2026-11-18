@@ -22,6 +22,15 @@ pub type ChunkStream = BoxStream<'static, Result<ChatResponseChunk, StreamFailur
 pub trait Backend: Send + Sync + 'static {
     /// Starts an answer. An `Err` here is an HTTP status; failures after this returns go in the stream.
     fn chat(&self, request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>>;
+    /// Starts an answer for the key `caller` (its id), when the request came from one. A backend that does not need
+    /// to know who asked leaves this as it is.
+    fn chat_for(
+        &self,
+        request: ChatRequest,
+        _caller: Option<&str>,
+    ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        self.chat(request)
+    }
     /// Embeds texts.
     fn embed(&self, request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>>;
 }

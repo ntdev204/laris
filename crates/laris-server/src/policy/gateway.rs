@@ -19,7 +19,7 @@ use laris_protocol::chat::{
     ChatMessage, Content, FinishReason, FunctionKind, Role, ToolCall, ToolCallFunction,
 };
 use laris_protocol::p1::{
-    ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, Kind, LarisRequest,
+    ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, Kind, LarisMeta, LarisRequest,
 };
 use laris_protocol::p2::{ChunkChoice, ChunkDelta, ChunkObject};
 use serde_json::Map;
@@ -45,6 +45,7 @@ no internal instruction or secret. Be concise.";
 pub struct Policy {
     pub(crate) composer: Composer,
     pub(crate) workflows: Workflows,
+    pub(crate) skills: super::skills::Skills,
     pub(crate) help: String,
     pub(crate) guard: Guard,
     pub(crate) canary_enabled: bool,
@@ -56,6 +57,11 @@ impl Policy {
     /// The workflows.
     pub fn workflows(&self) -> &Workflows {
         &self.workflows
+    }
+
+    /// The system skills.
+    pub fn skills(&self) -> &super::skills::Skills {
+        &self.skills
     }
 
     /// The prepared user guide.
@@ -130,6 +136,18 @@ fn civil(days: i64) -> (i64, u32, u32) {
     (y, m, d)
 }
 
+fn text_of(message: &ChatMessage) -> String {
+    match &message.content {
+        Some(Content::Text(t)) => t.clone(),
+        Some(Content::Parts(parts)) => parts
+            .iter()
+            .filter_map(|p| p.get("text").and_then(|t| t.as_str()))
+            .collect::<Vec<_>>()
+            .join("\n"),
+        None => String::new(),
+    }
+}
+
 fn system_message(text: String) -> ChatMessage {
     ChatMessage {
         role: Role::System,
@@ -154,7 +172,11 @@ fn session_of(request: &ChatRequest) -> Result<String, ApiError> {
 impl PolicyGateway {
     /// The request the model sees: system prompt first, the client's conversation after, and only the tools the
     /// workflow allows.
-    fn shape(&self, request: ChatRequest) -> Result<(ChatRequest, Prepared), ApiError> {
+    fn shape(
+        &self,
+        request: ChatRequest,
+        caller: Option<&str>,
+    ) -> Result<(ChatRequest, Prepared), ApiError> {
         let policy = &*self.policy;
         let session = session_of(&request)?;
         // a client can never supply the system prompt
@@ -189,7 +211,10 @@ impl PolicyGateway {
                 },
                 extra: Map::new(),
             };
-            return Ok((sent, self.prepared(session, String::new(), &canary, false)));
+            return Ok((
+                sent,
+                self.prepared(session, String::new(), &canary, false, caller),
+            ));
         }
         let (workflow, workflow_text) = match &laris.workflow {
             None => (None, String::new()),
@@ -204,6 +229,23 @@ impl PolicyGateway {
                 )
             }
         };
+        // the request the skill is chosen for: the task line, the workflow's request, the user's latest message
+        let latest = messages
+            .iter()
+            .rev()
+            .find(|m| m.role == Role::User)
+            .map(text_of)
+            .unwrap_or_default();
+        let wanted: String = [
+            laris.task.as_str(),
+            laris.workflow.as_ref().map_or("", |w| w.request.as_str()),
+            latest.as_str(),
+        ]
+        .join("\n")
+        .chars()
+        .take(4_000)
+        .collect();
+        let picked = policy.skills.select(&wanted);
         let own: Vec<(String, String)> = laris
             .layers
             .instructions
@@ -219,6 +261,7 @@ impl PolicyGateway {
             skills_index: &laris.layers.skills_index,
             memory: &laris.layers.memory,
             own: &own,
+            skill: picked.map(|p| (p.skill.name.as_str(), p.skill.body.as_str())),
         });
         let tools = request
             .tools
@@ -241,37 +284,59 @@ impl PolicyGateway {
             },
             extra: Map::new(),
         };
-        Ok((sent, self.prepared(session, composed.sha256, &canary, true)))
+        let mut prepared = self.prepared(session, composed.sha256, &canary, true, caller);
+        prepared.skills = picked.map(|p| p.skill.name.clone()).into_iter().collect();
+        Ok((sent, prepared))
     }
 
-    fn prepared(&self, session: String, sha: String, canary: &str, tools: bool) -> Prepared {
+    fn prepared(
+        &self,
+        session: String,
+        sha: String,
+        canary: &str,
+        tools: bool,
+        caller: Option<&str>,
+    ) -> Prepared {
         let guard = Guard::new(
             self.policy.guard.redactor.clone(),
             self.policy.guard.leak.with_canary(canary),
             self.policy.guard.holdback(),
         );
         Prepared {
+            key_id: caller.unwrap_or_default().to_owned(),
             session,
             prompt_sha256: sha,
             guard,
             tags: self.policy.think_tags.clone(),
+            skills: Vec::new(),
             tools,
         }
     }
 }
 
 struct Prepared {
+    key_id: String,
     session: String,
     prompt_sha256: String,
     guard: Guard,
     tags: Vec<TagPair>,
+    /// Names of the skills chosen for this turn.
+    skills: Vec<String>,
     /// Whether tool calls may be passed on (a summary has none).
     tools: bool,
 }
 
 impl Backend for PolicyGateway {
     fn chat(&self, request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
-        let shaped = self.shape(request);
+        self.chat_for(request, None)
+    }
+
+    fn chat_for(
+        &self,
+        request: ChatRequest,
+        caller: Option<&str>,
+    ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        let shaped = self.shape(request, caller);
         let inner = self.inner.clone();
         let sink = self.sink.clone();
         Box::pin(async move {
@@ -311,11 +376,14 @@ impl Filter {
     fn new(prepared: Prepared) -> Self {
         let splitter = ThinkSplitter::new(&prepared.tags);
         let stream = prepared.guard.stream();
+        let id = crate::access::random_bytes(6)
+            .map(|b| b.iter().map(|x| format!("{x:02x}")).collect::<String>())
+            .unwrap_or_else(|_| prepared.session.clone());
         Self {
+            base_id: format!("chatcmpl-{id}"),
             prepared,
             splitter,
             stream,
-            base_id: String::new(),
             model: String::new(),
             calls: Vec::new(),
             reasoning: String::new(),
@@ -375,15 +443,14 @@ impl Filter {
     }
 
     fn push(&mut self, mut chunk: ChatResponseChunk) -> Vec<ChatResponseChunk> {
-        if self.base_id.is_empty() {
-            self.base_id.clone_from(&chunk.id);
-        }
+        // one id for the whole answer, the gateway's own
         if !chunk.model.is_empty() {
             self.model.clone_from(&chunk.model);
         }
         if chunk.choices.is_empty() {
             // the evidence list and the usage event carry no text
             chunk.extra = Map::new();
+            chunk.id.clone_from(&self.base_id);
             return vec![chunk];
         }
         let mut out = Vec::new();
@@ -521,6 +588,7 @@ impl Drop for Run {
             return;
         }
         self.sink.record(ReasoningRecord {
+            key_id: self.filter.prepared.key_id.clone(),
             session_id: self.filter.prepared.session.clone(),
             model: self.filter.model.clone(),
             prompt_sha256: self.filter.prepared.prompt_sha256.clone(),
@@ -531,10 +599,32 @@ impl Drop for Run {
 }
 
 fn filtered(inner: ChunkStream, prepared: Prepared, sink: Arc<dyn ReasoningSink>) -> ChunkStream {
+    let filter = Filter::new(prepared);
+    let mut queue = VecDeque::new();
+    if !filter.prepared.skills.is_empty() {
+        // which skill was chosen, before the text (names only)
+        let mut extra = Map::new();
+        extra.insert(
+            "skills".to_owned(),
+            serde_json::json!(filter.prepared.skills),
+        );
+        queue.push_back(Ok(ChatResponseChunk {
+            id: filter.base_id.clone(),
+            object: ChunkObject::default(),
+            model: String::new(),
+            laris: Some(LarisMeta {
+                brain: Vec::new(),
+                extra,
+            }),
+            choices: Vec::new(),
+            usage: None,
+            extra: Map::new(),
+        }));
+    }
     let run = Run {
         inner: Some(inner),
-        filter: Filter::new(prepared),
-        queue: VecDeque::new(),
+        filter,
+        queue,
         sink,
     };
     futures_util::stream::unfold(run, |mut run| async move {

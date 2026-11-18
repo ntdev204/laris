@@ -181,6 +181,81 @@ impl SecretRedactor {
     }
 }
 
+static SPACED: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b\w(?: \w\b){2,}").expect("valid"));
+static DOTTED: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b\w(?:[-._·•*|/\\,;:]\w\b){2,}").expect("valid"));
+
+/// Characters that show nothing: zero-width and direction marks, soft hyphen, byte order mark.
+fn invisible(c: char) -> bool {
+    matches!(c, '\u{ad}' | '\u{200b}'..='\u{200f}' | '\u{202a}'..='\u{202e}' | '\u{2060}'..='\u{2064}' | '\u{feff}')
+}
+
+/// A letter that looks like a Latin one (Cyrillic, Greek, full-width) as that Latin letter.
+fn confusable(c: char) -> char {
+    match c {
+        'а' | 'α' => 'a',
+        'в' => 'b',
+        'с' | 'ϲ' => 'c',
+        'е' | 'ё' => 'e',
+        'һ' => 'h',
+        'і' | 'ι' | 'ї' => 'i',
+        'ј' => 'j',
+        'к' | 'κ' => 'k',
+        'м' => 'm',
+        'о' | 'ο' => 'o',
+        'р' | 'ρ' => 'p',
+        'ѕ' => 's',
+        'т' | 'τ' => 't',
+        'ν' => 'v',
+        'х' | 'χ' => 'x',
+        'у' | 'υ' => 'y',
+        '\u{ff21}'..='\u{ff3a}' => char::from_u32(c as u32 - 0xff21 + 'A' as u32).unwrap_or(c),
+        '\u{ff41}'..='\u{ff5a}' => char::from_u32(c as u32 - 0xff41 + 'a' as u32).unwrap_or(c),
+        _ => c,
+    }
+}
+
+/// The text with the tricks that hide a copy from a word match undone: invisible characters dropped, look-alike
+/// letters folded to Latin, and letters spread out (`i g n o r e`, `i.g.n.o.r.e`) joined again. `None` when
+/// nothing changed, so the common case costs one scan.
+fn plain_view(text: &str) -> Option<String> {
+    let mut changed = false;
+    let mut folded = String::with_capacity(text.len());
+    for c in text.chars() {
+        if invisible(c) {
+            changed = true;
+            continue;
+        }
+        let f = confusable(c);
+        changed |= f != c;
+        folded.push(f);
+    }
+    let mut out = folded;
+    for pattern in [&*SPACED, &*DOTTED] {
+        if pattern.is_match(&out) {
+            changed = true;
+            out = pattern
+                .replace_all(&out, |m: &regex::Captures<'_>| {
+                    m[0].chars()
+                        .filter(|c| c.is_alphanumeric())
+                        .collect::<String>()
+                })
+                .into_owned();
+        }
+    }
+    changed.then_some(out)
+}
+
+/// Lower-case letters and digits only: the form in which a canary is looked for.
+fn bare(text: &str) -> String {
+    text.chars()
+        .filter(|c| !invisible(*c))
+        .map(confusable)
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
 fn shingle_hash(words: &[String]) -> u64 {
     let digest = Sha256::digest(words.join(" ").as_bytes());
     u64::from_be_bytes(digest[..8].try_into().expect("a digest has 32 bytes"))
@@ -201,6 +276,7 @@ pub struct LeakDetector {
     min_hits: usize,
     enabled: bool,
     canary: String,
+    canary_bare: String,
     /// The budget was reached: later sources are only partly covered.
     pub truncated: bool,
 }
@@ -230,6 +306,7 @@ impl LeakDetector {
             min_hits: settings.leak_min_shingles.max(1),
             enabled: settings.leak_detection,
             canary: String::new(),
+            canary_bare: String::new(),
             truncated,
         }
     }
@@ -238,6 +315,7 @@ impl LeakDetector {
     pub fn with_canary(&self, canary: &str) -> Self {
         Self {
             canary: canary.to_owned(),
+            canary_bare: bare(canary),
             ..self.clone()
         }
     }
@@ -247,14 +325,23 @@ impl LeakDetector {
         self.shingles.len()
     }
 
-    /// Whether `text` holds the canary or enough shingles of internal text.
+    /// Whether `text` holds the canary or enough shingles of internal text, also when the copy is spread out,
+    /// has invisible characters between its letters or uses look-alike letters.
     pub fn leaked(&self, text: &str) -> bool {
-        if !self.canary.is_empty() && text.contains(&self.canary) {
+        let plain = plain_view(text);
+        if !self.canary.is_empty()
+            && (text.contains(&self.canary)
+                || bare(plain.as_deref().unwrap_or(text)).contains(&self.canary_bare))
+        {
             return true;
         }
         if !self.enabled || self.shingles.is_empty() {
             return false;
         }
+        self.shingled(text) || plain.is_some_and(|p| self.shingled(&p))
+    }
+
+    fn shingled(&self, text: &str) -> bool {
         let words = words_of(text);
         if words.len() < self.n {
             return false;

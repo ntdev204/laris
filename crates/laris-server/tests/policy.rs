@@ -472,7 +472,7 @@ async fn reasoning_never_reaches_the_client_whatever_form_it_takes() {
             got.wire
         );
     }
-    let kept = sink.recent(5);
+    let kept = sink.newest(5);
     assert_eq!(kept.len(), 1);
     for part in ["plan A", "plan B", "plan C", "plan D"] {
         assert!(kept[0].reasoning.contains(part));
@@ -499,7 +499,7 @@ async fn reasoning_is_kept_even_when_the_client_leaves() {
     let mut stream = gw.chat(request(json!({}))).await.unwrap();
     let _ = stream.next().await; // the client reads nothing more
     drop(stream);
-    assert_eq!(sink.recent(1)[0].reasoning, "private plan");
+    assert_eq!(sink.newest(1)[0].reasoning, "private plan");
 }
 
 #[tokio::test]
@@ -1018,7 +1018,7 @@ async fn no_reasoning_in_a_chat_body_and_the_operator_can_read_it() {
     }
     // the stream ended, so the record is written
     for _ in 0..50 {
-        if !reasoning.recent(1).is_empty() {
+        if !reasoning.newest(1).is_empty() {
             break;
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
@@ -1062,16 +1062,19 @@ fn settings_come_from_the_environment() {
         ("LARIS_SERVER__LEAK_MIN_SHINGLES", "3"),
         ("LARIS_SERVER__CANARY", "false"),
         ("LARIS_SERVER__THINK_TAGS", r#"[["<a>","</a>"]]"#),
+        ("LARIS_SERVER__SKILL_MIN_SCORE", "7.5"),
     ]))
     .unwrap();
     assert_eq!(cfg.prompt.reply_language, "Vietnamese");
     assert_eq!(cfg.prompt.assistant_name, "LARIS");
     assert_eq!(cfg.guard.leak_min_shingles, 3);
     assert!(!cfg.guard.canary_enabled);
+    assert_eq!(cfg.skills.min_score, 7.5);
     assert_eq!(cfg.think_tags, [("<a>".to_owned(), "</a>".to_owned())]);
     for bad in [
         ("LARIS_SERVER__LEAK_MIN_SHINGLES", "0"),
         ("LARIS_SERVER__CANARY", "maybe"),
+        ("LARIS_SERVER__SKILL_MARGIN", "-1"),
         ("LARIS_SERVER__THINK_TAGS", "<think>"),
     ] {
         let e =
@@ -1098,4 +1101,380 @@ fn every_policy_yaml_file_loads_with_the_subset_reader() {
     assert_eq!(n, 9);
     // the reasoning sink is a trait object the server can swap for storage (T150)
     let _: Arc<dyn ReasoningSink> = Arc::new(MemoryReasoning::new(1));
+}
+
+// ---------------------------------------------------------------- skills chosen by context
+
+fn skills() -> laris_server::policy::Skills {
+    laris_server::policy::Skills::load(&repo(), laris_server::policy::SkillSettings::default())
+}
+
+#[test]
+fn every_system_skill_loads() {
+    let s = skills();
+    assert!(s.problems.is_empty(), "{:?}", s.problems);
+    assert_eq!(s.len(), 16);
+    assert!(s.names().contains(&"research-gap"));
+}
+
+#[test]
+fn the_skill_that_fits_the_request_is_chosen_and_otherwise_none() {
+    use laris_server::policy::Why;
+    let s = skills();
+    for (request, want) in [
+        (
+            "Is this research gap real? has anyone done adaptive MPC with tire slip on Ackermann vehicles?",
+            Some("research-gap"),
+        ),
+        (
+            "Which journal should I submit my paper to?",
+            Some("journal-selection"),
+        ),
+        (
+            "Please review this manuscript as a peer reviewer and write a referee report",
+            Some("peer-review"),
+        ),
+        (
+            "write a grant proposal for a funding call",
+            Some("grant-proposal"),
+        ),
+        (
+            "Design an experiment with ablation and baselines to validate my method",
+            Some("experiment-and-validation"),
+        ),
+        (
+            "prove this theorem, I need a lemma and a proof",
+            Some("theory-and-proof"),
+        ),
+        (
+            "make slides for my thesis defense presentation",
+            Some("research-presentation"),
+        ),
+        (
+            "plan my research roadmap for the next two years",
+            Some("research-roadmap"),
+        ),
+        (
+            "is my result reproducible? set up code and seeds",
+            Some("reproducible-code"),
+        ),
+        (
+            "do a literature review of perovskite stability",
+            Some("literature-review"),
+        ),
+        ("what is the capital of France", None),
+        ("hello", None),
+        ("search the corpus for perovskite stability", None),
+        ("write a python script to parse csv", None),
+        // two skills fit about equally: none is better than a coin toss
+        (
+            "Help me write the abstract and introduction of my paper",
+            None,
+        ),
+    ] {
+        let got = s.select(request).map(|p| p.skill.name.as_str());
+        assert_eq!(got, want, "{request}");
+    }
+    // naming a skill wins over the scores, and only a real name counts
+    let named = s.select("/research-gap what do you think?").unwrap();
+    assert_eq!(
+        (named.skill.name.as_str(), named.why),
+        ("research-gap", Why::Named)
+    );
+    assert!(s.select("/not-a-skill hello").is_none());
+}
+
+fn system_of(seen: &Seen) -> String {
+    match &seen.lock().unwrap().last().unwrap().messages[0].content {
+        Some(laris_protocol::chat::Content::Text(t)) => t.clone(),
+        _ => panic!("system text"),
+    }
+}
+
+#[tokio::test]
+async fn only_the_chosen_skill_reaches_the_prompt_and_no_list_of_skills() {
+    let policy = load(&[]);
+    let (gw, seen, _) = gateway(&policy, vec![Ok(text("ok")), Ok(stop())]);
+    let got = ask(
+        &gw,
+        json!({"messages": [{"role": "user", "content":
+            "Is this research gap real? has anyone done adaptive MPC with tire slip?"}]}),
+    )
+    .await;
+    let system = system_of(&seen);
+    assert!(system.contains("<skill name=\"research-gap\" authority=\"low\">"));
+    assert!(system.contains("never overrides the policy above"));
+    assert!(
+        system.find("<skill ").unwrap() > system.find("<internal_policy").unwrap(),
+        "below the policy"
+    );
+    for other in skills()
+        .names()
+        .into_iter()
+        .filter(|n| *n != "research-gap")
+    {
+        assert!(
+            !system.contains(&format!("name: {other}")),
+            "{other} is in the prompt"
+        );
+    }
+    assert!(
+        !system.contains("<skills>"),
+        "no skills index from the server"
+    );
+    // the client is told which skill, by name, before the text
+    assert!(
+        got.wire.contains("\"skills\":[\"research-gap\"]"),
+        "{}",
+        got.wire
+    );
+    assert!(got.wire.find("skills").unwrap() < got.wire.find("\"content\"").unwrap());
+}
+
+#[tokio::test]
+async fn no_fitting_skill_means_no_skill_section_and_a_summary_never_has_one() {
+    let policy = load(&[]);
+    let (gw, seen, _) = gateway(&policy, vec![Ok(stop())]);
+    let got = ask(
+        &gw,
+        json!({"messages": [{"role": "user", "content": "what is the capital of France"}]}),
+    )
+    .await;
+    assert!(!system_of(&seen).contains("<skill "));
+    assert!(!got.wire.contains("skills"));
+    ask(
+        &gw,
+        json!({"laris": {"kind": "summarize"}, "messages": [{"role": "user",
+            "content": "/research-gap is this novel? research gap literature"}]}),
+    )
+    .await;
+    assert!(!system_of(&seen).contains("<skill "));
+}
+
+#[tokio::test]
+async fn one_answer_has_one_id_on_every_event() {
+    let policy = load(&[]);
+    let (gw, _, _) = gateway(&policy, vec![Ok(text("a")), Ok(text("b")), Ok(stop())]);
+    let mut stream = gw
+        .chat(request(
+            json!({"messages": [{"role": "user", "content": "/research-gap x"}]}),
+        ))
+        .await
+        .unwrap();
+    let mut ids = BTreeSet::new();
+    while let Some(Ok(c)) = stream.next().await {
+        ids.insert(c.id);
+    }
+    assert_eq!(ids.len(), 1);
+    assert!(ids.iter().next().unwrap().starts_with("chatcmpl-"));
+}
+
+#[test]
+fn a_broken_skill_is_skipped_and_named_and_skills_stay_outside_the_lock() {
+    let root = policy_copy("skills");
+    std::fs::write(
+        root.join(".laris/skills/research-gap/SKILL.md"),
+        "no front matter",
+    )
+    .unwrap();
+    std::fs::create_dir_all(root.join(".laris/skills/extra-one")).unwrap();
+    std::fs::write(
+        root.join(".laris/skills/extra-one/SKILL.md"),
+        "---\nname: extra-one\ndescription: A new skill about quantum widgets and their calibration.\n---\n# Extra\nBody.",
+    )
+    .unwrap();
+    let s =
+        laris_server::policy::Skills::load(&root, laris_server::policy::SkillSettings::default());
+    assert_eq!(s.len(), 16);
+    assert_eq!(s.problems, ["research-gap: no front matter"]);
+    assert_eq!(
+        s.select("calibration of quantum widgets")
+            .unwrap()
+            .skill
+            .name,
+        "extra-one"
+    );
+    // skills are data below the policy: changing them does not break the lock
+    integrity::verified(&root).expect("the lock does not cover skills");
+}
+
+#[test]
+fn a_long_skill_is_cut_to_the_budget_and_selection_can_be_switched_off() {
+    let small = laris_server::policy::SkillSettings {
+        max_chars: 200,
+        ..Default::default()
+    };
+    let s = laris_server::policy::Skills::load(&repo(), small);
+    let body = &s.select("/research-gap").unwrap().skill.body;
+    assert!(body.contains("[... cut to fit the skill budget]"));
+    assert!(body.chars().count() < 260);
+    let off = laris_server::policy::SkillSettings {
+        enabled: false,
+        ..Default::default()
+    };
+    assert!(
+        laris_server::policy::Skills::load(&repo(), off)
+            .select("/research-gap")
+            .is_none()
+    );
+}
+
+// ---------------------------------------------------------------- reasoning with the key id
+
+#[tokio::test]
+async fn the_reasoning_record_names_the_key_that_asked() {
+    let policy = load(&[]);
+    let (gw, _, sink) = gateway(
+        &policy,
+        vec![
+            Ok(chunk(json!({"reasoning_content": "thought"}), None)),
+            Ok(stop()),
+        ],
+    );
+    let stream = gw
+        .chat_for(request(json!({})), Some("key-abc"))
+        .await
+        .unwrap();
+    let _ = collect(stream).await;
+    assert_eq!(sink.newest(1)[0].key_id, "key-abc");
+}
+
+fn pg_env() -> Option<String> {
+    let dsn = std::env::var("LARIS_TEST_PG_DSN")
+        .ok()
+        .filter(|v| !v.trim().is_empty());
+    if dsn.is_none() {
+        eprintln!("LARIS_TEST_PG_DSN is not set: PostgreSQL test skipped");
+    }
+    dsn
+}
+
+#[tokio::test]
+async fn reasoning_is_stored_in_postgres_with_the_key_and_read_back_by_the_operator() {
+    use laris_server::policy::{PgReasoning, ReasoningStore};
+    use laris_server::storage::{Storage, StorageConfig};
+    use sqlx::Connection;
+    let Some(dsn) = pg_env() else { return };
+    let schema = format!("t146_{}", std::process::id());
+    let mut config = StorageConfig::with_dsn(&dsn);
+    config.schema = Some(schema.clone());
+    let storage = Arc::new(Storage::connect(&config).await.unwrap());
+    let store = Arc::new(PgReasoning::new(storage.clone()));
+    let policy = load(&[]);
+    let model = Model {
+        chunks: vec![
+            Ok(chunk(json!({"reasoning_content": "stored thought"}), None)),
+            Ok(text("Visible.")),
+            Ok(stop()),
+        ],
+        seen: Seen::default(),
+    };
+    let gw = PolicyGateway::new(policy, Arc::new(model), store.clone());
+    let stream = gw
+        .chat_for(request(json!({})), Some("key-pg"))
+        .await
+        .unwrap();
+    let got = collect(stream).await;
+    assert_eq!(got.text, "Visible.");
+    let mut rows = Vec::new();
+    for _ in 0..100 {
+        rows = store.recent(5).await;
+        if !rows.is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(30)).await;
+    }
+    assert_eq!(store.failures(), 0);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(
+        (rows[0].key_id.as_str(), rows[0].reasoning.as_str()),
+        ("key-pg", "stored thought")
+    );
+    assert_eq!(rows[0].session_id, "sess-1");
+    assert!(!rows[0].reasoning.contains("Visible"));
+    storage.close().await;
+    let mut c = sqlx::postgres::PgConnection::connect(&dsn).await.unwrap();
+    sqlx::raw_sql(&format!("DROP SCHEMA IF EXISTS \"{schema}\" CASCADE"))
+        .execute(&mut c)
+        .await
+        .unwrap();
+}
+
+// ---------------------------------------------------------------- disguised copies
+
+#[tokio::test]
+async fn disguised_copies_of_internal_text_are_stopped_too() {
+    let policy = load(&[]);
+    let sources = confidential_sources();
+    let passage: String = sources
+        .iter()
+        .find(|s| s.split_whitespace().count() > 40)
+        .unwrap()
+        .split_whitespace()
+        .skip(5)
+        .take(25)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let spaced = passage
+        .split(' ')
+        .map(|w| w.chars().map(String::from).collect::<Vec<_>>().join(" "))
+        .collect::<Vec<_>>()
+        .join("   ");
+    let dotted = passage
+        .split(' ')
+        .map(|w| w.chars().map(String::from).collect::<Vec<_>>().join("."))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let invisible: String = passage.chars().flat_map(|c| [c, '\u{200b}']).collect();
+    let soft: String = passage.chars().flat_map(|c| [c, '\u{ad}']).collect();
+    let lookalike: String = passage
+        .chars()
+        .map(|c| match c {
+            'a' => 'а',
+            'e' => 'е',
+            'o' => 'о',
+            'p' => 'р',
+            'c' => 'с',
+            _ => c,
+        })
+        .collect();
+    let fullwidth: String = passage
+        .chars()
+        .map(|c| {
+            if c.is_ascii_lowercase() {
+                char::from_u32(c as u32 - 'a' as u32 + 0xff41).unwrap()
+            } else {
+                c
+            }
+        })
+        .collect();
+    let mut rng = Lcg(11);
+    for (name, attack) in [
+        ("spaced letters", spaced),
+        ("dotted letters", dotted),
+        ("zero-width", invisible),
+        ("soft hyphen", soft),
+        ("look-alike letters", lookalike),
+        ("full-width", fullwidth),
+    ] {
+        let got = leak_through(&policy, &attack, &mut rng).await;
+        assert!(
+            got.text.contains("blocked"),
+            "{name} was not stopped: {}",
+            got.text
+        );
+    }
+}
+
+#[test]
+fn ordinary_text_is_not_mistaken_for_a_disguise() {
+    let policy = load(&[]);
+    let leak = policy.guard().leak.clone();
+    for fine in [
+        "The J. R. R. Tolkien estate and the U.S.A. had a 3 x 4 grid.",
+        "Results: a b c d e f g h i j k l m n o p (alphabet) and 1 2 3 4 5 6 7 8 9.",
+        "Perovskite solar cells degrade under humidity; encapsulation helps.",
+    ] {
+        assert!(!leak.leaked(fine), "{fine}");
+    }
 }

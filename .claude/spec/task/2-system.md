@@ -1001,16 +1001,31 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   reached the client; with leak detection switched off the suite fails, checked once by hand), 7 unit tests in
   `yaml`, `reasoning`, `integrity` and `gateway`. `cargo fmt --check`, `clippy -D warnings`, `cargo test` (511 pass,
   no PostgreSQL in this run), `cargo deny check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
-  Limits: the guard is a rule over text. It stops verbatim and lightly altered copies of the internal text; a
-  paraphrase, a translation, spelling the text out letter by letter or an encoding is not stopped, so the
-  confidentiality limit is "no run of 8 words", not "no information". Reasoning is kept in memory (200 records)
-  without the key id and is lost at restart: `Backend::chat` carries no principal, so T150 (traces) decides the
-  stored form and adds the key. System skills (`.laris/skills`) are not composed into the prompt: the client's
-  skills index is, as in generation 1, and `skills/` is outside the lock. The brain consult, the brain tools and the
-  `LarisMeta` evidence list are T147. The guard messages are English constants in the server, not the Vietnamese
-  `strings.yaml` entries, so a default server speaks English; `strings.yaml` is still read by nothing here. The
-  canary and the guard hold only the confidential prompt modules and rules, not `brain/` (T147). Not run: the
-  PostgreSQL tests of T142 and T143 (no `LARIS_TEST_PG_DSN`); T146 touches no table.
+  Follow-up, same day (branch `feature/T146-limits`): (1) skills are chosen by context and never listed in the
+  prompt: `policy::skills` reads `.laris/skills/*/SKILL.md` (front matter name and description), and per turn picks
+  one skill from the user's message, task line and workflow request: a `/name` the user typed wins, otherwise BM25
+  over name (x3) and description, chosen when the score reaches `SKILL_MIN_SCORE` (5.0) and beats the runner-up by
+  `SKILL_MARGIN` (1.2); otherwise none. Only the chosen skill's text enters the prompt, as `<skill ...
+  authority="low">` after the workflow's place and below the policy; its name goes to the client in a `laris`
+  event (`skills`) before the text; a summary never gets one. Calibrated on 16 skills and 17 requests (all ten
+  fitting requests chosen, the five unrelated ones none, one two-way tie none); `SKILL_SELECTION`,
+  `SKILL_MAX_CHARS` (12000) too. A broken skill is skipped and named, not fatal; skills stay outside the lock, as in
+  generation 1. (2) Reasoning is stored in PostgreSQL with the key id: `Backend::chat_for(request, caller)` (default
+  calls `chat`), `PgReasoning` writes the generation-1 `traces` row (key, session, model, prompt hash, reasoning; no
+  answer text; best effort, failures counted), `/v1/admin/reasoning` reads it back, `main` uses it; the in-memory
+  ring stays for tests. `LARIS_SERVER__REASONING_KEEP` is gone. (3) The guard sees through disguises: invisible
+  characters dropped, Cyrillic, Greek and full-width look-alikes folded, letters spread out by spaces or dots
+  joined, and the canary compared on letters and digits only; tests stop each, and fail with the view switched off.
+  (4) One answer id on every event (the gateway's own). (5) The PostgreSQL tests were run: throwaway
+  `postgres:16` container on 127.0.0.1:55432 (not the trial server's), 522 tests pass including the T142 and T143
+  ones, plus the new PostgreSQL reasoning test. 11 more tests in `tests/policy.rs`.
+  Limits that remain: the guard is a rule over text. It stops copies and disguised copies of the internal text; a
+  paraphrase, a translation or an encoding such as base64 is not stopped, so the limit is "no run of 8 words", not
+  "no information". Skill matching is by words: a request in Vietnamese reaches a skill only by name until the
+  descriptions carry Vietnamese terms (a change to the skills, the owner's call); a skill's `references/` files are
+  not sent. A secret spelled out letter by letter is not redacted (only internal text is checked that way). The
+  brain consult, the brain tools, the `LarisMeta` evidence list and the brain texts in the guard are T147. Guard
+  messages are English constants by design (default English); `strings.yaml` is read by nothing on the server.
 
 ### T147 — System brain service
 - Requirements: SR-S5

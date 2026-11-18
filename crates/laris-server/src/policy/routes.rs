@@ -69,6 +69,7 @@ pub async fn help(State(state): Shared, Extension(scope): Scope, request: Reques
 
 #[derive(Serialize)]
 struct ReasoningView {
+    key_id: String,
     session_id: String,
     model: String,
     prompt_sha256: String,
@@ -96,8 +97,10 @@ pub async fn reasoning(
             .map_or(50, |n| n.clamp(1, 500));
         let items: Vec<ReasoningView> = store
             .recent(limit)
+            .await
             .into_iter()
             .map(|r| ReasoningView {
+                key_id: r.key_id,
                 session_id: r.session_id,
                 model: r.model,
                 prompt_sha256: r.prompt_sha256,

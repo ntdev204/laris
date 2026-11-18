@@ -3,6 +3,7 @@
 //! Some models write their reasoning inline between tags (`<think>…</think>`); others send it in a separate
 //! field. Either way it is diverted here, handed to a [`ReasoningSink`] for the operator, and never streamed.
 
+use futures_util::future::BoxFuture;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
@@ -110,6 +111,8 @@ impl ThinkSplitter {
 /// What the operator keeps of one answer's reasoning. It holds no answer text.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReasoningRecord {
+    /// Id of the key that asked; empty when the request came without one.
+    pub key_id: String,
     /// Session id.
     pub session_id: String,
     /// Model name.
@@ -126,6 +129,12 @@ pub struct ReasoningRecord {
 pub trait ReasoningSink: Send + Sync + 'static {
     /// Keeps one record.
     fn record(&self, record: ReasoningRecord);
+}
+
+/// A sink the operator can also read back.
+pub trait ReasoningStore: ReasoningSink {
+    /// The newest `limit` records, newest first.
+    fn recent(&self, limit: usize) -> BoxFuture<'_, Vec<ReasoningRecord>>;
 }
 
 /// A bounded in-memory store, newest last. The operator reads it at `GET /v1/admin/reasoning`.
@@ -145,9 +154,15 @@ impl MemoryReasoning {
     }
 
     /// The newest `limit` records, newest first.
-    pub fn recent(&self, limit: usize) -> Vec<ReasoningRecord> {
+    pub fn newest(&self, limit: usize) -> Vec<ReasoningRecord> {
         let items = self.items.lock().unwrap_or_else(|e| e.into_inner());
         items.iter().rev().take(limit).cloned().collect()
+    }
+}
+
+impl ReasoningStore for MemoryReasoning {
+    fn recent(&self, limit: usize) -> BoxFuture<'_, Vec<ReasoningRecord>> {
+        Box::pin(async move { self.newest(limit) })
     }
 }
 
@@ -238,6 +253,7 @@ mod tests {
         let store = MemoryReasoning::new(2);
         for i in 0..3 {
             store.record(ReasoningRecord {
+                key_id: String::new(),
                 session_id: format!("s{i}"),
                 model: String::new(),
                 prompt_sha256: String::new(),
@@ -245,7 +261,7 @@ mod tests {
                 at: 0.0,
             });
         }
-        let ids: Vec<_> = store.recent(10).into_iter().map(|r| r.session_id).collect();
+        let ids: Vec<_> = store.newest(10).into_iter().map(|r| r.session_id).collect();
         assert_eq!(ids, ["s2", "s1"]);
     }
 }
