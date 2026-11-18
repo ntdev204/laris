@@ -39,9 +39,9 @@ Exit criteria:
 
 ### Phase 29 — System: harness
 Goal: tools, policy, sandbox, evidence and learning data around the loop.
-Tasks: T132, T133, T134, T135, T136, T137, T138
+Tasks: T132, T133, T134, T135, T214, T136, T137, T138
 Exit criteria:
-- Tool, permission, hook, sandbox (three platforms), redaction, evidence and learning-data tests pass.
+- Tool, permission, hook, sandbox (three platforms; Windows and macOS runs are T214), redaction, evidence and learning-data tests pass.
 
 ### Phase 30 — System: prompt
 Goal: the prompt layer and the model-free evaluation runner.

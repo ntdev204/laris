@@ -503,9 +503,12 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - `laris-sandbox` for Linux, macOS, Windows; automatic `~/.laris/.venv` with `uv`
 - Validation:
   - Per platform: writes outside allowed roots fail; build on first use, repair, single build under two sessions
-- Status: in_progress
-- Note: Started 2026-11-18 on `feature/T135-sandbox`; Linux and the Python environment are done and tested, macOS is
-  written and tested as text only, **Windows is written and compiles but has never run**, so the task is not closed. `laris-sandbox`: own `Policy`
+    (Linux and the Python environment here; the macOS and Windows runs are T214)
+- Status: done
+- Note: Closed 2026-11-18 on `feature/T135-sandbox` with the owner's agreement (the owner has no Windows or macOS
+  machine) **for Linux and the Python environment only**: the macOS and Windows backends are written but were never run,
+  and their per-platform validation, the part of SR-H6 still open, moved to T214. Do not read this as three-platform
+  sandboxing proven. `laris-sandbox`: own `Policy`
   (readable roots or whole disk, writable roots, hidden paths, protected names `.git` and `.laris`, network on/off;
   replaces `codex-protocol`, T134 decision 1). Linux: `bwrap_args` builds the mounts in covering order (read-only
   base, writable roots, protected names read-only, hidden paths last; `--unshare-user/pid/ipc/uts/net`,
@@ -554,6 +557,21 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   nothing wires the sandbox into a running session (the client tasks); `rand` and `tempfile` stayed unapproved and
   unused. `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan` and
   `xtask schema --check` pass.
+
+### T214 — Run the sandbox on Windows and macOS
+- Requirements: SR-H6
+- Depends: T135
+- Deliverables:
+  - `tests/windows.rs` and `tests/macos.rs` run on their platforms (a machine or a CI runner), failures fixed
+- Validation:
+  - On Windows and macOS: write outside allowed roots fails, inside works, `.git` and `.laris` stay read-only, exit code
+    kept, unenforceable policies refused (Windows); then the Python environment tests on both
+- Status: pending
+- Note: Split from T135 on 2026-11-18 (no Windows or macOS machine). Until it is done SR-H6 "per platform" is unmet there
+  and the sandbox must be described as proven on Linux only. `cargo test -p laris-sandbox --test windows` and `--test macos`
+  are written; Windows needs `bash` (Git for Windows) on `PATH` for `Bash`, and a policy that allows the network
+  (`Policy::with_network(true)`), since the backend cannot block it. Also open there: wiring a sandbox policy into a
+  running session (client tasks).
 
 ### T136 — Redaction and injection defence
 - Requirements: SR-H10
