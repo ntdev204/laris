@@ -1,0 +1,28 @@
+{
+  "config": {
+    "error": {
+      "unknown_setting": "unknown setting",
+      "expected_type": "expected {expected}, found {found}",
+      "not_in_enum": "must be one of {allowed}",
+      "below_minimum": "must be at least {limit}",
+      "above_maximum": "must be at most {limit}",
+      "not_above": "must be greater than {limit}",
+      "not_below": "must be less than {limit}",
+      "too_short": "must have at least {min} characters",
+      "missing_required": "missing required setting {name}",
+      "no_match": "matches none of the allowed forms",
+      "not_allowed": "not allowed here",
+      "invalid_json": "invalid JSON: {detail}",
+      "not_object": "settings must be a JSON object",
+      "literal_secret": "looks like a literal secret; keep secrets out of the settings file and use the credentials file or the environment",
+      "url_scheme": "must start with http:// or https://",
+      "fingerprint_format": "must be sha256: followed by 64 lowercase hex digits",
+      "unknown_hook_event": "unknown hook event {event} (known: {known})",
+      "env_value": "cannot read this value as {expected}",
+      "unreadable": "cannot read the file: {detail}",
+      "too_large": "the file is larger than {limit} bytes",
+      "write_failed": "cannot write the file: {detail}"
+    },
+    "root": "(root)"
+  }
+}

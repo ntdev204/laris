@@ -1,0 +1,452 @@
+{
+  "$defs": {
+    "Context": {
+      "additionalProperties": false,
+      "description": "Context window and autocompact.",
+      "properties": {
+        "autoCompact": {
+          "default": true,
+          "description": "Compact automatically near the limit.",
+          "type": "boolean"
+        },
+        "compactThreshold": {
+          "default": 0.8,
+          "description": "Fraction of the window at which compaction starts.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 1,
+          "type": "number"
+        },
+        "windowTokens": {
+          "default": 32768,
+          "description": "Window size in tokens.",
+          "format": "uint64",
+          "minimum": 1024,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "HookCommand": {
+      "additionalProperties": false,
+      "description": "A command hook.",
+      "properties": {
+        "command": {
+          "description": "Shell command.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "timeout": {
+          "default": 30.0,
+          "description": "Timeout in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "maximum": 600,
+          "type": "number"
+        },
+        "type": {
+          "const": "command",
+          "default": "command",
+          "description": "Always `command`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "type": "object"
+    },
+    "HookMatcher": {
+      "additionalProperties": false,
+      "description": "Hooks that run for tools matching `matcher`.",
+      "properties": {
+        "hooks": {
+          "default": [],
+          "description": "Commands to run.",
+          "items": {
+            "$ref": "#/$defs/HookCommand"
+          },
+          "type": "array"
+        },
+        "matcher": {
+          "default": "",
+          "description": "Tool-name pattern; empty matches all.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Language": {
+      "description": "Interface language of the catalogue.",
+      "oneOf": [
+        {
+          "const": "en",
+          "description": "English.",
+          "type": "string"
+        },
+        {
+          "const": "vi",
+          "description": "Vietnamese.",
+          "type": "string"
+        }
+      ]
+    },
+    "Learning": {
+      "additionalProperties": false,
+      "description": "Learning data collection (kept on the machine, ADR-021 D40).",
+      "properties": {
+        "collect": {
+          "default": true,
+          "description": "Derive learning examples from sessions.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "PermissionMode": {
+      "description": "Permission mode.",
+      "oneOf": [
+        {
+          "const": "default",
+          "description": "Ask before writes and commands.",
+          "type": "string"
+        },
+        {
+          "const": "acceptEdits",
+          "description": "Accept file edits without asking.",
+          "type": "string"
+        },
+        {
+          "const": "plan",
+          "description": "Plan only; deny changes.",
+          "type": "string"
+        },
+        {
+          "const": "bypass",
+          "description": "Skip permission prompts.",
+          "type": "string"
+        }
+      ]
+    },
+    "Permissions": {
+      "additionalProperties": false,
+      "description": "Permission mode and rules.",
+      "properties": {
+        "additionalDirectories": {
+          "default": [],
+          "description": "Directories outside the project that tools may touch.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "allow": {
+          "default": [],
+          "description": "Rules that allow.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ask": {
+          "default": [],
+          "description": "Rules that ask.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "defaultMode": {
+          "$ref": "#/$defs/PermissionMode",
+          "default": "default",
+          "description": "Mode when a rule does not decide."
+        },
+        "deny": {
+          "default": [],
+          "description": "Rules that deny.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Sandbox": {
+      "additionalProperties": false,
+      "description": "Sandbox for code the model runs.",
+      "properties": {
+        "indexUrl": {
+          "default": "",
+          "description": "Package index address; empty for the default.",
+          "type": "string"
+        },
+        "inheritEnv": {
+          "default": false,
+          "description": "Whether the sandbox inherits the environment.",
+          "type": "boolean"
+        },
+        "packages": {
+          "default": [],
+          "description": "Packages preinstalled in the sandbox.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "python": {
+          "default": "3.12",
+          "description": "Python version of the sandbox.",
+          "type": "string"
+        },
+        "pythonSource": {
+          "default": "",
+          "description": "Where to fetch the interpreter; empty for the default.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Server": {
+      "additionalProperties": false,
+      "description": "Server connection.",
+      "properties": {
+        "caFingerprint": {
+          "default": "",
+          "description": "`sha256:<hex>` of the pinned private certificate; empty for none.",
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "default": 120.0,
+          "description": "Request timeout in seconds.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": "number"
+        },
+        "url": {
+          "default": "",
+          "description": "Server address; empty until the user or the package sets it.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StatusLine": {
+      "additionalProperties": false,
+      "description": "Status line command.",
+      "properties": {
+        "command": {
+          "description": "Shell command.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "type": {
+          "const": "command",
+          "default": "command",
+          "description": "Always `command`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "type": "object"
+    },
+    "Theme": {
+      "description": "Colour theme.",
+      "oneOf": [
+        {
+          "const": "auto",
+          "description": "Follow the terminal.",
+          "type": "string"
+        },
+        {
+          "const": "light",
+          "description": "Light.",
+          "type": "string"
+        },
+        {
+          "const": "dark",
+          "description": "Dark.",
+          "type": "string"
+        }
+      ]
+    },
+    "Ui": {
+      "additionalProperties": false,
+      "description": "Terminal interface.",
+      "properties": {
+        "language": {
+          "$ref": "#/$defs/Language",
+          "default": "en",
+          "description": "Language of the interface messages ([`crate::Catalogue`])."
+        },
+        "markdown": {
+          "default": true,
+          "description": "Render Markdown.",
+          "type": "boolean"
+        },
+        "showStatusLine": {
+          "default": true,
+          "description": "Show the status line.",
+          "type": "boolean"
+        },
+        "spinner": {
+          "default": true,
+          "description": "Show the spinner.",
+          "type": "boolean"
+        },
+        "theme": {
+          "$ref": "#/$defs/Theme",
+          "default": "auto",
+          "description": "Colour theme."
+        }
+      },
+      "type": "object"
+    },
+    "Vault": {
+      "additionalProperties": false,
+      "description": "Vault recording.",
+      "properties": {
+        "autoRecord": {
+          "default": true,
+          "description": "Record sessions in the vault.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The settings document.",
+  "properties": {
+    "$schema": {
+      "description": "Schema reference, kept for editors.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "autoUpdates": {
+      "default": true,
+      "description": "Check for updates.",
+      "type": "boolean"
+    },
+    "cleanupPeriodDays": {
+      "default": 30,
+      "description": "Days to keep session data; 0 keeps none.",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "context": {
+      "$ref": "#/$defs/Context",
+      "default": {
+        "autoCompact": true,
+        "compactThreshold": 0.8,
+        "windowTokens": 32768
+      },
+      "description": "Context window."
+    },
+    "env": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "description": "Environment variables set for tools and hooks.",
+      "type": "object"
+    },
+    "extraInstructions": {
+      "default": "",
+      "description": "Instructions appended to every prompt.",
+      "type": "string"
+    },
+    "hooks": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/HookMatcher"
+        },
+        "type": "array"
+      },
+      "default": {},
+      "description": "Hooks by event; events are listed in [`HOOK_EVENTS`].",
+      "type": "object"
+    },
+    "learning": {
+      "$ref": "#/$defs/Learning",
+      "default": {
+        "collect": true
+      },
+      "description": "Learning data."
+    },
+    "model": {
+      "default": "",
+      "description": "Model name sent to the server; empty for the server default.",
+      "type": "string"
+    },
+    "permissions": {
+      "$ref": "#/$defs/Permissions",
+      "default": {
+        "additionalDirectories": [],
+        "allow": [],
+        "ask": [],
+        "defaultMode": "default",
+        "deny": []
+      },
+      "description": "Permissions."
+    },
+    "sandbox": {
+      "$ref": "#/$defs/Sandbox",
+      "default": {
+        "indexUrl": "",
+        "inheritEnv": false,
+        "packages": [],
+        "python": "3.12",
+        "pythonSource": ""
+      },
+      "description": "Sandbox."
+    },
+    "server": {
+      "$ref": "#/$defs/Server",
+      "default": {
+        "caFingerprint": "",
+        "timeoutSeconds": 120.0,
+        "url": ""
+      },
+      "description": "Server connection."
+    },
+    "statusLine": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StatusLine"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Status line command."
+    },
+    "ui": {
+      "$ref": "#/$defs/Ui",
+      "default": {
+        "language": "en",
+        "markdown": true,
+        "showStatusLine": true,
+        "spinner": true,
+        "theme": "auto"
+      },
+      "description": "Terminal interface."
+    },
+    "vault": {
+      "$ref": "#/$defs/Vault",
+      "default": {
+        "autoRecord": true
+      },
+      "description": "Vault recording."
+    }
+  },
+  "title": "LARIS client settings (~/.laris/settings.json)",
+  "type": "object"
+}

@@ -30,6 +30,11 @@ version = "2.0.0-dev"
 [[package]]
 name = "laris-config"
 version = "2.0.0-dev"
+dependencies = [
+ "schemars",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "laris-core"
@@ -257,6 +262,7 @@ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 name = "xtask"
 version = "2.0.0-dev"
 dependencies = [
+ "laris-config",
  "laris-protocol",
  "regex",
 ]

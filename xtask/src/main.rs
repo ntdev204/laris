@@ -1,9 +1,10 @@
 //! `cargo xtask <command>`: governance helpers of the workspace.
 //!
 //! Commands: `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
-//! no-training guard over the Rust sources and CI files.
+//! no-training guard over the Rust sources and CI files; `scan` finds hardcoded endpoints and secrets.
 
 mod guard;
+mod scan;
 mod schema;
 mod spec;
 
@@ -24,9 +25,10 @@ fn main() -> ExitCode {
     match args.next().as_deref() {
         Some("spec") => spec::run(&root),
         Some("schema") => schema::run(&root, args.next().as_deref() == Some("--check")),
+        Some("scan") => scan::run(&args.next().map_or(root, PathBuf::from)),
         Some("guard") => guard::run(&args.next().map_or(root, PathBuf::from)),
         _ => {
-            eprintln!("usage: cargo xtask <spec | guard [root] | schema [--check]>");
+            eprintln!("usage: cargo xtask <spec | guard [root] | scan [root] | schema [--check]>");
             ExitCode::from(2)
         }
     }
