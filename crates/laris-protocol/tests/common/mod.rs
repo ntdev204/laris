@@ -101,6 +101,11 @@ fn check(root: &Value, schema: &Value, v: &Value, at: &str) -> Result<(), String
             return Err(format!("{at}: expected type {t}, got {v}"));
         }
     }
+    if let (Some(min), Some(n)) = (schema.get("minimum").and_then(Value::as_f64), v.as_f64())
+        && n < min
+    {
+        return Err(format!("{at}: {v} below minimum {min}"));
+    }
     if let Some(c) = schema.get("const")
         && c != v
     {

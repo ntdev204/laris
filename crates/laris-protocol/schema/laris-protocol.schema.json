@@ -1,4 +1,832 @@
 {
+  "core": {
+    "Command": {
+      "$defs": {
+        "Attachment": {
+          "additionalProperties": false,
+          "description": "A pasted image or long text kept by the interface.",
+          "properties": {
+            "data_base64": {
+              "description": "Content, base64.",
+              "type": "string"
+            },
+            "kind": {
+              "$ref": "#/$defs/AttachmentKind",
+              "description": "Image or text."
+            },
+            "name": {
+              "default": "pasted",
+              "description": "Display name.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "data_base64"
+          ],
+          "type": "object"
+        },
+        "AttachmentKind": {
+          "description": "Kind of a pasted attachment.",
+          "oneOf": [
+            {
+              "const": "image",
+              "description": "An image, read by local OCR.",
+              "type": "string"
+            },
+            {
+              "const": "text",
+              "description": "A long pasted text.",
+              "type": "string"
+            }
+          ]
+        },
+        "Decision": {
+          "description": "The user's decision on a permission request.",
+          "oneOf": [
+            {
+              "const": "allow",
+              "description": "Allow.",
+              "type": "string"
+            },
+            {
+              "const": "deny",
+              "description": "Deny.",
+              "type": "string"
+            }
+          ]
+        },
+        "Mode": {
+          "description": "Permission mode a front end can ask for; `next` cycles.",
+          "oneOf": [
+            {
+              "const": "default",
+              "description": "Ask before risky calls.",
+              "type": "string"
+            },
+            {
+              "const": "acceptEdits",
+              "description": "Accept edits without asking.",
+              "type": "string"
+            },
+            {
+              "const": "plan",
+              "description": "Plan only.",
+              "type": "string"
+            },
+            {
+              "const": "bypass",
+              "description": "Skip approvals.",
+              "type": "string"
+            },
+            {
+              "const": "next",
+              "description": "The next mode in the cycle.",
+              "type": "string"
+            }
+          ]
+        },
+        "Scope": {
+          "description": "How long an approval lasts.",
+          "oneOf": [
+            {
+              "const": "once",
+              "description": "This call only.",
+              "type": "string"
+            },
+            {
+              "const": "session",
+              "description": "This session.",
+              "type": "string"
+            },
+            {
+              "const": "project",
+              "description": "This project.",
+              "type": "string"
+            },
+            {
+              "const": "everywhere",
+              "description": "Everywhere.",
+              "type": "string"
+            }
+          ]
+        },
+        "Trigger": {
+          "description": "What `/` or `@` completes.",
+          "oneOf": [
+            {
+              "const": "/",
+              "description": "Slash commands.",
+              "type": "string"
+            },
+            {
+              "const": "@",
+              "description": "Files and skills.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Interface to core.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "description": "The answer to `login_required`.",
+          "properties": {
+            "key": {
+              "description": "API key; never echoed back in an event.",
+              "type": "string"
+            },
+            "server": {
+              "description": "Server address.",
+              "type": "string"
+            },
+            "trust": {
+              "description": "Confirms the shown certificate fingerprint.",
+              "type": "boolean"
+            },
+            "type": {
+              "const": "login",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A user message.",
+          "properties": {
+            "attachments": {
+              "description": "Pasted attachments.",
+              "items": {
+                "$ref": "#/$defs/Attachment"
+              },
+              "type": "array"
+            },
+            "text": {
+              "description": "Text.",
+              "type": "string"
+            },
+            "type": {
+              "const": "user_message",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The answer to a permission request.",
+          "properties": {
+            "decision": {
+              "$ref": "#/$defs/Decision",
+              "description": "Allow or deny."
+            },
+            "id": {
+              "description": "Request id.",
+              "type": "string"
+            },
+            "remember": {
+              "description": "Remember the decision.",
+              "type": "boolean"
+            },
+            "scope": {
+              "$ref": "#/$defs/Scope",
+              "default": "once",
+              "description": "How long."
+            },
+            "type": {
+              "const": "permission_response",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "decision"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Stop the running turn.",
+          "properties": {
+            "type": {
+              "const": "interrupt",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A slash command; `name` has no slash.",
+          "properties": {
+            "args": {
+              "default": "",
+              "description": "The rest of the line.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Command name.",
+              "type": "string"
+            },
+            "type": {
+              "const": "command",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Change the permission mode.",
+          "properties": {
+            "mode": {
+              "$ref": "#/$defs/Mode",
+              "description": "The mode."
+            },
+            "type": {
+              "const": "set_mode",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "mode"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Ask for completions.",
+          "properties": {
+            "id": {
+              "description": "Id echoed in the answer.",
+              "type": "string"
+            },
+            "text": {
+              "default": "",
+              "description": "Text typed after the trigger.",
+              "type": "string"
+            },
+            "trigger": {
+              "$ref": "#/$defs/Trigger",
+              "description": "`/` or `@`."
+            },
+            "type": {
+              "const": "complete",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "trigger"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "End the session.",
+          "properties": {
+            "type": {
+              "const": "shutdown",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ],
+      "title": "Command"
+    },
+    "Event": {
+      "$defs": {
+        "CompletionItem": {
+          "additionalProperties": false,
+          "description": "One entry of a completion answer.",
+          "properties": {
+            "description": {
+              "default": "",
+              "description": "Short explanation.",
+              "type": "string"
+            },
+            "value": {
+              "description": "Text to insert.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        },
+        "LoginReason": {
+          "description": "Why a session cannot start yet.",
+          "oneOf": [
+            {
+              "const": "no_server",
+              "description": "No server address is configured.",
+              "type": "string"
+            },
+            {
+              "const": "untrusted_certificate",
+              "description": "The certificate has to be confirmed by a person.",
+              "type": "string"
+            },
+            {
+              "const": "certificate_mismatch",
+              "description": "The certificate differs from the confirmed one.",
+              "type": "string"
+            },
+            {
+              "const": "no_key",
+              "description": "No API key.",
+              "type": "string"
+            },
+            {
+              "const": "rejected",
+              "description": "The server refused the key.",
+              "type": "string"
+            },
+            {
+              "const": "invalid",
+              "description": "The input is not usable.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Core to interface.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "description": "Sent before `ready` when the session cannot start yet.",
+          "properties": {
+            "fingerprint": {
+              "default": "",
+              "description": "SHA-256 a person compares for `untrusted_certificate`.",
+              "type": "string"
+            },
+            "message": {
+              "default": "",
+              "description": "Extra text.",
+              "type": "string"
+            },
+            "reason": {
+              "$ref": "#/$defs/LoginReason",
+              "description": "What is missing."
+            },
+            "server": {
+              "default": "",
+              "description": "Server address, if known.",
+              "type": "string"
+            },
+            "type": {
+              "const": "login_required",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "reason"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The session is ready; carries the protocol version.",
+          "properties": {
+            "cwd": {
+              "description": "Working directory.",
+              "type": "string"
+            },
+            "engine": {
+              "description": "Program version.",
+              "type": "string"
+            },
+            "mode": {
+              "description": "Permission mode.",
+              "type": "string"
+            },
+            "server": {
+              "default": "",
+              "description": "Server address, empty when none.",
+              "type": "string"
+            },
+            "session": {
+              "description": "Conversation id.",
+              "type": "string"
+            },
+            "type": {
+              "const": "ready",
+              "type": "string"
+            },
+            "version": {
+              "default": "1",
+              "description": "Protocol version ([`CORE_VERSION`]).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "engine",
+            "session",
+            "cwd",
+            "mode"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A piece of the answer.",
+          "properties": {
+            "delta": {
+              "description": "The text.",
+              "type": "string"
+            },
+            "type": {
+              "const": "text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "delta"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The model called a tool.",
+          "properties": {
+            "arguments": {
+              "additionalProperties": true,
+              "default": {},
+              "description": "Arguments.",
+              "type": "object"
+            },
+            "id": {
+              "description": "Call id.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "type": {
+              "const": "tool_call",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A tool answered.",
+          "properties": {
+            "id": {
+              "description": "Id of the call.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "result": {
+              "default": null,
+              "description": "Result."
+            },
+            "type": {
+              "const": "tool_result",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The plan.",
+          "properties": {
+            "source": {
+              "default": "",
+              "description": "Where it came from.",
+              "type": "string"
+            },
+            "steps": {
+              "default": [],
+              "description": "Steps (`text`, `status`).",
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "plan",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A call needs approval.",
+          "properties": {
+            "arguments": {
+              "additionalProperties": true,
+              "default": {},
+              "description": "Arguments.",
+              "type": "object"
+            },
+            "diff": {
+              "default": "",
+              "description": "Unified diff of the change.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Request id.",
+              "type": "string"
+            },
+            "reason": {
+              "default": "",
+              "description": "Why approval is needed.",
+              "type": "string"
+            },
+            "rule": {
+              "default": "",
+              "description": "The rule an \"always allow\" would save.",
+              "type": "string"
+            },
+            "scopes": {
+              "default": [
+                "once",
+                "session",
+                "project",
+                "everywhere"
+              ],
+              "description": "Scopes that may be chosen.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "tool": {
+              "description": "Tool name.",
+              "type": "string"
+            },
+            "type": {
+              "const": "permission_request",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "tool"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Progress that is not text.",
+          "properties": {
+            "data": {
+              "additionalProperties": true,
+              "default": {},
+              "description": "Values.",
+              "type": "object"
+            },
+            "kind": {
+              "description": "`verify`, `reflect`, `brain`, `learning`, `mode`, `notice`, `line`, `queued`, `sandbox` ...",
+              "type": "string"
+            },
+            "type": {
+              "const": "status",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Context use.",
+          "properties": {
+            "tokens": {
+              "description": "Tokens in context.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "const": "usage",
+              "type": "string"
+            },
+            "window": {
+              "description": "Context window.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "type",
+            "tokens",
+            "window"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The context was compacted.",
+          "properties": {
+            "after": {
+              "description": "Tokens after.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "before": {
+              "description": "Tokens before.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "method": {
+              "default": "",
+              "description": "How.",
+              "type": "string"
+            },
+            "summarized": {
+              "default": 0,
+              "description": "Turns summarised.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "const": "compact",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "before",
+            "after"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Result of the completion check.",
+          "properties": {
+            "complete": {
+              "description": "Whether the goal is complete.",
+              "type": "boolean"
+            },
+            "failed": {
+              "default": [],
+              "description": "Failed items.",
+              "items": true,
+              "type": "array"
+            },
+            "open": {
+              "default": [],
+              "description": "Open items.",
+              "items": true,
+              "type": "array"
+            },
+            "retry": {
+              "default": false,
+              "description": "Whether the core retries.",
+              "type": "boolean"
+            },
+            "type": {
+              "const": "goal",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "complete"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The answer to a `complete` command.",
+          "properties": {
+            "id": {
+              "description": "Id of the command.",
+              "type": "string"
+            },
+            "items": {
+              "default": [],
+              "description": "Candidates.",
+              "items": {
+                "$ref": "#/$defs/CompletionItem"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "completion",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A failure.",
+          "properties": {
+            "code": {
+              "description": "Code.",
+              "type": "string"
+            },
+            "message": {
+              "description": "Message.",
+              "type": "string"
+            },
+            "type": {
+              "const": "error",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "code",
+            "message"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The turn ended.",
+          "properties": {
+            "answer": {
+              "default": "",
+              "description": "Final answer text.",
+              "type": "string"
+            },
+            "status": {
+              "description": "`completed`, `interrupted`, ...",
+              "type": "string"
+            },
+            "type": {
+              "const": "done",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "status"
+          ],
+          "type": "object"
+        }
+      ],
+      "title": "Event"
+    }
+  },
   "p1": {
     "AccountResponse": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

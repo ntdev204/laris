@@ -6,8 +6,11 @@
 //! [`schema::export`] produces the JSON Schema of every type, deterministically.
 
 pub mod chat;
+pub mod events;
+pub mod jsonl;
 pub mod p1;
 pub mod p2;
+pub mod scenario;
 pub mod schema;
 pub mod sse;
 pub mod version;
@@ -15,6 +18,9 @@ pub mod version;
 pub use chat::{
     ChatMessage, Content, FinishReason, FunctionKind, Role, ToolCall, ToolCallFunction, ToolSchema,
     Usage,
+};
+pub use events::{
+    CORE_VERSION, Command, CoreEnd, Event, InterfaceEnd, VersionMismatch, channel, check_ready,
 };
 pub use p1::{
     AccountResponse, AdminReasoning, AdminUsage, ChatRequest, ChatResponseChunk, EmbedRequest,

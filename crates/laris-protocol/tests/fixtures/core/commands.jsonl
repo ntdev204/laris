@@ -1,0 +1,16 @@
+{"type":"login","server":"laris.internal:8443"}
+{"type":"login","trust":true}
+{"type":"login","key":"lk_good_key"}
+{"type":"user_message","text":"hello"}
+{"type":"user_message","text":"see","attachments":[{"kind":"image","name":"a.png","data_base64":"aGk="},{"kind":"text","data_base64":"aGk="}]}
+{"type":"permission_response","id":"p1","decision":"allow","scope":"project"}
+{"type":"permission_response","id":"p1","decision":"deny"}
+{"type":"permission_response","id":"p1","decision":"allow","scope":"session","remember":true}
+{"type":"interrupt"}
+{"type":"command","name":"help","args":""}
+{"type":"command","name":"nope","args":"x y"}
+{"type":"set_mode","mode":"acceptEdits"}
+{"type":"set_mode","mode":"next"}
+{"type":"complete","id":"c1","trigger":"/","text":"he"}
+{"type":"complete","id":"c2","trigger":"@"}
+{"type":"shutdown"}

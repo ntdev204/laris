@@ -1,0 +1,25 @@
+{"type":"login_required","reason":"untrusted_certificate","server":"https://laris.internal:8443","fingerprint":"SHA256:AB:CD","message":""}
+{"type":"login_required","reason":"no_key"}
+{"type":"ready","version":"1","engine":"2.0.0","session":"abcdef12-0000","cwd":"/work/demo","mode":"default","server":"https://laris.example"}
+{"type":"ready","engine":"2.0.0","session":"s","cwd":"/w","mode":"plan"}
+{"type":"text","delta":"Xin chào, **đậm**\n"}
+{"type":"tool_call","id":"call_1","name":"search_papers","arguments":{"query":"graphs"}}
+{"type":"tool_call","id":"call_2","name":"noop"}
+{"type":"tool_result","id":"call_1","name":"search_papers","result":{"hits":[{"id":1}]}}
+{"type":"tool_result","id":"call_2","name":"noop"}
+{"type":"plan","source":"model","steps":[{"text":"read","status":"done"},{"text":"write","status":"pending"}]}
+{"type":"plan"}
+{"type":"permission_request","id":"p1","tool":"write_file","arguments":{"path":"a.txt"},"reason":"writes","rule":"write_file(a.txt)","diff":"+hi","scopes":["once","session"]}
+{"type":"permission_request","id":"p2","tool":"Bash"}
+{"type":"status","kind":"queued","data":{"count":1,"text":"second"}}
+{"type":"status","kind":"sandbox"}
+{"type":"usage","tokens":1500,"window":8000}
+{"type":"compact","before":9000,"after":3000,"summarized":12,"method":"model"}
+{"type":"compact","before":9000,"after":3000}
+{"type":"goal","complete":false,"open":["check"],"failed":[{"item":"x"}],"retry":true}
+{"type":"goal","complete":true}
+{"type":"completion","id":"c1","items":[{"value":"help","description":"list commands"},{"value":"src/"}]}
+{"type":"completion","id":"c2"}
+{"type":"error","code":"unknown_command","message":"unknown command /nope"}
+{"type":"done","status":"completed","answer":"Done."}
+{"type":"done","status":"interrupted"}
