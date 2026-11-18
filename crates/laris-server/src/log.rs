@@ -2,6 +2,7 @@
 //! client address. A record has no field that could hold a path, query, header, body, key or message text; the
 //! route is a fixed name chosen by the handler, not the URL the client sent.
 
+use crate::trace::{TraceDraft, TraceSink, traced};
 use serde_json::json;
 use std::net::IpAddr;
 use std::sync::Mutex;
@@ -96,6 +97,8 @@ pub struct RequestScope {
     bytes_in: AtomicU64,
     done: AtomicBool,
     sink: std::sync::Arc<dyn LogSink>,
+    traces: Option<std::sync::Arc<dyn TraceSink>>,
+    draft: Mutex<TraceDraft>,
 }
 
 impl RequestScope {
@@ -115,6 +118,22 @@ impl RequestScope {
             bytes_in: AtomicU64::new(0),
             done: AtomicBool::new(false),
             sink,
+            traces: None,
+            draft: Mutex::new(TraceDraft::default()),
+        }
+    }
+
+    /// Sends a content-free trace of the request to `traces` when it ends.
+    #[must_use]
+    pub fn with_traces(mut self, traces: Option<std::sync::Arc<dyn TraceSink>>) -> Self {
+        self.traces = traces;
+        self
+    }
+
+    /// Lets a handler note what the trace of this request should say (key, tokens, names).
+    pub fn trace(&self, note: impl FnOnce(&mut TraceDraft)) {
+        if let Ok(mut draft) = self.draft.lock() {
+            note(&mut draft);
         }
     }
 
@@ -146,15 +165,29 @@ impl RequestScope {
             return;
         }
         let route = self.route.lock().map_or("unmatched", |r| *r);
+        let duration_ms = u64::try_from(self.started.elapsed().as_millis()).unwrap_or(u64::MAX);
         self.sink.record(&AccessRecord {
             id: self.id.clone(),
             method: self.method.clone(),
             route,
             status,
             bytes_in: self.bytes_in.load(Ordering::Relaxed),
-            duration_ms: u64::try_from(self.started.elapsed().as_millis()).unwrap_or(u64::MAX),
+            duration_ms,
             client: self.client,
             outcome,
         });
+        if let Some(traces) = &self.traces
+            && traced(route)
+        {
+            let draft = self.draft.lock().map(|mut d| std::mem::take(&mut *d));
+            traces.record(draft.unwrap_or_default().finish(
+                &self.id,
+                route,
+                status,
+                outcome,
+                duration_ms,
+                crate::access::now(),
+            ));
+        }
     }
 }

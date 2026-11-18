@@ -6,6 +6,7 @@ use crate::access::{Access, KeyError, KeyRecord, NewKey, perm};
 use crate::app::{AppState, gate, read_json};
 use crate::error::ApiError;
 use crate::log::RequestScope;
+use crate::trace::TraceQuery;
 use axum::Extension;
 use axum::body::Body;
 use axum::extract::{Path, Request, State};
@@ -268,4 +269,98 @@ async fn key_limit_inner(
         StatusCode::OK,
         &serde_json::json!({ "record": KeyView::of(record, now) }),
     )
+}
+
+/// What a trace row looks like to the operator: names and numbers only.
+#[derive(Debug, Serialize)]
+struct TraceView {
+    request_id: String,
+    key_id: String,
+    route: String,
+    status: u16,
+    outcome: String,
+    duration_ms: u64,
+    session_id: String,
+    model: String,
+    prompt_tokens: i64,
+    completion_tokens: i64,
+    tools: Vec<String>,
+    brain: Vec<String>,
+    answer_chars: u64,
+    at: f64,
+}
+
+/// The query of `GET /v1/admin/traces`. An unknown name or a value of the wrong form is a 400, never ignored.
+fn trace_query(query: Option<&str>) -> Result<TraceQuery, ApiError> {
+    let bad = |m: &str| ApiError::BadRequest(format!("invalid request: {m}"));
+    let name = |v: &str| {
+        let ok = !v.is_empty()
+            && v.len() <= 64
+            && v.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'));
+        ok.then(|| v.to_owned())
+            .ok_or_else(|| bad("a filter is not a plain name"))
+    };
+    let time = |v: &str| {
+        v.parse::<f64>()
+            .ok()
+            .filter(|t| t.is_finite() && *t >= 0.0)
+            .ok_or_else(|| bad("a time is not a number of seconds"))
+    };
+    let mut q = TraceQuery::default();
+    for pair in query
+        .unwrap_or_default()
+        .split('&')
+        .filter(|p| !p.is_empty())
+    {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        match key {
+            "limit" => {
+                q.limit = Some(value.parse().map_err(|_| bad("limit is not a number"))?);
+            }
+            "key_id" => q.key_id = Some(name(value)?),
+            "route" => q.route = Some(name(value)?),
+            "outcome" => q.outcome = Some(name(value)?),
+            "since" => q.since = Some(time(value)?),
+            "until" => q.until = Some(time(value)?),
+            _ => return Err(bad("unknown query parameter")),
+        }
+    }
+    Ok(q)
+}
+
+/// `GET /v1/admin/traces`: the newest request traces, for the operator (`traces.read`). Filters: `limit` (1 to 500,
+/// default 50), `key_id`, `route`, `outcome`, `since` and `until` (Unix seconds).
+pub async fn traces(State(state): Shared, Extension(scope): Scope, request: Request) -> Response {
+    scope.set_route("admin_traces");
+    let headers = request.headers().clone();
+    let query = request.uri().query().map(str::to_owned);
+    drop(request);
+    let result = async {
+        gate(&state, &scope, &headers, perm::TRACES_READ).await?;
+        let store = state.traces.as_ref().ok_or(ApiError::NotFound)?;
+        let rows = store.query(trace_query(query.as_deref())?).await;
+        let items: Vec<TraceView> = rows
+            .into_iter()
+            .map(|r| TraceView {
+                request_id: r.request_id,
+                key_id: r.key_id,
+                route: r.route,
+                status: r.status,
+                outcome: r.outcome,
+                duration_ms: r.duration_ms,
+                session_id: r.session_id,
+                model: r.model,
+                prompt_tokens: r.prompt_tokens,
+                completion_tokens: r.completion_tokens,
+                tools: r.tools,
+                brain: r.brain,
+                answer_chars: r.answer_chars,
+                at: r.at,
+            })
+            .collect();
+        json(StatusCode::OK, &serde_json::json!({ "traces": items }))
+    }
+    .await;
+    done(result)
 }

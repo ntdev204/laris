@@ -23,6 +23,8 @@ pub mod perm {
     pub const USAGE_READ: &str = "usage.read";
     /// Read reasoning traces.
     pub const REASONING_READ: &str = "reasoning.read";
+    /// Read the per-request traces.
+    pub const TRACES_READ: &str = "traces.read";
     /// Create, revoke and limit keys.
     pub const KEYS_MANAGE: &str = "keys.manage";
 }
@@ -63,15 +65,25 @@ impl Default for Roles {
         );
         roles.insert(
             "auditor".to_string(),
-            set(&["account", "usage.read", "reasoning.read"]),
+            set(&["account", "usage.read", "reasoning.read", "traces.read"]),
         );
         let mut admin = set(&user);
-        admin.extend(set(&["usage.read", "reasoning.read", "keys.manage"]));
+        admin.extend(set(&[
+            "usage.read",
+            "reasoning.read",
+            "traces.read",
+            "keys.manage",
+        ]));
         roles.insert("admin".to_string(), admin);
         Self {
             roles,
             privileged_roles: set(&["admin", "auditor"]),
-            privileged_permissions: set(&["usage.read", "reasoning.read", "keys.manage"]),
+            privileged_permissions: set(&[
+                "usage.read",
+                "reasoning.read",
+                "traces.read",
+                "keys.manage",
+            ]),
         }
     }
 }
@@ -152,12 +164,24 @@ impl Roles {
 mod tests {
     use super::*;
 
+    fn ask_one(p: &str) -> BTreeSet<String> {
+        std::iter::once(p.to_owned()).collect()
+    }
+
     #[test]
     fn role_defaults_are_the_documented_ones() {
         let r = Roles::default();
         assert!(r.of("user").contains("chat") && !r.of("user").contains("keys.manage"));
         assert!(r.of("readonly").len() == 4 && !r.of("readonly").contains("chat"));
         assert!(r.of("auditor").contains("reasoning.read") && !r.of("auditor").contains("chat"));
+        for role in ["auditor", "admin"] {
+            assert!(
+                r.of(role).contains(perm::TRACES_READ),
+                "{role} reads traces"
+            );
+        }
+        assert!(!r.of("user").contains(perm::TRACES_READ));
+        assert!(r.check_extras("user", &ask_one(perm::TRACES_READ)).is_err());
         assert!(r.of("admin").contains("keys.manage") && r.of("admin").contains("chat"));
         for role in ["user", "admin"] {
             assert!(r.of(role).contains(perm::TOOLS), "{role} runs remote tools");
