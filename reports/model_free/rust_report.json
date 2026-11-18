@@ -1,0 +1,213 @@
+{
+  "metrics": {
+    "retrieval.bm25.mrr": {
+      "ok": true,
+      "value": 1.0
+    },
+    "retrieval.bm25.ndcg@5": {
+      "ok": true,
+      "value": 0.6739
+    },
+    "retrieval.bm25.recall@5": {
+      "ok": true,
+      "value": 0.5833
+    },
+    "retrieval.graph.mrr": {
+      "ok": true,
+      "value": 1.0
+    },
+    "retrieval.graph.ndcg@5": {
+      "ok": true,
+      "value": 1.0
+    },
+    "retrieval.graph.recall@5": {
+      "ok": true,
+      "value": 1.0
+    }
+  },
+  "model": "none: model-free suites; the foundation model is NOT QUALIFIED",
+  "notRun": [
+    "benchmarks (budgets are fixed from measurements in T154)",
+    "any trained model: scripted model only, so no scientific capability is shown"
+  ],
+  "passed": true,
+  "problems": [],
+  "seededRegressionPercent": 0.0,
+  "suites": {
+    "agentic": {
+      "failed": 0,
+      "ok": true,
+      "passed": 26,
+      "targets": {
+        "laris-core::agentic": {
+          "failed": 0,
+          "passed": 20
+        },
+        "laris-core::log": {
+          "failed": 0,
+          "passed": 6
+        }
+      }
+    },
+    "evidence": {
+      "failed": 0,
+      "ok": true,
+      "passed": 15,
+      "targets": {
+        "laris-evidence::gate": {
+          "failed": 0,
+          "passed": 15
+        }
+      }
+    },
+    "golden": {
+      "failed": 0,
+      "ok": true,
+      "passed": 41,
+      "targets": {
+        "laris-protocol::core": {
+          "failed": 0,
+          "passed": 10
+        },
+        "laris-protocol::fixtures": {
+          "failed": 0,
+          "passed": 8
+        },
+        "laris-retrieval::golden": {
+          "failed": 0,
+          "passed": 6
+        },
+        "laris-store::store": {
+          "failed": 0,
+          "passed": 7
+        },
+        "laris-vault::golden": {
+          "failed": 0,
+          "passed": 5
+        },
+        "laris-vault::writer_golden": {
+          "failed": 0,
+          "passed": 5
+        }
+      }
+    },
+    "injection": {
+      "failed": 0,
+      "ok": true,
+      "passed": 33,
+      "targets": {
+        "laris-policy::hooks": {
+          "failed": 0,
+          "passed": 17
+        },
+        "laris-policy::shield": {
+          "failed": 0,
+          "passed": 9
+        },
+        "laris-policy::trust": {
+          "failed": 0,
+          "passed": 7
+        }
+      }
+    },
+    "leak": {
+      "failed": 0,
+      "ok": true,
+      "passed": 9,
+      "targets": {
+        "laris-policy::redact": {
+          "failed": 0,
+          "passed": 9
+        }
+      }
+    },
+    "permissions": {
+      "failed": 0,
+      "ok": true,
+      "passed": 69,
+      "targets": {
+        "laris-policy::gate": {
+          "failed": 0,
+          "passed": 14
+        },
+        "laris-policy::modes": {
+          "failed": 0,
+          "passed": 15
+        },
+        "laris-policy::rules": {
+          "failed": 0,
+          "passed": 6
+        },
+        "laris-tools::registry": {
+          "failed": 0,
+          "passed": 8
+        },
+        "laris-tools::tools": {
+          "failed": 0,
+          "passed": 26
+        }
+      }
+    },
+    "prompt": {
+      "failed": 0,
+      "ok": true,
+      "passed": 22,
+      "targets": {
+        "laris-core::prompt": {
+          "failed": 0,
+          "passed": 13
+        },
+        "laris-policy::prompted": {
+          "failed": 0,
+          "passed": 9
+        }
+      }
+    },
+    "retrieval": {
+      "failed": 0,
+      "ok": true,
+      "passed": 10,
+      "targets": {
+        "laris-retrieval::behaviour": {
+          "failed": 0,
+          "passed": 10
+        }
+      }
+    },
+    "sandbox": {
+      "failed": 0,
+      "ok": true,
+      "passed": 21,
+      "targets": {
+        "laris-sandbox::linux": {
+          "failed": 0,
+          "passed": 10
+        },
+        "laris-sandbox::pyenv": {
+          "failed": 0,
+          "passed": 6
+        },
+        "laris-tools::sandboxed_bash": {
+          "failed": 0,
+          "passed": 5
+        }
+      }
+    },
+    "vault": {
+      "failed": 0,
+      "ok": true,
+      "passed": 16,
+      "targets": {
+        "laris-vault::vault_fs": {
+          "failed": 0,
+          "passed": 7
+        },
+        "laris-vault::writer_fs": {
+          "failed": 0,
+          "passed": 9
+        }
+      }
+    }
+  },
+  "tolerancePercent": 20.0
+}

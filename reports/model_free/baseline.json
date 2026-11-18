@@ -1,0 +1,44 @@
+{
+  "metrics": {
+    "retrieval.bm25.mrr": 1.0,
+    "retrieval.bm25.ndcg@5": 0.6739,
+    "retrieval.bm25.recall@5": 0.5833,
+    "retrieval.graph.mrr": 1.0,
+    "retrieval.graph.ndcg@5": 1.0,
+    "retrieval.graph.recall@5": 1.0
+  },
+  "note": "figures of the model-free evaluation; a figure that loses tolerancePercent or more fails `cargo xtask eval`",
+  "suites": {
+    "agentic": {
+      "passed": 26
+    },
+    "evidence": {
+      "passed": 15
+    },
+    "golden": {
+      "passed": 41
+    },
+    "injection": {
+      "passed": 33
+    },
+    "leak": {
+      "passed": 9
+    },
+    "permissions": {
+      "passed": 69
+    },
+    "prompt": {
+      "passed": 22
+    },
+    "retrieval": {
+      "passed": 10
+    },
+    "sandbox": {
+      "passed": 21
+    },
+    "vault": {
+      "passed": 16
+    }
+  },
+  "tolerancePercent": 20.0
+}

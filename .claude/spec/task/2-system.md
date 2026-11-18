@@ -747,7 +747,31 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     report outside the specifications
 - Validation:
   - Reproducible run; seeded regression fails
-- Status: pending
+- Status: in_progress
+- Note: Built and verified 2026-11-18, **not closed**: the ledger refuses `done` while its dependency T135 is
+  `in_progress` (the Windows sandbox backend is not built); nothing else is open. `cargo xtask eval [--out FILE] [--baseline FILE] [--write-baseline] [--seed-regression
+  PERCENT]` (`xtask/src/eval.rs`, no new crate) runs the model-free suites as the workspace's own test targets, one
+  `cargo test -p P --test T -- --test-threads=1` each (one thread, because `tests/hooks.rs` flakes under parallel
+  runs, T136), and sums the `test result` lines. Suites: golden (protocol fixtures and core events, vault index and
+  writer golden, retrieval golden, store), agentic (the translated scenarios and event-log replay), evidence,
+  leak (`redact`), injection (`shield`, `hooks`, `trust`), vault round trips (`vault_fs`, `writer_fs`), retrieval
+  behaviour, prompt, permissions (policy and tools) and sandbox (Linux, Python environment, sandboxed `Bash`). The
+  runner also measures retrieval on the fixture vault itself (BM25 and graph recall@5, MRR, nDCG@5 from
+  `tests/fixtures/retrieval`). `reports/model_free/baseline.json` holds the passed count per suite, those six figures
+  and `tolerancePercent` (20; the file is the authority, not the code). A figure worse than its baseline by the
+  tolerance or more fails, so does any failed test, a suite or figure missing from the baseline, and a suite that
+  did not build. The report `reports/model_free/rust_report.json` has no timestamp or duration and sorted keys: two
+  runs gave the same bytes. `--seed-regression P` makes every figure P percent worse before the comparison, writes no
+  default report and must exit 1: at 20 every suite and figure fails, at 19 the unit test shows it passes. The
+  generation-1 `reports/model_free/report.json` is left as it was. Tests: 7 unit tests in `xtask` (counts parsing, a
+  run with no result line, inclusive threshold, seeded 20 fails and 19 passes, failed or lost test or unknown figure,
+  same bytes, arguments). Limits: the suites are the existing tests, so the runner adds no new check, only one
+  command, one baseline and one report; benchmarks are not run (the budgets are fixed from measurements in T154); the
+  baseline is the Linux development machine (a platform that runs fewer sandbox tests must not use it); a passed
+  count only has to stay within the tolerance, so a lost test below 20 percent is not caught, a new test needs a
+  baseline refresh with `--write-baseline` only to raise the floor; a scripted model plays the model, so nothing
+  shows capability of the foundation model, which is NOT QUALIFIED. The sandbox suite covers Linux only. `cargo fmt --check`, `clippy -D warnings`, `cargo test` for
+  `xtask`, `cargo deny check`, `xtask guard` and `xtask scan` pass.
 
 ## Phase 31 — Server: LLM
 
