@@ -1,0 +1,656 @@
+[
+  {
+    "dict": true,
+    "value": {
+      "a": 1
+    },
+    "yaml": "a: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": 1,
+      "b": "two",
+      "c": [
+        "x",
+        "y"
+      ]
+    },
+    "yaml": "a: 1\nb: two\nc: [x, y]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": "it's",
+      "b": "tab\there é \"q\"",
+      "c": ""
+    },
+    "yaml": "a: 'it''s'\nb: \"tab\\there \\u00e9 \\\"q\\\"\"\nc: \"\""
+  },
+  {
+    "dict": true,
+    "value": {
+      "N": null,
+      "empty": null,
+      "n": null,
+      "null_word": null,
+      "tilde": null
+    },
+    "yaml": "empty:\nnull_word: null\ntilde: ~\nn: Null\nN: NULL"
+  },
+  {
+    "dict": true,
+    "value": {
+      "false_": false,
+      "no_": false,
+      "off_": false,
+      "on_": true,
+      "true_": true,
+      "yes_": true
+    },
+    "yaml": "yes_: yes\nno_: No\ntrue_: TRUE\nfalse_: false\non_: ON\noff_: off"
+  },
+  {
+    "dict": true,
+    "value": {
+      "b": 5,
+      "bad_oct": "08",
+      "h": 31,
+      "i": 42,
+      "n": -7,
+      "o": 493,
+      "p": 3,
+      "sign_zero": 0,
+      "u": 1000,
+      "z": 0
+    },
+    "yaml": "i: 42\nn: -7\np: +3\nh: 0x1F\no: 0755\nb: 0b101\nu: 1_000\nz: 0\nbad_oct: 08\nsign_zero: -0"
+  },
+  {
+    "dict": true,
+    "value": {
+      "end": 5.0,
+      "f": 3.14,
+      "h": 0.5,
+      "n": -2.5,
+      "s": "1e3",
+      "se": 1500.0,
+      "sign_half": "-.5",
+      "u": 10.25
+    },
+    "yaml": "f: 3.14\nh: .5\nn: -2.5\ns: 1e3\nse: 1.5e+3\nend: 5.\nu: 1_0.2_5\nsign_half: -.5"
+  },
+  {
+    "dict": true,
+    "value": {
+      "d": {
+        "__date__": "2026-11-13"
+      },
+      "m": {
+        "__datetime__": "2026-01-03T01:02:03"
+      },
+      "o": {
+        "__datetime__": "2026-11-13T10:30:00.500000+07:00"
+      },
+      "t": {
+        "__datetime__": "2026-11-13T10:30:00"
+      },
+      "z": {
+        "__datetime__": "2026-11-13T10:30:00+00:00"
+      }
+    },
+    "yaml": "d: 2026-11-13\nt: 2026-11-13 10:30:00\nz: 2026-11-13T10:30:00Z\no: 2026-11-13T10:30:00.5+07:00\nm: 2026-1-3 1:02:03"
+  },
+  {
+    "dict": true,
+    "value": {
+      "frac": {
+        "__datetime__": "2026-11-13T10:30:00.123456+00:00"
+      },
+      "hour": {
+        "__datetime__": "2026-11-13T10:30:00+07:00"
+      },
+      "neg": {
+        "__datetime__": "2026-11-13T10:30:00-05:30"
+      },
+      "space_z": {
+        "__datetime__": "2026-11-13T10:30:00+00:00"
+      }
+    },
+    "yaml": "frac: 2026-11-13T10:30:00.123456789Z\nneg: 2026-11-13T10:30:00-05:30\nspace_z: 2026-11-13 10:30:00 Z\nhour: 2026-11-13 10:30:00 +7"
+  },
+  {
+    "dict": true,
+    "value": {
+      "time_like": 630,
+      "url": "http://example.com/a:b",
+      "v": "1.0.0",
+      "ver": 1.2
+    },
+    "yaml": "time_like: 10:30\nurl: http://example.com/a:b\nv: 1.0.0\nver: 1.2"
+  },
+  {
+    "dict": true,
+    "value": {
+      "empty_list": [],
+      "empty_map": {},
+      "more": [
+        1,
+        2,
+        3
+      ],
+      "tags": [
+        "a",
+        "b c",
+        "d"
+      ]
+    },
+    "yaml": "tags: [a, \"b c\", 'd']\nmore: [ 1 , 2,3 ]\nempty_list: []\nempty_map: {}"
+  },
+  {
+    "dict": true,
+    "value": {
+      "list": [
+        "one",
+        "two words",
+        "[[Note]]"
+      ]
+    },
+    "yaml": "list:\n- one\n- two words\n- \"[[Note]]\""
+  },
+  {
+    "dict": true,
+    "value": {
+      "list": [
+        "one",
+        "two"
+      ],
+      "next": 1
+    },
+    "yaml": "list:\n  - one\n  - two\nnext: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "items": [
+        {
+          "a": 1,
+          "b": 2
+        },
+        {
+          "c": 3
+        },
+        {
+          "d": 4
+        },
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    "yaml": "items:\n- a: 1\n  b: 2\n- c: 3\n-\n  d: 4\n- - x\n  - y"
+  },
+  {
+    "dict": true,
+    "value": {
+      "m": {
+        "a": 1,
+        "b": [
+          2,
+          3
+        ],
+        "c": {
+          "d": "e"
+        },
+        "f": null
+      }
+    },
+    "yaml": "m: {a: 1, b: [2, 3], c: {d: e}, f}"
+  },
+  {
+    "dict": true,
+    "value": {
+      "nested": {
+        "inner": {
+          "deeper": "value"
+        },
+        "other": 1
+      },
+      "top": 2
+    },
+    "yaml": "nested:\n  inner:\n    deeper: value\n  other: 1\ntop: 2"
+  },
+  {
+    "dict": true,
+    "value": {
+      "after": 1,
+      "lit": "line one\nline two\n"
+    },
+    "yaml": "lit: |\n  line one\n  line two\n\nafter: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "after": 1,
+      "keep": "text\n\n",
+      "strip": "text"
+    },
+    "yaml": "strip: |-\n  text\n\nkeep: |+\n  text\n\nafter: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "fold": "folded text continues\nnew paragraph\n  indented\nback\n",
+      "next": 1
+    },
+    "yaml": "fold: >\n  folded text\n  continues\n\n  new paragraph\n    indented\n  back\nnext: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "fold_strip": "a b"
+    },
+    "yaml": "fold_strip: >-\n  a\n  b"
+  },
+  {
+    "dict": true,
+    "value": {
+      "next": 1,
+      "wrapped": "a plain scalar that wraps\nwith a blank line"
+    },
+    "yaml": "wrapped: a plain scalar\n  that wraps\n\n  with a blank line\nnext: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "next": 1,
+      "quoted": "a double quoted wrap",
+      "single": "a single wrap"
+    },
+    "yaml": "quoted: \"a double\n  quoted wrap\"\nsingle: 'a single\n  wrap'\nnext: 1"
+  },
+  {
+    "dict": true,
+    "value": {
+      "flow": [
+        "a",
+        "b",
+        "c"
+      ],
+      "next": [
+        "d"
+      ]
+    },
+    "yaml": "flow: [a,\n  b,\n  c]\nnext: [d]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "dup": "second",
+      "other": 1
+    },
+    "yaml": "dup: first\nother: 1\ndup: second"
+  },
+  {
+    "dict": true,
+    "value": {
+      "1": "int key",
+      "2026-01-02": "date key",
+      "None": "null key",
+      "dq": 2,
+      "quoted key": 1,
+      "true_key": "x"
+    },
+    "yaml": "1: int key\ntrue_key: x\nnull: null key\n2026-01-02: date key\n'quoted key': 1\n\"dq\": 2"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": 1,
+      "b": "x # not a comment",
+      "c": "x#y",
+      "d": "q"
+    },
+    "yaml": "# comment first\na: 1 # trailing\n# between\nb: 'x # not a comment' # real\nc: x#y\nd: \"q\" # c"
+  },
+  {
+    "dict": true,
+    "value": {
+      "hash": "a",
+      "quote": "has # hash",
+      "url": "http://a/b#frag"
+    },
+    "yaml": "url: http://a/b#frag\nhash: a #comment\nquote: \"has # hash\""
+  },
+  {
+    "error": true,
+    "yaml": "key: value: with colon"
+  },
+  {
+    "error": true,
+    "yaml": "key: [unclosed"
+  },
+  {
+    "error": true,
+    "yaml": "key: 'unclosed"
+  },
+  {
+    "error": true,
+    "yaml": "key: \"bad \\q escape\""
+  },
+  {
+    "error": true,
+    "yaml": "a: 1\n b: 2"
+  },
+  {
+    "error": true,
+    "yaml": "a: 1\n\tb: 2"
+  },
+  {
+    "dict": false,
+    "value": [
+      "just",
+      "a list"
+    ],
+    "yaml": "- just\n- a list"
+  },
+  {
+    "dict": false,
+    "value": "just a scalar",
+    "yaml": "just a scalar"
+  },
+  {
+    "dict": false,
+    "value": null,
+    "yaml": "# only a comment"
+  },
+  {
+    "dict": false,
+    "value": null,
+    "yaml": ""
+  },
+  {
+    "crash": "ValueError",
+    "error": true,
+    "yaml": "a: 2026-02-30"
+  },
+  {
+    "crash": "ValueError",
+    "error": true,
+    "yaml": "a: 2026-13-01"
+  },
+  {
+    "crash": "ValueError",
+    "error": true,
+    "yaml": "a: 2026-11-13 25:00:00"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": 90,
+      "b": -3723,
+      "c": 90.5,
+      "d": "12:60",
+      "e": "0:30",
+      "f": 630
+    },
+    "yaml": "a: 1:30\nb: -1:02:03\nc: 1:30.5\nd: 12:60\ne: 0:30\nf: 1_0:30"
+  },
+  {
+    "error": true,
+    "yaml": "a: {x: 1}}"
+  },
+  {
+    "error": true,
+    "yaml": "a: [1, 2]]"
+  },
+  {
+    "error": true,
+    "yaml": "a: - b"
+  },
+  {
+    "error": true,
+    "yaml": "a: 'x' y"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": [
+        1,
+        2
+      ],
+      "b": [
+        3
+      ]
+    },
+    "yaml": "a:\n- 1\n- 2\nb:\n  - 3"
+  },
+  {
+    "error": true,
+    "yaml": "a:\n  - 1\n b: 2"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          {
+            "b": "c"
+          }
+        ]
+      ]
+    },
+    "yaml": "a: [[1, 2], [3, {b: c}]]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": [
+        "x, y",
+        "z]"
+      ]
+    },
+    "yaml": "a: [\"x, y\", 'z]']"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": [
+        "x#y",
+        "z"
+      ]
+    },
+    "yaml": "a: [x#y, z]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "msg": "Tom & Jerry, 50% off @home"
+    },
+    "yaml": "msg: Tom & Jerry, 50% off @home"
+  },
+  {
+    "dict": true,
+    "value": {
+      "more": "say \"hi\" now",
+      "text": "it's fine"
+    },
+    "yaml": "text: it's fine\nmore: say \"hi\" now"
+  },
+  {
+    "dict": true,
+    "value": {
+      "k": "v",
+      "other": "w"
+    },
+    "yaml": "k: v\n\n\nother: w\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": {
+        "b": 1
+      }
+    },
+    "yaml": "a:\n\n  b: 1"
+  },
+  {
+    "error": true,
+    "yaml": "a: b\n  c: d"
+  },
+  {
+    "error": true,
+    "yaml": "- a\n-b"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": [
+        1,
+        2
+      ]
+    },
+    "yaml": "a: [1, 2,]"
+  },
+  {
+    "error": true,
+    "yaml": "a: [,]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": {
+        "b": null,
+        "c": 1
+      }
+    },
+    "yaml": "a: {b: , c: 1}"
+  },
+  {
+    "dict": true,
+    "value": {
+      "None": "tilde key"
+    },
+    "yaml": "~: tilde key"
+  },
+  {
+    "error": true,
+    "yaml": "a: b\t"
+  },
+  {
+    "error": true,
+    "yaml": "a:\n  yes: tab\there"
+  },
+  {
+    "error": true,
+    "yaml": "a: [x,\ty]"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": "x\ty",
+      "b": null
+    },
+    "yaml": "a: \"x\ty\"\nb: # c\tinside a comment"
+  },
+  {
+    "dict": true,
+    "value": {
+      "a": "x\ty\t\n"
+    },
+    "yaml": "a: |\n  x\ty\t\n"
+  },
+  {
+    "error": true,
+    "yaml": "a: }"
+  },
+  {
+    "error": true,
+    "yaml": "a: ,"
+  },
+  {
+    "error": true,
+    "yaml": "a: ]"
+  },
+  {
+    "error": true,
+    "yaml": "a: : x"
+  },
+  {
+    "dict": true,
+    "value": {
+      "key": "text"
+    },
+    "yaml": "key: |\n  text"
+  },
+  {
+    "dict": true,
+    "value": {
+      "key": "text\n"
+    },
+    "yaml": "key: |+\n  text\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "key": "text\n\n"
+    },
+    "yaml": "key: |+\n  text\n\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "key": "text"
+    },
+    "yaml": "key: |-\n  text\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "key": "text more"
+    },
+    "yaml": "key: >\n  text\n  more"
+  },
+  {
+    "dict": true,
+    "value": {
+      "type": "# x"
+    },
+    "yaml": "type: |\n # x"
+  },
+  {
+    "dict": true,
+    "value": {
+      "k": ""
+    },
+    "yaml": "k: |\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "k": ""
+    },
+    "yaml": "k: |\n\n\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "k": "\n\n"
+    },
+    "yaml": "k: |+\n\n\n"
+  },
+  {
+    "dict": true,
+    "value": {
+      "emoji": "🙂 ok",
+      "vi": "Tiếng Việt"
+    },
+    "yaml": "emoji: 🙂 ok\nvi: Tiếng Việt"
+  }
+]

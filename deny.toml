@@ -30,6 +30,9 @@ allow = [
     # transitive crates of serde, serde_json and schemars (T123)
     "dyn-clone", "itoa", "proc-macro2", "quote", "ref-cast", "ref-cast-impl", "schemars_derive",
     "serde_core", "serde_derive", "serde_derive_internals", "syn", "unicode-ident", "zmij",
+    # transitive crates of sha2 (T126)
+    "block-buffer", "cfg-if", "cpufeatures", "crypto-common", "digest", "generic-array", "libc", "typenum",
+    "version_check",
 ]
 
 [sources]

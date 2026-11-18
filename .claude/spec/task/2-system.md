@@ -164,7 +164,27 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Parser for every link form, properties, tags, headings, blocks; backlinks, orphans; incremental deterministic index
 - Validation:
   - Golden fixture equals the generation-1 index; rerun byte-identical
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-18. `laris-vault` has `yaml` (own reader for the properties subset, since no YAML crate is
+  approved: block and flow collections, quoted and plain scalars over several lines, `|` and `>` blocks, comments,
+  YAML 1.1 scalar resolution as PyYAML does it, tabs refused as PyYAML does; tags, explicit keys and an explicit
+  block-indent digit are errors; `.inf`, `.nan` and integers beyond 64 bits stay text), `note` (`parse_note`: every
+  link form, property links, tags, headings, block ids, SHA-256, the five fixed error texts, JSON form with
+  `__date__`/`__datetime__`) and `index` (`VaultIndex::build` over a folder with the same ignored folders, symlink
+  rule and lossy UTF-8 with universal newlines as generation 1; shortest-path resolution, ambiguity and unresolved
+  lists, backlinks, orphans; reuse of unchanged notes by size and mtime from a previous index or the `dumps` cache;
+  `export_string` is deterministic, sorted, byte-stable). Golden files in `tests/golden/vault/`: `fixture/` is the
+  generation-1 fixture plus 16 authored notes and two in ignored folders (property zoo, bad YAML, anchors, depth, CRLF, Unicode names, hidden and
+  ignored folders, every link and tag form); `index.json` and `yaml_cases.json` are written by `generate.py` from the
+  generation-1 code, and the Rust output equals `index.json` byte for byte. Checked beyond the committed tests (not
+  committed): identical to generation 1 on `.laris/brain` (65 notes), `docs` (33), `.claude/spec` and the retrieval
+  fixture; 18 000 random YAML documents and 120 random vaults gave no difference. Known differences from generation 1:
+  keys that Python treats as equal (`yes` and `true`, `1` and `true`) stay two keys; a whitespace-only line holding a
+  tab is accepted; the format spec lists four ignored folders, the code (and so this crate) ignores six (`.laris`,
+  `_templates` too) - spec text left for the owner. New crates: `sha2` with its nine transitive crates, vendored and
+  added to `deny.toml` (approved in T119); `regex`, `serde_json` already present. `cargo fmt --check`,
+  `clippy -D warnings`, `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and
+  `xtask spec` pass.
 
 ### T127 — laris-vault: writer, schema and lint
 - Requirements: SR-L2
