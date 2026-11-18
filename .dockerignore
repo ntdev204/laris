@@ -1,0 +1,20 @@
+# The build context holds code and vendored crates only: no policy, no weights, no data, no secrets (SR-S8).
+.git
+target
+artifacts
+data
+reports
+experiments
+docker/secrets
+.laris
+LARIS.md
+.env
+.env.*
+**/__pycache__
+**/*.pt
+**/*.pth
+**/*.safetensors
+**/*.ckpt
+**/*.model
+packaging/npm/node_modules
+.venv
