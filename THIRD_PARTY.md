@@ -10,10 +10,10 @@ version, licence and origin. `deny.toml` is the machine-checked allowlist; this 
 | Sandbox (OS confinement) | codex (`github.com/openai/codex`), commit `aa5f492031f7edb75a40973d19eda8efb9512c61` (ADR-021 D30) | Apache-2.0 | `laris-sandbox` | T134 (measured, planned), T135 (fork) |
 
 Files planned for the fork (T134, `docs/architecture/SANDBOX_MEASUREMENT.md`; no file copied yet; each copied file keeps
-its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit). Pending owner approval of the cut:
+its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit). Cut approved by the owner on 2026-11-18 (option A):
 
 - `codex-rs/linux-sandbox/src/`: `bwrap.rs`, `linux_run_main.rs`, `seccomp.rs`, `launcher.rs`, `fd_mount.rs`,
-  `daemon_mounts.rs`, `exec_util.rs`, `wslg.rs`, `lib.rs`, `main.rs` (and `bundled_bwrap.rs` only if approved).
+  `daemon_mounts.rs`, `exec_util.rs`, `wslg.rs`, `lib.rs`, `main.rs` (`bundled_bwrap.rs` is not forked).
 - `codex-rs/sandboxing/src/`: `landlock.rs`, `bwrap.rs`, `launch.rs`, `spawn.rs`, `linux_pid_namespace.rs`,
   `policy_transforms.rs`, `manager.rs`, `denial.rs`, `violation.rs`, `seatbelt.rs`, `seatbelt_scratch.rs`,
   `seatbelt_daemon.rs`, `seatbelt_*.sbpl`, `lib.rs`. To modify: replace `codex-protocol` types with the `laris-sandbox`

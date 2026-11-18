@@ -3,7 +3,7 @@ document_id: "DOC-ARCH-SANDBOX-001"
 title: "Sandbox Measurement: Cutting the codex Sandbox"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-18"
 updated_at: "2026-11-18"
 owner: "LARIS Architecture Team"
@@ -15,7 +15,7 @@ related_documents:
   - "THIRD_PARTY.md"
 decision_references:
   - "ADR-021"
-change_summary: "First version (task T134): measured size of the codex sandbox per platform and a proposed cut, for owner approval."
+change_summary: "0.2.0: owner decisions recorded (section 10). First version (task T134): measured size of the codex sandbox per platform and a proposed cut, for owner approval."
 ---
 
 # Sandbox Measurement: Cutting the codex Sandbox
@@ -185,3 +185,12 @@ the codex `NOTICE` names only Ratatui, which is not forked.
 - macOS and Windows behaviour was not run; the Windows read-only limitation comes from reading one code path.
 - The effort to replace the permission types is an estimate until T135 writes them.
 - The cut files may still hold references to dropped crates that only appear on compilation.
+
+## 10. Owner decisions (2026-11-18)
+
+1. Own policy type replaces `codex-protocol`: approved.
+2. Windows: option A (restricted token only; no read-hiding and no OS network block on Windows, T133 must refuse such
+   requests there): approved.
+3. Common drops (no managed network proxy, no `mxc-sandbox`, no bundled `bwrap`): approved.
+4. New crates `rustix`, `dunce`, `which`, `indexmap`: approved. `rand` and `tempfile` are not approved (elevated
+   backend and tests only); `anyhow` is replaced by `thiserror`.
