@@ -115,10 +115,7 @@ impl Harness {
         config.shutdown_grace = Duration::from_millis(200);
         tweak(&mut config);
         let sink = Arc::new(MemorySink::default());
-        let state = Arc::new(AppState {
-            config,
-            backend: Arc::new(Scripted(script)),
-        });
+        let state = Arc::new(AppState::open(config, Arc::new(Scripted(script))));
         let (tx, rx) = oneshot::channel::<()>();
         let sink2 = sink.clone();
         let task = tokio::spawn(async move {

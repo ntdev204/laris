@@ -7,6 +7,8 @@
 //! [`storage`] module; the model
 //! sits behind the [`Backend`] trait.
 
+pub mod access;
+pub mod admin;
 pub mod app;
 pub mod backend;
 pub mod config;
