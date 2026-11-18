@@ -718,7 +718,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `tests/log.rs` 2, `error` unit tests 2. Dependencies (approved in T119): `axum` 0.8.9 with `http1` and `tokio` only;
   `cargo vendor` added `axum`, `axum-core`, `matchit`, `mime`, `httpdate`, `errno`, `signal-hook-registry` (listed in
   `deny.toml` and `THIRD_PARTY.md`); `hyper` and `hyper-util` (already vendored) are used directly for the header
-  timeout, not on the T119 direct list (owner to confirm); `futures-util`, `tokio` (`signal`, `rt-multi-thread`),
+  timeout, not on the T119 direct list (owner confirmed 2026-11-18); `futures-util`, `tokio` (`signal`, `rt-multi-thread`),
   `thiserror`, `serde`, `serde_json` as before. Limits: no TLS (Caddy in front, SR-S1); no keys, roles, quotas or
   storage yet (T143, T142); the model is behind `Backend` and `NoBackend` (T144); the slow-client rule covers a slow
   sender, not a slow reader of the answer stream (a client that stops reading is held by the connection limit and

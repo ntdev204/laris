@@ -47,7 +47,7 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 | matchit | 0.8.4 | MIT AND BSD-3-Clause | axum | T141 |
 | mime, httpdate | 0.3.18 / 1.0.3 | MIT OR Apache-2.0 | axum, hyper | T141 |
 | errno, signal-hook-registry | 0.3.15 / 1.4.8 | MIT OR Apache-2.0 | tokio (`signal`) | T141 |
-| hyper, hyper-util | already vendored (T128) | MIT | `laris-server` uses them directly for the connection loop (header timeout); owner to confirm | T141 |
+| hyper, hyper-util | already vendored (T128) | MIT | `laris-server` uses them directly for the connection loop (header timeout); owner confirmed 2026-11-18 | T141 |
 
 Crates approved in T119 but not yet used are listed in `deny.toml`; each row is added here when its task vendors it.
 
