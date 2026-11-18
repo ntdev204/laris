@@ -612,8 +612,9 @@ returned logs, manifests and reports.
   - Runbook section 12; `scripts/colab/data_manifest.py` (train and val files the loader reads, test splits and unread directories left out, `--stage` hard-links them with `files.sha256`), `pack_code.sh`, `setup_vm.sh`, `sync_data.sh`; the Colab CLI (`google-colab-cli` 0.8.0, SSH needs 0.7.2 or later) installed by the agent as a `uv tool` with the owner's approval of 2026-11-18
 - Validation:
   - A 10 s A100 session checked the VM (40 GB, 83 GB RAM, 236 GB disk, driver 580, PyTorch 2.14.1+cu130, Python 3.13) and was stopped; fixture test of the manifest; the data copy and a forward-only check on the VM wait for the data on Drive; no training
-- Status: pending
+- Status: done
 - Note: Owner decisions 2026-11-18: keep CARLA running locally, use the Colab A100 (191 compute units), upload the 28.10 GB of training data to the owner's Drive. Open: the Drive quota (28.1 GB data plus 6.1 GB per checkpoint), the units per hour of the plan (read it in the Colab UI), and whether the stage-1 rerun is its own task. The agent does not train; the owner starts each run.
+- Note (result 2026-11-18): done. 74 train and val files (28.10 GB, test splits excluded) went to the owner's Drive by rsync over `colab ssh` from a CPU session, then to the A100 VM disk; `files.sha256` verified 74 of 74 on the VM. Two defects found by the checksum: `fineweb_edu_en/train.parquet` was cut to 8.70 GB on Drive after the interrupted transfer, and a first re-upload read "OK" from the CPU session's cache but was lost because the session was stopped before Drive flushed; fixed on the VM, written back to Drive with `fsync`, a fresh mount must run `sha256sum -c files.sha256` to confirm. Drive authorisation needs the owner's click at every `colab drivemount` (Enter must follow it, not precede it); Colab allows one SSH connection per runtime at a time. Colab CLI 0.8.0, 6.73 compute units per hour on the A100 (`colab usage`), balance 186.36 units.
 
 ### T211 — VRAM ceiling by device (ADR-023) and the A100 speed profile
 - Requirements: SR-M3, SR-M6
