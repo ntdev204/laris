@@ -42,6 +42,12 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 | syn, quote, proc-macro2, unicode-ident | 3.0.10 / 1.0.47 / 1.0.107 / 1.0.27 | MIT OR Apache-2.0 (unicode-ident also Unicode-3.0) | serde, schemars | T123 |
 | ref-cast, ref-cast-impl, dyn-clone | 1.0.27 / 1.0.27 / 1.0.20 | MIT OR Apache-2.0 | schemars | T123 |
 | itoa, zmij | 1.0.19 / 1.0.23 | MIT OR Apache-2.0 / MIT | serde_json | T123 |
+| axum | 0.8.9 | MIT | `laris-server` (features `http1`, `tokio` only) | T141 |
+| axum-core | 0.5.6 | MIT | axum | T141 |
+| matchit | 0.8.4 | MIT AND BSD-3-Clause | axum | T141 |
+| mime, httpdate | 0.3.18 / 1.0.3 | MIT OR Apache-2.0 | axum, hyper | T141 |
+| errno, signal-hook-registry | 0.3.15 / 1.4.8 | MIT OR Apache-2.0 | tokio (`signal`) | T141 |
+| hyper, hyper-util | already vendored (T128) | MIT | `laris-server` uses them directly for the connection loop (header timeout); owner to confirm | T141 |
 
 Crates approved in T119 but not yet used are listed in `deny.toml`; each row is added here when its task vendors it.
 

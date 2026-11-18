@@ -56,6 +56,8 @@ allow = [
     "fallible-iterator", "fallible-streaming-iterator", "foldhash", "hashbrown", "hashlink", "libsqlite3-sys",
     "rsqlite-vfs", "sqlite-wasm-rs",
     "pkg-config", "vcpkg",
+    # transitive crates of axum and tokio signal (T141)
+    "axum-core", "errno", "httpdate", "matchit", "mime", "signal-hook-registry",
 ]
 
 [sources]
