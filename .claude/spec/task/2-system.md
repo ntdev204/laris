@@ -720,11 +720,20 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `deny.toml` and `THIRD_PARTY.md`); `hyper` and `hyper-util` (already vendored) are used directly for the header
   timeout, not on the T119 direct list (owner confirmed 2026-11-18); `futures-util`, `tokio` (`signal`, `rt-multi-thread`),
   `thiserror`, `serde`, `serde_json` as before. Limits: no TLS (Caddy in front, SR-S1); no keys, roles, quotas or
-  storage yet (T143, T142); the model is behind `Backend` and `NoBackend` (T144); the slow-client rule covers a slow
-  sender, not a slow reader of the answer stream (a client that stops reading is held by the connection limit and
-  `stream_idle` only while the backend is silent); only `/health`, `chat` and `embed` exist, the other P1 routes come
+  storage yet (T143, T142); the model is behind `Backend` and `NoBackend` (T144); a client that reads slowly
+  is cut by the write-stall guard (see the amendment below), so the slow-client rules cover both directions; only `/health`, `chat` and `embed` exist, the other P1 routes come
   with their tasks; `stream:false` is refused with 400 (generation 1 had no recorded non-streaming chat); the
-  access log goes to standard error as JSON lines, no subscriber crate. `cargo fmt --check`, `clippy -D warnings`,
+  access log goes to standard error as JSON lines, no subscriber crate. Amendment 2026-11-18 (branch
+  `feature/T141-write-stall`, owner asked after the first close): `stall::StallGuard` wraps each accepted socket; a
+  write or flush that stays blocked by the peer for `LARIS_SERVER__WRITE_STALL_MS` (default 30000) fails with
+  `TimedOut`, hyper ends the connection, the answer stream is dropped (the backend stops) and the log says
+  `client_gone`. The clock runs only while the peer blocks a write and restarts on every write that progresses, so
+  waiting for the model or for the next request is not counted. Tests: a client that stops reading a 320 MB lazy
+  stream is cut within 3 s and its only connection slot is free again while it keeps the socket open; a client that
+  reads steadily but slower than the server is not cut (all bytes and `[DONE]` arrive); with the guard disabled the
+  first test fails. Limit: the guard bounds one blocked write, not the total time of an answer, so a client that reads
+  one buffer just under every `write_stall` can still hold a slot for the length of the answer (the model's own
+  limits bound that; a total-time limit per answer is not set). `cargo fmt --check`, `clippy -D warnings`,
   `cargo test`, `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T142 — PostgreSQL storage

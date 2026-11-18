@@ -2,6 +2,7 @@
 
 use crate::app::{AppState, Deferred, router};
 use crate::log::{LogSink, RequestScope};
+use crate::stall::StallGuard;
 use axum::body::Body;
 use axum::http::{HeaderValue, Request, Response};
 use hyper::body::Incoming;
@@ -130,13 +131,14 @@ pub async fn serve(
                     inner: TowerToHyperService::new(app.clone()),
                 };
                 let header_timeout = config.header_timeout;
+                let write_stall = config.write_stall;
                 tasks.spawn(async move {
                     let mut builder = hyper::server::conn::http1::Builder::new();
                     builder
                         .timer(TokioTimer::new())
                         .header_read_timeout(header_timeout)
                         .max_buf_size(MAX_HEADER_BUFFER);
-                    let _ = builder.serve_connection(TokioIo::new(stream), conn).await;
+                    let _ = builder.serve_connection(TokioIo::new(StallGuard::new(stream, write_stall)), conn).await;
                     drop(permit);
                 });
             }
