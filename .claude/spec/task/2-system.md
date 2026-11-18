@@ -1206,7 +1206,37 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Inventory of the Python call sites; tool routes in the Python model service; server `/tools/{name}`; schemas
 - Validation:
   - Fixture tests reproduce the extraction results through the server
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19. Inventory (also in the docstring of `laris.model.tools`): the generation-1 scientific and
+  scholarly code is called from `research/evaluation/extraction.py` (`extract_spans`, the macro-F1 gate),
+  `research/evaluation/suite.py` (`suite_citation`: bibliography, citations, `Doc`) and tests only; no Python
+  client code calls it, so the client has nothing to port and the research tooling keeps its direct calls. Six tools,
+  all deterministic and model-free, so they bypass the GPU queue: `extract_discourse`, `detect_limitations`,
+  `normalize_quantities`, `parse_bibliography`, `analyse_citations`, `mine_literature` (`laris/model/tools.py`).
+  P2 gains `GET /v1/tools` (function schemas, sorted) and `POST /v1/tools/{name}` (`{"arguments"}` in; `{"result"}` or
+  `{"error": {"message", "type"}}` out; unknown name 404). A refusal is a tool result with a type
+  (`invalid_arguments`, `input_too_large`, `rejected`, `tool_failed`), never an HTTP failure, and carries no input text
+  (a library error is reported by class name only). Limits are configuration: `model_service.tool_max_chars`
+  (2 000 000) and `tool_max_documents` (200). `laris-protocol` gets `scientific` (names, argument and result types,
+  error codes) and `ToolList`; the schema export has the new `scientific` group (regenerated). Server: `GET
+  /v1/laris/tools` and `POST /v1/laris/tools/{name}` behind the usual gate with the new permission `tools` (roles
+  `user` and `admin`; not `readonly` or `auditor`). `Backend` gets `tools()` and `tool()` (default 502; the policy
+  gateway passes them on); `ModelBackend` sends them to P2 through the same bounded places as chat and embed, passes
+  on only `arguments`, answers 404 for a name the service does not serve, validates the name before it reaches an
+  address (`[a-z0-9_]`, at most 64), refuses an answer with both or neither of `result` and `error`, and never shows
+  the service's text or address (502/503). Character offsets are Unicode scalar values, not bytes; the protocol docs
+  and a test say so. Fixtures are recorded from the real tool box by `scripts/record_scientific_fixtures.py`
+  (`tests/fixtures/scientific`, round-tripped and schema-validated). Tests: 25 Python cases (`tests/unit/model/test_tools.py`, 11 tests:
+  baseline macro-F1 0.9433 through the tool equals the library, gold citation edges, refusals, no leak, ASGI route) and
+  9 Rust in `tests/tools.rs` (fake model: list, arguments only, refusal, 404 and bad names, failures, dead model,
+  shared places) plus 3 in `laris-protocol`. With `LARIS_TEST_MODEL_PYTHON` set (run here with `.venv/bin/python`)
+  the real service is driven through the server: the extraction fixtures score macro F1 0.9433, equal to
+  `baseline.json` type by type, the recorded results come back, and the citation fixture gives exactly its gold edges;
+  without it those two tests pass without proving anything. Not done, by design: the client's `RemoteTools` over this
+  route (client programme), metering or rate limits for tool calls (they spend no tokens; keys are still checked),
+  per-tool permissions, a trace of the tool name (T150), the Agent rung (T151). The foundation model is NOT
+  QUALIFIED; these tools use no model. `cargo fmt --check`, `clippy -D warnings`, `cargo test` (without PostgreSQL),
+  `cargo deny check`, `xtask guard`, `xtask scan`, `xtask schema --check` and `xtask spec` pass.
 
 ### T150 — Traces and audit
 - Requirements: SR-S7

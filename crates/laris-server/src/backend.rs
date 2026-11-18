@@ -4,7 +4,10 @@
 use crate::error::ApiError;
 use futures_util::future::BoxFuture;
 use futures_util::stream::BoxStream;
-use laris_protocol::p1::{ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse};
+use laris_protocol::p1::{
+    ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, ToolList, ToolRequest,
+    ToolResponse,
+};
 
 /// A failure after the answer stream started. It is sent as an `error` event followed by `[DONE]`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,6 +36,27 @@ pub trait Backend: Send + Sync + 'static {
     }
     /// Embeds texts.
     fn embed(&self, request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>>;
+    /// The remote tools on offer (the model service's scientific tools, SR-M2). A backend with none answers 502.
+    fn tools(&self) -> BoxFuture<'static, Result<ToolList, ApiError>> {
+        Box::pin(async {
+            Err(ApiError::BadGateway(
+                "the model service is not connected".into(),
+            ))
+        })
+    }
+    /// Runs the remote tool `name`. A refusal by the tool is `Ok` with an `error` in the response; an `Err` is the
+    /// transport or the service failing (or [`ApiError::NotFound`] for a name nobody serves).
+    fn tool(
+        &self,
+        _name: String,
+        _request: ToolRequest,
+    ) -> BoxFuture<'static, Result<ToolResponse, ApiError>> {
+        Box::pin(async {
+            Err(ApiError::BadGateway(
+                "the model service is not connected".into(),
+            ))
+        })
+    }
 }
 
 /// The backend of a server with no model connected: every call is a 502.

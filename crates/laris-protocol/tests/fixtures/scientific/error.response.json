@@ -1,0 +1,6 @@
+{
+ "error": {
+  "message": "text must be a non-empty string",
+  "type": "invalid_arguments"
+ }
+}

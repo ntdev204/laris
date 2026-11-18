@@ -218,6 +218,8 @@ class ModelServiceConfig(BaseModel):
     gpu_workers: int = Field(default=1, ge=1)  # jobs running on the GPU at the same time
     queue_max_waiting: int = Field(default=64, ge=1)  # beyond this, requests get 503
     queue_wait_timeout_s: float = Field(default=60.0, gt=0.0)  # waiting longer gives 504
+    tool_max_chars: int = Field(default=2_000_000, ge=1)  # most text one scientific tool call may carry
+    tool_max_documents: int = Field(default=200, ge=1)  # most documents in one scholarly tool call
 
 
 class ServingConfig(BaseModel):

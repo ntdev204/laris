@@ -1,0 +1,212 @@
+{
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "analyse_citations",
+    "description": "Resolve the reference lists of the given documents against each other and report the citation graph: summary, edges, co-citation, coupling, centrality or unresolved entries.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "documents": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "text": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "id",
+         "text"
+        ],
+        "additionalProperties": false
+       },
+       "description": "Documents with a unique id and their full text; a reference list ends the text."
+      },
+      "kind": {
+       "type": "string",
+       "enum": [
+        "summary",
+        "edges",
+        "cocitation",
+        "coupling",
+        "centrality",
+        "unresolved"
+       ]
+      }
+     },
+     "required": [
+      "documents"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "detect_limitations",
+    "description": "Find limitations, assumptions and negative findings without relying on headings, with uncertainty scores and character ranges.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string",
+       "description": "The text to read."
+      },
+      "document_id": {
+       "type": "string",
+       "description": "Name used in evidence coordinates (default 'doc')."
+      },
+      "strip_headers": {
+       "type": "boolean",
+       "description": "Ignore heading lines."
+      }
+     },
+     "required": [
+      "text"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "extract_discourse",
+    "description": "Find claims, methods, datasets, metrics, results, limitations, assumptions and formulas in scientific text, each with its character range in the text.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string",
+       "description": "The text to read."
+      },
+      "document_id": {
+       "type": "string",
+       "description": "Name used in evidence coordinates (default 'doc')."
+      }
+     },
+     "required": [
+      "text"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "mine_literature",
+    "description": "Statistics over a set of documents: overview, term trends by year, near duplicates or similarity groups. Counts name the scope they were computed over.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "documents": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "text": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "id",
+         "text"
+        ],
+        "additionalProperties": false
+       },
+       "description": "Documents with a unique id and their full text; a reference list ends the text."
+      },
+      "kind": {
+       "type": "string",
+       "enum": [
+        "overview",
+        "term_trends",
+        "near_duplicates",
+        "groups"
+       ]
+      },
+      "threshold": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "top": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100
+      },
+      "min_docs": {
+       "type": "integer",
+       "minimum": 1
+      }
+     },
+     "required": [
+      "documents"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "normalize_quantities",
+    "description": "Find physical quantities (value, unit, uncertainty) and convert each to its SI representation with its dimension and character range.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string",
+       "description": "The text to read."
+      },
+      "document_id": {
+       "type": "string",
+       "description": "Name used in evidence coordinates (default 'doc')."
+      }
+     },
+     "required": [
+      "text"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "parse_bibliography",
+    "description": "Read title, authors, year, DOI and arXiv id from the head of a paper; a field not stated stays empty. Optional file metadata fills what the text does not say.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string",
+       "description": "The text to read."
+      },
+      "metadata": {
+       "type": "object",
+       "description": "File metadata."
+      }
+     },
+     "required": [
+      "text"
+     ],
+     "additionalProperties": false
+    }
+   }
+  }
+ ]
+}

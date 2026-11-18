@@ -441,3 +441,114 @@ fn seeded_faults_are_caught() {
     assert!(P1Event::from_data("{not json").is_err());
     assert!(P2Event::from_data(r#"{"id": 5}"#).is_err());
 }
+
+// ---------------------------------------------------------------- scientific tools (T149)
+//
+// Recorded from the Python tool box by `scripts/record_scientific_fixtures.py`: every request and result parses as its
+// type, survives a round trip, and validates against the exported schema.
+
+fn scientific(name: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/scientific")
+        .join(name);
+    serde_json::from_str(
+        &std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path:?}: {e}")),
+    )
+    .unwrap_or_else(|e| panic!("{name}: {e}"))
+}
+
+fn tool_pair<A, R>(tool: &str, args: &str, result: &str)
+where
+    A: Serialize + DeserializeOwned + PartialEq + std::fmt::Debug,
+    R: Serialize + DeserializeOwned + PartialEq + std::fmt::Debug,
+{
+    let request = scientific(&format!("{tool}.request.json"));
+    round_trip::<ToolRequest>(&request, tool);
+    assert_schema("p1", "ToolRequest", &request, tool);
+    round_trip::<A>(&request["arguments"], tool);
+    assert_schema("scientific", args, &request["arguments"], tool);
+    let response = scientific(&format!("{tool}.response.json"));
+    round_trip::<ToolResponse>(&response, tool);
+    assert_schema("p1", "ToolResponse", &response, tool);
+    round_trip::<R>(&response["result"], tool);
+    assert_schema("scientific", result, &response["result"], tool);
+}
+
+#[test]
+fn scientific_tool_fixtures_round_trip_and_validate() {
+    use laris_protocol::scientific::*;
+    tool_pair::<ExtractDiscourseArgs, DiscourseExtraction>(
+        EXTRACT_DISCOURSE,
+        "ExtractDiscourseArgs",
+        "DiscourseExtraction",
+    );
+    tool_pair::<DetectLimitationsArgs, LimitationReport>(
+        DETECT_LIMITATIONS,
+        "DetectLimitationsArgs",
+        "LimitationReport",
+    );
+    tool_pair::<NormalizeQuantitiesArgs, Quantities>(
+        NORMALIZE_QUANTITIES,
+        "NormalizeQuantitiesArgs",
+        "Quantities",
+    );
+    tool_pair::<ParseBibliographyArgs, BibliographyResult>(
+        PARSE_BIBLIOGRAPHY,
+        "ParseBibliographyArgs",
+        "BibliographyResult",
+    );
+    tool_pair::<AnalyseCitationsArgs, CitationResult>(
+        ANALYSE_CITATIONS,
+        "AnalyseCitationsArgs",
+        "CitationResult",
+    );
+    let mining = scientific("mine_literature.request.json");
+    round_trip::<MineLiteratureArgs>(&mining["arguments"], MINE_LITERATURE);
+    assert_schema(
+        "scientific",
+        "MineLiteratureArgs",
+        &mining["arguments"],
+        "mine",
+    );
+    let error = scientific("error.response.json");
+    round_trip::<ToolResponse>(&error, "error");
+    assert_eq!(error["error"]["type"], ERR_INVALID_ARGUMENTS);
+}
+
+#[test]
+fn the_tool_list_names_the_scientific_tools() {
+    let list = scientific("tools.list.json");
+    round_trip::<ToolList>(&list, "tools.list");
+    assert_schema("p1", "ToolList", &list, "tools.list");
+    let typed: ToolList = serde_json::from_value(list).unwrap();
+    let names: Vec<&str> = typed
+        .tools
+        .iter()
+        .map(|t| t.function.name.as_str())
+        .collect();
+    assert_eq!(names, laris_protocol::scientific::TOOLS);
+}
+
+#[test]
+fn scientific_offsets_slice_the_text_in_scalar_values() {
+    let request = scientific("extract_discourse.request.json");
+    let text: Vec<char> = request["arguments"]["text"]
+        .as_str()
+        .unwrap()
+        .chars()
+        .collect();
+    let found: laris_protocol::scientific::DiscourseExtraction =
+        serde_json::from_value(scientific("extract_discourse.response.json")["result"].clone())
+            .unwrap();
+    let entities = found.claims.iter().chain(&found.limitations);
+    let mut checked = 0;
+    for e in entities {
+        let c = &e.coordinate;
+        let slice: String = text[c.char_start as usize..c.char_end as usize]
+            .iter()
+            .collect();
+        assert_eq!(slice.trim_end(), c.verbatim_snippet.trim_end());
+        checked += 1;
+    }
+    assert!(checked >= 2);
+}

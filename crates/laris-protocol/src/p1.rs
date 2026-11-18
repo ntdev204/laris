@@ -1,7 +1,7 @@
 //! P1: the client's API to the server. Chat is a server-sent event stream; the other routes answer JSON.
 //!
 //! Routes: `POST /v1/laris/chat` (SSE), `POST /v1/laris/embed`, `GET /v1/laris/{workflows,help,account}`,
-//! `POST /v1/laris/tools/{name}`, `GET /v1/models`, `GET /v1/admin/{usage,reasoning}`.
+//! `GET /v1/laris/tools`, `POST /v1/laris/tools/{name}`, `GET /v1/models`, `GET /v1/admin/{usage,reasoning}`.
 
 use crate::chat::{ChatMessage, ToolSchema, Usage};
 use crate::p2::{ChunkChoice, ChunkObject};
@@ -383,6 +383,17 @@ pub struct AdminReasoning {
     /// Recent traces.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub traces: Option<Vec<Value>>,
+}
+
+/// `GET /v1/laris/tools` (and P2's `GET /v1/tools`): the remote tools on offer, sorted by name.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct ToolList {
+    /// One schema per tool.
+    #[serde(default)]
+    pub tools: Vec<ToolSchema>,
+    /// Fields of a newer peer.
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
 }
 
 /// `POST /v1/laris/tools/{name}`: run one of the model service's remote tools.

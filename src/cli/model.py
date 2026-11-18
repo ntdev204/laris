@@ -64,6 +64,7 @@ def serve(argv: Sequence[str]) -> int:
 
     from laris.model.app import create_app
     from laris.model.service import ModelService, build_embedder, build_queue
+    from laris.model.tools import Limits, ToolBox
     from laris.shared.backend import load_backend
     from laris.shared.config.loader import load_runtime_config
 
@@ -77,7 +78,16 @@ def serve(argv: Sequence[str]) -> int:
         args.device or cfg.device,
     )
     queue = build_queue(backend, embedder, cfg)
-    app = create_app(ModelService(backend, name, embedder, queue), cfg.max_body_bytes)
+    app = create_app(
+        ModelService(
+            backend,
+            name,
+            embedder,
+            queue,
+            ToolBox(Limits(cfg.tool_max_chars, cfg.tool_max_documents)),
+        ),
+        cfg.max_body_bytes,
+    )
     host, port = args.host or cfg.host, args.port or cfg.port
     kind = "custom backend" if spec else "PLACEHOLDER backend (no trained core model)"
     print(f"LARIS model service on http://{host}:{port}/v1  model={name}  [{kind}]", flush=True)

@@ -1,0 +1,49 @@
+{
+ "result": {
+  "scope": {
+   "documents": 4,
+   "documents_with_reference_list": 3,
+   "references": 8,
+   "resolved": 5,
+   "unresolved_or_flagged": 3
+  },
+  "summary": {
+   "edges": 5,
+   "in_degree": {
+    "D1": 0,
+    "D2": 3,
+    "D3": 2,
+    "D4": 0
+   },
+   "out_degree": {
+    "D1": 2,
+    "D2": 0,
+    "D3": 1,
+    "D4": 2
+   },
+   "citations_without_entry": 1
+  },
+  "edges": [
+   {
+    "citing": "D1",
+    "cited": "D2"
+   },
+   {
+    "citing": "D1",
+    "cited": "D3"
+   },
+   {
+    "citing": "D3",
+    "cited": "D2"
+   },
+   {
+    "citing": "D4",
+    "cited": "D2"
+   },
+   {
+    "citing": "D4",
+    "cited": "D3"
+   }
+  ]
+ }
+}
