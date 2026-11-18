@@ -21,6 +21,10 @@ from laris.research.language.training.trainer import (
     MultiTaskLossCalculator,
     MultiTaskLossWeights,
 )
+from laris.research.language.training.vram_ceiling import (
+    DEFAULT_CEILING_GIB,
+    vram_ceiling_from_environment,
+)
 from laris.shared.config.loader import load_config
 from laris.shared.config.schemas import TrainingConfig
 from laris.shared.core.authorization import (
@@ -51,7 +55,23 @@ from laris.shared.language.tokenization.normalized import (
     NormalizedSentencePiece,
 )
 
-MAX_VRAM_GB = 14.5
+# Default ceiling; `LARIS_VRAM_CEILING_GB` may raise it on a 24 GB+ card (ADR-023).
+MAX_VRAM_GB = DEFAULT_CEILING_GIB
+
+
+def _vram_ceiling_or_exit() -> Optional[float]:
+    """Ceiling from the environment and the visible GPU; None after printing an error."""
+    total: Optional[float] = None
+    if TORCH_AVAILABLE:
+        import torch
+
+        if torch.cuda.is_available():
+            total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+    try:
+        return vram_ceiling_from_environment(total)
+    except ValueError as exc:
+        print(f"[ERROR] {exc}")
+        return None
 
 
 def seed_everything(seed: int) -> None:
@@ -359,9 +379,13 @@ def _run_memory_profile(
     stage = "forward+backward with a real optimizer step" if with_step else "forward only"
     print(f"\n[PROFILING MODE] Real model, real train batches, {stage}.")
     print("The model is randomly initialised and discarded; nothing is saved.")
+    ceiling_gb = _vram_ceiling_or_exit()
+    if ceiling_gb is None:
+        return 1
     model = PyTorchTransformerEncoder(config).to("cuda")
     trainer = LanguageEncoderTrainer(
         model=model,
+        max_vram_ceiling_gb=ceiling_gb,
         config=config,
         dataloader=loader,
         use_8bit_adam=use_8bit_adam,
@@ -381,7 +405,7 @@ def _run_memory_profile(
               f"{len(loader.task_paths)} active tasks.")
         return 1
     profile = profile_training_memory(
-        trainer, loader, MAX_VRAM_GB, with_training_step=with_step,
+        trainer, loader, ceiling_gb, with_training_step=with_step,
         tasks_per_step=hyper.tasks_per_step,
     )
     print(f"GPU:                       {profile.gpu_name} ({profile.total_vram_gb:.2f} GB)")
@@ -406,7 +430,7 @@ def _run_memory_profile(
         if profile.seconds_per_group_step is not None:
             print(f"Latency per mixed step:    {profile.seconds_per_group_step:.2f} s "
                   "(one micro-step with that many tasks)")
-    print(f"Measured peak:             {profile.peak_gb:.2f} GB (limit {MAX_VRAM_GB} GB)")
+    print(f"Measured peak:             {profile.peak_gb:.2f} GB (limit {ceiling_gb:g} GB)")
     per_update = profile.seconds_per_micro_batch * hyper.gradient_accumulation_steps
     print(
         f"Latency:                   {profile.seconds_per_micro_batch:.2f} s/micro-batch incl. "
@@ -610,9 +634,15 @@ def run(args: argparse.Namespace) -> int:
             print(f"[ERROR] Cannot initialize from {args.init_from}: {exc}")
             return 1
     model.to(device)
+    ceiling_gb = _vram_ceiling_or_exit()
+    if ceiling_gb is None:
+        return 1
+    if ceiling_gb != DEFAULT_CEILING_GIB:
+        print(f"VRAM ceiling:              {ceiling_gb:g} GB (LARIS_VRAM_CEILING_GB, ADR-023)")
 
     trainer = LanguageEncoderTrainer(
         model=model,
+        max_vram_ceiling_gb=ceiling_gb,
         config=config,
         dataloader=loader,
         use_8bit_adam=use_8bit_adam,
@@ -649,6 +679,8 @@ def run(args: argparse.Namespace) -> int:
         "training": hyper.model_dump(),
         "precision": args.precision,
         "use_8bit_adam": use_8bit_adam,
+        "vram_ceiling_gb": ceiling_gb,
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "tokenizer_model": str(args.tokenizer_model),
         "tokenizer_sha256": tokenizer_digest,
         "text_normalization": NORMALIZATION_ID if args.normalize_input else None,

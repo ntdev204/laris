@@ -39,6 +39,7 @@ On `laris-v2` only the principle ADRs remain; the decisions about the Python gen
 | [ADR-008](ADR-008-evaluation-before-capability-claims.md) | Empirical Evaluation and Benchmark Gates Preceding Capability Claims | ACCEPTED | 2026-10-15 | Layer 10, Testing |
 | [ADR-020](ADR-020-researchllm.md) | What ResearchLLM is: stages, stage-6 advisor options, gates | ACCEPTED (owner-delegated 2026-11-13; thresholds provisional) | — | Model block |
 | [ADR-021](ADR-021-rust-generation.md) | Rust generation: system, server, client; decisions D27-D43 | ACCEPTED | 2026-11-13 | System, server, client |
+| [ADR-023](ADR-023-vram-ceiling-by-device.md) | VRAM ceiling by device for training and profile runs | ACCEPTED | 2026-11-18 | Model block, owner runs |
 
 ## Freeze Register
 

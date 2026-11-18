@@ -615,6 +615,17 @@ returned logs, manifests and reports.
 - Status: pending
 - Note: Owner decisions 2026-11-18: keep CARLA running locally, use the Colab A100 (191 compute units), upload the 28.10 GB of training data to the owner's Drive. Open: the Drive quota (28.1 GB data plus 6.1 GB per checkpoint), the units per hour of the plan (read it in the Colab UI), and whether the stage-1 rerun is its own task. The agent does not train; the owner starts each run.
 
+### T211 — VRAM ceiling by device (ADR-023) and the A100 speed profile
+- Requirements: SR-M3, SR-M6
+- Depends: T210
+- Deliverables:
+  - ADR-023 (owner decision 2026-11-18): default ceiling 14.5 GB; `LARIS_VRAM_CEILING_GB` may raise it only on a GPU of 24 GB or more and up to 95 % of the memory PyTorch sees; `vram_ceiling.py`, the training CLI (profile and run), provenance `vram_ceiling_gb` and `gpu_name`; the central `HardwareConfig` and the RTX envelope unchanged
+  - `scripts/colab/speed_profile.sh` and runbook section 13: micro-batch 8, 16, 32 with accumulation 4, 2, 1 and gradient checkpointing on and off, decision rule, recomputation of the T203 draws for the chosen micro-batch
+- Validation:
+  - Unit tests of the ceiling (default, lowering, refusal on a small card, 95 % cap, bad values); spec and docs validators; the profile itself is an owner run and its figures replace nothing until measured
+- Status: pending
+- Note: Owner order 2026-11-18: use the Colab A100 at its full speed ("Tận dụng tối đa tài nguyên", then "Cho phép" to relaxing the ceiling by device). The agent does not run the profile (it takes optimizer steps). The stage-1 rerun is not yet a task; it follows the profile and uses the micro-batch it chooses.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
