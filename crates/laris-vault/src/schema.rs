@@ -1,7 +1,6 @@
 //! Note schema registry: which properties each note type must carry, and where it lives (SR-L2).
 //!
-//! The registry is read from `.laris/vault/schema.yaml` (under the integrity lock). A project without that file (a thin
-//! client, an adopted vault) uses the same table built into [`BUILTIN_YAML`]; a test keeps the two identical. A note
+//! The registry is built into [`BUILTIN_YAML`]; a project that wants other types points [`Schema::load`] at its own file. A note
 //! without a `type` belongs to the user and is never checked.
 
 use std::collections::BTreeMap;

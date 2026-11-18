@@ -6,6 +6,14 @@ use laris_vault::VaultIndex;
 
 use crate::text::{round_to, tokens};
 
+/// The folder of proposals that nobody accepted yet. Its notes are never retrieved, whatever the query.
+pub const INBOX: &str = "_inbox";
+
+/// Whether a vault-relative path is inside the proposals inbox.
+pub fn in_inbox(path: &str) -> bool {
+    path.split('/').next() == Some(INBOX)
+}
+
 const K1: f64 = 1.5;
 const B: f64 = 0.75;
 /// A title word counts as this many body words.
@@ -36,6 +44,9 @@ impl NoteSearch {
         let mut lengths = Vec::new();
         let mut postings: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
         for (path, note) in &index.notes {
+            if in_inbox(path) {
+                continue;
+            }
             if !folders.is_empty() && !folders.iter().any(|f| path.split('/').next() == Some(f)) {
                 continue;
             }
