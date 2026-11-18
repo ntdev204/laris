@@ -16,10 +16,13 @@
       "passed": 15
     },
     "golden": {
-      "passed": 41
+      "passed": 45
     },
     "injection": {
       "passed": 33
+    },
+    "ladder": {
+      "passed": 12
     },
     "leak": {
       "passed": 9

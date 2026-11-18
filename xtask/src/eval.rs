@@ -25,6 +25,9 @@ use std::process::{Command, ExitCode};
 
 /// Report text that says what the numbers are not.
 const MODEL: &str = "none: model-free suites; the foundation model is NOT QUALIFIED";
+/// What stood in for the model and the tool box in the ladder suites (SR-S9): the report says so.
+const BACKEND: &str = "ladder suites: scripted model and recorded tool-box outputs in one process (the compose \
+     stack is T153); mechanics only, no capability is shown";
 const DEFAULT_REPORT: &str = "reports/model_free/rust_report.json";
 const DEFAULT_BASELINE: &str = "reports/model_free/baseline.json";
 /// Tolerance used only when a new baseline is written; afterwards the file is the authority.
@@ -42,13 +45,21 @@ const SUITES: &[Suite] = &[
             ("laris-protocol", "core"),
             ("laris-vault", "golden"),
             ("laris-vault", "writer_golden"),
-            ("laris-retrieval", "golden"),
+            ("laris-retrieval", "recorded"),
             ("laris-store", "store"),
         ],
     ),
     (
         "agentic",
         &[("laris-core", "agentic"), ("laris-core", "log")],
+    ),
+    (
+        "ladder",
+        &[
+            ("laris-server", "rag_rung"),
+            ("laris-server", "agent_rung"),
+            ("laris-server", "agentic_rung"),
+        ],
     ),
     ("evidence", &[("laris-evidence", "gate")]),
     ("leak", &[("laris-policy", "redact")]),
@@ -323,6 +334,7 @@ fn judge(m: &Measured, baseline: &Value, seed: f64) -> (Value, bool) {
         metrics.insert(key.clone(), json!({"value": round4(*value), "ok": ok}));
     }
     let report = json!({
+        "backend": BACKEND,
         "model": MODEL,
         "passed": passed,
         "tolerancePercent": tolerance,

@@ -1316,7 +1316,29 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     the vault, bounded autonomy; report naming the backend
 - Validation:
   - Suite passes; the report states that mechanics, not model capability, were shown
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T152-agentic-rung`. Scenario suite `laris-server/tests/agentic_rung.rs`
+  (5 tests, Linux) over the same stack as the Agent rung: the harness moved to `tests/support/mod.rs` and is shared by
+  `agent_rung.rs` (unchanged scenarios) and the new suite (`Options`: session id, agent limits, project vault, memory
+  folder). Scenarios: (1) the model's plan is shown before the first tool, its steps move to done as local and remote
+  tools run, an answer given while a step is open is sent back once with the step named, the goal ends complete, a
+  `memory` note with provenance is written into the project vault (`write_vault_note`), and no trace row holds the
+  plan text, the note, the report or the paper; (2) a model stream that breaks mid-goal ends the turn as
+  `provider_error`, a new loop over the same store resumes the plan (`resumed`, shown to the model), does not run
+  the finished `Read` again and completes; (3) replans are bounded (`max_replans` 2, the limit said once) while a
+  tool box that refuses every call is called four times and the model reports the gap; (4) a goal the model will not
+  finish is reported open with its open step; (5) autonomy: the step ceiling ends a planner that never stops
+  (`max_steps`, exactly that many model calls), a refused approval and a denied path run and write nothing and reach
+  no server, more calls in one step than `maxToolCallsPerStep` get a typed `too_many_calls` result. Repeating the same
+  call is refused by the loop, so the replan scenario varies its arguments. `cargo xtask eval` has a `ladder` suite
+  (`rag_rung`, `agent_rung`, `agentic_rung`; 12 tests) and its report now carries `backend` naming what stood in:
+  a scripted model and recorded tool-box outputs in one process, mechanics only, no capability shown. Fixed on the way:
+  the `golden` suite of the runner pointed at `laris-retrieval/tests/golden.rs`, removed in T215, so it had failed
+  since then; it now runs `recorded` (baseline 41 -> 45). 628 workspace tests pass (without PostgreSQL); `fmt`,
+  `clippy -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`, `xtask eval` (and the seeded 20
+  percent regression fails). Not done, by design: the run against the compose stack (T153/T154), the Agentic rung
+  with a qualified model, the client. The backend is a script, so this proves mechanics only; the foundation model is
+  NOT QUALIFIED.
 
 ### T153 — Docker deployment
 - Requirements: SR-S8
