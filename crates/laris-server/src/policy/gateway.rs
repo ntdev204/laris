@@ -9,6 +9,7 @@
 use super::compose::{Composer, Inputs};
 use super::guard::{Guard, StreamGuard};
 use super::reasoning::{ReasoningRecord, ReasoningSink, TagPair, ThinkSplitter};
+use super::skills::SKILL_TOOL;
 use super::workflows::Workflows;
 use crate::backend::{Backend, ChunkStream, StreamFailure};
 use crate::error::ApiError;
@@ -16,7 +17,7 @@ use futures_util::StreamExt;
 use futures_util::future::BoxFuture;
 use hmac::{Hmac, Mac};
 use laris_protocol::chat::{
-    ChatMessage, Content, FinishReason, FunctionKind, Role, ToolCall, ToolCallFunction,
+    ChatMessage, Content, FinishReason, FunctionKind, Role, ToolCall, ToolCallFunction, Usage,
 };
 use laris_protocol::p1::{
     ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, Kind, LarisMeta, LarisRequest,
@@ -229,23 +230,31 @@ impl PolicyGateway {
                 )
             }
         };
-        // the request the skill is chosen for: the task line, the workflow's request, the user's latest message
+        // a skill the user named loads before the first step; any other is loaded by the model when it needs it
         let latest = messages
             .iter()
             .rev()
             .find(|m| m.role == Role::User)
             .map(text_of)
             .unwrap_or_default();
-        let wanted: String = [
-            laris.task.as_str(),
-            laris.workflow.as_ref().map_or("", |w| w.request.as_str()),
-            latest.as_str(),
-        ]
-        .join("\n")
-        .chars()
-        .take(4_000)
-        .collect();
-        let picked = policy.skills.select(&wanted);
+        let skill_tool_allowed = policy.skills.offered()
+            && workflow.is_none_or(|w| w.allowed_tools.iter().any(|t| t == SKILL_TOOL));
+        let named = if skill_tool_allowed {
+            policy.skills.named(&latest)
+        } else {
+            None
+        };
+        let skills_index = if skill_tool_allowed {
+            let budget = policy.composer.settings().skills_index_chars;
+            let mut index = policy.skills.index(budget);
+            if !laris.layers.skills_index.trim().is_empty() {
+                index.push('\n');
+                index.push_str(&laris.layers.skills_index);
+            }
+            index
+        } else {
+            laris.layers.skills_index.clone()
+        };
         let own: Vec<(String, String)> = laris
             .layers
             .instructions
@@ -258,20 +267,27 @@ impl PolicyGateway {
             date: &today(),
             extra: &laris.layers.extra,
             workflow: &workflow_text,
-            skills_index: &laris.layers.skills_index,
+            skills_index: &skills_index,
             memory: &laris.layers.memory,
             own: &own,
-            skill: picked.map(|p| (p.skill.name.as_str(), p.skill.body.as_str())),
+            skill: named.map(|k| (k.name.as_str(), k.body.as_str())),
         });
-        let tools = request
+        let mut tools: Vec<_> = request
             .tools
             .into_iter()
+            // the server's own tool is the server's: a client cannot offer one under that name
+            .filter(|t| t.function.name != SKILL_TOOL)
             .filter(|t| {
                 workflow.is_none_or(|w| {
                     t.function.name == PLAN_TOOL || w.allowed_tools.contains(&t.function.name)
                 })
             })
             .collect();
+        if skill_tool_allowed
+            && let Ok(schema) = serde_json::from_value(policy.skills.tool_schema())
+        {
+            tools.push(schema);
+        }
         messages.insert(0, system_message(composed.text));
         let sent = ChatRequest {
             messages,
@@ -285,7 +301,8 @@ impl PolicyGateway {
             extra: Map::new(),
         };
         let mut prepared = self.prepared(session, composed.sha256, &canary, true, caller);
-        prepared.skills = picked.map(|p| p.skill.name.clone()).into_iter().collect();
+        prepared.skills = named.map(|k| k.name.clone()).into_iter().collect();
+        prepared.skill_tool = skill_tool_allowed;
         Ok((sent, prepared))
     }
 
@@ -309,19 +326,23 @@ impl PolicyGateway {
             guard,
             tags: self.policy.think_tags.clone(),
             skills: Vec::new(),
+            skill_tool: false,
             tools,
         }
     }
 }
 
+#[derive(Clone)]
 struct Prepared {
     key_id: String,
     session: String,
     prompt_sha256: String,
     guard: Guard,
     tags: Vec<TagPair>,
-    /// Names of the skills chosen for this turn.
+    /// Names of the skills the user named, loaded before the first step.
     skills: Vec<String>,
+    /// Whether the model may load system skills.
+    skill_tool: bool,
     /// Whether tool calls may be passed on (a summary has none).
     tools: bool,
 }
@@ -339,10 +360,11 @@ impl Backend for PolicyGateway {
         let shaped = self.shape(request, caller);
         let inner = self.inner.clone();
         let sink = self.sink.clone();
+        let policy = self.policy.clone();
         Box::pin(async move {
             let (sent, prepared) = shaped?;
-            let stream = inner.chat(sent).await?;
-            Ok(filtered(stream, prepared, sink))
+            let stream = inner.chat(sent.clone()).await?;
+            Ok(filtered(stream, sent, prepared, inner, policy, sink))
         })
     }
 
@@ -362,6 +384,9 @@ struct Call {
 /// The state of one answer on its way through the guard.
 struct Filter {
     prepared: Prepared,
+    visible: String,
+    usage: Option<Usage>,
+    pending: Option<Vec<Call>>,
     splitter: ThinkSplitter,
     stream: StreamGuard,
     base_id: String,
@@ -369,18 +394,17 @@ struct Filter {
     calls: Vec<Call>,
     reasoning: String,
     ended: bool,
-    blocked_calls: bool,
 }
 
 impl Filter {
-    fn new(prepared: Prepared) -> Self {
+    fn new(prepared: Prepared, base_id: String) -> Self {
         let splitter = ThinkSplitter::new(&prepared.tags);
         let stream = prepared.guard.stream();
-        let id = crate::access::random_bytes(6)
-            .map(|b| b.iter().map(|x| format!("{x:02x}")).collect::<String>())
-            .unwrap_or_else(|_| prepared.session.clone());
         Self {
-            base_id: format!("chatcmpl-{id}"),
+            base_id,
+            visible: String::new(),
+            usage: None,
+            pending: None,
             prepared,
             splitter,
             stream,
@@ -388,7 +412,6 @@ impl Filter {
             calls: Vec::new(),
             reasoning: String::new(),
             ended: false,
-            blocked_calls: false,
         }
     }
 
@@ -417,7 +440,8 @@ impl Filter {
         }
     }
 
-    fn text_chunks(&self, pieces: Vec<String>) -> Vec<ChatResponseChunk> {
+    fn text_chunks(&mut self, pieces: Vec<String>) -> Vec<ChatResponseChunk> {
+        self.visible.extend(pieces.iter().map(String::as_str));
         pieces
             .into_iter()
             .map(|p| {
@@ -448,7 +472,16 @@ impl Filter {
             self.model.clone_from(&chunk.model);
         }
         if chunk.choices.is_empty() {
-            // the evidence list and the usage event carry no text
+            // the evidence list and the usage event carry no text; usage is summed over the steps of the answer
+            if let Some(u) = chunk.usage.take() {
+                let total = self.usage.get_or_insert_with(Usage::default);
+                total.prompt_tokens += u.prompt_tokens;
+                total.completion_tokens += u.completion_tokens;
+                total.total_tokens += u.total_tokens;
+            }
+            if chunk.laris.is_none() {
+                return Vec::new();
+            }
             chunk.extra = Map::new();
             chunk.id.clone_from(&self.base_id);
             return vec![chunk];
@@ -518,15 +551,20 @@ impl Filter {
         call.arguments.push_str(&tc.function.arguments);
     }
 
-    /// The tool calls (those that do not repeat internal text) and the finish event.
+    /// The tool calls (those that do not repeat internal text) and the finish event. A turn that only asks for
+    /// system skills is not finished: the calls are kept for the server to answer.
     fn close(&mut self, reason: FinishReason) -> Vec<ChatResponseChunk> {
         let mut out = Vec::new();
         let calls = std::mem::take(&mut self.calls);
         let mut wire = Vec::new();
+        let mut mine = Vec::new();
         if !self.stream.blocked && self.prepared.tools {
             for (i, c) in calls.into_iter().enumerate() {
                 if c.name.is_empty() || self.prepared.guard.leak.leaked(&c.arguments) {
-                    self.blocked_calls = true;
+                    continue;
+                }
+                if self.prepared.skill_tool && c.name == SKILL_TOOL {
+                    mine.push(c);
                     continue;
                 }
                 let (name_ok, _) = self.prepared.guard.redactor.redact(&c.name);
@@ -542,6 +580,11 @@ impl Filter {
                     extra: Map::new(),
                 });
             }
+        }
+        // calls for the client win: the skill calls are dropped and the model asks again if it still needs them
+        if wire.is_empty() && !mine.is_empty() {
+            self.pending = Some(mine);
+            return out;
         }
         let finish =
             if self.stream.blocked || (wire.is_empty() && reason == FinishReason::ToolCalls) {
@@ -577,39 +620,40 @@ struct Run {
     filter: Filter,
     queue: VecDeque<Result<ChatResponseChunk, StreamFailure>>,
     sink: Arc<dyn ReasoningSink>,
+    backend: Arc<dyn Backend>,
+    policy: Arc<Policy>,
+    request: ChatRequest,
+    id: String,
+    steps: usize,
+    loads: usize,
+    usage: Option<Usage>,
+    reasoning: String,
+    model: String,
 }
 
-impl Drop for Run {
-    fn drop(&mut self) {
-        // written whether the answer ended, failed or the client left
+impl Run {
+    /// Takes what the finished step knew into the totals of the answer.
+    fn absorb(&mut self) {
         let thought = self.filter.splitter.take_reasoning();
         self.filter.keep_reasoning(&thought);
-        if self.filter.reasoning.is_empty() {
-            return;
+        self.reasoning
+            .push_str(&std::mem::take(&mut self.filter.reasoning));
+        if !self.filter.model.is_empty() {
+            self.model.clone_from(&self.filter.model);
         }
-        self.sink.record(ReasoningRecord {
-            key_id: self.filter.prepared.key_id.clone(),
-            session_id: self.filter.prepared.session.clone(),
-            model: self.filter.model.clone(),
-            prompt_sha256: self.filter.prepared.prompt_sha256.clone(),
-            reasoning: std::mem::take(&mut self.filter.reasoning),
-            at: crate::access::now(),
-        });
+        if let Some(u) = self.filter.usage.take() {
+            let total = self.usage.get_or_insert_with(Usage::default);
+            total.prompt_tokens += u.prompt_tokens;
+            total.completion_tokens += u.completion_tokens;
+            total.total_tokens += u.total_tokens;
+        }
     }
-}
 
-fn filtered(inner: ChunkStream, prepared: Prepared, sink: Arc<dyn ReasoningSink>) -> ChunkStream {
-    let filter = Filter::new(prepared);
-    let mut queue = VecDeque::new();
-    if !filter.prepared.skills.is_empty() {
-        // which skill was chosen, before the text (names only)
+    fn meta(&self, skills: &[String]) -> ChatResponseChunk {
         let mut extra = Map::new();
-        extra.insert(
-            "skills".to_owned(),
-            serde_json::json!(filter.prepared.skills),
-        );
-        queue.push_back(Ok(ChatResponseChunk {
-            id: filter.base_id.clone(),
+        extra.insert("skills".to_owned(), serde_json::json!(skills));
+        ChatResponseChunk {
+            id: self.id.clone(),
             object: ChunkObject::default(),
             model: String::new(),
             laris: Some(LarisMeta {
@@ -619,14 +663,152 @@ fn filtered(inner: ChunkStream, prepared: Prepared, sink: Arc<dyn ReasoningSink>
             choices: Vec::new(),
             usage: None,
             extra: Map::new(),
-        }));
+        }
     }
-    let run = Run {
+
+    /// Answers the model's calls for system skills and starts the next step. `false` when the answer ends here.
+    async fn next_step(&mut self, calls: Vec<Call>) -> bool {
+        let visible = std::mem::take(&mut self.filter.visible);
+        let mut asked = Vec::new();
+        let mut answers = Vec::new();
+        let mut loaded = Vec::new();
+        for (n, call) in calls.into_iter().enumerate() {
+            let id = call
+                .id
+                .clone()
+                .unwrap_or_else(|| format!("skill-{}-{n}", self.steps));
+            let args: serde_json::Value =
+                serde_json::from_str(&call.arguments).unwrap_or(serde_json::Value::Null);
+            let name = args
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+            let reference = args.get("reference").and_then(|v| v.as_str());
+            let result = if self.loads >= self.policy.skills.max_loads() {
+                Err(super::skills::LoadError(
+                    "Error: the limit of skills for this answer is reached; answer with what you have.".into(),
+                ))
+            } else {
+                self.policy.skills.text_of(name, reference)
+            };
+            self.loads += 1;
+            let content = match result {
+                Ok(text) => {
+                    loaded.push(name.to_owned());
+                    text
+                }
+                Err(e) => e.0,
+            };
+            asked.push(ToolCall {
+                index: None,
+                id: Some(id.clone()),
+                kind: FunctionKind::Function,
+                function: ToolCallFunction {
+                    name: SKILL_TOOL.to_owned(),
+                    arguments: call.arguments,
+                    extra: Map::new(),
+                },
+                extra: Map::new(),
+            });
+            answers.push(ChatMessage {
+                role: Role::Tool,
+                content: Some(Content::Text(content)),
+                tool_calls: Vec::new(),
+                tool_call_id: Some(id),
+                name: Some(SKILL_TOOL.to_owned()),
+                extra: Map::new(),
+            });
+        }
+        self.request.messages.push(ChatMessage {
+            role: Role::Assistant,
+            content: (!visible.is_empty()).then_some(Content::Text(visible)),
+            tool_calls: asked,
+            tool_call_id: None,
+            name: None,
+            extra: Map::new(),
+        });
+        self.request.messages.extend(answers);
+        if !loaded.is_empty() {
+            let meta = self.meta(&loaded);
+            self.queue.push_back(Ok(meta));
+        }
+        self.steps += 1;
+        if self.steps > self.policy.skills.max_loads() + 1 {
+            let done = self
+                .filter
+                .chunk(ChunkDelta::default(), Some(FinishReason::Stop));
+            self.queue.push_back(Ok(done));
+            return false;
+        }
+        match self.backend.chat(self.request.clone()).await {
+            Ok(stream) => {
+                self.inner = Some(stream);
+                self.filter = Filter::new(self.filter.prepared.clone(), self.id.clone());
+                self.filter.model.clone_from(&self.model);
+                true
+            }
+            Err(e) => {
+                self.queue.push_back(Err(StreamFailure {
+                    message: e.to_string(),
+                    kind: "BackendError".into(),
+                }));
+                false
+            }
+        }
+    }
+}
+
+impl Drop for Run {
+    fn drop(&mut self) {
+        // written whether the answer ended, failed or the client left
+        self.absorb();
+        if self.reasoning.is_empty() {
+            return;
+        }
+        self.sink.record(ReasoningRecord {
+            key_id: self.filter.prepared.key_id.clone(),
+            session_id: self.filter.prepared.session.clone(),
+            model: self.model.clone(),
+            prompt_sha256: self.filter.prepared.prompt_sha256.clone(),
+            reasoning: std::mem::take(&mut self.reasoning),
+            at: crate::access::now(),
+        });
+    }
+}
+
+fn filtered(
+    inner: ChunkStream,
+    request: ChatRequest,
+    prepared: Prepared,
+    backend: Arc<dyn Backend>,
+    policy: Arc<Policy>,
+    sink: Arc<dyn ReasoningSink>,
+) -> ChunkStream {
+    let id = crate::access::random_bytes(6)
+        .map(|b| b.iter().map(|x| format!("{x:02x}")).collect::<String>())
+        .unwrap_or_else(|_| prepared.session.clone());
+    let id = format!("chatcmpl-{id}");
+    let named = prepared.skills.clone();
+    let mut run = Run {
         inner: Some(inner),
-        filter,
-        queue,
+        filter: Filter::new(prepared, id.clone()),
+        queue: VecDeque::new(),
         sink,
+        backend,
+        policy,
+        request,
+        id,
+        steps: 0,
+        loads: 0,
+        usage: None,
+        reasoning: String::new(),
+        model: String::new(),
     };
+    if !named.is_empty() {
+        // which skill the user named, before the text (names only)
+        let meta = run.meta(&named);
+        run.queue.push_back(Ok(meta));
+    }
     futures_util::stream::unfold(run, |mut run| async move {
         loop {
             if let Some(item) = run.queue.pop_front() {
@@ -648,6 +830,18 @@ fn filtered(inner: ChunkStream, prepared: Prepared, sink: Arc<dyn ReasoningSink>
                     run.inner = None;
                     let out = run.filter.end();
                     run.queue.extend(out.into_iter().map(Ok));
+                    run.absorb();
+                    if let Some(calls) = run.filter.pending.take() {
+                        run.next_step(calls).await;
+                        continue;
+                    }
+                    if let Some(total) = run.usage.take() {
+                        let mut event = run.meta(&[]);
+                        event.laris = None;
+                        event.model.clone_from(&run.model);
+                        event.usage = Some(total);
+                        run.queue.push_back(Ok(event));
+                    }
                 }
             }
         }

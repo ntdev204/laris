@@ -1001,7 +1001,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   reached the client; with leak detection switched off the suite fails, checked once by hand), 7 unit tests in
   `yaml`, `reasoning`, `integrity` and `gateway`. `cargo fmt --check`, `clippy -D warnings`, `cargo test` (511 pass,
   no PostgreSQL in this run), `cargo deny check`, `xtask guard`, `xtask scan` and `xtask schema --check` pass.
-  Follow-up, same day (branch `feature/T146-limits`): (1) skills are chosen by context and never listed in the
+  Follow-up, same day (branch `feature/T146-limits`): (1) [superseded by the Claude Code style skills described further down] skills are chosen by context and never listed in the
   prompt: `policy::skills` reads `.laris/skills/*/SKILL.md` (front matter name and description), and per turn picks
   one skill from the user's message, task line and workflow request: a `/name` the user typed wins, otherwise BM25
   over name (x3) and description, chosen when the score reaches `SKILL_MIN_SCORE` (5.0) and beats the runner-up by
@@ -1034,9 +1034,20 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   again, limited to tools that exist: `Read`, `Grep`, `Glob`, `Write`, `update_plan`; T148 adds the corpus tools),
   `help.md`, `integrity.toml` (TOML, covers `policy.toml`, `help.md`, `prompts`, `rules`, `workflows`). The YAML
   reader is deleted. Crate approved by the owner: `toml` 0.9 with `toml_datetime`, `toml_parser`, `serde_spanned`,
-  `winnow` (`deny.toml` and `THIRD_PARTY.md` updated). Skills are read as `skill.md` with a TOML front matter
-  between `+++` lines; no skill exists in this format yet, so no skill is chosen until the owner defines them.
-  The policy text is new, written by the assistant and not yet reviewed by the owner: review it before relying on it.
+  `winnow` (`deny.toml` and `THIRD_PARTY.md` updated). The policy text is new and the owner approved it on
+  2026-11-18 (the lock was written after that approval).
+  Skills work as in Claude Code (owner decision 2026-11-18, replacing the BM25 selector of the first follow-up):
+  `.laris/skills/<name>/SKILL.md` with a `name` and `description` front matter and optional `references/*.md`;
+  the 16 existing skill folders load unchanged. The prompt lists only `name: description` (each cut to 260
+  characters, inside the 8000-character index budget); the server offers the tool `use_system_skill` and the model
+  loads a skill, or one of its own reference files, when the context calls for it. The gateway answers that call
+  itself and runs the next model step inside the same stream: one answer id, usage summed over the steps and sent
+  once, reasoning of every step kept for the operator, calls for the client win over skill calls, at most
+  `SKILL_MAX_LOADS` (3) loads and `max_loads + 2` model calls, a reference must be one the skill lists (no path),
+  a client cannot offer a tool with that name, and a workflow that does not list the tool gets no skills. A user
+  who starts a message with `/name` loads that skill before the first step. Skill text is tagged low authority.
+  Settings `LARIS_SERVER__SKILLS`, `SKILL_MAX_CHARS`, `SKILL_MAX_LOADS`. The skills stay outside the lock. The
+  skill folders are the owner's existing content (Claude Code format); whether to rewrite them is the owner's call.
   `.laris/skills`, `.laris/brain` and `.laris/vault` still hold generation-1 content, unread by the server and
   outside the lock; T215 and T147 deal with them. 519 tests pass with PostgreSQL (one `laris-policy` hook test,
   `control_characters_cannot_reach_the_terminal`, failed once under load and passed in isolation and on the

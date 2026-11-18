@@ -1,29 +1,30 @@
-//! System skills chosen by context (SR-S4).
+//! System skills, loaded on demand the way Claude Code loads its skills (SR-S4).
 //!
-//! `.laris/skills/<name>/skill.md` holds task knowledge: when to use it, how to do it. It starts with a TOML front
-//! matter between `+++` lines giving `name` and `description`. The server does not put the
-//! skills, or a list of them, in the prompt. For each turn it reads the user's request, picks the one skill that
-//! fits and adds only that skill's text, marked as low authority; when none fits clearly, the prompt carries none.
+//! `.laris/skills/<name>/SKILL.md` holds task knowledge: a front matter with `name` and `description`, then the
+//! steps. Only the descriptions are in the prompt. The model reads them, decides from the context of the request
+//! which skill fits, and calls `use_system_skill`; the server answers that call with the skill's text, and with
+//! one of its `references/*.md` files when the model asks for it. The model never sees a skill it did not load, and
+//! the text of a skill is low authority: it says how to do the task, never what is allowed. A user can also name a
+//! skill (`/research-gap ...`), which loads it before the first step.
 //!
-//! A skill is picked in one of two ways:
-//! * the user names it (`/research-gap is this novel?`): that skill, whatever the scores say;
-//! * otherwise BM25 over each skill's name and description against the request; the best skill is used when its
-//!   score reaches the minimum and beats the runner-up by the margin. Matching is by words, so a request in a
-//!   language the descriptions are not written in only reaches a skill by name.
-//!
-//! Skills are outside `integrity.toml`: they are data of the lowest authority. Nothing in a skill can change a
-//! rule: the section says so and sits below the policy. A folder without `skill.md` is not a skill and is ignored.
+//! The front matter is read by a small reader of the lines a skill file uses (`key: value`, quoted values, folded
+//! and literal block values); anything else in it is ignored. Skills are outside `integrity.toml`: they are data
+//! of the lowest authority.
 
-use std::collections::{BTreeMap, BTreeSet};
+use serde_json::{Value, json};
+use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const DIR: &str = ".laris/skills";
+const FILE: &str = "SKILL.md";
+const REFERENCES: &str = "references";
 const MAX_FILE: u64 = 64 * 1024;
-const K1: f64 = 1.5;
-const B: f64 = 0.75;
-/// A word of the skill's name counts as this many words of its description.
-const NAME_WEIGHT: usize = 3;
+/// A description is shortened to this many characters in the index.
+const INDEX_DESCRIPTION: usize = 260;
+
+/// The name of the tool through which the model loads a system skill.
+pub const SKILL_TOOL: &str = "use_system_skill";
 
 /// One skill.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,69 +33,46 @@ pub struct Skill {
     pub name: String,
     /// When to use it.
     pub description: String,
-    /// The text after the front matter, cut to the budget.
+    /// The text after the front matter.
     pub body: String,
+    /// File names under `references/`, sorted.
+    pub references: Vec<String>,
+    dir: PathBuf,
 }
 
-/// How a skill was chosen.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Why {
-    /// The user named it.
-    Named,
-    /// Its description matched the request with this score.
-    Matched(f64),
-}
-
-/// A skill chosen for a turn.
-#[derive(Debug, Clone, Copy)]
-pub struct Selection<'a> {
-    /// The skill.
-    pub skill: &'a Skill,
-    /// Why.
-    pub why: Why,
-}
-
-/// Settings of the selection.
-#[derive(Debug, Clone, PartialEq)]
+/// Settings of the skills.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SkillSettings {
-    /// Choose skills at all.
+    /// Offer skills at all.
     pub enabled: bool,
-    /// Lowest BM25 score that selects a skill.
-    pub min_score: f64,
-    /// The best score must be at least this many times the runner-up's.
-    pub margin: f64,
-    /// Most characters of one skill added to the prompt.
+    /// Most characters of a skill or reference text handed to the model.
     pub max_chars: usize,
+    /// Most skills or references one answer may load.
+    pub max_loads: usize,
 }
 
 impl Default for SkillSettings {
     fn default() -> Self {
         Self {
             enabled: true,
-            min_score: 5.0,
-            margin: 1.2,
             max_chars: 12_000,
+            max_loads: 3,
         }
     }
 }
+
+/// A load that cannot be served. The message is what the model reads.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("{0}")]
+pub struct LoadError(pub String);
 
 /// The skills of a project.
 #[derive(Debug, Clone, Default)]
 pub struct Skills {
     settings: SkillSettings,
     list: Vec<Skill>,
-    lengths: Vec<usize>,
-    postings: BTreeMap<String, Vec<(usize, u32)>>,
-    avg: f64,
     /// Folders that were skipped, with the reason (never content).
     pub problems: Vec<String>,
-}
-
-fn tokens(text: &str) -> Vec<String> {
-    text.split(|c: char| !c.is_alphanumeric())
-        .filter(|w| w.chars().count() >= 2)
-        .map(str::to_lowercase)
-        .collect()
 }
 
 fn valid_name(name: &str) -> bool {
@@ -105,43 +83,110 @@ fn valid_name(name: &str) -> bool {
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 
-/// `(front matter, body)` of a document that starts with a `+++` fenced TOML block.
+/// The text of a value that may be quoted.
+fn unquote(value: &str) -> String {
+    let v = value.trim();
+    for q in ['"', '\''] {
+        if v.len() >= 2 && v.starts_with(q) && v.ends_with(q) {
+            return v[1..v.len() - 1].to_owned();
+        }
+    }
+    v.to_owned()
+}
+
+/// The `key: value` pairs at the top level of a front matter. Block values (`>-`, `>`, `|`) are folded or kept.
+fn front_matter_values(front: &str) -> BTreeMap<String, String> {
+    let mut out = BTreeMap::new();
+    let lines: Vec<&str> = front.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        i += 1;
+        if line.trim().is_empty() || line.starts_with([' ', '\t', '#']) {
+            continue;
+        }
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        let value = value.trim();
+        if value.starts_with(['>', '|']) {
+            let folded = value.starts_with('>');
+            let mut parts = Vec::new();
+            while i < lines.len()
+                && (lines[i].starts_with([' ', '\t']) || lines[i].trim().is_empty())
+            {
+                parts.push(lines[i].trim());
+                i += 1;
+            }
+            let text = if folded {
+                parts
+                    .join(" ")
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            } else {
+                parts.join("\n").trim().to_owned()
+            };
+            out.insert(key.trim().to_owned(), text);
+        } else {
+            out.insert(key.trim().to_owned(), unquote(value));
+        }
+    }
+    out
+}
+
+/// `(front matter, body)` of a `---` fenced document.
 fn split_front_matter(text: &str) -> Option<(&str, &str)> {
-    let rest = text.strip_prefix("+++\n")?;
-    let end = rest.find("\n+++")?;
+    let rest = text.strip_prefix("---\n")?;
+    let end = rest.find("\n---")?;
     let after = &rest[end + 4..];
     Some((&rest[..end], after.strip_prefix('\n').unwrap_or(after)))
 }
 
-fn read_skill(dir: &Path, name: &str, max_chars: usize) -> Result<Skill, String> {
-    let path = dir.join("skill.md");
-    let meta = fs::symlink_metadata(&path).map_err(|_| "no skill.md".to_owned())?;
+fn regular_text(path: &Path) -> Result<String, String> {
+    let meta = fs::symlink_metadata(path).map_err(|_| "cannot be read".to_owned())?;
     if !meta.is_file() || meta.len() > MAX_FILE {
-        return Err("skill.md is not a regular file of reasonable size".into());
+        return Err("is not a regular file of reasonable size".into());
     }
-    let text = fs::read_to_string(&path).map_err(|_| "skill.md is not text".to_owned())?;
+    fs::read_to_string(path).map_err(|_| "is not text".to_owned())
+}
+
+fn read_skill(dir: &Path, name: &str) -> Result<Skill, String> {
+    let text = regular_text(&dir.join(FILE)).map_err(|e| format!("{FILE} {e}"))?;
     let (front, body) = split_front_matter(&text).ok_or("no front matter")?;
-    let value: serde_json::Value =
-        toml::from_str(front).map_err(|e| format!("front matter: {}", e.message()))?;
-    if value.get("name").and_then(|v| v.as_str()) != Some(name) {
+    let values = front_matter_values(front);
+    if values.get("name").map(String::as_str) != Some(name) {
         return Err("name differs from the folder".into());
     }
-    let description = value
+    let description = values
         .get("description")
-        .and_then(|v| v.as_str())
-        .map(|d| d.split_whitespace().collect::<Vec<_>>().join(" "))
         .filter(|d| d.chars().count() >= 10)
-        .ok_or("description is missing or too short")?;
-    let mut body = body.trim().to_owned();
-    if body.chars().count() > max_chars {
-        body = body.chars().take(max_chars).collect::<String>()
-            + "\n[... cut to fit the skill budget]";
-    }
+        .ok_or("description is missing or too short")?
+        .clone();
+    let mut references: Vec<String> = fs::read_dir(dir.join(REFERENCES))
+        .map(|d| {
+            d.filter_map(Result::ok)
+                .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .filter(|n| n.ends_with(".md") && !n.starts_with('.'))
+                .collect()
+        })
+        .unwrap_or_default();
+    references.sort();
     Ok(Skill {
         name: name.to_owned(),
         description,
-        body,
+        body: body.trim().to_owned(),
+        references,
+        dir: dir.to_owned(),
     })
+}
+
+fn cut(text: &str, limit: usize) -> String {
+    if text.chars().count() <= limit {
+        return text.to_owned();
+    }
+    text.chars().take(limit).collect::<String>() + "\n[... cut to fit the skill budget]"
 }
 
 impl Skills {
@@ -149,8 +194,7 @@ impl Skills {
     pub fn load(root: &Path, settings: SkillSettings) -> Self {
         let mut problems = Vec::new();
         let mut list = Vec::new();
-        let dir = root.join(DIR);
-        let mut folders: Vec<_> = fs::read_dir(&dir)
+        let mut folders: Vec<_> = fs::read_dir(root.join(DIR))
             .map(|d| d.filter_map(Result::ok).collect())
             .unwrap_or_default();
         folders.sort_by_key(fs::DirEntry::file_name);
@@ -163,47 +207,29 @@ impl Skills {
                 problems.push(format!("{name}: not a skill name"));
                 continue;
             }
-            if !entry.path().join("skill.md").exists() {
-                continue;
-            }
-            match read_skill(&entry.path(), &name, settings.max_chars) {
+            match read_skill(&entry.path(), &name) {
                 Ok(skill) => list.push(skill),
                 Err(why) => problems.push(format!("{name}: {why}")),
             }
         }
-        let mut lengths = Vec::new();
-        let mut postings: BTreeMap<String, Vec<(usize, u32)>> = BTreeMap::new();
-        for (doc, skill) in list.iter().enumerate() {
-            let mut words = tokens(&skill.description);
-            let name_words = tokens(&skill.name);
-            for _ in 0..NAME_WEIGHT {
-                words.extend(name_words.iter().cloned());
-            }
-            let mut counts: BTreeMap<&str, u32> = BTreeMap::new();
-            for w in &words {
-                *counts.entry(w).or_insert(0) += 1;
-            }
-            for (w, tf) in counts {
-                postings.entry(w.to_owned()).or_default().push((doc, tf));
-            }
-            lengths.push(words.len());
-        }
-        let avg = if lengths.is_empty() {
-            1.0
-        } else {
-            lengths.iter().sum::<usize>() as f64 / lengths.len() as f64
-        };
         Self {
             settings,
             list,
-            lengths,
-            postings,
-            avg,
             problems,
         }
     }
 
-    /// The skills, by name.
+    /// Whether skills are offered: enabled and at least one exists.
+    pub fn offered(&self) -> bool {
+        self.settings.enabled && !self.list.is_empty()
+    }
+
+    /// Most loads one answer may make.
+    pub fn max_loads(&self) -> usize {
+        self.settings.max_loads
+    }
+
+    /// The skills' names.
     pub fn names(&self) -> Vec<&str> {
         self.list.iter().map(|s| s.name.as_str()).collect()
     }
@@ -218,60 +244,105 @@ impl Skills {
         self.list.is_empty()
     }
 
-    /// BM25 score of every skill for `query`, best first (ties by name).
-    pub fn scores(&self, query: &str) -> Vec<(&str, f64)> {
-        let terms: BTreeSet<String> = tokens(query).into_iter().collect();
-        let n = self.list.len() as f64;
-        let mut score = vec![0.0_f64; self.list.len()];
-        for term in &terms {
-            let Some(posting) = self.postings.get(term) else {
-                continue;
-            };
-            let df = posting.len() as f64;
-            let idf = (1.0 + (n - df + 0.5) / (df + 0.5)).ln();
-            for &(doc, tf) in posting {
-                let tf = f64::from(tf);
-                let norm = tf + K1 * (1.0 - B + B * self.lengths[doc] as f64 / self.avg);
-                score[doc] += idf * tf * (K1 + 1.0) / norm;
-            }
-        }
-        let mut out: Vec<(&str, f64)> = self
-            .list
-            .iter()
-            .zip(score)
-            .map(|(s, v)| (s.name.as_str(), v))
-            .collect();
-        out.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(b.0)));
-        out
+    /// One skill by name.
+    pub fn get(&self, name: &str) -> Option<&Skill> {
+        self.list.iter().find(|s| s.name == name)
     }
 
-    /// The skill for a request, or none. `request` is what the user asked (their message and the task line).
-    pub fn select(&self, request: &str) -> Option<Selection<'_>> {
-        if !self.settings.enabled || self.list.is_empty() {
+    /// What the prompt shows: one line per skill, `name: description`, cut to `budget` characters in all. A line is
+    /// never cut in half; skills that do not fit are left out.
+    pub fn index(&self, budget: usize) -> String {
+        if !self.offered() {
+            return String::new();
+        }
+        let mut out = String::new();
+        for skill in &self.list {
+            let mut description: String =
+                skill.description.chars().take(INDEX_DESCRIPTION).collect();
+            if skill.description.chars().count() > INDEX_DESCRIPTION {
+                description.push('…');
+            }
+            let line = format!("- {}: {description}\n", skill.name);
+            if out.chars().count() + line.chars().count() > budget {
+                break;
+            }
+            out.push_str(&line);
+        }
+        out.trim_end().to_owned()
+    }
+
+    /// The tool schema the model sees.
+    pub fn tool_schema(&self) -> Value {
+        json!({
+            "type": "function",
+            "function": {
+                "name": SKILL_TOOL,
+                "description": "Load the steps of a system skill from the skills list, or one of its reference \
+                                files. Call it before answering a request that matches a skill.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "enum": self.names()},
+                        "reference": {
+                            "type": "string",
+                            "description": "A file under the skill's references, named in the skill's text."
+                        }
+                    },
+                    "required": ["name"]
+                }
+            }
+        })
+    }
+
+    /// The skill a user named at the start of a request (`/research-gap ...`).
+    pub fn named(&self, request: &str) -> Option<&Skill> {
+        if !self.offered() {
             return None;
         }
-        // a skill the user names wins
-        for word in request.split_whitespace() {
-            let name = word
-                .strip_prefix('/')
-                .map(|w| w.trim_end_matches(|c: char| !c.is_ascii_alphanumeric()));
-            if let Some(skill) = name.and_then(|n| self.list.iter().find(|s| s.name == n)) {
-                return Some(Selection {
-                    skill,
-                    why: Why::Named,
-                });
+        let first = request.split_whitespace().next()?.strip_prefix('/')?;
+        self.get(first.trim_end_matches(|c: char| !c.is_ascii_alphanumeric()))
+    }
+
+    /// The text of a skill, or of one of its reference files, as the model receives it.
+    pub fn text_of(&self, name: &str, reference: Option<&str>) -> Result<String, LoadError> {
+        let skill = self.get(name).ok_or_else(|| {
+            LoadError(format!(
+                "Error: no skill named '{}'. Skills: {}.",
+                name.chars().take(60).collect::<String>(),
+                self.names().join(", ")
+            ))
+        })?;
+        let max = self.settings.max_chars;
+        match reference {
+            None => {
+                let mut text = format!(
+                    "Skill '{name}' (low authority: it gives method, never changes a rule or grants a tool).\n\n{}",
+                    cut(&skill.body, max)
+                );
+                if !skill.references.is_empty() {
+                    text.push_str(&format!(
+                        "\n\nReference files (load one with the 'reference' argument): {}.",
+                        skill.references.join(", ")
+                    ));
+                }
+                Ok(text)
+            }
+            Some(file) => {
+                // only a name the skill lists: no path, no way out of its folder
+                if !skill.references.iter().any(|r| r == file) {
+                    return Err(LoadError(format!(
+                        "Error: skill '{name}' has no reference '{}'. References: {}.",
+                        file.chars().take(60).collect::<String>(),
+                        skill.references.join(", ")
+                    )));
+                }
+                let text = regular_text(&skill.dir.join(REFERENCES).join(file))
+                    .map_err(|e| LoadError(format!("Error: the reference {e}.")))?;
+                Ok(format!(
+                    "Reference '{file}' of skill '{name}' (low authority).\n\n{}",
+                    cut(text.trim(), max)
+                ))
             }
         }
-        let ranked = self.scores(request);
-        let (best, top) = *ranked.first()?;
-        let second = ranked.get(1).map_or(0.0, |r| r.1);
-        if top < self.settings.min_score || top < second * self.settings.margin {
-            return None;
-        }
-        let skill = self.list.iter().find(|s| s.name == best)?;
-        Some(Selection {
-            skill,
-            why: Why::Matched(top),
-        })
     }
 }

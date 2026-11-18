@@ -29,7 +29,7 @@ pub use reasoning::{
 };
 pub use reasoning_pg::PgReasoning;
 pub use routes::{help, reasoning as reasoning_route, workflows as workflows_route};
-pub use skills::{Selection, Skill, SkillSettings, Skills, Why};
+pub use skills::{LoadError, SKILL_TOOL, Skill, SkillSettings, Skills};
 pub use workflows::{Workflow, WorkflowError, Workflows};
 
 use guard::Guard;
@@ -79,7 +79,7 @@ pub struct PolicyConfig {
     pub guard: GuardSettings,
     /// Tags that wrap inline reasoning (`LARIS_SERVER__THINK_TAGS`, JSON list of `[open, close]`).
     pub think_tags: Vec<(String, String)>,
-    /// Choosing a skill for each turn.
+    /// System skills.
     pub skills: SkillSettings,
 }
 
@@ -197,26 +197,14 @@ impl PolicyConfig {
                 .filter(|s| !s.is_empty())
                 .collect();
         }
-        if let Some(b) = flag("LARIS_SERVER__SKILL_SELECTION")? {
+        if let Some(b) = flag("LARIS_SERVER__SKILLS")? {
             cfg.skills.enabled = b;
         }
         if let Some(n) = number("LARIS_SERVER__SKILL_MAX_CHARS", 1)? {
             cfg.skills.max_chars = n;
         }
-        for (name, slot) in [
-            ("LARIS_SERVER__SKILL_MIN_SCORE", &mut cfg.skills.min_score),
-            ("LARIS_SERVER__SKILL_MARGIN", &mut cfg.skills.margin),
-        ] {
-            if let Some(v) = get(name) {
-                *slot = v
-                    .parse::<f64>()
-                    .ok()
-                    .filter(|n| n.is_finite() && *n >= 0.0)
-                    .ok_or(PolicyError::Invalid {
-                        name,
-                        reason: "expected a number of 0 or more",
-                    })?;
-            }
+        if let Some(n) = number("LARIS_SERVER__SKILL_MAX_LOADS", 0)? {
+            cfg.skills.max_loads = n;
         }
         if let Some(text) = get("LARIS_SERVER__THINK_TAGS") {
             cfg.think_tags = serde_json::from_str::<Vec<(String, String)>>(text).map_err(|_| {

@@ -1071,19 +1071,19 @@ fn settings_come_from_the_environment() {
         ("LARIS_SERVER__LEAK_MIN_SHINGLES", "3"),
         ("LARIS_SERVER__CANARY", "false"),
         ("LARIS_SERVER__THINK_TAGS", r#"[["<a>","</a>"]]"#),
-        ("LARIS_SERVER__SKILL_MIN_SCORE", "7.5"),
+        ("LARIS_SERVER__SKILL_MAX_LOADS", "5"),
     ]))
     .unwrap();
     assert_eq!(cfg.prompt.reply_language, "Vietnamese");
     assert_eq!(cfg.prompt.assistant_name, "LARIS");
     assert_eq!(cfg.guard.leak_min_shingles, 3);
     assert!(!cfg.guard.canary_enabled);
-    assert_eq!(cfg.skills.min_score, 7.5);
+    assert_eq!(cfg.skills.max_loads, 5);
     assert_eq!(cfg.think_tags, [("<a>".to_owned(), "</a>".to_owned())]);
     for bad in [
         ("LARIS_SERVER__LEAK_MIN_SHINGLES", "0"),
         ("LARIS_SERVER__CANARY", "maybe"),
-        ("LARIS_SERVER__SKILL_MARGIN", "-1"),
+        ("LARIS_SERVER__SKILLS", "sometimes"),
         ("LARIS_SERVER__THINK_TAGS", "<think>"),
     ] {
         let e =
@@ -1114,230 +1114,416 @@ fn a_workflow_that_does_not_load_stops_the_server() {
     let _: Arc<dyn ReasoningSink> = Arc::new(MemoryReasoning::new(1));
 }
 
-// ---------------------------------------------------------------- skills chosen by context
+// ---------------------------------------------------------------- skills, loaded by the model on demand
 
-const SKILLS: [(&str, &str); 6] = [
-    (
-        "research-gap",
-        "Finds, classifies and ranks research gaps in a body of literature and checks whether an idea is novel. Use when the user asks if a gap is real, what is missing in the literature, or where they can contribute.",
-    ),
-    (
-        "journal-selection",
-        "Chooses a journal or conference for a paper from its scope, audience and requirements. Use when the user asks which journal to submit a paper to.",
-    ),
-    (
-        "peer-review",
-        "Reviews a manuscript as a peer reviewer and writes a referee report with major and minor comments. Use when the user asks for a review of a paper.",
-    ),
-    (
-        "grant-proposal",
-        "Plans and writes a grant proposal for a funding call: aims, work plan, budget and impact. Use when the user prepares a grant proposal.",
-    ),
-    (
-        "reproducible-code",
-        "Makes an analysis reproducible: environment, seeds, data versions and a single command that reruns it. Use when the user asks whether a result is reproducible or how to set up code and seeds.",
-    ),
-    (
-        "literature-review",
-        "Builds a literature review: scope, search, screening and a synthesis of the sources. Use when the user asks for a literature review of a topic.",
-    ),
-];
-
-/// A copy of the policy with a few skills written for the test.
-fn skill_root(name: &str) -> PathBuf {
-    let root = policy_copy(name);
-    for (skill, description) in SKILLS {
-        let dir = root.join(".laris/skills").join(skill);
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(
-            dir.join("skill.md"),
-            format!(
-                "+++\nname = \"{skill}\"\ndescription = \"{description}\"\n+++\n# {skill}\nSteps of {skill}.\n"
-            ),
-        )
-        .unwrap();
-    }
-    root
-}
-
-fn skills_in(root: &Path) -> laris_server::policy::Skills {
-    laris_server::policy::Skills::load(root, laris_server::policy::SkillSettings::default())
+fn skills() -> laris_server::policy::Skills {
+    laris_server::policy::Skills::load(&repo(), laris_server::policy::SkillSettings::default())
 }
 
 #[test]
-fn skills_load_from_their_own_format_and_other_folders_are_ignored() {
-    // the repository ships no skill in this format yet: old-format folders are not skills
-    assert!(skills_in(&repo()).is_empty());
-    let root = skill_root("skills-load");
-    let s = skills_in(&root);
+fn the_system_skills_load_with_their_references() {
+    let s = skills();
     assert!(s.problems.is_empty(), "{:?}", s.problems);
-    assert_eq!(s.len(), SKILLS.len());
+    assert_eq!(s.len(), 16);
+    let gap = s.get("research-gap").unwrap();
+    assert!(
+        gap.description
+            .starts_with("Identifies, classifies, falsifies")
+    );
+    assert!(gap.references.contains(&"gap-templates.md".to_owned()));
+    assert!(
+        s.get("research-collaboration")
+            .unwrap()
+            .references
+            .is_empty()
+    );
 }
 
 #[test]
-fn the_skill_that_fits_the_request_is_chosen_and_otherwise_none() {
-    use laris_server::policy::Why;
-    let s = skills_in(&skill_root("skills-choose"));
-    for (request, want) in [
-        (
-            "Is this research gap real? has anyone done adaptive MPC with tire slip?",
-            Some("research-gap"),
-        ),
-        (
-            "Which journal should I submit my paper to?",
-            Some("journal-selection"),
-        ),
-        (
-            "Please review this manuscript as a peer reviewer and write a referee report",
-            Some("peer-review"),
-        ),
-        (
-            "write a grant proposal for a funding call",
-            Some("grant-proposal"),
-        ),
-        (
-            "is my result reproducible? set up code and seeds",
-            Some("reproducible-code"),
-        ),
-        (
-            "do a literature review of perovskite stability",
-            Some("literature-review"),
-        ),
-        ("what is the capital of France", None),
-        ("hello", None),
-        ("search my notes for perovskite stability", None),
-        ("write a python script to parse csv", None),
-    ] {
-        let got = s.select(request).map(|p| p.skill.name.as_str());
-        assert_eq!(got, want, "{request}");
-    }
-    // naming a skill wins over the scores, and only a real name counts
-    let named = s.select("/research-gap what do you think?").unwrap();
-    assert_eq!(
-        (named.skill.name.as_str(), named.why),
-        ("research-gap", Why::Named)
-    );
-    assert!(s.select("/not-a-skill hello").is_none());
+fn the_index_holds_descriptions_only_and_stays_in_budget() {
+    let s = skills();
+    let index = s.index(8_000);
+    assert!(index.chars().count() <= 8_000);
+    assert!(index.contains("- research-gap: Identifies, classifies"));
+    assert_eq!(index.lines().count(), 16);
+    // no skill text, only each description cut short
+    assert!(!index.contains("## Purpose"));
+    assert!(index.lines().all(|l| l.chars().count() < 330));
+    // a small budget drops whole lines, never half of one
+    let small = s.index(400);
+    assert!(small.lines().all(|l| l.starts_with("- ") && !l.is_empty()));
+    assert!(small.chars().count() <= 400);
 }
 
-fn system_of(seen: &Seen) -> String {
-    match &seen.lock().unwrap().last().unwrap().messages[0].content {
+#[test]
+fn a_skill_and_only_its_own_references_can_be_loaded() {
+    let s = skills();
+    let text = s.text_of("research-gap", None).unwrap();
+    assert!(text.starts_with("Skill 'research-gap' (low authority"));
+    assert!(text.contains("## Purpose") && text.contains("gap-templates.md"));
+    let reference = s.text_of("research-gap", Some("gap-templates.md")).unwrap();
+    assert!(reference.starts_with("Reference 'gap-templates.md' of skill 'research-gap'"));
+    for bad in [
+        "../SKILL.md",
+        "/etc/passwd",
+        "../../peer-review/SKILL.md",
+        "nothing.md",
+        "",
+    ] {
+        let e = s.text_of("research-gap", Some(bad)).unwrap_err();
+        assert!(
+            e.0.starts_with("Error: skill 'research-gap' has no reference"),
+            "{bad}"
+        );
+    }
+    let unknown = s.text_of("../etc", None).unwrap_err();
+    assert!(unknown.0.contains("no skill named") && unknown.0.contains("research-gap"));
+    assert_eq!(
+        s.named("/research-gap is this novel?").unwrap().name,
+        "research-gap"
+    );
+    assert!(
+        s.named("what about /research-gap").is_none(),
+        "only at the start of the message"
+    );
+    assert!(s.named("/not-a-skill hello").is_none());
+}
+
+#[test]
+fn a_broken_skill_is_skipped_and_named_and_skills_stay_outside_the_lock() {
+    let root = policy_copy("skills-broken");
+    std::fs::write(
+        root.join(".laris/skills/research-gap/SKILL.md"),
+        "no front matter",
+    )
+    .unwrap();
+    let s = laris_server::policy::Skills::load(&root, Default::default());
+    assert_eq!(s.len(), 15);
+    assert_eq!(s.problems, ["research-gap: no front matter"]);
+    integrity::verified(&root).expect("the lock does not cover skills");
+}
+
+#[test]
+fn a_long_skill_is_cut_to_the_budget_and_skills_can_be_switched_off() {
+    let small = laris_server::policy::SkillSettings {
+        max_chars: 50,
+        ..Default::default()
+    };
+    let s = laris_server::policy::Skills::load(&repo(), small);
+    assert!(
+        s.text_of("research-gap", None)
+            .unwrap()
+            .contains("[... cut to fit the skill budget]")
+    );
+    let off = laris_server::policy::SkillSettings {
+        enabled: false,
+        ..Default::default()
+    };
+    let s = laris_server::policy::Skills::load(&repo(), off);
+    assert!(s.index(8_000).is_empty() && s.named("/research-gap").is_none() && !s.offered());
+}
+
+/// A model that answers each call with the next script and remembers every request.
+struct Steps {
+    scripts: Mutex<std::collections::VecDeque<Vec<Result<ChatResponseChunk, StreamFailure>>>>,
+    seen: Seen,
+}
+
+impl Backend for Steps {
+    fn chat(&self, request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        self.seen.lock().unwrap().push(request);
+        let chunks = self
+            .scripts
+            .lock()
+            .unwrap()
+            .pop_front()
+            .unwrap_or_else(|| vec![Ok(stop())]);
+        Box::pin(async move { Ok(stream::iter(chunks).boxed()) })
+    }
+
+    fn embed(&self, _r: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>> {
+        Box::pin(async { Err(ApiError::BadGateway("no embed".into())) })
+    }
+}
+
+fn stepped(
+    scripts: Vec<Vec<Result<ChatResponseChunk, StreamFailure>>>,
+) -> (PolicyGateway, Seen, Arc<MemoryReasoning>) {
+    let seen = Seen::default();
+    let sink = Arc::new(MemoryReasoning::new(10));
+    let model = Steps {
+        scripts: Mutex::new(scripts.into()),
+        seen: seen.clone(),
+    };
+    (
+        PolicyGateway::new(load(&[]), Arc::new(model), sink.clone()),
+        seen,
+        sink,
+    )
+}
+
+fn call_skill(id: &str, arguments: Value) -> Vec<Result<ChatResponseChunk, StreamFailure>> {
+    vec![
+        Ok(chunk(
+            json!({"tool_calls": [{"index": 0, "id": id, "type": "function",
+            "function": {"name": "use_system_skill", "arguments": arguments.to_string()}}]}),
+            None,
+        )),
+        Ok(chunk(json!({}), Some("tool_calls"))),
+    ]
+}
+
+fn system_of(seen: &Seen, call: usize) -> String {
+    match &seen.lock().unwrap()[call].messages[0].content {
         Some(laris_protocol::chat::Content::Text(t)) => t.clone(),
         _ => panic!("system text"),
     }
 }
 
-fn load_at(root: &Path) -> Arc<Policy> {
-    Arc::new(Policy::load(&config(root), std::iter::empty(), None).expect("the policy loads"))
+#[tokio::test]
+async fn the_prompt_lists_the_skills_and_offers_the_tool_but_holds_no_skill_text() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(text("hi")), Ok(stop())]]);
+    ask(&gw, json!({})).await;
+    let system = system_of(&seen, 0);
+    assert!(system.contains("<skills>") && system.contains("- research-gap: Identifies"));
+    assert!(
+        !system.contains("## Purpose"),
+        "the steps of a skill are not in the prompt"
+    );
+    let sent = seen.lock().unwrap()[0].clone();
+    let schema = sent
+        .tools
+        .iter()
+        .find(|t| t.function.name == "use_system_skill")
+        .expect("tool offered");
+    let names = &schema.function.parameters.as_ref().unwrap()["properties"]["name"]["enum"];
+    assert_eq!(names.as_array().unwrap().len(), 16);
 }
 
 #[tokio::test]
-async fn only_the_chosen_skill_reaches_the_prompt_and_no_list_of_skills() {
-    let policy = load_at(&skill_root("skills-prompt"));
-    let (gw, seen, _) = gateway(&policy, vec![Ok(text("ok")), Ok(stop())]);
-    let got = ask(
+async fn the_model_loads_a_skill_and_the_server_answers_and_goes_on() {
+    let (gw, seen, sink) = stepped(vec![
+        {
+            let mut step = vec![
+                Ok(chunk(json!({"reasoning_content": "first thought"}), None)),
+                Ok(text("Let me check. ")),
+            ];
+            step.extend(call_skill("call_a", json!({"name": "research-gap"})));
+            step.push(Ok(serde_json::from_value(
+                json!({"id": "x", "model": "m", "choices": [],
+                "usage": {"prompt_tokens": 100, "completion_tokens": 10, "total_tokens": 110}}),
+            )
+            .unwrap()));
+            step
+        },
+        vec![
+            Ok(chunk(json!({"reasoning_content": "second thought"}), None)),
+            Ok(text("The gap is real.")),
+            Ok(stop()),
+            Ok(
+                serde_json::from_value(json!({"id": "y", "model": "m", "choices": [],
+                "usage": {"prompt_tokens": 300, "completion_tokens": 20, "total_tokens": 320}}))
+                .unwrap(),
+            ),
+        ],
+    ]);
+    let tool = json!({"type": "function", "function": {"name": "Grep"}});
+    let got = ask(&gw, json!({"tools": [tool], "messages": [{"role": "user", "content": "Is this research gap real?"}]})).await;
+    // the client sees one continuous answer: text of both steps, no skill call, one finish, one usage event
+    assert_eq!(got.text, "Let me check. The gap is real.");
+    assert!(got.calls.is_empty() && got.finish.as_deref() == Some("stop"));
+    assert!(!got.wire.contains("use_system_skill") && !got.wire.contains("## Purpose"));
+    assert_eq!(got.wire.matches("\"usage\":{").count(), 1);
+    assert!(
+        got.wire.contains("\"prompt_tokens\":400") && got.wire.contains("\"completion_tokens\":30")
+    );
+    assert!(got.wire.contains("\"skills\":[\"research-gap\"]"));
+    let ids: BTreeSet<String> = got
+        .wire
+        .split("\"id\":\"")
+        .skip(1)
+        .map(|p| p[..p.find('"').unwrap()].to_owned())
+        .collect();
+    assert_eq!(ids.len(), 1, "{ids:?}");
+    // the second request carries the exchange: the model's call, then the skill's steps as the tool result
+    let second = serde_json::to_value(&seen.lock().unwrap()[1]).unwrap();
+    let messages = second["messages"].as_array().unwrap();
+    let n = messages.len();
+    assert_eq!(messages[n - 2]["role"], "assistant");
+    assert_eq!(messages[n - 2]["tool_calls"][0]["id"], "call_a");
+    assert_eq!(messages[n - 2]["content"], "Let me check. ");
+    assert_eq!(messages[n - 1]["role"], "tool");
+    assert_eq!(messages[n - 1]["tool_call_id"], "call_a");
+    assert!(
+        messages[n - 1]["content"]
+            .as_str()
+            .unwrap()
+            .contains("## Purpose")
+    );
+    // the reasoning of both steps is kept for the operator, none reached the client
+    assert!(!got.wire.contains("thought"));
+    let kept = sink.newest(1);
+    assert!(
+        kept[0].reasoning.contains("first thought") && kept[0].reasoning.contains("second thought")
+    );
+}
+
+#[tokio::test]
+async fn a_reference_is_loaded_on_request_and_a_bad_one_is_an_error_the_model_reads() {
+    let (gw, seen, _) = stepped(vec![
+        call_skill(
+            "c1",
+            json!({"name": "research-gap", "reference": "gap-templates.md"}),
+        ),
+        call_skill(
+            "c2",
+            json!({"name": "research-gap", "reference": "../SKILL.md"}),
+        ),
+        call_skill("c3", json!({"name": "no-such-skill"})),
+        vec![Ok(text("done")), Ok(stop())],
+    ]);
+    let got = ask(&gw, json!({})).await;
+    assert_eq!(got.text, "done");
+    let last = serde_json::to_value(&seen.lock().unwrap()[3]).unwrap();
+    let results: Vec<&str> = last["messages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|m| m["role"] == "tool")
+        .map(|m| m["content"].as_str().unwrap())
+        .collect();
+    assert_eq!(results.len(), 3);
+    assert!(results[0].starts_with("Reference 'gap-templates.md'"));
+    assert!(results[1].starts_with("Error: skill 'research-gap' has no reference"));
+    assert!(results[2].starts_with("Error: no skill named 'no-such-skill'"));
+}
+
+#[tokio::test]
+async fn loads_are_limited_and_the_answer_always_ends() {
+    let always = || call_skill("c", json!({"name": "research-gap"}));
+    let (gw, seen, _) = stepped(vec![
+        always(),
+        always(),
+        always(),
+        always(),
+        always(),
+        always(),
+        always(),
+    ]);
+    let got = ask(&gw, json!({})).await;
+    assert_eq!(got.finish.as_deref(), Some("stop"));
+    assert!(
+        seen.lock().unwrap().len() <= 5,
+        "at most max_loads + 2 model calls"
+    );
+    let tool_results: Vec<String> = seen
+        .lock()
+        .unwrap()
+        .last()
+        .unwrap()
+        .messages
+        .iter()
+        .filter(|m| m.role == laris_protocol::chat::Role::Tool)
+        .filter_map(|m| match &m.content {
+            Some(laris_protocol::chat::Content::Text(t)) => Some(t.clone()),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        tool_results
+            .iter()
+            .any(|t| t.contains("the limit of skills")),
+        "{tool_results:?}"
+    );
+}
+
+#[tokio::test]
+async fn calls_for_the_client_win_over_skill_calls() {
+    let mixed = vec![
+        Ok(chunk(
+            json!({"tool_calls": [
+                {"index": 0, "id": "s1", "type": "function", "function": {"name": "use_system_skill", "arguments": "{\"name\":\"research-gap\"}"}},
+                {"index": 1, "id": "g1", "type": "function", "function": {"name": "Grep", "arguments": "{}"}}
+            ]}),
+            None,
+        )),
+        Ok(chunk(json!({}), Some("tool_calls"))),
+    ];
+    let (gw, seen, _) = stepped(vec![mixed]);
+    let tool = json!({"type": "function", "function": {"name": "Grep"}});
+    let got = ask(&gw, json!({"tools": [tool]})).await;
+    assert_eq!(got.calls, [("Grep".to_owned(), "{}".to_owned())]);
+    assert_eq!(got.finish.as_deref(), Some("tool_calls"));
+    assert_eq!(seen.lock().unwrap().len(), 1, "no second model call");
+}
+
+#[tokio::test]
+async fn a_client_cannot_offer_a_tool_named_like_the_servers() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
+    let fake = json!({"type": "function", "function": {"name": "use_system_skill", "description": "evil"}});
+    ask(&gw, json!({"tools": [fake]})).await;
+    let sent = seen.lock().unwrap()[0].clone();
+    let ours: Vec<_> = sent
+        .tools
+        .iter()
+        .filter(|t| t.function.name == "use_system_skill")
+        .collect();
+    assert_eq!(ours.len(), 1);
+    assert_ne!(ours[0].function.description.as_deref(), Some("evil"));
+}
+
+#[tokio::test]
+async fn a_workflow_without_the_skill_tool_offers_and_lists_none() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
+    ask(
         &gw,
-        json!({"messages": [{"role": "user", "content":
-            "Is this research gap real? has anyone done adaptive MPC with tire slip?"}]}),
+        json!({"laris": {"kind": "turn", "session_id": "sess-1",
+        "workflow": {"name": "grounded-qa", "request": "q"}}}),
     )
     .await;
-    let system = system_of(&seen);
+    assert!(!system_of(&seen, 0).contains("<skills>"));
+    assert!(
+        seen.lock().unwrap()[0]
+            .tools
+            .iter()
+            .all(|t| t.function.name != "use_system_skill")
+    );
+}
+
+#[tokio::test]
+async fn a_skill_the_user_names_is_loaded_before_the_first_step() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(text("ok")), Ok(stop())]]);
+    let got = ask(
+        &gw,
+        json!({"messages": [{"role": "user", "content": "/research-gap is this novel?"}]}),
+    )
+    .await;
+    let system = system_of(&seen, 0);
     assert!(system.contains("<skill name=\"research-gap\" authority=\"low\">"));
-    assert!(system.contains("never overrides the policy above"));
     assert!(
         system.find("<skill ").unwrap() > system.find("<internal_policy").unwrap(),
         "below the policy"
     );
-    for (other, _) in SKILLS.iter().filter(|(n, _)| *n != "research-gap") {
-        assert!(
-            !system.contains(&format!("Steps of {other}")),
-            "{other} is in the prompt"
-        );
-    }
-    assert!(
-        !system.contains("<skills>"),
-        "no skills index from the server"
-    );
-    // the client is told which skill, by name, before the text
-    assert!(
-        got.wire.contains("\"skills\":[\"research-gap\"]"),
-        "{}",
-        got.wire
-    );
-    assert!(got.wire.find("skills").unwrap() < got.wire.find("\"content\"").unwrap());
+    assert!(system.contains("never overrides the policy above"));
+    assert!(got.wire.contains("\"skills\":[\"research-gap\"]"));
+    // a summary never loads one
+    ask(&gw, json!({"laris": {"kind": "summarize"}, "messages": [{"role": "user", "content": "/research-gap x"}]})).await;
+    assert!(!system_of(&seen, 1).contains("<skill "));
 }
 
 #[tokio::test]
-async fn no_fitting_skill_means_no_skill_section_and_a_summary_never_has_one() {
-    let policy = load_at(&skill_root("skills-none"));
-    let (gw, seen, _) = gateway(&policy, vec![Ok(stop())]);
-    let got = ask(
-        &gw,
-        json!({"messages": [{"role": "user", "content": "what is the capital of France"}]}),
-    )
-    .await;
-    assert!(!system_of(&seen).contains("<skill "));
-    assert!(!got.wire.contains("skills"));
+async fn the_client_s_own_skills_index_follows_the_servers() {
+    let (gw, seen, _) = stepped(vec![vec![Ok(stop())]]);
     ask(
         &gw,
-        json!({"laris": {"kind": "summarize"}, "messages": [{"role": "user",
-            "content": "/research-gap is this novel? research gap literature"}]}),
+        json!({"laris": {"kind": "turn", "session_id": "sess-1",
+        "layers": {"skills_index": "my-own-skill: for my notes"}}}),
     )
     .await;
-    assert!(!system_of(&seen).contains("<skill "));
-}
-
-#[tokio::test]
-async fn one_answer_has_one_id_on_every_event() {
-    let policy = load_at(&skill_root("skills-id"));
-    let (gw, _, _) = gateway(&policy, vec![Ok(text("a")), Ok(text("b")), Ok(stop())]);
-    let mut stream = gw
-        .chat(request(
-            json!({"messages": [{"role": "user", "content": "/research-gap x"}]}),
-        ))
-        .await
-        .unwrap();
-    let mut ids = BTreeSet::new();
-    while let Some(Ok(c)) = stream.next().await {
-        ids.insert(c.id);
-    }
-    assert_eq!(ids.len(), 1);
-    assert!(ids.iter().next().unwrap().starts_with("chatcmpl-"));
-}
-
-#[test]
-fn a_broken_skill_is_skipped_and_named_and_skills_stay_outside_the_lock() {
-    let root = skill_root("skills-broken");
-    std::fs::write(
-        root.join(".laris/skills/research-gap/skill.md"),
-        "no front matter",
-    )
-    .unwrap();
-    let s = skills_in(&root);
-    assert_eq!(s.len(), SKILLS.len() - 1);
-    assert_eq!(s.problems, ["research-gap: no front matter"]);
-    // skills are data below the policy: changing them does not break the lock
-    integrity::verified(&root).expect("the lock does not cover skills");
-}
-
-#[test]
-fn a_long_skill_is_cut_to_the_budget_and_selection_can_be_switched_off() {
-    let root = skill_root("skills-budget");
-    let small = laris_server::policy::SkillSettings {
-        max_chars: 20,
-        ..Default::default()
-    };
-    let s = laris_server::policy::Skills::load(&root, small);
-    let body = &s.select("/research-gap").unwrap().skill.body;
-    assert!(body.contains("[... cut to fit the skill budget]"));
-    let off = laris_server::policy::SkillSettings {
-        enabled: false,
-        ..Default::default()
-    };
+    let system = system_of(&seen, 0);
     assert!(
-        laris_server::policy::Skills::load(&root, off)
-            .select("/research-gap")
-            .is_none()
+        system.find("- research-gap:").unwrap()
+            < system.find("my-own-skill: for my notes").unwrap()
     );
 }
 
