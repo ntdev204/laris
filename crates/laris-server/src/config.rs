@@ -41,6 +41,8 @@ pub struct ServerConfig {
     pub header_timeout: Duration,
     /// Time a client has to send the whole body (`LARIS_SERVER__BODY_TIMEOUT_MS`).
     pub body_timeout: Duration,
+    /// Longest a write to the client may stay blocked because it does not read (`LARIS_SERVER__WRITE_STALL_MS`).
+    pub write_stall: Duration,
     /// Longest silence inside an answer stream before it ends with an error event (`LARIS_SERVER__STREAM_IDLE_MS`).
     pub stream_idle: Duration,
     /// Connections served at once (`LARIS_SERVER__MAX_CONNECTIONS`).
@@ -60,6 +62,7 @@ impl ServerConfig {
             trusted_proxies: TrustedProxies::default(),
             header_timeout: Duration::from_secs(10),
             body_timeout: Duration::from_secs(30),
+            write_stall: Duration::from_secs(30),
             stream_idle: Duration::from_secs(120),
             max_connections: 1024,
             embed_max_inputs: 256,
@@ -99,6 +102,9 @@ impl ServerConfig {
         }
         if let Some(n) = number("LARIS_SERVER__BODY_TIMEOUT_MS", 1)? {
             cfg.body_timeout = Duration::from_millis(n);
+        }
+        if let Some(n) = number("LARIS_SERVER__WRITE_STALL_MS", 1)? {
+            cfg.write_stall = Duration::from_millis(n);
         }
         if let Some(n) = number("LARIS_SERVER__STREAM_IDLE_MS", 1)? {
             cfg.stream_idle = Duration::from_millis(n);

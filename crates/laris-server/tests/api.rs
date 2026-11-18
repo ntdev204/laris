@@ -28,6 +28,8 @@ enum Script {
     Stall,
     /// 1 chunk, then a long wait (the client is expected to leave).
     Slow,
+    /// `n` chunks of 64 KiB, made only as fast as the connection takes them.
+    Big(usize),
     /// An HTTP-level refusal.
     Refuse(ApiError),
 }
@@ -68,6 +70,10 @@ impl Backend for Scripted {
                         Ok(chunk("late"))
                     }))
                     .boxed(),
+                Script::Big(n) => {
+                    let big = chunk(&"x".repeat(64 * 1024));
+                    stream::iter((0..n).map(move |_| Ok(big.clone()))).boxed()
+                }
                 Script::Refuse(e) => return Err(e),
             };
             Ok(s)
@@ -681,5 +687,68 @@ async fn shutdown_waits_for_open_work_then_stops() {
     let h = Harness::start(Script::Chunks(2), |_| {}).await;
     let r = h.send(&post("/v1/laris/chat", CHAT, "")).await;
     assert_eq!(r.events().last(), Some(&P1Event::Done));
+    h.shutdown().await;
+}
+
+#[tokio::test]
+async fn client_that_stops_reading_is_cut_and_its_slot_freed() {
+    let h = Harness::start(Script::Big(5000), |c| {
+        c.write_stall = Duration::from_millis(300);
+        c.max_connections = 1;
+        c.stream_idle = Duration::from_secs(20);
+        c.header_timeout = Duration::from_secs(5);
+    })
+    .await;
+    let mut s = TcpStream::connect(h.addr).await.unwrap();
+    s.write_all(&post("/v1/laris/chat", CHAT, ""))
+        .await
+        .unwrap();
+    let mut buf = [0u8; 256];
+    assert!(s.read(&mut buf).await.unwrap() > 0); // the answer started; now read nothing more
+    let started = std::time::Instant::now();
+    let rec = h.record(|r| r.route == "chat").await;
+    assert_eq!(rec.outcome, Some("client_gone"));
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "{:?}",
+        started.elapsed()
+    );
+    // the only slot is free again while the silent client still holds its socket open
+    let r = h
+        .send(b"GET /health HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n")
+        .await;
+    assert_eq!(r.status(), 200);
+    drop(s);
+    h.shutdown().await;
+}
+
+#[tokio::test]
+async fn slow_but_steady_reader_is_not_cut() {
+    let h = Harness::start(Script::Big(160), |c| {
+        c.write_stall = Duration::from_millis(500)
+    })
+    .await;
+    let mut s = TcpStream::connect(h.addr).await.unwrap();
+    s.write_all(&post("/v1/laris/chat", CHAT, ""))
+        .await
+        .unwrap();
+    let mut total = 0usize;
+    let mut tail = Vec::new();
+    let mut buf = vec![0u8; 64 * 1024];
+    loop {
+        let n = s.read(&mut buf).await.unwrap();
+        if n == 0 {
+            break;
+        }
+        total += n;
+        tail.extend_from_slice(&buf[..n]);
+        if tail.len() > 64 {
+            tail.drain(..tail.len() - 64);
+        }
+        tokio::time::sleep(Duration::from_millis(15)).await; // slower than the server, never stuck
+    }
+    assert!(total > 160 * 64 * 1024, "{total}");
+    assert!(String::from_utf8_lossy(&tail).contains("[DONE]"));
+    assert_eq!(h.record(|r| r.route == "chat").await.outcome, None);
     h.shutdown().await;
 }

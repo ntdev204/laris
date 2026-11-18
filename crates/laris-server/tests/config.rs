@@ -44,6 +44,7 @@ fn every_setting_is_read() {
         ("LARIS_SERVER__HEADER_TIMEOUT_MS", "1500"),
         ("LARIS_SERVER__BODY_TIMEOUT_MS", "2500"),
         ("LARIS_SERVER__STREAM_IDLE_MS", "3500"),
+        ("LARIS_SERVER__WRITE_STALL_MS", "4500"),
         ("LARIS_SERVER__MAX_CONNECTIONS", "7"),
         ("LARIS_SERVER__EMBED_MAX_INPUTS", "9"),
         ("LARIS_SERVER__SHUTDOWN_GRACE_MS", "0"),
@@ -53,6 +54,7 @@ fn every_setting_is_read() {
     assert_eq!(c.header_timeout, Duration::from_millis(1500));
     assert_eq!(c.body_timeout, Duration::from_millis(2500));
     assert_eq!(c.stream_idle, Duration::from_millis(3500));
+    assert_eq!(c.write_stall, Duration::from_millis(4500));
     assert_eq!((c.max_connections, c.embed_max_inputs), (7, 9));
     assert_eq!(c.shutdown_grace, Duration::ZERO);
     assert!(c.trusted_proxies.is_trusted("10.9.9.9".parse().unwrap()));
@@ -69,6 +71,7 @@ fn errors_name_the_variable_and_not_the_value() {
         ("LARIS_SERVER__MAX_BODY_BYTES", "SECRETVALUE"),
         ("LARIS_SERVER__HEADER_TIMEOUT_MS", "-5"),
         ("LARIS_SERVER__MAX_CONNECTIONS", "0"),
+        ("LARIS_SERVER__WRITE_STALL_MS", "0"),
         ("LARIS_SERVER__TRUSTED_PROXIES", "10.0.0.0/8,SECRETVALUE"),
     ];
     for (name, value) in bad {
