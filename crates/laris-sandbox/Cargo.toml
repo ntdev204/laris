@@ -22,5 +22,23 @@ seccompiler = "0.5"
 rustix = { version = "1", features = ["thread"] }
 libc = "0.2"
 
-[lints]
-workspace = true
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Console",
+    "Win32_System_JobObjects",
+    "Win32_System_Memory",
+    "Win32_System_Threading",
+] }
+
+# The workspace forbids `unsafe`. The Windows backend calls raw Win32 and cannot avoid it, so this crate (alone) denies
+# it instead and `src/windows.rs` is the one module that allows it (T135; owner to confirm).
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }

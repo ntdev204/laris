@@ -7,7 +7,7 @@
 //! | --- | --- | --- |
 //! | Linux | bubblewrap + seccomp, Landlock fallback | built and tested |
 //! | macOS | Seatbelt profile | profile generated and tested as text, **never run** |
-//! | Windows | none | **not built**; `Sandbox::detect` refuses, so a command is never run unconfined |
+//! | Windows | write-restricted token + ACLs + job object (no read hiding, no network block) | written, `cargo check` only, **never run** |
 
 pub mod bwrap;
 pub mod helper;
@@ -15,6 +15,9 @@ pub mod macos;
 pub mod policy;
 pub mod pyenv;
 pub mod sandbox;
+pub mod winargs;
+#[cfg(windows)]
+pub mod windows;
 
 pub use policy::{PROTECTED_NAMES, Policy, Readable, SandboxError};
 pub use pyenv::PythonEnv;

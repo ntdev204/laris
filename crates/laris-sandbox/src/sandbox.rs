@@ -17,6 +17,9 @@ pub enum Backend {
     Landlock,
     /// macOS: `sandbox-exec` with a generated profile.
     Seatbelt,
+    /// Windows: a write-restricted token, ACLs on the writable roots and a job object, set up by the helper.
+    /// Option A of T134: no read hiding and no OS network block.
+    RestrictedToken,
 }
 
 /// A policy bound to a backend.
@@ -31,13 +34,11 @@ impl Sandbox {
     /// Picks the strongest backend that works on this machine.
     ///
     /// # Errors
-    /// `Unavailable` when nothing can confine the command (a command must then not run), `Unsupported` when the
-    /// only working backend cannot enforce the policy, and always on Windows (no backend in this build).
+    /// `Unavailable` when nothing can confine the command (a command must then not run) and `Unsupported` when the
+    /// only working backend cannot enforce the policy.
     pub fn detect(policy: Policy, helper: Option<PathBuf>) -> Result<Self, SandboxError> {
         if cfg!(windows) {
-            return Err(SandboxError::Unavailable(
-                "there is no Windows backend in this build; commands cannot be confined".into(),
-            ));
+            return Self::with_backend(policy, Backend::RestrictedToken, helper);
         }
         if cfg!(target_os = "macos") {
             return Self::with_backend(policy, Backend::Seatbelt, helper);
@@ -81,6 +82,19 @@ impl Sandbox {
                     helper,
                 })
             }
+            Backend::RestrictedToken => {
+                let helper = helper.ok_or_else(|| {
+                    SandboxError::Unavailable(format!(
+                        "laris-sandbox-helper not found (set {HELPER_ENV})"
+                    ))
+                })?;
+                windows_policy_check(&policy)?;
+                Ok(Self {
+                    backend,
+                    policy,
+                    helper,
+                })
+            }
             Backend::Seatbelt => Ok(Self {
                 backend,
                 policy,
@@ -112,6 +126,14 @@ impl Sandbox {
                 "no read hiding",
             ],
             Backend::Seatbelt => vec!["not run on macOS in this build's tests"],
+            Backend::RestrictedToken => vec![
+                "no read hiding and no read limit: the whole disk is readable",
+                "no network block: the network is on",
+                "a folder that grants write to Everyone stays writable",
+                "the capability ACE stays on the writable roots after the command",
+                "no private desktop",
+                "never run on Windows in this build's tests",
+            ],
         }
     }
 
@@ -146,6 +168,18 @@ impl Sandbox {
                 cmd.current_dir(cwd);
                 Ok(cmd)
             }
+            Backend::RestrictedToken => {
+                let mut cmd = Command::new(&self.helper);
+                cmd.args(crate::winargs::helper_args(
+                    &crate::winargs::WindowsRestrictions {
+                        write_roots: self.policy.writable.clone(),
+                        protected: self.policy.protected_paths(),
+                    },
+                ));
+                cmd.args(argv);
+                cmd.current_dir(cwd);
+                Ok(cmd)
+            }
             Backend::Seatbelt => {
                 let mut cmd = Command::new(crate::macos::SANDBOX_EXEC);
                 cmd.args(crate::macos::sandbox_exec_args(&self.policy, argv));
@@ -166,6 +200,27 @@ impl Sandbox {
             },
         })
     }
+}
+
+/// What the Windows backend cannot enforce: refused rather than silently weakened (T134 decision 2).
+///
+/// # Errors
+/// `Unsupported` for hidden paths, limited reads, or a network that is off.
+pub fn windows_policy_check(policy: &Policy) -> Result<(), SandboxError> {
+    if !policy.deny_read.is_empty()
+        || !matches!(policy.readable, crate::policy::Readable::Everything)
+    {
+        return Err(SandboxError::Unsupported(
+            "the Windows backend cannot hide paths from reads".into(),
+        ));
+    }
+    if !policy.network {
+        return Err(SandboxError::Unsupported(
+            "the Windows backend cannot block the network; the policy must allow it explicitly"
+                .into(),
+        ));
+    }
+    Ok(())
 }
 
 /// Whether `bwrap` exists and can build a sandbox here (user namespaces can be switched off by the system).
@@ -206,4 +261,38 @@ fn find_helper() -> Option<PathBuf> {
 #[must_use]
 pub fn os(s: &str) -> OsString {
     OsStr::new(s).to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn windows_refuses_what_it_cannot_enforce() {
+        let on = Policy::workspace([PathBuf::from("w")]).with_network(true);
+        assert!(windows_policy_check(&on).is_ok());
+        assert!(windows_policy_check(&Policy::workspace([PathBuf::from("w")])).is_err());
+        assert!(windows_policy_check(&on.clone().with_deny_read([PathBuf::from("s")])).is_err());
+        assert!(windows_policy_check(&on.with_readable_only([PathBuf::from("r")])).is_err());
+    }
+
+    #[test]
+    fn windows_command_passes_roots_and_protected_names_to_the_helper() {
+        let sandbox = Sandbox::with_backend(
+            Policy::workspace([PathBuf::from("w")]).with_network(true),
+            Backend::RestrictedToken,
+            Some(PathBuf::from("helper")),
+        )
+        .expect("sandbox");
+        let cmd = sandbox
+            .command(&[os("cmd"), os("/c"), os("dir")], Path::new("w"))
+            .expect("command");
+        let args: Vec<_> = cmd
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(args, ["--write-root", "w", "--", "cmd", "/c", "dir"]);
+        assert_eq!(cmd.get_program(), "helper");
+        assert!(sandbox.limits().iter().any(|l| l.contains("network")));
+    }
 }

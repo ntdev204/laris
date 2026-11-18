@@ -505,7 +505,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Per platform: writes outside allowed roots fail; build on first use, repair, single build under two sessions
 - Status: in_progress
 - Note: Started 2026-11-18 on `feature/T135-sandbox`; Linux and the Python environment are done and tested, macOS is
-  written and tested as text only, **Windows is not built**, so the task is not closed. `laris-sandbox`: own `Policy`
+  written and tested as text only, **Windows is written and compiles but has never run**, so the task is not closed. `laris-sandbox`: own `Policy`
   (readable roots or whole disk, writable roots, hidden paths, protected names `.git` and `.laris`, network on/off;
   replaces `codex-protocol`, T134 decision 1). Linux: `bwrap_args` builds the mounts in covering order (read-only
   base, writable roots, protected names read-only, hidden paths last; `--unshare-user/pid/ipc/uts/net`,
@@ -534,9 +534,21 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   leaves nothing, the environment is read-only to a command), 5 `Bash` (sandboxed write, the time limit kills the group
   inside bubblewrap, `PATH`, install rule, a sandbox that cannot start). New vendored crates: `landlock`, `seccompiler`,
   `rustix` (approved in T119 / T134) and their transitive `enumflags2`, `enumflags2_derive`, `linux-raw-sys`, plus a
-  second `syn` 2.0.119 beside `syn` 3 for `enumflags2_derive` (`multiple-versions` warns). Not done: the Windows
-  restricted-token backend (about 9-10k codex lines; cannot be written or run on this Linux machine, and the Windows
-  Rust target is not installed), so SR-H6 "per platform" is unmet there; macOS untested; the bubblewrap tests need
+  second `syn` 2.0.119 beside `syn` 3 for `enumflags2_derive` (`multiple-versions` warns). Windows (added 2026-11-18, option A): `Backend::RestrictedToken`; the helper makes a `WRITE_RESTRICTED` copy of its token
+  (restricting SIDs: a per-user capability SID derived from the user SID, the logon SID, Everyone), grants the capability SID
+  write on the writable roots and denies it write on existing `.git`/`.laris`, sets the token's default DACL, starts the
+  command suspended inside a kill-on-close job object and returns its exit code. About 330 own lines in `windows.rs`
+  (nothing copied from codex's 25k) plus `winargs.rs` (helper arguments, MSVC command-line quoting, capability SID: text,
+  unit-tested on Linux). Policies it cannot enforce are refused (hidden or limited reads, network off: the policy must allow
+  the network on Windows). `laris-sandbox` now sets its own lints (`unsafe_code = deny`, not the workspace `forbid`) and only
+  `windows.rs` allows `unsafe`: **owner to confirm**. `windows-sys` 0.61 features added to the crate only. Verified: `cargo
+  check` and `clippy -D warnings --all-targets` for `x86_64-pc-windows-msvc` (target added with `rustup target add`), 4
+  Linux unit tests for the text parts and the command shape. **Not verified: it has never run on Windows**; `tests/windows.rs`
+  (write inside/outside, `.git` read-only, exit code, refusals) is written for the owner to run there (`cargo test -p
+  laris-sandbox --test windows`). Known limits: no read hiding, no network block, Everyone-writable folders stay writable,
+  the capability ACE stays on the roots, no private desktop, no ConPTY, `Bash` still assumes a Unix `sh` and a process group
+  (the Windows shell and time-limit kill are not wired). SR-H6 "per platform" stays unmet until the Windows tests pass on
+  Windows. macOS untested; the bubblewrap tests need
   unprivileged user namespaces (they run here, they fall back to Landlock only where `bwrap` is unusable); protected
   names that do not exist yet can be created by a sandboxed command (only existing ones are mounted read-only);
   nothing wires the sandbox into a running session (the client tasks); `rand` and `tempfile` stayed unapproved and
