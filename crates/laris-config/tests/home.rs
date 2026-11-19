@@ -76,16 +76,20 @@ fn ensure_twice_changes_nothing() {
 }
 
 #[test]
-fn a_generation_one_home_is_left_exactly_as_it_was() {
-    let base = temp_dir("generation-one");
+fn an_existing_home_with_foreign_files_is_left_exactly_as_it_was() {
+    let base = temp_dir("foreign-files");
     let root = base.join(".laris");
-    fs::create_dir_all(root.join("runtime/cache")).unwrap();
-    fs::create_dir_all(root.join("projects/old-1234")).unwrap();
-    fs::write(root.join("config.yaml"), "model: legacy\n").unwrap();
-    fs::write(root.join("runtime/cache/state.bin"), [1u8, 2, 3]).unwrap();
-    fs::write(root.join("projects/old-1234/state.json"), "{\"old\": 1}").unwrap();
-    fs::write(root.join("settings.json"), "{\"model\": \"legacy\"}\n").unwrap();
-    fs::write(root.join(CREDENTIALS_FILE), "{\"apiKey\": \"old\"}").unwrap();
+    fs::create_dir_all(root.join("cache/data")).unwrap();
+    fs::create_dir_all(root.join("projects/other-1234")).unwrap();
+    fs::write(root.join("notes.yaml"), "model: other\n").unwrap();
+    fs::write(root.join("cache/data/state.bin"), [1u8, 2, 3]).unwrap();
+    fs::write(
+        root.join("projects/other-1234/state.json"),
+        "{\"other\": 1}",
+    )
+    .unwrap();
+    fs::write(root.join("settings.json"), "{\"model\": \"other\"}\n").unwrap();
+    fs::write(root.join(CREDENTIALS_FILE), "{\"apiKey\": \"other\"}").unwrap();
 
     let snapshot = |dir: &std::path::Path| {
         let mut out = Vec::new();
@@ -107,7 +111,7 @@ fn a_generation_one_home_is_left_exactly_as_it_was() {
     let created = Home::new(&root).ensure().unwrap();
     assert_eq!(snapshot(&root), before, "no existing file changed or moved");
     assert!(created.files.is_empty());
-    assert!(root.join("runtime/cache").is_dir(), "nothing was deleted");
+    assert!(root.join("cache/data").is_dir(), "nothing was deleted");
     assert!(
         root.join("commands").is_dir(),
         "only what was missing was added"

@@ -41,7 +41,7 @@ Task ids continue one global sequence and are unique across all task files.
 |---|---|---|
 | 1. Model | ResearchLLM stages 1-6 (section 6.8) | First and highest priority. Agents prepare code, data, configuration, evaluation and commands; the owner trains and returns measurements |
 | 2. System, server, client | Rust rewrite (sections 6.2-6.7) | Its system and server phases run only when the next programme-1 task waits for the owner (a training run, a decision, labels). Its client phase starts after the model is finished (T118) |
-| 3. Brain | Cognitive architecture (section 6.9) | After programme 2 reaches parity and the model is finished |
+| 3. Brain | Cognitive architecture (section 6.9) | After programme 2 is accepted and the model is finished |
 
 "The model is finished" means: every stage of section 6.8 passed its held-out gates and the owner recorded the
 promotion. Until then the foundation model and every specialist are **NOT QUALIFIED**.
@@ -196,7 +196,7 @@ Acceptance: a failing gate blocks merge; a seeded training call fails CI.
 ### SR-G4 — Git flow and releases
 Owner: governance
 One task, one branch, one session; pull requests only; push, merge, tag and release only with the owner's explicit
-authorisation. Release 3.0.0 merges `laris-v2` into `main` when programme 2 reaches parity.
+authorisation. Release 3.0.0 merges `laris-v2` into `main` when programme 2 passes its acceptance checklist.
 Acceptance: release checklist recorded in the task note; `laris-v1` untouched.
 
 ### SR-G5 — Threat model and security suite
