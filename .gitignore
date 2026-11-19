@@ -90,3 +90,7 @@ packaging/npm/node_modules/
 # Release signing keys never go into Git (T159).
 release.key
 *.release.key
+
+# Vendored crates are kept exactly as published: their checksums list every file (T159)
+!/vendor/
+!/vendor/**
