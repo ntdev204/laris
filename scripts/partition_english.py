@@ -21,6 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from laris.research.corpus.splits.partitioners import english as E  # noqa: E402
+from laris.research.corpus.splits.partitioners import ner as N  # noqa: E402
 from laris.research.corpus.splits.partitioners import retrieval as R  # noqa: E402
 
 WITHDRAWN = {"WIKIPEDIA-VI", "CC100-VI-CLEAN", "VINLI", "VISTS", "UIT-VIQUAD-V2"}
@@ -118,6 +119,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 report[spec["id"]] = {"counts": result.counts, **stats}
                 print(f"[retrieval] {spec['id']}: {result.counts} {stats}", flush=True)
 
+    ner_specs = [s for s in config.get("ner", []) if want(s["id"])]
+    if ner_specs:
+        # One pass over the NER sources: train sentences are checked against all held-out text.
+        for result, stats in N.partition_ner(ner_specs, args.raw, args.processed):
+            results.append(result.to_dict())
+            report[result.dataset_id] = stats
+            print(f"[ner] {result.dataset_id}: {result.counts} {stats}", flush=True)
+
     fresh = {r["dataset_id"] for r in results}
     kept = [
         r
@@ -134,7 +143,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.config.is_relative_to(REPO_ROOT)
         else str(args.config),
         "seed": config["seed"],
-        "sources": report,
+        "sources": {**manifest.get("english_partition", {}).get("sources", {}), **report},
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"manifest updated: {len(manifest['partitioned_datasets'])} partitioned datasets")

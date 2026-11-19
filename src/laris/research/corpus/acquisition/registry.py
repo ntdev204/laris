@@ -41,3 +41,7 @@ OCR_ACQUIRERS = {**english_acquirers(OCR_CONFIG), PMC_ID: acquire_pmc_pdf}
 # configs/data/science_sources.yaml.
 SCIENCE_CONFIG = Path(__file__).resolve().parents[5] / "configs" / "data" / "science_sources.yaml"
 SCIENCE_ACQUIRERS = english_acquirers(SCIENCE_CONFIG)
+
+# Named-entity-recognition fine-tune sources (T187); configs/data/ner_sources.yaml.
+NER_CONFIG = Path(__file__).resolve().parents[5] / "configs" / "data" / "ner_sources.yaml"
+NER_ACQUIRERS = english_acquirers(NER_CONFIG)

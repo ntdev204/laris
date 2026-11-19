@@ -1,0 +1,36 @@
+# Named-entity-recognition fine-tune sources (T187, Phase 42). Same format as english_sources.yaml.
+# Owner decision 2026-11-19 (recorded in T187): Few-NERD (CC BY-SA 4.0, share-alike accepted) trains and tests the
+# NER head; WNUT-17 (CC BY 4.0) is the out-of-domain second test; NER is a separate fine-tune, not part of the
+# stage-1 mixture. The labels of both sets are the publishers' human labels (Few-NERD: expert annotation; WNUT-17:
+# crowd/expert annotation). Nothing here trains or fits.
+config_version: "1.0.0"
+hf_endpoint: "https://huggingface.co"
+user_agent: "LARIS-Research-Agent/1.0"
+max_retries: 6
+timeout_seconds: 120
+
+sources:
+  - id: FEW-NERD-EN
+    role: ner
+    repo: DFKI-SLT/few-nerd
+    path: supervised
+    pattern: "*.parquet"
+    license_name: "CC-BY-SA-4.0 (dataset), Apache-2.0 (code)"
+    license_approved: true
+    sample_unit: "Wikipedia sentence with entity types"
+    min_rows: 180000
+    notes: "Supervised mode (131,767 / 18,824 / 37,648 sentences per the HF card), eight coarse types. Share-alike accepted by the owner 2026-11-19; the data stays outside Git."
+  - id: WNUT-17-EN
+    role: ner
+    repo: leondz/wnut_17
+    # The HF repository holds only a loading script; the parquet conversion branch carries the same official
+    # train / dev / test files from the publisher's GitHub (leondz/emerging_entities_17).
+    rev: "refs%2Fconvert%2Fparquet"
+    path: wnut_17
+    recursive: true
+    pattern: "*.parquet"
+    license_name: "CC-BY-4.0 (publisher GitHub README); platform terms of the underlying posts not examined"
+    license_approved: true
+    sample_unit: "Social-media sentence with entity types"
+    min_rows: 5000
+    notes: "Official splits: train (Twitter), dev (YouTube), test (StackExchange and Reddit): the out-of-domain test. Six native types."

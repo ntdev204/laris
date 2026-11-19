@@ -1,0 +1,568 @@
+{
+  "task": "T187",
+  "window_words": 8,
+  "stage1_directories_scanned": {
+    "adversarial_qa_en": 26533,
+    "all_nli": 942068,
+    "altlex_en": 109408,
+    "anli": 162864,
+    "c4_en": 2880360,
+    "cc_news_en": 617064,
+    "cnn_dailymail_en": 429736,
+    "coco_captions_en": 406343,
+    "drop_en": 25441,
+    "duorc_en": 87173,
+    "eli5_en": 318791,
+    "fever": 77139,
+    "fineweb_edu_en": 5919079,
+    "gooaq_en": 2948726,
+    "gutenberg_en": 1204465,
+    "hotpotqa": 80721,
+    "mrpc_en": 5234,
+    "msmarco_en": 578526,
+    "natural_questions_pairs_en": 97773,
+    "openwebtext_en": 2056577,
+    "paws": 49401,
+    "paws_swap_en": 30220,
+    "paws_unlabeled_en": 624587,
+    "quora_duplicates": 330352,
+    "quoref_en": 17392,
+    "relation_pairs_en": 1410056,
+    "ropes_en": 9650,
+    "scitail_en": 24332,
+    "similarity_llm_en": 3000,
+    "simple_wiki_en": 86425,
+    "specter_triplets_en": 372376,
+    "squad": 78319,
+    "squad_v2_en": 117580,
+    "stackexchange_duplicates_en": 787292,
+    "sts_extra_en": 14429,
+    "stsb": 5734,
+    "vitaminc_en": 367422,
+    "wanli_en": 97067,
+    "wikipedia_en": 1991346,
+    "wikipedia_simple_en": 166137,
+    "xsum_en": 235806,
+    "yahoo_answers_en": 667385
+  },
+  "stage1_directories_without_train_split": [
+    "mlm",
+    "nli",
+    "paraphrase",
+    "qa",
+    "quora",
+    "similarity"
+  ],
+  "summary": {
+    "FEW-NERD-EN/val": {
+      "sentences": 18824,
+      "sentences_with_a_hit": 9007,
+      "share": 0.4785,
+      "sentences_with_exact_hit": 137,
+      "sentences_with_window_hit": 8964,
+      "hit_sentences_per_stage1_directory": {
+        "wikipedia_en": 7430,
+        "fineweb_edu_en": 2074,
+        "hotpotqa": 1425,
+        "openwebtext_en": 1268,
+        "c4_en": 919,
+        "wikipedia_simple_en": 608,
+        "relation_pairs_en": 405,
+        "cnn_dailymail_en": 363,
+        "cc_news_en": 352,
+        "natural_questions_pairs_en": 305,
+        "msmarco_en": 300,
+        "gooaq_en": 266,
+        "paws_unlabeled_en": 239,
+        "altlex_en": 204,
+        "gutenberg_en": 190,
+        "xsum_en": 158,
+        "vitaminc_en": 141,
+        "simple_wiki_en": 127,
+        "anli": 97,
+        "yahoo_answers_en": 92,
+        "squad": 91,
+        "squad_v2_en": 91,
+        "paws_swap_en": 59,
+        "wanli_en": 42,
+        "eli5_en": 38,
+        "all_nli": 37,
+        "fever": 36,
+        "paws": 35,
+        "adversarial_qa_en": 20,
+        "duorc_en": 19,
+        "quoref_en": 18,
+        "drop_en": 17,
+        "quora_duplicates": 13,
+        "stackexchange_duplicates_en": 6,
+        "mrpc_en": 4,
+        "similarity_llm_en": 4,
+        "stsb": 1,
+        "sts_extra_en": 1,
+        "ropes_en": 1
+      }
+    },
+    "FEW-NERD-EN/test": {
+      "sentences": 37648,
+      "sentences_with_a_hit": 17964,
+      "share": 0.4772,
+      "sentences_with_exact_hit": 273,
+      "sentences_with_window_hit": 17880,
+      "hit_sentences_per_stage1_directory": {
+        "wikipedia_en": 14862,
+        "fineweb_edu_en": 4024,
+        "hotpotqa": 2862,
+        "openwebtext_en": 2546,
+        "c4_en": 1746,
+        "wikipedia_simple_en": 1179,
+        "relation_pairs_en": 777,
+        "cnn_dailymail_en": 673,
+        "cc_news_en": 605,
+        "natural_questions_pairs_en": 543,
+        "msmarco_en": 523,
+        "gooaq_en": 459,
+        "paws_unlabeled_en": 435,
+        "altlex_en": 397,
+        "gutenberg_en": 317,
+        "xsum_en": 289,
+        "simple_wiki_en": 284,
+        "vitaminc_en": 248,
+        "anli": 173,
+        "yahoo_answers_en": 156,
+        "squad": 148,
+        "squad_v2_en": 148,
+        "paws_swap_en": 79,
+        "wanli_en": 74,
+        "fever": 69,
+        "eli5_en": 59,
+        "paws": 51,
+        "all_nli": 47,
+        "drop_en": 39,
+        "quoref_en": 30,
+        "duorc_en": 28,
+        "stackexchange_duplicates_en": 20,
+        "adversarial_qa_en": 18,
+        "quora_duplicates": 15,
+        "similarity_llm_en": 14,
+        "mrpc_en": 11,
+        "scitail_en": 2,
+        "stsb": 1,
+        "sts_extra_en": 1
+      }
+    },
+    "WNUT-17-EN/val": {
+      "sentences": 1009,
+      "sentences_with_a_hit": 27,
+      "share": 0.0268,
+      "sentences_with_exact_hit": 4,
+      "sentences_with_window_hit": 23,
+      "hit_sentences_per_stage1_directory": {
+        "openwebtext_en": 12,
+        "yahoo_answers_en": 10,
+        "c4_en": 9,
+        "fineweb_edu_en": 7,
+        "all_nli": 3,
+        "relation_pairs_en": 3,
+        "cnn_dailymail_en": 3,
+        "eli5_en": 2,
+        "wikipedia_en": 2,
+        "cc_news_en": 2,
+        "stackexchange_duplicates_en": 2,
+        "msmarco_en": 1,
+        "gooaq_en": 1,
+        "xsum_en": 1,
+        "duorc_en": 1,
+        "gutenberg_en": 1
+      }
+    },
+    "WNUT-17-EN/test": {
+      "sentences": 1287,
+      "sentences_with_a_hit": 77,
+      "share": 0.0598,
+      "sentences_with_exact_hit": 18,
+      "sentences_with_window_hit": 67,
+      "hit_sentences_per_stage1_directory": {
+        "openwebtext_en": 30,
+        "fineweb_edu_en": 21,
+        "c4_en": 18,
+        "stackexchange_duplicates_en": 18,
+        "wikipedia_en": 12,
+        "yahoo_answers_en": 9,
+        "cnn_dailymail_en": 8,
+        "cc_news_en": 7,
+        "gutenberg_en": 6,
+        "xsum_en": 5,
+        "all_nli": 4,
+        "relation_pairs_en": 4,
+        "eli5_en": 4,
+        "wikipedia_simple_en": 3,
+        "quora_duplicates": 2,
+        "natural_questions_pairs_en": 2,
+        "gooaq_en": 2,
+        "wanli_en": 2,
+        "duorc_en": 1,
+        "hotpotqa": 1,
+        "msmarco_en": 1
+      }
+    }
+  },
+  "sample_hits": [
+    {
+      "id": "FEW-NERD-EN:val:0",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "The final stage in the development of the Skyfox was the production of a model with tricycle landing gear to better cater for the pilot training market .",
+      "stage1": {
+        "fineweb_edu_en": {
+          "window": 2
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:2239",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "Bessy was featured in Gene Kelly 's film `` Invitation to the Dance `` ( 1956 ) , and four years later he created `` Pas de dieux `` at the Paris Opera for her .",
+      "stage1": {
+        "xsum_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:4486",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "Larch Mountain is a mountain in the Northern Oregon Coast Range in Washington County , Oregon , United States .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 2
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:6823",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "Failing to adapt to city life in Tallahassee , Dummett returned to his home on the north end of Mosquito Lagoon .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:9060",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "The Rhodesian Bush War ( or Second `` Chimurenga '' ) , which had been underway at a low level since before UDI , began in earnest in December 1972 when ZANLA attacked farms in north-eastern Rhodesia .",
+      "stage1": {
+        "fineweb_edu_en": {
+          "window": 1
+        },
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:11285",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "Saward hosts audiences for Formula One fans who can ask questions about the sport .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:13610",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "The competitors are supposed to be freshmen ( students with less than 30 hours of credit ) , and the race is split up by gender .",
+      "stage1": {
+        "openwebtext_en": {
+          "window": 1
+        },
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:15880",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "It was named for Ely S. Parker , a Seneca lawyer who served as secretary to Ulysses S. Grant , wrote the Confederate terms of surrender , and was appointed as Commissioner of Indian Affairs under President Grant .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:val:18131",
+      "source": "FEW-NERD-EN",
+      "split": "val",
+      "text": "At the time of its completion it was the highest arch bridge in the world .",
+      "stage1": {
+        "fineweb_edu_en": {
+          "window": 13
+        },
+        "msmarco_en": {
+          "window": 1
+        },
+        "openwebtext_en": {
+          "window": 4
+        },
+        "hotpotqa": {
+          "window": 9
+        },
+        "wikipedia_en": {
+          "window": 33
+        },
+        "wikipedia_simple_en": {
+          "window": 2
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:1507",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The team was initially led throughout the season by quarterback Carlyle Holiday , former quarterback and wide receiver Arnaz Battle , and on defense , Shane Walton .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:3807",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The film portrays the circumstances surrounding the rise of the Sikh insurgency in Punjab in the 1980s and traces the transformation of a youth from a boy next door to an angry person bent on wreaking vengeance , upon receiving gross injustice from the political system and sidelined being labelled as terrorist , to make it easy to kill him without any state accountability .",
+      "stage1": {
+        "hotpotqa": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:6104",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Sodium hydroxide has been used for detection of carbon monoxide poisoning , with blood samples of such patients turning to a vermilion color upon the addition of a few drops of sodium hydroxide .",
+      "stage1": {
+        "fineweb_edu_en": {
+          "window": 2
+        },
+        "gutenberg_en": {
+          "window": 2
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:8363",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The Charioteer Tank , or FV4101 Tank , Medium Gun , Charioteer was a post-war British armoured fighting vehicle .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:10640",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Marilyn Barrueta was inducted into the National Teachers Hall of Fame in 2005 after 48 years of teaching .",
+      "stage1": {
+        "openwebtext_en": {
+          "window": 1
+        },
+        "hotpotqa": {
+          "window": 3
+        },
+        "wikipedia_en": {
+          "window": 3
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:12871",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "In Palestine between 1935 and 1938 , he was promoted major-general in 1937 and , appointed a Companion of the Order of the Bath in 1938 .",
+      "stage1": {
+        "c4_en": {
+          "window": 5
+        },
+        "fineweb_edu_en": {
+          "window": 20
+        },
+        "gutenberg_en": {
+          "window": 5
+        },
+        "openwebtext_en": {
+          "window": 8
+        },
+        "hotpotqa": {
+          "window": 5
+        },
+        "relation_pairs_en": {
+          "window": 4
+        },
+        "wikipedia_en": {
+          "window": 532
+        },
+        "wikipedia_simple_en": {
+          "window": 4
+        },
+        "xsum_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:15185",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Renewed volcanic activity southeast of the Ilgachuz Range starting 3.5 million years ago led to the creation of the Itcha Range , the youngest of the three Anahim shield volcanoes .",
+      "stage1": {
+        "fineweb_edu_en": {
+          "window": 1
+        },
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:17475",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "In the 1670s , he hoped to write for the prominent politicians Joseph Williamson and Anthony Ashley-Cooper , 1st Earl of Shaftesbury , but they declined the offer .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:19769",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Via the Kanawha and Ohio Rivers , it is part of the Mississippi River watershed .",
+      "stage1": {
+        "altlex_en": {
+          "window": 2
+        },
+        "fineweb_edu_en": {
+          "window": 1
+        },
+        "msmarco_en": {
+          "window": 2
+        },
+        "simple_wiki_en": {
+          "window": 1
+        },
+        "hotpotqa": {
+          "window": 10
+        },
+        "paws_unlabeled_en": {
+          "window": 11
+        },
+        "wikipedia_en": {
+          "window": 50
+        },
+        "relation_pairs_en": {
+          "window": 2
+        },
+        "wikipedia_simple_en": {
+          "window": 2
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:22056",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The Broadway show `` Jumbo `` opened on November 16 , 1935 , and was the last musical produced at the New York Hippodrome before it was demolished in 1939 .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:24365",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Although it was a short role , he won over the audience .",
+      "stage1": {
+        "openwebtext_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:26603",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "As he runs , pursued by his tormentors , Maurice and Skunk , still tied up , come out and see this and , regretting what they 've done , use the floss they 're bound in to trip Merv , knocking him down and causing him to land face-first into a pile of trash .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:28929",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "Tengrism was probably similar with the folk traditions of the Tungusic peoples , such as the Manchu folk religion .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:31186",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "It was also tested on the T-34-100 , T-44-100 , KV-100 , and IS-2 ( `` obyekt 245 `` ) .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:33404",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The sisters performed with the Scranton Sirens Orchestra ( 1923 ) , and achieved early fame on Broadway , New York , when they performed in George White 's Scandals of 1924 .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    },
+    {
+      "id": "FEW-NERD-EN:test:35648",
+      "source": "FEW-NERD-EN",
+      "split": "test",
+      "text": "The film features an international ensemble cast , including French - American Jean-Marc Barr , Germans Barbara Sukowa and Udo Kier , expatriate American Eddie Constantine , and Swedes Max von Sydow and Ernst-Hugo Järegård .",
+      "stage1": {
+        "wikipedia_en": {
+          "window": 1
+        }
+      }
+    }
+  ],
+  "note": "A hit is unlabelled text seen by stage 1 (no entity labels there); NER validation and test rows are never removed."
+}

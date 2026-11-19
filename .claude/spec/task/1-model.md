@@ -364,7 +364,8 @@ returned logs, manifests and reports.
 - Validation:
   - Corpus unit tests pass; `data check --verify-sha256` passes; label counts per split reported; leakage hits listed
     and removed from training, never from test
-- Status: pending
+- Status: done
+- Note: 2026-11-19: owner decisions recorded: Few-NERD (supervised, CC BY-SA 4.0 accepted, `license_approved: true`) plus WNUT-17 (CC BY 4.0, out-of-domain test); label set Few-NERD 8 coarse types in BIO; NER is a separate fine-tune. Acquired 188,239 and 5,690 sentences (`configs/data/ner_sources.yaml`, `--ner-all`, SHA-256 in the acquisition manifest); converted by `partitioners/ner.py` through `scripts/partition_english.py` (official splits kept; Few-NERD 124,086 / 18,824 / 37,648, WNUT-17 3,393 / 1,009 / 1,287; 7,682 train sentences that repeat validation or test text dropped from train only). WNUT-17 maps to the unified set by a proposed mapping (corporation and group to ORGANIZATION, creative-work to ART) kept next to its native labels. Leakage scan `scripts/check_ner_leakage.py` over 42 stage-1 train directories: 47.7 % of Few-NERD test sentences and 6.0 % of WNUT-17 test sentences also occur in stage-1 text (unlabelled, so no label leak); stage-1 partitions and test rows left untouched. Open for the owner: whether to remove those text hits from stage 1. Few-NERD merges adjacent same-type entities (about 1.2 %). Report `reports/verification/T187-ner-data.md`; tests `tests/unit/corpus/test_ner_partition.py`; `data check --verify-sha256` READY.
 
 ### T188 — Token-classification (NER) head on the encoder
 - Requirements: SR-M12, SR-M3

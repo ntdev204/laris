@@ -69,6 +69,19 @@ retrieval:
   - {id: ALTLEX-EN, query: text, positive: simplified, symmetric: true}
   - {id: SIMPLE-WIKI-EN, query: text, positive: simplified, symmetric: true}
   - {id: COCO-CAPTIONS-EN, query: caption1, positive: caption2, symmetric: true}
+# Named-entity-recognition fine-tune sources (T187). Official splits are kept; labels are converted to BIO over the
+# unified Few-NERD coarse types. `type_map` sends each native type to the unified type; the WNUT-17 mapping
+# (corporation and group -> ORGANIZATION, creative-work -> ART) is a proposal the owner can change here.
+ner:
+  - id: FEW-NERD-EN
+    tag_style: type
+    tag_names: [O, art, building, event, location, organization, other, person, product]
+    type_map: {art: ART, building: BUILDING, event: EVENT, location: LOCATION, organization: ORGANIZATION, other: OTHER, person: PERSON, product: PRODUCT}
+  - id: WNUT-17-EN
+    tag_style: bio
+    tag_names: [O, B-corporation, I-corporation, B-creative-work, I-creative-work, B-group, I-group, B-location, I-location, B-person, I-person, B-product, I-product]
+    type_map: {corporation: ORGANIZATION, creative-work: ART, group: ORGANIZATION, location: LOCATION, person: PERSON, product: PRODUCT}
+
 retrieval_ratios: {train: 0.98, val: 0.01, test: 0.01}
 retrieval_max_chars: 4000
 # Held-out text no retrieval pair may contain (exact match on either side, or an eight-word overlap on the positive):

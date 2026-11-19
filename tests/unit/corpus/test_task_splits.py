@@ -202,13 +202,18 @@ class TestDatasetInventoryAuditAndManifest(unittest.TestCase):
 
         report = audit_dataset_inventory(manifest_path=manifest_path, base_dir=repo_root)
         self.assertEqual(report["status"], "VERIFIED_AUDIT")
-        from laris.research.corpus.acquisition.sources.english_hf import load_sources_config
-
         # 18 generation-1 entries, the English stage-1 replacement sources (D46, T175) and the two
         # STEM slice acquired for the tokenizer fit (T179, T180: 15 science, math, engineering and
-        # technology sources)
+        # technology sources) and the NER fine-tune sources (T187)
+        from laris.research.corpus.acquisition.registry import NER_CONFIG
+        from laris.research.corpus.acquisition.sources.english_hf import load_sources_config
+
         self.assertEqual(
-            report["total_datasets_tracked"], 18 + len(load_sources_config()["sources"]) + 15
+            report["total_datasets_tracked"],
+            18
+            + len(load_sources_config()["sources"])
+            + 15
+            + len(load_sources_config(NER_CONFIG)["sources"]),
         )
         if report["physical_files_present"]:
             self.assertGreater(report["total_physical_files"], 40)

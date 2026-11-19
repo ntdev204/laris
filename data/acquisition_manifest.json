@@ -2562,9 +2562,85 @@
           "sha256": "d3ffcd51af1d596a83fbc90ffe2b2ece40e7b4050d51329d9089fc3b8341c663"
         }
       ]
+    },
+    {
+      "dataset_id": "FEW-NERD-EN",
+      "name": "Few Nerd En",
+      "version": "DFKI-SLT/few-nerd@main",
+      "official_source_url": "https://huggingface.co/datasets/DFKI-SLT/few-nerd",
+      "license_name": "CC-BY-SA-4.0 (dataset), Apache-2.0 (code)",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Wikipedia sentence with entity types",
+      "expected_sample_count": ">= 180,000 samples",
+      "actual_sample_count": 188239,
+      "actual_size_bytes": 24121858,
+      "sha256_checksum": "b7ad746fcbeb68fcc235ba7142d7c3723ea2dc39930089e947284defecf300c6",
+      "storage_path": "data/raw/few_nerd_en",
+      "schema_valid": true,
+      "notes": "Role: ner. Supervised mode (131,767 / 18,824 / 37,648 sentences per the HF card), eight coarse types. Share-alike accepted by the owner 2026-11-19; the data stays outside Git. Source DFKI-SLT/few-nerd@main; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test-00000-of-00001.parquet",
+          "bytes": 4823735,
+          "sample_count": 37648,
+          "sha256": "b7ad746fcbeb68fcc235ba7142d7c3723ea2dc39930089e947284defecf300c6"
+        },
+        {
+          "filename": "train-00000-of-00001.parquet",
+          "bytes": 16873779,
+          "sample_count": 131767,
+          "sha256": "6ccb192b1accd3d1754db2244d18ddf64040357fb5b9076a338ec421a72d7d61"
+        },
+        {
+          "filename": "validation-00000-of-00001.parquet",
+          "bytes": 2424344,
+          "sample_count": 18824,
+          "sha256": "d502de918f2a6510179e64bc8b7cfff4e28999188e308f8b0fe75bd71844da66"
+        }
+      ]
+    },
+    {
+      "dataset_id": "WNUT-17-EN",
+      "name": "Wnut 17 En",
+      "version": "leondz/wnut_17@refs%2Fconvert%2Fparquet",
+      "official_source_url": "https://huggingface.co/datasets/leondz/wnut_17",
+      "license_name": "CC-BY-4.0 (publisher GitHub README); platform terms of the underlying posts not examined",
+      "license_status": "APPROVED_FOR_ACQUISITION",
+      "acquisition_status": "VERIFIED",
+      "language": "English",
+      "sample_unit": "Social-media sentence with entity types",
+      "expected_sample_count": ">= 5,000 samples",
+      "actual_sample_count": 5690,
+      "actual_size_bytes": 492888,
+      "sha256_checksum": "c85ed5a45c4393f97bf64da11e9a49d4109e903a051c0e43073d3d732d748b58",
+      "storage_path": "data/raw/wnut_17_en",
+      "schema_valid": true,
+      "notes": "Role: ner. Official splits: train (Twitter), dev (YouTube), test (StackExchange and Reddit): the out-of-domain test. Six native types. Source leondz/wnut_17@refs%2Fconvert%2Fparquet; 3 file(s) selected by pattern '*.parquet'. English stage-1 replacement data (D46 / ADR-022); not a training run.",
+      "files": [
+        {
+          "filename": "test__0000.parquet",
+          "bytes": 116408,
+          "sample_count": 1287,
+          "sha256": "c85ed5a45c4393f97bf64da11e9a49d4109e903a051c0e43073d3d732d748b58"
+        },
+        {
+          "filename": "train__0000.parquet",
+          "bytes": 309383,
+          "sample_count": 3394,
+          "sha256": "6139f865cc3babe93d21947c0f4d239d4dea6f74bc7bdd9ebe0ab9dde74ce3af"
+        },
+        {
+          "filename": "validation__0000.parquet",
+          "bytes": 67097,
+          "sample_count": 1009,
+          "sha256": "8e15496da8f258ff853b614e4ce9c88d79de08244fdc192a3249c2efbb996ba8"
+        }
+      ]
     }
   ],
-  "total_datasets_tracked": 71,
-  "total_acquired_bytes": 36664102998,
-  "total_acquired_samples": 23099328
+  "total_datasets_tracked": 73,
+  "total_acquired_bytes": 36688717744,
+  "total_acquired_samples": 23293257
 }
