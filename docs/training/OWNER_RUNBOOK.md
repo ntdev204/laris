@@ -880,3 +880,22 @@ result as measured on the validation split.
 
 **Read before comparing.** (1) Stage 2 and the control differ in several things at once (mixture, tasks, heads, batch composition); the comparison separates the mixture from the compute, not each part. (2) Retrieval and
 contrastive batches are 4x larger than at 8 x 4, so their in-batch negatives differ from pilot-era runs. (3) The control reads the T208 similarity rows too. (4) The foundation model stays NOT QUALIFIED whatever these runs show.
+
+## 17. T205: forward-only evaluation of the T204 checkpoints (prepared 2026-11-19)
+
+T204 ran with `--no-evaluate-after`, so QA EM/F1, NLI macro F1, paraphrase AUC/F1 and retrieval ranking are not on record, and the stage-1 rerun was never probed. This section closes that gap before any longer run.
+Forward passes only: no backward step, no optimizer, no training authorisation. Validation split only (the sealed test split stays untouched). On the A100 VM, in `/content/laris`, with the checkpoints of section 16
+(`artifacts/checkpoints/language_encoder/english-r1-{stage1-rerun,stage2,control}/best`; restore them from Drive `runs/` if the VM was reset); `$TOK` is the tokenizer path used in section 16.
+```bash
+export HOME_ISOLATED=$(mktemp -d)
+mkdir -p artifacts/evaluations/language_encoder
+for RUN in english-r1-stage1-rerun english-r1-stage2 english-r1-control; do
+  CK=artifacts/checkpoints/language_encoder/$RUN/best
+  HOME=$HOME_ISOLATED timeout -s KILL 1800s python3 -I -m cli.model evaluate language-encoder \
+    --checkpoint $CK --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 8 \
+    --seed 42 --device cuda --output artifacts/evaluations/language_encoder/$RUN-val.json
+  python3 -I scripts/diagnose_pair_path.py $CK $TOK 600 > artifacts/evaluations/language_encoder/$RUN-probe.txt
+done
+```
+Return the six files (or save them to Drive). The agent reads them, adds the figures to `reports/verification/T205-stage2-analysis.md` and records them in T205. Compute: three short forward-only passes, a few minutes each.
+Read each figure as "measured on the validation split"; the foundation model stays NOT QUALIFIED.
