@@ -7,10 +7,15 @@ use laris_policy::{Answer, ApprovalRequest, Approver, Engine, ProjectState};
 use laris_tools::Scope;
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
+/// A fresh folder, unique per call: tests run in parallel and several reuse the same `name`, and a shared folder
+/// that one test empties disappears under the shell another test is running in.
 pub fn temp_dir(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("laris-policy-{name}-{}", std::process::id()));
+    static COUNTER: AtomicUsize = AtomicUsize::new(0);
+    let n = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let dir = std::env::temp_dir().join(format!("laris-policy-{name}-{}-{n}", std::process::id()));
     std::fs::remove_dir_all(&dir).ok();
     std::fs::create_dir_all(&dir).expect("temp dir");
     dir.canonicalize().expect("canonical")
