@@ -1,6 +1,6 @@
 # T205 — analysis and decision after the stage-2 run (2026-11-19)
 
-Status: analysis of figures already measured; **no run, no training, no new measurement** in this task. Every number below is on the **validation split** and names its source.
+Status: analysis of the T204 figures plus the forward-only evaluation of section 5 (runbook section 17, run 2026-11-19; no training, no backward step). Every number below is on the **validation split** and names its source.
 The foundation model stays **NOT QUALIFIED**: no held-out (test) gate was run, and nothing here is a gate result.
 
 Sources: T204 = `reports/verification/T204-stage2-control-runs.md` (+ `reports/verification/T204/*-probe.txt`, `*-log-tail.txt`);
@@ -28,7 +28,7 @@ The control is the only like-for-like comparator of the stage-2 arm (same start,
 | QA val loss (weighted) | (0.7414 at 2,000) | 0.5729 | 0.5641 | Equal within noise |
 | NLI / paraphrase val loss (weighted) | 0.226 / n.a. | 0.2120 / 0.0616 | 0.2046 / 0.0609 | Small gap; NLI raw cross-entropy about 1.06 / 1.02 if the weight is 0.2 (derived) against ln 3 = 1.099 |
 
-Not measured in T204 and therefore absent: QA exact match and F1, NLI macro F1, paraphrase macro F1, and retrieval ranking metrics (the runs used `--no-evaluate-after`). G06 and G07 (SQuAD EM 0.72, F1 0.83) have no figure after stage 2; only the QA loss moved.
+T204 itself ran with `--no-evaluate-after`; the task metrics missing from the table above (QA EM/F1, NLI macro F1, paraphrase F1) were measured afterwards and are in section 5. They change the reading of QA (section 5).
 The 600-row probes carry sampling error: about ±0.02 on an accuracy near 0.45 and about ±0.02-0.03 on an AUC near 0.55 (binomial and rank-statistic estimates, not computed from the rows). The NLI gap (0.455 against 0.432) and the PAWS gap (0.553 against 0.504) are therefore at about one to two standard errors and **are not established differences**; the similarity gap (0.840 against 0.203) is far outside any such error.
 
 ## 2. Exposure against interference
@@ -45,14 +45,46 @@ The question from T190-T191: did the pair tasks stay at chance because they were
 
 1. **Not to the sealed T100 evaluation.** NLI (ANLI 0.333), PAWS (0.553) and MLM/retrieval cost are not at a level a gate run would clear, and no QA EM/F1 figure exists. Opening the sealed split to confirm a known shortfall would only spend it.
 2. **Not a main run on the current recipe.** The stage-2 recipe fixed similarity (a candidate for G05 once measured on the full validation split and then the sealed test) but left NLI and PAWS at or near chance; the cost to MLM and retrieval is real and its effect on QA (G06, G07) is unmeasured.
-3. **Before any further training, close the measurement gap (forward-only, no training):** run the evaluator (`cli.model evaluate language-encoder`, validation split) on `english-r1-stage2/best` and `english-r1-control/best` so that QA EM/F1, NLI macro F1, paraphrase AUC/F1, similarity Spearman on all 1,500 STS-B validation rows and retrieval are on record for both arms, and run the stage-2 probes on the stage-1 rerun `best` so the "before" row is the real one rather than pilot 2. Prepared as runbook section 17; the checkpoints are on the owner's Drive, so the owner (or an owner-permitted agent run) executes it.
-4. **A longer stage-2 run is justified, as one measured step, not a commitment.** Reason: all four losses that move are still moving, and the similarity result shows the recipe can teach a pair task. Proposal for the owner (not started; a run needs the owner's order): continue from `english-r1-stage2/best` with a fresh optimizer and warm-up, 15,000 further steps, eval and save every 1,000, same mixture, probes at 5,000-step marks. Budget from T204 (about 2.5 h per 5,000 steps, about 28 compute units per arm including probes, derived): about 7.5 h and about 85 units, no control. Stop and escalate if NaN, a task loss more than 10 % above its best for two evaluations, or, at 10,000 further steps, ANLI accuracy still below 0.36 and PAWS AUC below 0.60 (thresholds chosen here as "clearly above the chance level plus about two standard errors"; unmeasured against any gate).
+3. **Measurement gap, closed on 2026-11-19 (section 5).** The evaluator and the probes were run forward-only on `english-r1-stage1-rerun/best`, `english-r1-stage2/best` and `english-r1-control/best` (512 samples per dataset, validation split). The "before" row is now the stage-1 rerun itself, not pilot 2.
+4. **A longer stage-2 run is justified only as one measured step, and only with the QA finding of section 5 in view.** Reason for: MLM and retrieval losses are still moving, and the similarity result shows the recipe can teach a pair task. Reason for caution: QA span extraction has not formed in either arm (SQuAD v1 F1 0.05-0.11 against G07 0.83), and the stage-2 mixture gave QA 4,543 draws; so 15,000 further steps on the same mixture cannot be expected to reach G06/G07 without a change that is not measured here. Proposal for the owner (not started; a run needs the owner's order): continue from `english-r1-stage2/best` with a fresh optimizer and warm-up, 15,000 further steps, eval and save every 1,000, same mixture, probes at 5,000-step marks. Budget from T204 (about 2.5 h per 5,000 steps, about 28 compute units per arm including probes, derived): about 7.5 h and about 85 units, no control. Stop and escalate if NaN, a task loss more than 10 % above its best for two evaluations, or, at 10,000 further steps, ANLI accuracy still below 0.36 and PAWS AUC below 0.60, or SQuAD v1 F1 still below 0.20 (evaluator on the validation split at each 5,000-step mark, about 7 minutes per checkpoint at 512 samples; thresholds chosen here as "clearly above the chance level plus about two standard errors"; unmeasured against any gate).
    Two data conditions before a longer run: (a) `similarity` has 23,163 rows and would repeat about 4.6x at 20,000 steps (T203); the longer run should lower the similarity floor to hold repeats near the 5,000-step level rather than grade more rows, because T204 shows similarity is no longer the shortfall; (b) the Drive copy of `fineweb_edu_en/train.parquet` is truncated (T204 finding 2) and must be re-uploaded first.
 5. **No new graded-label task now.** The plan said to open one if similarity or any pair task still fell short and labels were the cause. Similarity does not fall short on validation (0.840). NLI and PAWS fall short, but their gap is not a label-quantity gap on this evidence: NLI has 1.67 M training rows and PAWS-type data is already in the mixture (T197, T200). LLM-graded labels (T208 shards 020-039 stay ungraded) would not address them, and T205 cannot show that the T208 rows helped, because the stage-2 and control arms differ in the similarity head and the contrastive data as well. Revisit only if the full-validation STS-B figure or the longer run shows a similarity shortfall.
 6. **Model-side options if the longer run still leaves NLI and PAWS at chance** (not proposed for now, noted so the next decision has them): a larger share or a dedicated warm-up for pair-format MLM, source-balanced NLI curriculum with ANLI-style data introduced later, or a larger body step budget. None is measured.
 
+## 5. Forward-only evaluation of the three checkpoints (runbook section 17, 2026-11-19)
+
+Run on the Colab A100 (code commit `e53be82` plus the evaluator change below), `cli.model evaluate language-encoder --split val --max-samples 512 --batch-size 8 --seed 42`, and `scripts/diagnose_pair_path.py` (600 rows). Files in `reports/verification/T205/` (`*-val.json`, `*-eval.log`, `*-probe.txt`).
+The control's probe file was lost when the session was stopped before it finished writing; its probe figures are those of T204 (`reports/verification/T204/control-probe.txt`, same checkpoint, script and 600 rows). The stage-1 rerun and stage-2 probes reproduce T191 and T204 respectively (stage 2: STS-B 0.840, all_nli 0.455, PAWS 0.553, identical to T204).
+The "required" column of the evaluator is its internal chance-plus-margin threshold, **not** G01-G12; every line below is "measured on the validation split".
+
+| group (512 samples per dataset) | stage-1 rerun | stage 2 | control | internal threshold |
+|---|---|---|---|---|
+| MLM masked accuracy | 0.2326 | 0.2831 | 0.3272 | 0.063 |
+| NLI macro F1 (5 datasets) | 0.2673 | 0.3681 | 0.3192 | 0.2617 |
+| Paraphrase AUC (3 datasets) | 0.5806 | 0.6346 | 0.5986 | 0.55 |
+| QA F1 (pooled, 4 datasets) | 0.0766 | 0.0928 | 0.1093 | 0.1286 (fails in all three) |
+| STS-B Spearman (512 rows) | 0.0556 | 0.8461 | 0.2471 | 0.5292 (Jaccard) |
+
+| dataset | stage-1 rerun | stage 2 | control |
+|---|---|---|---|
+| SQuAD v1, exact match / F1 (the G06/G07 dataset; gates 0.72 / 0.83) | 0.020 / 0.105 | 0.025 / 0.051 | 0.041 / 0.111 |
+| SQuAD v2, F1 (no-answer exact match) | 0.068 (0.006) | 0.229 (0.662) | 0.154 (0.281) |
+| HotpotQA F1 / AdversarialQA F1 | 0.073 / 0.059 | 0.083 / 0.008 | 0.091 / 0.081 |
+| NLI all_nli / ANLI macro F1 | 0.325 / 0.219 | 0.424 / 0.332 | 0.409 / 0.277 |
+| Paraphrase PAWS / Quora AUC | 0.510 / 0.677 | 0.560 / 0.757 | 0.515 / 0.698 |
+
+Readings (one seed, 512 rows per dataset; an F1 near 0.1 carries about ±0.02 sampling error, estimated, not computed):
+1. **QA span extraction has not formed in any run.** SQuAD v1 F1 is 0.05-0.11 against 0.83 required by G07, and the pooled QA figure is below or near the empty-answer baseline (0.0786). The stage-2 pooled figure (0.0928) is lifted by SQuAD v2 no-answer rows (it predicts "no answer" for 66 % of them, the control for 28 %), not by extraction: its SQuAD v1 F1 (0.051) is the lowest of the three. The QA validation loss in T204 (0.56 against 0.66 at the start) fell without this showing in span quality. This is a larger shortfall than NLI or PAWS and was invisible until this evaluation.
+2. Stage 2 against control, pooled QA: 0.0928 against 0.1093, inside the sampling error; it is not shown that stage 2 harms QA, only that neither arm learned it.
+3. NLI rises in both arms (0.267 -> 0.368 / 0.319); the ANLI macro F1 of 0.332 (stage 2) is close to chance for three classes. Paraphrase on PAWS stays at 0.51-0.56.
+4. Similarity is the only pair task with a large effect, and it is also the only one where head design changed (bi-encoder).
+5. MLM accuracy falls for stage 2 (0.2831 against 0.3272), as the loss did; the control is still improving.
+6. None of these is a gate result; the sealed test split was not touched; the foundation model stays NOT QUALIFIED.
+
+Evaluator speed (measured on the A100, 64 samples): every dataset takes about 4.5-6 s per 64 rows (fp32 forward, about 0.57 s per batch of 8), so 22 datasets at 2,048 samples would take about 50 minutes per checkpoint; 512 samples take about 7 minutes. `_score_mlm` also moved the full logits (batch x length x vocabulary, about 1.8 GB) to the CPU before selecting the masked rows; it now selects on the device first (same result, `evaluator.py`), which does not change the dominant forward cost.
+
 ## 4. Limits and caveats
-- One seed per arm, 600-row probes, validation split only; probe errors are estimates, not computed.
+- One seed per arm, 600-row probes and 512-row evaluator samples, validation split only; probe errors are estimates, not computed.
 - The bi-encoder STS-B figure is on STS-B **validation** rows; STS-B train is in the stage-2 mixture, validation and test are not (T197 leakage guard: 0 hits). G05 is a test-split gate (Spearman ≥ 0.82): 0.840 on 600 validation rows is a signal, not a pass.
 - Pilot 2 is a stand-in for the stage-1 rerun; data and batch layout differ.
 - No qualification claim: no gate on held-out data was run, so the foundation model stays NOT QUALIFIED.
