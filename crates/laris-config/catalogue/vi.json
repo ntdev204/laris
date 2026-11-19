@@ -67,5 +67,17 @@
     "needs_pipe": "Hãy đưa khóa qua ống, ví dụ: printf '%s' \"$KEY\" | laris login. Biểu mẫu đăng nhập trong giao diện sẽ ẩn nội dung bạn gõ.",
     "unreadable": "Không đọc được khóa đã lưu: {detail}",
     "save_failed": "Máy chủ đã chấp nhận khóa nhưng không lưu được: {detail}"
+  },
+  "headless": {
+    "no_prompt": "Chưa có yêu cầu. Đưa yêu cầu qua tham số hoặc đầu vào chuẩn: laris -p \"yêu cầu của bạn\".",
+    "input_too_large": "Dữ liệu trên đầu vào chuẩn lớn hơn {limit} byte.",
+    "input_not_text": "Dữ liệu trên đầu vào chuẩn không phải văn bản.",
+    "no_session": "Dự án này chưa có phiên nào trước đó để tiếp tục.",
+    "unknown_session": "Dự án này không có phiên {id}.",
+    "login_required": "Chưa đăng nhập vào {server}. Chạy laris login hoặc đặt LARIS_API_KEY.",
+    "no_server": "Chưa đặt địa chỉ máy chủ. Đặt server.url trong settings.json hoặc LARIS_SERVER__URL.",
+    "bad_mode": "Chế độ quyền {mode} không dùng được: {detail}",
+    "bad_max_turns": "--max-turns phải là số nguyên từ 1 đến {limit}, không phải {value}.",
+    "cannot_continue": "Không tiếp tục được phiên này: {detail}"
   }
 }

@@ -33,6 +33,12 @@ impl ApiKey {
         }
     }
 
+    /// The key as text. Only for hiding it: a redactor must know the key to mask it in what leaves the machine.
+    /// Never print or log the result.
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+
     pub(crate) fn bearer(&self) -> String {
         format!("Bearer {}", self.0)
     }

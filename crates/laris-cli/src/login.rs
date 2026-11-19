@@ -168,21 +168,30 @@ pub struct HttpVerifier {
     pub use_env_proxy: bool,
 }
 
+/// The P1 client for `server` and `key`: the pin and the limits of the `server` settings, over the real network.
+/// The address is completed the way the login does ([`server_address`]).
+pub fn connect(
+    server: &Server,
+    key: &ApiKey,
+    use_env_proxy: bool,
+) -> Result<ModelClient<ReqwestTransport>, ClientError> {
+    let mut server = server.clone();
+    server.url = server_address(&server.url);
+    let config = ClientConfig::from_server(&server, Some(key.clone()))?;
+    let connect = Duration::try_from_secs_f64(server.timeout_seconds)
+        .map_err(|_| ClientError::Config("server.timeoutSeconds is not usable".to_owned()))?;
+    let transport = ReqwestTransport::new(&HttpOptions {
+        connect_timeout: connect,
+        trust: Trust::from_server(&server)?,
+        use_env_proxy,
+    })?;
+    ModelClient::new(transport, config)
+}
+
 impl KeyVerifier for HttpVerifier {
     fn verify(&self, server: &Server, key: &ApiKey) -> Result<AccountResponse, VerifyError> {
-        let other = |e: ClientError| VerifyError::Other(e.to_string());
-        let mut server = server.clone();
-        server.url = server_address(&server.url);
-        let config = ClientConfig::from_server(&server, Some(key.clone())).map_err(other)?;
-        let connect = Duration::try_from_secs_f64(server.timeout_seconds)
-            .map_err(|_| VerifyError::Other("server.timeoutSeconds is not usable".to_owned()))?;
-        let transport = ReqwestTransport::new(&HttpOptions {
-            connect_timeout: connect,
-            trust: Trust::from_server(&server).map_err(other)?,
-            use_env_proxy: self.use_env_proxy,
-        })
-        .map_err(other)?;
-        let client = ModelClient::new(transport, config).map_err(other)?;
+        let client = connect(server, key, self.use_env_proxy)
+            .map_err(|e| VerifyError::Other(e.to_string()))?;
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()

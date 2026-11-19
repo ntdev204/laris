@@ -67,5 +67,17 @@
     "needs_pipe": "Pipe the key in, for example: printf '%s' \"$KEY\" | laris login. The interface login form hides what you type.",
     "unreadable": "Cannot read the saved key: {detail}",
     "save_failed": "The server accepted the key, but it could not be saved: {detail}"
+  },
+  "headless": {
+    "no_prompt": "No request given. Pass it as an argument or on standard input: laris -p \"your request\".",
+    "input_too_large": "The input on standard input is larger than {limit} bytes.",
+    "input_not_text": "The input on standard input is not text.",
+    "no_session": "There is no earlier session in this project to continue.",
+    "unknown_session": "There is no session {id} in this project.",
+    "login_required": "Not signed in to {server}. Run laris login, or set LARIS_API_KEY.",
+    "no_server": "No server address is set. Set server.url in settings.json or LARIS_SERVER__URL.",
+    "bad_mode": "Permission mode {mode} is not available: {detail}",
+    "bad_max_turns": "--max-turns must be a whole number from 1 to {limit}, not {value}.",
+    "cannot_continue": "The session cannot be continued: {detail}"
   }
 }

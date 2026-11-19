@@ -24,6 +24,9 @@ pub trait ToolRunner {
     fn run(&mut self, name: &str, arguments: &Map<String, Value>) -> Value;
 }
 
+/// Receives every event the moment it is produced.
+type Sink = Box<dyn FnMut(&Event)>;
+
 /// One session being driven.
 pub struct Driver<M: Model, R: ToolRunner, D: Decider> {
     recorder: Recorder,
@@ -34,6 +37,7 @@ pub struct Driver<M: Model, R: ToolRunner, D: Decider> {
     started: Instant,
     interrupt: Arc<AtomicBool>,
     now: Box<dyn Fn() -> f64>,
+    sink: Option<Sink>,
 }
 
 impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
@@ -56,7 +60,23 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
             started: Instant::now(),
             interrupt: Arc::new(AtomicBool::new(false)),
             now: Box::new(now),
+            sink: None,
         }
+    }
+
+    /// Hands every event to `sink` the moment it is produced (headless `stream-json` writes it out at once). The
+    /// events are still returned, in the same order.
+    #[must_use]
+    pub fn with_sink(mut self, sink: impl FnMut(&Event) + 'static) -> Self {
+        self.sink = Some(Box::new(sink));
+        self
+    }
+
+    fn push(&mut self, all: &mut Vec<Event>, new: Vec<Event>) {
+        if let Some(sink) = self.sink.as_mut() {
+            new.iter().for_each(sink);
+        }
+        all.extend(new);
     }
 
     /// The handle that ends the running turn: set it from anywhere; the loop notices before its next action.
@@ -93,7 +113,9 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
                 attachments: Vec::new(),
             },
         };
-        let mut events = self.recorder.record(command, (self.now)())?;
+        let first = self.recorder.record(command, (self.now)())?;
+        let mut events = Vec::new();
+        self.push(&mut events, first);
         self.started = Instant::now();
         events.extend(self.run()?);
         Ok(events)
@@ -101,12 +123,15 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
 
     /// Ends the running turn: open tool calls are answered as interrupted, so the conversation stays valid.
     pub fn interrupt(&mut self) -> Result<Vec<Event>, CoreError> {
-        self.recorder.record(
+        let events = self.recorder.record(
             Record::Command {
                 command: Command::Interrupt {},
             },
             (self.now)(),
-        )
+        )?;
+        let mut out = Vec::new();
+        self.push(&mut out, events);
+        Ok(out)
     }
 
     /// Continues the turn the session is in (after a resume), until it waits for the user.
@@ -123,17 +148,19 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
             let Some(action) = self.decider.decide(self.recorder.session(), &clock) else {
                 break;
             };
-            events.extend(self.recorder.record(
+            let decided = self.recorder.record(
                 Record::Decision {
                     action: action.clone(),
                 },
                 (self.now)(),
-            )?);
-            match action {
-                Action::AskModel { note } => events.extend(self.ask(note.as_deref())?),
-                Action::RunTool { id } => events.extend(self.run_tool(&id)?),
-                _ => {}
-            }
+            )?;
+            self.push(&mut events, decided);
+            let next = match action {
+                Action::AskModel { note } => self.ask(note.as_deref())?,
+                Action::RunTool { id } => self.run_tool(&id)?,
+                _ => Vec::new(),
+            };
+            self.push(&mut events, next);
         }
         Ok(events)
     }
