@@ -900,3 +900,22 @@ done
 Measured on the A100: the evaluator takes about 0.57 s per batch of 8 for every dataset (fp32), so 512 samples per dataset take about 7 minutes per checkpoint and 2,048 about 50 (over the 1,800 s limit above); a probe takes about 7 minutes. The evaluator also needs `data/processed/task_splits_manifest.json` (not on Drive; upload it from the local `data/processed/`). Run the loop with `setsid nohup` and wait for `SEC17_DONE` in its log before copying files or stopping the session: a probe file exists (empty) while it is still being written.
 Return the six files (or save them to Drive). The agent reads them, adds the figures to `reports/verification/T205-stage2-analysis.md` and records them in T205. Compute: three short forward-only passes, a few minutes each.
 Read each figure as "measured on the validation split"; the foundation model stays NOT QUALIFIED.
+
+## 18. T216: longer stage-2 run (prepared 2026-11-20; owner permission for this run only)
+
+Continues `english-r1-stage2/best` (T204; on Drive `runs/english-r1-stage2/best`) with a fresh optimizer for 15,000 steps, config `english_r1_stage2_long.yaml` (the stage-2 mixture, QA floor 0.15, similarity floor 0.04, floors still total 0.66), micro-batch 32 x 1,
+2 tasks per micro-step, retrieval batch 128, evaluation and saving every 1,000 steps, `--patience 4`, seed 42, run id `english-r1-stage2-long`. No control arm.
+```bash
+cd /content/laris
+export LARIS_TRAINING_AUTHORIZED=1        # only for this run, with the owner's permission of 2026-11-20
+setsid nohup bash scripts/colab/train_arm.sh long > /dev/null 2>&1 < /dev/null &      # about 7.3 h at 1.75 s per step
+tr '\r' '\n' < artifacts/profiles/english-r1-stage2-long.log | grep -E "^ +[0-9]+ " | tail -5     # validation rows
+```
+Data on the VM: `bash scripts/colab/sync_data.sh` copies Drive to the VM and checks `files.sha256`; the Drive copy of `fineweb_edu_en/train.parquet` is truncated (T204 finding 2), so that one file must be replaced from `~/laris-colab-data/fineweb_edu_en/train.parquet` (10,050,137,213 bytes) before the run, and the checksums must then match.
+
+**Budget (derived from T204):** 15,000 x 1.75 s = 7.3 h, about 6.73 units per hour = about 50 units for the run, about 85 with setup, data sync, the three intermediate evaluations and saves.
+**Stop rules:** a non-finite loss; a task loss more than 10 % above its best for two evaluations (the run stops itself after four evaluations without improvement of the mean); a step slower than 3.6 s; CUDA out of memory (T204 peak 22.6 GB);
+SQuAD v1 F1 still below 0.20 at step 10,000.
+**Intermediate evaluation (forward only, validation split):** at about steps 5,000, 10,000 and 15,000, copy `last` to a scratch folder first (the run overwrites `last`), then run the section 17 loop on the copy (evaluator at 512 samples per dataset about 7 min, probe about 7 min; the run slows while it shares the GPU, peak about 22.6 + 8 GB, inside 40 GB).
+After the run: `bash scripts/colab/save_run.sh english-r1-stage2-long` and wait for `SAVE_DONE` before `colab stop`.
+The foundation model stays NOT QUALIFIED whatever this run shows; the sealed test split is not on the VM.

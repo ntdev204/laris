@@ -658,6 +658,16 @@ returned logs, manifests and reports.
 - Note: Reason (T212): one core at 100 %, GPU about 32 %, 44 ms per row (1.4 s per optimizer step); expected up to about 3x on the A100, not measured. A run with workers is not bit-reproducible (per-worker seeds, batch order follows process timing); the stage-2 run and its control must use the same setting. Default 0 changes nothing.
 - Note (result 2026-11-18, negative): measured on the A100 VM (12 cores), loader only, micro-batch 8, T212 config, 120 micro-steps: plain loader 11.6 ms per micro-step; 2, 4, 8 workers 11.0, 8.7, 13.8 ms (1.1x, 1.3x, 0.8x). The loader is about 3 % of the 350 ms step, so the hypothesis of T212 (data path is the bottleneck) is false and prefetching gives no speed-up; the rough FLOP count puts the step at about a third of the A100 peak. `--loader-workers` stays at 0 (unchanged behaviour); the class, its six tests and `scripts/colab/loader_throughput.py` remain and can be removed. Speed work left: fused ops or `torch.compile` in the training step (untested).
 
+### T216 — Longer stage-2 run with QA measured at each mark (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T205
+- Deliverables:
+  - `configs/language_encoder/english_r1_stage2_long.yaml` (stage-2 mixture with the QA floor 0.15 and the similarity floor 0.04, 15,000 steps), the `long` arm of `scripts/colab/train_arm.sh` (from `english-r1-stage2/best`, fresh optimizer, evaluation and saving every 1,000 steps), runbook section 18 (commands, budget, stop rules, forward-only evaluation at each 5,000-step mark); intake of the returned log and the evaluator/probe files
+- Validation:
+  - The run ends `[SUCCESS]` or stops on a rule; the evaluator and `diagnose_pair_path.py` on the validation split at steps 5,000, 10,000 and 15,000 are reported against T205 (stage 2: SQuAD v1 F1 0.051, all_nli accuracy 0.455, PAWS AUC 0.553, MLM accuracy 0.283); every result is "measured on the validation split"; no test split is touched
+- Status: in_progress
+- Note: Owner decision 2026-11-20 (after T205): "Cho phép, chỉ lần này": the agent may run this one run on the Colab A100 (about 7.5 h, about 85 compute units); the permission does not extend to any other run. Stop rules: a non-finite loss; a task loss more than 10 % above its best for two evaluations; a step slower than 3.6 s; SQuAD v1 F1 still below 0.20 at step 10,000 (evaluated forward-only on a copy of `last`). The floors are unmeasured proposals; there is no control arm, so a change against T205 stage 2 cannot be attributed to the floors rather than to more steps. T205 correction: the T203 "draws" are micro-batches of 8 rows; stage 2 saw about 36,000 QA rows, this run about 145,000.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold
