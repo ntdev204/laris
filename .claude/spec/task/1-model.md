@@ -348,9 +348,10 @@ returned logs, manifests and reports.
   - Unit tests: TF-IDF on fixtures matches hand-computed values; `group_documents` output identical before and after;
     word vectors on a tiny random-weight encoder (shapes, determinism, piece pooling); no new dependency (no
     scikit-learn or gensim without owner approval); no fitting, no training
-- Status: pending
+- Status: done
 - Note: Fitting static embeddings (word2vec, GloVe) counts as training and would be an owner run; not planned. Word
   vectors from an untrained or unqualified encoder carry no claim of quality: the foundation model is NOT QUALIFIED.
+- Note: 2026-11-19: `shared/text/tfidf.py` (sparse dict vectors, smoothed idf `ln((1+n)/(1+df)) + offset`, optional sublinear tf, L2 norm, cosine, `top_terms`, `nearest`) and `shared/language/word_vectors.py` (static vectors from the embedding table, contextual vectors from one inference-only pass with `task="embedding"`, `WordVectorIndex` for exact cosine neighbours). `mining.group_documents` now builds its vectors with `TfidfModel`; its output is byte-identical to the frozen pre-change algorithm kept in `tests/unit/text/test_tfidf.py`. Tests: `tests/unit/text`, `tests/unit/language/test_word_vectors.py` (tiny random-weight encoder, forward passes only; weights unchanged, no gradient). No dependency added, nothing fitted or trained. Defaults: idf offset 0 (a term in every document is dropped, as in `group_documents`); contextual words are whitespace tokens, a word cut by the sequence limit gets None. No quality claim: the encoder is NOT QUALIFIED.
 
 ### T187 — NER data acquisition and partition
 - Requirements: SR-M4

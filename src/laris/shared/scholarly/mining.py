@@ -5,13 +5,13 @@ is never read as covering more than it did. All functions are deterministic.
 """
 
 import hashlib
-import math
 import random
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
 
 from laris.shared.scholarly.biblio import Bibliography, extract
+from laris.shared.text.tfidf import TfidfModel, cosine, term_frequencies
 
 _WORD = re.compile(r"[^\W\d_]{3,}", re.UNICODE)
 STOP = frozenset(
@@ -186,16 +186,8 @@ def group_documents(
     """Single-link groups of documents whose TF-IDF cosine similarity reaches `threshold`."""
     kept, dropped = _limit(docs, max_docs)
     counts = {d.doc_id: _tf(d.text) for d in kept}
-    n = len(kept)
-    df: Dict[str, int] = {}
-    for tf in counts.values():
-        for t in tf:
-            df[t] = df.get(t, 0) + 1
-    vec: Dict[str, Dict[str, float]] = {}
-    for doc_id, tf in counts.items():
-        raw = {t: c * math.log((1 + n) / (1 + df[t])) + 0.0 for t, c in tf.items()}
-        norm = math.sqrt(sum(v * v for v in raw.values())) or 1.0
-        vec[doc_id] = {t: v / norm for t, v in raw.items() if v > 0}
+    model = TfidfModel.from_term_counts(counts.values())
+    vec = {doc_id: model.vector(tf) for doc_id, tf in counts.items()}
     parent = {d.doc_id: d.doc_id for d in kept}
 
     def find(x: str) -> str:
@@ -229,16 +221,11 @@ def group_documents(
 
 
 def _tf(text: str) -> Dict[str, int]:
-    tf: Dict[str, int] = {}
-    for t in tokens(text):
-        tf[t] = tf.get(t, 0) + 1
-    return tf
+    return term_frequencies(tokens(text))
 
 
 def _cos(a: Dict[str, float], b: Dict[str, float]) -> float:
-    if len(a) > len(b):
-        a, b = b, a
-    return sum(v * b.get(t, 0.0) for t, v in a.items())
+    return cosine(a, b)
 
 
 def to_markdown(kind: str, result: Dict[str, Any]) -> str:
