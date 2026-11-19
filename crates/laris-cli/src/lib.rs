@@ -6,4 +6,5 @@ pub mod credentials;
 pub mod headless;
 pub mod learn;
 pub mod login;
+pub mod replay;
 pub mod start;

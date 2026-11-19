@@ -79,5 +79,29 @@
     "bad_mode": "Permission mode {mode} is not available: {detail}",
     "bad_max_turns": "--max-turns must be a whole number from 1 to {limit}, not {value}.",
     "cannot_continue": "The session cannot be continued: {detail}"
+  },
+  "ui": {
+    "placeholder": "Type a message, or / for commands",
+    "thinking": "Working…",
+    "hint_interrupt": "esc to interrupt",
+    "hint_newline": "shift+enter for a new line",
+    "hint_exit": "ctrl+c twice to exit",
+    "hint_help": "/help for help",
+    "exit_again": "Press Ctrl-C again to exit",
+    "interrupted": "Interrupted",
+    "banner_cwd": "cwd: {cwd}",
+    "banner_session": "session {session} · mode {mode}",
+    "banner_server": "server: {server}",
+    "context": "context {percent}%",
+    "tokens_left": "{count} tokens left",
+    "queued": "{count} queued",
+    "sandbox": "sandbox {state}",
+    "login_needed": "Sign-in needed ({reason}) {server}",
+    "compacted": "Context compacted: {before} → {after} tokens",
+    "goal_open": "Goal not complete: {open} open",
+    "permission_wait": "Waiting for approval: {tool}",
+    "result_hits": "{count} results",
+    "result_done": "done",
+    "blocked": "This session cannot continue. Press Ctrl-C to exit."
   }
 }

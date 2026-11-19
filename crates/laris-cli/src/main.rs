@@ -8,7 +8,7 @@ use laris_config::Catalogue;
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: laris <-p [REQUEST] | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
+const USAGE: &str = "usage: laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
 
 fn started() -> Result<Started, String> {
     let env: Vec<(String, String)> = std::env::vars().collect();
@@ -59,7 +59,10 @@ fn main() -> ExitCode {
         }
     }
     let name = args.first().map(String::as_str);
-    if !matches!(name, Some("login" | "logout" | "status" | "learn")) {
+    if !matches!(
+        name,
+        Some("login" | "logout" | "status" | "learn" | "replay")
+    ) {
         eprintln!("{USAGE}");
         return ExitCode::from(2);
     }
@@ -94,6 +97,18 @@ fn main() -> ExitCode {
                 "login",
             )
         }
+        Some("replay") => report(
+            laris_cli::replay::run(
+                &args[1..],
+                &started.settings,
+                started
+                    .env
+                    .iter()
+                    .find(|(k, _)| k == "COLUMNS")
+                    .map(|(_, v)| v.as_str()),
+            ),
+            "replay",
+        ),
         Some("logout") => report(account::logout(&started), "logout"),
         Some("status") => report(Ok(account::status(&started)), "status"),
         _ => {

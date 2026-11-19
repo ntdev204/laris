@@ -23,6 +23,7 @@ laris-policy = { path = "../laris-policy", version = "2.0.0-dev" }
 laris-sandbox = { path = "../laris-sandbox", version = "2.0.0-dev" }
 laris-store = { path = "../laris-store", version = "2.0.0-dev" }
 laris-tools = { path = "../laris-tools", version = "2.0.0-dev" }
+laris-tui = { path = "../laris-tui", version = "2.0.0-dev" }
 serde_json = "1"
 tokio = { version = "1", default-features = false, features = ["rt", "time", "net"] }
 

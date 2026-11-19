@@ -1480,7 +1480,36 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Banner, input box, streaming Markdown, status line, footer, driven by a recorded core
 - Validation:
   - Render tests at 60 and 100 columns; chat and interrupt scenarios pass
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T157-terminal-interface`, after T156 in the same session. Built with no new
+  crate: ratatui and crossterm are approved (T119) but not vendored, and the owner chose on 2026-11-19 to build the
+  parts that do not touch the terminal first and vendor them with T158. `laris-tui`: `width` (columns with wide and
+  combining characters, word wrap with hanging indents, column wrap, ellipsis), `style` (spans, lines, theme with a
+  mono mode, `plain` and `ansi`), `markdown` (headings, paragraphs, lists, quotes, rules, tables as rows, fences with
+  `highlight` for Python, Rust, JS/TS, shell, JSON, TOML; inline code, bold, italic, links; `render_open` returns the
+  lines that are final and the paragraph that may still grow, and the tests prove a final line never changes as text
+  streams in, at every cut of four documents and four widths), `input` (multi-line buffer, cursor, history with the
+  unsent draft, backslash-Enter, cleaned paste), `app` (`App::update(Input) -> Vec<Command>`: Enter sends a user
+  message or a `/command`, Esc interrupts a running turn, Ctrl+C clears the box, then twice leaves, Shift+Tab asks for
+  the next mode, typing while the agent works sends and the core queues; core events become banner, conversation, tool
+  blocks, plan, notices, status line), `view` (`App::layout(width)`: `committed` lines that are final and `live` lines
+  that are redrawn, banner, `●` answers, `⎿` tool results, spinner, bordered growing input box with the cursor,
+  status line that drops fields to fit, footer hints, the armed-exit prompt) and `replay` (a scenario of
+  `laris-protocol` typed as keystrokes, commands checked against the step, events fed in, a screen kept per step).
+  Everything from the core is stripped of control characters before it is drawn (an escape sequence in a tool result
+  or a model answer cannot reach the terminal). A `ready` of another version stops the interface (the `mismatch`
+  scenario). Catalogue group `ui` (EN and VI). `laris replay FILE [--width N] [--color] [--steps]` shows a recorded
+  scenario through the interface for review (no server, no key). Tests: 27 in `laris-tui` (the chat and interrupt
+  scenarios at 60 and 100 columns with text snapshots in `tests/snapshots/`, queued typing and slash commands, every one
+  of the eleven scenarios within every width from 20 to 160, Ctrl+C and Esc, the exit prompt expiring, hostile
+  output, themes, Vietnamese, the growing box, wide and combining characters, streaming stability, the input
+  buffer) and 2 in `laris-cli` for the binary. Seeded faults caught: a paragraph committed before it ended, control
+  characters left in drawn text. 716 workspace tests pass; `fmt`, `clippy -D warnings`, `cargo deny check`, `xtask
+  guard`, `scan`, `schema --check`. Not done, by design: the raw-mode loop that reads the keyboard and prints to the
+  screen (crossterm; T158), tool and diff blocks, approvals, the login form, history search, `@path` and completion,
+  `# note`, `!command` (T158), the owner's screenshot review (T158), a settings panel; a resize reflows the live part
+  only (lines already printed keep the width they were printed at). The interface is shown only against recorded
+  scenarios; the foundation model is NOT QUALIFIED.
 
 ### T158 — Interface on the real core and commands
 - Requirements: SR-C1, SR-C2
