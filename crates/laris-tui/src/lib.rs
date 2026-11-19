@@ -11,19 +11,22 @@
 //!   to send; [`App::layout`] draws it at a width as final lines and live lines.
 //! * [`replay`]: drives an [`App`] with a recorded core, a scenario of `laris-protocol`.
 //!
-//! The raw-mode loop that reads the keyboard and writes to the screen needs `crossterm`, which is approved (T119)
-//! but not vendored yet; it is built on this with the real core in T158.
+//! * [`term`]: raw mode, the keys `crossterm` reports and the inline screen that prints what is final once and
+//!   redraws the rest (T158). The loop that joins it to a real core is in `laris-cli`.
+//! * [`diff`]: a unified diff for the terminal.
 
 pub mod app;
+pub mod diff;
 pub mod highlight;
 pub mod input;
 pub mod markdown;
 pub mod replay;
 pub mod style;
+pub mod term;
 pub mod view;
 pub mod width;
 
-pub use app::{App, Info, Input, Item, Tone};
+pub use app::{App, Approval, Choice, Info, Input, Item, Menu, Search, SignIn, Stage, Tone};
 pub use input::{InputBuffer, Key};
 pub use style::{Color, Line, Span, Style, Theme, ansi, plain};
 pub use view::Layout;

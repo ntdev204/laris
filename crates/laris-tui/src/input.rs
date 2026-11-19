@@ -43,6 +43,8 @@ pub enum Key {
     Tab,
     /// Shift+Tab.
     ShiftTab,
+    /// Ctrl+R: search the history.
+    CtrlR,
 }
 
 /// The text being written.
@@ -121,6 +123,40 @@ impl InputBuffer {
             self.history.push(text.clone());
         }
         text
+    }
+
+    /// The sent texts, oldest first.
+    pub fn history(&self) -> &[String] {
+        &self.history
+    }
+
+    /// The newest history entry that contains `query` (case-insensitive) among those before `before` (all when
+    /// `None`). Returns its index. An empty query matches the newest entry.
+    pub fn search(&self, query: &str, before: Option<usize>) -> Option<usize> {
+        let end = before.unwrap_or(self.history.len()).min(self.history.len());
+        let query = query.to_lowercase();
+        (0..end)
+            .rev()
+            .find(|&i| self.history[i].to_lowercase().contains(&query))
+    }
+
+    /// The characters of the text.
+    pub fn chars(&self) -> &[char] {
+        &self.text
+    }
+
+    /// Moves the cursor to the character position `at` (clamped).
+    pub fn set_cursor(&mut self, at: usize) {
+        self.cursor = at.min(self.text.len());
+    }
+
+    /// Replaces the characters from `from` to the cursor with `with` and puts the cursor after it.
+    pub fn replace_before_cursor(&mut self, from: usize, with: &str) {
+        let from = from.min(self.cursor);
+        self.text.drain(from..self.cursor);
+        self.cursor = from;
+        self.browsing = None;
+        self.insert(with);
     }
 
     /// Clears the text without keeping it.

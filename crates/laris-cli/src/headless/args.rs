@@ -78,7 +78,7 @@ pub fn split_rules(list: &str) -> Vec<String> {
     rules
 }
 
-fn mode_of(text: &str) -> Result<PermissionMode, String> {
+pub(crate) fn mode_of(text: &str) -> Result<PermissionMode, String> {
     match text {
         "default" => Ok(PermissionMode::Default),
         "acceptEdits" => Ok(PermissionMode::AcceptEdits),

@@ -61,6 +61,12 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | rustix | T135 |
 | syn (second version) | 2.0.119 | MIT OR Apache-2.0 | enumflags2_derive (the workspace uses syn 3) | T135 |
 | toml, toml_datetime, toml_parser, serde_spanned, winnow | 0.9.12, 0.7.5, 1.1.5, 1.1.3, 0.7.15 | MIT OR Apache-2.0 | `laris-server` (the policy files of `.laris/`) | T146 |
+| crossterm | 0.29.0 | MIT | `laris-tui` (raw mode, key and paste input; default features) | T158 |
+| crossterm_winapi, winapi and its two import crates | 0.9.1 / 0.3.9 / 0.4.0 | MIT; MIT OR Apache-2.0 | crossterm (Windows console) | T158 |
+| derive_more, derive_more-impl, convert_case, unicode-segmentation | 2.1.1 / 2.1.1 / 0.10.0 / 1.13.3 | MIT; MIT OR Apache-2.0 | crossterm | T158 |
+| signal-hook, signal-hook-mio | 0.3.18 / 0.2.5 | MIT OR Apache-2.0 | crossterm (event reader; mio and signal-hook-registry already vendored) | T158 |
+| document-features, litrs, rustc_version, semver | 0.2.12 / 1.0.1 / 0.4.1 / 1.0.28 | MIT OR Apache-2.0 | crossterm, derive_more (build time) | T158 |
+| ratatui | not vendored | | the T157 core draws its own lines, so ratatui has no use; stays approved in T119 | T158 |
 
 Crates approved in T119 but not yet used are listed in `deny.toml`; each row is added here when its task vendors it.
 

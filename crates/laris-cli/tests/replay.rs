@@ -5,7 +5,10 @@
 use std::process::Command;
 
 fn laris(args: &[&str], envs: &[(&str, &str)]) -> std::process::Output {
-    let home = std::env::temp_dir().join(format!("laris-cli-t157-{}", std::process::id()));
+    // every call has its own home: two tests of this file run at once and would race on `settings.json`
+    static CALLS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let n = CALLS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let home = std::env::temp_dir().join(format!("laris-cli-t157-{}-{n}", std::process::id()));
     std::fs::create_dir_all(&home).unwrap();
     Command::new(env!("CARGO_BIN_EXE_laris"))
         .args(args)

@@ -128,7 +128,7 @@ fn typing_while_the_agent_works_and_slash_commands_pass_too() {
 fn every_scenario_draws_within_the_width_whatever_the_width() {
     for name in SCENARIOS {
         for width in [20, 33, 60, 100, 160] {
-            let played = play(name, width, true).unwrap_or_else(|e| panic!("{name}: {e}"));
+            let played = play(name, width, false).unwrap_or_else(|e| panic!("{name}: {e}"));
             for snap in &played.snapshots {
                 for line in snap.screen.lines() {
                     assert!(
@@ -158,18 +158,12 @@ fn every_scenario_draws_within_the_width_whatever_the_width() {
 }
 
 #[test]
-fn a_scenario_that_needs_an_approval_cannot_be_typed_yet_and_says_so() {
-    let err = replay(&common::scenario("refusal"), &Ui::default(), 80, false)
-        .map(|_| ())
-        .unwrap_err();
-    assert!(err.contains("permission_response"), "{err}");
-    // fed events only, the request is on screen
-    let played = play("refusal", 80, true).unwrap();
-    assert!(
-        played.snapshots[1]
-            .screen
-            .contains("Waiting for approval: write_file")
-    );
+fn all_eleven_golden_scenarios_replay_through_the_interface_without_skipping_a_step() {
+    for name in SCENARIOS {
+        for width in WIDTHS {
+            play(name, width, false).unwrap_or_else(|e| panic!("{name} @ {width}: {e}"));
+        }
+    }
 }
 
 #[test]
@@ -387,4 +381,21 @@ fn the_box_grows_with_the_text_and_keeps_the_cursor_inside_it() {
     let tall = a.layout(60);
     assert!(tall.live.len() < 20, "{} live lines", tall.live.len());
     assert!(tall.live[tall.cursor.unwrap().0].text().contains("more"));
+}
+
+#[test]
+fn the_approval_login_and_completion_screens_are_what_the_owner_reviews() {
+    for name in [
+        "approval",
+        "refusal",
+        "login",
+        "login_trust",
+        "completion",
+        "queued",
+    ] {
+        for width in WIDTHS {
+            let played = play(name, width, false).expect("the scenario replays");
+            check_snapshot(name, width, &snapshot(name, width, &played));
+        }
+    }
 }

@@ -9,6 +9,7 @@ use crate::app::{App, Input};
 use crate::input::Key;
 use laris_config::settings::Ui;
 use laris_protocol::Command;
+use laris_protocol::events::{Decision, Mode, Trigger};
 use laris_protocol::scenario::Scenario;
 use serde_json::Value;
 
@@ -45,8 +46,38 @@ pub fn type_and_send(app: &mut App, text: &str) -> Vec<Command> {
     app.update(Input::Key(Key::Enter))
 }
 
+/// Picks the menu entry that gives `decision` and `scope`, and confirms it.
+fn answer_approval(
+    app: &mut App,
+    decision: Decision,
+    scope: laris_protocol::events::Scope,
+) -> Vec<Command> {
+    let at = app.approval().and_then(|a| {
+        a.choices
+            .iter()
+            .position(|c| c.decision == decision && c.scope == scope)
+    });
+    let Some(at) = at else {
+        return Vec::new();
+    };
+    for _ in 0..at {
+        app.update(Input::Key(Key::Down));
+    }
+    app.update(Input::Key(Key::Enter))
+}
+
+/// Fills the login form the way a person would: the address, `y` for a fingerprint, or the key.
+fn fill_login(app: &mut App, server: &str, key: &str, trust: bool) -> Vec<Command> {
+    if trust {
+        return app.update(Input::Key(Key::Char('y')));
+    }
+    let text = if key.is_empty() { server } else { key };
+    type_and_send(app, text)
+}
+
 /// Plays `scenario` into a new interface drawn at `width`. With `skip_unsupported` a step that expects a command
-/// this interface cannot give yet (an approval, a login: T158) only has its events fed in; otherwise it is an error.
+/// this interface cannot give (none of the eleven golden scenarios has one now) only has its events fed in; otherwise it
+/// is an error.
 pub fn replay(
     scenario: &Scenario,
     ui: &Ui,
@@ -70,6 +101,26 @@ pub fn replay(
                     };
                     Some(type_and_send(&mut app, &line))
                 }
+                Command::Complete { trigger, text, .. } => {
+                    app.clear_input();
+                    let mark = match trigger {
+                        Trigger::Slash => '/',
+                        Trigger::At => '@',
+                    };
+                    for c in std::iter::once(mark).chain(text.chars()) {
+                        app.update(Input::Key(Key::Char(c)));
+                    }
+                    Some(app.update(Input::Key(Key::Tab)))
+                }
+                Command::PermissionResponse {
+                    decision, scope, ..
+                } => Some(answer_approval(&mut app, *decision, *scope)),
+                Command::Login {
+                    server, key, trust, ..
+                } => Some(fill_login(&mut app, server, key, *trust)),
+                Command::SetMode {
+                    mode: Mode::Next, ..
+                } => Some(app.update(Input::Key(Key::ShiftTab))),
                 _ => None,
             };
             match produced {

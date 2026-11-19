@@ -1,0 +1,56 @@
+──── step 0 ────
+╭──────────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                              │
+│                                                              │
+│ cwd: /work/demo                                              │
+│ session abcdef12 · mode default                              │
+│ server: https://laris.example                                │
+│ /help for help                                               │
+╰──────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ > Type a message, or / for commands                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+ default
+ shift+enter for a new line · ctrl+c twice to exit
+──── step 1 ────
+╭──────────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                              │
+│                                                              │
+│ cwd: /work/demo                                              │
+│ session abcdef12 · mode default                              │
+│ server: https://laris.example                                │
+│ /help for help                                               │
+╰──────────────────────────────────────────────────────────────╯
+
+> write a note
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────
+ Allow write_file?
+   path: "a.txt"
+   rule: write_file(a.txt)
+ ❯ 1. Yes, this once
+   2. Yes, for this session
+   3. No
+ ↑↓ choose · enter confirm · y yes · n no · esc deny
+──── step 2 ────
+╭──────────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                              │
+│                                                              │
+│ cwd: /work/demo                                              │
+│ session abcdef12 · mode default                              │
+│ server: https://laris.example                                │
+│ /help for help                                               │
+╰──────────────────────────────────────────────────────────────╯
+
+> write a note
+  ⎿ write_file: No
+
+● I did not write it.
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ > Type a message, or / for commands                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+ default
+ shift+enter for a new line · ctrl+c twice to exit
+──── refusal @ 100 ────

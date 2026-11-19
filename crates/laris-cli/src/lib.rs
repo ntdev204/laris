@@ -4,6 +4,7 @@
 pub mod account;
 pub mod credentials;
 pub mod headless;
+pub mod interactive;
 pub mod learn;
 pub mod login;
 pub mod replay;

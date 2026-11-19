@@ -8,7 +8,7 @@ use laris_config::Catalogue;
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
+const USAGE: &str = "usage: laris (no arguments: the interactive interface) | laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
 
 fn started() -> Result<Started, String> {
     let env: Vec<(String, String)> = std::env::vars().collect();
@@ -59,6 +59,17 @@ fn main() -> ExitCode {
         }
     }
     let name = args.first().map(String::as_str);
+    if name.is_none() {
+        return match started() {
+            Ok(started) => {
+                ExitCode::from(laris_cli::interactive::run(std::sync::Arc::new(started)))
+            }
+            Err(message) => {
+                eprintln!("laris: {message}");
+                ExitCode::from(2)
+            }
+        };
+    }
     if !matches!(
         name,
         Some("login" | "logout" | "status" | "learn" | "replay")

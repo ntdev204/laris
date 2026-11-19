@@ -8,9 +8,16 @@ use crate::input::{InputBuffer, Key};
 use crate::style::Theme;
 use laris_config::Catalogue;
 use laris_config::settings::Ui;
-use laris_protocol::events::{ENDS_COMMAND, Mode};
+use laris_protocol::events::{
+    CompletionItem, Decision, ENDS_COMMAND, LoginReason, Mode, Scope, Trigger,
+};
 use laris_protocol::{Command, Event, check_ready};
 use serde_json::{Map, Value};
+
+/// `text` with white space collapsed: two spellings of one message compare equal.
+fn norm(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
 
 /// Milliseconds the "press Ctrl-C again" prompt stays armed.
 pub const EXIT_WINDOW_MS: u64 = 3000;
@@ -71,6 +78,106 @@ pub enum Item {
     },
     /// The plan: (text, status) per step.
     Plan(Vec<(String, String)>),
+    /// A unified diff of a change that was asked about or made.
+    Diff(String),
+}
+
+/// One answer the approval menu offers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Choice {
+    /// Catalogue key of its label.
+    pub label: &'static str,
+    /// Allow or deny.
+    pub decision: Decision,
+    /// How long.
+    pub scope: Scope,
+}
+
+/// A call waiting for the person's answer.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Approval {
+    /// Request id.
+    pub id: String,
+    /// Tool name.
+    pub tool: String,
+    /// Arguments.
+    pub arguments: Map<String, Value>,
+    /// Why it is asked.
+    pub reason: String,
+    /// The rule "always" would save.
+    pub rule: String,
+    /// The change, as a unified diff.
+    pub diff: String,
+    /// What can be answered.
+    pub choices: Vec<Choice>,
+    /// The highlighted choice.
+    pub selected: usize,
+}
+
+/// What the login form asks for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Stage {
+    /// The server address.
+    Server,
+    /// Whether to trust a certificate fingerprint.
+    Trust,
+    /// The API key (masked).
+    Key,
+}
+
+/// The login form. What is typed in it is never shown, logged or kept after sending.
+#[derive(Clone)]
+pub struct SignIn {
+    /// What is asked now.
+    pub stage: Stage,
+    /// The server, as far as known.
+    pub server: String,
+    /// The fingerprint to confirm.
+    pub fingerprint: String,
+    /// Why the form is shown again.
+    pub note: String,
+    /// The reason the core gave.
+    pub reason: LoginReason,
+    /// A command was sent and the answer has not come.
+    pub waiting: bool,
+    pub(crate) field: InputBuffer,
+}
+
+impl std::fmt::Debug for SignIn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SignIn")
+            .field("stage", &self.stage)
+            .field("server", &self.server)
+            .field("typed_characters", &self.field.chars().len())
+            .finish_non_exhaustive()
+    }
+}
+
+impl SignIn {
+    /// How many characters were typed (what the mask shows).
+    pub fn typed(&self) -> usize {
+        self.field.chars().len()
+    }
+}
+
+/// History search.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Search {
+    /// What is looked for.
+    pub query: String,
+    /// The history entry found.
+    pub found: Option<usize>,
+}
+
+/// The candidates of a completion.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Menu {
+    /// Candidates.
+    pub items: Vec<CompletionItem>,
+    /// The highlighted one.
+    pub selected: usize,
+    pub(crate) trigger: Trigger,
+    pub(crate) start: usize,
 }
 
 /// What `ready` told.
@@ -101,6 +208,8 @@ pub struct App {
     pub(crate) line: Map<String, Value>,
     pub(crate) usage: Option<(u64, u64)>,
     pub(crate) queued: u64,
+    /// Messages typed while a turn runs: shown below the conversation until the core starts them.
+    pub(crate) pending: Vec<String>,
     pub(crate) running: bool,
     pub(crate) streamed: bool,
     pub(crate) armed_ms: Option<u64>,
@@ -108,6 +217,14 @@ pub struct App {
     pub(crate) frame: u64,
     quit: bool,
     pub(crate) blocked: bool,
+    pub(crate) approval: Option<Approval>,
+    pub(crate) sign_in: Option<SignIn>,
+    pub(crate) search: Option<Search>,
+    pub(crate) menu: Option<Menu>,
+    pub(crate) asked: Option<(String, Trigger, usize)>,
+    pub(crate) flash: Option<String>,
+    next_id: u64,
+    clear: bool,
 }
 
 impl App {
@@ -124,6 +241,7 @@ impl App {
             line: Map::new(),
             usage: None,
             queued: 0,
+            pending: Vec::new(),
             running: false,
             streamed: false,
             armed_ms: None,
@@ -131,6 +249,14 @@ impl App {
             frame: 0,
             quit: false,
             blocked: false,
+            approval: None,
+            sign_in: None,
+            search: None,
+            menu: None,
+            asked: None,
+            flash: None,
+            next_id: 0,
+            clear: false,
         }
     }
 
@@ -215,11 +341,55 @@ impl App {
         }
     }
 
+    /// The login form, while it is open.
+    pub fn sign_in(&self) -> Option<&SignIn> {
+        self.sign_in.as_ref()
+    }
+
+    /// The call waiting for an answer.
+    pub fn approval(&self) -> Option<&Approval> {
+        self.approval.as_ref()
+    }
+
+    /// The open completion menu.
+    pub fn menu(&self) -> Option<&Menu> {
+        self.menu.as_ref()
+    }
+
+    /// The history search, while it is open.
+    pub fn search(&self) -> Option<&Search> {
+        self.search.as_ref()
+    }
+
+    /// Empties the input box (a scripted replay starts each typed step from nothing).
+    pub fn clear_input(&mut self) {
+        self.input.clear();
+        self.menu = None;
+    }
+
+    /// `true` once after `/clear`: the terminal driver forgets what it printed and clears the screen.
+    pub fn take_clear(&mut self) -> bool {
+        std::mem::take(&mut self.clear)
+    }
+
     fn on_key(&mut self, key: Key) -> Vec<Command> {
         if self.blocked {
             if matches!(key, Key::CtrlC | Key::CtrlD) {
                 self.quit = true;
             }
+            return Vec::new();
+        }
+        self.flash = None;
+        if self.approval.is_some() {
+            return self.approval_key(key);
+        }
+        if self.sign_in.is_some() {
+            return self.sign_in_key(key);
+        }
+        if self.search.is_some() {
+            return self.search_key(key);
+        }
+        if self.menu.is_some() && self.menu_key(key) {
             return Vec::new();
         }
         let was_armed = self.armed_ms.take().is_some();
@@ -251,6 +421,17 @@ impl App {
                 }
             }
             Key::ShiftTab => vec![Command::SetMode { mode: Mode::Next }],
+            Key::CtrlR => {
+                if !self.input.history().is_empty() {
+                    let found = self.input.search("", None);
+                    self.search = Some(Search {
+                        query: String::new(),
+                        found,
+                    });
+                }
+                Vec::new()
+            }
+            Key::Tab => self.complete(),
             Key::Enter => {
                 if self.input.continues() {
                     self.input.continue_line();
@@ -270,28 +451,361 @@ impl App {
         }
     }
 
-    fn send(&mut self, text: &str) -> Vec<Command> {
-        self.close_answer();
-        self.items.push(Item::User(text.to_owned()));
-        if !self.running {
-            self.running = true;
-            self.elapsed_ms = 0;
-            self.streamed = false;
+    // -- approval ------------------------------------------------------------------------------
+
+    fn approval_key(&mut self, key: Key) -> Vec<Command> {
+        let Some(approval) = self.approval.as_mut() else {
+            return Vec::new();
+        };
+        let last = approval.choices.len().saturating_sub(1);
+        match key {
+            Key::Up => approval.selected = approval.selected.saturating_sub(1),
+            Key::Down | Key::Tab => approval.selected = (approval.selected + 1).min(last),
+            Key::Char('y' | 'Y') => approval.selected = 0,
+            Key::Char('n' | 'N') | Key::Esc | Key::CtrlC => {
+                approval.selected = last;
+                return self.answer();
+            }
+            Key::Char(c @ '1'..='9') => {
+                let at = c as usize - '1' as usize;
+                if at <= last {
+                    approval.selected = at;
+                } else {
+                    return Vec::new();
+                }
+            }
+            Key::Enter => return self.answer(),
+            _ => return Vec::new(),
         }
+        if matches!(key, Key::Char('y' | 'Y' | '1'..='9')) {
+            return self.answer();
+        }
+        Vec::new()
+    }
+
+    fn answer(&mut self) -> Vec<Command> {
+        let Some(approval) = self.approval.take() else {
+            return Vec::new();
+        };
+        let choice = approval.choices[approval.selected.min(approval.choices.len() - 1)];
+        let label = self.text(choice.label, &[]);
+        let tone = if choice.decision == Decision::Allow {
+            Tone::Dim
+        } else {
+            Tone::Warn
+        };
+        self.close_answer();
+        if !approval.diff.trim().is_empty() {
+            self.items.push(Item::Diff(approval.diff.clone()));
+        }
+        self.items.push(Item::Notice {
+            text: format!("{}: {label}", approval.tool),
+            tone,
+        });
+        vec![Command::PermissionResponse {
+            id: approval.id,
+            decision: choice.decision,
+            scope: choice.scope,
+            remember: choice.scope != Scope::Once,
+        }]
+    }
+
+    /// What the approval menu offers for the scopes the core allows: once, then each wider scope, then no.
+    fn choices(scopes: &[String]) -> Vec<Choice> {
+        let mut out = vec![Choice {
+            label: "ui.approval_once",
+            decision: Decision::Allow,
+            scope: Scope::Once,
+        }];
+        for (name, label, scope) in [
+            ("session", "ui.approval_session", Scope::Session),
+            ("project", "ui.approval_project", Scope::Project),
+            ("everywhere", "ui.approval_everywhere", Scope::Everywhere),
+        ] {
+            if scopes.iter().any(|s| s == name) {
+                out.push(Choice {
+                    label,
+                    decision: Decision::Allow,
+                    scope,
+                });
+            }
+        }
+        out.push(Choice {
+            label: "ui.approval_deny",
+            decision: Decision::Deny,
+            scope: Scope::Once,
+        });
+        out
+    }
+
+    // -- login ---------------------------------------------------------------------------------
+
+    fn sign_in_key(&mut self, key: Key) -> Vec<Command> {
+        let Some(form) = self.sign_in.as_mut() else {
+            return Vec::new();
+        };
+        if matches!(key, Key::CtrlC | Key::CtrlD | Key::Esc) {
+            self.quit = true;
+            return vec![Command::Shutdown {}];
+        }
+        if form.waiting {
+            return Vec::new();
+        }
+        match form.stage {
+            Stage::Trust => match key {
+                Key::Char('y' | 'Y') => {
+                    form.waiting = true;
+                    vec![Command::Login {
+                        server: String::new(),
+                        key: String::new(),
+                        trust: true,
+                    }]
+                }
+                Key::Char('n' | 'N') => {
+                    self.quit = true;
+                    vec![Command::Shutdown {}]
+                }
+                _ => Vec::new(),
+            },
+            Stage::Server | Stage::Key => {
+                if key == Key::Enter {
+                    let typed = form.field.text();
+                    let typed = typed.trim().to_owned();
+                    form.field.clear();
+                    if typed.is_empty() {
+                        return Vec::new();
+                    }
+                    form.waiting = true;
+                    return vec![if form.stage == Stage::Server {
+                        Command::Login {
+                            server: typed,
+                            key: String::new(),
+                            trust: false,
+                        }
+                    } else {
+                        Command::Login {
+                            server: String::new(),
+                            key: typed,
+                            trust: false,
+                        }
+                    }];
+                }
+                if !matches!(key, Key::Newline | Key::Up | Key::Down) {
+                    form.field.edit(key);
+                }
+                Vec::new()
+            }
+        }
+    }
+
+    fn open_sign_in(
+        &mut self,
+        reason: LoginReason,
+        server: String,
+        fingerprint: String,
+        message: String,
+    ) {
+        let stage = match reason {
+            LoginReason::NoServer => Stage::Server,
+            LoginReason::UntrustedCertificate | LoginReason::CertificateMismatch => Stage::Trust,
+            LoginReason::NoKey | LoginReason::Rejected | LoginReason::Invalid => Stage::Key,
+        };
+        let note = if !message.is_empty() {
+            message
+        } else if reason == LoginReason::Rejected {
+            self.text("login.rejected", &[])
+        } else {
+            String::new()
+        };
+        self.sign_in = Some(SignIn {
+            stage,
+            server,
+            fingerprint,
+            note,
+            reason,
+            waiting: false,
+            field: InputBuffer::new(),
+        });
+    }
+
+    // -- history search ------------------------------------------------------------------------
+
+    fn search_key(&mut self, key: Key) -> Vec<Command> {
+        let Some(search) = self.search.as_mut() else {
+            return Vec::new();
+        };
+        match key {
+            Key::Esc | Key::CtrlC => self.search = None,
+            Key::Enter => {
+                let entry = search
+                    .found
+                    .and_then(|i| self.input.history().get(i).cloned());
+                self.search = None;
+                if let Some(entry) = entry {
+                    self.input.set(&entry);
+                }
+            }
+            Key::CtrlR | Key::Up => {
+                if let Some(found) = search.found {
+                    search.found = self
+                        .input
+                        .search(&search.query, Some(found))
+                        .or(Some(found));
+                }
+            }
+            Key::Backspace => {
+                search.query.pop();
+                search.found = self.input.search(&search.query, None);
+            }
+            Key::Char(c) if !c.is_control() => {
+                search.query.push(c);
+                search.found = self.input.search(&search.query, None);
+            }
+            _ => {}
+        }
+        Vec::new()
+    }
+
+    // -- completion ----------------------------------------------------------------------------
+
+    /// Tab: asks the core for completions of the word at the cursor when it starts with `/` (first word) or `@`.
+    fn complete(&mut self) -> Vec<Command> {
+        let chars = self.input.chars();
+        let cursor = self.input.cursor();
+        let start = chars[..cursor]
+            .iter()
+            .rposition(|c| c.is_whitespace())
+            .map_or(0, |p| p + 1);
+        let word: String = chars[start..cursor].iter().collect();
+        let trigger = match word.chars().next() {
+            Some('/') if start == 0 => Trigger::Slash,
+            Some('@') => Trigger::At,
+            _ => return Vec::new(),
+        };
+        self.next_id += 1;
+        let id = format!("c{}", self.next_id);
+        self.asked = Some((id.clone(), trigger, start));
+        vec![Command::Complete {
+            id,
+            trigger,
+            text: word.chars().skip(1).collect(),
+        }]
+    }
+
+    fn accept(&mut self, value: &str, trigger: Trigger, start: usize) {
+        let mut text = match trigger {
+            Trigger::Slash => format!("/{value}"),
+            Trigger::At => format!("@{value}"),
+        };
+        if !text.ends_with('/') {
+            text.push(' ');
+        }
+        self.input.replace_before_cursor(start, &text);
+    }
+
+    /// `true` when the menu used the key.
+    fn menu_key(&mut self, key: Key) -> bool {
+        let Some(menu) = self.menu.as_mut() else {
+            return false;
+        };
+        let last = menu.items.len().saturating_sub(1);
+        match key {
+            Key::Tab | Key::Down => {
+                menu.selected = if menu.selected >= last {
+                    0
+                } else {
+                    menu.selected + 1
+                };
+            }
+            Key::Up => {
+                menu.selected = if menu.selected == 0 {
+                    last
+                } else {
+                    menu.selected - 1
+                };
+            }
+            Key::Enter => {
+                if let Some(menu) = self.menu.take()
+                    && let Some(item) = menu.items.get(menu.selected)
+                {
+                    self.accept(&item.value.clone(), menu.trigger, menu.start);
+                }
+            }
+            Key::Esc => self.menu = None,
+            _ => {
+                self.menu = None;
+                return false;
+            }
+        }
+        true
+    }
+
+    fn on_completion(&mut self, id: &str, items: Vec<CompletionItem>) {
+        let Some((asked, trigger, start)) = self.asked.take() else {
+            return;
+        };
+        if asked != id {
+            self.asked = Some((asked, trigger, start));
+            return;
+        }
+        match items.len() {
+            0 => self.flash = Some(self.text("ui.completion_none", &[])),
+            1 => self.accept(&items[0].value.clone(), trigger, start),
+            _ => {
+                self.menu = Some(Menu {
+                    items,
+                    selected: 0,
+                    trigger,
+                    start,
+                });
+            }
+        }
+    }
+
+    fn send(&mut self, text: &str) -> Vec<Command> {
         if let Some(rest) = text.strip_prefix('/')
             && !rest.starts_with(char::is_whitespace)
             && !rest.is_empty()
         {
             let (name, args) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
+            match name {
+                "exit" | "quit" => {
+                    self.quit = true;
+                    return vec![Command::Shutdown {}];
+                }
+                "clear" => {
+                    self.items.clear();
+                    self.clear = true;
+                    self.notice(self.text("ui.cleared", &[]), Tone::Dim);
+                    return Vec::new();
+                }
+                _ => {}
+            }
+            self.user_line(text);
             return vec![Command::Slash {
                 name: name.to_owned(),
                 args: args.trim().to_owned(),
             }];
         }
+        self.user_line(text);
         vec![Command::UserMessage {
             text: text.to_owned(),
             attachments: Vec::new(),
         }]
+    }
+
+    /// What the person sent: part of the conversation now when nothing runs, else waiting below it until the core
+    /// starts it.
+    fn user_line(&mut self, text: &str) {
+        if self.running {
+            self.pending.push(text.to_owned());
+            return;
+        }
+        self.close_answer();
+        self.items.push(Item::User(text.to_owned()));
+        self.running = true;
+        self.elapsed_ms = 0;
+        self.streamed = false;
     }
 
     fn on_event(&mut self, event: Event) {
@@ -312,6 +826,7 @@ impl App {
                 server,
                 ..
             } => {
+                self.sign_in = None;
                 self.info = Some(Info {
                     engine,
                     session,
@@ -323,18 +838,11 @@ impl App {
             Event::LoginRequired {
                 reason,
                 server,
+                fingerprint,
                 message,
-                ..
             } => {
-                let reason = format!("{reason:?}").to_lowercase();
-                let mut text = self.text(
-                    "ui.login_needed",
-                    &[("reason", &reason), ("server", &server)],
-                );
-                if !message.is_empty() {
-                    text.push_str(&format!(" {message}"));
-                }
-                self.notice(text, Tone::Warn);
+                self.running = false;
+                self.open_sign_in(reason, server, fingerprint, message);
             }
             Event::Text { delta } => {
                 self.running = true;
@@ -369,9 +877,15 @@ impl App {
                     } = item
                         && *found == id
                     {
-                        *slot = Some(result);
+                        *slot = Some(result.clone());
                         break;
                     }
+                }
+                if let Some(diff) = result.get("diff").and_then(Value::as_str)
+                    && !diff.trim().is_empty()
+                    && !matches!(self.items.last(), Some(Item::Diff(last)) if last == diff)
+                {
+                    self.items.push(Item::Diff(diff.to_owned()));
                 }
             }
             Event::Plan { steps, .. } => {
@@ -390,16 +904,40 @@ impl App {
                     self.items.push(Item::Plan(steps));
                 }
             }
-            Event::PermissionRequest { tool, .. } => {
-                self.notice(
-                    self.text("ui.permission_wait", &[("tool", &tool)]),
-                    Tone::Warn,
-                );
+            Event::PermissionRequest {
+                id,
+                tool,
+                arguments,
+                reason,
+                rule,
+                diff,
+                scopes,
+            } => {
+                self.close_answer();
+                self.menu = None;
+                self.approval = Some(Approval {
+                    id,
+                    tool,
+                    arguments,
+                    reason,
+                    rule,
+                    diff,
+                    choices: Self::choices(&scopes),
+                    selected: 0,
+                });
             }
             Event::Status { kind, data } => match kind.as_str() {
                 "line" => self.line = data,
                 "queued" => {
                     self.queued = data.get("count").and_then(Value::as_u64).unwrap_or(0);
+                    // the core says which message it took; only the one waiting first moves into the conversation
+                    let started = data.get("started").and_then(Value::as_str).map(norm);
+                    if started.is_some() && self.pending.first().map(|p| norm(p)) == started {
+                        let text = self.pending.remove(0);
+                        self.close_answer();
+                        self.items.push(Item::User(text));
+                        self.elapsed_ms = 0;
+                    }
                 }
                 "notice" => {
                     if let Some(text) = data
@@ -429,12 +967,12 @@ impl App {
                     self.notice(text, Tone::Warn);
                 }
             }
-            Event::Completion { .. } => {}
+            Event::Completion { id, items } => self.on_completion(&id, items),
             Event::Error { code, message } => {
                 let ends = ENDS_COMMAND.contains(&code.as_str());
                 self.notice(format!("{code}: {message}"), Tone::Error);
                 if ends && self.queued == 0 {
-                    self.running = false;
+                    self.running = !self.pending.is_empty();
                 }
             }
             Event::Done { status, answer } => {
@@ -454,7 +992,7 @@ impl App {
                         open: false,
                     });
                 }
-                self.running = self.queued > 0;
+                self.running = self.queued > 0 || !self.pending.is_empty();
                 self.streamed = false;
             }
         }

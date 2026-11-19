@@ -24,6 +24,7 @@ Start with the repository [README](../README.md), then the sections below. Super
 | Governance | [DOCUMENTATION.md](development/DOCUMENTATION.md) | Metadata schema, writing standard, document lifecycle |
 | | [GIT_FLOW.md](development/GIT_FLOW.md) | Branching, PR gates, review lifecycle |
 | | [GLOSSARY.md](GLOSSARY.md), [CHANGELOG.md](../CHANGELOG.md) | Terms, release history |
+| Guide | [CLIENT.md](guide/CLIENT.md) | Using the terminal interface: keys, commands, approvals, input forms |
 | Specifications | [DATA_SCHEMAS.md](specifications/DATA_SCHEMAS.md) | Schemas |
 | | [OBSIDIAN_VAULT_FORMAT.md](specifications/OBSIDIAN_VAULT_FORMAT.md) | Vault format (old data must stay readable) |
 | | [LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md](specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md) | Training readiness gates and staged pipeline |
