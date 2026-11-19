@@ -13,6 +13,7 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, cross: true }
@@ -28,7 +29,8 @@ jobs:
       - name: Build with cross (static Linux)
         if: matrix.cross
         run: |
-          cargo install cross --locked --version 0.2.5
+          # outside the repository: its .cargo/config.toml replaces crates-io with the vendor folder
+          (cd "$RUNNER_TEMP" && cargo install cross --locked --version 0.2.5)
           cross build --release --offline --locked --target ${{ matrix.target }} -p laris-cli
       - name: Build natively
         if: ${{ !matrix.cross }}
