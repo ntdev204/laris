@@ -823,7 +823,9 @@ dependencies = [
  "laris-model-client",
  "laris-policy",
  "laris-protocol",
+ "laris-sandbox",
  "laris-store",
+ "laris-tools",
  "serde_json",
  "tokio",
 ]

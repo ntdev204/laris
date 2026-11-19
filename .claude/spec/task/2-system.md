@@ -1445,7 +1445,33 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - `laris -p` with stdin, output formats, resume, continue, flags, exit codes
 - Validation:
   - Tests with a scripted model per format and exit code
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T156-headless-mode`, with T157 in the same session at the owner's request.
+  `laris_cli::headless`: `args` (`-p/--print`, the request as words, `--output-format text|json|stream-json`,
+  `--continue/-c`, `--resume/-r ID`, `--max-turns`, `--permission-mode`, `--allowedTools`, `--disallowedTools`; `--flag=value`
+  and `--` accepted; rule lists split on commas and spaces outside parentheses), `run` (`read_request`: argument, then
+  a blank line, then standard input, or either alone, 4 MiB cap, a terminal is never read; `engine`: settings'
+  permissions plus the flags' rules, deny wins, a rule that does not parse is a usage error, `bypass` refused because no
+  policy supplies `allow_bypass` yet; `open_session`; `execute`), `server` (`ServerModel`: the sync `Model` over the P1
+  client on a small runtime, which closes the gap T131 left; `HttpRemote`: the server's remote tools over
+  `GET /v1/laris/tools` and `POST /v1/laris/tools/{name}`), `real` (everything wired: key from `LARIS_API_KEY` or the saved
+  one for that server only, pinned client, tools with checkpoints, memory folder and skills, sandbox when the machine
+  has one, redactor that knows the key, injection shield, hooks, `PolicyGate` with `NoApprover`, `Prompted` layers).
+  Output: `text` prints only the answer; `json` one `result` object (`status`, `isError`, `result`, `session`,
+  `modelCalls`, `goalComplete`, `usage`, `errors`, `exitCode`); `stream-json` is `ready` then the core events of
+  `laris-protocol` as JSON lines, written the moment they happen (`Driver::with_sink`, new in `laris-core`; a test reads
+  standard output from inside a running tool). Nobody can answer an approval, so a call that needs one gets the typed
+  `approval_denied`; the flags say beforehand what may run. Every run is a session in the project's store:
+  `--continue` takes the latest, `--resume ID` a named one, and a session killed mid-turn finishes that turn first.
+  Exit codes: 0 completed, 1 failed (model, timeout, loop), 2 usage, 3 not signed in (`login_required` event or
+  `result`), 4 turn limit (`max_turns` is `agent.maxSteps`, 1 to 10), 5 no such session. Catalogue group `headless` (EN
+  and VI). `ApiKey::expose` is new, for the redactor only. 20 new tests in `laris-cli/tests/headless.rs` (every format,
+  every exit code, permissions, resume, the pipe, the real path against a local server, the compiled binary); seeded
+  faults caught: events written only at the end, a disallow rule that allows. 687 workspace tests pass; `fmt`, `clippy
+  -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`. Not done, by design: interrupting by signal
+  (no signal crate is approved; the OS ends the process and `--resume` finishes the turn), the project vault tools (no vault is opened), the Python
+  environment, a policy-supplied `bypass`, the run against a compose stack, and anything that needs a qualified model:
+  the foundation model is NOT QUALIFIED.
 
 ### T157 — Terminal interface on a recorded core
 - Requirements: SR-C1

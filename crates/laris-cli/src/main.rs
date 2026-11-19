@@ -1,5 +1,6 @@
 //! Binary laris.
 
+use laris_cli::headless::{self, Console};
 use laris_cli::login::HttpVerifier;
 use laris_cli::start::{Started, start};
 use laris_cli::{account, learn};
@@ -7,7 +8,7 @@ use laris_config::Catalogue;
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: laris <login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
+const USAGE: &str = "usage: laris <-p [REQUEST] | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
 
 fn started() -> Result<Started, String> {
     let env: Vec<(String, String)> = std::env::vars().collect();
@@ -29,8 +30,34 @@ fn report(result: Result<String, String>, name: &str) -> ExitCode {
     }
 }
 
+fn headless(options: &headless::Options) -> ExitCode {
+    let started = match started() {
+        Ok(started) => started,
+        Err(message) => {
+            eprintln!("laris: {message}");
+            return ExitCode::from(headless::exit::USAGE);
+        }
+    };
+    let mut stdin = std::io::stdin();
+    let piped = !stdin.is_terminal();
+    let console = Console {
+        out: Box::new(std::io::stdout()),
+        err: Box::new(std::io::stderr()),
+    };
+    let input: Option<&mut dyn Read> = if piped { Some(&mut stdin) } else { None };
+    ExitCode::from(headless::real::run(&started, options, input, console))
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    match headless::parse(&args) {
+        Ok(Some(options)) => return headless(&options),
+        Ok(None) => {}
+        Err(message) => {
+            eprintln!("laris: {message}\n{}", headless::USAGE);
+            return ExitCode::from(headless::exit::USAGE);
+        }
+    }
     let name = args.first().map(String::as_str);
     if !matches!(name, Some("login" | "logout" | "status" | "learn")) {
         eprintln!("{USAGE}");
