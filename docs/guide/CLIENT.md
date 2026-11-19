@@ -18,6 +18,8 @@ change_summary: "Guide entries for the commands, input forms, approvals and logi
 
 # The `laris` terminal interface
 
+Installing `laris` (one command per platform) and making a release are described in `DISTRIBUTION.md`.
+
 Run `laris` with no arguments in a terminal. For scripts and pipes use `laris -p` (see `laris -p --help` through the
 usage text of the binary). The foundation model behind the system is NOT QUALIFIED: treat answers as leads to check.
 

@@ -1,0 +1,74 @@
+name: release-build
+
+# T159: builds, packages and signs the client archives. Manual only; it uploads workflow artifacts and publishes
+# nothing (push, tag and release stay with the owner, ADR-021 D42). Needs the secret LARIS_RELEASE_KEY (the PEM
+# private key made by `cargo xtask dist keygen`) and the variable LARIS_RELEASE_URL (the https address of the release).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, cross: true }
+          - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, cross: true }
+          - { os: macos-13, target: x86_64-apple-darwin, cross: false }
+          - { os: macos-latest, target: aarch64-apple-darwin, cross: false }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, cross: false }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup show active-toolchain
+      - name: Build with cross (static Linux)
+        if: matrix.cross
+        run: |
+          cargo install cross --locked --version 0.2.5
+          cross build --release --offline --locked --target ${{ matrix.target }} -p laris-cli
+      - name: Build natively
+        if: ${{ !matrix.cross }}
+        run: |
+          rustup target add ${{ matrix.target }}
+          cargo build --release --offline --locked --target ${{ matrix.target }} -p laris-cli
+      - name: Package
+        shell: bash
+        run: |
+          ext=""; [ "${{ matrix.target }}" = "x86_64-pc-windows-msvc" ] && ext=".exe"
+          cargo xtask dist package --target ${{ matrix.target }} --bin "target/${{ matrix.target }}/release/laris$ext" --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-${{ matrix.target }}
+          path: out/*
+
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          pattern: archive-*
+          merge-multiple: true
+      - name: Manifest, signature, installers
+        env:
+          LARIS_RELEASE_URL: ${{ vars.LARIS_RELEASE_URL }}
+          KEY: ${{ secrets.LARIS_RELEASE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/release.key"
+          openssl ec -pubout -in "$RUNNER_TEMP/release.key" -out "$RUNNER_TEMP/release.pub"
+          cargo xtask dist manifest --dir out
+          LARIS_RELEASE_KEY="$RUNNER_TEMP/release.key" cargo xtask dist sign --dir out
+          cargo xtask dist verify --dir out --pubkey "$RUNNER_TEMP/release.pub"
+          cargo xtask dist scripts --dir out/installers --pubkey "$RUNNER_TEMP/release.pub"
+          rm -f "$RUNNER_TEMP/release.key"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: out

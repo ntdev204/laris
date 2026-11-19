@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Distribution (T159):** release profile (LTO, strip), `laris --version`, `cargo xtask dist` (package, manifest with size report, sign, verify, render), `install.sh`, `install.ps1`, an npm wrapper, and a manual `release-build` workflow; every route checks a signature and a checksum before installing. See `docs/guide/DISTRIBUTION.md`.
 - **English stage-1 data (T175):** `configs/data/english_sources.yaml` lists 32 English sources (MLM text, NLI, similarity, paraphrase, QA, retrieval); `python -m ... --english-all` acquires them with resume, SHA-256 and row counts; `scripts/check_sts_leakage.py` drops extra similarity pairs that touch STS-B validation or test.
 - **Withdrawn gates (T176):** a gate with `status: withdrawn` and `withdrawn_by` stays listed in `configs/evaluation/foundation.yaml` and is reported as `WITHDRAWN`, never as passed.
 

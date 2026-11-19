@@ -86,3 +86,7 @@ packaging/npm/vendor/
 docker/secrets/
 packaging/npm/node_modules/
 /target
+
+# Release signing keys never go into Git (T159).
+release.key
+*.release.key

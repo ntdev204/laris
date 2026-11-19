@@ -1574,7 +1574,30 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Release builds per platform, `install.sh`, `install.ps1`, checksums and signatures, npm wrapper, size report
 - Validation:
   - One-command install on a clean machine per platform; tampered binary refused
-- Status: pending
+- Status: in_progress
+- Note: implemented and merged, NOT closed: the validation asks for a clean machine per platform and only Linux
+  x86_64 with a local mirror was run. Branch `feature/T159-distribution`. Signing: the owner chose `openssl` on
+  2026-11-19 because `minisign` is not installed and no tool may be installed without approval; the signature is ECDSA
+  P-256 over SHA-256 (not Ed25519, which Windows PowerShell cannot check), recorded in the ADR-021 addendum.
+  `[profile.release]` (fat LTO, one codegen unit, stripped symbols); `laris --version`. `cargo xtask dist`: `keygen`,
+  `package` (one member per archive: `laris-<target>.tar.gz`, `.zip` for Windows), `manifest` (`SHA256SUMS` and
+  `size-report.md`), `sign` (key file from `LARIS_RELEASE_KEY`, never in Git), `verify`, `scripts` (renders
+  `distribution/install.sh`, `install.ps1` and the npm wrapper with the https release address and the public key: the
+  templates hold neither; the address is an argument or `LARIS_RELEASE_URL`); `sha2` added to xtask (already
+  approved and vendored). `install.sh` (openssl, tar, curl or wget) and the npm wrapper (Node 18, no dependencies)
+  check the signature of `SHA256SUMS`, then the archive's line, then that the archive holds only `laris`, and install
+  atomically only after that; `install.ps1` does the same with .NET CNG. `.github/workflows/release-build` (manual,
+  uploads artifacts only: `cross` for musl, native runners for macOS and Windows, then sign). Guide:
+  `docs/guide/DISTRIBUTION.md`. Tests: 13 in `xtask/tests/dist.rs` (fake binary: good install and start; a changed
+  archive, changed list with a stale signature, changed or foreign-key signature, unlisted archive, archive with
+  extra files, plain-http or unrendered address; the npm wrapper installs, launches and refuses two tampering kinds;
+  rendered files hold the key and no placeholder). Seeded faults caught: the signature check removed from
+  `install.sh` (3 tests failed) and from the npm wrapper (1 failed). Real release build on Linux (gnu): 9.45 MiB
+  binary, 4.42 MiB archive; installed from a local mirror with `install.sh` and the npm wrapper, and a changed archive
+  was refused. Not done, by design: a run on a clean macOS, Windows or aarch64 machine (`install.ps1` has not been
+  run at all, there is no PowerShell here); the musl, macOS and Windows builds (CI only, the workflow has not run);
+  macOS notarisation and Windows Authenticode (no certificates); key rotation; `npm publish`. The foundation model is
+  NOT QUALIFIED.
 
 ## Phase 36 — Acceptance and release 3.0.0
 

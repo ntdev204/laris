@@ -100,3 +100,11 @@ migration, adoption or parity with generation 1. `.laris/` is rewritten (Markdow
 the TOML format, with the `toml` crate and its transitive crates, was approved for it. Work already done under the
 old rule (T142 migrations, T143 key digests, T145 parity fixtures, the P1/P2 fixtures) is listed in T215 for removal.
 `laris-v1` itself stays frozen and untouched.
+
+## Addendum 2026-11-19: signing in T159
+
+`minisign` (section 4) is not on the owner's machine and no new tool may be installed without approval. The owner chose
+`openssl` instead: the checksum manifest `SHA256SUMS` is signed with ECDSA P-256 over SHA-256 (`openssl dgst -sha256
+-sign`), and `install.sh` (openssl), `install.ps1` (.NET CNG) and the npm wrapper (Node crypto) check the same
+signature against the public key written into them. ECDSA P-256 was preferred to Ed25519 because Windows PowerShell has
+no Ed25519. Notarisation and Authenticode remain for release 3.0.0 if the owner holds the certificates.

@@ -1,0 +1,12 @@
+{
+  "name": "laris",
+  "version": "__LARIS_VERSION__",
+  "description": "LARIS command-line client (thin wrapper: downloads, verifies and runs the native binary)",
+  "license": "Apache-2.0",
+  "bin": { "laris": "bin/laris.js" },
+  "scripts": { "postinstall": "node install.js" },
+  "files": ["bin", "check", "install.js", "config.json", "README.md"],
+  "engines": { "node": ">=18" },
+  "os": ["linux", "darwin", "win32"],
+  "cpu": ["x64", "arm64"]
+}
