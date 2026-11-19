@@ -4,7 +4,7 @@
 //! key is accepted), `commands/`, `skills/`, `projects/` (one folder per project, with the SQLite file and the
 //! folder's `state.json`), `LARIS.md` (optional, the user's own) and `.venv/` (built by the sandbox on first use).
 //! [`Home::ensure`] only adds what is missing: it never rewrites, moves or deletes an existing entry, so a home
-//! that holds other files (generation 1 left `config.yaml` and `runtime/` there) is left exactly as it was.
+//! that already holds other files (anything this build did not create) is left exactly as it was.
 //!
 //! A project's `./.laris/` holds only [`PROJECT_ENTRIES`]; anything else is reported by [`ProjectFolder::stray`]
 //! and never read. Settings in a project folder are ignored by design (a cloned repository must not change policy).

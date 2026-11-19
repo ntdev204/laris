@@ -8,7 +8,7 @@ use laris_config::Catalogue;
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: laris (no arguments: the interactive interface) | laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
+const USAGE: &str = "usage: laris (no arguments: the interactive interface) | laris --version | laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
 
 fn started() -> Result<Started, String> {
     let env: Vec<(String, String)> = std::env::vars().collect();
@@ -50,6 +50,10 @@ fn headless(options: &headless::Options) -> ExitCode {
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if matches!(args.as_slice(), [flag] if flag == "--version" || flag == "-V") {
+        println!("laris {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
     match headless::parse(&args) {
         Ok(Some(options)) => return headless(&options),
         Ok(None) => {}

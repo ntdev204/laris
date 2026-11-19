@@ -1408,14 +1408,14 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Deliverables:
   - `~/.laris` layout, settings schema, project-folder rules, packaged default server, login inside the interface
 - Validation:
-  - Fresh home; generation-1 home unchanged; wrong key shows the form again; overrides work
+  - Fresh home; an existing home with foreign files unchanged; wrong key shows the form again; overrides work
 - Status: done
 - Note: Closed 2026-11-19 at the owner's explicit request, ahead of the plan order (the model is not finished: T118 is
   still pending). `Depends` no longer lists T118: nothing here needs the model, and the validator refuses a done task
   with an open dependency; restore the line if the owner wants the client held back until T118. `laris_config::home`:
   `LARIS_HOME` (absolute) or `~/.laris`; `Home::ensure` adds only what is missing (the folder, private on Unix;
   `commands/`, `skills/`, `projects/`; an empty `settings.json` created with `create_new`) and never rewrites, moves or
-  deletes an entry, so a generation-1 home (`config.yaml`, `runtime/`, old project files) stays byte for byte as it was.
+  deletes an entry, so a home that already holds foreign files (other YAML, cache folders, other project files) stays byte for byte as it was.
   `ProjectFolder`: a project's `./.laris/` holds only `LARIS.md`, `skills/`, `commands/`, `memory/`; `create_dir`
   refuses any other name, `stray()` lists what else is there, and none of it is read (a planted `settings.json` is
   ignored); the project root is the nearest folder with its own `.laris` (never the global home) or `.git`.
@@ -1576,14 +1576,14 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - One-command install on a clean machine per platform; tampered binary refused
 - Status: pending
 
-## Phase 36 — Parity and release 3.0.0
+## Phase 36 — Acceptance and release 3.0.0
 
-### T160 — Parity with generation 1
-- Requirements: SR-H15, SR-G4
+### T160 — Acceptance checklist
+- Requirements: SR-G4
 - Depends: T154, T158, T159
 - Deliverables:
-  - Parity checklist (behaviours, commands, data) against `laris-v1`; generation-1 home, project databases, vaults and
-    server database tested unchanged
+  - Acceptance checklist (behaviours, commands, data) against this ledger's specification alone; home, project
+    databases, vaults and server database checked for loss across upgrades of generation 2
 - Validation:
   - Checklist complete; no open regression
 - Status: pending

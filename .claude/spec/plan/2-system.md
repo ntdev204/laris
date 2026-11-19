@@ -83,8 +83,8 @@ Tasks: T155, T156, T157, T158, T159
 Exit criteria:
 - Golden scenarios pass through the interface; owner screenshot review; one-command install per platform.
 
-### Phase 36 — Parity and release 3.0.0
+### Phase 36 — Acceptance and release 3.0.0
 Goal: the Rust system replaces the Python one.
 Tasks: T160, T161
 Exit criteria:
-- Parity checklist complete; release 3.0.0 merged with the owner's authorisation.
+- Acceptance checklist complete; release 3.0.0 merged with the owner's authorisation.
