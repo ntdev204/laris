@@ -79,6 +79,13 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
         all.extend(new);
     }
 
+    /// Uses `flag` as the interrupt handle, so a front end that owns the flag can set it from another thread.
+    #[must_use]
+    pub fn with_interrupt_flag(mut self, flag: Arc<AtomicBool>) -> Self {
+        self.interrupt = flag;
+        self
+    }
+
     /// The handle that ends the running turn: set it from anywhere; the loop notices before its next action.
     pub fn interrupt_handle(&self) -> Arc<AtomicBool> {
         Arc::clone(&self.interrupt)

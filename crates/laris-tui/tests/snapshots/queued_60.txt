@@ -1,0 +1,58 @@
+──── step 0 ────
+╭──────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                          │
+│                                                          │
+│ cwd: /work/demo                                          │
+│ session abcdef12 · mode default                          │
+│ server: https://laris.example                            │
+│ /help for help                                           │
+╰──────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────╮
+│ > Type a message, or / for commands                      │
+╰──────────────────────────────────────────────────────────╯
+ default
+ shift+enter for a new line · ctrl+c twice to exit
+──── step 1 ────
+╭──────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                          │
+│                                                          │
+│ cwd: /work/demo                                          │
+│ session abcdef12 · mode default                          │
+│ server: https://laris.example                            │
+│ /help for help                                           │
+╰──────────────────────────────────────────────────────────╯
+
+> first
+
+● working on first
+✻ Working… (0s · esc to interrupt)
+╭──────────────────────────────────────────────────────────╮
+│ > Type a message, or / for commands                      │
+╰──────────────────────────────────────────────────────────╯
+ default
+ esc to interrupt · shift+enter for a new line
+──── step 2 ────
+╭──────────────────────────────────────────────────────────╮
+│ ✻ Laris  v2.0.0                                          │
+│                                                          │
+│ cwd: /work/demo                                          │
+│ session abcdef12 · mode default                          │
+│ server: https://laris.example                            │
+│ /help for help                                           │
+╰──────────────────────────────────────────────────────────╯
+
+> first
+
+● working on first
+
+> second
+
+● answer to second
+
+╭──────────────────────────────────────────────────────────╮
+│ > Type a message, or / for commands                      │
+╰──────────────────────────────────────────────────────────╯
+ default
+ shift+enter for a new line · ctrl+c twice to exit
+──── queued @ 60 ────

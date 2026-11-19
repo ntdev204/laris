@@ -1519,7 +1519,53 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     `!command`, `# note`; guide entries
 - Validation:
   - All translated golden scenarios pass; owner screenshot review on Linux and Windows
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19, branch `feature/T158-interface-commands`. The owner approved vendoring on 2026-11-19 and chose
+  the whole task in one session. Vendored `crossterm` 0.29 with its transitive crates (`convert_case`, `derive_more`,
+  `signal-hook`, `signal-hook-mio`, `unicode-segmentation`, `winapi` and its import crates, `crossterm_winapi`,
+  `document-features`, `litrs`, `rustc_version`, `semver`; `mio` and `signal-hook-registry` were already there) into
+  `vendor/`, `deny.toml` and `THIRD_PARTY.md`; `ratatui` is NOT vendored because the T157 core draws its own lines and it
+  would have no use (still approved in T119). `laris-tui`: `diff` (unified diff block, 24 rows then a count), approvals
+  (`App::approval`: tool, arguments, reason, rule, diff, choices once, session, project, everywhere, no; keys arrows,
+  Enter, `y`, `n`, Esc, digits; the answer is a `permission_response` and the diff and the answer stay in the
+  conversation), the login form (`SignIn`: server, certificate fingerprint `y`/`n`, key masked as dots; the typed text is
+  not in `Debug`, not in the chat box, and the field is emptied when sent; `Esc`/Ctrl+C leave), history search (Ctrl+R),
+  completion (Tab asks the core with `complete`, one candidate is inserted, several open a menu), `/exit`, `/quit` and
+  `/clear` local, other `/name args` sent as `command`, a message typed while a turn runs waits below the conversation
+  marked `(queued)` until the core's `queued` status says it started, `term` (`key_of` for crossterm keys, `RawMode` with
+  bracketed paste restored on drop and on panic, `Screen`: final lines are printed once into the scrollback, the live part
+  is erased and redrawn, an unchanged frame writes nothing, a live part taller than the window shows its last rows). A bug
+  of T157 found on the way: a tool call printed with `…` kept it forever in the scrollback when its result came later;
+  a block that waits for its result (and the last plan) is now live, with everything after it. The replay types
+  `complete`, `permission_response`, `login` (server, `y`, key) and `set_mode` steps, so all eleven golden scenarios replay
+  without skipping a step (the T157 `skip_unsupported` is no longer used). `laris-cli`: `interactive` (`commands`: built-in
+  list, custom commands from `~/.laris/commands` and `.laris/commands` with `description:`, `$ARGUMENTS`, `$1`..`$9`, links
+  and files over 64 KiB ignored, a custom one never replaces a built-in; `files`: `@path` completion and attaching, only
+  what `Scope::resolve` allows; `front`: the session side, a turn, `/help`, `/mode`, `/status`, `/rewind`, custom
+  commands, `!command` through the Bash tool (shown as a tool block, kept for the next message), `# note` appended to
+  `.laris/LARIS.md`, `@path`, completion, Shift+Tab; `worker`: the session on its own thread with the approver waiting for
+  the person's answer over a channel, the interrupt flag, the queue counter; `control`: keys and events, sign-in and
+  sign-out, checking a key is drawn as "checking" before the wait; `terminal`: the raw-mode loop). `laris` with no
+  arguments is the interface (a terminal is required; `laris -p` stays for pipes). `laris_cli::headless::real::build` now
+  builds the parts both modes share; `Driver::with_interrupt_flag` is new in `laris-core`. Guide: `docs/guide/CLIENT.md`
+  (a test requires every built-in command and input form in it). Tests: 24 in `laris-cli/tests/interactive.rs` (real local
+  tools, real gate, real store, scripted model, keys typed into the controller: a turn, the queue, an approval granted,
+  refused, remembered and with a diff, `/help`, custom commands, `/mode`, `!`, `#`, `@`, `/rewind`, `/status`, sign-in with a
+  wrong then a right key, `/logout`, a session that cannot start, links and huge files), 19 in `laris-tui/tests/interact.rs`,
+  9 in `laris-tui/tests/term.rs` (the bytes of the screen are played into a small terminal emulator and what is left equals
+  what the interface shows, after every event of all eleven scenarios at 60 and 100 columns, with and without colour),
+  snapshots of six more scenarios in `tests/snapshots/`. Seeded faults caught: a stale approval answer taken for the new
+  request, a tool block committed before its result, Esc not refusing an approval. 769 workspace tests pass (three runs);
+  `fmt`, `clippy -D warnings`, `cargo deny check`, `xtask guard`, `scan`, `schema --check`. A flaky test of T157
+  (`laris-cli/tests/replay.rs`: two tests shared one home folder and raced on `settings.json`) now has a home per call.
+  Smoke test on a pseudo-terminal against an unreachable server: the form draws, the key is not echoed, "Checking the
+  key…" shows before the wait, the reason is shown, Ctrl+C leaves with code 0. Not done, by design: the owner's screenshot
+  review on Linux and on Windows (needs a real terminal; Windows output was not run, and the screen writes its own escape
+  sequences, which the legacy Windows console may not accept: to be seen in that review); a model call is not interrupted (Esc ends the turn before its next step, as in T156);
+  `--continue`/`--resume` for the interface (the session store holds the log; the conversation is not drawn again); a
+  server address or certificate prompt in the form (the packaged or configured address is used; the protocol and the
+  golden scenarios for it replay); `/workflow`; Shift+Enter shows as a new line only on terminals that report it (Alt+Enter,
+  Ctrl+J and backslash-Enter always work); a chat against the compose stack. The foundation model is NOT QUALIFIED.
 
 ### T159 — Distribution
 - Requirements: SR-C6

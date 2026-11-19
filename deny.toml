@@ -67,6 +67,10 @@ allow = [
     "ppv-lite86", "rand", "rand_chacha", "rand_core", "redox_syscall", "scopeguard", "sqlx-core", "sqlx-postgres",
     "stringprep", "tinyvec", "tokio-stream", "tracing-attributes", "unicode-bidi", "unicode-normalization",
     "unicode-properties", "wasite", "whoami", "zerocopy",
+    # crossterm and its transitive crates (T158: raw mode and key input; owner approved vendoring 2026-11-19)
+    "convert_case", "crossterm_winapi", "derive_more", "derive_more-impl", "document-features", "litrs",
+    "rustc_version", "semver", "signal-hook", "signal-hook-mio", "unicode-segmentation", "winapi",
+    "winapi-i686-pc-windows-gnu", "winapi-x86_64-pc-windows-gnu",
     # transitive crates of landlock and rustix (T135)
     "enumflags2", "enumflags2_derive", "linux-raw-sys",
 ]
