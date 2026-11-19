@@ -1432,7 +1432,9 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   faults caught: key saved when refused, saved key sent to any server, settings rewritten by `ensure`. 667 workspace
   tests pass; `fmt`, `clippy -D warnings`, `cargo deny check`. The flaky `laris-policy` `hooks` test
   (`control_characters_cannot_reach_the_terminal`, working folder gone) failed once more in a run right after a build and
-  passed in the next five runs; not changed here. Not done, by design: the masked login form in the terminal interface
+  passed in the next five runs. Fixed afterwards (branch `fix/policy-test-temp-dir-collision`): four tests of
+  `hooks.rs` shared the folder name `again`, and the test helper `temp_dir` emptied it, so a hook's shell lost its working
+  folder; `temp_dir` now gives every call its own folder (eight full `laris-policy` runs, no failure). Not done, by design: the masked login form in the terminal interface
   (T157, T158; this task provides its state and checks), the settings panel, `laris -p` (T156), the packaged build that
   carries the server address (T159; here `LARIS_PACKAGED_DEFAULTS` and `defaults.json` beside the binary are tested).
 
