@@ -110,15 +110,35 @@ b = [ids(r["sentence2"]) for r in sts]
 y = np.array([float(r["score"]) for r in sts])
 print(f"STS-B val rows {len(sts)}  label mean {y.mean():.3f} var {y.var():.3f}")
 
-# A: cross-encoder head
+# A: similarity head (cross-encoder on the pair input, or the bi-encoder on two single sentences)
 pairs = list(zip(a, b))
-sim = batched(pairs, "similarity", "similarity_score").squeeze(-1).numpy()
+
+
+@torch.no_grad()
+def bi_encoder_scores(first, second, bs=32):
+    out = []
+    for i in range(0, len(first), bs):
+        sides = []
+        for chunk in (first[i:i + bs], second[i:i + bs]):
+            seq, mask = zip(*[build_sequence(x, None, L) for x in chunk])
+            width = max(sum(m) for m in mask)
+            sides += [torch.tensor([s[:width] for s in seq], device="cuda"),
+                      torch.tensor([m[:width] for m in mask], device="cuda")]
+        out.append(model.bi_encoder_similarity(*sides)["similarity_score"].float().cpu())
+    return torch.cat(out)
+
+
+if getattr(enc.config, "similarity_head", "cross_encoder") == "bi_encoder":
+    sim = bi_encoder_scores(a, b).squeeze(-1).numpy()
+else:
+    sim = batched(pairs, "similarity", "similarity_score").squeeze(-1).numpy()
 print(
-    f"A  sim head (pair input): Spearman {spearman(sim, y):.3f}  pred mean {sim.mean():.3f} "
+    f"A  sim head ({getattr(enc.config, 'similarity_head', 'cross_encoder')}): Spearman {spearman(sim, y):.3f}  pred mean {sim.mean():.3f} "
     f"std {sim.std():.4f}  MSE {((sim - y) ** 2).mean():.3f}  (constant-mean MSE {y.var():.3f})"
 )
-cls_pair = batched(pairs, "similarity", "cls_embedding")
-print(f"C  CLS of pair input: mean cosine between different examples {collapse(cls_pair):.3f}")
+if getattr(enc.config, "similarity_head", "cross_encoder") != "bi_encoder":
+    cls_pair = batched(pairs, "similarity", "cls_embedding")
+    print(f"C  CLS of pair input: mean cosine between different examples {collapse(cls_pair):.3f}")
 
 # B: siamese embeddings (the path retrieval trains)
 ea = batched([(x, None) for x in a], "embedding", "cls_embedding")

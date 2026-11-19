@@ -549,9 +549,10 @@ returned logs, manifests and reports.
   - Prepared commands, budget and stop rules for the stage-2 run and the control run, each with the forward-only probes of `scripts/diagnose_pair_path.py` (extended with the order accuracy and the bi-encoder Spearman) and the evaluator on the validation split; intake of the returned logs
 - Validation:
   - Logs and manifests match; probes and evaluator are reported per task for both runs; every result is stated as measured on the validation split
-- Status: pending
+- Status: done
 - Note: Owner run, only on the owner's order and not before T193 to T203 are done. Stop rules as in the pilot: NaN, a task loss more than 10 % above its best for two evaluations, a step more than twice the smoke time.
 - Note (prepared 2026-11-18): `scripts/colab/train_arm.sh stage2|control` and `save_run.sh`, runbook section 16 (commands, budget about 70 compute units, stop rules, probes). Both arms start from `english-r1-stage1-rerun/best` (T212) with micro-batch 32 x 1, retrieval batch 128, 5,000 steps. Not started: it needs the owner's order or the owner's explicit permission for the agent to run it (the permission of 2026-11-18 covered only the T212 run).
+- Note (result 2026-11-19): the agent ran both arms on the Colab A100 under the owner's "Tự chạy đi" (these two runs only); both `[SUCCESS]` at step 5,000, 1.7-1.8 s per step, peak 22.6 GB, about 2.5 h each. Validation at 5,000: stage 2 mean 0.6190 (mlm 2.535, nli 0.2046, para 0.0609, qa 0.5641, ret 0.3473), control mean 0.5650 (mlm 2.293, nli 0.2120, para 0.0616, qa 0.5729, ret 0.2428); the means mix different similarity heads. Probes (validation, 600 rows): STS-B head Spearman 0.840 stage 2 against 0.203 control; all_nli accuracy 0.455 / 0.432; PAWS AUC 0.553 / 0.504; order above the majority baseline for stage 2, at the majority for the control. MLM and retrieval cost of the mixture as T203 expected. Open: NLI near chance on ANLI, order head skewed to "other_document". `diagnose_pair_path.py` fixed for the bi-encoder head. Drive still holds a truncated `fineweb_edu_en/train.parquet` (VM copy repaired). Report `reports/verification/T204-stage2-control-runs.md`; checkpoints on Drive `runs/english-r1-stage2` and `runs/english-r1-control`. The model stays NOT QUALIFIED.
 
 ### T205 — Analysis and decision after the stage-2 run
 - Requirements: SR-M4, SR-M6
