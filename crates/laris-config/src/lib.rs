@@ -7,12 +7,15 @@
 //! first problem, as `hooks.PreToolUse[0].hooks[0].timeout`. Messages are keys of the [`catalogue`], in English
 //! and Vietnamese with the same keys and placeholders.
 //!
+//! [`home`] holds the layout of `~/.laris` and the rules of a project's `./.laris/`.
+//!
 //! The library never reads the process environment or the home directory itself: callers pass them in, so every
 //! rule is testable.
 
 pub mod catalogue;
 pub mod error;
 pub mod files;
+pub mod home;
 pub mod layers;
 pub mod packaged;
 pub mod settings;

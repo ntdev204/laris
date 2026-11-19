@@ -820,10 +820,12 @@ version = "2.0.0-dev"
 dependencies = [
  "laris-config",
  "laris-core",
+ "laris-model-client",
  "laris-policy",
  "laris-protocol",
  "laris-store",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

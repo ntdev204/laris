@@ -51,5 +51,21 @@
     "timeout": "Stopped: the time for one turn ran out.",
     "provider_error": "The model API could not be reached. Check the model server and try again.",
     "interrupted": "The call was cut off before its result was recorded; it may or may not have run."
+  },
+  "login": {
+    "title": "Sign in to Laris",
+    "prompt": "Enter your API key for {server}.",
+    "no_server": "No server address is set. Set server.url in {settings} or LARIS_SERVER__URL, then sign in.",
+    "rejected": "The server did not accept this key. Check it and try again.",
+    "unreachable": "Could not reach {server}: {detail}. The key was not saved.",
+    "invalid_key": "That is not a usable key: {detail}.",
+    "saved": "Signed in as {role}. The key is saved in {path}.",
+    "signed_out": "Signed out. The saved key was removed.",
+    "no_saved_key": "There is no saved key.",
+    "other_server": "The saved key was accepted by another server ({server}); sign in again for this one.",
+    "from_environment": "The key comes from LARIS_API_KEY; the environment wins over the saved key.",
+    "needs_pipe": "Pipe the key in, for example: printf '%s' \"$KEY\" | laris login. The interface login form hides what you type.",
+    "unreadable": "Cannot read the saved key: {detail}",
+    "save_failed": "The server accepted the key, but it could not be saved: {detail}"
   }
 }

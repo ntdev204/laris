@@ -1404,12 +1404,37 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 
 ### T155 — Global home, settings and login
 - Requirements: SR-C3, SR-C4
-- Depends: T118, T128, T129
+- Depends: T128, T129
 - Deliverables:
   - `~/.laris` layout, settings schema, project-folder rules, packaged default server, login inside the interface
 - Validation:
   - Fresh home; generation-1 home unchanged; wrong key shows the form again; overrides work
-- Status: pending
+- Status: done
+- Note: Closed 2026-11-19 at the owner's explicit request, ahead of the plan order (the model is not finished: T118 is
+  still pending). `Depends` no longer lists T118: nothing here needs the model, and the validator refuses a done task
+  with an open dependency; restore the line if the owner wants the client held back until T118. `laris_config::home`:
+  `LARIS_HOME` (absolute) or `~/.laris`; `Home::ensure` adds only what is missing (the folder, private on Unix;
+  `commands/`, `skills/`, `projects/`; an empty `settings.json` created with `create_new`) and never rewrites, moves or
+  deletes an entry, so a generation-1 home (`config.yaml`, `runtime/`, old project files) stays byte for byte as it was.
+  `ProjectFolder`: a project's `./.laris/` holds only `LARIS.md`, `skills/`, `commands/`, `memory/`; `create_dir`
+  refuses any other name, `stray()` lists what else is there, and none of it is read (a planted `settings.json` is
+  ignored); the project root is the nearest folder with its own `.laris` (never the global home) or `.git`.
+  `laris_cli`: `credentials` (apiKey and the server that accepted it, mode 0600 from creation, atomic, a loose file is
+  tightened on read), `login` (`decide`, `LoginForm`, `sign_in`, `KeyVerifier`, `HttpVerifier` = `GET /v1/laris/account`
+  through the P1 client with the pin and limits of `server`), `start` (home, settings, project), `account`
+  (`laris login` reads the key from a pipe and refuses a terminal; `laris logout`; `laris status` as JSON, never the
+  key). A key is saved only after the server accepts it; a refused key, an unreachable server and a malformed key leave
+  the form open with the catalogue message (English by default, Vietnamese on `ui.language`) and write nothing; the
+  environment key wins over the saved one; a saved key is used only for the server that accepted it (a key is never
+  sent to a different server); the packaged address is the lowest layer, then `settings.json`, then `LARIS_*`.
+  Catalogue group `login` (EN and VI). 23 new tests (7 in `laris-config/tests/home.rs`, 16 in
+  `laris-cli/tests/login.rs`, among them the real HTTP path and the compiled binary against a local server); seeded
+  faults caught: key saved when refused, saved key sent to any server, settings rewritten by `ensure`. 667 workspace
+  tests pass; `fmt`, `clippy -D warnings`, `cargo deny check`. The flaky `laris-policy` `hooks` test
+  (`control_characters_cannot_reach_the_terminal`, working folder gone) failed once more in a run right after a build and
+  passed in the next five runs; not changed here. Not done, by design: the masked login form in the terminal interface
+  (T157, T158; this task provides its state and checks), the settings panel, `laris -p` (T156), the packaged build that
+  carries the server address (T159; here `LARIS_PACKAGED_DEFAULTS` and `defaults.json` beside the binary are tested).
 
 ### T156 — Headless mode
 - Requirements: SR-C5

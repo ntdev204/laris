@@ -51,5 +51,21 @@
     "timeout": "Đã dừng: hết thời gian cho một lượt xử lý.",
     "provider_error": "Không gọi được API mô hình. Kiểm tra server mô hình rồi thử lại.",
     "interrupted": "Lệnh gọi bị cắt ngang trước khi ghi được kết quả; có thể nó đã chạy hoặc chưa."
+  },
+  "login": {
+    "title": "Đăng nhập Laris",
+    "prompt": "Nhập khóa API cho {server}.",
+    "no_server": "Chưa đặt địa chỉ máy chủ. Đặt server.url trong {settings} hoặc LARIS_SERVER__URL rồi đăng nhập.",
+    "rejected": "Máy chủ không chấp nhận khóa này. Kiểm tra lại rồi thử lại.",
+    "unreachable": "Không kết nối được {server}: {detail}. Khóa chưa được lưu.",
+    "invalid_key": "Khóa không dùng được: {detail}.",
+    "saved": "Đã đăng nhập với vai trò {role}. Khóa được lưu tại {path}.",
+    "signed_out": "Đã đăng xuất. Khóa đã lưu đã bị xóa.",
+    "no_saved_key": "Không có khóa đã lưu.",
+    "other_server": "Khóa đã lưu được một máy chủ khác ({server}) chấp nhận; hãy đăng nhập lại cho máy chủ này.",
+    "from_environment": "Khóa lấy từ LARIS_API_KEY; biến môi trường được ưu tiên hơn khóa đã lưu.",
+    "needs_pipe": "Hãy đưa khóa qua ống, ví dụ: printf '%s' \"$KEY\" | laris login. Biểu mẫu đăng nhập trong giao diện sẽ ẩn nội dung bạn gõ.",
+    "unreadable": "Không đọc được khóa đã lưu: {detail}",
+    "save_failed": "Máy chủ đã chấp nhận khóa nhưng không lưu được: {detail}"
   }
 }
