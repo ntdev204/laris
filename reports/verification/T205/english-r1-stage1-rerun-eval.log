@@ -1,0 +1,10 @@
+
+Evaluation on split 'val' (11054 samples)
+task       lang metric             value  baseline  required  result
+mlm        en   masked_accuracy   0.2326    0.0430    0.0630  PASS
+nli        en   macro_f1          0.2673    0.2117    0.2617  PASS
+paraphrase en   auc               0.5806    0.5000    0.5500  PASS
+qa         en   f1                0.0766    0.0786    0.1286  FAIL
+similarity en   spearman          0.0556    0.5292    0.5292  FAIL
+Overall: FAILED
+Report written to artifacts/evaluations/language_encoder/english-r1-stage1-rerun-val.json

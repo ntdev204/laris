@@ -186,11 +186,13 @@ class LanguageEncoderEvaluator:
         for batch, take in self._batches("mlm", files, n):
             out = self._forward(batch)
             labels = batch.labels["mlm_labels"][:take]
-            logits = out["mlm_logits"][:take].float().cpu()
+            logits = out["mlm_logits"][:take]
             sel = labels >= 0
             if not bool(sel.any()):
                 continue
-            masked_logits = logits[sel]
+            # Select the masked positions on the device before the transfer: the full logits
+            # (batch x length x vocabulary) are about 6x larger than the masked rows.
+            masked_logits = logits[sel.to(logits.device)].float().cpu()
             gold = labels[sel]
             logp = masked_logits.log_softmax(-1)
             nll += float(-logp[np.arange(len(gold)), gold.numpy()].sum())

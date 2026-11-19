@@ -892,10 +892,11 @@ mkdir -p artifacts/evaluations/language_encoder
 for RUN in english-r1-stage1-rerun english-r1-stage2 english-r1-control; do
   CK=artifacts/checkpoints/language_encoder/$RUN/best
   HOME=$HOME_ISOLATED timeout -s KILL 1800s python3 -I -m cli.model evaluate language-encoder \
-    --checkpoint $CK --tokenizer-model $TOK --split val --max-samples 2048 --batch-size 8 \
-    --seed 42 --device cuda --output artifacts/evaluations/language_encoder/$RUN-val.json
+    --checkpoint $CK --tokenizer-model $TOK --split val --max-samples 512 --batch-size 8 \
+    --seed 42 --device cuda --output artifacts/evaluations/language_encoder/$RUN-val.json > artifacts/evaluations/language_encoder/$RUN-eval.log
   python3 -I scripts/diagnose_pair_path.py $CK $TOK 600 > artifacts/evaluations/language_encoder/$RUN-probe.txt
 done
 ```
+Measured on the A100: the evaluator takes about 0.57 s per batch of 8 for every dataset (fp32), so 512 samples per dataset take about 7 minutes per checkpoint and 2,048 about 50 (over the 1,800 s limit above); a probe takes about 7 minutes. The evaluator also needs `data/processed/task_splits_manifest.json` (not on Drive; upload it from the local `data/processed/`). Run the loop with `setsid nohup` and wait for `SEC17_DONE` in its log before copying files or stopping the session: a probe file exists (empty) while it is still being written.
 Return the six files (or save them to Drive). The agent reads them, adds the figures to `reports/verification/T205-stage2-analysis.md` and records them in T205. Compute: three short forward-only passes, a few minutes each.
 Read each figure as "measured on the validation split"; the foundation model stays NOT QUALIFIED.
