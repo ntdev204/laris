@@ -79,5 +79,29 @@
     "bad_mode": "Chế độ quyền {mode} không dùng được: {detail}",
     "bad_max_turns": "--max-turns phải là số nguyên từ 1 đến {limit}, không phải {value}.",
     "cannot_continue": "Không tiếp tục được phiên này: {detail}"
+  },
+  "ui": {
+    "placeholder": "Nhập tin nhắn, hoặc / để xem lệnh",
+    "thinking": "Đang xử lý…",
+    "hint_interrupt": "esc để ngắt",
+    "hint_newline": "shift+enter để xuống dòng",
+    "hint_exit": "ctrl+c hai lần để thoát",
+    "hint_help": "/help để xem trợ giúp",
+    "exit_again": "Nhấn Ctrl-C lần nữa để thoát",
+    "interrupted": "Đã ngắt",
+    "banner_cwd": "thư mục: {cwd}",
+    "banner_session": "phiên {session} · chế độ {mode}",
+    "banner_server": "máy chủ: {server}",
+    "context": "ngữ cảnh {percent}%",
+    "tokens_left": "còn {count} token",
+    "queued": "{count} đang chờ",
+    "sandbox": "sandbox {state}",
+    "login_needed": "Cần đăng nhập ({reason}) {server}",
+    "compacted": "Đã nén ngữ cảnh: {before} → {after} token",
+    "goal_open": "Mục tiêu chưa xong: còn {open} mục",
+    "permission_wait": "Đang chờ duyệt: {tool}",
+    "result_hits": "{count} kết quả",
+    "result_done": "xong",
+    "blocked": "Phiên này không thể tiếp tục. Nhấn Ctrl-C để thoát."
   }
 }
