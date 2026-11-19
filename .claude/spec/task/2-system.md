@@ -1519,8 +1519,8 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     `!command`, `# note`; guide entries
 - Validation:
   - All translated golden scenarios pass; owner screenshot review on Linux and Windows
-- Status: blocked
-- Note: NOT CLOSED (owner, 2026-11-19): blocked on the owner's screenshot review on Linux and Windows, which the validation requires. Work below is merged into `laris-v2` but the task stays open. Branch `feature/T158-interface-commands`. The owner approved vendoring on 2026-11-19 and chose
+- Status: in_progress
+- Note: NOT CLOSED (owner, 2026-11-19): waiting for the owner's screenshot review on Linux and Windows, which the validation requires. Work below is merged into `laris-v2` but the task stays open. Branch `feature/T158-interface-commands`. The owner approved vendoring on 2026-11-19 and chose
   the whole task in one session. Vendored `crossterm` 0.29 with its transitive crates (`convert_case`, `derive_more`,
   `signal-hook`, `signal-hook-mio`, `unicode-segmentation`, `winapi` and its import crates, `crossterm_winapi`,
   `document-features`, `litrs`, `rustc_version`, `semver`; `mio` and `signal-hook-registry` were already there) into
