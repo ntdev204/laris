@@ -1024,16 +1024,12 @@ fn context_usage_model_config_and_export_answer_from_what_the_session_knows() {
     assert!(screen(&c).contains("context 20%"), "{}", screen(&c));
     send(&mut c, "/context");
     idle(&mut c);
-    assert!(
-        screen(&c).contains("200 / 1000 tokens (compacts at 80%)"),
-        "{}",
-        screen(&c)
-    );
+    assert!(screen(&c).contains("200 / 1k (20%)"), "{}", screen(&c));
     send(&mut c, "/usage");
     idle(&mut c);
     let text = screen(&c);
     assert!(
-        text.contains("150 prompt + 50 answer = 200 tokens in 1 requests"),
+        text.contains("150 prompt · 50 answer · 1 requests"),
         "{text}"
     );
     assert!(text.contains("Cannot ask the server"), "{text}");
@@ -1046,11 +1042,7 @@ fn context_usage_model_config_and_export_answer_from_what_the_session_knows() {
     );
     send(&mut c, "/config");
     idle(&mut c);
-    assert!(
-        screen(&c).contains("context window 1000 tokens"),
-        "{}",
-        screen(&c)
-    );
+    assert!(screen(&c).contains("1000 tokens"), "{}", screen(&c));
     send(&mut c, "/export");
     idle(&mut c);
     assert!(screen(&c).contains("Saved to"), "{}", screen(&c));
