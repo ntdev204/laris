@@ -8,7 +8,7 @@ use laris_config::Catalogue;
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: laris (no arguments: the interactive interface) | laris --version | laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
+const USAGE: &str = "usage: laris (no arguments: the interactive interface; --continue | --resume ID: the interactive interface on an earlier session) | laris --version | laris <-p [REQUEST] | replay FILE | login | logout | status | learn <stats | collect [--session ID] | export --kind sft|retrieval|preference --out FILE [--min-rating none|up] | rate ID up|down | purge --yes>>\nlogin reads the key from standard input: printf '%s' \"$KEY\" | laris login";
 
 fn started() -> Result<Started, String> {
     let env: Vec<(String, String)> = std::env::vars().collect();
@@ -48,6 +48,17 @@ fn headless(options: &headless::Options) -> ExitCode {
     ExitCode::from(headless::real::run(&started, options, input, console))
 }
 
+/// `laris --continue` and `laris --resume ID`: the interactive interface on an earlier session.
+fn resume_of(args: &[String]) -> Result<Option<headless::args::Resume>, String> {
+    use headless::args::Resume;
+    match args {
+        [flag] if flag == "-c" || flag == "--continue" => Ok(Some(Resume::Continue)),
+        [flag, id] if flag == "-r" || flag == "--resume" => Ok(Some(Resume::Session(id.clone()))),
+        [flag] if flag == "-r" || flag == "--resume" => Err(format!("{flag} needs a session id")),
+        _ => Ok(None),
+    }
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if matches!(args.as_slice(), [flag] if flag == "--version" || flag == "-V") {
@@ -63,11 +74,20 @@ fn main() -> ExitCode {
         }
     }
     let name = args.first().map(String::as_str);
-    if name.is_none() {
+    let resume = match resume_of(&args) {
+        Ok(resume) => resume,
+        Err(message) => {
+            eprintln!("laris: {message}\n{USAGE}");
+            return ExitCode::from(2);
+        }
+    };
+    if name.is_none() || resume.is_some() {
+        let resume = resume.unwrap_or(headless::args::Resume::New);
         return match started() {
-            Ok(started) => {
-                ExitCode::from(laris_cli::interactive::run(std::sync::Arc::new(started)))
-            }
+            Ok(started) => ExitCode::from(laris_cli::interactive::run(
+                std::sync::Arc::new(started),
+                &resume,
+            )),
             Err(message) => {
                 eprintln!("laris: {message}");
                 ExitCode::from(2)

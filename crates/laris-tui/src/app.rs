@@ -35,6 +35,15 @@ pub enum Input {
     Tick(u64),
 }
 
+/// One entry of a session's log, to show a resumed session's conversation again.
+#[derive(Debug, Clone, PartialEq)]
+pub enum History {
+    /// What the user sent.
+    User(String),
+    /// An event the core sent.
+    Event(Event),
+}
+
 /// How a notice looks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tone {
@@ -342,6 +351,41 @@ impl App {
                 Vec::new()
             }
         }
+    }
+
+    /// Shows the conversation of a session that is resumed: what the user sent and what the core answered, from the
+    /// event log. Only what belongs to the conversation is taken (no login, approval or completion).
+    pub fn show_history(&mut self, entries: Vec<History>) {
+        for entry in entries {
+            match entry {
+                History::User(text) => {
+                    self.close_answer();
+                    self.items.push(Item::User(text));
+                }
+                History::Event(event) => {
+                    let shown = match &event {
+                        Event::Status { kind, .. } => kind == "notice",
+                        other => matches!(
+                            other,
+                            Event::Text { .. }
+                                | Event::ToolCall { .. }
+                                | Event::ToolResult { .. }
+                                | Event::Plan { .. }
+                                | Event::Compact { .. }
+                                | Event::Error { .. }
+                                | Event::Done { .. }
+                        ),
+                    };
+                    if shown {
+                        self.on_event(event);
+                    }
+                }
+            }
+        }
+        self.close_answer();
+        self.running = false;
+        self.streamed = false;
+        self.elapsed_ms = 0;
     }
 
     fn notice(&mut self, text: String, tone: Tone) {

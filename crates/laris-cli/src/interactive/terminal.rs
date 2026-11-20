@@ -11,12 +11,12 @@ use crate::login::HttpVerifier;
 use crate::start::Started;
 use laris_config::Catalogue;
 use laris_config::home::INSTRUCTIONS_FILE;
-use laris_core::{Driver, FollowModel, Recorder};
+use laris_core::{Driver, FollowModel, Record, Recorder, decode_record};
 use laris_model_client::ApiKey;
-use laris_protocol::Event;
+use laris_protocol::{Command, Event};
 use laris_store::{DEFAULT_BUSY_TIMEOUT, Store};
-use laris_tui::Theme;
-use laris_tui::term::{RawMode, Screen, Term, next, pending, size};
+use laris_tui::term::{FullScreen, RawMode, Term, next, pending, size};
+use laris_tui::{History, Theme};
 use std::io::{IsTerminal, Write};
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
@@ -44,19 +44,71 @@ pub fn session_options() -> Options {
     }
 }
 
-/// Starts the real session: the model and tools of a headless run, the person as the approver.
+/// The session a resumed run goes on with and what was said in it, read back from the event log: what the user sent
+/// and what the core answered. `Ok((None, []))` for a new session; `Err` is the reason, for the person.
+pub fn history(
+    started: &Started,
+    resume: &Resume,
+) -> Result<(Option<String>, Vec<History>), String> {
+    if matches!(resume, Resume::New) {
+        return Ok((None, Vec::new()));
+    }
+    let store = Store::open_space(
+        started.home.root(),
+        &started.project,
+        None,
+        DEFAULT_BUSY_TIMEOUT,
+    )
+    .map_err(|e| format!("cannot open the session store: {e}"))?;
+    let words = Catalogue::new(started.settings.ui.language);
+    let existing = store.sessions().unwrap_or_default();
+    let id = match resume {
+        Resume::Continue => existing
+            .last()
+            .cloned()
+            .ok_or_else(|| words.get("headless.no_session", &[]).unwrap_or_default())?,
+        Resume::Session(id) if existing.contains(id) => id.clone(),
+        Resume::Session(id) => {
+            return Err(words
+                .get("headless.unknown_session", &[("id", id)])
+                .unwrap_or_default());
+        }
+        Resume::New => return Ok((None, Vec::new())),
+    };
+    let stored = store
+        .events(&id, 0)
+        .map_err(|e| format!("cannot read the session {id}: {e}"))?;
+    let entries = stored
+        .iter()
+        .filter_map(|e| decode_record(&e.data).ok())
+        .filter_map(|record| match record {
+            Record::Command {
+                command: Command::UserMessage { text, .. },
+            } => Some(History::User(text)),
+            Record::Emitted { event } => Some(History::Event(event)),
+            _ => None,
+        })
+        .collect();
+    Ok((Some(id), entries))
+}
+
+/// Starts the real session: the model and tools of a headless run, the person as the approver. `resume` is the
+/// session to go on with (from [`history`]); without it a new one is made.
 pub fn start_real(
     started: &Arc<Started>,
     key: &ApiKey,
     server: &str,
     events: Sender<Event>,
+    resume: Option<&str>,
 ) -> Handle {
     let started = Arc::clone(started);
     let key = key.clone();
     let server = server.to_owned();
+    let resume = resume.map(str::to_owned);
     spawn(events, move |ports| {
         let now = clock();
-        let id = format!("chat-{:.0}-{}", now * 1000.0, std::process::id());
+        let id =
+            resume.unwrap_or_else(|| format!("chat-{:.0}-{}", now * 1000.0, std::process::id()));
         let built = build(&started, &session_options(), &key, &id, ports.approver)
             .map_err(|e| e.message)?;
         let store = Store::open_space(
@@ -110,7 +162,7 @@ fn wants_colour(env: &[(String, String)]) -> bool {
 }
 
 /// Runs the interface until the person leaves. Returns the exit code.
-pub fn run(started: Arc<Started>) -> u8 {
+pub fn run(started: Arc<Started>, resume: &Resume) -> u8 {
     let words = Catalogue::new(started.settings.ui.language);
     if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() {
         eprintln!(
@@ -121,7 +173,16 @@ pub fn run(started: Arc<Started>) -> u8 {
     }
     let colour = wants_colour(&started.env);
     let theme = (!colour).then(Theme::mono);
-    let start: Starter = Box::new(start_real);
+    let (session, past) = match history(&started, resume) {
+        Ok(found) => found,
+        Err(message) => {
+            eprintln!("laris: {message}");
+            return 2;
+        }
+    };
+    let start: Starter = Box::new(move |started, key, server, events| {
+        start_real(started, key, server, events, session.as_deref())
+    });
     let mut control = Controller::new(
         Arc::clone(&started),
         theme,
@@ -130,14 +191,15 @@ pub fn run(started: Arc<Started>) -> u8 {
             use_env_proxy: true,
         }),
     );
-    let raw = match RawMode::enter() {
+    control.app.show_history(past);
+    let raw = match RawMode::enter_full() {
         Ok(raw) => raw,
         Err(e) => {
             eprintln!("laris: cannot use the terminal: {e}");
             return 2;
         }
     };
-    let mut screen = Screen::new(std::io::stdout(), colour);
+    let mut screen = FullScreen::new(std::io::stdout(), colour);
     let (mut columns, mut rows) = size();
     let mut last = Instant::now();
     let result = (|| -> std::io::Result<()> {
@@ -159,8 +221,16 @@ pub fn run(started: Arc<Started>) -> u8 {
             while let Some(term) = next(waited)? {
                 waited = Duration::ZERO;
                 match term {
-                    Term::Key(key) => control.key_deferred(key),
-                    Term::Paste(text) => control.paste(text),
+                    Term::Key(key) => {
+                        screen.to_end();
+                        control.key_deferred(key);
+                    }
+                    Term::Paste(text) => {
+                        screen.to_end();
+                        control.paste(text);
+                    }
+                    Term::Scroll(lines) => screen.scroll_by(lines),
+                    Term::Page(pages) => screen.page_by(pages, usize::from(rows)),
                     Term::Resize(c, r) => {
                         columns = c.max(1);
                         rows = r.max(1);

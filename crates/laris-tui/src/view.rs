@@ -27,6 +27,11 @@ pub struct Layout {
     pub live: Vec<Line>,
     /// The cursor, as (row in `live`, column).
     pub cursor: Option<(usize, usize)>,
+    /// How many of the first `committed` lines are the header (the banner); a full-screen terminal pins them.
+    pub head: usize,
+    /// Where in `live` the fixed bottom starts (the input box, the menus, the status line, the footer); what is
+    /// above it belongs to the conversation.
+    pub fixed: usize,
 }
 
 impl Layout {
@@ -680,6 +685,7 @@ impl App {
     pub fn layout(&self, width: usize) -> Layout {
         let width = width.max(20);
         let mut committed = banner(self, width);
+        let head = committed.len();
         let (talk, tail, split) = conversation(self, width);
         if !committed.is_empty() && !talk.is_empty() {
             committed.push(Line::blank());
@@ -711,6 +717,7 @@ impl App {
             live.push(spinner_line(self, width));
         }
         if self.blocked {
+            let fixed = live.len();
             live.push(truncate(
                 &Line::styled(
                     format!(" {}", self.text("ui.blocked", &[])),
@@ -722,18 +729,24 @@ impl App {
                 committed,
                 live,
                 cursor: None,
+                head,
+                fixed,
             };
         }
         if let Some(approval) = &self.approval {
+            let fixed = live.len();
             live.extend(approval_block(self, approval, width));
             live.push(hint_line(self, "ui.approval_keys", width));
             return Layout {
                 committed,
                 live,
                 cursor: None,
+                head,
+                fixed,
             };
         }
         if self.sign_in.is_some() {
+            let fixed = live.len();
             let block = sign_in_block(self, width);
             let masked_row = block.len().saturating_sub(1);
             let waiting = self.sign_in.as_ref().is_some_and(|f| f.waiting);
@@ -749,8 +762,11 @@ impl App {
                 committed,
                 live,
                 cursor,
+                head,
+                fixed,
             };
         }
+        let fixed = live.len();
         let (boxed, (row, col)) = input_box(self, width);
         let cursor = Some((live.len() + row, col));
         live.extend(boxed);
@@ -762,6 +778,8 @@ impl App {
             committed,
             live,
             cursor,
+            head,
+            fixed,
         }
     }
 
