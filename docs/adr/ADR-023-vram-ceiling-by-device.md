@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-023"
 title: "ADR-023: VRAM ceiling by device for training and profile runs"
 document_type: "adr"
-status: "ACCEPTED"
+status: "SUPERSEDED"
 version: "0.1.0"
 created_at: "2026-11-18"
 updated_at: "2026-11-18"
@@ -14,7 +14,7 @@ related_documents:
 decision_references:
   - "ADR-022"
   - "ADR-008"
-change_summary: "Owner decision 2026-11-18: the 14.5 GB training ceiling of the RTX 5070 Ti may be raised by the owner on a GPU of 24 GB or more (Colab A100), never on the 16 GB card."
+change_summary: "Superseded 2026-11-20 by D48 (spec.md): the self-trained model is dropped; ResearchLLM is an open-weight third-party LLM. Owner decision 2026-11-18: the 14.5 GB training ceiling of the RTX 5070 Ti may be raised by the owner on a GPU of 24 GB or more (Colab A100), never on the 16 GB card."
 ---
 
 # ADR-023: VRAM ceiling by device

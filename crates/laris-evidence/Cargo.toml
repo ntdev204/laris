@@ -7,7 +7,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
+laris-protocol = { path = "../laris-protocol", version = "1.0.0" }
 regex = "1"
 serde_json = "1"
 

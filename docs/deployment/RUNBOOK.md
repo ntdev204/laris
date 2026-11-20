@@ -74,10 +74,9 @@ working because `caddy_data` survives.
 
 1. Back up first: `docker/backup.sh --with-secrets /safe/place`.
 2. Stop the old stack **without** `-v`: `docker compose -f docker/compose.yaml stop` (never `down -v`, never remove
-   `caddy_data`). Generation 1 ran the same project name; its `api` container is removed by `up --remove-orphans`.
+   `caddy_data`).
 3. Start the new stack with the same `LARIS_DOMAIN`, `LARIS_HTTP_PORT` and `LARIS_HTTPS_PORT` as before.
-4. Generation 2 stands alone: it uses the PostgreSQL schema `laris2` in the same database and leaves generation 1's
-   tables as they are. It does not read generation 1's keys; create new ones.
+4. The server uses the PostgreSQL schema `laris2`; create keys with the admin key (section Keys).
 5. Check: `curl -k https://<domain>:<port>/.well-known/laris/ca.crt | openssl x509 -noout -fingerprint -sha256`
    is the fingerprint clients pinned, and `docker volume inspect laris_caddy_data` still exists.
 

@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-020"
 title: "ADR-020: What ResearchLLM is (stages, stage-6 advisor options, gates)"
 document_type: "adr"
-status: "ACCEPTED"
+status: "SUPERSEDED"
 version: "0.1.0"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
@@ -13,7 +13,7 @@ related_documents:
 decision_references:
   - "ADR-002"
   - "ADR-008"
-change_summary: "Draft for the owner's decision D44: options for the stage-6 generative advisor and the stage-6 gates."
+change_summary: "Superseded 2026-11-20 by D48 (spec.md): the self-trained model is dropped; ResearchLLM is an open-weight third-party LLM. Draft for the owner's decision D44: options for the stage-6 generative advisor and the stage-6 gates."
 ---
 
 # ADR-020: What ResearchLLM is

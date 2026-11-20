@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-002"
 title: "ADR-002: Self-Built Language Foundation & Exclusion of Mandatory Pretrained LLMs"
 document_type: "adr"
-status: "ACCEPTED"
+status: "SUPERSEDED"
 version: "1.0.0"
 created_at: "2026-10-15"
 updated_at: "2026-10-15"
@@ -10,10 +10,9 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/research/LANGUAGE_AND_MODEL_STRATEGY.md"
 decision_references:
   - "ADR-002"
-change_summary: "Enforced self-built model foundation principle and prohibited mandatory pretrained LLM dependencies."
+change_summary: "Superseded 2026-11-20 by D48 (spec.md): the self-trained model is dropped; ResearchLLM is an open-weight third-party LLM. Enforced self-built model foundation principle and prohibited mandatory pretrained LLM dependencies."
 ---
 
 # ADR-002: Self-Built Language Foundation & Exclusion of Mandatory Pretrained LLMs

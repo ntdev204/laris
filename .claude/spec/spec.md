@@ -162,13 +162,13 @@ changes in the ADR named in the task.
 | D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | confirmed 2026-11-13 (ADR-021) |
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | confirmed 2026-11-13 (ADR-021) |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | confirmed 2026-11-13 (ADR-021) |
-| D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 3.0.0 | confirmed 2026-11-13 (ADR-021) |
+| D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 1.0.0 | confirmed 2026-11-13 (ADR-021) |
 | D43 | Stands alone | No reading, migration or compatibility with the earlier Python system; its data, formats and fixtures are not carried over | owner decision 2026-11-18 (ADR-021 addendum) |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
 | D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, English data acquired and STS-B leakage check built in T175, document and config sweep in T176, partition and wiring in T177, retrieval-pair task in T178, then tokenizer fit and retraining (owner) |
 | D47 | Gold sources | No new human annotation for stages 2-4: held-out sets come from public human-labelled sets where one exists (SciFact, PubMedQA labeled, SCIDOCS, TREC-COVID, NFCorpus, DocLayNet boxes), and from LLM labels with `label_source: llm` where none exists; gates are reported as measured on those sets, never as human-gold results, and none is waived | decided by the owner 2026-11-14 (amends the labelling part of D45; D05 guideline and sealing rules still apply) |
-| D48 | ResearchLLM | The self-trained model is dropped: ResearchLLM is an open-weight third-party reasoning LLM (not code-focused) chosen by the owner from a sourced report (T228), with a Prefilter, TF-IDF/BM25 retrieval, a harness loop and the Obsidian brain; learning-data export stays; no distillation from Claude outputs | decided by the owner 2026-11-20 (T227); programme-1 tasks T99-T118, T188-T189, T209, T220-T226 superseded |
+| D48 | ResearchLLM | The self-trained model is dropped: ResearchLLM is an open-weight third-party reasoning LLM (not code-focused) chosen by the owner from a sourced report (T228), with a Prefilter, TF-IDF/BM25 retrieval, a harness loop and the Obsidian brain; learning-data export stays; no distillation from Claude outputs | decided by the owner 2026-11-20 (T227); the superseded programme-1 tasks (T99-T118, T188-T189, T209, T220-T226) were removed from the ledger |
 
 ## 7. Requirements
 
@@ -197,7 +197,7 @@ Acceptance: a failing gate blocks merge; a seeded training call fails CI.
 ### SR-G4 — Git flow and releases
 Owner: governance
 One task, one branch, one session; pull requests only; push, merge, tag and release only with the owner's explicit
-authorisation. Release 3.0.0 merges `laris-v2` into `main` when programme 2 passes its acceptance checklist.
+authorisation. Release 1.0.0 (tag `v1.0.0`) merges `laris-v2` into `main` when programme 2 passes its acceptance checklist.
 Acceptance: release checklist recorded in the task note; `laris-v1` untouched.
 
 ### SR-G5 — Threat model and security suite
@@ -462,7 +462,7 @@ Acceptance: the no-training guard (SR-G3) covers the model block; every owner-ru
 
 ### 7.8 Model programme: ResearchLLM
 
-**D48 (2026-11-20):** the requirements below that describe a self-built model (SR-M4 to SR-M11) are superseded for the first version: the model is an open-weight third-party LLM, nothing is trained, and no gate here is claimed. The tasks that implemented them stay as history; Phase 44 holds the work that replaces them.
+**D48 (2026-11-20):** SR-M4 to SR-M6 describe the dropped self-trained encoder and are kept only as the record of the tasks that implemented them; SR-M7 to SR-M9 (stages 2-4) were removed; SR-M10 and SR-M11 are rewritten for the open-weight LLM. Phase 44 holds the work. Superseded tasks were removed from the ledger and remain in git history.
 
 ### SR-M4 — Data lineage and splits
 Owner: model
@@ -485,35 +485,15 @@ G09, G11 are withdrawn by D46 and recorded, never counted as passed) on held-out
 identity; G12 needs STEM relevance labels (D45).
 Acceptance: the offline readiness check exits 0 on the held-out reports; the owner records the promotion.
 
-### SR-M7 — Stage 2: scientific language
+### SR-M10 — Model service
 Owner: model
-Scientific adaptation pipeline (data, objectives, evaluation) implemented; SciFact NLI macro F1 ≥ 0.82 and evidence
-precision and recall ≥ 0.80 on held-out data.
-Acceptance: readiness check on held-out reports; owner promotion.
+The model service serves the chosen open-weight LLM through P2 and the tool routes (`/v1/chat/completions`, with tool calls) within the VRAM budget of the target GPU; no model is trained.
+Acceptance: P2 contract tests pass; the owner-measured memory use is recorded.
 
-### SR-M8 — Stage 3: scientific OCR
+### SR-M11 — ResearchLLM on an open-weight LLM (D48)
 Owner: model
-OCR of scientific documents: CER ≤ 1.5 % clean and ≤ 3.0 % degraded; layout IoU ≥ 0.88; human gold per D05.
-Acceptance: readiness check on held-out reports; owner promotion; the harness ingestion uses it through a remote tool.
-
-### SR-M9 — Stage 4: manuscript learning
-Owner: model
-OCR-coupled discourse-role model: macro F1 ≥ 0.82 on held-out data.
-Acceptance: readiness check on held-out reports; owner promotion.
-
-### SR-M10 — Stage 5: integration in the model service
-Owner: model
-All qualified heads and models served by the model service within a measured full-load VRAM ≤ 15.0 GB on the target GPU,
-through P2 and the tool routes.
-Acceptance: owner-measured full-load VRAM report; P2 contract tests pass with the real models.
-
-### SR-M11 — Stage 6: ResearchLLM advisor and specialists
-Owner: model
-Self-built generation, reasoning and verification specialists (D44) serving `/v1/chat/completions` with tool calls as the
-research advisor. Gates fixed in ADR-020 before training and measured on held-out data, at least: grounded-answer
-faithfulness, citation accuracy, unsupported-claim rate, tool-call validity, plan quality on scripted research tasks, in English;
-Vietnamese only after the translation layer has its own round-trip gate (ADR-022).
-Acceptance: readiness check on held-out reports; owner promotion; "the model is finished" recorded (section 2).
+ResearchLLM is an open-weight third-party reasoning LLM (not code-focused) chosen by the owner from the sourced report T228, combined with a Prefilter, TF-IDF/BM25 retrieval, the harness loop and the Obsidian brain. Capability is claimed only where measured on a held-out set (ADR-008); until then the model is NOT QUALIFIED.
+Acceptance: the owner records the choice; the chat backend answers a prompt through the model service (T231).
 
 ### SR-M12 — Evaluation and readiness
 Owner: model
@@ -594,8 +574,7 @@ gate, brain write gate with provenance, sealed test splits and data checksums. L
 
 ## 10. Task progress index
 
-The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T100.
-Phase 21: T101-T104. Phase 22: T105-T107. Phase 23: T108-T110. Phase 24: T111-T112. Phase 25: T113-T118.
+The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T98.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T189 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T226 (pair-task remediation; programme 1). Phase 44: T227-T234 (open-weight LLM, D48; programme 1).
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T234 (open-weight LLM, D48; programme 1).
