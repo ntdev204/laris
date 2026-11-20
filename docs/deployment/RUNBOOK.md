@@ -72,8 +72,13 @@ docker/smoke_test.sh
 
 It builds and starts a separate project (`laris-smoke`, ports 28080/28443, its own volumes), checks that only Caddy
 publishes ports, health through Caddy, the first admin key, a user key, one chat answer, the account, a trace
-without message text, and the policy lock; then removes the smoke project. A running server of the project `laris`
-is not touched.
+without message text, and the policy lock; then removes the smoke project. Since T243 it also checks the pipeline: a
+refusal is answered by the Prefilter without the model, the main brain is seeded through the write gate, a covered
+question is answered from the brain with a server evidence entry and no model stage, a free question reaches the model,
+and with grounding `required` (the script restarts the server with it) an uncovered question abstains. The placeholder
+backend shows mechanics only. The cognitive evaluation through the server is `scripts/server_eval.py` (it seeds the
+brain with `configs/cognitive-eval.json`, asks its questions through `/v1/laris/chat` and writes a report under
+`reports/server/`). A running server of the project `laris` is not touched.
 
 ## Upgrading the trial server
 
@@ -108,8 +113,14 @@ the repository checkout) and restart the server: `docker compose -f docker/compo
 
 ## Request pipeline (ADR-025)
 
-Every stage is off by default; with all of them off the chat route is the policy gateway alone. Settings of the
-`server` service (the compose file does not set them yet; T243 adds them with a vault mount):
+Since T243 the compose stack runs the whole pipeline: Prefilter on, grounding `optional`, the rule decider on, the
+composer answering without the model when the brain covers the question, and the main brain in `/state/brain` (the
+state volume). Each setting below is a `LARIS_SERVER__*` variable of the `server` service, and compose fills it from a
+`LARIS_*` variable (for example `LARIS_PIPELINE_GROUNDING`, `LARIS_DECIDER_MIN_COVERAGE`, `LARIS_BRAIN_MIN_SUPPORT`)
+that you can set in `docker/laris.env`. The gate and decider thresholds are starting values that nothing has tuned.
+`LARIS_PIPELINE_PREFILTER=false`, `LARIS_PIPELINE_GROUNDING=off` and `LARIS_DECIDER_ENABLED=false` give the plain
+policy gateway again (the rollback). With `optional`, a question the brain does not cover goes to the model as a free
+answer; with `required` it abstains (`R6-abstain`).
 
 | Variable | Meaning |
 | :--- | :--- |
