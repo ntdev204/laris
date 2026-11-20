@@ -89,7 +89,7 @@ crates/
   laris-protocol           P1, P2, core events; JSON Schema export                   (protocol)
   laris-config             settings, environment, packaged defaults, catalogue        (shared)
   laris-vault              Obsidian format: parse, index, write, schema, lint         (shared)
-  laris-retrieval          BM25, graph expansion, fusion                              (shared)
+  laris-retrieval          BM25, TF-IDF, graph expansion, fusion (shared)
   laris-model-client       P1 client                                                  (harness, loop)
   laris-store              client SQLite                                              (harness, loop)
   laris-core               state machine, event log, decider seam, context            (harness, loop + prompt)
@@ -244,7 +244,7 @@ crash mid-write keeps the old file; lint fails on seeded faults.
 
 ### SR-L3 — Retrieval
 Owner: shared
-BM25, link-neighbourhood expansion and deterministic fusion with span provenance; a dense channel fed by the model block,
+BM25, TF-IDF passage retrieval with note path and character span, link-neighbourhood expansion and deterministic fusion with span provenance; a dense channel fed by the model block,
 labelled not qualified until stage 1 passes G12.
 Acceptance: rankings on `tests/fixtures/retrieval/` equal the recorded expectations; recall@k, MRR, nDCG computed; P95 under 300 ms at
 10,000 notes measured.

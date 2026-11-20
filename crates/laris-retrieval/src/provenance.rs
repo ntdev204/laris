@@ -83,7 +83,7 @@ fn best_span(
 }
 
 /// Byte ranges of the non-blank paragraphs of `body`, trimmed, split at blank lines.
-fn paragraphs(body: &str) -> Vec<(usize, usize)> {
+pub(crate) fn paragraphs(body: &str) -> Vec<(usize, usize)> {
     let mut out = Vec::new();
     let mut start: Option<usize> = None;
     let mut end = 0;

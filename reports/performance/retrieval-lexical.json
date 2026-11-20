@@ -1,0 +1,19 @@
+{
+  "bm25_median_ms": 0.993,
+  "bm25_p95_ms": 1.122,
+  "graph_median_ms": 1.03,
+  "graph_p95_ms": 1.154,
+  "index_build_s": 0.132,
+  "notes": 10000,
+  "queries": 200,
+  "search_build_s": 0.092,
+  "passages": 20000,
+  "passages_build_s": 0.374,
+  "passage_bm25_median_ms": 2.038,
+  "passage_bm25_p95_ms": 2.365,
+  "passage_tfidf_median_ms": 1.632,
+  "passage_tfidf_p95_ms": 1.741,
+  "passage_fused_median_ms": 3.79,
+  "passage_fused_p95_ms": 4.195,
+  "target_p95_ms": 300.0
+}
