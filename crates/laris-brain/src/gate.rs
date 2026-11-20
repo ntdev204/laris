@@ -77,6 +77,10 @@ pub struct SourceProposal {
     pub command: Option<String>,
     /// Hash of the inputs, for a tool run.
     pub inputs_sha256: Option<String>,
+    /// Identifiers of the documents this one cites (kept for the independence check of corroboration).
+    pub cites: Vec<String>,
+    /// The dataset release it reports on, when it names one.
+    pub dataset: Option<String>,
     /// The metadata check.
     pub metadata: MetadataCheck,
     /// Who proposed it.
@@ -368,7 +372,13 @@ impl Gate {
         &self.root
     }
 
-    fn index(&self) -> Result<VaultIndex, GateError> {
+    /// The thresholds this gate was built with.
+    pub fn settings(&self) -> GateSettings {
+        self.settings
+    }
+
+    /// The brain as an index, read fresh from disk.
+    pub fn index(&self) -> Result<VaultIndex, GateError> {
         VaultIndex::build(&self.root, None)
             .map_err(|e| GateError(format!("cannot read the brain: {e:?}")))
     }
@@ -526,6 +536,15 @@ impl Gate {
         }
         if let Some(hash) = &p.inputs_sha256 {
             props.push(("inputs_sha256".to_string(), Value::Str(hash.clone())));
+        }
+        if !p.cites.is_empty() {
+            props.push((
+                "cites".to_string(),
+                Value::List(p.cites.iter().cloned().map(Value::Str).collect()),
+            ));
+        }
+        if let Some(dataset) = &p.dataset {
+            props.push(("dataset".to_string(), Value::Str(dataset.clone())));
         }
         let text = render_note(&props, &body).map_err(|e| (Refusal::Shape, e.message))?;
         self.write_new(&rel, &text)

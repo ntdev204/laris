@@ -4,6 +4,7 @@
 //! * [`gate`]: the only writer of the main-brain vault. A proposal is checked (shape, span, metadata, support,
 //!   contradiction search), then written with an audit record, refused with a reason or written with a Conflict.
 //!   Retracting or replacing a Source downgrades its dependants ([`gate::Gate::retract_source`]).
+//! * [`tools`]: search, acquisition, metadata and quote verification, corroboration and checks, all feeding the gate.
 //! * [`text`]: the rule check on statements that the gate and the answer check share.
 //!
 //! Everything is deterministic: the same vault and proposal give the same decision. Nothing here is tuned by a
@@ -12,6 +13,7 @@
 pub mod audit;
 pub mod gate;
 pub mod text;
+pub mod tools;
 
 pub use gate::{
     ClaimProposal, ConsolidationReport, Decision, Evidence, Gate, GateError, GateSettings,

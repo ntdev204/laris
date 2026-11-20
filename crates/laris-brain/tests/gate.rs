@@ -58,6 +58,8 @@ fn source(title: &str, id: &str, text: &str) -> SourceProposal {
         text: text.into(),
         command: None,
         inputs_sha256: None,
+        cites: vec![],
+        dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
         proposer: who(),
     }
@@ -519,6 +521,8 @@ fn a_tool_run_verifies_only_what_its_output_supports() {
         text: out.into(),
         command: Some("python check.py".into()),
         inputs_sha256: Some("0".repeat(64)),
+        cites: vec![],
+        dataset: None,
         metadata: MetadataCheck::NotApplicable,
         proposer: who(),
     };
