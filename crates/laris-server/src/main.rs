@@ -166,7 +166,24 @@ async fn main() -> ExitCode {
         }
         Err(e) => return fail(e, 2),
     };
-    let backend = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
+    let gateway = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
+    let pipeline_config = match laris_server::pipeline::PipelineConfig::from_env(&env) {
+        Ok(c) => c,
+        Err(e) => return fail(e, 2),
+    };
+    let backend: Arc<dyn Backend> = if pipeline_config.enabled() {
+        match laris_server::pipeline::Pipeline::new(
+            gateway,
+            pipeline_config,
+            policy.prefilter().cloned(),
+            policy.harness().cloned(),
+        ) {
+            Ok(p) => Arc::new(p),
+            Err(e) => return fail(e, 1),
+        }
+    } else {
+        gateway
+    };
     let traces = Arc::new(PgTraces::spawn(storage.clone()));
     let state = Arc::new(
         AppState::new(config, backend, access)

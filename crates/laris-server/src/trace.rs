@@ -24,6 +24,8 @@ const MAX_TOOLS: usize = 32;
 const MAX_BRAIN_TITLE: usize = 120;
 /// Most brain note titles kept per request.
 const MAX_BRAIN: usize = 64;
+/// Most pipeline stages kept per request.
+const MAX_STAGES: usize = 16;
 /// Routes that are not traced: health checks and unknown paths would only fill the table.
 const UNTRACED: [&str; 2] = ["health", "unmatched"];
 /// Rows waiting for the writer before new ones are dropped.
@@ -58,8 +60,25 @@ pub struct TraceRecord {
     pub brain: Vec<String>,
     /// Visible characters of the answer.
     pub answer_chars: u64,
+    /// The pipeline stages the request went through, in order; empty when the pipeline is off.
+    pub stages: Vec<StageRecord>,
     /// Unix seconds when the request ended.
     pub at: f64,
+}
+
+/// One stage of the request pipeline as the audit row keeps it (ADR-025 section 8): a stage name, how it ended, its
+/// time and a rule id or reason code. Never message text.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct StageRecord {
+    /// `prefilter`, `retrieval`, `decider`, `model`, `gate` or `assembly`.
+    pub stage: String,
+    /// `ok`, `skipped`, `stop` or `error`.
+    pub outcome: String,
+    /// Milliseconds the stage took.
+    pub ms: u64,
+    /// The rule id or reason code; empty when there is none.
+    #[serde(default)]
+    pub code: String,
 }
 
 /// Where traces go.
@@ -109,6 +128,7 @@ pub struct TraceDraft {
     tools: Vec<String>,
     brain: Vec<String>,
     answer_chars: u64,
+    stages: Vec<StageRecord>,
 }
 
 /// A name as it may appear in a row: plain characters only, at most `max` of them.
@@ -171,6 +191,28 @@ impl TraceDraft {
             .collect();
     }
 
+    /// Adds a pipeline stage. Names and codes with odd characters are dropped, never kept in part.
+    pub fn add_stage(&mut self, stage: &str, outcome: &str, ms: u64, code: &str) {
+        if self.stages.len() >= MAX_STAGES {
+            return;
+        }
+        let (Some(stage), Some(outcome)) = (plain(stage, 32, false), plain(outcome, 32, false))
+        else {
+            return;
+        };
+        let code = if code.is_empty() {
+            String::new()
+        } else {
+            plain(code, 64, false).unwrap_or_default()
+        };
+        self.stages.push(StageRecord {
+            stage,
+            outcome,
+            ms,
+            code,
+        });
+    }
+
     /// The record of a request that ended with `status` and `outcome`.
     pub fn finish(
         self,
@@ -198,6 +240,7 @@ impl TraceDraft {
             tools: self.tools,
             brain: self.brain,
             answer_chars: self.answer_chars,
+            stages: self.stages,
             at,
         }
     }
@@ -311,8 +354,8 @@ async fn write(storage: &Storage, r: &TraceRecord) -> Result<(), ()> {
     let mut tx = storage.begin().await.map_err(|_| ())?;
     sqlx::query(
         "INSERT INTO traces (kind, request_id, key_id, ts, route, status, outcome, duration_ms, session_id, model, \
-         prompt_tokens, completion_tokens, tool_calls, brain, answer_chars) \
-         VALUES ('request', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+         prompt_tokens, completion_tokens, tool_calls, brain, answer_chars, stages) \
+         VALUES ('request', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
     )
     .bind(&r.request_id)
     .bind(&r.key_id)
@@ -328,6 +371,7 @@ async fn write(storage: &Storage, r: &TraceRecord) -> Result<(), ()> {
     .bind(serde_json::to_string(&r.tools).unwrap_or_else(|_| "[]".to_owned()))
     .bind(serde_json::to_string(&r.brain).unwrap_or_else(|_| "[]".to_owned()))
     .bind(i32::try_from(r.answer_chars).unwrap_or(i32::MAX))
+    .bind(serde_json::to_string(&r.stages).unwrap_or_else(|_| "[]".to_owned()))
     .execute(&mut *tx)
     .await
     .map_err(|_| ())?;
@@ -348,7 +392,7 @@ impl TraceStore for PgTraces {
             let limit = i64::try_from(query.limit()).unwrap_or(500);
             let rows = sqlx::query(
                 "SELECT request_id, key_id, ts, route, status, outcome, duration_ms, session_id, model, \
-                 prompt_tokens, completion_tokens, tool_calls, brain, answer_chars FROM traces \
+                 prompt_tokens, completion_tokens, tool_calls, brain, answer_chars, stages FROM traces \
                  WHERE kind = 'request' \
                  AND ($1::text IS NULL OR key_id = $1) AND ($2::text IS NULL OR route = $2) \
                  AND ($3::text IS NULL OR outcome = $3) \
@@ -381,6 +425,7 @@ impl TraceStore for PgTraces {
                     tools: names(r.get("tool_calls")),
                     brain: names(r.get("brain")),
                     answer_chars: u64::try_from(r.get::<i32, _>("answer_chars")).unwrap_or(0),
+                    stages: serde_json::from_str(&r.get::<String, _>("stages")).unwrap_or_default(),
                     at: r.get("ts"),
                 })
                 .collect()

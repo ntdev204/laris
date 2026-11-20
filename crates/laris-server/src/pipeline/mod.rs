@@ -1,0 +1,616 @@
+//! The request pipeline of the server (ADR-025, T239): what happens to a chat turn between the policy and the model.
+//!
+//! [`Pipeline`] is a [`Backend`] that stands in front of another one (the policy gateway). For a turn it runs, in
+//! order:
+//!
+//! 1. the **Prefilter** on the latest user message: a hit is the answer and the model is never called;
+//! 2. **retrieval** over the server's vault: lexical passages with the note path as their source;
+//! 3. when passages exist, the **harness** ([`laris_policy::HarnessModel`]): the prompt with the passages as marked,
+//!    untrusted data, one or more drafts from the model behind this backend, the evidence gate on each, a bounded
+//!    retry, then the checked draft or an abstention. The draft is buffered (D53), so text that fails the gate is
+//!    never sent;
+//! 4. without passages the turn is *free*: the inner answer is streamed unbuffered and claims no evidence
+//!    (`grounding = optional`), or the turn abstains (`grounding = required`).
+//!
+//! Every stage ends in a step event (stage, outcome, milliseconds, rule or reason code) sent as it ends and kept in
+//! the audit row; no step carries message text. With every stage off the route is the policy gateway alone, as before
+//! (D56). Tool-call proposals and continuations after a tool result are never gated: they go on to the client
+//! (ADR-025 section 2.2).
+//!
+//! This is a text rule over a model's draft (see [`laris_evidence`]): a cited passage that does not support the
+//! sentence passes. It does not qualify any model.
+
+mod adapter;
+
+use crate::backend::{Backend, ChunkStream, StreamFailure};
+use crate::config::ConfigError;
+use crate::error::ApiError;
+use futures_util::future::BoxFuture;
+use futures_util::{StreamExt, stream};
+use laris_core::{Model, ModelRequest};
+use laris_policy::{
+    Ending, HarnessConfig, HarnessModel, NoTurnSink, Outcome, Passage, PassageSource, Prefilter,
+    Redactor, Shield, VaultSource, latest_user_message,
+};
+use laris_protocol::chat::{FinishReason, Usage};
+use laris_protocol::p1::{ChatRequest, ChatResponseChunk, Kind, LarisMeta};
+use laris_protocol::p2::{ChunkChoice, ChunkDelta, ChunkObject};
+use laris_retrieval::{Scorer, VaultPassages};
+use laris_vault::VaultIndex;
+use serde_json::{Map, Value, json};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+/// Keys of the `laris` block that only the server may set. A request that carries them has them dropped (TM-31).
+pub const SERVER_ONLY_KEYS: [&str; 3] = ["steps", "decision", "evidence"];
+
+/// What happens to a turn that retrieval found no passages for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Grounding {
+    /// No retrieval and no harness: the route is the policy gateway alone.
+    Off,
+    /// A turn with passages is answered through the harness; a turn without passages is a free answer.
+    Optional,
+    /// Every turn must be grounded: without passages it abstains and the model is not called.
+    Required,
+}
+
+/// Settings of the pipeline, from `LARIS_SERVER__PIPELINE_*` variables (SR-L1). Every stage is off by default.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PipelineConfig {
+    /// Run the Prefilter (`LARIS_SERVER__PIPELINE_PREFILTER`, `true` or `false`).
+    pub prefilter: bool,
+    /// Retrieval and harness (`LARIS_SERVER__PIPELINE_GROUNDING`: `off`, `optional` or `required`).
+    pub grounding: Grounding,
+    /// The vault retrieval reads (`LARIS_SERVER__PIPELINE_VAULT`).
+    pub vault: Option<PathBuf>,
+    /// Longest draft the server buffers, in characters (`LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS`).
+    pub max_draft_chars: usize,
+    /// Longest one call to the model may take inside the pipeline (`LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS`).
+    pub stage_timeout: Duration,
+}
+
+impl Default for PipelineConfig {
+    fn default() -> Self {
+        Self {
+            prefilter: false,
+            grounding: Grounding::Off,
+            vault: None,
+            max_draft_chars: 64 * 1024,
+            stage_timeout: Duration::from_secs(120),
+        }
+    }
+}
+
+impl PipelineConfig {
+    /// Whether any stage is on.
+    pub fn enabled(&self) -> bool {
+        self.prefilter || self.grounding != Grounding::Off
+    }
+
+    /// Reads the settings from `env`.
+    pub fn from_env(env: &HashMap<String, String>) -> Result<Self, ConfigError> {
+        let get = |name: &str| env.get(name).map(|v| v.trim()).filter(|v| !v.is_empty());
+        let invalid =
+            |name: &'static str, reason: &'static str| ConfigError::Invalid { name, reason };
+        let mut cfg = Self::default();
+        if let Some(v) = get("LARIS_SERVER__PIPELINE_PREFILTER") {
+            cfg.prefilter = match v {
+                "true" => true,
+                "false" => false,
+                _ => {
+                    return Err(invalid(
+                        "LARIS_SERVER__PIPELINE_PREFILTER",
+                        "expected true or false",
+                    ));
+                }
+            };
+        }
+        if let Some(v) = get("LARIS_SERVER__PIPELINE_GROUNDING") {
+            cfg.grounding = match v {
+                "off" => Grounding::Off,
+                "optional" => Grounding::Optional,
+                "required" => Grounding::Required,
+                _ => {
+                    return Err(invalid(
+                        "LARIS_SERVER__PIPELINE_GROUNDING",
+                        "expected off, optional or required",
+                    ));
+                }
+            };
+        }
+        cfg.vault = get("LARIS_SERVER__PIPELINE_VAULT").map(PathBuf::from);
+        let number = |name: &'static str| -> Result<Option<u64>, ConfigError> {
+            match get(name) {
+                None => Ok(None),
+                Some(v) => match v.parse::<u64>() {
+                    Ok(n) if n >= 1 => Ok(Some(n)),
+                    _ => Err(invalid(name, "expected a whole number in range")),
+                },
+            }
+        };
+        if let Some(n) = number("LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS")? {
+            cfg.max_draft_chars = usize::try_from(n).unwrap_or(usize::MAX);
+        }
+        if let Some(n) = number("LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS")? {
+            cfg.stage_timeout = Duration::from_millis(n);
+        }
+        if cfg.grounding != Grounding::Off && cfg.vault.is_none() {
+            return Err(ConfigError::Missing("LARIS_SERVER__PIPELINE_VAULT"));
+        }
+        Ok(cfg)
+    }
+}
+
+/// A pipeline that cannot start. The message names a setting or a file, never content.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum PipelineError {
+    /// The Prefilter is on but `.laris/prefilter.toml` is not there (fail closed).
+    #[error("the Prefilter is on but .laris/prefilter.toml is missing")]
+    NoPrefilter,
+    /// Grounding is on but `.laris/harness.toml` is not there (fail closed).
+    #[error("grounding is on but .laris/harness.toml is missing")]
+    NoHarness,
+}
+
+/// The passages of one turn, found before the harness runs; the harness takes them as its source.
+struct Prefetched(Vec<Passage>);
+
+impl PassageSource for Prefetched {
+    fn passages(&self, _query: &str, limit: usize) -> Vec<Passage> {
+        self.0.iter().take(limit).cloned().collect()
+    }
+}
+
+/// One stage as it ended.
+#[derive(Debug, Clone)]
+struct Step {
+    stage: &'static str,
+    outcome: &'static str,
+    ms: u64,
+    code: String,
+}
+
+impl Step {
+    fn new(stage: &'static str, outcome: &'static str, started: Instant, code: &str) -> Self {
+        Self {
+            stage,
+            outcome,
+            ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+            code: code.to_owned(),
+        }
+    }
+
+    fn json(&self) -> Value {
+        json!({"stage": self.stage, "outcome": self.outcome, "ms": self.ms, "code": self.code})
+    }
+}
+
+struct Inner {
+    backend: Arc<dyn Backend>,
+    prefilter: Option<Arc<Prefilter>>,
+    harness: Option<HarnessConfig>,
+    source: Option<Arc<VaultSource>>,
+    shield: Arc<Shield>,
+    config: PipelineConfig,
+}
+
+/// A [`Backend`] that runs the Prefilter, retrieval and the harness around another one.
+pub struct Pipeline {
+    inner: Arc<Inner>,
+}
+
+impl Pipeline {
+    /// Puts the pipeline in front of `backend`. `prefilter` and `harness` come from the verified policy. A stage that
+    /// is on without its policy file is an error, so the server does not start half checked. A vault that cannot be
+    /// read is not: the retrieval stage reports `skipped` and, when grounding is required, the turn abstains.
+    pub fn new(
+        backend: Arc<dyn Backend>,
+        config: PipelineConfig,
+        prefilter: Option<Arc<Prefilter>>,
+        harness: Option<HarnessConfig>,
+    ) -> Result<Self, PipelineError> {
+        if config.prefilter && prefilter.is_none() {
+            return Err(PipelineError::NoPrefilter);
+        }
+        if config.grounding != Grounding::Off && harness.is_none() {
+            return Err(PipelineError::NoHarness);
+        }
+        let source = (config.grounding != Grounding::Off)
+            .then_some(config.vault.as_deref())
+            .flatten()
+            .and_then(|root| VaultIndex::build(root, None).ok())
+            .map(|index| Arc::new(VaultSource::new(VaultPassages::new(&index), Scorer::Fused)));
+        Ok(Self {
+            inner: Arc::new(Inner {
+                backend,
+                prefilter: config.prefilter.then_some(prefilter).flatten(),
+                harness,
+                source,
+                shield: Arc::new(Shield::new(Arc::new(Redactor::standard()))),
+                config,
+            }),
+        })
+    }
+}
+
+impl Backend for Pipeline {
+    fn chat(&self, request: ChatRequest) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        self.chat_for(request, None)
+    }
+
+    fn chat_for(
+        &self,
+        mut request: ChatRequest,
+        caller: Option<&str>,
+    ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        for key in SERVER_ONLY_KEYS {
+            request.laris.extra.remove(key);
+        }
+        let this = self.inner.clone();
+        let caller = caller.map(str::to_owned);
+        Box::pin(async move { run(this, request, caller).await })
+    }
+
+    fn embed(
+        &self,
+        request: laris_protocol::p1::EmbedRequest,
+    ) -> BoxFuture<'static, Result<laris_protocol::p1::EmbedResponse, ApiError>> {
+        self.inner.backend.embed(request)
+    }
+
+    fn tools(&self) -> BoxFuture<'static, Result<laris_protocol::p1::ToolList, ApiError>> {
+        self.inner.backend.tools()
+    }
+
+    fn tool(
+        &self,
+        name: String,
+        request: laris_protocol::p1::ToolRequest,
+    ) -> BoxFuture<'static, Result<laris_protocol::p1::ToolResponse, ApiError>> {
+        self.inner.backend.tool(name, request)
+    }
+}
+
+const FAILED: &str = "the model service failed";
+
+fn chunk(
+    delta: ChunkDelta,
+    finish: Option<FinishReason>,
+    laris: Option<LarisMeta>,
+    usage: Option<Usage>,
+    model: &str,
+) -> ChatResponseChunk {
+    ChatResponseChunk {
+        id: "laris-pipeline".to_owned(),
+        object: ChunkObject::default(),
+        model: model.to_owned(),
+        laris,
+        choices: if delta == ChunkDelta::default() && finish.is_none() {
+            Vec::new()
+        } else {
+            vec![ChunkChoice {
+                index: 0,
+                delta,
+                finish_reason: finish,
+                extra: Map::new(),
+            }]
+        },
+        usage,
+        extra: Map::new(),
+    }
+}
+
+fn step_chunk(step: &Step) -> ChatResponseChunk {
+    let mut extra = Map::new();
+    extra.insert("steps".to_owned(), json!([step.json()]));
+    chunk(
+        ChunkDelta::default(),
+        None,
+        Some(LarisMeta {
+            brain: Vec::new(),
+            extra,
+        }),
+        None,
+        "",
+    )
+}
+
+/// The chunks of an answer the pipeline wrote itself (a Prefilter hit, an abstention): the text, the end and zero
+/// usage, because no completion was produced.
+fn canned(text: &str) -> Vec<ChatResponseChunk> {
+    vec![
+        chunk(
+            ChunkDelta {
+                content: Some(text.to_owned()),
+                ..ChunkDelta::default()
+            },
+            None,
+            None,
+            None,
+            "",
+        ),
+        chunk(
+            ChunkDelta::default(),
+            Some(FinishReason::Stop),
+            None,
+            None,
+            "",
+        ),
+        chunk(
+            ChunkDelta::default(),
+            None,
+            None,
+            Some(Usage::default()),
+            "",
+        ),
+    ]
+}
+
+fn ready(chunks: Vec<ChatResponseChunk>) -> ChunkStream {
+    stream::iter(chunks.into_iter().map(Ok)).boxed()
+}
+
+async fn run(
+    this: Arc<Inner>,
+    request: ChatRequest,
+    caller: Option<String>,
+) -> Result<ChunkStream, ApiError> {
+    // a summary, a workflow-free continuation after a tool result and a pipeline with every stage off are not turns
+    // this pipeline checks
+    let question = (this.config.enabled() && request.laris.kind == Kind::Turn)
+        .then(|| latest_user_message(&request.messages))
+        .flatten();
+    let Some(question) = question else {
+        return this.backend.chat_for(request, caller.as_deref()).await;
+    };
+    let mut steps: Vec<Step> = Vec::new();
+
+    // stage 3: the Prefilter
+    match &this.prefilter {
+        None => steps.push(Step::new("prefilter", "skipped", Instant::now(), "")),
+        Some(prefilter) => {
+            let started = Instant::now();
+            match prefilter.check(&question) {
+                Outcome::Answer(hit) => {
+                    steps.push(Step::new("prefilter", "stop", started, &hit.rule));
+                    let mut out: Vec<ChatResponseChunk> = steps.iter().map(step_chunk).collect();
+                    out.extend(canned(&hit.text));
+                    return Ok(ready(out));
+                }
+                Outcome::Pass => steps.push(Step::new("prefilter", "ok", started, "")),
+            }
+        }
+    }
+
+    // stage 4: retrieval
+    let (Some(harness), true) = (&this.harness, this.config.grounding != Grounding::Off) else {
+        return free(this.clone(), request, caller, steps).await;
+    };
+    let started = Instant::now();
+    let passages = match &this.source {
+        None => {
+            steps.push(Step::new(
+                "retrieval",
+                "skipped",
+                started,
+                "vault_unavailable",
+            ));
+            Vec::new()
+        }
+        Some(source) => {
+            let (source, limit, text) = (source.clone(), harness.passages, question.clone());
+            let found = tokio::task::spawn_blocking(move || source.passages(&text, limit)).await;
+            match found {
+                Ok(found) => {
+                    steps.push(Step::new("retrieval", "ok", started, ""));
+                    found
+                }
+                Err(_) => {
+                    steps.push(Step::new("retrieval", "error", started, "retrieval_failed"));
+                    Vec::new()
+                }
+            }
+        }
+    };
+    if passages.is_empty() {
+        if this.config.grounding == Grounding::Required {
+            let code = if steps.last().is_some_and(|s| s.outcome == "ok") {
+                "no_evidence"
+            } else {
+                "vault_unavailable"
+            };
+            steps.push(Step::new("gate", "stop", Instant::now(), code));
+            let mut out: Vec<ChatResponseChunk> = steps.iter().map(step_chunk).collect();
+            out.extend(canned(&harness.abstain_no_source));
+            return Ok(ready(out));
+        }
+        return free(this.clone(), request, caller, steps).await;
+    }
+
+    // stages 6 and 7: the model and the evidence gate, buffered
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<ChatResponseChunk, StreamFailure>>(16);
+    for step in &steps {
+        let _ = tx.try_send(Ok(step_chunk(step)));
+    }
+    let harness = harness.clone();
+    tokio::spawn(grounded(
+        this, request, caller, harness, passages, steps, tx,
+    ));
+    Ok(stream::unfold(rx, |mut rx| async move {
+        rx.recv().await.map(|item| (item, rx))
+    })
+    .boxed())
+}
+
+/// A free answer: the inner stream, unbuffered, behind the step events so far.
+async fn free(
+    this: Arc<Inner>,
+    request: ChatRequest,
+    caller: Option<String>,
+    steps: Vec<Step>,
+) -> Result<ChunkStream, ApiError> {
+    let inner = this.backend.chat_for(request, caller.as_deref()).await?;
+    let prefix: Vec<Result<ChatResponseChunk, StreamFailure>> =
+        steps.iter().map(|s| Ok(step_chunk(s))).collect();
+    Ok(stream::iter(prefix).chain(inner).boxed())
+}
+
+/// Runs the harness on a blocking thread and sends its result as chunks.
+async fn grounded(
+    this: Arc<Inner>,
+    request: ChatRequest,
+    caller: Option<String>,
+    harness: HarnessConfig,
+    passages: Vec<Passage>,
+    mut steps: Vec<Step>,
+    tx: tokio::sync::mpsc::Sender<Result<ChatResponseChunk, StreamFailure>>,
+) {
+    let seen = Arc::new(adapter::Seen::default());
+    let model = adapter::BackendModel::new(
+        this.backend.clone(),
+        request.clone(),
+        caller,
+        tokio::runtime::Handle::current(),
+        this.config.max_draft_chars,
+        this.config.stage_timeout,
+        seen.clone(),
+    );
+    let (shield, messages, tools) = (
+        this.shield.clone(),
+        request.messages.clone(),
+        request.tools.clone(),
+    );
+    let started = Instant::now();
+    let joined = tokio::task::spawn_blocking(move || {
+        let mut harness = HarnessModel::new(
+            model,
+            Prefetched(passages),
+            shield,
+            harness,
+            Arc::new(NoTurnSink),
+        );
+        let answer = harness.answer(&ModelRequest {
+            messages: &messages,
+            note: None,
+            tools: &tools,
+        });
+        (answer, harness.last_turn().map(|t| t.ending))
+    })
+    .await;
+    let total = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let model_ms = seen.model_ms();
+    let step = |stage, outcome, ms, code: &str| Step {
+        stage,
+        outcome,
+        ms,
+        code: code.to_owned(),
+    };
+    let model_name = seen.model();
+    match joined {
+        Ok((Ok(answer), ending)) => {
+            steps.push(step("model", "ok", model_ms, ""));
+            let gate = match ending {
+                Some(Ending::Answered) => step("gate", "ok", total.saturating_sub(model_ms), ""),
+                Some(Ending::PassedOn) | None => step("gate", "skipped", 0, "tool_call_proposal"),
+                Some(Ending::NoSource) => step(
+                    "gate",
+                    "stop",
+                    total.saturating_sub(model_ms),
+                    "no_evidence",
+                ),
+                Some(Ending::ModelAbstained) => step(
+                    "gate",
+                    "stop",
+                    total.saturating_sub(model_ms),
+                    "model_abstained",
+                ),
+                Some(Ending::Unverified) => step(
+                    "gate",
+                    "stop",
+                    total.saturating_sub(model_ms),
+                    "unsupported_draft",
+                ),
+            };
+            steps.push(gate);
+            if ending == Some(Ending::NoSource) {
+                // every passage was dropped before the model saw it: the model was not asked
+                steps.retain(|s| s.stage != "model");
+            }
+            let brain = seen.brain();
+            let mut out: Vec<ChatResponseChunk> =
+                steps[steps.len() - 2..].iter().map(step_chunk).collect();
+            if !brain.is_empty() {
+                out.push(chunk(
+                    ChunkDelta::default(),
+                    None,
+                    Some(LarisMeta {
+                        brain,
+                        extra: Map::new(),
+                    }),
+                    None,
+                    &model_name,
+                ));
+            }
+            let finish = if answer.tool_calls.is_empty() {
+                FinishReason::Stop
+            } else {
+                FinishReason::ToolCalls
+            };
+            out.push(chunk(
+                ChunkDelta {
+                    content: (!answer.text.is_empty()).then(|| answer.text.clone()),
+                    tool_calls: answer.tool_calls.clone(),
+                    ..ChunkDelta::default()
+                },
+                None,
+                None,
+                None,
+                &model_name,
+            ));
+            out.push(chunk(
+                ChunkDelta::default(),
+                Some(finish),
+                None,
+                None,
+                &model_name,
+            ));
+            out.push(chunk(
+                ChunkDelta::default(),
+                None,
+                None,
+                Some(answer.usage.unwrap_or_default()),
+                &model_name,
+            ));
+            for c in out {
+                if tx.send(Ok(c)).await.is_err() {
+                    return;
+                }
+            }
+        }
+        Ok((Err(error), _)) => {
+            let code = seen.failure().unwrap_or_else(|| "model_unavailable".into());
+            let _ = error;
+            let step = step("model", "error", model_ms, &code);
+            let _ = tx.send(Ok(step_chunk(&step))).await;
+            let _ = tx
+                .send(Err(StreamFailure {
+                    message: FAILED.to_owned(),
+                    kind: "ModelUnavailable".to_owned(),
+                }))
+                .await;
+        }
+        Err(_) => {
+            let step = step("model", "error", total, "stage_failed");
+            let _ = tx.send(Ok(step_chunk(&step))).await;
+            let _ = tx
+                .send(Err(StreamFailure {
+                    message: "the pipeline failed".to_owned(),
+                    kind: "PipelineFailed".to_owned(),
+                }))
+                .await;
+        }
+    }
+}

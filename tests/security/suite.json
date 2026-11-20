@@ -345,6 +345,13 @@
             "an_unreachable_database_error_holds_neither_address_nor_password"
           ],
           "needs": "postgres"
+        },
+        {
+          "package": "laris-server",
+          "target": "pipeline",
+          "tests": [
+            "a_grounded_answer_passes_the_gate_and_shows_its_stages"
+          ]
         }
       ]
     },
@@ -602,6 +609,44 @@
             "rewind_never_writes_where_a_tool_could_not_and_checkpoints_are_capped",
             "rewind_without_checkpoints_is_a_typed_error",
             "write_creates_overwrites_redacts_and_checkpoints"
+          ]
+        }
+      ]
+    },
+    "SEC-PIPE-01": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "pipeline",
+          "tests": [
+            "steps_decision_and_evidence_in_a_request_are_dropped",
+            "a_prefilter_hit_never_reaches_the_model",
+            "a_stage_that_is_on_without_its_policy_file_does_not_start"
+          ]
+        }
+      ]
+    },
+    "SEC-PIPE-02": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "pipeline",
+          "tests": [
+            "a_passage_that_gives_orders_never_reaches_the_model",
+            "a_draft_that_fails_the_gate_is_retried_then_the_turn_abstains"
+          ]
+        }
+      ]
+    },
+    "SEC-PIPE-04": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "pipeline",
+          "tests": [
+            "a_draft_larger_than_the_buffer_is_an_error_not_a_truncation",
+            "a_draft_that_fails_the_gate_is_retried_then_the_turn_abstains",
+            "a_model_that_fails_is_a_typed_error_and_a_step"
           ]
         }
       ]

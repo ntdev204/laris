@@ -708,6 +708,7 @@ async fn postgres_old_request_traces_are_purged_by_the_retention_task() {
         tools: vec![],
         brain: vec![],
         answer_chars: 0,
+        stages: vec![],
         at,
     };
     traces.record(record(old, "old"));
