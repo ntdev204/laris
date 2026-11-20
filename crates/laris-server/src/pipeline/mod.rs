@@ -21,6 +21,9 @@
 //! sentence passes. It does not qualify any model.
 
 mod adapter;
+mod decider;
+
+pub use decider::{DeciderConfig, Decision, TurnCounters, Verdict, decide};
 
 use crate::backend::{Backend, Caller, ChunkStream, StreamFailure};
 use crate::config::ConfigError;
@@ -172,6 +175,8 @@ struct Step {
     outcome: &'static str,
     ms: u64,
     code: String,
+    /// The decider's choice (action and rule), sent once with its step.
+    decision: Option<Value>,
 }
 
 impl Step {
@@ -181,6 +186,7 @@ impl Step {
             outcome,
             ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
             code: code.to_owned(),
+            decision: None,
         }
     }
 
@@ -194,6 +200,7 @@ struct Inner {
     prefilter: Option<Arc<Prefilter>>,
     harness: Option<HarnessConfig>,
     brain: Option<Arc<MainBrain>>,
+    decider: Option<DeciderConfig>,
     shield: Arc<Shield>,
     config: PipelineConfig,
 }
@@ -229,10 +236,23 @@ impl Pipeline {
                 prefilter: config.prefilter.then_some(prefilter).flatten(),
                 harness,
                 brain,
+                decider: None,
                 shield: Arc::new(Shield::new(Arc::new(Redactor::standard()))),
                 config,
             }),
         })
+    }
+}
+
+impl Pipeline {
+    /// Puts the rule decider (stage 5) behind the decision seam. It needs the main brain and grounding.
+    pub fn with_decider(mut self, config: DeciderConfig) -> Result<Self, PipelineError> {
+        let inner = Arc::get_mut(&mut self.inner).expect("the pipeline is not shared yet");
+        if inner.brain.is_none() || inner.config.grounding == Grounding::Off {
+            return Err(PipelineError::NoBrain);
+        }
+        inner.decider = Some(config);
+        Ok(self)
     }
 }
 
@@ -321,6 +341,9 @@ fn chunk(
 fn step_chunk(step: &Step) -> ChatResponseChunk {
     let mut extra = Map::new();
     extra.insert("steps".to_owned(), json!([step.json()]));
+    if let Some(decision) = &step.decision {
+        extra.insert("decision".to_owned(), decision.clone());
+    }
     chunk(
         ChunkDelta::default(),
         None,
@@ -336,7 +359,7 @@ fn step_chunk(step: &Step) -> ChatResponseChunk {
 /// The chunks of an answer the pipeline wrote itself (a Prefilter hit, an abstention): the text, the end and zero
 /// usage, because no completion was produced.
 fn canned(text: &str) -> Vec<ChatResponseChunk> {
-    vec![
+    let say = (!text.is_empty()).then(|| {
         chunk(
             ChunkDelta {
                 content: Some(text.to_owned()),
@@ -346,22 +369,26 @@ fn canned(text: &str) -> Vec<ChatResponseChunk> {
             None,
             None,
             "",
-        ),
-        chunk(
-            ChunkDelta::default(),
-            Some(FinishReason::Stop),
-            None,
-            None,
-            "",
-        ),
-        chunk(
-            ChunkDelta::default(),
-            None,
-            None,
-            Some(Usage::default()),
-            "",
-        ),
-    ]
+        )
+    });
+    say.into_iter()
+        .chain([
+            chunk(
+                ChunkDelta::default(),
+                Some(FinishReason::Stop),
+                None,
+                None,
+                "",
+            ),
+            chunk(
+                ChunkDelta::default(),
+                None,
+                None,
+                Some(Usage::default()),
+                "",
+            ),
+        ])
+        .collect()
 }
 
 fn ready(chunks: Vec<ChatResponseChunk>) -> ChunkStream {
@@ -399,7 +426,10 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
     }
 
     // stage 4: retrieval
-    let (Some(harness), true) = (&this.harness, this.config.grounding != Grounding::Off) else {
+    let (Some(harness), true) = (
+        this.harness.clone(),
+        this.config.grounding != Grounding::Off,
+    ) else {
         return free(this.clone(), request, caller, steps).await;
     };
     let started = Instant::now();
@@ -433,6 +463,81 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
             }
         }
     };
+    // stage 5: the decider
+    if let Some(decider) = this.decider {
+        let started = Instant::now();
+        let index = if brain_read {
+            this.brain.as_ref().and_then(|b| b.index())
+        } else {
+            None
+        };
+        let Some(index) = index else {
+            let code = if brain_read {
+                "vault_unavailable"
+            } else {
+                "no_permission"
+            };
+            steps.push(Step::new("decider", "skipped", started, code));
+            return after_decider(this, request, caller, harness, passages, steps).await;
+        };
+        let turn = TurnCounters::from_request(&request.laris.extra);
+        let (text, found, required) = (
+            question.clone(),
+            !passages.is_empty(),
+            this.config.grounding == Grounding::Required,
+        );
+        let abstain = harness.abstain_no_source.clone();
+        let decided = tokio::task::spawn_blocking(move || {
+            decide(&decider, &index, &text, found, required, &turn, &abstain)
+        })
+        .await;
+        match decided {
+            Err(_) => steps.push(Step::new("decider", "error", started, "decider_failed")),
+            Ok(decision) => {
+                let ends = !matches!(decision.verdict, Verdict::Continue | Verdict::Compose(_));
+                let mut step = Step::new(
+                    "decider",
+                    if ends { "stop" } else { "ok" },
+                    started,
+                    &decision.code(),
+                );
+                step.decision = Some(json!({
+                    "action": decision.choice.act.as_str(),
+                    "rule": decision.choice.rule,
+                }));
+                steps.push(step);
+                match decision.verdict {
+                    Verdict::Continue => {}
+                    Verdict::End(text) => {
+                        let mut out: Vec<ChatResponseChunk> =
+                            steps.iter().map(step_chunk).collect();
+                        out.extend(canned(&text));
+                        return Ok(ready(out));
+                    }
+                    Verdict::Compose(text) => {
+                        steps.push(Step::new("assembly", "ok", Instant::now(), ""));
+                        let mut out: Vec<ChatResponseChunk> =
+                            steps.iter().map(step_chunk).collect();
+                        out.extend(canned(&text));
+                        return Ok(ready(out));
+                    }
+                }
+            }
+        }
+    }
+    after_decider(this, request, caller, harness, passages, steps).await
+}
+
+/// Stages 6 and 7 for a turn the decider let through: without passages a free answer (or the abstention when grounding
+/// is required), with passages the buffered, gated answer.
+async fn after_decider(
+    this: Arc<Inner>,
+    request: ChatRequest,
+    caller: Option<String>,
+    harness: HarnessConfig,
+    passages: Vec<Passage>,
+    mut steps: Vec<Step>,
+) -> Result<ChunkStream, ApiError> {
     if passages.is_empty() {
         if this.config.grounding == Grounding::Required {
             let code = match steps.last() {
@@ -453,7 +558,6 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
     for step in &steps {
         let _ = tx.try_send(Ok(step_chunk(step)));
     }
-    let harness = harness.clone();
     tokio::spawn(grounded(
         this, request, caller, harness, passages, steps, tx,
     ));
@@ -538,6 +642,7 @@ async fn grounded(
         outcome,
         ms,
         code: code.to_owned(),
+        decision: None,
     };
     let model_name = seen.model();
     match joined {

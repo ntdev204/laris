@@ -126,6 +126,14 @@ thresholds `LARIS_SERVER__MAIN_BRAIN_MIN_SUPPORT`, `_MIN_EQUIVALENCE`, `_SUBJECT
 source, quote, requested level, evidence) and `POST /v1/admin/brain/retract` (title, reason). A caller needs `brain.read`
 (default on for `user`) to have an answer grounded in it. No route returns a note.
 
+The **decider** (stage 5, the rule decider of `laris-brain`) is off unless `LARIS_SERVER__DECIDER_ENABLED=true`; then every
+value is required, none has a default: `_REQUIRED_LEVEL` and `_ANSWER_MIN_LEVEL` (`sourced`, `corroborated`, `verified`,
+`reviewed`), `_MIN_COVERAGE` and `_ANSWER_MIN_COVER` (0 to 1), `_MAX_RETRIEVALS`, `_MAX_ADVISOR_ASKS`, `_MAX_REPEATS`,
+`_ANSWER_MAX_NOTES`, `_MAX_STEPS` and `_MAX_SECONDS` (the caps the client's loop counters are clamped to).
+`LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` lets the composer answer from accepted Claims without calling the model
+when the decider chooses `answer`. The decision network cannot be enabled (it is not promoted); setting
+`LARIS_SERVER__DECIDER_NETWORK` stops the server. Each decision is a step with the code `action:rule`.
+
 Attempts, passages and the abstention texts are the owner's policy in `.laris/harness.toml`. Each stage and its time
 are in the trace row (`stages`, `GET /v1/admin/traces`), never the message. The database needs migration 0003, which
 the server applies at start.

@@ -111,6 +111,7 @@ impl PassageSource for BrainSource {
 pub struct MainBrain {
     gate: Arc<Gate>,
     source: RwLock<Option<Arc<BrainSource>>>,
+    index: RwLock<Option<Arc<VaultIndex>>>,
     /// One writer at a time: the gate reads, decides and rewrites files.
     writing: tokio::sync::Mutex<()>,
 }
@@ -128,6 +129,7 @@ impl MainBrain {
         let brain = Self {
             gate: Arc::new(gate),
             source: RwLock::new(None),
+            index: RwLock::new(None),
             writing: tokio::sync::Mutex::new(()),
         };
         brain.reindex();
@@ -142,8 +144,21 @@ impl MainBrain {
             .clone()
     }
 
+    /// The vault index as of the last write, for the decider's measurements; `None` when the vault cannot be read.
+    pub fn index(&self) -> Option<Arc<VaultIndex>> {
+        self.index
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
     fn reindex(&self) {
-        let fresh = VaultIndex::build(self.gate.root(), None).ok().map(|index| {
+        let built = VaultIndex::build(self.gate.root(), None).ok().map(Arc::new);
+        *self
+            .index
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = built.clone();
+        let fresh = built.map(|index| {
             let hidden = ["retracted", "superseded"]
                 .into_iter()
                 .flat_map(|status| index.by_prop("status", status))

@@ -175,18 +175,27 @@ async fn main() -> ExitCode {
         Ok(None) => None,
         Err(e) => return fail(e, 2),
     };
+    let decider_config = match laris_server::pipeline::DeciderConfig::from_env(&env) {
+        Ok(c) => c,
+        Err(e) => return fail(e, 2),
+    };
     let pipeline_config = match laris_server::pipeline::PipelineConfig::from_env(&env) {
         Ok(c) => c,
         Err(e) => return fail(e, 2),
     };
     let backend: Arc<dyn Backend> = if pipeline_config.enabled() {
-        match laris_server::pipeline::Pipeline::new(
+        let built = laris_server::pipeline::Pipeline::new(
             gateway,
             pipeline_config,
             policy.prefilter().cloned(),
             policy.harness().cloned(),
             main_brain.clone(),
-        ) {
+        );
+        let built = match (built, decider_config) {
+            (Ok(p), Some(d)) => p.with_decider(d),
+            (other, _) => other,
+        };
+        match built {
             Ok(p) => Arc::new(p),
             Err(e) => return fail(e, 1),
         }
