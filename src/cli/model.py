@@ -18,7 +18,6 @@ from cli.commands import (
     language_encoder,
     partition,
     readiness,
-    suite,
     tokenizer,
 )
 from cli.parser import Table, run
@@ -38,7 +37,6 @@ COMMANDS: Table = {
         "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
         "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
         "calibrate": ("Tighten thresholds from measured val reports", calibrate),
-        "suite": ("Model-free suites (retrieval, citation, extraction, leak, ...)", suite),
     },
     "infer": {name: (f"Run {name} on a checkpoint", cmd) for name, cmd in infer.COMMANDS.items()},
 }

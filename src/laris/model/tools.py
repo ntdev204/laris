@@ -9,7 +9,7 @@ reported as `tool_failed` without its text.
 
 Call sites of the Python code this replaces (inventory, T149):
   * `research.evaluation.extraction.extract_spans` -> `extract_discourse` (macro-F1 gate)
-  * `research.evaluation.suite.suite_citation`     -> `parse_bibliography`, `analyse_citations`
+  * the citation suite of the removed Python runner -> `parse_bibliography`, `analyse_citations`
   * `shared.scholarly.mining` (overview, term_trends, near_duplicates, group_documents)
                                                    -> `mine_literature`
   * `shared.scientific.limitations`                -> `detect_limitations`

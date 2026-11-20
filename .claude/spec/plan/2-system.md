@@ -59,7 +59,7 @@ Exit criteria:
 
 ### Phase 32 — Server: RAG
 Goal: grounded answers from workspace retrieval and the system brain.
-Tasks: T145, T146, T215, T147, T148
+Tasks: T145, T146, T215, T217, T147, T148
 Exit criteria:
 - Retrieval matches the recorded expectations; confidentiality suite passes; brain navigation within budget; the RAG-rung
   scenario passes with the evidence gate.
