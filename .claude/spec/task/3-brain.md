@@ -47,7 +47,8 @@ Status values and rules as in [task/1-model.md](1-model.md).
     sources and feed the write gate
 - Validation:
   - Fixture runs promote only correctly verified claims; every promotion carries provenance
-- Status: pending
+- Status: done
+- Note: 2026-11-20: `crates/laris-brain/src/tools.rs`. The outside world is two traits, `Scholarly` (search, fetch) and `Registry` (resolve an identifier), plus `ToolRunner` for checks; the server binds them to real services from configuration (no endpoint, key or default in code), so **no network adapter exists yet**: the tools are proven on fixtures only, and the server wiring is left to the task that connects the brain to the server. `Tools` offers `search` (deterministic, de-duplicated, skips stored identifiers), `acquire` (fetch, `verify_metadata` against the registry by family names, year and title words, then `Gate::submit_source`; a document that does not resolve or differs is refused), `verify_quote`, `promote_claim` (gate, then `corroborate`, then `Provenance`), `corroborate` (BM25 candidates, `independent`: different identifier, no mutual citation, not the same dataset release; the gate's rule check decides equivalence), `verify_with_tool` (stores the run as a `tool_run` Source, then raises to `verified` only if the output supports the Claim). `SourceProposal` gained `cites` and `dataset`. Tools never write the vault. 4 tests in `tests/tools.rs` on fixtures (good, wrong-year, unresolved, copy that cites the first, fabricated quote): exactly 3 Claims stored, each with provenance (identifier, metadata check, retrieved, span reproduced, proposer, audit sequence), vault lint clean.
 
 ### T166 — Answer assembly from accepted claims
 - Requirements: SR-K4
