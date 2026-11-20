@@ -105,3 +105,10 @@ Tasks: T113, T114, T115, T116, T117, T118
 Exit criteria:
 - The stage-6 gates of ADR-020 pass on held-out data in English; Vietnamese only after the translation layer has its own gate (ADR-022).
 - The owner records "the model is finished" (spec section 2); programme 2's client phase and programme 3 may start.
+
+### Phase 44 — ResearchLLM on an open-weight LLM (D48)
+Goal: an open-weight reasoning LLM, with a Prefilter, lexical retrieval, a harness loop and the Obsidian brain, replaces the self-trained model.
+Tasks: T227, T228, T229, T230, T231, T232, T233, T234
+Exit criteria:
+- The chat route answers from a third-party open-weight model chosen by the owner; answers cite vault passages or abstain.
+- The self-trained model code is removed; learning export is kept. No model is declared qualified by this phase.
