@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-025"
 title: "ADR-025: Request pipeline in the server"
 document_type: "adr"
-status: "PROPOSED"
+status: "ACCEPTED"
 version: "0.1.0"
 created_at: "2026-11-20"
 updated_at: "2026-11-20"
@@ -19,14 +19,14 @@ decision_references:
   - "ADR-008"
   - "ADR-021"
   - "ADR-024"
-change_summary: "Draft for owner acceptance (task T238): stage order, what moves to the server, vault and brain placement, P1 step events and evidence list, failure modes, threat-model changes."
+change_summary: "Accepted by the owner 2026-11-20 (task T238): stage order, what moves to the server, vault and brain placement, P1 step events and evidence list, failure modes, threat-model changes."
 ---
 
 # ADR-025: Request pipeline in the server
 
 ## Metadata
-- **Status:** PROPOSED on 2026-11-20. It becomes ACCEPTED only when the owner says so; no pipeline code (T239-T243) starts before that (SR-K1 rule, T238 validation).
-- **Requirements:** SR-S4, SR-S5, SR-K1 · **Task:** T238 · **Decisions proposed:** D49-D56 · **Builds on:** ADR-021 (D28, D37, D39), ADR-024 (brain, closed action set, rule decider), ADR-004, ADR-008
+- **Status:** ACCEPTED on 2026-11-20 by the owner ("Chấp nhận"), as drafted; pipeline code (T239-T243) may now start. Any change to D49-D56 needs an amendment to this ADR.
+- **Requirements:** SR-S4, SR-S5, SR-K1 · **Task:** T238 · **Decisions:** D49-D56 · **Builds on:** ADR-021 (D28, D37, D39), ADR-024 (brain, closed action set, rule decider), ADR-004, ADR-008
 - **Amends:** D28 (where the loop runs) and D39 (where the evidence check runs), as set out in section 3. Every other ADR-021 decision stands.
 - **Qualification:** the foundation model and ResearchLLM (Qwen3.5-9B through the open-weight backend) are NOT QUALIFIED. This ADR moves *mechanics* into the server and makes answers faithful to their sources; it claims no model capability. Results of T243 are system measurements only.
 
@@ -168,7 +168,7 @@ New rows for `docs/architecture/THREAT_MODEL.md`, added by T239-T243 with their 
 
 The server already receives every user message; the pipeline does not widen what the server *sees*. It widens what the server *does with it*, so the controls above are on what stays out of logs and what a key may read. The honest limit stays (ADR-024 sections 4 and 6.3): retrieval, contradiction and outside-set checks are filters with a measured, non-zero miss rate. The pipeline guarantees faithfulness to accepted sources up to that rate, not truth.
 
-## 10. Decisions proposed
+## 10. Decisions (accepted)
 
 | ID | Decision | Choice | Alternative rejected, reason |
 | :--- | :--- | :--- | :--- |
@@ -205,4 +205,4 @@ The server already receives every user message; the pipeline does not widen what
 ## 14. Validation
 - SR-K1 / T238: the owner accepts this ADR; **no pipeline code before it**.
 - Each later task cites the section it implements: T239 sections 2, 7, 8; T240 section 5; T241 section 4; T242 section 6; T243 sections 2, 7, 9 and the exit criteria of Phase 47.
-- On acceptance: spec decisions D49-D56 and the D28/D39 amendments are recorded, the THREAT_MODEL rows of section 9 are added by the owning tasks, and this file's status becomes ACCEPTED.
+- Accepted 2026-11-20: spec decisions D49-D56 and the D28/D39 amendments are recorded in the spec; the THREAT_MODEL rows of section 9 are added by the owning tasks.

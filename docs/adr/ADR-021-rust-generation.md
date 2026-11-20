@@ -108,3 +108,9 @@ The `laris-v1` branch was removed on 2026-11-20.
 -sign`), and `install.sh` (openssl), `install.ps1` (.NET CNG) and the npm wrapper (Node crypto) check the same
 signature against the public key written into them. ECDSA P-256 was preferred to Ed25519 because Windows PowerShell has
 no Ed25519. Notarisation and Authenticode remain for release 1.0.0 if the owner holds the certificates.
+
+## Addendum 2026-11-20: D28 and D39 amended by ADR-025
+
+The owner accepted ADR-025. The agent loop, tool execution and the project vault stay on the client (D28's reason
+stands); the per-request pipeline (Prefilter, retrieval, brain decider, model call, evidence gate, assembly) runs in
+the server. The evidence check (D39) runs once per piece of evidence, by the side that holds it.

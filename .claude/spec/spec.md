@@ -149,7 +149,7 @@ changes in the ADR named in the task.
 | ID | Decision | Choice | Status |
 |---|---|---|---|
 | D27 | Languages | Rust for everything except the model block, which stays Python; no C++ | decided |
-| D28 | Where the loop runs | The system runs on the user's machine like codex and Claude Code; the server is a gateway and runs no agent loop. The server ladder is reached by server and system together | decided; confirmed by the owner 2026-11-13 against the ladder wording (ADR-021) |
+| D28 | Where the loop runs | The system runs on the user's machine like codex and Claude Code; the server is a gateway and runs no agent loop. The server ladder is reached by server and system together | decided; confirmed by the owner 2026-11-13 against the ladder wording (ADR-021); amended 2026-11-20 (ADR-025): the loop, tools and project vault stay on the client, the per-request pipeline runs in the server (D49) |
 | D29 | Technology mastery | All logic written in-house on proven base crates, vendored (`cargo vendor`) and checked by `cargo-deny` | decided |
 | D30 | Sandbox | Forked from codex (Apache-2.0, `aa5f492`): OS mechanisms only, licence, notice and origin kept in `THIRD_PARTY.md` | decided |
 | D31 | Layout | Cargo workspace at the root; Python model block under `src/laris/` | decided |
@@ -160,7 +160,7 @@ changes in the ADR named in the task.
 | D36 | Process model | Interface and core in one process; core events serialisable for headless mode and a later daemon | confirmed 2026-11-13 (ADR-021) |
 | D37 | Direct mode | None | confirmed 2026-11-13 (ADR-021) |
 | D38 | Core design | Event-sourced core with a decider seam, so programme 3 replaces the decider, not the core | confirmed 2026-11-13 (ADR-021) |
-| D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | confirmed 2026-11-13 (ADR-021) |
+| D39 | Evidence check | The server returns the evidence of a turn in the `laris` block; each piece is checked once, by the side that holds it (server-held entries carry `origin: server`; the client checks local tool and project-note evidence) | confirmed 2026-11-13 (ADR-021); amended 2026-11-20 (ADR-025) |
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | confirmed 2026-11-13 (ADR-021) |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | confirmed 2026-11-13 (ADR-021) |
 | D42 | Branches | `main` integrates; one feature branch per task cut from it; release 1.0.0 is tagged on `main` | confirmed 2026-11-13 (ADR-021); `laris-v2` merged into `main` and removed 2026-11-20 |
@@ -170,6 +170,14 @@ changes in the ADR named in the task.
 | D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, English data acquired and STS-B leakage check built in T175, document and config sweep in T176, partition and wiring in T177, retrieval-pair task in T178, then tokenizer fit and retraining (owner) |
 | D47 | Gold sources | No new human annotation for stages 2-4: held-out sets come from public human-labelled sets where one exists (SciFact, PubMedQA labeled, SCIDOCS, TREC-COVID, NFCorpus, DocLayNet boxes), and from LLM labels with `label_source: llm` where none exists; gates are reported as measured on those sets, never as human-gold results, and none is waived | decided by the owner 2026-11-14 (amends the labelling part of D45; D05 guideline and sealing rules still apply) |
 | D48 | ResearchLLM | The self-trained model is dropped: ResearchLLM is an open-weight third-party reasoning LLM (not code-focused) chosen by the owner from a sourced report (T228), with a Prefilter, TF-IDF/BM25 retrieval, a harness loop and the Obsidian brain; learning-data export stays; no distillation from Claude outputs | decided by the owner 2026-11-20 (T227); the superseded programme-1 tasks (T99-T118, T188-T189, T209, T220-T226) were removed from the ledger |
+| D49 | Pipeline location | The per-request pipeline (Prefilter, retrieval, brain decider, model call, evidence gate, assembly) runs in the server for every chat turn; the loop stays on the client | accepted 2026-11-20 (ADR-025) |
+| D50 | Main brain placement | One shared vault on the server, read with `brain.read`, written only by the write gate; no per-user server vaults | accepted 2026-11-20 (ADR-025) |
+| D51 | Stage order | auth, policy, Prefilter, retrieval, decider, model, evidence gate, assembly | accepted 2026-11-20 (ADR-025) |
+| D52 | Evidence check | Once per evidence, by the side that holds it | accepted 2026-11-20 (ADR-025) |
+| D53 | Grounded answers | Buffered, gated, then streamed; free answers and tool-call proposals stream unbuffered and claim no evidence | accepted 2026-11-20 (ADR-025) |
+| D54 | Server decider | Rule decider behind the ADR-024 seam; closed action set unchanged; `run_tool`, `acquire`, `verify` not decided by the server pipeline; network off | accepted 2026-11-20 (ADR-025) |
+| D55 | P1 additions | Optional `laris.steps`, `decision`, `evidence`; dropped from requests; `X-Laris-Protocol` bumped | accepted 2026-11-20 (ADR-025) |
+| D56 | Rollout | Every stage behind configuration, off by default until T243 passes | accepted 2026-11-20 (ADR-025) |
 
 ## 7. Requirements
 
