@@ -1,6 +1,6 @@
 //! The integrity lock of the protected policy files (SR-S4).
 //!
-//! `.laris/integrity.toml` holds a SHA-256 per file of `policy.toml`, `help.md` and everything under
+//! `.laris/integrity.toml` holds a SHA-256 per file of `policy.toml`, `help.md`, `prefilter.toml` and everything under
 //! `.laris/prompts`, `rules` and `workflows`. The server reads every protected file once into a [`Snapshot`], hashes
 //! those bytes, compares them with the lock, and builds everything it serves from the same bytes: a file that
 //! changes on disk after the check cannot slip into the prompt. A problem is reported by name and kind only, never
@@ -17,6 +17,8 @@ pub const LOCK_FILE: &str = ".laris/integrity.toml";
 pub const MANIFEST_FILE: &str = ".laris/policy.toml";
 /// The prepared user guide.
 pub const HELP_FILE: &str = ".laris/help.md";
+/// The Prefilter's rules and canned texts.
+pub const PREFILTER_FILE: &str = ".laris/prefilter.toml";
 /// Folders whose files are protected.
 pub const PROTECTED_DIRS: [&str; 3] = [".laris/prompts", ".laris/rules", ".laris/workflows"];
 
@@ -62,7 +64,7 @@ impl Snapshot {
         let mut snapshot = Self::default();
         let mut total = 0u64;
         let mut paths = Vec::new();
-        for single in [MANIFEST_FILE, HELP_FILE] {
+        for single in [MANIFEST_FILE, HELP_FILE, PREFILTER_FILE] {
             let path = root.join(single);
             if path.is_file() {
                 paths.push(path);
