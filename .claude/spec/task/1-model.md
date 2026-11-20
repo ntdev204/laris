@@ -676,8 +676,9 @@ returned logs, manifests and reports.
   - Runbook section 19: the interim model is `english-r1-stage2/best` (T204; `model.pt` 2.2 GB and the tokenizer), served by `laris-model serve --checkpoint ... --tokenizer-model ...` for `/v1/embeddings`; chat keeps the PLACEHOLDER backend (no trained core model); one `/v1/embeddings` request and one `/v1/models` request to check it; where to read the measured figures (T205) and what is NOT measured
 - Validation:
   - The owner runs section 19 and returns the `/v1/models`, `/v1/embeddings` responses and the VRAM or RAM used; nothing here trains or evaluates
-- Status: blocked
+- Status: done
 - Note: Owner decision 2026-11-20: "Tôi không có nhiều thời gian... tôi chỉ cần chạy, không hạ xuống 110M": no further training or measurement now; the first system version runs on the stage-2 checkpoint. This is **not** a qualification: the foundation model stays NOT QUALIFIED (SQuAD v1 F1 0.05-0.11 against 0.83, STS-B test never run; T205). The sealed T100 evaluation and the qualified stages (T99-T118, T162-T172) stay as they were. Status `blocked` until the owner returns the run of section 19; the agent did not load the checkpoint (it is not on this machine).
+  Result 2026-11-20 (owner downloaded the checkpoint; the agent served it, no training): `model.pt` 2,176,044,335 bytes, sha256 matches the manifest (optimizer step 5,000). `laris-model serve --device cuda` (isolated HOME) answered `/v1/models` with `laris-placeholder` and `/v1/embeddings` with 1,280-dim vectors; cosine "a cat sleeps" vs "a kitten is napping" 0.834, vs "stock markets fell sharply" -0.229 (3 sentences, an illustration, not a measurement); GPU memory 3,643 MiB used while serving. Chat is still the PLACEHOLDER backend. NOT QUALIFIED.
 
 ### T219 — Plan for the stage-1 extended run in chunks (48-52 h budget)
 - Requirements: SR-M3, SR-M6
