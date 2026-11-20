@@ -5,7 +5,7 @@ Version 2.0.0-draft · 2026-11-13 · Implements [spec.md](../spec.md) sections 5
 
 ## 1. How this programme works
 
-- Starts after the model is finished (T118) and programme 2 reached parity (T161); the design ADR (T162) may be written
+- Starts after the model is chosen (D48, T228) and programme 2 reached parity (T161); the design ADR (T162) may be written
   earlier if the owner opens the gate.
 - Roles: ResearchLLM advises (proposals), the Obsidian main brain stores verified knowledge with provenance, a
   non-generative decision network decides, the system executes and writes verified results back through one gate.

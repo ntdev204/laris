@@ -29,7 +29,7 @@ Exit criteria:
 
 ### Phase 20 — Stage 1: foundation encoder (English since D46)
 Goal: the foundation encoder passes its English gates (G01, G03-G07, G10, G12; G02, G08, G09, G11 withdrawn by D46) on held-out data.
-Tasks: T95, T96, T97, T98, T99, T100
+Tasks: T95, T96, T97, T98
 Exit criteria:
 - Every gate G01-G12 has a valid measurement protocol (no NOT VERIFIED left).
 - Data corrections are frozen with lineage; the tokenizer meets G10 and G11; human STEM relevance exists for G12.
@@ -42,12 +42,12 @@ Exit criteria:
 - Withdrawn gates are recorded, none relaxed or marked passed.
 - English replacement data (MLM text, similarity beyond STS-B, NLI, paraphrase, QA, retrieval; at least 20 GB) is acquired with provenance, leakage-checked against STS-B, and partitioned.
 - Every normative document and configuration that mentioned Vietnamese in stage 1 is amended or marked historical; withdrawn gates stay listed.
-- A new English tokenizer and encoder exist from an owner run; T100 evaluates them.
+- A new English tokenizer and encoder exist from an owner run.
 
 ### Phase 42 — NLP techniques: TF-IDF, word embeddings, NER token classification
 Goal: TF-IDF and word vectors are reusable model-block functions, and the existing encoder gets a token-classification
 (NER) head trained on a public dataset whose licence the owner approved; stage-1 checkpoints and gates stay unchanged.
-Tasks: T185, T186, T187, T188, T189
+Tasks: T185, T186, T187
 Exit criteria:
 - The NER data licence review is written and the owner has chosen the source; nothing is downloaded before that
   (CoNLL-2003 English needs the Reuters/NIST agreement and is not used without it).
@@ -62,7 +62,7 @@ Exit criteria:
 Goal: the encoder body learns to compare two segments and the four pair tasks get data and objectives that can teach it,
 before any main run. Owner direction 2026-11-14: no training now, solve the data problem first; 2026-11-15: combined route
 (two-segment self-supervision, contrastive similarity without bought labels, mixed batches, two-stage schedule), planned step by step.
-Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205, T206, T207, T208, T209, T210, T211, T212, T213, T216, T218, T219, T220, T221, T222, T223, T224, T225, T226
+Tasks: T192, T193, T194, T195, T196, T197, T198, T199, T200, T201, T202, T203, T204, T205, T206, T207, T208, T210, T211, T212, T213, T216, T218, T219
 Execution order (each step needs the previous ones; no step before T204 trains): T192 data on disk (done) -> T193 audit (done) -> T206 data corrections (done) ->
 T194 two-segment builder (done) -> T195 order head (done) -> T196 balanced NLI and paraphrase (done) -> T197 relation pairs (done) -> T198 bi-encoder head (done) ->
 T199 contrastive objective (done) -> T200 paraphrase and QA data (done) -> T201 mixed batches (done) -> T207 data decisions (done) -> T202 owner profile (done, tasks_per_step 2) -> T208 LLM similarity labels (done) -> T203 mixture and schedule (done, proposal) -> T209 owner profile on a shared GPU, T210 Colab A100 transfer -> T211 device ceiling and A100 speed profile -> T212 stage-1 rerun on the corrected data (done) -> T213 prefetching loader ->
@@ -73,38 +73,6 @@ Exit criteria:
 - Similarity gets relation pairs and a bi-encoder head without bought labels, with a zero-hit leakage rescan against STS-B validation and test (T197 to T199); STS-B stays the only gate data.
 - QA and paraphrase formatters and re-weighting exist and are measured (T200); mixed batches exist behind `tasks_per_step` (T201, done; estimate only until the T202 owner profile).
 - No task before T204 runs training, tokenizer fitting or a backward step; T202 and T204 are owner runs started only on the owner's order. The foundation model stays NOT QUALIFIED.
-
-### Phase 21 — Stage 2: scientific language
-Goal: scientific adaptation passes SciFact NLI and evidence gates.
-Tasks: T101, T102, T103, T104
-Exit criteria:
-- Scientific datasets and evidence gold are frozen with provenance.
-- SciFact NLI macro F1 ≥ 0.82 and evidence precision and recall ≥ 0.80 on held-out data; owner promotion.
-
-### Phase 22 — Stage 3: scientific OCR
-Goal: OCR of scientific documents meets CER and layout gates.
-Tasks: T105, T106, T107
-Exit criteria:
-- CER ≤ 1.5 % clean and ≤ 3.0 % degraded; layout IoU ≥ 0.88 on held-out data; owner promotion.
-
-### Phase 23 — Stage 4: manuscript learning
-Goal: discourse roles on OCR output meet their gate.
-Tasks: T108, T109, T110
-Exit criteria:
-- Discourse-role macro F1 ≥ 0.82 on held-out data; owner promotion.
-
-### Phase 24 — Stage 5: integration in the model service
-Goal: all qualified models are served together within the VRAM budget.
-Tasks: T111, T112
-Exit criteria:
-- Owner-measured full-load VRAM ≤ 15.0 GB; P2 and tool-route contract tests pass with the real models.
-
-### Phase 25 — Stage 6: ResearchLLM advisor and specialists
-Goal: the generative research advisor and the reasoning and verification specialists pass their gates.
-Tasks: T113, T114, T115, T116, T117, T118
-Exit criteria:
-- The stage-6 gates of ADR-020 pass on held-out data in English; Vietnamese only after the translation layer has its own gate (ADR-022).
-- The owner records "the model is finished" (spec section 2); programme 2's client phase and programme 3 may start.
 
 ### Phase 44 — ResearchLLM on an open-weight LLM (D48)
 Goal: an open-weight reasoning LLM, with a Prefilter, lexical retrieval, a harness loop and the Obsidian brain, replaces the self-trained model.
