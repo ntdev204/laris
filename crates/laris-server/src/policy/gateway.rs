@@ -55,9 +55,21 @@ pub struct Policy {
     pub(crate) canary_enabled: bool,
     pub(crate) think_tags: Vec<TagPair>,
     pub(crate) secret: [u8; 32],
+    pub(crate) prefilter: Option<Arc<laris_policy::Prefilter>>,
+    pub(crate) harness: Option<laris_policy::HarnessConfig>,
 }
 
 impl Policy {
+    /// The Prefilter rules of `.laris/prefilter.toml`, when the file exists (stage 3 of the pipeline).
+    pub fn prefilter(&self) -> Option<&Arc<laris_policy::Prefilter>> {
+        self.prefilter.as_ref()
+    }
+
+    /// The harness settings of `.laris/harness.toml`, when the file exists (stages 6 and 7).
+    pub fn harness(&self) -> Option<&laris_policy::HarnessConfig> {
+        self.harness.as_ref()
+    }
+
     /// The workflows.
     pub fn workflows(&self) -> &Workflows {
         &self.workflows

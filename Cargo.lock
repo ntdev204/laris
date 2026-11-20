@@ -1026,6 +1026,7 @@ dependencies = [
  "laris-model-client",
  "laris-policy",
  "laris-protocol",
+ "laris-retrieval",
  "laris-sandbox",
  "laris-store",
  "laris-tools",

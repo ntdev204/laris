@@ -1707,7 +1707,26 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - `PrefilterModel` and `HarnessModel` (T229, T232) wired into the server's chat route behind configuration; a Prefilter hit never reaches the model; retrieved passages come from the server's vault; every stage and its time is recorded in the audit row without message text
 - Validation:
   - Server tests with a scripted model: a Prefilter hit, a grounded answer, a missing source (abstains), an injected passage (ignored); the capability ladder still passes
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 built (ADR-025 sections 2, 7, 8). `laris-server::pipeline`: `Pipeline` is a `Backend` in front of the policy gateway.
+  Stage 3, the Prefilter (`.laris/prefilter.toml`, loaded and verified with the policy, `Policy::prefilter`), runs on the
+  latest user message and a hit is the answer, the model never called; a continuation after a tool result, a summary and
+  a pipeline with every stage off pass straight through. Stage 4, lexical retrieval (fused BM25 / TF-IDF) over the vault at
+  `LARIS_SERVER__PIPELINE_VAULT`; stages 6-7, `HarnessModel` (`.laris/harness.toml`: passages, attempts, texts) over an
+  adapter that makes each draft one bounded call to the backend; the draft is buffered and gated, retried up to
+  `max_attempts`, then sent or replaced by the abstention (D53). A passage that gives orders is dropped before the
+  model. Without passages `grounding = optional` streams a free answer unbuffered and claims no evidence;
+  `required` abstains without calling the model. A tool-call proposal is passed to the client ungated. Settings:
+  `LARIS_SERVER__PIPELINE_PREFILTER` (true/false), `_GROUNDING` (off/optional/required), `_VAULT`, `_MAX_DRAFT_CHARS`,
+  `_STAGE_TIMEOUT_MS`; all off by default (D56), a stage on without its policy file stops the server. Each stage is a
+  step event (`laris.steps`: stage, outcome, ms, code; sent as it ends, carried in the chunk's `extra` until T242 types
+  it) and a row of `traces.stages` (migration 0003, `GET /v1/admin/traces`), never message text; `steps`, `decision` and
+  `evidence` in a request are dropped (TM-31). Threat rows TM-31, TM-32, TM-34 added (SEC-PIPE-01, -02, -04; the audit
+  test extends SEC-KEY-02). Checked: 15 tests in `crates/laris-server/tests/pipeline.rs` (Prefilter hit, grounded answer,
+  retry then abstain, missing source, free answer, injected passage, unreadable vault, model failure, draft too large,
+  tool-call proposal, continuation, dropped request fields, off equals today, configuration); the capability ladder
+  suites unchanged. The decider is T241, the vault and write gate T240, typed P1 fields T242. The task stays
+  in_progress only because T238 is, as for T238 itself.
 
 ### T240 — Server-side vault and main brain
 - Requirements: SR-S5, SR-K3

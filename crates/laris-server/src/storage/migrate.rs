@@ -32,6 +32,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "0002_request_traces.sql",
         sql: include_str!("../../migrations/0002_request_traces.sql"),
     },
+    Migration {
+        version: 3,
+        name: "0003_trace_stages.sql",
+        sql: include_str!("../../migrations/0003_trace_stages.sql"),
+    },
 ];
 
 /// Applies the pending migrations and returns how many ran.

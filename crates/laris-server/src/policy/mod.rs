@@ -64,6 +64,9 @@ pub enum PolicyError {
     /// The guard cannot be built.
     #[error("guard: {0}")]
     Guard(String),
+    /// `prefilter.toml` or `harness.toml` does not load.
+    #[error("{0}")]
+    Pipeline(String),
     /// No source of randomness.
     #[error("no source of randomness")]
     Random,
@@ -287,6 +290,25 @@ impl Policy {
             .and_then(|b| b.try_into().ok())
             .ok_or(PolicyError::Random)?;
         let skills = Skills::load(&config.root, config.skills.clone());
+        let prefilter = match snapshot.text(integrity::PREFILTER_FILE) {
+            Some(text) => {
+                let variables = HashMap::from([
+                    ("help".to_owned(), help.clone()),
+                    ("version".to_owned(), composer.version().to_owned()),
+                ]);
+                let rules = laris_policy::Prefilter::from_toml(text?, &variables)
+                    .map_err(|e| PolicyError::Pipeline(e.to_string()))?;
+                Some(Arc::new(rules))
+            }
+            None => None,
+        };
+        let harness = match snapshot.text(integrity::HARNESS_FILE) {
+            Some(text) => Some(
+                laris_policy::HarnessConfig::from_toml(text?)
+                    .map_err(|e| PolicyError::Pipeline(e.to_string()))?,
+            ),
+            None => None,
+        };
         Ok(Self {
             composer,
             workflows,
@@ -297,6 +319,8 @@ impl Policy {
             canary_enabled: config.guard.canary_enabled,
             think_tags: config.think_tags.clone(),
             secret,
+            prefilter,
+            harness,
         })
     }
 }

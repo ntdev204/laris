@@ -150,9 +150,13 @@ async fn chat_inner(
     scope: &Arc<RequestScope>,
     request: Request,
 ) -> Result<Response, ApiError> {
-    let (body, principal, length) =
+    let (mut body, principal, length) =
         read_json::<ChatRequest>(state, scope, request, perm::CHAT).await?;
     validate_chat(&body)?;
+    // the client cannot assert steps, a decision or evidence for itself (TM-31)
+    for key in crate::pipeline::SERVER_ONLY_KEYS {
+        body.laris.extra.remove(key);
+    }
     let session = body.laris.session_id.clone().unwrap_or_default();
     scope.trace(|t| t.set_session(&session));
     let meter = reserve_for(state, principal.as_ref(), length, "chat", session).await?;
@@ -452,10 +456,18 @@ impl EndGuard {
         if self.model.is_empty() && !chunk.model.is_empty() {
             self.model.clone_from(&chunk.model);
         }
-        if let Some(meta) = &chunk.laris
-            && !meta.brain.is_empty()
-        {
-            self.scope.trace(|t| t.set_brain(&meta.brain));
+        if let Some(meta) = &chunk.laris {
+            if !meta.brain.is_empty() {
+                self.scope.trace(|t| t.set_brain(&meta.brain));
+            }
+            if let Some(steps) = meta.extra.get("steps").and_then(|v| v.as_array()) {
+                for step in steps {
+                    let text = |k: &str| step.get(k).and_then(|v| v.as_str()).unwrap_or("");
+                    let ms = step.get("ms").and_then(|v| v.as_u64()).unwrap_or(0);
+                    self.scope
+                        .trace(|t| t.add_stage(text("stage"), text("outcome"), ms, text("code")));
+                }
+            }
         }
         for choice in &chunk.choices {
             for call in &choice.delta.tool_calls {

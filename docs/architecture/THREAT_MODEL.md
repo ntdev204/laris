@@ -136,6 +136,14 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
 | TM-29 | Poisoned or leaked data enters training or a held-out split | X6 | Sealed test splits and data checksums; manifests with provenance; a seeded model-generated example is excluded; agents never train | SR-M3, SR-M4, SR-K6 | T168 | SEC-DATA-03 |
 | TM-30 | Unapproved or malicious dependency, or a training call, enters the build | X7 | `cargo deny` allow-list from T119; vendoring; the no-training guard; signed releases | SR-G2, SR-G3, SR-C6 | T121, T159 | SEC-SUP-01 |
 
+### 4.6 Request pipeline (ADR-025)
+
+| Id | Threat | Attacker | Control | Req | Task | Test id |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TM-31 | A modified client skips the Prefilter, retrieval or the gate | X4 | Stages run on the server; `steps`, `decision` and `evidence` in a request are dropped | SR-S4 | T239, T242 | SEC-PIPE-01 |
+| TM-32 | A retrieved passage carries instructions | X1, X6 | Passages are redacted, folded to one line and read by the shield; one that gives orders is dropped before the model sees it; the gate checks the draft against the passages | SR-S4, SR-M11 | T239 | SEC-PIPE-02 |
+| TM-34 | Unbounded buffering or retries exhaust memory or the model | X4 | `max_draft_chars` (an error, never a truncation), `max_attempts` of the harness policy, the model concurrency limit, the stage timeout | SR-S4, SR-S6 | T239 | SEC-PIPE-04 |
+
 ## 5. Coverage rules and current state
 
 - Every row has one control entry, an owning task and one test id; test ids are unique.

@@ -106,6 +106,23 @@ The key text is shown once. Revoke with `POST /v1/admin/keys/{id}/revoke`.
 Change `.laris/` only with the owner's approval, then refresh the lock with `laris-server policy lock` (run against
 the repository checkout) and restart the server: `docker compose -f docker/compose.yaml restart server`.
 
+## Request pipeline (ADR-025)
+
+Every stage is off by default; with all of them off the chat route is the policy gateway alone. Settings of the
+`server` service (the compose file does not set them yet; T243 adds them with a vault mount):
+
+| Variable | Meaning |
+| :--- | :--- |
+| `LARIS_SERVER__PIPELINE_PREFILTER` | `true` runs the Prefilter rules (`.laris/prefilter.toml`) on the latest user message; a hit is the answer and the model is not called |
+| `LARIS_SERVER__PIPELINE_GROUNDING` | `off`, `optional` (answer from passages when there are some, else a free answer) or `required` (no passages, no answer) |
+| `LARIS_SERVER__PIPELINE_VAULT` | the vault retrieval reads; required when grounding is on; an unreadable vault is reported as a skipped stage, never as a grounded answer |
+| `LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS` | largest buffered draft (65536); a longer one is an error, not a truncation |
+| `LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS` | longest one model call inside the pipeline (120000) |
+
+Attempts, passages and the abstention texts are the owner's policy in `.laris/harness.toml`. Each stage and its time
+are in the trace row (`stages`, `GET /v1/admin/traces`), never the message. The database needs migration 0003, which
+the server applies at start.
+
 ## Backup and restore
 
 `docker/backup.sh [--with-secrets] [DIR]` writes a `pg_dump` (custom format); `docker/restore.sh DUMP` restores it.

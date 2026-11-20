@@ -287,6 +287,7 @@ struct TraceView {
     tools: Vec<String>,
     brain: Vec<String>,
     answer_chars: u64,
+    stages: Vec<crate::trace::StageRecord>,
     at: f64,
 }
 
@@ -356,6 +357,7 @@ pub async fn traces(State(state): Shared, Extension(scope): Scope, request: Requ
                 tools: r.tools,
                 brain: r.brain,
                 answer_chars: r.answer_chars,
+                stages: r.stages,
                 at: r.at,
             })
             .collect();
