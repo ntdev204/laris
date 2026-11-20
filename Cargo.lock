@@ -908,6 +908,7 @@ dependencies = [
  "laris-store",
  "laris-tools",
  "laris-tui",
+ "ring",
  "serde_json",
  "tokio",
 ]

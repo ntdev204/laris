@@ -81,6 +81,7 @@
     "cannot_continue": "Không tiếp tục được phiên này: {detail}"
   },
   "ui": {
+    "update_ready": "Đã cài bản {version} · dùng /restart để cập nhật",
     "placeholder": "Nhập tin nhắn, hoặc / để xem lệnh",
     "thinking": "Đang xử lý…",
     "hint_interrupt": "esc để ngắt",
@@ -145,6 +146,7 @@
     "help": "Xem các lệnh",
     "clear": "Xóa màn hình (phiên vẫn tiếp tục)",
     "exit": "Thoát Laris",
+    "restart": "Khởi động lại Laris để dùng bản mới, và tiếp tục phiên này",
     "mode": "Xem hoặc đổi chế độ quyền: /mode [auto|default|acceptEdits|plan|bypass]",
     "status": "Xem phiên, máy chủ và đăng nhập",
     "usage": "Xem số token phiên này và khóa đã dùng",

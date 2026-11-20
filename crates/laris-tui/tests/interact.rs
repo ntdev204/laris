@@ -751,3 +751,61 @@ fn the_stages_of_the_server_pipeline_and_the_sources_of_an_answer_are_shown() {
         "working stages are not shown"
     );
 }
+
+// -- update notice and /restart --------------------------------------------------------------
+
+fn update_event(version: &str) -> Event {
+    let mut data = Map::new();
+    data.insert("version".into(), Value::from(version));
+    Event::Status {
+        kind: "update".into(),
+        data,
+    }
+}
+
+#[test]
+fn an_installed_update_shows_a_notice_above_the_input_at_the_right() {
+    for width in WIDTHS {
+        let mut a = app();
+        assert!(!a.screen_text(width).contains("/restart"));
+        feed(&mut a, update_event("9.8.7"));
+        assert_eq!(a.update_ready(), Some("9.8.7"));
+        let text = a.screen_text(width);
+        let lines: Vec<&str> = text.lines().collect();
+        let at = lines
+            .iter()
+            .position(|l| l.contains("9.8.7") && l.contains("/restart"))
+            .unwrap_or_else(|| panic!("the notice is shown at {width}:\n{text}"));
+        let rule = lines
+            .iter()
+            .position(|l| l.starts_with('─'))
+            .expect("the input box's rule");
+        assert_eq!(
+            at + 1,
+            rule,
+            "the notice is the line right above the input:\n{text}"
+        );
+        let line = lines[at];
+        assert!(
+            line.starts_with("  "),
+            "it is pushed to the right: {line:?}"
+        );
+        assert!(str_width(line) <= width, "{line:?} fits {width}");
+        assert!(line.trim_end().ends_with("to apply"), "{line:?}");
+    }
+}
+
+#[test]
+fn restart_leaves_the_interface_and_asks_for_a_restart() {
+    let mut a = app();
+    type_text(&mut a, "/restart");
+    assert!(matches!(
+        &key(&mut a, Key::Enter)[..],
+        [Command::Shutdown {}]
+    ));
+    assert!(a.should_quit() && a.restart_requested());
+    let mut b = app();
+    type_text(&mut b, "/exit");
+    key(&mut b, Key::Enter);
+    assert!(!b.restart_requested(), "/exit only leaves");
+}

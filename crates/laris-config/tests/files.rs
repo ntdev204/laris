@@ -175,3 +175,28 @@ fn packaged_defaults_are_found_beside_the_binary_or_by_name() {
     );
     std::fs::remove_dir_all(dir).ok();
 }
+
+#[test]
+fn packaged_update_source_is_https_only_and_independent_of_the_server() {
+    let both = Packaged::parse(
+        r#"{"server": {"url": "https://p.example.org"},
+            "update": {"url": "https://releases.example.org/laris/", "signatureVerifier": " KEY "}}"#,
+    );
+    assert_eq!(
+        both.update_url.as_deref(),
+        Some("https://releases.example.org/laris")
+    );
+    assert_eq!(both.update_verifier.as_deref(), Some("KEY"));
+    assert_eq!(
+        both.layer()["update"]["url"],
+        "https://releases.example.org/laris"
+    );
+    let alone = Packaged::parse(
+        r#"{"update": {"url": "https://r.example.org", "signatureVerifier": "K"}}"#,
+    );
+    assert_eq!(alone.server_url, None);
+    assert!(alone.layer()["server"].is_null());
+    let plain = Packaged::parse(r#"{"update": {"url": "http://r.example.org"}}"#);
+    assert_eq!(plain.update_url, None, "an update address must be https");
+    assert_eq!(plain.layer(), serde_json::Value::Null);
+}

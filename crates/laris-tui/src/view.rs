@@ -600,6 +600,17 @@ fn status_line(app: &App, width: usize) -> Option<Line> {
     ))
 }
 
+/// The update notice, above the input box at the right: shown while this session runs a version older than the one
+/// installed on disk.
+fn update_line(app: &App, width: usize) -> Option<Line> {
+    let version = app.update.as_deref()?;
+    let text = app.text("ui.update_ready", &[("version", &clean(version))]);
+    let line = truncate(&Line::styled(format!("{text} "), app.theme.warn()), width);
+    let mut aligned = Line::plain(" ".repeat(width.saturating_sub(line.width())));
+    aligned.0.extend(line.0);
+    Some(aligned)
+}
+
 fn hint_line(app: &App, key: &str, width: usize) -> Line {
     truncate(
         &Line::styled(format!(" {}", app.text(key, &[])), app.theme.dim()),
@@ -726,6 +737,7 @@ impl App {
             };
         }
         let fixed = live.len();
+        live.extend(update_line(self, width));
         let (boxed, (row, col)) = input_box(self, width);
         let cursor = Some((live.len() + row, col));
         live.extend(boxed);

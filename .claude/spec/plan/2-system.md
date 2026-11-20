@@ -131,3 +131,9 @@ Goal: the client looks and works like the familiar terminal assistants: a plain 
 Tasks: T250
 Exit criteria:
 - The input box is two rules and a `>` prompt; the banner is two lines; the status line shows model, context and tokens left; pipeline stages are hidden unless one fails; `/quit` is gone; `/usage`, `/context`, `/model`, `/config` and `/export` exist and are covered by tests; the status line's context figure comes from real usage.
+
+### Phase 52 — Automatic update
+Goal: the client keeps itself current without the user doing anything, and says so when a restart will apply it.
+Tasks: T251
+Exit criteria:
+- The interface checks the release address in the background, installs a newer signed release over the program, and shows a notice above the input box at the right until `/restart` applies it; a bad signature, list or archive is never installed; covered by tests.

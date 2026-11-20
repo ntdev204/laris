@@ -67,6 +67,20 @@ Targets: `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`, `x86_64-appl
 
 The release address is never in the sources: it is an argument or `LARIS_RELEASE_URL` at this step.
 
+## Automatic update
+
+The client updates itself, always (T251). A release build carries the release address and the public half of the signing
+key (`LARIS_BUILD_DEFAULTS`, set by the workflow from `LARIS_RELEASE_URL` and the secret `LARIS_RELEASE_KEY`); a
+development build carries neither and never checks. While the interface runs, a background thread reads
+`<address>/latest/SHA256SUMS`, `SHA256SUMS.sig` and `VERSION` at start and then every `update.intervalMinutes` (default 360).
+Only a signed list is believed, and only a strictly newer version is installed: the archive is downloaded from
+`<address>/<version>/`, checked against its line of the signed list, unpacked with the system `tar` and put in place of the
+program. The running session is not changed; a line above the input box at the right says `/restart` applies the update. The
+folder of the program must be writable (an install made with `install.sh` in `~/.local/bin` is). `latest` is the rolling
+release the workflow keeps on GitHub (`gh release upload latest --clobber`), so the installers' default `latest` works too.
+The settings `update.url`, `update.signatureVerifier` and `update.intervalMinutes` (or `LARIS_UPDATE__URL`, ...) override the
+built-in values.
+
 ## What is checked, and what is not
 
 - Tested here with a fake binary and a real release build on Linux: good install, a changed archive, a changed list, a

@@ -16,5 +16,5 @@
   "learning": {"collect": false},
   "extraInstructions": "Answer briefly.",
   "cleanupPeriodDays": 7,
-  "autoUpdates": false
+  "update": {"url": "https://releases.example.org/laris", "signatureVerifier": "AAAA", "intervalMinutes": 60}
 }

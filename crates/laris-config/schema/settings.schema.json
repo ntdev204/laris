@@ -758,6 +758,30 @@
       },
       "type": "object"
     },
+    "Update": {
+      "additionalProperties": false,
+      "description": "Where the client finds its own new releases. Updating is always on: with no address (a development build) there\nis nothing to check. A release build carries both values (`LARIS_BUILD_DEFAULTS`).",
+      "properties": {
+        "intervalMinutes": {
+          "default": 360,
+          "description": "Minutes between two checks while the client runs.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "signatureVerifier": {
+          "default": "",
+          "description": "The release signing key, PEM or its base64 body; empty for none. A release is installed only when its\nchecksum list is signed with this key.",
+          "type": "string"
+        },
+        "url": {
+          "default": "",
+          "description": "Release address (`https://.../<version>/<file>` is a release file); empty for none.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Vault": {
       "additionalProperties": false,
       "description": "The project vault: recording, writing and ingestion.",
@@ -851,11 +875,6 @@
         "timeBudgetSeconds": 180.0
       },
       "description": "Agent loop limits."
-    },
-    "autoUpdates": {
-      "default": true,
-      "description": "Check for updates.",
-      "type": "boolean"
     },
     "cleanupPeriodDays": {
       "default": 30,
@@ -1033,6 +1052,15 @@
         "theme": "auto"
       },
       "description": "Terminal interface."
+    },
+    "update": {
+      "$ref": "#/$defs/Update",
+      "default": {
+        "intervalMinutes": 360,
+        "signatureVerifier": "",
+        "url": ""
+      },
+      "description": "Automatic updates of the client (always on; this says where the releases are)."
     },
     "vault": {
       "$ref": "#/$defs/Vault",

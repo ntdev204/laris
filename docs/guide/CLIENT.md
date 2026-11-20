@@ -62,6 +62,7 @@ Type `/` to list them; each character narrows the list. These are built in:
 | `/help` | Show the commands. |
 | `/clear` | Clear the screen (the session goes on). |
 | `/exit` | Leave. |
+| `/restart` | Leave and start Laris again, going on with this session. Use it when the notice above the input box says an update is installed. |
 | `/mode [auto\|default\|acceptEdits\|plan\|bypass]` | Show or change the permission mode. `auto` (the default) runs changes and commands without asking, except those that fit `permissions.autoAsk` (by default: `sudo`, recursive deletion of `/`, `~` or a parent, `git push`, `git reset --hard`, `git clean`, disk and power commands). `bypass` is refused unless the installation's policy allows it. |
 | `/status` | Show the session, server and project. |
 | `/usage` | Tokens this session used (prompt, answer, requests), and the key's used, limit and left from the server. |

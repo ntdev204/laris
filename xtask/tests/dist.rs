@@ -320,8 +320,14 @@ fn the_installer_needs_a_rendered_https_address() {
 fn the_size_report_and_manifest_list_every_archive() {
     let release = release("report");
     let sums = fs::read_to_string(release.latest().join("SHA256SUMS")).expect("sums");
-    assert_eq!(sums.lines().count(), 4);
-    assert!(sums.lines().all(|l| l.len() > 66 && l.contains("  laris-")));
+    assert_eq!(sums.lines().count(), 5, "four archives and VERSION");
+    assert!(
+        sums.lines()
+            .all(|l| l.len() > 66 && (l.contains("  laris-") || l.ends_with("  VERSION")))
+    );
+    // the signed list covers the version the clients compare themselves with (T251)
+    let version = fs::read_to_string(release.latest().join("VERSION")).expect("VERSION");
+    assert!(laris_cli_version_matches(&version), "{version:?}");
     let report = fs::read_to_string(release.latest().join("size-report.md")).expect("report");
     assert!(report.contains("| aarch64-apple-darwin |"));
     assert!(report.contains("MiB"));
@@ -410,4 +416,19 @@ fn rendered_files_carry_the_key_and_address_and_no_placeholder() {
             .expect("key")
             .contains("BEGIN PUBLIC KEY")
     );
+}
+
+/// `VERSION` is the workspace version and one line.
+fn laris_cli_version_matches(text: &str) -> bool {
+    let root = fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../Cargo.toml"))
+        .expect("Cargo.toml");
+    let want = root
+        .split("[workspace.package]")
+        .nth(1)
+        .and_then(|rest| {
+            rest.lines()
+                .find_map(|l| l.trim().strip_prefix("version = \"")?.strip_suffix('"'))
+        })
+        .expect("workspace version");
+    text == format!("{want}\n")
 }

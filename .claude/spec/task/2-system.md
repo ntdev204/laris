@@ -1904,3 +1904,20 @@ Owner's direction 2026-11-20: make the client interface like the familiar termin
 - Status: done
 - Note: 2026-11-20 built. `/model` only lists the server's models: the named model family, the banner's model and the role switch stay with T245-T247. `/copy` is not built (it needs clipboard access the client does not have).
 Released as 1.1.0 on 2026-11-20 by the owner's order ("commit, merge và publish version mới").
+
+## Phase 52 — Automatic update
+
+Owner's direction 2026-11-20: update always on when a new version exists; a client on an old version shows a notice above the input, at the right, telling the user to use `/restart` (as Claude Code does).
+
+### T251 — Automatic update and `/restart`
+- Requirements: SR-C6
+- Depends: T250
+- Deliverables:
+  - `settings.update` (`url`, `signatureVerifier`, `intervalMinutes`) and the packaged defaults `update.url` and `update.signatureVerifier` (`LARIS_BUILD_DEFAULTS`); the setting `autoUpdates` (never read) is removed: updating is always on
+  - `laris-cli::update`: a background thread started with the interface; it reads `<url>/latest/SHA256SUMS`, `.sig` and `VERSION`, checks the signature (ECDSA P-256 over SHA-256, `ring`), installs only a strictly newer version, downloads `<url>/<version>/<archive>`, checks it against the signed list, unpacks it and replaces the program (Unix rename, Windows move aside); nothing is hardcoded
+  - `cargo xtask dist manifest` writes `VERSION` and lists it in the signed `SHA256SUMS`; the workflow `release-build` builds the update source into the client and keeps the rolling release `latest`
+  - Interface: status event `update`, a warning line above the input box at the right, `/restart` (leaves and starts the program again, resuming the session); catalogue (en, vi), client and distribution guides, changelog
+- Validation:
+  - Tests: version compare, signature and tamper refusals, no downgrade, an installed program replaces the old one and stays executable; notice position and `/restart` in the interface; `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-20 built. `ring` (already in the lock as the TLS provider) is now a direct dependency of `laris-cli` for the signature check: owner to confirm. The updater is tested against a scripted fetcher and a real `tar`; the real HTTPS download, the GitHub `latest` release, Windows (zip through `tar`, move-aside replace) and a restart on Windows are NOT tried. A development build has no update source and never checks. The check needs `tar` on the machine. The session that runs keeps the old version until `/restart`; two old sessions may each download the same release once.

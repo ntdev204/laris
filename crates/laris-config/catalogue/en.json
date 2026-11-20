@@ -81,6 +81,7 @@
     "cannot_continue": "The session cannot be continued: {detail}"
   },
   "ui": {
+    "update_ready": "Update {version} installed · run /restart to apply",
     "placeholder": "Type a message, or / for commands",
     "thinking": "Working…",
     "hint_interrupt": "esc to interrupt",
@@ -145,6 +146,7 @@
     "help": "Show the commands",
     "clear": "Clear the screen (the session goes on)",
     "exit": "Leave Laris",
+    "restart": "Restart Laris to use the update, and go on with this session",
     "mode": "Show or change the permission mode: /mode [auto|default|acceptEdits|plan|bypass]",
     "status": "Show the session, server and sign-in",
     "usage": "Show the tokens this session and the key have used",

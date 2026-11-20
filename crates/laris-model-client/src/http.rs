@@ -46,6 +46,27 @@ impl ReqwestTransport {
     }
 }
 
+impl ReqwestTransport {
+    /// A client for downloading public files (the client's own releases): system trust, and redirects followed,
+    /// because release hosts serve files from another address. It carries no key; never use it for the server.
+    pub fn for_downloads(
+        connect_timeout: Duration,
+        use_env_proxy: bool,
+    ) -> Result<Self, ClientError> {
+        let mut builder = reqwest::Client::builder()
+            .connect_timeout(connect_timeout)
+            .redirect(reqwest::redirect::Policy::limited(5))
+            .use_rustls_tls();
+        if !use_env_proxy {
+            builder = builder.no_proxy();
+        }
+        let client = builder
+            .build()
+            .map_err(|e| ClientError::Config(format!("cannot build the HTTP client: {e}")))?;
+        Ok(Self { client })
+    }
+}
+
 fn pinned_tls(authority_der: &[u8]) -> Result<rustls::ClientConfig, ClientError> {
     let config_error = |e: &dyn std::fmt::Display| {
         ClientError::Config(format!("cannot use the pinned authority: {e}"))

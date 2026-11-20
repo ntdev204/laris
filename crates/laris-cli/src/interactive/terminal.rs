@@ -19,6 +19,7 @@ use laris_store::{DEFAULT_BUSY_TIMEOUT, Store};
 use laris_tui::term::{FullScreen, RawMode, Term, next, pending, size};
 use laris_tui::{History, Theme};
 use std::io::{IsTerminal, Write};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
@@ -191,6 +192,32 @@ fn remote_get(
         .map_err(|e| e.to_string())
 }
 
+/// `/restart`: starts the program again, resuming the session when it has one on record. On Unix the process is
+/// replaced; elsewhere the new one runs to its end and its exit code is ours.
+fn restart(started: &Started, exe: &Path, session: Option<&str>) -> u8 {
+    let mut command = std::process::Command::new(exe);
+    if let Some(id) = session
+        && history(started, &Resume::Session(id.to_owned())).is_ok()
+    {
+        command.arg("--resume").arg(id);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        let failure = command.exec();
+        eprintln!("laris: cannot restart: {failure}");
+        1
+    }
+    #[cfg(not(unix))]
+    match command.status() {
+        Ok(status) => u8::try_from(status.code().unwrap_or(1)).unwrap_or(1),
+        Err(e) => {
+            eprintln!("laris: cannot restart: {e}");
+            1
+        }
+    }
+}
+
 fn wants_colour(env: &[(String, String)]) -> bool {
     let get = |name: &str| env.iter().find(|(k, _)| k == name).map(|(_, v)| v.as_str());
     get("NO_COLOR").is_none_or(str::is_empty) && get("TERM") != Some("dumb")
@@ -234,6 +261,28 @@ pub fn run(started: Arc<Started>, resume: &Resume) -> u8 {
             return 2;
         }
     };
+    // taken now: once an update replaces the file, the system may no longer name the running program
+    let exe = std::env::current_exe().ok().map(|p| {
+        let text = p.to_string_lossy();
+        PathBuf::from(text.strip_suffix(" (deleted)").unwrap_or(&text))
+    });
+    if let Some(exe) = exe.clone() {
+        let events = control.sender();
+        let scratch = started.home.root().to_path_buf();
+        crate::update::spawn_watch(
+            started.settings.update.clone(),
+            exe,
+            scratch,
+            Box::new(move |version| {
+                let mut data = serde_json::Map::new();
+                data.insert("version".to_owned(), version.into());
+                let _ = events.send(Event::Status {
+                    kind: "update".to_owned(),
+                    data,
+                });
+            }),
+        );
+    }
     let mut screen = FullScreen::new(std::io::stdout(), colour);
     let (mut columns, mut rows) = size();
     let mut last = Instant::now();
@@ -285,7 +334,11 @@ pub fn run(started: Arc<Started>, resume: &Resume) -> u8 {
     })();
     drop(raw);
     let _ = std::io::stdout().flush();
+    let again = control.app.restart_requested().then(|| control.session());
     drop(control);
+    if let (Ok(()), Some(session), Some(exe)) = (&result, again, &exe) {
+        return restart(&started, exe, session.as_deref());
+    }
     match result {
         Ok(()) => 0,
         Err(e) => {

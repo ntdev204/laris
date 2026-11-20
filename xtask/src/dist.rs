@@ -3,7 +3,8 @@
 //! Subcommands, in the order a release uses them:
 //! - `keygen --out DIR` makes the release signing key pair (ECDSA P-256; the private key never goes into Git).
 //! - `package --target T --bin FILE --out DIR` makes `laris-T.tar.gz` (`.zip` for Windows) holding only `laris`.
-//! - `manifest --dir DIR` writes `SHA256SUMS` over the archives and `size-report.md`.
+//! - `manifest --dir DIR` writes `VERSION` (the workspace version), `SHA256SUMS` over the archives and `VERSION`, and
+//!   `size-report.md`. A running client reads the signed `VERSION` to learn the latest release.
 //! - `sign --dir DIR` signs `SHA256SUMS` with the key named by `LARIS_RELEASE_KEY` (a file path).
 //! - `scripts --dir DIR --url URL --pubkey FILE` renders `install.sh`, `install.ps1` and the npm wrapper with the
 //!   release address and the public key; nothing is hardcoded in the templates.
@@ -231,9 +232,14 @@ fn file_name(path: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// `SHA256SUMS` text for the archives in `dir` (the format `sha256sum -c` reads).
+/// `SHA256SUMS` text for the archives in `dir` and its `VERSION` file when there is one (the format `sha256sum -c`
+/// reads). The signature covers the list, so it covers the version the running clients compare themselves with.
 pub fn manifest_text(dir: &Path) -> Result<String, String> {
     let mut text = String::new();
+    let version = dir.join("VERSION");
+    if version.is_file() {
+        text.push_str(&format!("{}  VERSION\n", sha256_file(&version)?));
+    }
     for archive in archives(dir)? {
         text.push_str(&format!(
             "{}  {}\n",
@@ -281,8 +287,13 @@ pub fn size_report(dir: &Path) -> Result<String, String> {
     Ok(report)
 }
 
-fn manifest(args: &[String]) -> Result<String, String> {
+fn manifest(root: &Path, args: &[String]) -> Result<String, String> {
     let dir = PathBuf::from(required(args, "--dir")?);
+    fs::write(
+        dir.join("VERSION"),
+        format!("{}\n", workspace_version(root)?),
+    )
+    .map_err(|e| e.to_string())?;
     let text = manifest_text(&dir)?;
     fs::write(dir.join("SHA256SUMS"), &text).map_err(|e| e.to_string())?;
     let _ = fs::remove_file(dir.join("SHA256SUMS.sig"));
@@ -417,7 +428,7 @@ pub fn run_dist(root: &Path, args: &[String]) -> ExitCode {
     let result = match args.first().map(String::as_str) {
         Some("keygen") => keygen(rest),
         Some("package") => package(rest),
-        Some("manifest") => manifest(rest),
+        Some("manifest") => manifest(root, rest),
         Some("sign") => sign(rest),
         Some("scripts") => scripts(root, rest),
         Some("verify") => verify(rest),
