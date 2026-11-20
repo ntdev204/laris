@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-024"
 title: "ADR-024: Main brain: the brain decides, the model advises"
 document_type: "adr"
-status: "PROPOSED"
+status: "ACCEPTED"
 version: "0.1.0"
 created_at: "2026-11-20"
 updated_at: "2026-11-20"
@@ -17,15 +17,13 @@ decision_references:
   - "ADR-004"
   - "ADR-008"
   - "ADR-021"
-change_summary: "Draft for the owner's acceptance (task T162): note types and certainty ladder, write gate, closed action set and inputs of the decision network, abstention, answer assembly, cold-start rule decider, held-out gates, owner runs."
+change_summary: "Accepted by the owner 2026-11-20 (task T162): note types and certainty ladder, write gate, closed action set and inputs of the decision network, abstention, answer assembly, cold-start rule decider, held-out gates, owner runs."
 ---
 
 # ADR-024: Main brain: the brain decides, the model advises
 
 ## Metadata
-- **Status:** PROPOSED on 2026-11-20. It becomes ACCEPTED only when the owner says so; until then no brain code is written
-  (SR-K1). Values marked *proposed* are the agent's recommendations; the owner confirms or changes them at acceptance, and
-  after acceptance none is relaxed without an amendment to this ADR.
+- **Status:** ACCEPTED on 2026-11-20 by the owner ("Chấp nhận"), including the proposed gate thresholds N1-N8; brain code may now start (SR-K1). Values marked *proposed* were confirmed by the acceptance; none is relaxed without an amendment to this ADR.
 - **Requirements:** SR-K1 to SR-K7 · **Task:** T162 · **Builds on:** D48 (open-weight ResearchLLM), ADR-004 (evidence
   provenance), ADR-008 (no capability claim without a held-out measurement), ADR-021 (Rust generation, `Decider` seam)
 - **Qualification:** the foundation model and ResearchLLM are NOT QUALIFIED. The system guarantees *faithfulness to its
