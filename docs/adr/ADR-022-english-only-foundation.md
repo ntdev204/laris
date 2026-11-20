@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-022"
 title: "ADR-022: English-only foundation encoder; Vietnamese through a translation layer"
 document_type: "adr"
-status: "ACCEPTED"
+status: "SUPERSEDED"
 version: "0.1.0"
 created_at: "2026-11-14"
 updated_at: "2026-11-14"
@@ -14,7 +14,7 @@ related_documents:
 decision_references:
   - "ADR-020"
   - "ADR-008"
-change_summary: "Owner decision 2026-11-14 (D46): remove Vietnamese from the stage-1 encoder; Vietnamese reaches the model through translation."
+change_summary: "Superseded 2026-11-20 by D48 (spec.md): the self-trained model is dropped; ResearchLLM is an open-weight third-party LLM. Owner decision 2026-11-14 (D46): remove Vietnamese from the stage-1 encoder; Vietnamese reaches the model through translation."
 ---
 
 # ADR-022: English-only foundation encoder

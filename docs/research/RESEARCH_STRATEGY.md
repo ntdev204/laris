@@ -10,7 +10,6 @@ owner: LARIS Architecture Team
 reviewers: []
 source_of_truth: true
 related_documents:
-- docs/research/LANGUAGE_AND_MODEL_STRATEGY.md
 - docs/specifications/DATA_SCHEMAS.md
 - docs/testing/BENCHMARK_PROTOCOL.md
 decision_references:

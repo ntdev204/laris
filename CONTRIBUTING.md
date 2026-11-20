@@ -9,7 +9,7 @@ To ensure that research provenance, documentation integrity, and local hardware 
 ## 1. Non-Negotiable Operational Invariants
 
 1. **Local-First Boundary:** Never introduce mandatory cloud inference APIs or remote endpoints into the core pipeline.
-2. **Self-Built Language Foundation ([ADR-002](docs/adr/ADR-002-self-built-language-foundation.md)):** Never introduce pretrained foundation LLMs as foundational dependencies.
+2. **Open-weight model only (D48, `.claude/spec/spec.md`):** The model is an open-weight third-party LLM chosen by the owner; ADR-002 (self-built foundation) is superseded. Never add a hosted inference API as a dependency.
 3. **Evidence-First Provenance ([ADR-004](docs/adr/ADR-004-evidence-provenance-first-class.md)):** Never write code that generates unanchored claims without `EvidenceCoordinate` references.
 4. **Hardware Safety Limits:** Never write code that assumes unbounded VRAM. Active GPU allocations must remain $\le 15.0$ GB on the RTX 5070 Ti.
 5. **No Claims Without Benchmarks ([ADR-008](docs/adr/ADR-008-evaluation-before-capability-claims.md)):** Never claim an accuracy or capability advancement without committing reproducible benchmark results.

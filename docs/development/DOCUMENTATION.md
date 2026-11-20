@@ -70,7 +70,7 @@ Bump `version` and `updated_at` on every content change (patch: wording; minor: 
 When documents disagree, the higher item wins. Do not pick the newer file by default; fix the lower one in the same change.
 
 1. Accepted ADRs (`docs/adr/`)
-2. Architecture overview and vision (`idea.md` until the new architecture documents exist)
+2. Architecture overview and vision (the ledger `.claude/spec/spec.md` until the new architecture documents exist)
 3. Specifications (`docs/specifications/`)
 4. Architecture documents (`docs/architecture/`)
 5. Research and testing (`docs/research/`, `docs/testing/`)
