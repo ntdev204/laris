@@ -1519,8 +1519,8 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     `!command`, `# note`; guide entries
 - Validation:
   - All translated golden scenarios pass; owner screenshot review on Linux and Windows
-- Status: in_progress
-- Note: NOT CLOSED (owner, 2026-11-19): waiting for the owner's screenshot review on Linux and Windows, which the validation requires. Work below is merged into `laris-v2` but the task stays open. Branch `feature/T158-interface-commands`. The owner approved vendoring on 2026-11-19 and chose
+- Status: done
+- Note: CLOSED by the owner on 2026-11-20 ("duyệt T158") after the screenshot review the validation requires; Windows console output stays unverified by the agent. Work below is merged into `laris-v2`. Branch `feature/T158-interface-commands`. The owner approved vendoring on 2026-11-19 and chose
   the whole task in one session. Vendored `crossterm` 0.29 with its transitive crates (`convert_case`, `derive_more`,
   `signal-hook`, `signal-hook-mio`, `unicode-segmentation`, `winapi` and its import crates, `crossterm_winapi`,
   `document-features`, `litrs`, `rustc_version`, `semver`; `mio` and `signal-hook-registry` were already there) into
@@ -1565,7 +1565,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `--continue`/`--resume` for the interface (the session store holds the log; the conversation is not drawn again); a
   server address or certificate prompt in the form (the packaged or configured address is used; the protocol and the
   golden scenarios for it replay); `/workflow`; Shift+Enter shows as a new line only on terminals that report it (Alt+Enter,
-  Ctrl+J and backslash-Enter always work); a chat against the compose stack. The foundation model is NOT QUALIFIED. Follow-up 2026-11-20 (owner request, branch `feature/T158b-slash-suggestions`): suggestions while typing, as in Claude Code. `/` as first word or an `@` word asks the core after every edit (ids `s<n>`, apart from the Tab ids), the answer opens the menu without a Tab, each character narrows it, no match or another word closes it silently; Enter chooses, Esc closes. `/name` candidates are names that start with the text, then names that contain it. Tests: `suggestions_follow_each_character_typed` and the menu test changed; the screenshot review is still the owner's.
+  Ctrl+J and backslash-Enter always work); a chat against the compose stack. The foundation model is NOT QUALIFIED. Follow-up 2026-11-20 (owner request, branch `feature/T158b-slash-suggestions`): suggestions while typing, as in Claude Code. `/` as first word or an `@` word asks the core after every edit (ids `s<n>`, apart from the Tab ids), the answer opens the menu without a Tab, each character narrows it, no match or another word closes it silently; Enter chooses, Esc closes. `/name` candidates are names that start with the text, then names that contain it. Tests: `suggestions_follow_each_character_typed` and the menu test changed.
 
 ### T159 — Distribution
 - Requirements: SR-C6
