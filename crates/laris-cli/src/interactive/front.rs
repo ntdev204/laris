@@ -7,6 +7,7 @@
 use super::commands::{CommandSet, expand};
 use super::files;
 use super::meter::Meter;
+use super::panels;
 use crate::headless::args::mode_of;
 use crate::headless::real::SharedRegistry;
 use laris_config::Catalogue;
@@ -375,49 +376,76 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
         self.done();
     }
 
+    /// Answers a command with fixed-layout text (bars, a grid, aligned columns): a fenced block keeps its lines.
+    fn show_block(&self, text: &str) {
+        self.show(format!("```\n{}\n```", text.trim_end()));
+    }
+
     fn usage(&mut self) {
         let t = self.w.meter.tally();
-        let mut out = self.text(
-            "commands.usage_session",
-            &[
-                ("prompt", &t.prompt.to_string()),
-                ("completion", &t.completion.to_string()),
-                ("total", &(t.prompt + t.completion).to_string()),
-                ("requests", &t.requests.to_string()),
-            ],
-        );
+        let mut out = format!("{}\n", self.text("commands.panel_usage_session", &[]));
+        let window = self.w.meter.window.max(1);
+        let percent = (t.context * 100 / window).min(100);
+        out.push_str(&format!(
+            "{}  {}\n",
+            panels::bar(percent),
+            self.text(
+                "commands.panel_used_pct",
+                &[("percent", &percent.to_string())]
+            )
+        ));
+        out.push_str(&format!(
+            "{}\n",
+            self.text(
+                "commands.panel_tokens_line",
+                &[
+                    ("prompt", &panels::compact(t.prompt)),
+                    ("completion", &panels::compact(t.completion)),
+                    ("requests", &t.requests.to_string()),
+                ],
+            )
+        ));
         match (self.w.remote)("/laris/account") {
             Ok(account) => {
                 let number = |key: &str| account.get(key).and_then(Value::as_u64);
-                let show = |n: Option<u64>| {
-                    n.map_or_else(|| self.text("commands.unlimited", &[]), |n| n.to_string())
-                };
+                let role = account.get("role").and_then(Value::as_str).unwrap_or("?");
                 out.push('\n');
-                out.push_str(
-                    &self.text(
-                        "commands.usage_account",
-                        &[
-                            (
-                                "role",
-                                account.get("role").and_then(Value::as_str).unwrap_or("?"),
-                            ),
-                            (
-                                "used",
-                                &number("tokens_used")
-                                    .map_or_else(|| "?".to_owned(), |n| n.to_string()),
-                            ),
-                            ("limit", &show(number("token_limit"))),
-                            ("left", &show(number("tokens_left"))),
-                        ],
-                    ),
-                );
+                out.push_str(&format!(
+                    "{}\n",
+                    self.text("commands.panel_usage_key", &[("role", role)])
+                ));
+                let used = number("tokens_used");
+                match number("token_limit") {
+                    Some(limit) if limit > 0 => {
+                        let pct = (used.unwrap_or(0).saturating_mul(100) / limit).min(100);
+                        let left = number("tokens_left")
+                            .unwrap_or(limit.saturating_sub(used.unwrap_or(0)));
+                        out.push_str(&format!(
+                            "{}  {}\n{}\n",
+                            panels::bar(pct),
+                            self.text("commands.panel_used_pct", &[("percent", &pct.to_string())]),
+                            self.text(
+                                "commands.panel_left",
+                                &[
+                                    ("left", &panels::compact(left)),
+                                    ("limit", &panels::compact(limit)),
+                                ],
+                            )
+                        ));
+                    }
+                    _ => out.push_str(&format!(
+                        "{} · {}\n",
+                        used.map_or_else(|| "?".to_owned(), panels::compact),
+                        self.text("commands.unlimited", &[])
+                    )),
+                }
             }
             Err(detail) => {
                 out.push('\n');
                 out.push_str(&self.text("commands.remote_failed", &[("detail", &detail)]));
             }
         }
-        self.show(out);
+        self.show_block(&out);
     }
 
     fn context_command(&mut self) {
@@ -431,21 +459,46 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
             return;
         }
         let window = self.w.meter.window.max(1);
-        let percent = (t.context * 100 / window).min(100);
-        let filled = usize::try_from(percent / 5).unwrap_or(20).min(20);
-        let bar = format!("{}{}", "█".repeat(filled), "░".repeat(20 - filled));
-        let compact = (self.w.meter.threshold * 100.0).round();
-        let text = self.text(
-            "commands.context_line",
-            &[
-                ("bar", &bar),
-                ("percent", &percent.to_string()),
-                ("tokens", &t.context.to_string()),
-                ("window", &window.to_string()),
-                ("compact", &format!("{compact:.0}")),
-            ],
-        );
-        self.show(text);
+        let legend = [
+            self.text("commands.panel_context_title", &[]),
+            String::new(),
+            format!(
+                "laris · {} / {} ({}%)",
+                panels::compact(t.context),
+                panels::compact(window),
+                (t.context * 100 / window).min(100)
+            ),
+            String::new(),
+            format!(
+                "⛁ {}: {}",
+                self.text("commands.panel_context_used", &[]),
+                panels::compact(t.context)
+            ),
+            format!(
+                "⛶ {}: {}",
+                self.text("commands.panel_context_free", &[]),
+                panels::compact(window.saturating_sub(t.context))
+            ),
+            format!(
+                "⛝ {}: {:.0}%",
+                self.text("commands.panel_context_buffer", &[]),
+                (1.0 - self.w.meter.threshold) * 100.0
+            ),
+        ];
+        let grid = panels::grid(t.context, window, self.w.meter.threshold);
+        let mut out = String::new();
+        for (i, row) in grid.iter().enumerate() {
+            out.push_str(row);
+            if let Some(text) = legend.get(i) {
+                out.push_str("   ");
+                out.push_str(text);
+            }
+            out.push('\n');
+        }
+        for text in legend.iter().skip(grid.len()) {
+            out.push_str(&format!("{}{text}\n", " ".repeat(panels::GRID_WIDTH + 3)));
+        }
+        self.show_block(&out);
     }
 
     fn model_command(&mut self) {
@@ -475,19 +528,37 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
     }
 
     fn config_command(&mut self) {
-        let text = self.text(
-            "commands.config_line",
-            &[
-                ("server", &self.w.server),
-                ("project", &self.w.project.display().to_string()),
-                ("mode", mode_name(self.w.engine.mode())),
-                ("sandbox", if self.w.sandbox { "on" } else { "off" }),
-                ("window", &self.w.meter.window.to_string()),
-                ("compact", &format!("{:.0}", self.w.meter.threshold * 100.0)),
-                ("session", &self.w.session),
-            ],
+        let rows = [
+            ("commands.cfg_server", self.w.server.clone()),
+            ("commands.cfg_project", self.w.project.display().to_string()),
+            (
+                "commands.cfg_mode",
+                mode_name(self.w.engine.mode()).to_owned(),
+            ),
+            (
+                "commands.cfg_sandbox",
+                if self.w.sandbox { "on" } else { "off" }.to_owned(),
+            ),
+            (
+                "commands.cfg_window",
+                format!("{} tokens", self.w.meter.window),
+            ),
+            (
+                "commands.cfg_compact",
+                format!("{:.0}%", self.w.meter.threshold * 100.0),
+            ),
+            ("commands.cfg_session", self.w.session.clone()),
+        ];
+        let rows: Vec<(String, String)> = rows
+            .into_iter()
+            .map(|(key, value)| (self.text(key, &[]), value))
+            .collect();
+        let text = format!(
+            "{}\n{}",
+            self.text("commands.panel_config_title", &[]),
+            panels::table(&rows)
         );
-        self.show(text);
+        self.show_block(&text);
     }
 
     /// `/export [file]`: the conversation as Markdown, by default in `exports/<session>.md` next to the project's

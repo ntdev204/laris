@@ -137,3 +137,10 @@ Goal: the client keeps itself current without the user doing anything, and says 
 Tasks: T251
 Exit criteria:
 - The interface checks the release address in the background, installs a newer signed release over the program, and shows a notice above the input box at the right until `/restart` applies it; a bad signature, list or archive is never installed; covered by tests.
+
+### Phase 53 — Informational panels like the familiar assistants
+Goal: `/usage`, `/context` and `/config` read like the familiar terminal assistants: bars, a context grid and aligned lists.
+Tasks: T252
+Exit criteria:
+- The three commands show their panels as described in T252; tests and the Rust task checks pass.
+

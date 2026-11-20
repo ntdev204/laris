@@ -1921,3 +1921,21 @@ Owner's direction 2026-11-20: update always on when a new version exists; a clie
   - Tests: version compare, signature and tamper refusals, no downgrade, an installed program replaces the old one and stays executable; notice position and `/restart` in the interface; `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-20 built. `ring` (already in the lock as the TLS provider) is now a direct dependency of `laris-cli` for the signature check (owner approved 2026-11-20). The updater is tested against a scripted fetcher and a real `tar`; the real HTTPS download, the GitHub `latest` release, Windows (zip through `tar`, move-aside replace) and a restart on Windows are NOT tried. A development build has no update source and never checks. The check needs `tar` on the machine. The session that runs keeps the old version until `/restart`; two old sessions may each download the same release once.
+
+## Phase 53 — Informational panels like the familiar assistants
+
+Owner's direction 2026-11-21: `/usage`, `/context` and `/config` look like Claude Code's.
+
+### T252 — Claude-style `/usage`, `/context`, `/config`
+- Requirements: SR-C1, SR-C2
+- Depends: T251
+- Deliverables:
+  - `laris-cli::interactive::panels`: progress bar, compact numbers (`12.3k`), context grid (`⛁` used, `⛶` free, `⛝` autocompact buffer) and an aligned key/value table
+  - `/usage`: "Current session" bar with percent used and the session's prompt/answer/request counts; "Current key" bar with used percent and tokens left when the server reports a limit
+  - `/context`: "Context Usage" grid of 50 cells with a legend (used, free space, autocompact buffer)
+  - `/config`: titled, aligned list of the session's settings; catalogue (en, vi) updated, old one-line strings removed
+- Validation:
+  - Unit tests of the panel pieces, the interface test of the three commands; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`
+- Status: done
+- Note: 2026-11-21 built. The panels are fenced blocks because the renderer reflows Markdown paragraphs. `/config` stays read-only; editing settings from it is not built.
+
