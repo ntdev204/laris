@@ -10,13 +10,13 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-laris-vault = { path = "../laris-vault", version = "1.0.2" }
-laris-retrieval = { path = "../laris-retrieval", version = "1.0.2" }
-laris-core = { path = "../laris-core", version = "1.0.2" }
+laris-vault = { path = "../laris-vault", version = "1.1.0" }
+laris-retrieval = { path = "../laris-retrieval", version = "1.1.0" }
+laris-core = { path = "../laris-core", version = "1.1.0" }
 serde_json = "1"
 regex = "1"
 
 [dev-dependencies]
-laris-config = { path = "../laris-config", version = "1.0.2" }
-laris-protocol = { path = "../laris-protocol", version = "1.0.2" }
-laris-store = { path = "../laris-store", version = "1.0.2" }
+laris-config = { path = "../laris-config", version = "1.1.0" }
+laris-protocol = { path = "../laris-protocol", version = "1.1.0" }
+laris-store = { path = "../laris-store", version = "1.1.0" }

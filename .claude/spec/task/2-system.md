@@ -1903,3 +1903,4 @@ Owner's direction 2026-11-20: make the client interface like the familiar termin
   - Snapshot, interface and controller tests; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`
 - Status: done
 - Note: 2026-11-20 built. `/model` only lists the server's models: the named model family, the banner's model and the role switch stay with T245-T247. `/copy` is not built (it needs clipboard access the client does not have).
+Released as 1.1.0 on 2026-11-20 by the owner's order ("commit, merge và publish version mới").

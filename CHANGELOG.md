@@ -6,13 +6,27 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-20
+
 ### Added
+- **Default slash commands:** `/usage` (tokens this session used, and the key's used, limit and left), `/context` (how
+  full the context window is), `/model` (the models the server offers), `/config` (the session's settings) and
+  `/export [file]` (the conversation as Markdown). The status line's `context N%` now comes from the usage the server
+  reports after each answer.
 - **`auto` permission mode, now the default:** the client reads, writes, creates and deletes files and runs commands
   without asking. Clearly destructive commands still ask: the calls that fit `permissions.autoAsk` (by default `sudo`,
   `su`, `doas`, recursive deletion of `/`, `~`, `$HOME` or a parent, `git push`, `git reset --hard`, `git clean`,
   `git branch -D`, `mkfs`, `dd`, `chmod -R`, `chown -R` and power commands). A list in the settings replaces the default
   one. `deny` and `ask` rules, `plan`, hooks, folder scope and the sandbox still apply. To keep asking first, set
   `permissions.defaultMode` to `default`. Available in `/mode`, Shift+Tab and `--permission-mode`.
+
+### Changed
+- **Client interface:** the input box is two rules with a `>` prompt (no side borders); the banner is two lines (name and
+  version, folder); the status line shows model, context and tokens left (no mode, branch or sandbox); the server's
+  working stages (checking, deciding, asking) are hidden unless one fails.
+
+### Removed
+- `/quit` (use `/exit`).
 
 ## [1.0.2] - 2026-11-20
 
