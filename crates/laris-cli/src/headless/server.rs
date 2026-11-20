@@ -6,11 +6,12 @@
 use laris_core::{Model, ModelAnswer, ModelError, ModelRequest};
 use laris_model_client::{ClientError, Interrupt, ModelClient, ReqwestTransport};
 use laris_protocol::{
-    ChatRequest, Kind, LarisRequest, P1Event, ToolCall, ToolList, ToolRequest, ToolResponse,
+    ChatRequest, Event, Kind, LarisRequest, P1Event, ToolCall, ToolList, ToolRequest, ToolResponse,
     ToolSchema,
 };
 use laris_tools::{RemoteTools, ToolError};
 use serde_json::{Map, Value};
+use std::rc::Rc;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 
@@ -32,9 +33,16 @@ pub struct ServerModel {
     client: Client,
     runtime: Arc<Runtime>,
     session: String,
+    progress: Option<Rc<dyn Fn(Event)>>,
 }
 
 impl ServerModel {
+    /// Reports each stage the server's pipeline ends, and the sources an answer cites, as they arrive.
+    pub fn with_progress(mut self, progress: Rc<dyn Fn(Event)>) -> Self {
+        self.progress = Some(progress);
+        self
+    }
+
     /// A model over `client`; `session` is the id the server groups the requests of this conversation under
     /// (4 to 64 of `A-Za-z0-9_-`).
     pub fn new(client: Client, runtime: Arc<Runtime>, session: &str) -> Self {
@@ -42,6 +50,7 @@ impl ServerModel {
             client,
             runtime,
             session: session.to_owned(),
+            progress: None,
         }
     }
 }
@@ -70,6 +79,9 @@ impl Model for ServerModel {
             while let Some(event) = stream.next().await.map_err(failed)? {
                 match event {
                     P1Event::Chunk(chunk) => {
+                        if let (Some(progress), Some(meta)) = (&self.progress, &chunk.laris) {
+                            report(progress, meta);
+                        }
                         for choice in chunk.choices {
                             if let Some(text) = choice.delta.content {
                                 out.text.push_str(&text);
@@ -136,5 +148,25 @@ impl RemoteTools for HttpRemote {
             )),
             _ => Err(ToolError::new("remote_unavailable", "an empty answer")),
         }
+    }
+}
+
+/// The step events and the cited sources of a chunk, as `status` events for the interface.
+fn report(progress: &Rc<dyn Fn(Event)>, meta: &laris_protocol::LarisMeta) {
+    let status = |kind: &str, value: Value| {
+        progress(Event::Status {
+            kind: kind.to_owned(),
+            data: value.as_object().cloned().unwrap_or_default(),
+        });
+    };
+    for step in &meta.steps {
+        status(
+            "pipeline",
+            serde_json::json!({"stage": step.stage, "outcome": step.outcome, "ms": step.ms, "code": step.code}),
+        );
+    }
+    if !meta.evidence.is_empty() {
+        let items: Vec<&str> = meta.evidence.iter().map(|e| e.title.as_str()).collect();
+        status("sources", serde_json::json!({ "items": items }));
     }
 }

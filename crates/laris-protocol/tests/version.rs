@@ -5,7 +5,7 @@ use laris_protocol::{PROTOCOL_HEADER, PROTOCOL_VERSION, check_version};
 #[test]
 fn accepts_only_the_current_version() {
     assert!(check_version(Some(PROTOCOL_VERSION)).is_ok());
-    assert!(check_version(Some("2")).is_err());
+    assert!(check_version(Some("1")).is_err());
     assert!(check_version(Some("")).is_err());
     assert!(check_version(None).is_err());
 }

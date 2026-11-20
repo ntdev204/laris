@@ -962,7 +962,7 @@ fn answer(mut connection: TcpStream, stream: &str, seen: &Seen) {
         )
     };
     let reply = format!(
-        "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nX-Laris-Protocol: 1\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{payload}",
+        "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nX-Laris-Protocol: 2\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{payload}",
         payload.len()
     );
     let _ = connection.write_all(reply.as_bytes());

@@ -503,7 +503,7 @@ impl Http {
         let mut s = TcpStream::connect(self.addr).await.unwrap();
         let payload = body.to_string();
         let head = format!(
-            "POST {path} HTTP/1.1\r\nHost: x\r\nX-Laris-Protocol: 1\r\nConnection: close\r\n\
+            "POST {path} HTTP/1.1\r\nHost: x\r\nX-Laris-Protocol: 2\r\nConnection: close\r\n\
              Content-Type: application/json\r\nContent-Length: {}\r\n\r\n",
             payload.len()
         );

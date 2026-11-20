@@ -54,6 +54,7 @@ impl std::error::Error for SseError {}
 
 /// One event of a P1 chat stream.
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::large_enum_variant)] // one event at a time; boxing would change every consumer
 pub enum P1Event {
     /// A chunk (text, tool calls, evidence list or usage).
     Chunk(ChatResponseChunk),

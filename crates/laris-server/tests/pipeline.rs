@@ -309,6 +309,11 @@ async fn a_grounded_answer_passes_the_gate_and_shows_its_stages() {
     let server = start(config(Grounding::Required, NOTES), vec![text(DRAFT)]).await;
     let reply = chat(&server, ask(QUESTION)).await;
     assert_eq!(reply.text, DRAFT);
+    assert!(
+        reply.wire.contains("\"origin\":\"server\"") && reply.wire.contains("Perovskite.md"),
+        "the cited passage is in the evidence list: {}",
+        reply.wire
+    );
     assert_eq!(
         stages(&reply),
         [

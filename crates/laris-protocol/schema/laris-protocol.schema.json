@@ -1382,6 +1382,71 @@
             }
           ]
         },
+        "Decision": {
+          "description": "What the server's decider chose for a turn.",
+          "properties": {
+            "action": {
+              "description": "The action (`answer`, `abstain`, `ask_advisor`, `stop`, ...).",
+              "type": "string"
+            },
+            "rule": {
+              "description": "The rule that fired.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "rule"
+          ],
+          "type": "object"
+        },
+        "Evidence": {
+          "description": "A piece of server-held evidence an answer cites. `origin` is `server`: the client does not check it again.",
+          "properties": {
+            "end": {
+              "default": 0,
+              "description": "End of the quoted span.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "id": {
+              "description": "Note path of the source.",
+              "type": "string"
+            },
+            "level": {
+              "default": "",
+              "description": "The level of the note (`sourced`, ...), or empty.",
+              "type": "string"
+            },
+            "origin": {
+              "default": "",
+              "description": "Who holds it: `server`.",
+              "type": "string"
+            },
+            "sha256": {
+              "default": "",
+              "description": "SHA-256 (hex) of the quoted text.",
+              "type": "string"
+            },
+            "start": {
+              "default": 0,
+              "description": "Start of the quoted span.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "title": {
+              "default": "",
+              "description": "The note's title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
         "FinishReason": {
           "description": "Why a choice ended.",
           "oneOf": [
@@ -1414,7 +1479,7 @@
         },
         "LarisMeta": {
           "additionalProperties": true,
-          "description": "The `laris` block of a response chunk: the evidence list of the system brain (note titles, never content).",
+          "description": "The `laris` block of a response chunk: the evidence list of the system brain (note titles, never content), the\npipeline's step events, its decision and the server-held evidence an answer cites.",
           "properties": {
             "brain": {
               "default": [],
@@ -1423,8 +1488,63 @@
                 "type": "string"
               },
               "type": "array"
+            },
+            "decision": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Decision"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The decider's choice, sent once before the text."
+            },
+            "evidence": {
+              "description": "Server-held evidence the answer cites, sent once before the text.",
+              "items": {
+                "$ref": "#/$defs/Evidence"
+              },
+              "type": "array"
+            },
+            "steps": {
+              "description": "Stages that ended since the last event, in stage order.",
+              "items": {
+                "$ref": "#/$defs/Step"
+              },
+              "type": "array"
             }
           },
+          "type": "object"
+        },
+        "Step": {
+          "description": "One stage of the server's request pipeline as it ended (ADR-025). Never carries message text.",
+          "properties": {
+            "code": {
+              "default": "",
+              "description": "A rule id or reason code; empty when there is none.",
+              "type": "string"
+            },
+            "ms": {
+              "default": 0,
+              "description": "Milliseconds the stage took.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "outcome": {
+              "description": "`ok`, `skipped`, `stop` or `error`.",
+              "type": "string"
+            },
+            "stage": {
+              "description": "`prefilter`, `retrieval`, `decider`, `model`, `gate` or `assembly`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "stage",
+            "outcome"
+          ],
           "type": "object"
         },
         "ToolCall": {
@@ -3017,7 +3137,7 @@
       "type": "object"
     }
   },
-  "protocol": "1",
+  "protocol": "2",
   "scientific": {
     "AnalyseCitationsArgs": {
       "$defs": {

@@ -23,10 +23,11 @@ pub use events::{
     CORE_VERSION, Command, CoreEnd, Event, InterfaceEnd, VersionMismatch, channel, check_ready,
 };
 pub use p1::{
-    AccountResponse, AdminReasoning, AdminUsage, ChatRequest, ChatResponseChunk, EmbedRequest,
-    EmbedResponse, EmbeddingItem, HelpResponse, HttpError, InstructionLayer, Kind, LarisMeta,
-    LarisRequest, Layers, ModelInfo, ModelList, ToolList, ToolRequest, ToolResponse, UsageRow,
-    WorkflowInfo, WorkflowRequest, WorkflowsResponse,
+    AccountResponse, AdminReasoning, AdminUsage, ChatRequest, ChatResponseChunk,
+    Decision as PipelineDecision, EmbedRequest, EmbedResponse, EmbeddingItem,
+    Evidence as ServerEvidence, HelpResponse, HttpError, InstructionLayer, Kind, LarisMeta,
+    LarisRequest, Layers, ModelInfo, ModelList, Step, ToolList, ToolRequest, ToolResponse,
+    UsageRow, WorkflowInfo, WorkflowRequest, WorkflowsResponse,
 };
 pub use p2::{ChatCompletion, ChatCompletionChunk, ModelChatRequest};
 pub use sse::{ErrorDetail, P1Event, P2Event, SseDecoder, SseError, StreamError};

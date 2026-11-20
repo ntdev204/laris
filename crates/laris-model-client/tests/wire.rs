@@ -60,7 +60,7 @@ async fn a_chunked_chat_stream_arrives_event_by_event() {
     let sent = String::from_utf8(requests[0].clone()).unwrap();
     let lower = sent.to_lowercase();
     assert!(sent.starts_with("POST /v1/laris/chat HTTP/1.1"), "{sent}");
-    assert!(lower.contains("x-laris-protocol: 1"));
+    assert!(lower.contains("x-laris-protocol: 2"));
     assert!(lower.contains("authorization: bearer wire-key-456"));
     assert!(lower.contains("accept: text/event-stream"));
     assert!(lower.contains("content-type: application/json"));

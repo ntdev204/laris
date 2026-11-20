@@ -282,7 +282,7 @@ impl HttpRemote {
         let http = reqwest::Client::new();
         let list: ToolList = http
             .get(&base)
-            .header("X-Laris-Protocol", "1")
+            .header("X-Laris-Protocol", "2")
             .send()
             .await
             .expect("the list of tools")
@@ -311,7 +311,7 @@ impl RemoteTools for HttpRemote {
                 let r = self
                     .http
                     .post(&url)
-                    .header("X-Laris-Protocol", "1")
+                    .header("X-Laris-Protocol", "2")
                     .json(&body)
                     .send()
                     .await

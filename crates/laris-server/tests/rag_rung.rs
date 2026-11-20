@@ -341,6 +341,7 @@ async fn ask(server: &Server, project: Project, question: &str) -> Run {
     collected.set_brain(&LarisMeta {
         brain: brain.lock().unwrap().clone(),
         extra: Map::new(),
+        ..LarisMeta::default()
     });
     let brain_titles = brain.lock().unwrap().clone();
     let wire_text = wire.lock().unwrap().clone();

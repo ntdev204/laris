@@ -195,7 +195,7 @@ impl Server {
             None => ("", 0, ""),
         };
         let req = format!(
-            "{method} {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\n{auth}{ctype}Content-Length: {len}\r\n\r\n{payload}"
+            "{method} {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\n{auth}{ctype}Content-Length: {len}\r\n\r\n{payload}"
         );
         s.write_all(req.as_bytes()).await.unwrap();
         let mut raw = Vec::new();
@@ -300,7 +300,7 @@ async fn a_client_that_leaves_leaves_a_trace() {
     let mut s = TcpStream::connect(server.addr).await.unwrap();
     let body = json!({"messages": [{"role": "user", "content": ASKED}]}).to_string();
     let req = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
         body.len()
     );
     s.write_all(req.as_bytes()).await.unwrap();
@@ -531,7 +531,7 @@ async fn postgres_a_request_is_traced_on_success_error_and_disconnect_with_no_te
     let body = json!({"messages": [{"role": "user", "content": ASKED}]}).to_string();
     s.write_all(
         format!(
-            "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 1\r\nAuthorization: Bearer {user}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 2\r\nAuthorization: Bearer {user}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
             body.len()
         )
         .as_bytes(),

@@ -714,6 +714,7 @@ impl Run {
                 // the whole list so far: a client keeps the last one it saw
                 brain: self.consulted.titles().to_vec(),
                 extra,
+                ..LarisMeta::default()
             }),
             choices: Vec::new(),
             usage: None,

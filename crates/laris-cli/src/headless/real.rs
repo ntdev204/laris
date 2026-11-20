@@ -80,6 +80,7 @@ pub fn build(
     key: &ApiKey,
     session_id: &str,
     approver: impl Approver + 'static,
+    progress: Option<std::rc::Rc<dyn Fn(laris_protocol::Event)>>,
 ) -> Result<Built, BuildError> {
     let fail = |code: &'static str, message: String, exit: u8| BuildError {
         code,
@@ -150,7 +151,16 @@ pub fn build(
     .with_shield(shield);
 
     let model = Prompted::new(
-        RedactingModel::new(ServerModel::new(client, runtime, session_id), redactor),
+        RedactingModel::new(
+            {
+                let model = ServerModel::new(client, runtime, session_id);
+                match progress {
+                    Some(p) => model.with_progress(p),
+                    None => model,
+                }
+            },
+            redactor,
+        ),
         Sources {
             home: started.home.root().to_path_buf(),
             project_root: started.project.clone(),
@@ -213,6 +223,7 @@ pub fn run(
         &key,
         &session.id,
         laris_policy::NoApprover,
+        None,
     ) {
         Ok(built) => built,
         Err(e) => return refuse(&mut console, format, e.code, &e.message, e.exit),

@@ -232,7 +232,7 @@ fn dechunk(mut b: &[u8]) -> Vec<u8> {
 
 fn post(path: &str, body: &str, extra: &str) -> Vec<u8> {
     format!(
-        "POST {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: {}\r\n{extra}\r\n{body}",
+        "POST {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: {}\r\n{extra}\r\n{body}",
         body.len()
     )
     .into_bytes()
@@ -329,7 +329,7 @@ async fn bad_bodies_are_400() {
     assert!(r.json()["error"].as_str().unwrap().contains("messages"));
     // wrong content type
     let wrong = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{CHAT}",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{CHAT}",
         CHAT.len()
     );
     assert_eq!(h.send(wrong.as_bytes()).await.status(), 400);
@@ -372,12 +372,12 @@ async fn embed_rules() {
 #[tokio::test]
 async fn length_required_is_411() {
     let h = Harness::start(Script::Chunks(1), |_| {}).await;
-    let none = b"POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\n\r\n";
+    let none = b"POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\n\r\n";
     let r = h.send(none).await;
     assert_eq!(r.status(), 411);
     assert_eq!(r.json(), json!({"error": "Content-Length is required"}));
     let chunked = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n{:x}\r\n{CHAT}\r\n0\r\n\r\n",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n{:x}\r\n{CHAT}\r\n0\r\n\r\n",
         CHAT.len()
     );
     assert_eq!(h.send(chunked.as_bytes()).await.status(), 411);
@@ -388,7 +388,7 @@ async fn length_required_is_411() {
 async fn oversize_is_413_before_the_body_is_read() {
     let h = Harness::start(Script::Chunks(1), |c| c.max_body_bytes = 64).await;
     // Only the headers are sent; the answer must not wait for the body.
-    let head = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: 65\r\n\r\n";
+    let head = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: 65\r\n\r\n";
     let mut s = TcpStream::connect(h.addr).await.unwrap();
     s.write_all(head.as_bytes()).await.unwrap();
     let mut buf = vec![0u8; 1024];
@@ -410,10 +410,10 @@ async fn oversize_is_413_before_the_body_is_read() {
         200
     );
     // a declared length that lies (more bytes than declared) cannot grow the body
-    let lying = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: 5\r\n\r\n{\"a\":1}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    let lying = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: 5\r\n\r\n{\"a\":1}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     assert_eq!(h.send(lying.as_bytes()).await.status(), 400);
     // not a number
-    let nan = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: abc\r\n\r\n";
+    let nan = "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: abc\r\n\r\n";
     assert_eq!(h.send(nan.as_bytes()).await.status(), 400);
     h.shutdown().await;
 }
@@ -525,7 +525,7 @@ async fn slow_body_is_cut_with_408() {
     })
     .await;
     let head = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
         CHAT.len()
     );
     let mut s = TcpStream::connect(h.addr).await.unwrap();

@@ -189,10 +189,6 @@ impl Step {
             decision: None,
         }
     }
-
-    fn json(&self) -> Value {
-        json!({"stage": self.stage, "outcome": self.outcome, "ms": self.ms, "code": self.code})
-    }
 }
 
 struct Inner {
@@ -339,21 +335,76 @@ fn chunk(
 }
 
 fn step_chunk(step: &Step) -> ChatResponseChunk {
-    let mut extra = Map::new();
-    extra.insert("steps".to_owned(), json!([step.json()]));
-    if let Some(decision) = &step.decision {
-        extra.insert("decision".to_owned(), decision.clone());
-    }
     chunk(
         ChunkDelta::default(),
         None,
         Some(LarisMeta {
-            brain: Vec::new(),
-            extra,
+            steps: vec![laris_protocol::Step {
+                stage: step.stage.to_owned(),
+                outcome: step.outcome.to_owned(),
+                ms: step.ms,
+                code: step.code.clone(),
+            }],
+            decision: step
+                .decision
+                .as_ref()
+                .map(|d| laris_protocol::PipelineDecision {
+                    action: d["action"].as_str().unwrap_or("").to_owned(),
+                    rule: d["rule"].as_str().unwrap_or("").to_owned(),
+                }),
+            ..LarisMeta::default()
         }),
         None,
         "",
     )
+}
+
+/// The evidence event: the server-held passages an answer cites, once, before the text.
+fn evidence_chunk(items: Vec<laris_protocol::ServerEvidence>) -> Option<ChatResponseChunk> {
+    (!items.is_empty()).then(|| {
+        chunk(
+            ChunkDelta::default(),
+            None,
+            Some(LarisMeta {
+                evidence: items,
+                ..LarisMeta::default()
+            }),
+            None,
+            "",
+        )
+    })
+}
+
+/// The passages `text` cites, as evidence entries (`origin: server`).
+fn evidence_of(text: &str, passages: &[Passage]) -> Vec<laris_protocol::ServerEvidence> {
+    use sha2::{Digest, Sha256};
+    passages
+        .iter()
+        .filter(|p| {
+            text.contains(&format!(
+                "[{} #",
+                p.source.split_whitespace().collect::<Vec<_>>().join(" ")
+            ))
+        })
+        .map(|p| laris_protocol::ServerEvidence {
+            id: p.source.clone(),
+            origin: "server".to_owned(),
+            level: String::new(),
+            title: p
+                .source
+                .trim_end_matches(".md")
+                .rsplit('/')
+                .next()
+                .unwrap_or("")
+                .to_owned(),
+            start: 0,
+            end: p.text.chars().count() as u64,
+            sha256: Sha256::digest(p.text.as_bytes())
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect(),
+        })
+        .collect()
 }
 
 /// The chunks of an answer the pipeline wrote itself (a Prefilter hit, an abstention): the text, the end and zero
@@ -618,6 +669,7 @@ async fn grounded(
         request.messages.clone(),
         request.tools.clone(),
     );
+    let shown = passages.clone();
     let started = Instant::now();
     let joined = tokio::task::spawn_blocking(move || {
         let mut harness = HarnessModel::new(
@@ -678,13 +730,16 @@ async fn grounded(
             let brain = seen.brain();
             let mut out: Vec<ChatResponseChunk> =
                 steps[steps.len() - 2..].iter().map(step_chunk).collect();
+            if ending == Some(Ending::Answered) {
+                out.extend(evidence_chunk(evidence_of(&answer.text, &shown)));
+            }
             if !brain.is_empty() {
                 out.push(chunk(
                     ChunkDelta::default(),
                     None,
                     Some(LarisMeta {
                         brain,
-                        extra: Map::new(),
+                        ..LarisMeta::default()
                     }),
                     None,
                     &model_name,
