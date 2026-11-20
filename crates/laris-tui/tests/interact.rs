@@ -507,9 +507,75 @@ fn a_menu_closes_on_esc_and_on_any_other_key_which_still_types() {
         other => panic!("{other:?}"),
     };
     feed(&mut a, completion(&id, &[("help", ""), ("mode", "")]));
-    key(&mut a, Key::Char('m'));
-    assert!(a.menu().is_none());
+    let sent = key(&mut a, Key::Char('m'));
+    assert!(
+        matches!(&sent[..], [Command::Complete { text, .. }] if text == "m"),
+        "{sent:?}"
+    );
     assert_eq!(a.input_text(), "/m");
+}
+
+#[test]
+fn suggestions_follow_each_character_typed() {
+    let mut a = app();
+    // `/` alone already asks, and the answer opens the menu without a Tab
+    let sent = key(&mut a, Key::Char('/'));
+    let id = match &sent[..] {
+        [
+            Command::Complete {
+                id,
+                trigger: Trigger::Slash,
+                text,
+            },
+        ] if text.is_empty() => id.clone(),
+        other => panic!("{other:?}"),
+    };
+    feed(
+        &mut a,
+        completion(&id, &[("help", "list"), ("mode", "mode")]),
+    );
+    assert_eq!(a.menu().map(|m| m.items.len()), Some(2));
+    assert_eq!(
+        a.input_text(),
+        "/",
+        "the text is not changed by suggestions"
+    );
+    // each character narrows: a new request, and the menu follows its answer
+    let sent = key(&mut a, Key::Char('m'));
+    let id = match &sent[..] {
+        [Command::Complete { id, text, .. }] if text == "m" => id.clone(),
+        other => panic!("{other:?}"),
+    };
+    feed(&mut a, completion(&id, &[("mode", "mode")]));
+    assert_eq!(a.menu().map(|m| m.items.len()), Some(1));
+    assert!(a.screen_text(80).contains("❯ mode"));
+    // Enter takes the highlighted suggestion; a second Enter sends it
+    key(&mut a, Key::Enter);
+    assert_eq!(a.input_text(), "/mode ");
+    assert!(a.menu().is_none());
+    // no match closes the menu without a message; an ordinary word asks nothing
+    a.clear_input();
+    let sent = key(&mut a, Key::Char('/'));
+    let id = match &sent[..] {
+        [Command::Complete { id, .. }] => id.clone(),
+        other => panic!("{other:?}"),
+    };
+    feed(&mut a, completion(&id, &[("help", "")]));
+    let sent = key(&mut a, Key::Char('z'));
+    let id = match &sent[..] {
+        [Command::Complete { id, .. }] => id.clone(),
+        other => panic!("{other:?}"),
+    };
+    feed(&mut a, completion(&id, &[]));
+    assert!(a.menu().is_none());
+    assert!(!a.screen_text(80).contains("nothing matches"));
+    a.clear_input();
+    assert!(key(&mut a, Key::Char('w')).is_empty());
+    // Backspace back to nothing closes the menu
+    a.clear_input();
+    key(&mut a, Key::Char('/'));
+    assert!(key(&mut a, Key::Backspace).is_empty());
+    assert!(a.menu().is_none());
 }
 
 #[test]

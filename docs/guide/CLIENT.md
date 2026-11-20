@@ -39,7 +39,7 @@ with the reason. `LARIS_API_KEY` in the environment wins over the saved key.
 | Ctrl+C | Clear the box; on an empty box press it twice to leave. |
 | Ctrl+D | Leave, when the box is empty. |
 | Ctrl+R | Search the history; Ctrl+R again for an older match; Enter uses it; Esc cancels. |
-| Tab | Complete `/command` (first word) or `@path`; Tab or the arrows move in the menu, Enter chooses, Esc closes. |
+| Tab | Complete `/command` (first word) or `@path`. Suggestions also appear as you type: `/` opens the list of commands and each character narrows it (names that start with the text first, then names that contain it); Tab or the arrows move in the menu, Enter chooses, Esc closes. |
 | Shift+Tab | Next permission mode. |
 | Ctrl+U, Ctrl+K, Ctrl+W | Delete to the start of the line, to its end, the word before the cursor. |
 
@@ -55,7 +55,7 @@ call and the model is told.
 
 ## Commands
 
-Type `/` and Tab to list them. These are built in:
+Type `/` to list them; each character narrows the list. These are built in:
 
 | Command | What it does |
 | :--- | :--- |
