@@ -1763,7 +1763,24 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - The rule decider (T167) behind the server's decision seam, choosing among answer, abstain, ask, retrieve and ask the advisor; the decision network stays off (not promoted, T171); every decision is logged with its rule
 - Validation:
   - Scenario tests through the HTTP API: stop on budget, abstain on no evidence, answer from accepted claims without calling the model
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 built (ADR-025 section 4, D54). `pipeline::decider`: stage 5 puts the rule decider of `laris-brain` behind the
+  server's decision seam, between retrieval and the model. Signals are measured on the main brain (coverage of the question
+  by accepted Claims, levels, open Conflicts) plus the loop counters the client sends in `laris.turn` (`steps_used`,
+  `seconds_used`, `repeats`, `advisor_asks`, `budget_left`), clamped to the server's caps and read as inputs only. The
+  server never decides `run_tool`, `acquire` or `verify` (no proposed call, no acquisition, no pending candidate in the
+  signals; `below_required` is held at 0). Outcomes: `stop` and `ask_user` end the turn with no sentence of their own;
+  `abstain` ends it with the harness abstention text and no model call (with `grounding = required`, no passages is final);
+  `answer` composes from accepted Claims when `LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` (no model call), else goes
+  on to the buffered, gated model answer; `ask_advisor` and `retrieve` go on to the model. The choice is sent as
+  `laris.decision` {action, rule} (in the chunk's `extra` until T242 types it) and the step `decider` carries `action:rule`
+  in the audit row; the signals stay out. The network cannot be switched on (`LARIS_SERVER__DECIDER_NETWORK` stops the
+  server). Settings `LARIS_SERVER__DECIDER_*` have no defaults and are required together. Checked: 10 tests in
+  `crates/laris-server/tests/decider.rs` (stop on budget, steps, time and cycle; abstain on no evidence; answer from Claims
+  without the model; covered question to the gated model; partial coverage asks the advisor; forged counters; log with rule
+  and no text; no `brain.read`; settings). TM-35 added (SEC-PIPE-05). Open for the owner: the texts for a stop and a question
+  to the user would need entries in the locked `.laris/harness.toml` (a policy change needs approval); until then a stop is
+  silent and `ask_user` cannot occur (the server has no closed slot test). The task stays in_progress only because T238 is.
 
 ### T242 — Protocol P1 step events and client display
 - Requirements: SR-S1, SR-C1

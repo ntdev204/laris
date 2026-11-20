@@ -376,6 +376,13 @@
           "tests": [
             "a_grounded_answer_passes_the_gate_and_shows_its_stages"
           ]
+        },
+        {
+          "package": "laris-server",
+          "target": "decider",
+          "tests": [
+            "every_decision_is_logged_with_its_rule_and_without_text"
+          ]
         }
       ]
     },
@@ -692,6 +699,19 @@
             "a_draft_larger_than_the_buffer_is_an_error_not_a_truncation",
             "a_draft_that_fails_the_gate_is_retried_then_the_turn_abstains",
             "a_model_that_fails_is_a_typed_error_and_a_step"
+          ]
+        }
+      ]
+    },
+    "SEC-PIPE-05": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "decider",
+          "tests": [
+            "forged_counters_cannot_skip_a_stage_or_widen_the_choice",
+            "the_turn_stops_on_steps_time_and_a_cycle_whatever_the_client_claims",
+            "the_settings_are_required_together_and_the_network_cannot_be_enabled"
           ]
         }
       ]
