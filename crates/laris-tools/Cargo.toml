@@ -7,21 +7,21 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-laris-config = { path = "../laris-config", version = "2.0.0-dev" }
-laris-core = { path = "../laris-core", version = "2.0.0-dev" }
-laris-protocol = { path = "../laris-protocol", version = "2.0.0-dev" }
-laris-sandbox = { path = "../laris-sandbox", version = "2.0.0-dev" }
+laris-config = { path = "../laris-config", version = "1.0.0" }
+laris-core = { path = "../laris-core", version = "1.0.0" }
+laris-protocol = { path = "../laris-protocol", version = "1.0.0" }
+laris-sandbox = { path = "../laris-sandbox", version = "1.0.0" }
 regex = "1"
 serde_json = "1"
 sha2 = "0.10"
 thiserror = "2"
-laris-vault = { path = "../laris-vault", version = "2.0.0-dev" }
-laris-retrieval = { path = "../laris-retrieval", version = "2.0.0-dev" }
-laris-store = { path = "../laris-store", version = "2.0.0-dev" }
+laris-vault = { path = "../laris-vault", version = "1.0.0" }
+laris-retrieval = { path = "../laris-retrieval", version = "1.0.0" }
+laris-store = { path = "../laris-store", version = "1.0.0" }
 
 
 [dev-dependencies]
-laris-evidence = { path = "../laris-evidence", version = "2.0.0-dev" }
+laris-evidence = { path = "../laris-evidence", version = "1.0.0" }
 
 [lints]
 workspace = true

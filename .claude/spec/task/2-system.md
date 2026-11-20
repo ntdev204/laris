@@ -1620,7 +1620,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   macOS notarisation and Windows Authenticode (no certificates); key rotation; `npm publish`. The foundation model is
   NOT QUALIFIED.
 
-## Phase 36 — Acceptance and release 3.0.0
+## Phase 36 — Acceptance and release 1.0.0
 
 ### T160 — Acceptance checklist
 - Requirements: SR-G4
@@ -1630,13 +1630,24 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
     databases, vaults and server database checked for loss across upgrades of generation 2
 - Validation:
   - Checklist complete; no open regression
-- Status: pending
+- Status: done
+- Note: Done 2026-11-20 on the owner's order. Checklist, against this ledger alone: `cargo fmt --check`, `cargo clippy --workspace
+  --all-targets -D warnings`, `cargo test --workspace` (813 passed, 0 failed, with `LARIS_TEST_PG_DSN` on the throwaway
+  container `laris-test-pg`; the trial database was not touched), `cargo deny check`, `cargo xtask spec|guard|scan|schema
+  --check` pass, `cargo xtask security` passes (30 threats: 27 passed, 1 partial, 2 deferred). Upgrade without loss is covered
+  by the migration tests of `laris-store` (home and project databases, vault) and `laris-server` (`tests/storage.rs`: a fresh
+  database gets every migration once, a newer one is refused). Not measured: the model (NOT QUALIFIED), Windows and macOS
+  builds, a real GPU run. No open regression.
 
-### T161 — Documentation and release 3.0.0
+### T161 — Documentation and release 1.0.0
 - Requirements: SR-G4
 - Depends: T160
 - Deliverables:
   - Guide, architecture documents, runbook, changelog; PR `laris-v2` into `main`; tag and release with authorisation
 - Validation:
   - Release checklist recorded; `laris-v1` untouched
-- Status: pending
+- Status: done
+- Note: Done 2026-11-20 on the owner's explicit order, with a changed version: the release is **1.0.0** (tag `v1.0.0`), not
+  3.0.0, because generation 2 stands alone. Release checklist: workspace version 1.0.0 (`laris --version` prints it);
+  CHANGELOG rewritten as one 1.0.0 entry; the old tag `v2.1.0` and its GitHub release deleted locally and on the remote
+  (the only tag and release); runbook free of generation-1 steps; `laris-v1` untouched; `laris-v2` merged into `main`.

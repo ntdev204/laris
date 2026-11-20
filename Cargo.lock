@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "laris-cli"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-core",
@@ -900,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "laris-config"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "schemars",
  "serde",
@@ -909,7 +909,7 @@ dependencies = [
 
 [[package]]
 name = "laris-core"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-protocol",
@@ -922,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "laris-evidence"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-protocol",
  "regex",
@@ -931,7 +931,7 @@ dependencies = [
 
 [[package]]
 name = "laris-model-client"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-protocol",
@@ -946,7 +946,7 @@ dependencies = [
 
 [[package]]
 name = "laris-policy"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-core",
@@ -966,7 +966,7 @@ dependencies = [
 
 [[package]]
 name = "laris-protocol"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "schemars",
  "serde",
@@ -975,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "laris-retrieval"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-vault",
  "serde_json",
@@ -983,7 +983,7 @@ dependencies = [
 
 [[package]]
 name = "laris-sandbox"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "landlock",
  "laris-config",
@@ -998,7 +998,7 @@ dependencies = [
 
 [[package]]
 name = "laris-server"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "axum",
  "bytes",
@@ -1029,7 +1029,7 @@ dependencies = [
 
 [[package]]
 name = "laris-store"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "rusqlite",
  "sha2",
@@ -1038,7 +1038,7 @@ dependencies = [
 
 [[package]]
 name = "laris-tools"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-core",
@@ -1056,7 +1056,7 @@ dependencies = [
 
 [[package]]
 name = "laris-tui"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "crossterm",
  "laris-config",
@@ -1066,7 +1066,7 @@ dependencies = [
 
 [[package]]
 name = "laris-vault"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "regex",
  "serde_json",
@@ -2671,7 +2671,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "2.0.0-dev"
+version = "1.0.0"
 dependencies = [
  "laris-config",
  "laris-protocol",

@@ -55,7 +55,7 @@ recommendations the owner confirms or changes; the "Alternative" column is what 
 | D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | proposed, confirmed 2026-11-13 | Check on the server only: the server cannot see local tool results; check twice: duplicate logic (ADR-004) |
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | proposed, confirmed 2026-11-13 | Collect on the server: privacy and confidentiality |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | proposed, confirmed 2026-11-13 | NLP in Rust: re-implements the model block and breaks D27 |
-| D42 | Branches | `laris-v2` integrates; one feature branch per task is cut from it; `main` receives release 3.0.0 | proposed, confirmed 2026-11-13 | Git flow with `develop`: generation 1 uses it, but two integration lines would split the ledger |
+| D42 | Branches | `laris-v2` integrates; one feature branch per task is cut from it; `main` receives release 1.0.0 | proposed, confirmed 2026-11-13 | Git flow with `develop`: generation 1 uses it, but two integration lines would split the ledger |
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided | Migration tool that rewrites data: risk of loss |
 
 ## 3. Confirmation of D28 against the ladder wording of 2026-11-13
@@ -78,7 +78,7 @@ that platform, installed by a one-line script (D34). Chosen:
 - Build: native CI runners for macOS and Windows, because the sandbox crates (landlock, seccomp, Windows APIs) must be
   built and tested on their own platform; `cross` only for the static Linux (musl) targets.
 - Signing: `minisign` detached signatures over a checksum manifest, verified by the install script; platform code
-  signing (macOS notarisation, Windows Authenticode) is added at release 3.0.0 if the owner holds the certificates.
+  signing (macOS notarisation, Windows Authenticode) is added at release 1.0.0 if the owner holds the certificates.
 Neither tool is installed or used before T121 and neither becomes a dependency of the Rust code.
 
 ## 5. Consequences
@@ -107,4 +107,4 @@ old rule (T142 migrations, T143 key digests, T145 parity fixtures, the P1/P2 fix
 `openssl` instead: the checksum manifest `SHA256SUMS` is signed with ECDSA P-256 over SHA-256 (`openssl dgst -sha256
 -sign`), and `install.sh` (openssl), `install.ps1` (.NET CNG) and the npm wrapper (Node crypto) check the same
 signature against the public key written into them. ECDSA P-256 was preferred to Ed25519 because Windows PowerShell has
-no Ed25519. Notarisation and Authenticode remain for release 3.0.0 if the owner holds the certificates.
+no Ed25519. Notarisation and Authenticode remain for release 1.0.0 if the owner holds the certificates.
