@@ -76,7 +76,7 @@ Exit criteria:
 
 ### Phase 44 — ResearchLLM on an open-weight LLM (D48)
 Goal: an open-weight reasoning LLM, with a Prefilter, lexical retrieval, a harness loop and the Obsidian brain, replaces the self-trained model.
-Tasks: T227, T228, T229, T230, T231, T232, T233, T234
+Tasks: T227, T228, T229, T230, T231, T232, T233, T234, T235
 Exit criteria:
 - The chat route answers from a third-party open-weight model chosen by the owner; answers cite vault passages or abstain.
 - The self-trained model code is removed; learning export is kept. No model is declared qualified by this phase.

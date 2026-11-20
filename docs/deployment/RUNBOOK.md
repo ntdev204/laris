@@ -50,10 +50,19 @@ docker compose -f docker/compose.yaml cp server:/state/first_admin_key -   # the
 ```
 
 Ports default to 80 and 443; set `LARIS_HTTP_PORT` and `LARIS_HTTPS_PORT` to move them (the trial server uses 18080
-and 18443). To serve an open-weight chat model set `LARIS_MODEL_BACKEND` to
-`laris.model.inference.open_llm:OpenWeightChat` and `LARIS_MODEL_SERVICE__CHAT_MODEL_ID` to a path under `/weights`
-(the image installs only the `model` extra, so the `chat` extra would have to be added first; see T231). A GPU needs
-a compose override that reserves the device; none is shipped because the placeholder runs on CPU.
+and 18443). To serve an open-weight chat model add `docker/compose.chat.yaml` (T235): it builds the model image with the `chat` extra,
+reserves the NVIDIA GPU and starts `OpenWeightChat` offline from the weights mounted at `/weights`. Use a separate project
+name so it keeps its own volumes and certificate authority:
+
+```sh
+export LARIS_MODELS_DIR=$HOME/.cache/huggingface/hub LARIS_CHAT_SNAPSHOT=<snapshot folder of models--Qwen--Qwen3.5-9B>
+export LARIS_HTTP_PORT=38080 LARIS_HTTPS_PORT=38443 LARIS_DOMAIN=localhost
+export LARIS_EDGE_SUBNET=172.31.61.0/24 LARIS_EDGE_GATEWAY=172.31.61.1 LARIS_SUBNET=172.31.60.0/24
+docker compose -p laris-qwen -f docker/compose.yaml -f docker/compose.chat.yaml up -d --build --wait --wait-timeout 900
+```
+
+The whole hub cache is mounted because a model's blobs can live in a store shared with other models. The first request
+loads the weights (about 11 GB of VRAM at 8 bit); the model is NOT QUALIFIED.
 
 ## Smoke test
 
