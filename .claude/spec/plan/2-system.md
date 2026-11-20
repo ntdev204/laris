@@ -107,3 +107,9 @@ Tasks: T238, T239, T240, T241, T242, T243
 Exit criteria:
 - ADR-025 accepted; the server runs the Prefilter, retrieval, brain decider and evidence gate; the client shows the stages; the smoke test and the cognitive evaluation pass through the server. The model stays NOT QUALIFIED.
 
+### Phase 48 — Client fixes found in use
+Goal: what the owner meets in daily use of the client is fixed and released.
+Tasks: T244
+Exit criteria:
+- The fix is released and the owner confirms it on Windows.
+

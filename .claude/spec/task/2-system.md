@@ -1734,3 +1734,15 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - Smoke test passes; the report states system measurements only and no model qualification; the owner reviews
 - Status: pending
 
+## Phase 48 — Client fixes found in use
+
+### T244 — Terminal flicker and the emoji icon (release 1.0.2)
+- Requirements: SR-C1
+- Depends: T236
+- Deliverables:
+  - No flicker while typing or while a turn runs: one synchronised frame per redraw and a slower spinner that moves only while a turn runs; no spinner glyph that a terminal can draw as a colour emoji; a test for each; a release that carries them (1.0.2, GitHub release and npm)
+- Validation:
+  - Emulator tests pass; the owner sees no flicker and no purple-on-blue icon on Windows Terminal
+- Status: in_progress
+- Note: 2026-11-20 (owner reports on 1.0.1: the screen reloads constantly while typing and answering, and the icon changes between purple and purple-on-blue). Causes found in the code: the spinner advanced every 40 ms tick (25 redraws a second, each erasing and printing the live block), and the glyph U+2733 is drawn as a coloured emoji box on Windows. Fixed: `Screen::draw` writes one `CSI ?2026h ... ?2026l` update per frame; the spinner steps every 120 ms and only while running; U+2733 became U+273A, and a test lists emoji-capable characters that no frame may use. Committed on `main`, not pushed, not released, not tried on Windows; the causes are read from the code, not seen on the owner's terminal. Closes when 1.0.2 is released and the owner confirms.
+
