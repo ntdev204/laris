@@ -679,6 +679,86 @@ returned logs, manifests and reports.
 - Status: blocked
 - Note: Owner decision 2026-11-20: "Tôi không có nhiều thời gian... tôi chỉ cần chạy, không hạ xuống 110M": no further training or measurement now; the first system version runs on the stage-2 checkpoint. This is **not** a qualification: the foundation model stays NOT QUALIFIED (SQuAD v1 F1 0.05-0.11 against 0.83, STS-B test never run; T205). The sealed T100 evaluation and the qualified stages (T99-T118, T162-T172) stay as they were. Status `blocked` until the owner returns the run of section 19; the agent did not load the checkpoint (it is not on this machine).
 
+### T219 — Plan for the stage-1 extended run in chunks (48-52 h budget)
+- Requirements: SR-M3, SR-M6
+- Depends: T205, T216
+- Deliverables:
+  - `configs/language_encoder/english_r1_stage1_ext.yaml` (T216 mixture, 100,000 steps, about 3.3 B tokens derived), the `ext` arm and optional RESUME_DIR of `scripts/colab/train_arm.sh` (a resumed chunk does not pass `--init-from`, which would refuse the existing run directory; the log is appended), `scripts/colab/stop_at_step.sh` (stops the run after the checkpoint of a given step), runbook section 20, tasks T220-T226
+- Validation:
+  - `bash -n` on both scripts, `python scripts/validate_spec.py`; the resume and the stop helper have **not** been run (T220 proves the resume at step 1,000)
+- Status: done
+- Note: Owner decision 2026-11-20: a budget of 48-52 h, split into tasks. Derived plan: 100,000 steps x 32,768 tokens = about 3.3 B tokens, five chunks of 20,000 steps (about 9.7 h, about 65 units each, about 340 units in all: the owner reads the unit balance in Colab). Risks, all unmeasured: resume has never run in this project (loader position restored from `loader_rng`, repeats of rows possible); the similarity task has about 23,000 rows and repeats many times at 100,000 steps; QA may still not form. Stop rule across chunks: SQuAD v1 F1 below 0.20 at step 40,000 (T222) ends the extended run and T226 decides. The foundation model stays NOT QUALIFIED whatever this run shows; the sealed T100 evaluation is separate and once.
+
+### T220 — Resume check at step 1,000 (owner run)
+- Requirements: SR-M3
+- Depends: T219
+- Deliverables:
+  - Runbook section 20: start `ext` on a fresh A100 VM (data and `english-r1-stage2/best` as in section 18), `stop_at_step.sh english-r1-ext 1000`, save `last`, restart with `train_arm.sh ext artifacts/checkpoints/language_encoder/english-r1-ext/last`; read the log for `[RESUME] ... at optimizer step 1000`, finite losses at steps 1,010-1,100 and the same task mix; the run then simply continues as chunk 1 (T221)
+- Validation:
+  - The log shows `[RESUME]` at step 1,000 and finite losses after it; if it does not, the run stops and the cause is reported before any further chunk
+- Status: pending
+- Note: about 1 h, about 7 units; the chunk-1 steps 1,000 to 20,000 of T221 follow in the same VM session.
+
+### T221 — Stage-1 extended run, chunk 1: steps 1,000 to 20,000 (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T220
+- Deliverables:
+  - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 20,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 20,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
+- Validation:
+  - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 20,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
+- Status: pending
+- Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
+
+### T222 — Stage-1 extended run, chunk 2: steps 20,000 to 40,000 (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T221
+- Deliverables:
+  - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 40,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 40,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283) **Gate: SQuAD v1 F1 below 0.20 at step 40,000 stops the extended run**
+- Validation:
+  - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 40,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
+- Status: pending
+- Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
+
+### T223 — Stage-1 extended run, chunk 3: steps 40,000 to 60,000 (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T222
+- Deliverables:
+  - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 60,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 60,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
+- Validation:
+  - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 60,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
+- Status: pending
+- Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
+
+### T224 — Stage-1 extended run, chunk 4: steps 60,000 to 80,000 (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T223
+- Deliverables:
+  - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 80,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 80,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
+- Validation:
+  - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 80,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
+- Status: pending
+- Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
+
+### T225 — Stage-1 extended run, chunk 5: steps 80,000 to 100,000 (owner run)
+- Requirements: SR-M3, SR-M6
+- Depends: T224
+- Deliverables:
+  - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 100,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 100,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
+- Validation:
+  - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 100,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
+- Status: pending
+- Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
+
+### T226 — Analysis and decision after the extended run
+- Requirements: SR-M3, SR-M6
+- Depends: T225
+- Deliverables:
+  - `reports/verification/T226-extended-run-analysis.md`: per-chunk curves of every task, SQuAD v1 F1 / STS-B / NLI / PAWS / MLM at 20,000, 40,000, 60,000, 80,000 and 100,000 against T205, the repeats of the similarity and QA rows, a decision: which checkpoint goes to the sealed T100 evaluation (owner run, once per candidate), or a re-plan
+- Validation:
+  - Every figure traced to a log or result file; "measured on the validation split"; no qualification claim
+- Status: pending
+- Note: if T222 stops the run at 40,000, this task reads T221-T222 only and the later chunks are marked `blocked` with the reason.
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold

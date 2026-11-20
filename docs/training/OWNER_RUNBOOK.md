@@ -940,3 +940,32 @@ HOME=$(mktemp -d) laris-model serve \
 `curl -s http://127.0.0.1:8001/v1/embeddings -H 'content-type: application/json' -d '{"input":["a cat sleeps","a kitten is napping"]}'`; the response holds two vectors. Report the two responses and the memory used.
 4. To make it the default, set `model_service.checkpoint` and `model_service.tokenizer_model` through configuration or the environment (no tunable is hardcoded).
 Nothing here trains, evaluates or touches a test split. The agent has not run these commands: the checkpoint is not on this machine, so the CPU/GPU memory and the response shape are unmeasured.
+
+
+## 20. T219-T226: stage-1 extended run in five chunks (prepared 2026-11-20)
+
+Budget 48-52 h on the Colab A100: 100,000 steps (about 3.3 B tokens, derived), config `english_r1_stage1_ext.yaml`, five chunks of 20,000 steps (about 9.7 h and about 65 units each), run id `english-r1-ext`, start `english-r1-stage2/best`.
+**Training is an owner run.** The agent runs a chunk only with your explicit permission for that chunk (the T216 permission is spent). The model stays NOT QUALIFIED.
+
+**Preparation of a VM** (once per VM, about 35 min): as section 18 (code upload with `pack_code.sh`, `setup_vm.sh`, `drivemount`, `sync_data.sh`, replace the truncated `fineweb_edu_en/train.parquet`, copy `runs/english-r1-stage2/best` to `artifacts/checkpoints/language_encoder/english-r1-stage2/best`). When a chunk ends, run `save_run.sh english-r1-ext`, wait for `SAVE_DONE`, and keep the VM alive for the next chunk if you can; a stopped VM loses its disk, so the next chunk needs the preparation again plus `runs/english-r1-ext/last` copied from Drive.
+
+**T220, first start and resume check (about 1 h):**
+```bash
+cd /content/laris && export LARIS_TRAINING_AUTHORIZED=1
+setsid nohup bash scripts/colab/train_arm.sh ext > /dev/null 2>&1 < /dev/null &
+bash scripts/colab/stop_at_step.sh english-r1-ext 1000        # prints CHUNK_STOPPED at step 1000
+setsid nohup bash scripts/colab/train_arm.sh ext artifacts/checkpoints/language_encoder/english-r1-ext/last > /dev/null 2>&1 < /dev/null &
+tr '\r' '\n' < artifacts/profiles/english-r1-ext.log | grep -E "RESUME|^\[Step 0010[0-9]0" | head     # [RESUME] at optimizer step 1000, then finite losses
+```
+Do not use `pkill -f` to stop a run through `colab ssh`: it also kills your own shell (seen on 2026-11-20); `stop_at_step.sh` finds the process by its run id.
+
+**T221 to T225, each chunk:** let the run continue (or start the next chunk with `train_arm.sh ext <last>`), then
+```bash
+bash scripts/colab/stop_at_step.sh english-r1-ext 20000       # 40000, 60000, 80000, 100000 for the later chunks
+bash scripts/colab/save_run.sh english-r1-ext                  # wait for SAVE_DONE
+cp -r artifacts/checkpoints/language_encoder/english-r1-ext/last /content/eval_copy                # evaluate the copy, never `last` itself
+```
+then the section 17 loop on `/content/eval_copy` (evaluator with `--split val --max-samples 512 --batch-size 8 --seed 42`, and `scripts/diagnose_pair_path.py` on 600 rows); copy the results to `reports/verification/T2xx/`.
+Wait for the end of the scripts (the final line), not for the file to exist.
+**Stop rules:** a non-finite loss; a step slower than 3.6 s; out of memory (peak 22.4 GB in T216); a task validation loss more than 10 % above its best for two evaluations; **SQuAD v1 F1 below 0.20 at step 40,000 (T222) ends the run** and T226 decides.
+**Budget:** about 340 units for the 100,000 steps plus about 10 % for preparations and evaluations; read the balance in the Colab UI first. Unmeasured: resume (T220 measures it), the similarity task repeating its 23,000 rows many times, and whether QA forms at all.
