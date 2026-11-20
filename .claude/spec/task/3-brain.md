@@ -26,7 +26,8 @@ Status values and rules as in [task/1-model.md](1-model.md).
   - Note types Source, Claim, Theory, Conflict, Open question in the vault schema; certainty levels; lint rules
 - Validation:
   - Schema and lint tests; a Claim without a resolvable span fails
-- Status: pending
+- Status: done
+- Note: 2026-11-20: `crates/laris-vault/src/brain.rs` (main-brain profile: `brain_schema`, `Level` ladder, `resolve_span`, `lint_brain`) and `tests/brain.rs` (9 tests: valid vault clean; missing, wrong-hash, out-of-range and unresolved spans; candidate and unknown levels refused; evidence for corroborated, verified and reviewed; edited Source; retracted Source; Conflict and Open question rules; deterministic order). Spans are byte offsets into the Source note body. Lint only proves a span exists and reproduces; meaning, metadata and contradiction checks belong to the write gate (T164, T165).
 
 ### T164 — Write gate and consolidation
 - Requirements: SR-K3

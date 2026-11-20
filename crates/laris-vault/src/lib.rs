@@ -7,6 +7,7 @@
 //! ([`schema`]) and lint ([`lint`]: format, hub tree, content) complete SR-L2. The format is `docs/specifications/OBSIDIAN_VAULT_FORMAT.md`; the
 //! recorded index under `tests/golden/vault/` pins the index of a vault that uses every form in it.
 
+pub mod brain;
 pub mod emit;
 pub mod index;
 pub mod lint;
@@ -15,6 +16,7 @@ pub mod schema;
 pub mod writer;
 pub mod yaml;
 
+pub use brain::{Level, SpanError, brain_schema, lint_brain, resolve_span};
 pub use index::{BuildStats, Resolution, VaultError, VaultIndex};
 pub use lint::{HierarchyRules, Problem, lint_content, lint_format, lint_hierarchy};
 pub use note::{Link, LinkSource, Note, parse_note};
