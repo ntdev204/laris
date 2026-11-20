@@ -1,0 +1,113 @@
+{
+  "name": "researchllm-qwen3.5-9b-2026-11-20",
+  "kind": "recorded: Qwen/Qwen3.5-9B (ResearchLLM, D48), 8-bit, greedy decoding (temperature 0.0), thinking off, max_new_tokens 1024, through OpenWeightChat; one model, one recording",
+  "labelled": true,
+  "prompts": {
+    "answer": "Answer the question briefly, in one or two sentences.",
+    "reword": "Reword the following sentence without changing its meaning. Reply with the reworded sentence only.\n\nSentence: {claim}",
+    "propose": "Source text:\n{source}\n\nQuestion: {question}\n\nPropose one claim that answers the question and quote, word for word, the part of the source text that supports it. Reply with JSON only: {{\"statement\": \"...\", \"quote\": \"...\"}}"
+  },
+  "replies": {
+    "q1": {
+      "text": "Yes, aspirin can reduce fever in adults by acting as an antipyretic to lower body temperature. However, it is generally not recommended for adults due to the risk of bleeding and Reye's syndrome, especially if there is any suspicion of viral infections like influenza.",
+      "supported": false
+    },
+    "q2": {
+      "text": "Yes, vitamin D supplementation can raise serum calcium levels in older adults, particularly when combined with calcium intake, as it enhances intestinal calcium absorption. However, in individuals with normal baseline levels, the increase is often modest and typically remains within the normal physiological range.",
+      "supported": false
+    },
+    "q3": {
+      "text": "Yes, metformin is a first-line medication specifically designed to lower fasting blood glucose levels in people with type 2 diabetes by reducing glucose production in the liver. It is highly effective at improving glycemic control, particularly in the fasting state, though it may also lower post-meal glucose levels to a lesser extent.",
+      "supported": false
+    },
+    "q4": {
+      "text": "No, ibuprofen does not cure influenza; it is a pain reliever and fever reducer used only to manage symptoms like body aches and fever. The virus itself must be treated with supportive care or, in some cases, specific antiviral medications prescribed by a doctor.",
+      "supported": false
+    },
+    "q5": {
+      "text": "No, aspirin does not cure cancer. While some studies suggest it may help reduce the risk of developing certain cancers or slow their progression, it is not a treatment capable of eliminating existing tumors.",
+      "supported": false
+    },
+    "q6": {
+      "text": "No, vitamin D does not reduce fever in children; it is not an antipyretic medication. Fever is typically managed with standard treatments like acetaminophen or ibuprofen, while vitamin D is used to support bone health and immune function.",
+      "supported": false
+    },
+    "q7": {
+      "text": "The capital of France is Paris.",
+      "supported": false
+    }
+  },
+  "rewordings": {
+    "c1": {
+      "text": "Adults can lower their fever by taking aspirin.",
+      "faithful": true
+    },
+    "c2": {
+      "text": "Vitamin D supplements increase serum calcium levels in older adults.",
+      "faithful": true
+    },
+    "c3": {
+      "text": "Metformin reduces fasting blood sugar levels in individuals with type 2 diabetes.",
+      "faithful": true
+    }
+  },
+  "proposals": [
+    {
+      "statement": "Aspirin reduces fever in adults.",
+      "quote": "Aspirin reduces fever in adults.",
+      "source": "Paper",
+      "supported": true,
+      "question": "q1",
+      "raw": "{\"statement\": \"Aspirin reduces fever in adults.\", \"quote\": \"Aspirin reduces fever in adults.\"}"
+    },
+    {
+      "statement": "Vitamin D supplementation raises serum calcium in older adults.",
+      "quote": "Vitamin D supplementation raises serum calcium in older adults.",
+      "source": "Paper",
+      "supported": true,
+      "question": "q2",
+      "raw": "{\"statement\": \"Vitamin D supplementation raises serum calcium in older adults.\", \"quote\": \"Vitamin D supplementation raises serum calcium in older adults.\"}"
+    },
+    {
+      "statement": "Metformin lowers fasting glucose in type 2 diabetes.",
+      "quote": "Metformin lowers fasting glucose in type 2 diabetes.",
+      "source": "Paper",
+      "supported": true,
+      "question": "q3",
+      "raw": "{\"statement\": \"Metformin lowers fasting glucose in type 2 diabetes.\", \"quote\": \"Metformin lowers fasting glucose in type 2 diabetes.\"}"
+    },
+    {
+      "statement": "Ibuprofen does not cure influenza.",
+      "quote": "Ibuprofen reduces pain in adults.",
+      "source": "Paper",
+      "supported": false,
+      "question": "q4",
+      "raw": "{\"statement\": \"Ibuprofen does not cure influenza.\", \"quote\": \"Ibuprofen reduces pain in adults.\"}"
+    },
+    {
+      "statement": "Aspirin does not cure cancer.",
+      "quote": "Aspirin reduces fever in adults.",
+      "source": "Paper",
+      "supported": false,
+      "question": "q5",
+      "raw": "{\"statement\": \"Aspirin does not cure cancer.\", \"quote\": \"Aspirin reduces fever in adults.\"}"
+    },
+    {
+      "statement": "The source text does not provide information about Vitamin D reducing fever in children.",
+      "quote": "Vitamin D supplementation raises serum calcium in older adults.",
+      "source": "Paper",
+      "supported": false,
+      "question": "q6",
+      "raw": "{\"statement\": \"The source text does not provide information about Vitamin D reducing fever in children.\", \"quote\": \"Vitamin D supplementation raises serum calcium in older adults.\"}"
+    },
+    {
+      "statement": "Paris is the capital of France.",
+      "quote": "",
+      "source": "Paper",
+      "supported": false,
+      "question": "q7",
+      "raw": "{\"statement\": \"Paris is the capital of France.\", \"quote\": \"\"}"
+    }
+  ],
+  "labelled_by": "the agent, by reading each entry against accepted claims c1-c3 (supported = every assertion is held by them; faithful = same meaning); pending the owner's review. Not training data."
+}
