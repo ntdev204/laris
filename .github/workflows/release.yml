@@ -1,11 +1,19 @@
 name: release-build
 
-# T159: builds, packages and signs the client archives. Manual only; it uploads workflow artifacts and publishes
-# nothing (push, tag and release stay with the owner, ADR-021 D42). Needs the secret LARIS_RELEASE_KEY (the PEM
-# private key made by `cargo xtask dist keygen`) and the variable LARIS_RELEASE_URL (the https address of the release).
+# T159: builds, packages and signs the client archives. Manual only. Needs the secret LARIS_RELEASE_KEY (the PEM
+# private key made by `cargo xtask dist keygen`) and the variable LARIS_RELEASE_URL (the https address of the release:
+# `https://github.com/<owner>/<repo>/releases/download`, so that `<address>/<version>/<file>` is a release asset).
+# With the input `publish` (owner's order, 2026-11-20, D42 amended) it also creates the GitHub release named by the
+# workspace version (tag without `v`, the layout the installers expect) with the signed archives, and publishes the npm
+# package with the secret NPM_TOKEN. Without it, nothing is published.
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Create the GitHub release and publish the npm package"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -74,3 +82,35 @@ jobs:
         with:
           name: release
           path: out
+
+  publish:
+    if: ${{ inputs.publish }}
+    needs: sign
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: out
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          [ -n "$version" ] || { echo "no workspace version"; exit 1; }
+          awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          gh release create "$version" --target "${{ github.sha }}" --title "LARIS $version" --notes-file notes.md --latest \
+            out/laris-* out/SHA256SUMS out/SHA256SUMS.sig out/installers/install.sh out/installers/install.ps1
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - name: npm publish
+        working-directory: out/installers/npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

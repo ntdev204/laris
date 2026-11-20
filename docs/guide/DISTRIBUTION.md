@@ -59,7 +59,11 @@ Targets: `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`, `x86_64-appl
 5. `cargo xtask dist verify --dir out --pubkey ~/.laris-release/release.pub` checks what was made, as an installer would.
 6. `cargo xtask dist scripts --dir out --url https://<release address> --pubkey ~/.laris-release/release.pub` renders
    `install.sh`, `install.ps1` and the npm package (`out/npm`; `npm publish` stays with the owner).
-7. Upload `out` as `<release address>/<version>/` and copy it to `latest/`. Push, tag and publish are the owner's.
+7. Upload `out` as `<release address>/<version>/` and copy it to `latest/`. With GitHub as the host, the workflow does this
+   itself when run with `publish` (owner's order, 2026-11-20): it creates the release named by the version (no `v`, so that
+   `https://github.com/<owner>/<repo>/releases/download/<version>/<file>` is the layout above; set `LARIS_RELEASE_URL` to
+   `https://github.com/<owner>/<repo>/releases/download`) and runs `npm publish` with the secret `NPM_TOKEN`. `latest` is not a
+   release there: the installers need `LARIS_VERSION=<version>`; the npm package pins its own version.
 
 The release address is never in the sources: it is an argument or `LARIS_RELEASE_URL` at this step.
 
