@@ -1119,6 +1119,27 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   content); T149 and T160/T161 and the closed-task notes above still tell the history; the Python source tree
   `src/laris` (generation 1 code) is untouched.
 
+### T217 — Remove the Python model-free evaluation runner
+- Requirements: SR-G4
+- Depends: T140, T215
+- Deliverables:
+  - Remove the Python duplicate of the Rust model-free runner (T140): `research/evaluation/suite.py` (retrieval, citation,
+    injection, vault, extraction, leak suites), the `suite` command of the model CLI, its test, and
+    `shared/harness/guard.py` (`InjectionScanner`, `LeakDetector`), which only that runner used
+- Validation:
+  - No Python import of the removed modules; the Python tests of evaluation, architecture, cli, model, scholarly and
+    vault pass; `cargo xtask spec` / `validate_spec.py` pass
+- Status: done
+- Note: Closed 2026-11-20, branch `feature/T217-model-block-independence`. Checked import by import before cutting:
+  the other generation-1 duplicates stay because the model block still uses them: `shared/vault` and `shared/text`
+  (used by `scholarly`, served as remote tools, D41), `shared/retrieval` and `shared/graph` (BM25 baseline and
+  provenance gate of the language evaluation), `shared/config` (`schemas.py` is the training configuration;
+  `runtime_schemas.py` holds `model_service` settings), `shared/harness/strings.py` and `shared/offline.py` (the
+  placeholder backend), `src/cli` (entry point `laris-model` and the training scripts). `tests/documentation` was
+  failing before this change (3 front-matter errors in `docs/deployment/RUNBOOK.md` and `docs/guide/DISTRIBUTION.md`);
+  untouched here. Empty directories `shared/policy`, `shared/skills`, `laris/client`, `laris/server` hold only
+  untracked `__pycache__`.
+
 ### T147 — System brain service
 - Requirements: SR-S5
 - Depends: T127, T145, T146
