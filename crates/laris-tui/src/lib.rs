@@ -26,7 +26,9 @@ pub mod term;
 pub mod view;
 pub mod width;
 
-pub use app::{App, Approval, Choice, Info, Input, Item, Menu, Search, SignIn, Stage, Tone};
+pub use app::{
+    App, Approval, Choice, History, Info, Input, Item, Menu, Search, SignIn, Stage, Tone,
+};
 pub use input::{InputBuffer, Key};
 pub use style::{Color, Line, Span, Style, Theme, ansi, plain};
 pub use view::Layout;

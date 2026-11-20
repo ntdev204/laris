@@ -1674,8 +1674,17 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - The interactive client runs on the alternate screen like `vim`: a header, a conversation area that scrolls (keys and mouse wheel), the input box and the status line fixed at the bottom; on exit the terminal is restored. The conversation of a session is read back from the event log when it is resumed (`--resume`), so the history of a session is kept; no flicker (one synchronised frame, a slow spinner)
 - Validation:
   - Terminal emulator tests of the full-screen layout, the scrolling and the restore on exit and on a panic; the existing T158 scenarios still pass; the owner tries it on Windows Terminal
-- Status: pending
+- Status: in_progress
 - Note: 2026-11-20 (owner: "giống vim, nhưng lịch sử hội thoại vẫn giữ theo session"). The flicker part is already done in T236's follow-up: `Screen::draw` writes one synchronised update (`CSI ?2026h/l`) per frame and the spinner advances every 120 ms and only while a turn runs (it ran at 25 frames a second). Not yet verified on Windows.
+  2026-11-20 built: `FullScreen` in `laris-tui` (alternate screen, mouse reported, header = the banner rows pinned on top,
+  conversation area between, input box / menus / status line / footer pinned at the bottom; only changed rows are
+  written, in one synchronised update; the view stays still when new lines arrive while the person reads back).
+  Keys: wheel (3 lines), Page Up / Page Down; typing returns to the end. `Layout` gained `head` and `fixed`.
+  `leave_sequence` (mouse off, cursor on, alternate screen left, paste off) runs on exit and from the panic hook.
+  History: `laris --continue` / `laris --resume ID` open the interactive client on an earlier session and show its
+  conversation read back from the event log (`App::show_history`). Checked: 8 emulator tests (`tests/fullscreen.rs`),
+  the T158 tests unchanged, and a pty run of the debug binary (enters and leaves the alternate screen, mouse on and off).
+  Open: the owner tries it on Windows Terminal; the inline `Screen` stays in the crate for its T158 tests only.
 
 ## Phase 47 — Request pipeline in the server
 
