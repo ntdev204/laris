@@ -92,6 +92,8 @@ impl MainBrainConfig {
 pub struct BrainSource {
     inner: VaultSource,
     hidden: HashSet<String>,
+    /// The `level` property of the notes that have one, by path.
+    levels: std::collections::HashMap<String, String>,
 }
 
 impl PassageSource for BrainSource {
@@ -103,6 +105,10 @@ impl PassageSource for BrainSource {
             .into_iter()
             .filter(|p| !self.hidden.contains(&p.source))
             .take(limit)
+            .map(|mut p| {
+                p.level = self.levels.get(&p.source).cloned().unwrap_or_default();
+                p
+            })
             .collect()
     }
 }
@@ -164,7 +170,13 @@ impl MainBrain {
                 .flat_map(|status| index.by_prop("status", status))
                 .map(|note| note.path.clone())
                 .collect();
+            let levels = index
+                .notes
+                .iter()
+                .filter_map(|(path, note)| note.prop("level").map(|v| (path.clone(), v.py_str())))
+                .collect();
             Arc::new(BrainSource {
+                levels,
                 inner: VaultSource::new(VaultPassages::new(&index), Scorer::Fused),
                 hidden,
             })

@@ -154,8 +154,8 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
 - Present state (T154, 2026-11-19): `cargo xtask security` runs every test id through `tests/security/suite.json`
   (exact test names per id; a renamed or missing test fails the run) and writes `reports/security/report.json`. Of the
   30 ids, 27 pass, `SEC-SUP-01` passes as **partial** (`cargo deny`, the guard and the scan run; release signing waits
-  for T159) and two are **deferred** to programme 3 because their owning tasks are pending: `SEC-BRAIN-01` (T164) and
-  `SEC-DATA-03` (T168). A deferral to a task that is already done fails the suite. The PostgreSQL tests (`SEC-KEY-01`
+  for T159) and none is deferred any more (`SEC-BRAIN-01` since T240, `SEC-DATA-03` since 2026-11-20, which runs the T168 dataset tests).
+  A deferral to a task that is already done fails the suite. The PostgreSQL tests (`SEC-KEY-01`
   to `SEC-KEY-04`, `SEC-QUOTA-01`, part of `SEC-KEY-02` and `SEC-HTTP-02`) need `LARIS_TEST_PG_DSN`; without it they
   are reported `not_run` and the suite fails, unless `--without-postgres` is given. `SEC-DEP-01` and `SEC-NET-01` are
   checked statically in CI (`crates/laris-server/tests/deployment.rs`); `docker/verify-images.sh` and

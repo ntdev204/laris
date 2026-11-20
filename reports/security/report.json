@@ -1,9 +1,8 @@
 {
   "complete": false,
   "counts": {
-    "deferred": 2,
     "partial": 1,
-    "passed": 27
+    "passed": 34
   },
   "model": "none: the suite runs the workspace tests; the foundation model is NOT QUALIFIED",
   "notRun": [
@@ -14,15 +13,16 @@
   "problems": [],
   "results": {
     "SEC-BRAIN-01": {
-      "deferredTo": {
-        "reason": "the main brain and its single write gate are programme 3",
-        "task": "T164"
-      },
       "owners": [
-        "T164"
+        "T164",
+        "T240"
       ],
-      "ran": [],
-      "status": "deferred",
+      "ran": [
+        "laris-brain::gate (2 tests)",
+        "laris-server::mainbrain (4 tests)",
+        "laris-server::mainbrain (1 tests)"
+      ],
+      "status": "passed",
       "threat": "TM-28"
     },
     "SEC-DATA-01": {
@@ -49,15 +49,13 @@
       "threat": "TM-27"
     },
     "SEC-DATA-03": {
-      "deferredTo": {
-        "reason": "sealed splits, manifests and the seeded model-generated example belong to the data pipeline of programme 3",
-        "task": "T168"
-      },
       "owners": [
         "T168"
       ],
-      "ran": [],
-      "status": "deferred",
+      "ran": [
+        "laris-brain::dataset (5 tests)"
+      ],
+      "status": "passed",
       "threat": "TM-29"
     },
     "SEC-DEP-01": {
@@ -194,7 +192,9 @@
         "laris-server::api (1 tests)",
         "laris-server::config (2 tests)",
         "laris-model-client::client (1 tests)",
-        "laris-server::storage (1 tests)"
+        "laris-server::storage (1 tests)",
+        "laris-server::pipeline (1 tests)",
+        "laris-server::decider (1 tests)"
       ],
       "status": "passed",
       "threat": "TM-07"
@@ -317,6 +317,58 @@
       "status": "passed",
       "threat": "TM-24"
     },
+    "SEC-PIPE-01": {
+      "owners": [
+        "T239",
+        "T242"
+      ],
+      "ran": [
+        "laris-server::pipeline (3 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-31"
+    },
+    "SEC-PIPE-02": {
+      "owners": [
+        "T239"
+      ],
+      "ran": [
+        "laris-server::pipeline (2 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-32"
+    },
+    "SEC-PIPE-03": {
+      "owners": [
+        "T240"
+      ],
+      "ran": [
+        "laris-server::mainbrain (3 tests)",
+        "laris-server::mainbrain (1 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-33"
+    },
+    "SEC-PIPE-04": {
+      "owners": [
+        "T239"
+      ],
+      "ran": [
+        "laris-server::pipeline (3 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-34"
+    },
+    "SEC-PIPE-05": {
+      "owners": [
+        "T241"
+      ],
+      "ran": [
+        "laris-server::decider (3 tests)"
+      ],
+      "status": "passed",
+      "threat": "TM-35"
+    },
     "SEC-QUOTA-01": {
       "owners": [
         "T143"
@@ -368,5 +420,5 @@
       "threat": "TM-30"
     }
   },
-  "threats": 30
+  "threats": 35
 }

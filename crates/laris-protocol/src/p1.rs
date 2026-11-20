@@ -150,7 +150,7 @@ pub struct Decision {
 }
 
 /// A piece of server-held evidence an answer cites. `origin` is `server`: the client does not check it again.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Evidence {
     /// Note path of the source.
     pub id: String,

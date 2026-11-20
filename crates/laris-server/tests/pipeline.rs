@@ -314,6 +314,15 @@ async fn a_grounded_answer_passes_the_gate_and_shows_its_stages() {
         "the cited passage is in the evidence list: {}",
         reply.wire
     );
+    // the span is where the passage sits in the note, not a length
+    let note = NOTES[0].1;
+    assert!(
+        reply
+            .wire
+            .contains(&format!("\"start\":0,\"end\":{}", note.chars().count())),
+        "{}",
+        reply.wire
+    );
     assert_eq!(
         stages(&reply),
         [

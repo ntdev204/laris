@@ -23,7 +23,7 @@
 mod adapter;
 mod decider;
 
-pub use decider::{DeciderConfig, Decision, TurnCounters, Verdict, decide};
+pub use decider::{DeciderConfig, DeciderTexts, Decision, TurnCounters, Verdict, decide};
 
 use crate::backend::{Backend, Caller, ChunkStream, StreamFailure};
 use crate::config::ConfigError;
@@ -389,7 +389,7 @@ fn evidence_of(text: &str, passages: &[Passage]) -> Vec<laris_protocol::ServerEv
         .map(|p| laris_protocol::ServerEvidence {
             id: p.source.clone(),
             origin: "server".to_owned(),
-            level: String::new(),
+            level: p.level.clone(),
             title: p
                 .source
                 .trim_end_matches(".md")
@@ -397,8 +397,8 @@ fn evidence_of(text: &str, passages: &[Passage]) -> Vec<laris_protocol::ServerEv
                 .next()
                 .unwrap_or("")
                 .to_owned(),
-            start: 0,
-            end: p.text.chars().count() as u64,
+            start: p.start as u64,
+            end: p.end as u64,
             sha256: Sha256::digest(p.text.as_bytes())
                 .iter()
                 .map(|b| format!("{b:02x}"))
@@ -537,15 +537,19 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
             !passages.is_empty(),
             this.config.grounding == Grounding::Required,
         );
-        let abstain = harness.abstain_no_source.clone();
+        let texts = DeciderTexts {
+            abstain: harness.abstain_no_source.clone(),
+            stop: harness.decider_stop.clone(),
+            ask_user: harness.decider_ask_user.clone(),
+        };
         let decided = tokio::task::spawn_blocking(move || {
-            decide(&decider, &index, &text, found, required, &turn, &abstain)
+            decide(&decider, &index, &text, found, required, &turn, &texts)
         })
         .await;
         match decided {
             Err(_) => steps.push(Step::new("decider", "error", started, "decider_failed")),
             Ok(decision) => {
-                let ends = !matches!(decision.verdict, Verdict::Continue | Verdict::Compose(_));
+                let ends = !matches!(decision.verdict, Verdict::Continue | Verdict::Compose(..));
                 let mut step = Step::new(
                     "decider",
                     if ends { "stop" } else { "ok" },
@@ -565,10 +569,11 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
                         out.extend(canned(&text));
                         return Ok(ready(out));
                     }
-                    Verdict::Compose(text) => {
+                    Verdict::Compose(text, cited) => {
                         steps.push(Step::new("assembly", "ok", Instant::now(), ""));
                         let mut out: Vec<ChatResponseChunk> =
                             steps.iter().map(step_chunk).collect();
+                        out.extend(evidence_chunk(cited));
                         out.extend(canned(&text));
                         return Ok(ready(out));
                     }

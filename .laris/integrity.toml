@@ -1,7 +1,7 @@
 algorithm = "sha256"
 
 [files]
-".laris/harness.toml" = "f7f2b4e0589806d95c2a422ed88204c388577e716eb37284e824f5f12bbf0dd4"
+".laris/harness.toml" = "13893d320432107d2e3a5e069f188ec4c31fe2fa336e2c8d870d84dd239909b6"
 ".laris/help.md" = "d84a3e2022ec66e698c7dabc436d275c7bde6b883ecab46732b0bba6b24438ad"
 ".laris/policy.toml" = "2254e784666e7b3a23728a6fdb98b425e477bc83cdc521c09697f26fc0e3c76c"
 ".laris/prefilter.toml" = "82fb89198de40588111bde62c14543fe78cbc9f60beaeadd30cf2e131dc2dd0e"

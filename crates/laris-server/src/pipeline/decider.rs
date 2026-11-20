@@ -178,14 +178,15 @@ impl TurnCounters {
 }
 
 /// What the pipeline does after the decision.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Verdict {
     /// Go on to the model (stages 6 and 7).
     Continue,
-    /// The turn ends here with this text (possibly empty: a stop has no sentence of its own).
+    /// The turn ends here with this text (the owner's sentence).
     End(String),
-    /// The answer is composed from accepted Claims; the model is not called.
-    Compose(String),
+    /// The answer is composed from accepted Claims (the text and the Claims it rests on, `origin: server`); the model is
+    /// not called.
+    Compose(String, Vec<laris_protocol::ServerEvidence>),
 }
 
 /// One decision of the stage.
@@ -204,13 +205,24 @@ impl Decision {
     }
 }
 
+/// The owner's sentences for the decisions that end a turn (`.laris/harness.toml`).
+#[derive(Debug, Clone)]
+pub struct DeciderTexts {
+    /// The abstention.
+    pub abstain: String,
+    /// The sentence of a stop.
+    pub stop: String,
+    /// The sentence of a request for more from the user.
+    pub ask_user: String,
+}
+
 /// Decides the turn for `question`.
 ///
 /// * `index` is the main brain as of the last write.
 /// * `passages_found` says whether retrieval found anything the model could be shown.
 /// * `grounding_required` makes "no evidence" final: with neither accepted Claims nor passages the advisor is not an
 ///   option, so the rules abstain.
-/// * `abstain_text` is the owner's abstention text.
+/// * `texts` are the owner's sentences for the decisions that end the turn.
 pub fn decide(
     config: &DeciderConfig,
     index: &VaultIndex,
@@ -218,7 +230,7 @@ pub fn decide(
     passages_found: bool,
     grounding_required: bool,
     turn: &TurnCounters,
-    abstain_text: &str,
+    texts: &DeciderTexts,
 ) -> Decision {
     // the client's figures, clamped to what this server allows
     let steps_used = turn.steps_used.min(config.max_steps);
@@ -239,17 +251,47 @@ pub fn decide(
     }
     let choice = RuleDecider::new(config.rules).decide(&signals);
     let verdict = match choice.act {
-        Act::Stop | Act::AskUser => Verdict::End(String::new()),
-        Act::Abstain => Verdict::End(abstain_text.to_owned()),
+        Act::Stop => Verdict::End(texts.stop.clone()),
+        Act::AskUser => Verdict::End(texts.ask_user.clone()),
+        Act::Abstain => Verdict::End(texts.abstain.clone()),
         Act::Answer if config.compose_without_model => {
             let composed = answer::compose(index, question, &config.answer);
             if composed.abstained() {
                 Verdict::Continue
             } else {
-                Verdict::Compose(composed.render(index))
+                Verdict::Compose(composed.render(index), claims_cited(index, &composed))
             }
         }
         _ => Verdict::Continue,
     };
     Decision { choice, verdict }
+}
+
+/// The Claims a composed answer cites, as evidence entries: the note, its level and the span of its Source the Claim
+/// quotes (the span properties the write gate checked).
+fn claims_cited(
+    index: &VaultIndex,
+    answer: &answer::Answer,
+) -> Vec<laris_protocol::ServerEvidence> {
+    let mut seen = std::collections::BTreeSet::new();
+    answer
+        .sentences
+        .iter()
+        .filter(|s| s.kind == answer::SentenceKind::Claim)
+        .filter_map(|s| s.cites.first())
+        .filter_map(|c| index.find(&laris_vault::note::link_name(c)))
+        .filter(|n| seen.insert(n.path.clone()))
+        .map(|n| {
+            let prop = |name: &str| n.prop(name).map(|v| v.py_str()).unwrap_or_default();
+            laris_protocol::ServerEvidence {
+                id: n.path.clone(),
+                origin: "server".to_owned(),
+                level: prop("level"),
+                title: n.title.clone(),
+                start: prop("span_start").parse().unwrap_or(0),
+                end: prop("span_end").parse().unwrap_or(0),
+                sha256: prop("span_sha256"),
+            }
+        })
+        .collect()
 }
