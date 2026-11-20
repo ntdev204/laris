@@ -280,6 +280,11 @@
       "description": "Permission mode.",
       "oneOf": [
         {
+          "const": "auto",
+          "description": "Run reads, writes and commands without asking, except the calls `autoAsk` names.",
+          "type": "string"
+        },
+        {
           "const": "default",
           "description": "Ask before writes and commands.",
           "type": "string"
@@ -329,9 +334,37 @@
           },
           "type": "array"
         },
+        "autoAsk": {
+          "default": [
+            "Bash(sudo:*)",
+            "Bash(su:*)",
+            "Bash(doas:*)",
+            "Bash(rm -[rRf]* /*)",
+            "Bash(rm -[rRf]* ~*)",
+            "Bash(rm -[rRf]* ..*)",
+            "Bash(rm -[rRf]* $HOME*)",
+            "Bash(git push:*)",
+            "Bash(git reset --hard*)",
+            "Bash(git clean:*)",
+            "Bash(git branch -D:*)",
+            "Bash(mkfs*)",
+            "Bash(dd:*)",
+            "Bash(chmod -R:*)",
+            "Bash(chown -R:*)",
+            "Bash(shutdown:*)",
+            "Bash(reboot:*)",
+            "Bash(poweroff:*)",
+            "Bash(halt:*)"
+          ],
+          "description": "In `auto` mode, the calls that still ask: destructive commands. A list here replaces the default one.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "defaultMode": {
           "$ref": "#/$defs/PermissionMode",
-          "default": "default",
+          "default": "auto",
           "description": "Mode when a rule does not decide."
         },
         "deny": {
@@ -898,7 +931,28 @@
         "additionalDirectories": [],
         "allow": [],
         "ask": [],
-        "defaultMode": "default",
+        "autoAsk": [
+          "Bash(sudo:*)",
+          "Bash(su:*)",
+          "Bash(doas:*)",
+          "Bash(rm -[rRf]* /*)",
+          "Bash(rm -[rRf]* ~*)",
+          "Bash(rm -[rRf]* ..*)",
+          "Bash(rm -[rRf]* $HOME*)",
+          "Bash(git push:*)",
+          "Bash(git reset --hard*)",
+          "Bash(git clean:*)",
+          "Bash(git branch -D:*)",
+          "Bash(mkfs*)",
+          "Bash(dd:*)",
+          "Bash(chmod -R:*)",
+          "Bash(chown -R:*)",
+          "Bash(shutdown:*)",
+          "Bash(reboot:*)",
+          "Bash(poweroff:*)",
+          "Bash(halt:*)"
+        ],
+        "defaultMode": "auto",
         "deny": []
       },
       "description": "Permissions."

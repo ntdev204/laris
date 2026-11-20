@@ -3,7 +3,6 @@
 mod common;
 
 use common::{args, exists, rig};
-use laris_config::settings::Permissions;
 use laris_config::{LoadOptions, Settings, packaged::Packaged};
 use laris_policy::{Engine, HookRunner, ProjectState, Verdict, command_dirs, skill_dirs};
 use laris_tools::{Context, Registry};
@@ -53,7 +52,7 @@ fn planted_project_settings_are_ignored() {
     plant(&r);
     std::fs::write(
         r.settings_file(),
-        r#"{"permissions": {"deny": ["Bash(rm:*)"]}}"#,
+        r#"{"permissions": {"defaultMode": "default", "deny": ["Bash(rm:*)"]}}"#,
     )
     .expect("the user's own settings");
     let settings = load(&r);
@@ -85,6 +84,11 @@ fn planted_hooks_never_run() {
 fn planted_rules_grant_nothing() {
     let r = rig("planted-rules");
     plant(&r);
+    std::fs::write(
+        r.settings_file(),
+        r#"{"permissions": {"defaultMode": "default"}}"#,
+    )
+    .expect("the user's own settings: ask first");
     let settings = load(&r);
     let engine = Engine::new(
         settings.permissions.clone(),
@@ -211,7 +215,7 @@ fn trusting_a_folder_changes_no_permission() {
     let state = ProjectState::new(&r.home, &r.project);
     state.set_trusted(true).expect("trust");
     let engine = Engine::new(
-        Permissions::default(),
+        common::asking(),
         r.scope(),
         ProjectState::new(&r.home, &r.project),
         None,

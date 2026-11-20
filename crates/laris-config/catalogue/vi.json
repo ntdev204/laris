@@ -136,7 +136,7 @@
     "cleared": "Đã xóa màn hình; phiên vẫn tiếp tục.",
     "no_worker": "Chưa đăng nhập: hãy đăng nhập trước.",
     "mode_set": "Chế độ quyền: {mode}",
-    "mode_unknown": "Không có chế độ {mode}. Dùng default, acceptEdits, plan hoặc bypass.",
+    "mode_unknown": "Không có chế độ {mode}. Dùng auto, default, acceptEdits, plan hoặc bypass.",
     "completion_none": "không có gợi ý",
     "needs_terminal": "Giao diện tương tác cần một terminal. Dùng laris -p cho tập lệnh và đường ống.",
     "queued_mark": "đang chờ"
@@ -146,7 +146,7 @@
     "clear": "Xóa màn hình (phiên vẫn tiếp tục)",
     "exit": "Thoát Laris",
     "quit": "Thoát Laris",
-    "mode": "Xem hoặc đổi chế độ quyền: /mode [default|acceptEdits|plan|bypass]",
+    "mode": "Xem hoặc đổi chế độ quyền: /mode [auto|default|acceptEdits|plan|bypass]",
     "status": "Xem phiên, máy chủ và đăng nhập",
     "rewind": "Hoàn tác các thay đổi tệp gần nhất: /rewind [số bước]",
     "login": "Nhập khóa API",

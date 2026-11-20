@@ -1869,3 +1869,20 @@ Owner's direction 2026-11-20: the banner shows the current model, and the models
   - The owner reviews the report; it states system measurements only, claims no qualification of either model and does not say Megatron is better unless the measurements say so
 - Status: pending
 
+## Phase 50 — Auto permission mode
+
+Owner's direction 2026-11-20: add an `auto` permission mode and make it the default: the agent reads, writes, creates and
+deletes files and runs commands without asking, while clearly destructive commands still ask (owner's choice: "full
+access plus a guard for dangerous commands"; the guard list lives in configuration, not in code paths).
+
+### T249 — The `auto` permission mode, default
+- Requirements: SR-H5
+- Depends: T244
+- Deliverables:
+  - `PermissionMode::Auto` (`"auto"` in settings, protocol, `--permission-mode`, `/mode` and Shift+Tab); it is the default `permissions.defaultMode`
+  - In `auto` a call that changes state runs without asking unless it fits a rule of `permissions.autoAsk` (default: privilege escalation, recursive deletion of `/`, `~` or a parent, `git push`, `git reset --hard`, `git clean`, disk and power commands); deny rules, `ask` rules, `plan`, hooks, folder scope and the sandbox still apply; `auto` needs no installation policy (unlike `bypass`)
+  - Settings and protocol schemas regenerated; catalogue (en, vi), client guide and SR-H5 updated
+- Validation:
+  - Mode tests: auto allows writes and commands, asks for each default guard, deny still wins, an allow rule overrides the guard, a user `autoAsk` replaces the default list, `default` still asks; the default mode is `auto`; `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-20 built. `PermissionMode::Auto` (`"auto"`) is the `#[default]` of the settings; `Permissions` gained `autoAsk` (camelCase; its default list is `laris_config::settings::default_auto_ask`, a settings default like the other ones, replaced whole by a list in the settings). The engine allows a state-changing call in `auto` after deny, plan, `ask` and `allow` rules, unless an `autoAsk` rule fits any command of the line (then `Ask`, reason "auto mode asks for <rule>"); with nobody to answer (headless) that ask becomes `approval_denied`. Shift+Tab cycles `auto`, `default`, `acceptEdits`, `plan`, (`bypass`). A `bypass` refused by the policy still falls back to `default`, not `auto`. Protocol `Mode::Auto`, headless `--permission-mode auto`, `/mode auto`, catalogue (en, vi), CLIENT guide, SR-H5, settings and protocol schemas regenerated. Tests that are about the approval flow now choose `default` explicitly (policy `common::asking()`, the interactive rig's `LARIS_PERMISSIONS__DEFAULT_MODE=default`, the server support); new tests: `modes.rs` (auto default, auto allows, each guard asks, deny wins and an allow passes the guard, own guard list), `headless.rs` (auto write runs, guarded `git push` refused without an answerer), `interactive.rs` (auto write with no prompt). `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace` (123 test binaries ok; `laris-brain/tests/cognition.rs` failed once in the first run and passed in the two later full runs, not identified), `cargo deny check`, `cargo xtask schema --check` pass. Limits: the guard is a pattern list over command text, not a sandbox: a destructive command spelled differently (a script, an alias, `find -delete`) is not caught; the OS sandbox (SR-H6) and folder scope stay the boundary. Not tried on Windows.

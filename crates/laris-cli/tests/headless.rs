@@ -293,7 +293,7 @@ fn stream_json_is_the_core_events_one_per_line() {
     };
     assert_eq!(version, "1");
     assert!(session.starts_with("headless-"));
-    assert_eq!(mode, "default");
+    assert_eq!(mode, "auto", "auto is the default mode");
     let Some(Event::Done { status, answer }) = events.last() else {
         panic!("the last line must be done: {events:?}");
     };
@@ -390,13 +390,56 @@ fn a_write_that_needs_approval_is_refused_because_nobody_can_answer() {
     let rig = Rig::new("refused");
     let out = go(
         &rig,
-        &["--output-format", "stream-json"],
+        &[
+            "--output-format",
+            "stream-json",
+            "--permission-mode",
+            "default",
+        ],
         vec![write_call(), say("could not write")],
     );
     assert_eq!(out.code, exit::OK);
     assert!(!rig.project.join("out.txt").exists());
     let results = tool_results(&out.events());
     assert_eq!(results[0].0, "Write");
+    assert_eq!(results[0].1["error"]["code"], "approval_denied");
+}
+
+#[test]
+fn in_auto_mode_a_write_runs_without_asking() {
+    let rig = Rig::new("auto-writes");
+    let out = go(
+        &rig,
+        &["--output-format", "stream-json"],
+        vec![write_call(), say("written")],
+    );
+    assert_eq!(out.code, exit::OK, "{}", out.err);
+    assert_eq!(
+        std::fs::read_to_string(rig.project.join("out.txt")).expect("written"),
+        "hi"
+    );
+}
+
+#[test]
+fn in_auto_mode_a_destructive_command_is_still_refused_when_nobody_can_answer() {
+    let rig = Rig::new("auto-guard");
+    let out = go(
+        &rig,
+        &["--output-format", "stream-json"],
+        vec![
+            use_tool(
+                "",
+                vec![call(
+                    "b1",
+                    "Bash",
+                    json!({"command": "git push origin main"}),
+                )],
+            ),
+            say("could not push"),
+        ],
+    );
+    assert_eq!(out.code, exit::OK, "{}", out.err);
+    let results = tool_results(&out.events());
     assert_eq!(results[0].1["error"]["code"], "approval_denied");
 }
 

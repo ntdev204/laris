@@ -63,8 +63,9 @@ impl Rig {
         )
     }
 
+    /// An engine in the ask-first `default` mode, which most tests are about (`auto` is the settings' default).
     pub fn engine(&self) -> Engine {
-        self.engine_with(Permissions::default(), false)
+        self.engine_with(asking(), false)
     }
 
     pub fn read(&self, relative: &str) -> String {
@@ -84,6 +85,14 @@ pub fn permissions(allow: &[&str], ask: &[&str], deny: &[&str]) -> Permissions {
         allow: own(allow),
         ask: own(ask),
         deny: own(deny),
+        ..asking()
+    }
+}
+
+/// The settings' defaults with the ask-first `default` mode.
+pub fn asking() -> Permissions {
+    Permissions {
+        default_mode: laris_config::settings::PermissionMode::Default,
         ..Permissions::default()
     }
 }

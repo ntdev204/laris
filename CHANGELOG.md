@@ -4,6 +4,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Earlier releases and tags were removed on 2026-11-20;
 this is the first release of the Rust generation. History lives in git.
 
+## [Unreleased]
+
+### Added
+- **`auto` permission mode, now the default:** the client reads, writes, creates and deletes files and runs commands
+  without asking. Clearly destructive commands still ask: the calls that fit `permissions.autoAsk` (by default `sudo`,
+  `su`, `doas`, recursive deletion of `/`, `~`, `$HOME` or a parent, `git push`, `git reset --hard`, `git clean`,
+  `git branch -D`, `mkfs`, `dd`, `chmod -R`, `chown -R` and power commands). A list in the settings replaces the default
+  one. `deny` and `ask` rules, `plan`, hooks, folder scope and the sandbox still apply. To keep asking first, set
+  `permissions.defaultMode` to `default`. Available in `/mode`, Shift+Tab and `--permission-mode`.
+
 ## [1.0.2] - 2026-11-20
 
 ### Added

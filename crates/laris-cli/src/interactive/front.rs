@@ -384,6 +384,7 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
                 let next = self.w.engine.cycle();
                 Ok(next)
             }
+            Mode::Auto => self.pick(laris_config::settings::PermissionMode::Auto),
             Mode::Default => self.pick(laris_config::settings::PermissionMode::Default),
             Mode::AcceptEdits => self.pick(laris_config::settings::PermissionMode::AcceptEdits),
             Mode::Plan => self.pick(laris_config::settings::PermissionMode::Plan),
