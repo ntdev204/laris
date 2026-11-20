@@ -885,7 +885,11 @@ dependencies = [
 name = "laris-brain"
 version = "1.0.0"
 dependencies = [
+ "laris-config",
+ "laris-core",
+ "laris-protocol",
  "laris-retrieval",
+ "laris-store",
  "laris-vault",
  "regex",
  "serde_json",

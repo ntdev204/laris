@@ -6,6 +6,8 @@
 //!   Retracting or replacing a Source downgrades its dependants ([`gate::Gate::retract_source`]).
 //! * [`answer`]: composes answers from accepted Claims and checks every sentence against the notes it cites.
 //! * [`tools`]: search, acquisition, metadata and quote verification, corroboration and checks, all feeding the gate.
+//! * [`decide`]: the closed action set, the measured signals and the rule decider that chooses among them.
+//! * [`seam`]: the adapter that puts a chooser behind the loop's `Decider` seam.
 //! * [`text`]: the rule check on statements that the gate and the answer check share.
 //!
 //! Everything is deterministic: the same vault and proposal give the same decision. Nothing here is tuned by a
@@ -13,7 +15,9 @@
 
 pub mod answer;
 pub mod audit;
+pub mod decide;
 pub mod gate;
+pub mod seam;
 pub mod text;
 pub mod tools;
 

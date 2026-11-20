@@ -155,7 +155,7 @@ pub struct Assembled {
     pub replaced: Vec<Replacement>,
 }
 
-fn prop(note: &Note, name: &str) -> String {
+pub(crate) fn prop(note: &Note, name: &str) -> String {
     note.prop(name).map_or(String::new(), |v| v.py_str())
 }
 
@@ -224,9 +224,12 @@ fn conflicts_of<'a>(index: &'a VaultIndex, notes: &[&Note]) -> Vec<(&'a Note, Ve
     out
 }
 
-/// Build an answer for `question` from the accepted Claims and Theories that match it. Nothing matching gives the
-/// abstention. Every used Claim carries its note id and level; every open Conflict that touches a used note is stated.
-pub fn compose(index: &VaultIndex, question: &str, settings: &AnswerSettings) -> Answer {
+/// The accepted Claims and Theories that match `question`, best match first, at most `settings.max_notes`.
+pub fn matching<'a>(
+    index: &'a VaultIndex,
+    question: &str,
+    settings: &AnswerSettings,
+) -> Vec<&'a Note> {
     let folders = ["Claims".to_string(), "Theories".to_string()];
     let search = NoteSearch::new(index, &folders);
     // stop words match every note and would answer anything
@@ -235,7 +238,7 @@ pub fn compose(index: &VaultIndex, question: &str, settings: &AnswerSettings) ->
         .into_iter()
         .collect::<Vec<_>>()
         .join(" ");
-    let used: Vec<&Note> = search
+    search
         .search(
             &query,
             settings.max_notes.saturating_mul(4).max(settings.max_notes),
@@ -244,7 +247,21 @@ pub fn compose(index: &VaultIndex, question: &str, settings: &AnswerSettings) ->
         .filter_map(|h| index.notes.get(&h.path))
         .filter(|n| accepted(index, n, settings))
         .take(settings.max_notes)
-        .collect();
+        .collect()
+}
+
+/// The open Conflicts that touch `notes`, with their sides, in title order.
+pub(crate) fn open_conflicts<'a>(
+    index: &'a VaultIndex,
+    notes: &[&Note],
+) -> Vec<(&'a Note, Vec<&'a Note>)> {
+    conflicts_of(index, notes)
+}
+
+/// Build an answer for `question` from the accepted Claims and Theories that match it. Nothing matching gives the
+/// abstention. Every used Claim carries its note id and level; every open Conflict that touches a used note is stated.
+pub fn compose(index: &VaultIndex, question: &str, settings: &AnswerSettings) -> Answer {
+    let used = matching(index, question, settings);
     if used.is_empty() {
         return Answer {
             sentences: vec![Sentence {
