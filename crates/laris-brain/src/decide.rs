@@ -130,6 +130,12 @@ pub struct Signals {
     pub call: CallState,
     /// How many times in a row the last action was chosen.
     pub repeats: u32,
+    /// Share of the advisor's proposals the gate accepted so far, from the audit log (never self-reported).
+    pub advisor_accept_rate: Option<f64>,
+    /// Agreement between independent advisor samples, when more than one was drawn.
+    pub advisor_agreement: Option<f64>,
+    /// Risk class of the proposed tool call from policy: 0 none, 1 low, 2 medium, 3 high.
+    pub tool_risk: u8,
     /// Steps left in the turn.
     pub steps_left: u32,
     /// Seconds left in the turn.
@@ -157,6 +163,9 @@ impl Signals {
             fresh_since_retrieve: false,
             call: CallState::None,
             repeats: 0,
+            advisor_accept_rate: None,
+            advisor_agreement: None,
+            tool_risk: 0,
             steps_left,
             time_left_seconds,
             budget_left: 1.0,
@@ -200,6 +209,54 @@ impl Signals {
         self
     }
 
+    /// The signals from the JSON [`Signals::to_json`] wrote, or `None` when a field is missing or has the wrong kind.
+    pub fn from_json(v: &Value) -> Option<Signals> {
+        let u = |k: &str| v.get(k)?.as_u64();
+        let f = |k: &str| v.get(k)?.as_f64();
+        let b = |k: &str| v.get(k)?.as_bool();
+        let opt = |k: &str| match v.get(k)? {
+            Value::Null => Some(None),
+            other => other.as_f64().map(Some),
+        };
+        let call = match v.get("call")?.as_str()? {
+            "none" => CallState::None,
+            "legal" => CallState::Legal,
+            "refused" => CallState::Refused,
+            _ => return None,
+        };
+        let best_level = match v.get("best_level")? {
+            Value::Null => None,
+            other => Some(Level::parse(other.as_str()?)?),
+        };
+        let missing_slot = match v.get("missing_slot")? {
+            Value::Null => None,
+            other => Some(other.as_str()?.to_owned()),
+        };
+        Some(Signals {
+            missing_slot,
+            coverage: f("coverage")?,
+            best_level,
+            accepted: u("accepted")? as usize,
+            below_required: u("below_required")? as usize,
+            pending_candidates: u("pending_candidates")? as usize,
+            open_conflicts: u("open_conflicts")? as usize,
+            retracted_dependencies: u("retracted_dependencies")? as usize,
+            acquisition_allowed: b("acquisition_allowed")?,
+            retrievals: u("retrievals")? as u32,
+            acquisitions: u("acquisitions")? as u32,
+            advisor_asks: u("advisor_asks")? as u32,
+            fresh_since_retrieve: b("fresh_since_retrieve")?,
+            call,
+            repeats: u("repeats")? as u32,
+            advisor_accept_rate: opt("advisor_accept_rate")?,
+            advisor_agreement: opt("advisor_agreement")?,
+            tool_risk: u("tool_risk")? as u8,
+            steps_left: u("steps_left")? as u32,
+            time_left_seconds: f("time_left_seconds")?,
+            budget_left: f("budget_left")?,
+        })
+    }
+
     /// The signals as JSON, for the decision log and the dataset.
     pub fn to_json(&self) -> Value {
         json!({
@@ -218,6 +275,9 @@ impl Signals {
             "fresh_since_retrieve": self.fresh_since_retrieve,
             "call": self.call.as_str(),
             "repeats": self.repeats,
+            "advisor_accept_rate": self.advisor_accept_rate,
+            "advisor_agreement": self.advisor_agreement,
+            "tool_risk": self.tool_risk,
             "steps_left": self.steps_left,
             "time_left_seconds": self.time_left_seconds,
             "budget_left": self.budget_left,
