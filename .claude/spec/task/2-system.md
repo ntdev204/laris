@@ -1662,10 +1662,11 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - `docker/laris.sh` (up, down, status, key) with a Tailscale certificate for the Caddy site; the client release built with its server address compiled in; release 1.0.1 (GitHub release and npm)
 - Validation:
   - A local build with `LARIS_BUILD_DEFAULTS` reports the address in `laris status`; the release workflow succeeds; `npm view @ntdev204/laris` shows 1.0.1
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 (owner: "1 lệnh để bật/tắt server, client chỉ nhập key", then "phát hành"). Script written and its `status` checked; `up`, `down` and `key` were not run by the agent. The release address is the tailnet name (`https://vthlab.tail3e814e.ts.net:38443`), reachable from the owner's tailnet only; `tailscale cert` needs `sudo tailscale set --operator=$USER` once. Version raised to 1.0.1 because npm cannot replace a published version.
 
 ## Phase 46 — Full-screen terminal interface
+  Closed by the owner 2026-11-20 ("đóng T236 và T238-T242"): npm `@ntdev204/laris` 1.0.1 and the GitHub release 1.0.1 exist and `release-build` succeeded; the `ci` run of the T236 commit failed and its log could not be read, which the owner accepted.
 
 ### T237 — Full-screen interface with the session history kept
 - Requirements: SR-C1
@@ -1697,7 +1698,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - An ADR that fixes the order of stages (auth, policy, Prefilter, retrieval, brain decider, model, evidence gate, answer assembly), what stays on the client (tool execution in the sandbox, files, approvals) and what moves to the server (the decision loop, the vault and brain, the model call), where the vault and the main brain live (per user or shared), what the protocol P1 carries (step events, evidence list), the failure modes (model down, vault empty) and the threat-model changes
 - Validation:
   - The owner accepts the ADR; no pipeline code before it
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20: `docs/adr/ADR-025-request-pipeline-in-server.md` written as PROPOSED, no code. It fixes the eight stages (auth, policy, Prefilter, retrieval, brain decider, model, evidence gate, assembly), amends D28 (the loop stays on the client, the per-request pipeline moves to the server) and D39 (the evidence check runs once, by the side that holds the evidence, `origin: server`), proposes D49-D56 (one shared main brain per server with `brain.read`; grounded answers buffered and gated, free answers and tool-call proposals streamed; rule decider only, network off; P1 gains `laris.steps`, `decision`, `evidence` and a protocol bump; every stage behind configuration, off by default), lists the failure modes and eight threat-model rows (TM-31 to TM-38, test ids SEC-PIPE-01 to 05). Accepted by the owner 2026-11-20 ("Chấp nhận"); status ACCEPTED, spec D49-D56 recorded, D28 and D39 amended in spec and in an ADR-021 addendum. The ADR is complete; the status stays in_progress only because T236 (release 1.0.1) is not closed and the ledger rule forbids a done task above an open dependency. Close T238 when T236 closes; T239 may start now.
 
 ### T239 — Server pipeline core: Prefilter, retrieval and harness in the chat route
@@ -1707,7 +1708,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - `PrefilterModel` and `HarnessModel` (T229, T232) wired into the server's chat route behind configuration; a Prefilter hit never reaches the model; retrieved passages come from the server's vault; every stage and its time is recorded in the audit row without message text
 - Validation:
   - Server tests with a scripted model: a Prefilter hit, a grounded answer, a missing source (abstains), an injected passage (ignored); the capability ladder still passes
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 built (ADR-025 sections 2, 7, 8). `laris-server::pipeline`: `Pipeline` is a `Backend` in front of the policy gateway.
   Stage 3, the Prefilter (`.laris/prefilter.toml`, loaded and verified with the policy, `Policy::prefilter`), runs on the
   latest user message and a hit is the answer, the model never called; a continuation after a tool result, a summary and
@@ -1735,7 +1736,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - The server holds the main-brain vault and the write gate (T164) behind its own storage and roles; clients cannot write it except through the gate; ingestion and retraction are admin operations
 - Validation:
   - Tests: a model-only claim is refused through the API, a retracted source downgrades its claims, access follows the roles
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 built (ADR-025 section 5, D50). `laris-server::mainbrain`: `MainBrain` holds the write gate of `laris-brain`
   (`Gate`) over one vault (`LARIS_SERVER__MAIN_BRAIN_DIR`; the five gate thresholds `LARIS_SERVER__MAIN_BRAIN_MIN_SUPPORT`,
   `_MIN_EQUIVALENCE`, `_SUBJECT_OVERLAP`, `_SEARCH_DEPTH`, `_MAX_BYTES` have no defaults and are required together). Writes
@@ -1754,7 +1755,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   adapted. Threat rows: TM-33 (SEC-PIPE-03) added, TM-28 extended with T240; `SEC-BRAIN-01` now runs (gate and server tests)
   instead of being deferred. Fixed in the follow-up of 2026-11-20: `SEC-DATA-03` now runs the five T168 dataset tests (it was deferred to a done
   task, so `cargo xtask security` reported FAILED; it passes: 35 threats, 34 passed, 1 partial), and the retention test waits
-  for the error by polling instead of a fixed pause (it failed about one run in three under load). The task stays in_progress only because T238 is.
+  for the error by polling instead of a fixed pause (it failed about one run in three under load). Closed 2026-11-20 by the owner with T236.
 
 ### T241 — Brain decider in the server turn
 - Requirements: SR-K5, SR-S4
@@ -1763,7 +1764,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - The rule decider (T167) behind the server's decision seam, choosing among answer, abstain, ask, retrieve and ask the advisor; the decision network stays off (not promoted, T171); every decision is logged with its rule
 - Validation:
   - Scenario tests through the HTTP API: stop on budget, abstain on no evidence, answer from accepted claims without calling the model
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 built (ADR-025 section 4, D54). `pipeline::decider`: stage 5 puts the rule decider of `laris-brain` behind the
   server's decision seam, between retrieval and the model. Signals are measured on the main brain (coverage of the question
   by accepted Claims, levels, open Conflicts) plus the loop counters the client sends in `laris.turn` (`steps_used`,
@@ -1781,7 +1782,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   and no text; no `brain.read`; settings). TM-35 added (SEC-PIPE-05). Follow-up 2026-11-20 (owner: "giải quyết hết phần còn thiếu"): `.laris/harness.toml` gains
   `decider_stop` and `decider_ask_user` (required fields of `HarnessConfig`; lock refreshed with `laris-server policy lock`),
   so a stop and a question to the user now end the turn with the owner's sentence; `ask_user` still cannot occur on the server
-  (no closed slot test), the text is there for when it can. The wording is mine and is open to the owner's edit. The task stays in_progress only because T238 is.
+  (no closed slot test), the text is there for when it can. The wording is mine and is open to the owner's edit. Closed 2026-11-20 by the owner with T236.
 
 ### T242 — Protocol P1 step events and client display
 - Requirements: SR-S1, SR-C1
@@ -1790,7 +1791,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - P1 gains step events (stage name, outcome, time) and the evidence list in the answer; the schema is regenerated and checked; the client shows the stages in the interface (for example "checking the knowledge base", "asking the model") and the sources of an answer
 - Validation:
   - Schema check, contract tests, emulator tests of the display
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 built (ADR-025 section 6, D55). `LarisMeta` gains typed `steps` ({stage, outcome, ms, code}), `decision`
   ({action, rule}) and `evidence` ({id, origin, level, title, start, end, sha256}), all optional and skipped when empty;
   `X-Laris-Protocol` is now `2` (an old client gets 426); the schema is regenerated (`cargo xtask schema --check`). The server
@@ -1800,7 +1801,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   notices ("Checking the knowledge base", "Asking the model", "Checking the answer against its sources", "Sources: ...";
   catalogue keys `ui.stage_*`, `ui.sources` in English and Vietnamese; a skipped stage is not shown). Checked: contract
   tests (`laris-protocol/tests/pipeline_events.rs`), the display (`laris-tui/tests/interact.rs`), the server test for the
-  evidence event; the other tests moved to protocol 2. Follow-up 2026-11-20 (owner: "giải quyết hết phần còn thiếu"): the evidence entry now carries the real span (`start`/`end` are the passage's character offsets in the note body, from the retrieval index) and the note's `level` (`BrainSource` reads it from the vault); an answer composed without the model sends the Claims it rests on as evidence (note, level, the span and sha256 the write gate checked); the client shows as sources only entries marked `origin: server` (the client runs no gate over server turns, so D52 holds by construction: the server checks once). Tests: `decider.rs` (composed evidence), `pipeline.rs` (span), `laris-cli` `only_entries_the_server_marked_are_shown_as_sources`. The task stays in_progress only because T238 is.
+  evidence event; the other tests moved to protocol 2. Follow-up 2026-11-20 (owner: "giải quyết hết phần còn thiếu"): the evidence entry now carries the real span (`start`/`end` are the passage's character offsets in the note body, from the retrieval index) and the note's `level` (`BrainSource` reads it from the vault); an answer composed without the model sends the Claims it rests on as evidence (note, level, the span and sha256 the write gate checked); the client shows as sources only entries marked `origin: server` (the client runs no gate over server turns, so D52 holds by construction: the server checks once). Tests: `decider.rs` (composed evidence), `pipeline.rs` (span), `laris-cli` `only_entries_the_server_marked_are_shown_as_sources`. Closed 2026-11-20 by the owner with T236.
 
 ### T243 — End-to-end acceptance of the pipeline with Qwen3.5-9B
 - Requirements: SR-S8, SR-K7
