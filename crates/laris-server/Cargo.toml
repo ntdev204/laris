@@ -10,12 +10,12 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-laris-brain = { path = "../laris-brain", version = "1.0.1" }
-laris-core = { path = "../laris-core", version = "1.0.1" }
-laris-policy = { path = "../laris-policy", version = "1.0.1" }
-laris-protocol = { path = "../laris-protocol", version = "1.0.1" }
-laris-retrieval = { path = "../laris-retrieval", version = "1.0.1" }
-laris-vault = { path = "../laris-vault", version = "1.0.1" }
+laris-brain = { path = "../laris-brain", version = "1.0.2" }
+laris-core = { path = "../laris-core", version = "1.0.2" }
+laris-policy = { path = "../laris-policy", version = "1.0.2" }
+laris-protocol = { path = "../laris-protocol", version = "1.0.2" }
+laris-retrieval = { path = "../laris-retrieval", version = "1.0.2" }
+laris-vault = { path = "../laris-vault", version = "1.0.2" }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 hyper = { version = "1", default-features = false, features = ["http1", "server"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio", "service", "server"] }
@@ -33,10 +33,10 @@ thiserror = "2"
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "time", "sync", "net", "io-util", "signal"] }
 
 [dev-dependencies]
-laris-config = { path = "../laris-config", version = "1.0.1" }
-laris-evidence = { path = "../laris-evidence", version = "1.0.1" }
-laris-model-client = { path = "../laris-model-client", version = "1.0.1" }
-laris-sandbox = { path = "../laris-sandbox", version = "1.0.1" }
-laris-store = { path = "../laris-store", version = "1.0.1" }
-laris-tools = { path = "../laris-tools", version = "1.0.1" }
+laris-config = { path = "../laris-config", version = "1.0.2" }
+laris-evidence = { path = "../laris-evidence", version = "1.0.2" }
+laris-model-client = { path = "../laris-model-client", version = "1.0.2" }
+laris-sandbox = { path = "../laris-sandbox", version = "1.0.2" }
+laris-store = { path = "../laris-store", version = "1.0.2" }
+laris-tools = { path = "../laris-tools", version = "1.0.2" }
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "time", "sync", "net", "io-util", "test-util"] }

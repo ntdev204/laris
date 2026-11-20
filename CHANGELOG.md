@@ -4,6 +4,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Earlier releases and tags were removed on 2026-11-20;
 this is the first release of the Rust generation. History lives in git.
 
+## [1.0.2] - 2026-11-20
+
+### Added
+- **Request pipeline in the server (ADR-025):** the compose stack runs the Prefilter, retrieval from the main brain, the
+  rule decider, the evidence gate and answer assembly before and around the model. A covered question is answered from
+  accepted claims without the model, an uncovered one abstains (`grounding=required`) or goes to the model
+  (`optional`). Every stage is a setting (`LARIS_PIPELINE_*`, `LARIS_DECIDER_*`, `LARIS_BRAIN_*`). Protocol 2: the answer
+  carries step events, the decision and the evidence list; the client shows the stages and the sources.
+- `docker/smoke_test.sh` checks the pipeline; `scripts/server_eval.py` repeats the cognitive evaluation through the server.
+
+### Fixed
+- **Client display:** no flicker while typing or while a turn runs (one synchronised frame per redraw, a slower spinner
+  that moves only while a turn runs); the spinner glyph is no longer one that terminals draw as a colour emoji. The
+  banner is three plain lines.
+
+### Notes
+- An old client (protocol 1) gets 426 from this server. The model stays NOT QUALIFIED; the T243 reports are system
+  measurements only. The gate and decider thresholds are untuned starting values.
+
 ## [1.0.1] - 2026-11-20
 
 ### Added
