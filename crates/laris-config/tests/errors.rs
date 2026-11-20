@@ -23,7 +23,7 @@ fn paths_are_named_for_every_kind_of_fault() {
             json!({"permissions": {"defaultMode": "yolo"}}),
             "permissions.defaultMode",
             ErrorKind::NotInEnum {
-                allowed: "\"default\", \"acceptEdits\", \"plan\", \"bypass\"".to_owned(),
+                allowed: "\"auto\", \"default\", \"acceptEdits\", \"plan\", \"bypass\"".to_owned(),
             },
         ),
         (

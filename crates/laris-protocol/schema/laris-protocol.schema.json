@@ -60,6 +60,11 @@
           "description": "Permission mode a front end can ask for; `next` cycles.",
           "oneOf": [
             {
+              "const": "auto",
+              "description": "Run without asking, except destructive commands.",
+              "type": "string"
+            },
+            {
               "const": "default",
               "description": "Ask before risky calls.",
               "type": "string"

@@ -68,7 +68,7 @@ impl Default for Server {
 }
 
 /// Permission mode and rules.
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
 pub struct Permissions {
     /// Mode when a rule does not decide.
@@ -81,13 +81,60 @@ pub struct Permissions {
     pub deny: Vec<String>,
     /// Directories outside the project that tools may touch.
     pub additional_directories: Vec<String>,
+    /// In `auto` mode, the calls that still ask: destructive commands. A list here replaces the default one.
+    pub auto_ask: Vec<String>,
+}
+
+impl Default for Permissions {
+    fn default() -> Self {
+        Self {
+            default_mode: PermissionMode::default(),
+            allow: Vec::new(),
+            ask: Vec::new(),
+            deny: Vec::new(),
+            additional_directories: Vec::new(),
+            auto_ask: default_auto_ask(),
+        }
+    }
+}
+
+/// The guard of `auto` mode when the settings name none: privilege escalation, recursive deletion of `/`, `~`, the
+/// home folder or a parent, history-changing git commands, and disk and power commands.
+pub fn default_auto_ask() -> Vec<String> {
+    [
+        "Bash(sudo:*)",
+        "Bash(su:*)",
+        "Bash(doas:*)",
+        "Bash(rm -[rRf]* /*)",
+        "Bash(rm -[rRf]* ~*)",
+        "Bash(rm -[rRf]* ..*)",
+        "Bash(rm -[rRf]* $HOME*)",
+        "Bash(git push:*)",
+        "Bash(git reset --hard*)",
+        "Bash(git clean:*)",
+        "Bash(git branch -D:*)",
+        "Bash(mkfs*)",
+        "Bash(dd:*)",
+        "Bash(chmod -R:*)",
+        "Bash(chown -R:*)",
+        "Bash(shutdown:*)",
+        "Bash(reboot:*)",
+        "Bash(poweroff:*)",
+        "Bash(halt:*)",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect()
 }
 
 /// Permission mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub enum PermissionMode {
-    /// Ask before writes and commands.
+    /// Run reads, writes and commands without asking, except the calls `autoAsk` names.
     #[default]
+    #[serde(rename = "auto")]
+    Auto,
+    /// Ask before writes and commands.
     #[serde(rename = "default")]
     Default,
     /// Accept file edits without asking.

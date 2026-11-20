@@ -6,8 +6,9 @@
 //! 2. in `plan` mode a call that changes state is refused (no rule makes a plan writable);
 //! 3. an `ask` rule asks, even in `bypass`;
 //! 4. an `allow` rule allows;
-//! 5. the mode: `bypass` allows, `acceptEdits` allows `Write` and `Edit`, `default` asks for a call that changes
-//!    state; a call that only reads is allowed.
+//! 5. the mode: `bypass` allows, `auto` allows unless a rule of `permissions.autoAsk` fits (then it asks),
+//!    `acceptEdits` allows `Write` and `Edit`, `default` asks for a call that changes state; a call that only reads
+//!    is allowed.
 //!
 //! Rules come from the settings (`permissions.*`), from what the user saved for this folder
 //! ([`ProjectState`]) and from the answers of this session. `bypass` exists only when the installation's policy
@@ -164,9 +165,10 @@ impl Engine {
         Ok(())
     }
 
-    /// Shift+Tab: `default`, `acceptEdits`, `plan`, then `bypass` when allowed, then `default` again.
+    /// Shift+Tab: `auto`, `default`, `acceptEdits`, `plan`, then `bypass` when allowed, then `auto` again.
     pub fn cycle(&self) -> PermissionMode {
         let order: Vec<PermissionMode> = [
+            PermissionMode::Auto,
             PermissionMode::Default,
             PermissionMode::AcceptEdits,
             PermissionMode::Plan,
@@ -266,6 +268,20 @@ impl Engine {
         if !writes || mode == PermissionMode::Bypass {
             return Decision::new(Verdict::Allow, "no approval needed", None);
         }
+        if mode == PermissionMode::Auto {
+            let guard = self.lock().permissions.auto_ask.clone();
+            if let Some(rule) = guard
+                .iter()
+                .find(|r| rule_matches(r, tool, arguments, &self.scope, true))
+            {
+                return Decision::new(
+                    Verdict::Ask,
+                    format!("auto mode asks for {rule}"),
+                    Some(rule.clone()),
+                );
+            }
+            return Decision::new(Verdict::Allow, "auto mode", None);
+        }
         if mode == PermissionMode::AcceptEdits && EDIT_TOOLS.contains(&name.as_str()) {
             return Decision::new(Verdict::Allow, "acceptEdits mode", None);
         }
@@ -353,6 +369,7 @@ impl Engine {
 /// The name of a mode as the settings spell it.
 pub fn mode_name(mode: PermissionMode) -> &'static str {
     match mode {
+        PermissionMode::Auto => "auto",
         PermissionMode::Default => "default",
         PermissionMode::AcceptEdits => "acceptEdits",
         PermissionMode::Plan => "plan",

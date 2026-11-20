@@ -119,3 +119,9 @@ Tasks: T245, T246, T247, T248
 Exit criteria:
 - ADR-026 accepted; the server serves the named models with per-role access and a VRAM budget; the client shows the model and role in its banner and switches with `/model`; both models are measured and reported as system measurements. The names are not qualifications.
 
+### Phase 50 — Auto permission mode
+Goal: the client works without approval prompts by default, and still asks before clearly destructive commands.
+Tasks: T249
+Exit criteria:
+- `auto` exists in every place a mode is named, is the default, and is covered by mode tests; the guard list is configuration.
+

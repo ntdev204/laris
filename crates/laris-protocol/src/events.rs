@@ -99,6 +99,9 @@ pub enum Decision {
 /// Permission mode a front end can ask for; `next` cycles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum Mode {
+    /// Run without asking, except destructive commands.
+    #[serde(rename = "auto")]
+    Auto,
     /// Ask before risky calls.
     #[serde(rename = "default")]
     Default,

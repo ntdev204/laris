@@ -526,6 +526,7 @@ pub async fn ask_with(
     let permissions = Permissions {
         allow: vec!["Read".into()],
         deny: vec!["Write(secret/**)".into()],
+        default_mode: laris_config::settings::PermissionMode::Default,
         ..Permissions::default()
     };
     let home = project.base.join("home");

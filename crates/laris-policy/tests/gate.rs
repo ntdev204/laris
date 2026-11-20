@@ -136,7 +136,7 @@ fn deny_beats_an_approval_that_would_have_said_yes() {
 
 #[test]
 fn a_call_that_needs_approval_shows_a_diff_and_runs_only_on_yes() {
-    let mut s = setup("approval", Permissions::default());
+    let mut s = setup("approval", common::asking());
     s.rig.write_file("a.txt", "one\ntwo\nthree\n");
     let approver = Scripted::new(vec![Answer::Deny, Answer::Once]);
     let gate = s.gate(approver.clone());
@@ -161,7 +161,7 @@ fn a_call_that_needs_approval_shows_a_diff_and_runs_only_on_yes() {
 
 #[test]
 fn a_new_file_is_previewed_as_all_added_lines() {
-    let mut s = setup("preview-new", Permissions::default());
+    let mut s = setup("preview-new", common::asking());
     let approver = Scripted::new(vec![Answer::Deny]);
     let gate = s.gate(approver.clone());
     s.through(
@@ -178,7 +178,7 @@ fn a_new_file_is_previewed_as_all_added_lines() {
         diff.contains("+a") && diff.contains("+b") && !removed,
         "{diff}"
     );
-    let mut s2 = setup("preview-edit", Permissions::default());
+    let mut s2 = setup("preview-edit", common::asking());
     let approver = Scripted::new(vec![Answer::Deny]);
     let gate = s2.gate(approver.clone());
     s2.through(
@@ -200,7 +200,7 @@ fn a_new_file_is_previewed_as_all_added_lines() {
 
 #[test]
 fn always_saves_the_rule_and_the_next_call_is_not_asked() {
-    let mut s = setup("always", Permissions::default());
+    let mut s = setup("always", common::asking());
     let approver = Scripted::new(vec![Answer::Always(Remember::Project)]);
     let gate = s.gate(approver.clone());
     let first = s.through(&gate, "Bash", json!({"command": "echo hi"}));
@@ -245,7 +245,7 @@ fn plan_mode_refuses_changes_and_commands_but_reads() {
 
 #[test]
 fn a_tool_the_gate_does_not_know_is_taken_to_change_state() {
-    let s = setup("unknown-tool", Permissions::default());
+    let s = setup("unknown-tool", common::asking());
     let approver = Scripted::new(vec![Answer::Deny]);
     let gate = s.gate(approver.clone());
     let refusal = gate
@@ -273,7 +273,7 @@ impl RemoteTools for Remote {
 
 #[test]
 fn a_remote_tool_is_asked_about_until_a_rule_allows_it() {
-    let mut s = setup("remote", Permissions::default());
+    let mut s = setup("remote", common::asking());
     s.registry.add_remote(Box::new(Remote)).expect("remote");
     let approver = Scripted::new(vec![Answer::Deny]);
     let gate = s.gate(approver.clone());
@@ -326,7 +326,7 @@ fn a_pre_tool_hook_can_block_a_call_that_a_rule_allows() {
 
 #[test]
 fn a_pre_tool_hook_cannot_grant_a_permission() {
-    let mut s = setup("hook-grant", Permissions::default());
+    let mut s = setup("hook-grant", common::asking());
     let hooks = hooked(
         &s,
         json!({"PreToolUse": [{"matcher": "", "hooks": [
@@ -357,7 +357,7 @@ fn a_denied_call_does_not_run_its_hooks() {
 
 #[test]
 fn a_post_tool_hook_adds_context_marked_untrusted() {
-    let mut s = setup("hook-post", Permissions::default());
+    let mut s = setup("hook-post", common::asking());
     s.rig.write_file("a.txt", "x\n");
     let hooks = hooked(
         &s,
@@ -472,7 +472,7 @@ fn the_loop_refuses_through_the_gate_and_the_log_replays() {
 
 #[test]
 fn the_state_file_is_kept_in_the_home_and_private() {
-    let s = setup("state-private", Permissions::default());
+    let s = setup("state-private", common::asking());
     let state = ProjectState::new(&s.rig.home, &s.rig.project);
     state.add_allow("read").expect("save");
     assert!(state.path().starts_with(&s.rig.home));

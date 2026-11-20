@@ -45,7 +45,7 @@ pub struct Options {
 
 /// The usage text.
 pub const USAGE: &str = "usage: laris -p [REQUEST] [--output-format text|json|stream-json] [--continue | --resume ID] \
-[--max-turns N] [--permission-mode default|acceptEdits|plan|bypass] [--allowedTools RULES] [--disallowedTools RULES]\n\
+[--max-turns N] [--permission-mode auto|default|acceptEdits|plan|bypass] [--allowedTools RULES] [--disallowedTools RULES]\n\
 the request may also be piped in; exit codes: 0 done, 1 failed, 2 usage, 3 not signed in, 4 turn limit reached, 5 no such session";
 
 /// Splits a list of rules on commas and white space that are not inside parentheses, so `Bash(git log --oneline)`
@@ -80,12 +80,13 @@ pub fn split_rules(list: &str) -> Vec<String> {
 
 pub(crate) fn mode_of(text: &str) -> Result<PermissionMode, String> {
     match text {
+        "auto" => Ok(PermissionMode::Auto),
         "default" => Ok(PermissionMode::Default),
         "acceptEdits" => Ok(PermissionMode::AcceptEdits),
         "plan" => Ok(PermissionMode::Plan),
         "bypass" => Ok(PermissionMode::Bypass),
         other => Err(format!(
-            "unknown permission mode {other:?}; use default, acceptEdits, plan or bypass"
+            "unknown permission mode {other:?}; use auto, default, acceptEdits, plan or bypass"
         )),
     }
 }

@@ -136,7 +136,7 @@
     "cleared": "Screen cleared; the session goes on.",
     "no_worker": "Not signed in: sign in first.",
     "mode_set": "Permission mode: {mode}",
-    "mode_unknown": "Unknown mode {mode}. Use default, acceptEdits, plan or bypass.",
+    "mode_unknown": "Unknown mode {mode}. Use auto, default, acceptEdits, plan or bypass.",
     "completion_none": "nothing matches",
     "needs_terminal": "The interactive interface needs a terminal. Use laris -p for scripts and pipes.",
     "queued_mark": "queued"
@@ -146,7 +146,7 @@
     "clear": "Clear the screen (the session goes on)",
     "exit": "Leave Laris",
     "quit": "Leave Laris",
-    "mode": "Show or change the permission mode: /mode [default|acceptEdits|plan|bypass]",
+    "mode": "Show or change the permission mode: /mode [auto|default|acceptEdits|plan|bypass]",
     "status": "Show the session, server and sign-in",
     "rewind": "Undo the last file changes: /rewind [steps]",
     "login": "Enter an API key",

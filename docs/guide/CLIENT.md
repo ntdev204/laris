@@ -62,7 +62,7 @@ Type `/` to list them; each character narrows the list. These are built in:
 | `/help` | Show the commands. |
 | `/clear` | Clear the screen (the session goes on). |
 | `/exit`, `/quit` | Leave. |
-| `/mode [default\|acceptEdits\|plan\|bypass]` | Show or change the permission mode. `bypass` is refused unless the installation's policy allows it. |
+| `/mode [auto\|default\|acceptEdits\|plan\|bypass]` | Show or change the permission mode. `auto` (the default) runs changes and commands without asking, except those that fit `permissions.autoAsk` (by default: `sudo`, recursive deletion of `/`, `~` or a parent, `git push`, `git reset --hard`, `git clean`, disk and power commands). `bypass` is refused unless the installation's policy allows it. |
 | `/status` | Show the session, server and project. |
 | `/rewind [steps]` | Undo the last file changes the session made (one step by default). |
 | `/login` | Enter an API key. |

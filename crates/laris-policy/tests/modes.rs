@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::{args, permissions, rig};
+use common::{args, asking, permissions, rig};
 use laris_config::settings::{PermissionMode, Permissions};
 use laris_policy::{Remember, Verdict, mode_name};
 use serde_json::json;
@@ -136,6 +136,7 @@ fn deny_holds_in_every_mode_and_against_session_and_project_allows() {
     e.remember("Write", Remember::Session).expect("session");
     e.remember("Write", Remember::Project).expect("project");
     for mode in [
+        PermissionMode::Auto,
         PermissionMode::Default,
         PermissionMode::AcceptEdits,
         PermissionMode::Plan,
@@ -188,7 +189,7 @@ fn the_mode_follows_the_settings_until_one_is_chosen() {
     });
     assert_eq!(e.mode(), PermissionMode::AcceptEdits);
     e.set_mode(PermissionMode::Plan).expect("mode");
-    e.set_permissions(Permissions::default());
+    e.set_permissions(asking());
     assert_eq!(
         e.mode(),
         PermissionMode::Plan,
@@ -200,11 +201,14 @@ fn the_mode_follows_the_settings_until_one_is_chosen() {
 fn cycling_the_modes() {
     let r = rig("cycle");
     let e = r.engine();
-    let seen: Vec<_> = (0..4).map(|_| mode_name(e.cycle())).collect();
-    assert_eq!(seen, ["acceptEdits", "plan", "default", "acceptEdits"]);
+    let seen: Vec<_> = (0..5).map(|_| mode_name(e.cycle())).collect();
+    assert_eq!(
+        seen,
+        ["acceptEdits", "plan", "auto", "default", "acceptEdits"]
+    );
     let allowed = r.engine_with(Permissions::default(), true);
-    let seen: Vec<_> = (0..4).map(|_| mode_name(allowed.cycle())).collect();
-    assert_eq!(seen, ["acceptEdits", "plan", "bypass", "default"]);
+    let seen: Vec<_> = (0..5).map(|_| mode_name(allowed.cycle())).collect();
+    assert_eq!(seen, ["default", "acceptEdits", "plan", "bypass", "auto"]);
 }
 
 #[test]
@@ -293,4 +297,128 @@ fn a_summary_names_the_mode_and_the_rules() {
     assert!(text.contains("deny: Bash(rm:*)"));
     assert!(text.contains("ask: (none)"));
     assert!(text.contains("allow: Read"));
+}
+
+fn bash(command: &str) -> serde_json::Map<String, serde_json::Value> {
+    args(json!({ "command": command }))
+}
+
+#[test]
+fn auto_is_the_default_mode() {
+    let r = rig("auto-default");
+    assert_eq!(Permissions::default().default_mode, PermissionMode::Auto);
+    let e = r.engine_with(Permissions::default(), false);
+    assert_eq!(e.mode(), PermissionMode::Auto);
+    assert_eq!(mode_name(e.mode()), "auto");
+}
+
+#[test]
+fn auto_runs_changes_and_commands_without_asking() {
+    let r = rig("auto-allows");
+    let e = r.engine_with(Permissions::default(), false);
+    assert_eq!(e.decide("Write", &write(), true).verdict, Verdict::Allow);
+    assert_eq!(e.decide("Edit", &write(), true).verdict, Verdict::Allow);
+    for command in [
+        "make",
+        "cargo test",
+        "rm -rf build",
+        "rm src/old.rs",
+        "mkdir -p out && touch out/a",
+        "git status",
+        "git commit -m x",
+    ] {
+        assert_eq!(
+            e.decide("Bash", &bash(command), true).verdict,
+            Verdict::Allow,
+            "{command}"
+        );
+    }
+    assert_eq!(
+        e.decide("save_memory", &args(json!({"text": "x"})), true)
+            .verdict,
+        Verdict::Allow
+    );
+}
+
+#[test]
+fn auto_still_asks_for_destructive_commands() {
+    let r = rig("auto-guard");
+    let e = r.engine_with(Permissions::default(), false);
+    for command in [
+        "sudo apt install x",
+        "rm -rf /",
+        "rm -rf /home/someone",
+        "rm -fr ~/",
+        "rm -rf ../other",
+        "rm -r $HOME/x",
+        "git push origin main",
+        "git push --force",
+        "git reset --hard HEAD~1",
+        "git clean -fdx",
+        "git branch -D topic",
+        "dd if=/dev/zero of=/dev/sda",
+        "mkfs.ext4 /dev/sdb1",
+        "chmod -R 777 .",
+        "shutdown now",
+        "make && git push",
+    ] {
+        let d = e.decide("Bash", &bash(command), true);
+        assert_eq!(d.verdict, Verdict::Ask, "{command}");
+        assert!(
+            d.reason.contains("auto mode asks"),
+            "{command}: {}",
+            d.reason
+        );
+    }
+}
+
+#[test]
+fn in_auto_deny_wins_and_an_allow_rule_passes_the_guard() {
+    let r = rig("auto-rules");
+    let e = r.engine_with(
+        Permissions {
+            allow: vec!["Bash(git push:*)".to_owned()],
+            deny: vec!["Write(secret/**)".to_owned()],
+            ..Permissions::default()
+        },
+        false,
+    );
+    assert_eq!(
+        e.decide(
+            "Write",
+            &args(json!({"path": "secret/k", "content": "x"})),
+            true
+        )
+        .verdict,
+        Verdict::Deny
+    );
+    assert_eq!(
+        e.decide("Bash", &bash("git push origin main"), true)
+            .verdict,
+        Verdict::Allow
+    );
+    assert_eq!(
+        e.decide("Bash", &bash("sudo ls"), true).verdict,
+        Verdict::Ask
+    );
+}
+
+#[test]
+fn a_guard_list_in_the_settings_replaces_the_default_one() {
+    let r = rig("auto-own-guard");
+    let e = r.engine_with(
+        Permissions {
+            auto_ask: vec!["Bash(make deploy:*)".to_owned()],
+            ..Permissions::default()
+        },
+        false,
+    );
+    assert_eq!(
+        e.decide("Bash", &bash("make deploy prod"), true).verdict,
+        Verdict::Ask
+    );
+    assert_eq!(
+        e.decide("Bash", &bash("git push"), true).verdict,
+        Verdict::Allow
+    );
 }

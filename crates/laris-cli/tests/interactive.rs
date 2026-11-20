@@ -52,12 +52,20 @@ struct Rig {
     started: Arc<Started>,
 }
 
+/// Most tests are about the approval flow, so their rig runs in the ask-first `default` mode; `auto` (the
+/// settings' default) has its own rig.
+const ASKING: (&str, &str) = ("LARIS_PERMISSIONS__DEFAULT_MODE", "default");
+
 impl Rig {
     fn new(name: &str) -> Self {
+        Self::with(name, Some(ASKING))
+    }
+
+    fn with(name: &str, extra: Option<(&str, &str)>) -> Self {
         let base = fresh(name);
         let project = base.join("project");
         std::fs::create_dir_all(project.join(".git")).unwrap();
-        let env = vec![
+        let mut env = vec![
             (
                 "LARIS_HOME".to_owned(),
                 base.join(".laris").to_string_lossy().into_owned(),
@@ -67,6 +75,7 @@ impl Rig {
                 "https://scripted.example".to_owned(),
             ),
         ];
+        env.extend(extra.map(|(k, v)| (k.to_owned(), v.to_owned())));
         let started = Arc::new(start(env, &project, None).expect("start"));
         Self {
             base,
@@ -76,8 +85,12 @@ impl Rig {
     }
 
     fn signed_in(name: &str) -> Self {
-        let mut rig = Self::new(name);
-        let env = vec![
+        Self::signed_in_with(name, Some(ASKING))
+    }
+
+    fn signed_in_with(name: &str, extra: Option<(&str, &str)>) -> Self {
+        let mut rig = Self::with(name, extra);
+        let mut env = vec![
             (
                 "LARIS_HOME".to_owned(),
                 rig.base.join(".laris").to_string_lossy().into_owned(),
@@ -88,6 +101,7 @@ impl Rig {
             ),
             ("LARIS_API_KEY".to_owned(), "lk_test_key".to_owned()),
         ];
+        env.extend(extra.map(|(k, v)| (k.to_owned(), v.to_owned())));
         rig.started = Arc::new(start(env, &rig.project, None).expect("start"));
         rig
     }
@@ -369,6 +383,32 @@ fn an_approved_write_happens_after_the_person_says_yes() {
 }
 
 #[test]
+fn in_auto_mode_the_default_a_write_happens_without_asking() {
+    let rig = Rig::signed_in_with("auto-write", None);
+    let (mut c, _) = controller(
+        &rig,
+        vec![
+            use_tool(vec![write_call("w1", "a.txt", "hello")]),
+            say("Done."),
+        ],
+    );
+    ready(&mut c);
+    send(&mut c, "write a note");
+    idle(&mut c);
+    assert!(c.app.approval().is_none(), "auto asks nothing for a write");
+    assert_eq!(
+        std::fs::read_to_string(rig.project.join("a.txt")).unwrap(),
+        "hello"
+    );
+    let text = screen(&c);
+    assert!(text.contains("● Done."), "{text}");
+    assert!(
+        text.contains("auto"),
+        "the status line says the mode: {text}"
+    );
+}
+
+#[test]
 fn a_refused_write_does_not_happen_and_the_model_is_told() {
     let rig = Rig::signed_in("refuse");
     let (mut c, _) = controller(
@@ -543,10 +583,10 @@ fn the_mode_can_be_asked_set_and_cycled() {
         "{}",
         screen(&c)
     );
-    // Shift+Tab: plan goes on to the next mode in the cycle (default)
+    // Shift+Tab: plan goes on to the next mode in the cycle (auto)
     c.key(Key::ShiftTab);
     until(&mut c, "the mode to change", |c| {
-        screen(c).contains("Permission mode: default")
+        screen(c).contains("Permission mode: auto")
     });
 }
 
