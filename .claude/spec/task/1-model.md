@@ -669,6 +669,16 @@ returned logs, manifests and reports.
 - Note: Owner decision 2026-11-20 (after T205): "Cho phép, chỉ lần này": the agent may run this one run on the Colab A100 (about 7.5 h, about 85 compute units); the permission does not extend to any other run. Stop rules: a non-finite loss; a task loss more than 10 % above its best for two evaluations; a step slower than 3.6 s; SQuAD v1 F1 still below 0.20 at step 10,000 (evaluated forward-only on a copy of `last`). The floors are unmeasured proposals; there is no control arm, so a change against T205 stage 2 cannot be attributed to the floors rather than to more steps. T205 correction: the T203 "draws" are micro-batches of 8 rows; stage 2 saw about 36,000 QA rows, this run about 145,000.
 - Result (2026-11-20): the agent started the run on the Colab A100 (a first VM was lost at about step 700 and the run restarted); it was **stopped by the owner's decision at step 1,040 of 15,000** ("tôi không còn thời gian cho train để đo và test"), after the first validation row only: step 1,000 mean 0.6572 (mlm 2.624, nli 0.2164, para 0.0646, qa 0.6331, ret 0.4027, sim 0.0024), 1.7-1.8 s per step, peak 22.4 GB, all losses finite. QA was **not measured** (no SQuAD figure: the 5,000-step mark was never reached), so the question T216 asked is unanswered. Weights of step 1,000 on Drive `runs/english-r1-stage2-long-step1000` (model.pt, manifest, log); log in `reports/verification/T216/english-r1-stage2-long-train.log`; the session is stopped. About 3 compute units used. The model stays NOT QUALIFIED; the interim model for the first system version is `english-r1-stage2/best` (T217).
 
+### T218 — Interim model for the first system version (owner run)
+- Requirements: SR-M10
+- Depends: T205, T216
+- Deliverables:
+  - Runbook section 19: the interim model is `english-r1-stage2/best` (T204; `model.pt` 2.2 GB and the tokenizer), served by `laris-model serve --checkpoint ... --tokenizer-model ...` for `/v1/embeddings`; chat keeps the PLACEHOLDER backend (no trained core model); one `/v1/embeddings` request and one `/v1/models` request to check it; where to read the measured figures (T205) and what is NOT measured
+- Validation:
+  - The owner runs section 19 and returns the `/v1/models`, `/v1/embeddings` responses and the VRAM or RAM used; nothing here trains or evaluates
+- Status: blocked
+- Note: Owner decision 2026-11-20: "Tôi không có nhiều thời gian... tôi chỉ cần chạy, không hạ xuống 110M": no further training or measurement now; the first system version runs on the stage-2 checkpoint. This is **not** a qualification: the foundation model stays NOT QUALIFIED (SQuAD v1 F1 0.05-0.11 against 0.83, STS-B test never run; T205). The sealed T100 evaluation and the qualified stages (T99-T118, T162-T172) stay as they were. Status `blocked` until the owner returns the run of section 19; the agent did not load the checkpoint (it is not on this machine).
+
 ## Phase 21 — Stage 2: scientific language
 
 ### T101 — Scientific datasets and evidence gold

@@ -921,3 +921,22 @@ SQuAD v1 F1 still below 0.20 at step 10,000.
 **Intermediate evaluation (forward only, validation split):** at about steps 5,000, 10,000 and 15,000, copy `last` to a scratch folder first (the run overwrites `last`), then run the section 17 loop on the copy (evaluator at 512 samples per dataset about 7 min, probe about 7 min; the run slows while it shares the GPU, peak about 22.6 + 8 GB, inside 40 GB).
 After the run: `bash scripts/colab/save_run.sh english-r1-stage2-long` and wait for `SAVE_DONE` before `colab stop`.
 The foundation model stays NOT QUALIFIED whatever this run shows; the sealed test split is not on the VM.
+
+
+## 19. T218: interim model for the first system version (prepared 2026-11-20)
+
+Owner decision 2026-11-20: no more training now; the first version of the system runs on the best checkpoint that exists. That is `english-r1-stage2/best` (T204, 544 M parameters, 56 k vocabulary), **NOT QUALIFIED**:
+measured on the validation split only (T205): STS-B Spearman 0.846 (512 rows), paraphrase AUC 0.63, NLI macro F1 0.37, **SQuAD v1 F1 0.051 (gate 0.83)**; no test split was run. It serves `/v1/embeddings`; it does not answer questions, and `/v1/chat/completions` keeps the PLACEHOLDER backend.
+
+1. Download only `model.pt` and `manifest.json` from Drive `MyDrive/laris/runs/english-r1-stage2/best/` (2.2 GB; `training_state.pt`, 4.4 GB, is not needed) to `artifacts/checkpoints/language_encoder/english-r1-stage2/best/`.
+2. Serve (isolated HOME, as for every `laris` command; the host and port come from `configs/default.yaml`, `model_service`):
+```bash
+HOME=$(mktemp -d) laris-model serve \
+  --checkpoint artifacts/checkpoints/language_encoder/english-r1-stage2/best \
+  --tokenizer-model artifacts/tokenizer/english-r1-56k-nd/laris_spm_en_56k_nd.model \
+  --device cuda      # or cpu if the GPU is busy; the weights load on the first request
+```
+3. Check (second terminal): `curl -s http://127.0.0.1:8001/v1/models` and
+`curl -s http://127.0.0.1:8001/v1/embeddings -H 'content-type: application/json' -d '{"input":["a cat sleeps","a kitten is napping"]}'`; the response holds two vectors. Report the two responses and the memory used.
+4. To make it the default, set `model_service.checkpoint` and `model_service.tokenizer_model` through configuration or the environment (no tunable is hardcoded).
+Nothing here trains, evaluates or touches a test split. The agent has not run these commands: the checkpoint is not on this machine, so the CPU/GPU memory and the response shape are unmeasured.
