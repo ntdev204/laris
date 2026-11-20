@@ -2,10 +2,11 @@
 stores nothing. A backend is any `ChatProvider`; the default is the scripted placeholder planner.
 
 With a `GpuQueue` every call that touches weights is queued and runs with its model resident in
-VRAM (`chat` for the backend, `embed` for the encoder); without one calls run directly (tests).
+VRAM (`chat` for the backend); without one calls run directly (tests). No embedding model ships
+(T233 removed the self-trained encoder): `/v1/embeddings` answers an error unless an `Embedder`
+is handed to `ModelService`, and an embedder is never queued.
 """
 
-from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional
 
 from laris.model.gpu_queue import GpuQueue, ModelSpec
@@ -13,53 +14,12 @@ from laris.model.tools import ToolBox
 from laris.protocol import ChatProvider
 from laris.protocol.openai import completion_response, embeddings_response, stream_chunks, texts_of
 
-CHAT, EMBED = "chat", "embed"
-
-
-class Encoder:
-    """The sentence encoder behind `/v1/embeddings`; its weights load and release on demand."""
-
-    def __init__(self, checkpoint: str, tokenizer_model: str, device: str = "") -> None:
-        self.checkpoint, self.tokenizer_model, self.device = checkpoint, tokenizer_model, device
-        self._predictor: Any = None
-
-    def load(self) -> None:
-        if self._predictor is not None:
-            return
-        from laris.model.inference.loader import load_encoder
-        from laris.model.inference.predictor import LanguageEncoderPredictor
-
-        encoder = load_encoder(
-            Path(self.checkpoint), Path(self.tokenizer_model), device=self.device or None
-        )
-        self._predictor = LanguageEncoderPredictor(encoder)
-
-    def unload(self) -> None:
-        self._predictor = None
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-        except ImportError:
-            pass
-
-    def __call__(self, texts: List[str]) -> List[List[float]]:
-        self.load()
-        return [[float(x) for x in row] for row in self._predictor.embed(texts)]
-
+CHAT = "chat"
 
 Embedder = Callable[[List[str]], List[List[float]]]
 
 
-def build_embedder(checkpoint: str, tokenizer_model: str, device: str = "") -> Optional[Encoder]:
-    """The encoder behind `/v1/embeddings`, or None when no checkpoint is configured."""
-    if not (checkpoint and tokenizer_model):
-        return None
-    return Encoder(checkpoint, tokenizer_model, device)
-
-
-def build_queue(backend: ChatProvider, embedder: Optional[Embedder], cfg: Any) -> GpuQueue:
+def build_queue(backend: ChatProvider, cfg: Any) -> GpuQueue:
     """The queue for this service from the `model_service` configuration."""
     models = {
         CHAT: ModelSpec(
@@ -69,13 +29,6 @@ def build_queue(backend: ChatProvider, embedder: Optional[Embedder], cfg: Any) -
             getattr(backend, "unload", lambda: None),
         )
     }
-    if embedder is not None:
-        models[EMBED] = ModelSpec(
-            EMBED,
-            cfg.embed_vram_bytes,
-            getattr(embedder, "load", lambda: None),
-            getattr(embedder, "unload", lambda: None),
-        )
     return GpuQueue(
         models,
         cfg.vram_budget_bytes,
@@ -137,10 +90,7 @@ class ModelService:
 
     def embed(self, body: Dict[str, Any]) -> Dict[str, Any]:
         if self.embedder is None:
-            raise ValueError("no embedding model loaded (set model_service.checkpoint)")
+            raise ValueError("no embedding model is configured")
         texts, embedder = texts_of(body.get("input", [])), self.embedder
 
-        def run() -> Dict[str, Any]:
-            return embeddings_response(embedder(texts), self.model_name)
-
-        return run() if self.queue is None else self.queue.call(EMBED, run)
+        return embeddings_response(embedder(texts), self.model_name)

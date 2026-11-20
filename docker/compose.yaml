@@ -73,8 +73,6 @@ services:
     image: laris-model:${LARIS_TAG:-dev}
     restart: unless-stopped
     environment:
-      LARIS_MODEL_SERVICE__CHECKPOINT: ${LARIS_MODEL_CHECKPOINT:-}
-      LARIS_MODEL_SERVICE__TOKENIZER_MODEL: ${LARIS_MODEL_TOKENIZER:-}
       LARIS_MODEL_SERVICE__BACKEND: ${LARIS_MODEL_BACKEND:-}
     volumes:
       - ${LARIS_MODELS_DIR:-../artifacts/weights}:/weights:ro

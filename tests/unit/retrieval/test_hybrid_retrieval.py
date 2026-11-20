@@ -1,5 +1,10 @@
 """Comprehensive unit tests for Layer 6 Hybrid Retrieval engine, adapters, and RRF combiner."""
 
+import hashlib
+import re
+from dataclasses import dataclass
+from typing import List
+
 import pytest
 
 from laris.shared.core.errors import (
@@ -17,10 +22,6 @@ from laris.shared.graph.schemas import (
     EvidenceGraph,
     MethodNode,
 )
-from laris.shared.language.encoder.sentence_encoder import CompactSentenceEncoder
-from laris.shared.language.schemas import VocabularyContract
-from laris.shared.language.tokenization.stem_benchmark import get_stem_vocabulary_tokens
-from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
 from laris.shared.retrieval import (
     DEFAULT_RRF_K,
     MAX_RETRIEVAL_DEPTH,
@@ -56,22 +57,48 @@ def sample_coordinate() -> EvidenceCoordinate:
     )
 
 
-@pytest.fixture
-def stem_tokenizer() -> ScientificTokenizer:
-    """Fixture providing a ScientificTokenizer initialized with STEM vocabulary."""
-    tokens = get_stem_vocabulary_tokens()
-    vocab_contract = VocabularyContract.create(sorted(set(tokens)))
-    return ScientificTokenizer(vocab=vocab_contract)
+class WordTokenizer:
+    """A plug-in pre-tokenizer: lower-case words (stands in for the removed tokenizer)."""
+
+    def pre_tokenize(self, text: str) -> List[str]:
+        return re.findall(r"[a-z0-9]+", text.lower())
+
+
+@dataclass(frozen=True)
+class _Contract:
+    embedding_dim: int
+
+
+@dataclass(frozen=True)
+class _Encoded:
+    embedding: List[float]
+
+
+class HashedWordEncoder:
+    """A deterministic plug-in embedder: hashed bag of words (stands in for the removed encoder)."""
+
+    def __init__(self, embedding_dim: int = 384) -> None:
+        self.embedding_dim = embedding_dim
+
+    def get_contract(self) -> _Contract:
+        return _Contract(self.embedding_dim)
+
+    def encode_sentence(self, text: str) -> _Encoded:
+        vector = [0.0] * self.embedding_dim
+        for word in WordTokenizer().pre_tokenize(text):
+            digest = hashlib.sha256(word.encode("utf-8")).digest()
+            vector[int.from_bytes(digest[:4], "big") % self.embedding_dim] += 1.0
+        return _Encoded(vector)
 
 
 @pytest.fixture
-def stem_encoder(stem_tokenizer: ScientificTokenizer) -> CompactSentenceEncoder:
-    """Fixture providing a deterministic CompactSentenceEncoder."""
-    return CompactSentenceEncoder(
-        tokenizer=stem_tokenizer,
-        embedding_dim=384,
-        seed=42,
-    )
+def stem_tokenizer() -> WordTokenizer:
+    return WordTokenizer()
+
+
+@pytest.fixture
+def stem_encoder() -> HashedWordEncoder:
+    return HashedWordEncoder()
 
 
 @pytest.fixture
@@ -365,10 +392,10 @@ def test_dense_adapter_dimension_mismatch_and_validation() -> None:
 
 
 def test_dense_adapter_with_compact_encoder(
-    stem_encoder: CompactSentenceEncoder,
+    stem_encoder: HashedWordEncoder,
     sample_coordinate: EvidenceCoordinate,
 ) -> None:
-    """Tests DenseVectorAdapter computing representations via CompactSentenceEncoder."""
+    """Tests DenseVectorAdapter computing representations via HashedWordEncoder."""
     adapter = DenseVectorAdapter(encoder=stem_encoder)
     assert adapter.expected_dim == 384
 
@@ -609,7 +636,7 @@ def test_hybrid_engine_adapter_management() -> None:
 
 def test_hybrid_engine_end_to_end_multi_channel(
     sample_coordinate: EvidenceCoordinate,
-    stem_encoder: CompactSentenceEncoder,
+    stem_encoder: HashedWordEncoder,
     sample_graph: EvidenceGraph,
 ) -> None:
     """Tests end-to-end multi-channel retrieval across lexical, dense, and graph adapters."""
@@ -694,7 +721,7 @@ def test_hybrid_engine_end_to_end_multi_channel(
 
 
 def test_edge_cases_and_branch_coverage(
-    stem_encoder: CompactSentenceEncoder,
+    stem_encoder: HashedWordEncoder,
     sample_graph: EvidenceGraph,
 ) -> None:
     """Tests edge cases across adapters, engine, and combiner to ensure high branch coverage."""
@@ -791,10 +818,8 @@ def test_edge_cases_and_branch_coverage(
     empty_engine = HybridRetrievalEngine()
     assert empty_engine.retrieve(RetrievalQuery(text="sample")) == []
 
-    # 7. LexicalBM25Adapter with explicit ScientificTokenizer
-    tokens = get_stem_vocabulary_tokens()
-    tok = ScientificTokenizer(vocab=VocabularyContract.create(sorted(set(tokens))))
-    lex_with_tok = LexicalBM25Adapter(tokenizer=tok)
+    # 7. LexicalBM25Adapter with a plugged-in pre-tokenizer
+    lex_with_tok = LexicalBM25Adapter(tokenizer=WordTokenizer())
     lex_with_tok.add_documents([LexicalDocument(doc_id="t1", text="Quantum optomechanics.")])
     res_tok = lex_with_tok.retrieve(RetrievalQuery(text="quantum optomechanics"))
     assert len(res_tok) == 1

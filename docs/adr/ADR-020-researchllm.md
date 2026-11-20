@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
 decision_references:
   - "ADR-002"
   - "ADR-008"

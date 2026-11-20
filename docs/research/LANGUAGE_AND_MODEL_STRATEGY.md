@@ -22,9 +22,9 @@ change_summary: "Aligns fertility with canonical gates and labels historical arc
 Research direction for the self-built language foundation, local training under the hardware envelope, and relational semantics.
 
 The alternatives and compute figures below are historical research proposals,
-not measurements or approved run budgets. The current architecture and 32,000-subword
-vocabulary are defined in the [training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md)
-and shipped configuration. Foundation qualification precedes scientific language; the owner decides compute/tokenizer changes at F04A.
+not measurements or approved run budgets. The architecture and 32,000-subword
+vocabulary they describe belonged to the self-trained encoder, whose specification, code and
+configuration were removed in T233 (D48); this document is kept as history. Foundation qualification precedes scientific language; the owner decides compute/tokenizer changes at F04A.
 
 ## 1. Self-Built Language Foundation and Encoders
 

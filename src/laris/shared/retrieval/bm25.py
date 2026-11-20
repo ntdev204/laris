@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from laris.shared.core.errors import ModuleContractViolationError
-from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
+from laris.shared.retrieval.plugins import Pretokenizer
 
 
 @dataclass(frozen=True)
@@ -50,7 +50,7 @@ class BM25RetrievalBaseline:
         self,
         k1: float = 1.5,
         b: float = 0.75,
-        tokenizer: Optional[ScientificTokenizer] = None,
+        tokenizer: Optional[Pretokenizer] = None,
     ) -> None:
         if k1 < 0:
             raise ValueError(f"k1 must be non-negative, got {k1}")

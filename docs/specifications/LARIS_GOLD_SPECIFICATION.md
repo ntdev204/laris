@@ -10,7 +10,6 @@ owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
 related_documents:
-  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
   - "docs/specifications/DATASET_SPECIFICATION.md"
   - "docs/specifications/DATA_SCHEMAS.md"
 decision_references:

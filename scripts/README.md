@@ -7,13 +7,14 @@ compatibility wrappers plus documentation tooling.
 - `validate_docs.py`: validates documentation metadata, uniqueness of document IDs, lifecycle status, internal links and ADR cross-references.
 - `verify_target_server.sh`: checks the target server hardware and environment.
 
-## Compatibility wrappers (delegate to the CLI)
-| Script | CLI command |
-|---|---|
-| `acquire_datasets.py` | `laris data acquire` |
-| `partition_datasets.py` | `laris data partition` |
-| `train_tokenizer.py` | `laris train tokenizer` |
-| `train_language_encoder.py` | `laris train language-encoder` |
+## Model block
+- `check_chat_backend.py`: one prompt through `/v1/chat/completions` on a running model service (T231).
+- `record_scientific_fixtures.py`: records the scientific tool fixtures.
+- `verify_model_block.py`: the no-training guard plus lint, types and the test suite.
+- `validate_spec.py`: validates the ledger (`.claude/spec`).
+- `benchmark_vault.py`: latency of the vault index.
+
+The dataset acquisition, partition, tokenizer and encoder training scripts were removed in T233 (D48).
 
 ## Usage
 ```bash

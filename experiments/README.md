@@ -3,11 +3,9 @@
 These manually invoked experiments are outside the automated test suite and the
 production CLI. Outputs and downloaded material go to ignored `artifacts/` paths.
 
-`scientific_nlp/` preserves the earlier 20-paper diagnostic acquisition/inference
-scripts. Its pilot requires the source-evidence gate from PR #312. It demonstrates
-integration failures, not scientific-language readiness or verified research gaps.
-It must not be used to skip the foundation and scientific-language exit gates.
+`scientific_nlp/` keeps the 20-paper acquisition script of the earlier diagnostic pilot. The pilot
+script itself needed the self-trained encoder and was removed in T233 (D48); its measured output
+stays in `reports/scientific_nlp/`. It demonstrates integration failures, not scientific-language
+readiness or verified research gaps.
 
-During the current preparation task, agents must not execute training, tokenizer
-fitting or optimizer-bearing profiling. The owner training runbook is under
-`docs/training/`; historical pilot scripts are not the next training step.
+Agents must not execute training, tokenizer fitting or optimizer-bearing profiling.

@@ -18,6 +18,8 @@ change_summary: "Reconciles actual develop merge state while preserving historic
 
 > **D46 / ADR-022 (2026-11-14):** Vietnamese rows below (MLM-VI, NLI-VI, QA-VI, similarity-VI, ViNLI) describe a withdrawn scope. The checkpoints and reports they were measured on were deleted by the owner's order on 2026-11-14; the figures are kept as written history only and support no claim about the English stage-1 encoder.
 
+> **D48 / T233 (2026-11-20):** the self-trained encoder, its training and evaluation code, tokenizer and data tooling were removed from the repository; the encoder sections below are measured history. The `laris evaluate language-encoder` command in the reproduction block no longer exists.
+
 # Checkpoint validation and scientific NLP pilot
 
 ## Measured readiness

@@ -12,6 +12,9 @@ source_of_truth: true
 related_documents:
   - "docs/guide/CLIENT.md"
   - "docs/adr/ADR-021-rust-generation.md"
+decision_references:
+  - "ADR-021"
+change_summary: "Installation and release steps of the Rust generation."
 ---
 
 # Installing laris and making a release

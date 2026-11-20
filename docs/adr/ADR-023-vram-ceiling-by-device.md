@@ -11,7 +11,6 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/adr/ADR-022-english-only-foundation.md"
-  - "docs/training/OWNER_RUNBOOK.md"
 decision_references:
   - "ADR-022"
   - "ADR-008"
@@ -38,7 +37,7 @@ The owner now has a Colab A100 (40 GB) and keeps a GPU program running locally. 
 ## 3. Consequences
 - A Colab run can use the A100's memory (for example `LARIS_VRAM_CEILING_GB=36`) while a local run on the RTX 5070 Ti cannot be raised by mistake.
 - Results are "measured on" a named GPU with its ceiling; speed and memory figures of one device do not transfer to another (T202 versus T211).
-- Implementation: `src/laris/research/language/training/vram_ceiling.py`, `src/cli/commands/language_encoder.py`, `tests/unit/language/test_vram_ceiling.py`.
+- Implementation: removed in T233 with the self-trained model (D48); the decision stays as history.
 
 ## 4. Risks
 - A ceiling is a check on the profile and a record, not an allocator limit: a run that really needs more memory ends in CUDA out of memory, as before.

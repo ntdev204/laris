@@ -207,7 +207,7 @@ class TestFreshEnvironmentInstallAndRelease:
         raw_text = pyproject_path.read_text(encoding="utf-8")
         assert 'name = "laris"' in raw_text
         assert f'version = "{core.__version__}"' in raw_text
-        assert 'requires-python = ">=3.10"' in raw_text
+        assert 'requires-python = ">=3.11"' in raw_text
         assert "build-backend = \"setuptools.build_meta\"" in raw_text
 
         if tomllib is not None:
@@ -218,7 +218,7 @@ class TestFreshEnvironmentInstallAndRelease:
             assert project.get("name") == "laris"
             assert project.get("version") == core.__version__
             assert project.get("license") == "MIT"
-            assert project.get("requires-python") == ">=3.10"
+            assert project.get("requires-python") == ">=3.11"
             assert core.__version__ == project.get("version")
 
             # Verify runtime core dependencies
