@@ -1789,7 +1789,20 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - P1 gains step events (stage name, outcome, time) and the evidence list in the answer; the schema is regenerated and checked; the client shows the stages in the interface (for example "checking the knowledge base", "asking the model") and the sources of an answer
 - Validation:
   - Schema check, contract tests, emulator tests of the display
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 built (ADR-025 section 6, D55). `LarisMeta` gains typed `steps` ({stage, outcome, ms, code}), `decision`
+  ({action, rule}) and `evidence` ({id, origin, level, title, start, end, sha256}), all optional and skipped when empty;
+  `X-Laris-Protocol` is now `2` (an old client gets 426); the schema is regenerated (`cargo xtask schema --check`). The server
+  sends each step as it ends, the decision with the decider step and the evidence of the passages an answer cites
+  (`origin: server`) before the text; the audit row reads the typed steps. Client: `ServerModel::with_progress` turns steps
+  and sources into `status` events (`pipeline`, `sources`) while the answer is still buffered; the interface shows them as
+  notices ("Checking the knowledge base", "Asking the model", "Checking the answer against its sources", "Sources: ...";
+  catalogue keys `ui.stage_*`, `ui.sources` in English and Vietnamese; a skipped stage is not shown). Checked: contract
+  tests (`laris-protocol/tests/pipeline_events.rs`), the display (`laris-tui/tests/interact.rs`), the server test for the
+  evidence event; the other tests moved to protocol 2. Open: the evidence entry has no real span offsets or note level yet
+  (`start` 0, `end` the passage length, `level` empty; the passage source gives only path and text); an answer composed
+  without the model sends no evidence list; the client gate does not yet skip `origin: server` entries because the client
+  does not run the harness gate on server turns. The task stays in_progress only because T238 is.
 
 ### T243 — End-to-end acceptance of the pipeline with Qwen3.5-9B
 - Requirements: SR-S8, SR-K7

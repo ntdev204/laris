@@ -65,7 +65,7 @@ async fn exchange(addr: std::net::SocketAddr, request: &[u8]) -> (u16, usize) {
 
 fn chat_request() -> Vec<u8> {
     format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
         CHAT.len()
     )
     .into_bytes()

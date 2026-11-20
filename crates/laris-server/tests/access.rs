@@ -180,7 +180,7 @@ impl Server {
             None => ("", 0, ""),
         };
         let req = format!(
-            "{method} {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\n{auth}{ctype}Content-Length: {len}\r\n\r\n{payload}"
+            "{method} {path} HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\n{auth}{ctype}Content-Length: {len}\r\n\r\n{payload}"
         );
         s.write_all(req.as_bytes()).await.unwrap();
         let mut raw = Vec::new();
@@ -402,7 +402,7 @@ async fn every_way_of_not_being_a_valid_key_answers_401_alike() {
     // a header without the Bearer scheme is not a key
     let mut s = TcpStream::connect(server.addr).await.unwrap();
     let req = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 1\r\nAuthorization: Basic {text}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX-Laris-Protocol: 2\r\nAuthorization: Basic {text}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
         CHAT.len()
     );
     s.write_all(req.as_bytes()).await.unwrap();
@@ -665,7 +665,7 @@ async fn a_request_that_fails_or_a_client_that_leaves_is_settled_or_released() {
     let hang = Server::start(access.clone(), Model::Hang).await;
     let mut s = TcpStream::connect(hang.addr).await.unwrap();
     let req = format!(
-        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 1\r\nAuthorization: Bearer {text}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
+        "POST /v1/laris/chat HTTP/1.1\r\nHost: t\r\nX-Laris-Protocol: 2\r\nAuthorization: Bearer {text}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{CHAT}",
         CHAT.len()
     );
     s.write_all(req.as_bytes()).await.unwrap();

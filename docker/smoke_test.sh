@@ -43,21 +43,21 @@ admin=$(tr -d '\n' < "$work/admin_key")
 [ -n "$admin" ] || fail "empty admin key"
 
 step "a user key"
-created=$(api -X POST "$base/v1/admin/keys" -H "Authorization: Bearer $admin" -H 'X-Laris-Protocol: 1' -H 'Content-Type: application/json' \
+created=$(api -X POST "$base/v1/admin/keys" -H "Authorization: Bearer $admin" -H 'X-Laris-Protocol: 2' -H 'Content-Type: application/json' \
     -d '{"label":"smoke","role":"user","token_limit":1000000}') || fail "key request"
 key=$(printf '%s' "$created" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
 [ -n "$key" ] || fail "no key in the answer: $(printf %s "$created" | cut -c1-200)"
 
 step "a chat answer from the placeholder model"
-answer=$(api -X POST "$base/v1/laris/chat" -H "Authorization: Bearer $key" -H 'X-Laris-Protocol: 1' -H 'Content-Type: application/json' \
+answer=$(api -X POST "$base/v1/laris/chat" -H "Authorization: Bearer $key" -H 'X-Laris-Protocol: 2' -H 'Content-Type: application/json' \
     -d '{"stream":true,"messages":[{"role":"user","content":"Hello, who are you?"}]}') || fail "chat"
 printf %s "$answer" | grep -q '"error"' && fail "chat answered with an error: $(printf %s "$answer" | cut -c1-200)"
 printf %s "$answer" | grep -q "data:" || fail "no streamed answer"
 printf '%s\n' "$answer" | cut -c1-200
 
 step "the account and a trace without content"
-api "$base/v1/laris/account" -H "X-Laris-Protocol: 1" -H "Authorization: Bearer $key" | grep -q 'user' || fail "account"
-traces=$(api "$base/v1/admin/traces" -H "X-Laris-Protocol: 1" -H "Authorization: Bearer $admin") || fail "traces"
+api "$base/v1/laris/account" -H "X-Laris-Protocol: 2" -H "Authorization: Bearer $key" | grep -q 'user' || fail "account"
+traces=$(api "$base/v1/admin/traces" -H "X-Laris-Protocol: 2" -H "Authorization: Bearer $admin") || fail "traces"
 printf '%s' "$traces" | grep -q 'chat' || fail "no chat trace"
 printf '%s' "$traces" | grep -qi 'who are you' && fail "a trace holds message text"
 

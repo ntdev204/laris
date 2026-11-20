@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// Version of P1 spoken by this build.
-pub const PROTOCOL_VERSION: &str = "1";
+pub const PROTOCOL_VERSION: &str = "2";
 /// Header that carries the version on every `/v1/laris/*` request.
 pub const PROTOCOL_HEADER: &str = "X-Laris-Protocol";
 

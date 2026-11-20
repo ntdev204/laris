@@ -109,8 +109,16 @@ pub fn start_real(
         let now = clock();
         let id =
             resume.unwrap_or_else(|| format!("chat-{:.0}-{}", now * 1000.0, std::process::id()));
-        let built = build(&started, &session_options(), &key, &id, ports.approver)
-            .map_err(|e| e.message)?;
+        let progress = Some(std::rc::Rc::clone(&ports.emit));
+        let built = build(
+            &started,
+            &session_options(),
+            &key,
+            &id,
+            ports.approver,
+            progress,
+        )
+        .map_err(|e| e.message)?;
         let store = Store::open_space(
             started.home.root(),
             &started.project,

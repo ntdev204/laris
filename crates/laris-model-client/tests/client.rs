@@ -101,7 +101,7 @@ async fn requests_carry_version_key_and_forced_streaming() {
 
     let sent = script.requests.lock().unwrap()[0].clone();
     assert_eq!(sent.url, "http://laris.test/v1/laris/chat");
-    assert_eq!(sent.header("x-laris-protocol"), Some("1"));
+    assert_eq!(sent.header("x-laris-protocol"), Some("2"));
     assert_eq!(sent.header("authorization"), Some("Bearer test-key-123"));
     assert_eq!(sent.header("accept"), Some("text/event-stream"));
     let body: serde_json::Value = serde_json::from_slice(sent.body.as_deref().unwrap()).unwrap();
@@ -142,7 +142,7 @@ async fn a_426_is_a_version_error_and_is_not_retried() {
 async fn an_answer_with_another_protocol_version_is_refused_even_on_200() {
     let step = Step::Answer {
         status: 200,
-        headers: vec![("X-Laris-Protocol".to_owned(), "2".to_owned())],
+        headers: vec![("X-Laris-Protocol".to_owned(), "3".to_owned())],
         chunks: vec![fixture("chat_text.response.sse")],
         hang_after: false,
     };
@@ -152,7 +152,7 @@ async fn an_answer_with_another_protocol_version_is_refused_even_on_200() {
         .await
         .unwrap_err();
     assert!(
-        matches!(&error, ClientError::Version(m) if m.contains("'2'")),
+        matches!(&error, ClientError::Version(m) if m.contains("'3'")),
         "{error:?}"
     );
 }
@@ -161,7 +161,7 @@ async fn an_answer_with_another_protocol_version_is_refused_even_on_200() {
 async fn a_matching_protocol_header_is_accepted() {
     let step = Step::Answer {
         status: 200,
-        headers: vec![("x-laris-protocol".to_owned(), "1".to_owned())],
+        headers: vec![("x-laris-protocol".to_owned(), "2".to_owned())],
         chunks: vec![fixture("chat_text.response.sse")],
         hang_after: false,
     };

@@ -144,7 +144,7 @@ impl Http {
         let mut s = TcpStream::connect(self.addr).await.unwrap();
         let payload = body.map(Value::to_string).unwrap_or_default();
         let mut head = format!(
-            "{method} {path} HTTP/1.1\r\nHost: x\r\nX-Laris-Protocol: 1\r\nConnection: close\r\n"
+            "{method} {path} HTTP/1.1\r\nHost: x\r\nX-Laris-Protocol: 2\r\nConnection: close\r\n"
         );
         if body.is_some() || method == "POST" {
             head.push_str(&format!(

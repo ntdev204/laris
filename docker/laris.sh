@@ -75,7 +75,7 @@ key)
     # shellcheck disable=SC2086
     # the built-in admin key works only from this machine: connect through 127.0.0.1, keep the name for TLS
     answer=$(curl -sS --max-time 30 $cacert --resolve "$domain:$LARIS_HTTPS_PORT:127.0.0.1" -X POST "$address/v1/admin/keys" \
-        -H "Authorization: Bearer $(tr -d '\n' < "$work/admin_key")" -H 'X-Laris-Protocol: 1' -H 'Content-Type: application/json' \
+        -H "Authorization: Bearer $(tr -d '\n' < "$work/admin_key")" -H 'X-Laris-Protocol: 2' -H 'Content-Type: application/json' \
         -d "{\"label\":\"${2:-full}\",\"role\":\"admin\",\"token_limit\":${3:-1000000000}}" 2>&1) || true
     key=$(printf '%s' "$answer" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
     if [ -n "$key" ]; then

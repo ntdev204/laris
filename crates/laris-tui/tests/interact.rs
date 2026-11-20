@@ -708,3 +708,52 @@ fn status_started(text: &str, count: u64) -> Event {
             .unwrap(),
     }
 }
+
+fn pipeline(stage: &str, outcome: &str) -> Event {
+    Event::Status {
+        kind: "pipeline".into(),
+        data: json!({"stage": stage, "outcome": outcome, "ms": 3, "code": ""})
+            .as_object()
+            .cloned()
+            .unwrap(),
+    }
+}
+
+fn notices(a: &App) -> Vec<String> {
+    a.items()
+        .iter()
+        .filter_map(|i| match i {
+            Item::Notice { text, .. } => Some(text.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn the_stages_of_the_server_pipeline_and_the_sources_of_an_answer_are_shown() {
+    let mut a = app();
+    feed(&mut a, pipeline("retrieval", "ok"));
+    feed(&mut a, pipeline("prefilter", "skipped"));
+    feed(&mut a, pipeline("model", "ok"));
+    feed(&mut a, pipeline("gate", "ok"));
+    feed(
+        &mut a,
+        Event::Status {
+            kind: "sources".into(),
+            data: json!({"items": ["Aspirin", "Paper A"]})
+                .as_object()
+                .cloned()
+                .unwrap(),
+        },
+    );
+    assert_eq!(
+        notices(&a),
+        [
+            "Checking the knowledge base",
+            "Asking the model",
+            "Checking the answer against its sources",
+            "Sources: Aspirin, Paper A",
+        ],
+        "a skipped stage is not shown"
+    );
+}

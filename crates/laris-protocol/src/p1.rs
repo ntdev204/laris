@@ -125,12 +125,71 @@ fn laris_empty(laris: &LarisRequest) -> bool {
     *laris == LarisRequest::default()
 }
 
-/// The `laris` block of a response chunk: the evidence list of the system brain (note titles, never content).
+/// One stage of the server's request pipeline as it ended (ADR-025). Never carries message text.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Step {
+    /// `prefilter`, `retrieval`, `decider`, `model`, `gate` or `assembly`.
+    pub stage: String,
+    /// `ok`, `skipped`, `stop` or `error`.
+    pub outcome: String,
+    /// Milliseconds the stage took.
+    #[serde(default)]
+    pub ms: u64,
+    /// A rule id or reason code; empty when there is none.
+    #[serde(default)]
+    pub code: String,
+}
+
+/// What the server's decider chose for a turn.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Decision {
+    /// The action (`answer`, `abstain`, `ask_advisor`, `stop`, ...).
+    pub action: String,
+    /// The rule that fired.
+    pub rule: String,
+}
+
+/// A piece of server-held evidence an answer cites. `origin` is `server`: the client does not check it again.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Evidence {
+    /// Note path of the source.
+    pub id: String,
+    /// Who holds it: `server`.
+    #[serde(default)]
+    pub origin: String,
+    /// The level of the note (`sourced`, ...), or empty.
+    #[serde(default)]
+    pub level: String,
+    /// The note's title.
+    #[serde(default)]
+    pub title: String,
+    /// Start of the quoted span.
+    #[serde(default)]
+    pub start: u64,
+    /// End of the quoted span.
+    #[serde(default)]
+    pub end: u64,
+    /// SHA-256 (hex) of the quoted text.
+    #[serde(default)]
+    pub sha256: String,
+}
+
+/// The `laris` block of a response chunk: the evidence list of the system brain (note titles, never content), the
+/// pipeline's step events, its decision and the server-held evidence an answer cites.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct LarisMeta {
     /// Titles of the guidance notes consulted for this turn, in the order they were opened.
     #[serde(default)]
     pub brain: Vec<String>,
+    /// Stages that ended since the last event, in stage order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub steps: Vec<Step>,
+    /// The decider's choice, sent once before the text.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub decision: Option<Decision>,
+    /// Server-held evidence the answer cites, sent once before the text.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<Evidence>,
     /// Fields of a newer peer.
     #[serde(flatten)]
     pub extra: Map<String, Value>,

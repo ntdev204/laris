@@ -1032,6 +1032,34 @@ impl App {
                         self.elapsed_ms = 0;
                     }
                 }
+                "pipeline" => {
+                    let stage = data.get("stage").and_then(Value::as_str).unwrap_or("");
+                    let failed = data.get("outcome").and_then(Value::as_str) == Some("error");
+                    if !stage.is_empty()
+                        && data.get("outcome").and_then(Value::as_str) != Some("skipped")
+                    {
+                        let key = match stage {
+                            "prefilter" | "retrieval" | "decider" | "model" | "gate"
+                            | "assembly" => {
+                                format!("ui.stage_{stage}")
+                            }
+                            _ => "ui.stage_other".to_owned(),
+                        };
+                        let text = self.text(&key, &[("stage", stage)]);
+                        self.notice(text, if failed { Tone::Warn } else { Tone::Dim });
+                    }
+                }
+                "sources" => {
+                    let list: Vec<&str> = data
+                        .get("items")
+                        .and_then(Value::as_array)
+                        .map(|a| a.iter().filter_map(Value::as_str).collect())
+                        .unwrap_or_default();
+                    if !list.is_empty() {
+                        let text = self.text("ui.sources", &[("list", &list.join(", "))]);
+                        self.notice(text, Tone::Dim);
+                    }
+                }
                 "notice" => {
                     if let Some(text) = data
                         .get("text")
