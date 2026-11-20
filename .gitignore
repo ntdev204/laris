@@ -94,3 +94,6 @@ release.key
 # Vendored crates are kept exactly as published: their checksums list every file (T159)
 !/vendor/
 !/vendor/**
+
+# Decision datasets (T168/T170): built from logs and scenarios, kept outside Git
+data/decision/
