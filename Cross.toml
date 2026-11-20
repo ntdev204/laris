@@ -1,0 +1,3 @@
+# `cross` runs the build in a container: let the packaged defaults of the release reach it (T236).
+[build.env]
+passthrough = ["LARIS_BUILD_DEFAULTS"]

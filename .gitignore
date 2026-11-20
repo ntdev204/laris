@@ -97,3 +97,5 @@ release.key
 
 # Decision datasets (T168/T170): built from logs and scenarios, kept outside Git
 data/decision/
+docker/tls/*
+!docker/tls/.gitkeep

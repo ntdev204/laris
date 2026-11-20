@@ -5,7 +5,8 @@ name: release-build
 # `https://github.com/<owner>/<repo>/releases/download`, so that `<address>/<version>/<file>` is a release asset).
 # With the input `publish` (owner's order, 2026-11-20, D42 amended) it also creates the GitHub release named by the
 # workspace version (tag without `v`, the layout the installers expect) with the signed archives, and publishes the npm
-# package with the secret NPM_TOKEN. Without it, nothing is published.
+# package with the secret NPM_TOKEN. The variable LARIS_DEFAULT_SERVER_URL (optional) is compiled into the client as its
+# default server address (`LARIS_BUILD_DEFAULTS`), so that a user only has to enter a key. Without it, nothing is published.
 
 on:
   workflow_dispatch:
@@ -34,6 +35,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain from rust-toolchain.toml
         run: rustup show active-toolchain
+      - name: Packaged defaults (the server address clients start with)
+        shell: bash
+        run: |
+          url="${{ vars.LARIS_DEFAULT_SERVER_URL }}"
+          [ -z "$url" ] || echo "LARIS_BUILD_DEFAULTS={\"server\":{\"url\":\"$url\"}}" >> "$GITHUB_ENV"
       - name: Build with cross (static Linux)
         if: matrix.cross
         run: |

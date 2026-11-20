@@ -1651,3 +1651,16 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   3.0.0, because generation 2 stands alone. Release checklist: workspace version 1.0.0 (`laris --version` prints it);
   CHANGELOG rewritten as one 1.0.0 entry; the old tag `v2.1.0` and its GitHub release deleted locally and on the remote
   (the only tag and release); runbook free of generation-1 steps; `laris-v1` untouched; `laris-v2` merged into `main`.
+
+## Phase 45 — One-command server and zero-setup client
+
+### T236 — One-command server and zero-setup client (1.0.1)
+- Requirements: SR-S8, SR-C1
+- Depends: T235
+- Deliverables:
+  - `docker/laris.sh` (up, down, status, key) with a Tailscale certificate for the Caddy site; the client release built with its server address compiled in; release 1.0.1 (GitHub release and npm)
+- Validation:
+  - A local build with `LARIS_BUILD_DEFAULTS` reports the address in `laris status`; the release workflow succeeds; `npm view @ntdev204/laris` shows 1.0.1
+- Status: in_progress
+- Note: 2026-11-20 (owner: "1 lệnh để bật/tắt server, client chỉ nhập key", then "phát hành"). Script written and its `status` checked; `up`, `down` and `key` were not run by the agent. The release address is the tailnet name (`https://vthlab.tail3e814e.ts.net:38443`), reachable from the owner's tailnet only; `tailscale cert` needs `sudo tailscale set --operator=$USER` once. Version raised to 1.0.1 because npm cannot replace a published version.
+

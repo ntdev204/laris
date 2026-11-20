@@ -4,6 +4,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Earlier releases and tags were removed on 2026-11-20;
 this is the first release of the Rust generation. History lives in git.
 
+## [1.0.1] - 2026-11-20
+
+### Added
+- **Zero-setup client:** the release is built with the server address compiled in (`LARIS_BUILD_DEFAULTS`, from the
+  repository variable `LARIS_DEFAULT_SERVER_URL`), so a user installs the package, runs `laris` and enters a key. The
+  address uses a publicly trusted certificate (Tailscale HTTPS), so no authority is pinned.
+- **One command for the server:** `docker/laris.sh up | down | status | key`.
+- **Release workflow** creates the GitHub release and publishes the npm package (`@ntdev204/laris`) when run with `publish`.
+
+### Notes
+- 1.0.0 was published first (GitHub release and npm) without the default address; 1.0.1 replaces it as the version to install.
+
 ## [1.0.0] - 2026-11-20
 
 First release of LARIS as a Rust system. It stands alone and reads nothing from earlier generations.

@@ -14,6 +14,10 @@
 }
 
 {$LARIS_DOMAIN:localhost} {
+	# a certificate you hold (for example `tailscale cert`): docker/tls/*.caddy holds `tls CERT KEY`; with none the
+	# domain gets Caddy's own authority or a public certificate, as above
+	import /etc/caddy/tls/*.caddy
+
 	encode zstd gzip
 
 	request_body {

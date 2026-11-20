@@ -88,3 +88,9 @@ Goal: the Rust system replaces the Python one.
 Tasks: T160, T161
 Exit criteria:
 - Acceptance checklist complete; release 1.0.0 merged with the owner's authorisation.
+
+### Phase 45 — One-command server and zero-setup client
+Goal: the owner starts and stops the server with one command and a user enters only a key.
+Tasks: T236
+Exit criteria:
+- `docker/laris.sh` runs the stack; the client release carries its server address; release 1.0.1 is published.
