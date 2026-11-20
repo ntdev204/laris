@@ -42,6 +42,7 @@ Only the principle ADRs remain; the decisions about the Python generation's stru
 | [ADR-022](ADR-022-english-only-foundation.md) | English-only foundation encoder | SUPERSEDED by D48 (spec.md) | 2026-11-14 | Model block |
 | [ADR-023](ADR-023-vram-ceiling-by-device.md) | VRAM ceiling by device for training and profile runs | SUPERSEDED by D48 (spec.md) | 2026-11-18 | Model block, owner runs |
 | [ADR-024](ADR-024-main-brain-design.md) | Main brain: the brain decides, the model advises (notes, write gate, decision network, gates) | ACCEPTED | 2026-11-20 | Brain, harness, server |
+| [ADR-025](ADR-025-request-pipeline-in-server.md) | Request pipeline in the server: stage order, what moves, shared main brain, P1 steps and evidence (D49-D56) | ACCEPTED | 2026-11-20 | Server, client, protocol |
 
 ## Freeze Register
 

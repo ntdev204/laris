@@ -1697,7 +1697,8 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - An ADR that fixes the order of stages (auth, policy, Prefilter, retrieval, brain decider, model, evidence gate, answer assembly), what stays on the client (tool execution in the sandbox, files, approvals) and what moves to the server (the decision loop, the vault and brain, the model call), where the vault and the main brain live (per user or shared), what the protocol P1 carries (step events, evidence list), the failure modes (model down, vault empty) and the threat-model changes
 - Validation:
   - The owner accepts the ADR; no pipeline code before it
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20: `docs/adr/ADR-025-request-pipeline-in-server.md` written as PROPOSED, no code. It fixes the eight stages (auth, policy, Prefilter, retrieval, brain decider, model, evidence gate, assembly), amends D28 (the loop stays on the client, the per-request pipeline moves to the server) and D39 (the evidence check runs once, by the side that holds the evidence, `origin: server`), proposes D49-D56 (one shared main brain per server with `brain.read`; grounded answers buffered and gated, free answers and tool-call proposals streamed; rule decider only, network off; P1 gains `laris.steps`, `decision`, `evidence` and a protocol bump; every stage behind configuration, off by default), lists the failure modes and eight threat-model rows (TM-31 to TM-38, test ids SEC-PIPE-01 to 05). Accepted by the owner 2026-11-20 ("Chấp nhận"); status ACCEPTED, spec D49-D56 recorded, D28 and D39 amended in spec and in an ADR-021 addendum. The ADR is complete; the status stays in_progress only because T236 (release 1.0.1) is not closed and the ledger rule forbids a done task above an open dependency. Close T238 when T236 closes; T239 may start now.
 
 ### T239 — Server pipeline core: Prefilter, retrieval and harness in the chat route
 - Requirements: SR-S4, SR-M11
