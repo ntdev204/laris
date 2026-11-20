@@ -12,17 +12,20 @@ model manifest.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TypeAlias
 
 import numpy as np
 
 from .network import sigmoid
+
+Floats: TypeAlias = Sequence[float] | np.ndarray
 
 TEMPERATURE_GRID: tuple[float, ...] = tuple(
     float(t) for t in np.round(np.geomspace(0.25, 8.0, 61), 6)
 )
 
 
-def log_loss(logits: Sequence[float], labels: Sequence[float], temperature: float) -> float:
+def log_loss(logits: Floats, labels: Floats, temperature: float) -> float:
     """Mean negative log-likelihood of ``labels`` under ``sigmoid(logit / temperature)``."""
     z = np.asarray(logits, dtype=np.float64) / temperature
     y = np.asarray(labels, dtype=np.float64)
@@ -31,8 +34,8 @@ def log_loss(logits: Sequence[float], labels: Sequence[float], temperature: floa
 
 
 def fit_temperature(
-    logits: Sequence[float],
-    labels: Sequence[float],
+    logits: Floats,
+    labels: Floats,
     grid: Sequence[float] = TEMPERATURE_GRID,
 ) -> float:
     """The grid temperature with the lowest validation log-loss (the lowest temperature wins a
@@ -42,9 +45,7 @@ def fit_temperature(
     return min(sorted(grid), key=lambda t: log_loss(logits, labels, t))
 
 
-def expected_calibration_error(
-    probabilities: Sequence[float], labels: Sequence[float], bins: int = 10
-) -> float:
+def expected_calibration_error(probabilities: Floats, labels: Floats, bins: int = 10) -> float:
     """Expected calibration error with equal-width bins (gate N3 asks for at most 0.05)."""
     p = np.asarray(probabilities, dtype=np.float64)
     y = np.asarray(labels, dtype=np.float64)
@@ -58,7 +59,7 @@ def expected_calibration_error(
 
 
 def fit_threshold(
-    confidences: Sequence[float], correct: Sequence[bool], target_precision: float
+    confidences: Floats, correct: Sequence[bool] | np.ndarray, target_precision: float
 ) -> float:
     """The lowest confidence at which the kept decisions are right at least ``target_precision`` of
     the time.
