@@ -990,7 +990,8 @@ returned logs, manifests and reports.
   - `reports/verification/T228-open-llm-selection.md`: candidates that fit an RTX 5070 Ti (16 GB) with a general reasoning (not code) focus; per candidate the licence as stated on the official model card (link, date read), size and quantisation, context length, reasoning mode, published science-reasoning figures with the source; the new runtime dependency that each needs; nothing downloaded
 - Validation:
   - Every statement links its source; the owner picks the model and the runtime in writing
-- Status: pending
+- Status: blocked
+- Note: Report written (`reports/verification/T228-open-llm-selection.md`, 2026-11-20, from official Hugging Face cards, vendor self-reported figures, nothing downloaded). Agent recommendation: Qwen3.5-9B (8-bit or 4-bit) with `transformers`; fallback Qwen3.5-4B BF16. Waiting for the owner to choose model, quantisation and runtime dependency in writing; T231 depends on it.
 
 ### T229 — Prefilter: deterministic answers before the model
 - Requirements: SR-M11
