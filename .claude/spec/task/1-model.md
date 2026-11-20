@@ -698,3 +698,13 @@ returned logs, manifests and reports.
 - Validation:
   - The owner confirms; the agent does not delete these files
 - Status: pending
+
+### T235 — Serve the open-weight chat model in the compose stack
+- Requirements: SR-M1, SR-S8
+- Depends: T231
+- Deliverables:
+  - `docker/compose.chat.yaml` (override: GPU reservation, `OpenWeightChat`, offline weights) and a `MODEL_EXTRAS` build argument in `docker/model.Dockerfile`; runbook text; the stack answers a chat from the open-weight model through the server
+- Validation:
+  - The stack becomes healthy in its own project; one chat completion from the model container on this machine; one chat through Caddy and the server with a user key
+- Status: in_progress
+- Note: 2026-11-20 (owner: "Tích hợp toàn bộ hệ thống", then "Qwen thật qua server"): project `laris-qwen` (ports 38080/38443, subnets 172.31.60/61, its own volumes and certificate authority; the smoke and trial projects were not touched). Image `laris-model-chat` is built with `MODEL_EXTRAS=chat` (the pins approved in T231). The weights are the Hugging Face hub cache mounted read-only at `/weights`: the whole hub, because the model's blobs sit in a store shared with other models and its own folder alone holds broken links (found by the first run, which failed with "No such file"). One completion inside the model container: "I am Qwen3.5, a large language model developed by Tongyi Lab.", 26 s including the first load, GPU memory 14.7 GB of 16.3 GB in use with the desktop's 3.6 GB (greedy, thinking off, 8-bit). Not yet measured: a chat through Caddy and the server (needs a user key that the owner creates), and the client loop against it. Qwen3.5-9B stays NOT QUALIFIED.
