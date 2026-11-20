@@ -903,6 +903,8 @@ Read each figure as "measured on the validation split"; the foundation model sta
 
 ## 18. T216: longer stage-2 run (prepared 2026-11-20; owner permission for this run only)
 
+> **Stopped 2026-11-20 at step 1,040 by the owner's decision; the 5,000-step mark was never reached and QA was not measured (see T216 in the task ledger). The commands below stay valid if the run is resumed from `english-r1-stage2/best`.**
+
 Continues `english-r1-stage2/best` (T204; on Drive `runs/english-r1-stage2/best`) with a fresh optimizer for 15,000 steps, config `english_r1_stage2_long.yaml` (the stage-2 mixture, QA floor 0.15, similarity floor 0.04, floors still total 0.66), micro-batch 32 x 1,
 2 tasks per micro-step, retrieval batch 128, evaluation and saving every 1,000 steps, `--patience 4`, seed 42, run id `english-r1-stage2-long`. No control arm.
 ```bash
