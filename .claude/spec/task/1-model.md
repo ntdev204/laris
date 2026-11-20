@@ -1010,7 +1010,8 @@ returned logs, manifests and reports.
   - TF-IDF and BM25 passage retrieval over the Obsidian vault in the Rust retrieval and vault crates, returning passages with note path and character span; tokenisation and rank fusion documented; fixtures and a latency check
 - Validation:
   - Cargo checks as in T229; the top-k of fixture queries equals hand-computed values
-- Status: pending
+- Status: done
+- Note: Done 2026-11-20. `crates/laris-retrieval/src/lexical.rs`: `VaultPassages` indexes the passages of a vault (paragraphs, cut at whitespace above 800 characters, `_inbox/` never indexed); `search(query, Scorer::{TfIdf, Bm25, Fused}, k)` returns `VaultPassageHit` with note path, character span `start..end`, note SHA-256, score and rank; `verify_passage` fails closed. Tokenisation (`tokens`, no stemming, no stop words), the TF-IDF cosine and BM25 formulas and the rank fusion (RRF k=60 over the top 100 of each ranking, ties by path then start) are documented in the module header. `tests/lexical.rs` pins rankings and scores to values computed by hand with an independent script, plus character spans over multi-byte text, long-paragraph cuts, inbox and fail-closed checks. Latency (`examples/bench`, owner-independent, 10 000 notes / 20 000 passages, 200 queries): P95 BM25 2.3 ms, TF-IDF 1.7 ms, fused 4.2 ms against the 300 ms target (`reports/performance/retrieval-lexical.json`; machine-dependent). No new dependency. Not done here: the harness does not call it yet (T232). NOT a qualification of any model.
 
 ### T231 — Chat backend on the chosen open-weight LLM
 - Requirements: SR-M1, SR-M11

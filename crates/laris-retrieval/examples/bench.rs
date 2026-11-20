@@ -13,7 +13,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use laris_retrieval::{GraphConfig, GraphRetriever, NoteSearch};
+use laris_retrieval::{GraphConfig, GraphRetriever, NoteSearch, Scorer, VaultPassages};
 use laris_vault::VaultIndex;
 
 const WORDS: [&str; 34] = [
@@ -126,6 +126,9 @@ fn main() {
     let search = NoteSearch::new(&index, &[]);
     let search_build_s = started.elapsed().as_secs_f64();
     let graph = GraphRetriever::new(&index, &[], GraphConfig::default());
+    let started = Instant::now();
+    let passages = VaultPassages::new(&index);
+    let passages_build_s = started.elapsed().as_secs_f64();
 
     let mut rng = Rng(11);
     let queries: Vec<String> = (0..200)
@@ -137,6 +140,7 @@ fn main() {
         })
         .collect();
     let (mut bm25_ms, mut graph_ms) = (Vec::new(), Vec::new());
+    let (mut pb_ms, mut pt_ms, mut pf_ms) = (Vec::new(), Vec::new(), Vec::new());
     for q in &queries {
         let t = Instant::now();
         std::hint::black_box(search.search(q, 10));
@@ -144,6 +148,15 @@ fn main() {
         let t = Instant::now();
         std::hint::black_box(graph.retrieve(q, 10));
         graph_ms.push(t.elapsed().as_secs_f64() * 1000.0);
+        for (scorer, sink) in [
+            (Scorer::Bm25, &mut pb_ms),
+            (Scorer::TfIdf, &mut pt_ms),
+            (Scorer::Fused, &mut pf_ms),
+        ] {
+            let t = Instant::now();
+            std::hint::black_box(passages.search(q, scorer, 10));
+            sink.push(t.elapsed().as_secs_f64() * 1000.0);
+        }
     }
     if let Some(path) = dump {
         let mut lines = String::new();
@@ -164,16 +177,27 @@ fn main() {
     }
     let (bm25_med, bm25_p95) = ms(&mut bm25_ms);
     let (graph_med, graph_p95) = ms(&mut graph_ms);
+    let (pb_med, pb_p95) = ms(&mut pb_ms);
+    let (pt_med, pt_p95) = ms(&mut pt_ms);
+    let (pf_med, pf_p95) = ms(&mut pf_ms);
     let r = |x: f64| (x * 1000.0).round() / 1000.0;
     let report = format!(
-        "{{\n  \"bm25_median_ms\": {},\n  \"bm25_p95_ms\": {},\n  \"graph_median_ms\": {},\n  \"graph_p95_ms\": {},\n  \"index_build_s\": {},\n  \"notes\": {count},\n  \"queries\": {},\n  \"search_build_s\": {},\n  \"target_p95_ms\": 300.0\n}}\n",
+        "{{\n  \"bm25_median_ms\": {},\n  \"bm25_p95_ms\": {},\n  \"graph_median_ms\": {},\n  \"graph_p95_ms\": {},\n  \"index_build_s\": {},\n  \"notes\": {count},\n  \"queries\": {},\n  \"search_build_s\": {},\n  \"passages\": {},\n  \"passages_build_s\": {},\n  \"passage_bm25_median_ms\": {},\n  \"passage_bm25_p95_ms\": {},\n  \"passage_tfidf_median_ms\": {},\n  \"passage_tfidf_p95_ms\": {},\n  \"passage_fused_median_ms\": {},\n  \"passage_fused_p95_ms\": {},\n  \"target_p95_ms\": 300.0\n}}\n",
         r(bm25_med),
         r(bm25_p95),
         r(graph_med),
         r(graph_p95),
         r(index_s),
         queries.len(),
-        r(search_build_s)
+        r(search_build_s),
+        passages.len(),
+        r(passages_build_s),
+        r(pb_med),
+        r(pb_p95),
+        r(pt_med),
+        r(pt_p95),
+        r(pf_med),
+        r(pf_p95)
     );
     match out {
         Some(path) => fs::write(path, &report).expect("write report"),
