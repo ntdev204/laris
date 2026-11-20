@@ -1752,9 +1752,9 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   of T239 is replaced by the main brain: grounding without one stops the server. Checked: 9 tests in
   `crates/laris-server/tests/mainbrain.rs` (4 with PostgreSQL, run against the local `laris-test-pg` container) and the T239 tests
   adapted. Threat rows: TM-33 (SEC-PIPE-03) added, TM-28 extended with T240; `SEC-BRAIN-01` now runs (gate and server tests)
-  instead of being deferred. Seen, not changed: `SEC-DATA-03` is still marked deferred to T168 although T168 is done, so
-  `cargo xtask security` reports FAILED; and `the_retention_task_runs_at_start_reports_a_failure_and_stops` fails about
-  one run in three on `main` as well (timing). The task stays in_progress only because T238 is.
+  instead of being deferred. Fixed in the follow-up of 2026-11-20: `SEC-DATA-03` now runs the five T168 dataset tests (it was deferred to a done
+  task, so `cargo xtask security` reported FAILED; it passes: 35 threats, 34 passed, 1 partial), and the retention test waits
+  for the error by polling instead of a fixed pause (it failed about one run in three under load). The task stays in_progress only because T238 is.
 
 ### T241 — Brain decider in the server turn
 - Requirements: SR-K5, SR-S4
@@ -1769,7 +1769,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   by accepted Claims, levels, open Conflicts) plus the loop counters the client sends in `laris.turn` (`steps_used`,
   `seconds_used`, `repeats`, `advisor_asks`, `budget_left`), clamped to the server's caps and read as inputs only. The
   server never decides `run_tool`, `acquire` or `verify` (no proposed call, no acquisition, no pending candidate in the
-  signals; `below_required` is held at 0). Outcomes: `stop` and `ask_user` end the turn with no sentence of their own;
+  signals; `below_required` is held at 0). Outcomes: `stop` and `ask_user` end the turn (with the owner's sentence, see the follow-up);
   `abstain` ends it with the harness abstention text and no model call (with `grounding = required`, no passages is final);
   `answer` composes from accepted Claims when `LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` (no model call), else goes
   on to the buffered, gated model answer; `ask_advisor` and `retrieve` go on to the model. The choice is sent as
@@ -1778,9 +1778,10 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   server). Settings `LARIS_SERVER__DECIDER_*` have no defaults and are required together. Checked: 10 tests in
   `crates/laris-server/tests/decider.rs` (stop on budget, steps, time and cycle; abstain on no evidence; answer from Claims
   without the model; covered question to the gated model; partial coverage asks the advisor; forged counters; log with rule
-  and no text; no `brain.read`; settings). TM-35 added (SEC-PIPE-05). Open for the owner: the texts for a stop and a question
-  to the user would need entries in the locked `.laris/harness.toml` (a policy change needs approval); until then a stop is
-  silent and `ask_user` cannot occur (the server has no closed slot test). The task stays in_progress only because T238 is.
+  and no text; no `brain.read`; settings). TM-35 added (SEC-PIPE-05). Follow-up 2026-11-20 (owner: "giải quyết hết phần còn thiếu"): `.laris/harness.toml` gains
+  `decider_stop` and `decider_ask_user` (required fields of `HarnessConfig`; lock refreshed with `laris-server policy lock`),
+  so a stop and a question to the user now end the turn with the owner's sentence; `ask_user` still cannot occur on the server
+  (no closed slot test), the text is there for when it can. The wording is mine and is open to the owner's edit. The task stays in_progress only because T238 is.
 
 ### T242 — Protocol P1 step events and client display
 - Requirements: SR-S1, SR-C1
@@ -1799,10 +1800,7 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   notices ("Checking the knowledge base", "Asking the model", "Checking the answer against its sources", "Sources: ...";
   catalogue keys `ui.stage_*`, `ui.sources` in English and Vietnamese; a skipped stage is not shown). Checked: contract
   tests (`laris-protocol/tests/pipeline_events.rs`), the display (`laris-tui/tests/interact.rs`), the server test for the
-  evidence event; the other tests moved to protocol 2. Open: the evidence entry has no real span offsets or note level yet
-  (`start` 0, `end` the passage length, `level` empty; the passage source gives only path and text); an answer composed
-  without the model sends no evidence list; the client gate does not yet skip `origin: server` entries because the client
-  does not run the harness gate on server turns. The task stays in_progress only because T238 is.
+  evidence event; the other tests moved to protocol 2. Follow-up 2026-11-20 (owner: "giải quyết hết phần còn thiếu"): the evidence entry now carries the real span (`start`/`end` are the passage's character offsets in the note body, from the retrieval index) and the note's `level` (`BrainSource` reads it from the vault); an answer composed without the model sends the Claims it rests on as evidence (note, level, the span and sha256 the write gate checked); the client shows as sources only entries marked `origin: server` (the client runs no gate over server turns, so D52 holds by construction: the server checks once). Tests: `decider.rs` (composed evidence), `pipeline.rs` (span), `laris-cli` `only_entries_the_server_marked_are_shown_as_sources`. The task stays in_progress only because T238 is.
 
 ### T243 — End-to-end acceptance of the pipeline with Qwen3.5-9B
 - Requirements: SR-S8, SR-K7

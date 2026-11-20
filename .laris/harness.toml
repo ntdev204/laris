@@ -30,3 +30,5 @@ text that is in the cited passage, and reply with NO_ANSWER if the passages do n
 abstain_no_source = "I found nothing in your vault that bears on this question, so I will not answer it from memory."
 abstain_model = "Your vault does not answer this question."
 abstain_unverified = "I could not back an answer with passages from your vault, so I am not giving one."
+decider_stop = "I stopped here because this turn used up the steps or time it was allowed. Ask again to continue."
+decider_ask_user = "I need a little more from you to answer this. Please say what exactly you want to know."

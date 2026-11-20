@@ -210,6 +210,7 @@ struct Reply {
     text: String,
     decision: Option<(String, String)>,
     steps: Vec<(String, String, String)>,
+    evidence: Vec<Value>,
 }
 
 async fn chat(server: &Server, question: &str, turn: Option<Value>) -> Reply {
@@ -237,6 +238,9 @@ async fn chat(server: &Server, question: &str, turn: Option<Value>) -> Reply {
                     .push((get("stage"), get("outcome"), get("code")));
             }
         }
+        if let Some(list) = value.pointer("/laris/evidence").and_then(Value::as_array) {
+            reply.evidence.extend(list.iter().cloned());
+        }
         if let Some(d) = value.pointer("/laris/decision") {
             reply.decision = Some((
                 d["action"].as_str().unwrap_or("").to_owned(),
@@ -262,6 +266,11 @@ fn decided(reply: &Reply, action: &str, rule: &str) {
     );
 }
 
+fn harness_text() -> laris_policy::HarnessConfig {
+    let text = std::fs::read_to_string(repo().join(".laris/harness.toml")).unwrap();
+    laris_policy::HarnessConfig::from_toml(&text).unwrap()
+}
+
 fn abstain_text() -> String {
     let text = std::fs::read_to_string(repo().join(".laris/harness.toml")).unwrap();
     laris_policy::HarnessConfig::from_toml(&text)
@@ -277,7 +286,7 @@ async fn the_turn_stops_when_the_budget_is_spent() {
     store_fact(&server).await;
     let reply = chat(&server, COVERED, Some(json!({"budget_left": 0.0}))).await;
     decided(&reply, "stop", "R1-limit");
-    assert!(reply.text.is_empty(), "a stop has no sentence of its own");
+    assert_eq!(reply.text, harness_text().decider_stop);
     assert_eq!(server.calls.load(Ordering::SeqCst), 0);
     assert!(
         reply
@@ -325,6 +334,13 @@ async fn an_answer_from_accepted_claims_does_not_call_the_model() {
     assert_eq!(server.calls.load(Ordering::SeqCst), 0);
     let stages: Vec<_> = reply.steps.iter().map(|s| s.0.as_str()).collect();
     assert_eq!(stages, ["prefilter", "retrieval", "decider", "assembly"]);
+    // the Claims the answer rests on are sent as evidence, with the span the write gate checked
+    assert_eq!(reply.evidence.len(), 1, "{:?}", reply.evidence);
+    let e = &reply.evidence[0];
+    assert_eq!(e["origin"], "server");
+    assert_eq!(e["level"], "sourced");
+    assert!(e["sha256"].as_str().is_some_and(|h| h.len() == 64), "{e}");
+    assert!(e["end"].as_u64() > e["start"].as_u64(), "{e}");
 }
 
 #[tokio::test]

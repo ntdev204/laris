@@ -70,6 +70,10 @@ pub struct HarnessConfig {
     pub abstain_model: String,
     /// The answer when no draft passed the gate.
     pub abstain_unverified: String,
+    /// What the server says when its decider stops the turn (steps, time or a cycle spent).
+    pub decider_stop: String,
+    /// What the server says when its decider asks the user to say more.
+    pub decider_ask_user: String,
 }
 
 impl HarnessConfig {
@@ -103,6 +107,8 @@ impl HarnessConfig {
             ("abstain_no_source", &self.abstain_no_source),
             ("abstain_model", &self.abstain_model),
             ("abstain_unverified", &self.abstain_unverified),
+            ("decider_stop", &self.decider_stop),
+            ("decider_ask_user", &self.decider_ask_user),
         ] {
             if text.trim().is_empty() {
                 return Err(HarnessError::Invalid(format!("{name} must not be empty")));
@@ -119,6 +125,12 @@ pub struct Passage {
     pub source: String,
     /// The text.
     pub text: String,
+    /// Character offset of the text in the note body (0 when the source does not know).
+    pub start: usize,
+    /// Character offset after the text in the note body.
+    pub end: usize,
+    /// The level of the note (`sourced`, ...), or empty when the source does not know.
+    pub level: String,
 }
 
 /// Where passages come from.
@@ -148,6 +160,9 @@ impl PassageSource for VaultSource {
             .map(|hit| Passage {
                 source: hit.passage.path,
                 text: hit.passage.text,
+                start: hit.passage.start,
+                end: hit.passage.end,
+                level: String::new(),
             })
             .collect()
     }

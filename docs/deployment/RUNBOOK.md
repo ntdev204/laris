@@ -132,7 +132,7 @@ value is required, none has a default: `_REQUIRED_LEVEL` and `_ANSWER_MIN_LEVEL`
 `_ANSWER_MAX_NOTES`, `_MAX_STEPS` and `_MAX_SECONDS` (the caps the client's loop counters are clamped to).
 `LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` lets the composer answer from accepted Claims without calling the model
 when the decider chooses `answer`. The decision network cannot be enabled (it is not promoted); setting
-`LARIS_SERVER__DECIDER_NETWORK` stops the server. Each decision is a step with the code `action:rule`.
+`LARIS_SERVER__DECIDER_NETWORK` stops the server. Each decision is a step with the code `action:rule`. A stop and a question to the user end the turn with `decider_stop` and `decider_ask_user` of `.laris/harness.toml`.
 
 Attempts, passages and the abstention texts are the owner's policy in `.laris/harness.toml`. Each stage and its time
 are in the trace row (`stages`, `GET /v1/admin/traces`), never the message. The database needs migration 0003, which

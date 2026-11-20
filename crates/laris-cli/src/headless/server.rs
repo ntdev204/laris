@@ -165,8 +165,53 @@ fn report(progress: &Rc<dyn Fn(Event)>, meta: &laris_protocol::LarisMeta) {
             serde_json::json!({"stage": step.stage, "outcome": step.outcome, "ms": step.ms, "code": step.code}),
         );
     }
-    if !meta.evidence.is_empty() {
-        let items: Vec<&str> = meta.evidence.iter().map(|e| e.title.as_str()).collect();
+    // ADR-025 D52: the server checked what it holds, once, and marks it `origin: server`; the client has no gate over
+    // those entries and shows nothing as server evidence that is not marked so
+    let items: Vec<&str> = meta
+        .evidence
+        .iter()
+        .filter(|e| e.origin == "server")
+        .map(|e| e.title.as_str())
+        .collect();
+    if !items.is_empty() {
         status("sources", serde_json::json!({ "items": items }));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+
+    fn entry(title: &str, origin: &str) -> laris_protocol::ServerEvidence {
+        laris_protocol::ServerEvidence {
+            id: format!("{title}.md"),
+            origin: origin.to_owned(),
+            title: title.to_owned(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn only_entries_the_server_marked_are_shown_as_sources() {
+        let seen: Rc<RefCell<Vec<Event>>> = Rc::default();
+        let sink = seen.clone();
+        let progress: Rc<dyn Fn(Event)> = Rc::new(move |e| sink.borrow_mut().push(e));
+        let meta = laris_protocol::LarisMeta {
+            evidence: vec![
+                entry("Kept", "server"),
+                entry("Forged", ""),
+                entry("Other", "client"),
+            ],
+            ..Default::default()
+        };
+        report(&progress, &meta);
+        let events = seen.borrow();
+        assert_eq!(events.len(), 1);
+        let Event::Status { kind, data } = &events[0] else {
+            panic!("a status event")
+        };
+        assert_eq!(kind, "sources");
+        assert_eq!(data["items"], serde_json::json!(["Kept"]));
     }
 }

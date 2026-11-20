@@ -371,7 +371,11 @@ async fn the_retention_task_runs_at_start_reports_a_failure_and_stops() {
         .execute(storage.pool())
         .await
         .unwrap();
-    tokio::time::sleep(Duration::from_millis(300)).await;
+    // wait for the next run to hit the broken schema; a loaded machine may take more than a fixed pause
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while storage.last_retention_error().is_none() && std::time::Instant::now() < deadline {
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
     assert!(storage.last_retention_error().is_some());
     tokio::time::timeout(Duration::from_secs(5), handle.stop())
         .await

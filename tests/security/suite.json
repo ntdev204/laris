@@ -77,10 +77,19 @@
       ]
     },
     "SEC-DATA-03": {
-      "deferred": {
-        "task": "T168",
-        "reason": "sealed splits, manifests and the seeded model-generated example belong to the data pipeline of programme 3"
-      }
+      "runs": [
+        {
+          "package": "laris-brain",
+          "target": "dataset",
+          "tests": [
+            "a_seeded_model_generated_example_is_excluded",
+            "groups_never_straddle_splits_and_the_heldout_set_is_sealed",
+            "a_changed_or_moved_example_breaks_the_seal",
+            "a_withheld_advisor_never_reaches_training_or_validation",
+            "training_text_comes_only_from_sources_and_verified_quotes"
+          ]
+        }
+      ]
     },
     "SEC-DEP-01": {
       "runs": [

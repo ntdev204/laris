@@ -28,6 +28,8 @@ retry_template = "Fix these and answer again:\n{{findings}}"
 abstain_no_source = "I found nothing in the vault about this."
 abstain_model = "The vault does not answer this."
 abstain_unverified = "I could not back an answer with the vault."
+decider_stop = "Stopped."
+decider_ask_user = "Say more."
 "#;
 
 fn config() -> HarnessConfig {
