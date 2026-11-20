@@ -4,7 +4,7 @@
 Rules: requirement ids are unique and each names exactly one known owner (`Owner:` line);
 task ids are unique across all task files; every task cites known requirements and earlier
 tasks; every requirement is covered by a task; each plan file lists, phase by phase, exactly
-the tasks of its task file (same file name); statuses are valid; a `done` or `blocked` task
+the tasks of its task file (same file name); statuses are valid; a `done`, `blocked` or `superseded` task
 has a note; a `done` task has only `done` dependencies; the spec progress index names every
 phase span.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[1] / ".claude" / "spec"
-STATUSES = {"pending", "in_progress", "done", "blocked"}
+STATUSES = {"pending", "in_progress", "done", "blocked", "superseded"}
 OWNERS = {"governance", "model", "protocol", "shared", "harness", "server", "client", "brain"}
 Task = Dict[str, object]
 
@@ -119,7 +119,7 @@ def validate(spec: str, plans: Dict[str, str], task_files: Dict[str, str]) -> Li
                 problems.append(f"{tid}: done but dependency {dep} is not done")
         if entry["status"] not in STATUSES:
             problems.append(f"{tid}: invalid status {entry['status']!r}")
-        if entry["status"] in ("done", "blocked") and not entry["note"]:
+        if entry["status"] in ("done", "blocked", "superseded") and not entry["note"]:
             problems.append(f"{tid}: {entry['status']} needs a note")
     for req in reqs:
         if req not in covered:

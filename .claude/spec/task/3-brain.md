@@ -8,14 +8,14 @@ Status values and rules as in [task/1-model.md](1-model.md).
 
 ### T162 — ADR: brain decides, model advises
 - Requirements: SR-K1
-- Depends: T118, T161
+- Depends: T161
 - Deliverables:
   - ADR fixing note types and certainty ladder, the write gate, the closed action set and inputs of the decision network,
     abstention, answer assembly, the cold-start rule decider, held-out gates and owner runs
 - Validation:
   - Owner accepts the ADR
-- Status: blocked
-- Note: Waiting for the owner to open the gate; the dependencies may be waived by the owner for the design only.
+- Status: pending
+- Note: Waiting for the owner to open the gate; the dependencies may be waived by the owner for the design only. 2026-11-20 (D48): T118 is superseded (the self-trained model is dropped), so it is no longer a dependency; the brain works with the open-weight LLM of Phase 44.
 
 ## Phase 38 — Knowledge base and write gate
 

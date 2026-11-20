@@ -168,6 +168,7 @@ changes in the ADR named in the task.
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
 | D46 | Foundation language | Stage-1 encoder is English only; Vietnamese through a translation layer (i18n plus a translation model, chosen later); VI data replaced by English documents; G02, G08, G09, G11 withdrawn by a gated amendment task, G12 becomes English | decided by the owner 2026-11-14 (ADR-022); gates amended in T173, data inventory T174, English data acquired and STS-B leakage check built in T175, document and config sweep in T176, partition and wiring in T177, retrieval-pair task in T178, then tokenizer fit and retraining (owner) |
 | D47 | Gold sources | No new human annotation for stages 2-4: held-out sets come from public human-labelled sets where one exists (SciFact, PubMedQA labeled, SCIDOCS, TREC-COVID, NFCorpus, DocLayNet boxes), and from LLM labels with `label_source: llm` where none exists; gates are reported as measured on those sets, never as human-gold results, and none is waived | decided by the owner 2026-11-14 (amends the labelling part of D45; D05 guideline and sealing rules still apply) |
+| D48 | ResearchLLM | The self-trained model is dropped: ResearchLLM is an open-weight third-party reasoning LLM (not code-focused) chosen by the owner from a sourced report (T228), with a Prefilter, TF-IDF/BM25 retrieval, a harness loop and the Obsidian brain; learning-data export stays; no distillation from Claude outputs | decided by the owner 2026-11-20 (T227); programme-1 tasks T99-T118, T188-T189, T209, T220-T226 superseded |
 
 ## 7. Requirements
 
@@ -461,6 +462,8 @@ Acceptance: the no-training guard (SR-G3) covers the model block; every owner-ru
 
 ### 7.8 Model programme: ResearchLLM
 
+**D48 (2026-11-20):** the requirements below that describe a self-built model (SR-M4 to SR-M11) are superseded for the first version: the model is an open-weight third-party LLM, nothing is trained, and no gate here is claimed. The tasks that implemented them stay as history; Phase 44 holds the work that replaces them.
+
 ### SR-M4 — Data lineage and splits
 Owner: model
 Every dataset, source licence, preprocessing step, split and fix has a provenance record with checksums
@@ -595,4 +598,4 @@ The authoritative status of every task is in the task files. Programme 1: Phase 
 Phase 21: T101-T104. Phase 22: T105-T107. Phase 23: T108-T110. Phase 24: T111-T112. Phase 25: T113-T118.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T189 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T226 (pair-task remediation; programme 1).
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T189 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T226 (pair-task remediation; programme 1). Phase 44: T227-T234 (open-weight LLM, D48; programme 1).

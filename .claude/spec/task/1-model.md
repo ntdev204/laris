@@ -2,7 +2,7 @@
 
 Version 2.0.0-draft · 2026-11-13 · Implements [plan/1-model.md](../plan/1-model.md) for [spec.md](../spec.md).
 
-Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner). A task is `done` only when every
+Status values: `pending`, `in_progress`, `done`, `blocked` (waiting for the owner), `superseded` (dropped by an owner decision; never run). A task is `done` only when every
 deliverable and validation item holds and a completion note is written. Run `python scripts/validate_spec.py` after each
 task. A task marked **owner run** contains steps only the owner executes; the agent prepares the commands and checks the
 returned logs, manifests and reports.
@@ -134,7 +134,8 @@ returned logs, manifests and reports.
   - Intake check of returned logs, checkpoints and manifests; validation analysis per gate
 - Validation:
   - Logs and manifests match; validation results reported per gate; the owner decides on another round or held-out evaluation
-- Status: blocked
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: Round R2 run by the owner 2026-11-13 and analysed: runbook section 7 (executed, results in 7.9), `scripts/training_intake.py`
   (18/18 on `foundation-r2`), `scripts/score_vi_stem_gold.py`, report `reports/verification/T99-r2-analysis.md`. SciFact dev dense MRR 0.0067 (R1)
   to 0.1285 (R2) against BM25 0.636; no gate is close (G01-G09 are 0.37-0.60 below threshold on `val`, PAWS at chance); the foundation model is NOT QUALIFIED.
@@ -156,7 +157,8 @@ returned logs, manifests and reports.
 - Validation:
   - The readiness check exits 0 on held-out reports; the owner records the stage-1 promotion; otherwise the task records
     NOT QUALIFIED and returns to T99
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ## Phase 41 — Stage 1 re-scope to English (D46)
 
@@ -382,7 +384,8 @@ returned logs, manifests and reports.
   - Non-training tests on a tiny random-weight encoder: shapes, alignment on fixtures with multi-piece words, loss mask,
     evaluator against hand-computed spans; a stage-1 checkpoint loads into the wrapper with no missing or unexpected
     encoder keys; no backward step, no optimiser
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T189 — NER fine-tune and held-out evaluation (owner run)
 - Requirements: SR-M3, SR-M12
@@ -393,7 +396,8 @@ returned logs, manifests and reports.
 - Validation:
   - Logs and manifests match the prepared command; entity-level micro F1 on the sealed test reported as "measured on"
     that set; validation results guide only; no qualification claim (NER has no gate)
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: Waits for a stage-1 checkpoint (T100 pilot or promoted encoder; the owner chooses). Until stage 1 is promoted the
   NER result describes an unqualified encoder.
 
@@ -609,7 +613,8 @@ returned logs, manifests and reports.
   - `configs/language_encoder/english_r1_t209_shared_gpu_profile.yaml` and runbook section 11: the T202 profile with retrieval batch 16, contrastive similarity batch 32, micro-batch 4 and accumulation 8, limit 11.5 GB, for a GPU shared with CARLA (about 2.3 GB); the decision rule and intake of the returned logs
 - Validation:
   - The logs show the peak per `tasks_per_step` 1 and 2 against the free memory with CARLA running; the report states which runs fit and what the halved negatives change
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: Owner decision 2026-11-18: CARLA stays running during training. `nvidia-smi` showed 12,956 MiB free of 16,303 MiB; the T202 peaks (11.39 GB for one task, 13.12 GB for two) leave no margin for one task and do not fit for two. Prepared by the agent; only the owner runs it. Stage 1 rerun, T204 and the control use the sizes this profile settles.
 
 ### T210 — Colab A100 for the owner runs (SSH, data and code transfer)
@@ -697,7 +702,8 @@ returned logs, manifests and reports.
   - Runbook section 20: start `ext` on a fresh A100 VM (data and `english-r1-stage2/best` as in section 18), `stop_at_step.sh english-r1-ext 1000`, save `last`, restart with `train_arm.sh ext artifacts/checkpoints/language_encoder/english-r1-ext/last`; read the log for `[RESUME] ... at optimizer step 1000`, finite losses at steps 1,010-1,100 and the same task mix; the run then simply continues as chunk 1 (T221)
 - Validation:
   - The log shows `[RESUME]` at step 1,000 and finite losses after it; if it does not, the run stops and the cause is reported before any further chunk
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 1 h, about 7 units; the chunk-1 steps 1,000 to 20,000 of T221 follow in the same VM session.
 
 ### T221 — Stage-1 extended run, chunk 1: steps 1,000 to 20,000 (owner run)
@@ -707,7 +713,8 @@ returned logs, manifests and reports.
   - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 20,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 20,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
 - Validation:
   - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 20,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
 
 ### T222 — Stage-1 extended run, chunk 2: steps 20,000 to 40,000 (owner run)
@@ -717,7 +724,8 @@ returned logs, manifests and reports.
   - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 40,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 40,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283) **Gate: SQuAD v1 F1 below 0.20 at step 40,000 stops the extended run**
 - Validation:
   - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 40,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
 
 ### T223 — Stage-1 extended run, chunk 3: steps 40,000 to 60,000 (owner run)
@@ -727,7 +735,8 @@ returned logs, manifests and reports.
   - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 60,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 60,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
 - Validation:
   - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 60,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
 
 ### T224 — Stage-1 extended run, chunk 4: steps 60,000 to 80,000 (owner run)
@@ -737,7 +746,8 @@ returned logs, manifests and reports.
   - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 80,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 80,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
 - Validation:
   - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 80,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
 
 ### T225 — Stage-1 extended run, chunk 5: steps 80,000 to 100,000 (owner run)
@@ -747,7 +757,8 @@ returned logs, manifests and reports.
   - Runbook section 20: `train_arm.sh ext <previous last>` for this chunk, `stop_at_step.sh english-r1-ext 100,000`, `save_run.sh english-r1-ext`, forward-only evaluation of a copy of `last` at step 100,000 (section 17 loop, validation split, 512 samples per dataset) and the QA/STS-B/NLI/MLM figures against T205 stage 2 (SQuAD v1 F1 0.051, STS-B 0.846, all_nli 0.455, PAWS 0.553, MLM 0.283)
 - Validation:
   - Finite losses, step time below 3.6 s, no out-of-memory, the checkpoint of step 100,000 on Drive, the evaluation reported; every figure is "measured on the validation split"; no test split is touched
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: about 9.7 h and about 65 compute units for 20,000 steps at 1.75 s (derived from T204/T216, not measured for this length). The agent runs it only with the owner's explicit permission for this chunk; otherwise the owner runs the commands.
 
 ### T226 — Analysis and decision after the extended run
@@ -757,7 +768,8 @@ returned logs, manifests and reports.
   - `reports/verification/T226-extended-run-analysis.md`: per-chunk curves of every task, SQuAD v1 F1 / STS-B / NLI / PAWS / MLM at 20,000, 40,000, 60,000, 80,000 and 100,000 against T205, the repeats of the similarity and QA rows, a decision: which checkpoint goes to the sealed T100 evaluation (owner run, once per candidate), or a re-plan
 - Validation:
   - Every figure traced to a log or result file; "measured on the validation split"; no qualification claim
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: if T222 stops the run at 40,000, this task reads T221-T222 only and the later chunks are marked `blocked` with the reason.
 
 ## Phase 21 — Stage 2: scientific language
@@ -770,7 +782,8 @@ returned logs, manifests and reports.
     SUPPORT, CONTRADICT, INSUFFICIENT_EVIDENCE) frozen before labelling
 - Validation:
   - Manifests and checksums; agreement thresholds met; test sealed
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T102 — Scientific adaptation pipeline
@@ -780,7 +793,8 @@ returned logs, manifests and reports.
   - Objectives, data loaders, evaluator and readiness gates for stage 2 starting from the promoted stage-1 checkpoint
 - Validation:
   - Non-training tests (shapes, loaders, evaluator on fixtures) pass
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T103 — Stage-2 training (owner run)
 - Requirements: SR-M7, SR-M3
@@ -789,7 +803,8 @@ returned logs, manifests and reports.
   - Prepared commands with budget and stop rules; intake check of the returned artifacts
 - Validation:
   - Logs and manifests match; validation analysis per gate
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T104 — Stage-2 held-out evaluation and promotion
 - Requirements: SR-M7, SR-M12
@@ -798,7 +813,8 @@ returned logs, manifests and reports.
   - Held-out evaluation commands (owner run) and readiness report
 - Validation:
   - SciFact NLI macro F1 ≥ 0.82, evidence precision and recall ≥ 0.80; owner promotion or NOT QUALIFIED
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ## Phase 22 — Stage 3: scientific OCR
 
@@ -810,7 +826,8 @@ returned logs, manifests and reports.
     layout gold
 - Validation:
   - Gold agreement (CER ≤ 0.5 %, IoU ≥ 0.92) between annotators; test sealed
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T106 — OCR pipeline
@@ -820,7 +837,8 @@ returned logs, manifests and reports.
   - Model code, loaders, CER and layout evaluators, readiness gates; a tool route for ingestion (SR-H13)
 - Validation:
   - Non-training tests on fixtures
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T107 — OCR training and held-out evaluation (owner run)
 - Requirements: SR-M8, SR-M12
@@ -829,7 +847,8 @@ returned logs, manifests and reports.
   - Prepared training and evaluation commands; intake checks; readiness report
 - Validation:
   - CER ≤ 1.5 % clean and ≤ 3.0 % degraded, layout IoU ≥ 0.88 on held-out data; owner promotion or NOT QUALIFIED
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ## Phase 23 — Stage 4: manuscript learning
 
@@ -840,7 +859,8 @@ returned logs, manifests and reports.
   - Discourse-role guideline and D05 gold on OCR output; splits by topic and paper cluster
 - Validation:
   - Agreement kappa ≥ 0.85; test sealed
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 - Note: D47 (2026-11-14): no new human annotation; held-out from public human-labelled sets where they exist, otherwise LLM labels marked `label_source: llm`; reports say "measured on" that set, not human gold.
 
 ### T109 — Manuscript-learning pipeline
@@ -850,7 +870,8 @@ returned logs, manifests and reports.
   - Model heads, loaders, evaluator and readiness gates coupled to the stage-3 OCR output
 - Validation:
   - Non-training tests on fixtures
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T110 — Stage-4 training and held-out evaluation (owner run)
 - Requirements: SR-M9, SR-M12
@@ -859,7 +880,8 @@ returned logs, manifests and reports.
   - Prepared commands; intake checks; readiness report
 - Validation:
   - Discourse-role macro F1 ≥ 0.82 on held-out data; owner promotion or NOT QUALIFIED
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ## Phase 24 — Stage 5: integration in the model service
 
@@ -871,7 +893,8 @@ returned logs, manifests and reports.
     discourse behind P2 and tool routes
 - Validation:
   - Contract tests with the real models (inference only); queue respects the configured VRAM budget in tests
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T112 — Full-load VRAM measurement (owner run)
 - Requirements: SR-M10
@@ -880,7 +903,8 @@ returned logs, manifests and reports.
   - Prepared measurement command and report template
 - Validation:
   - Owner-measured full-load VRAM ≤ 15.0 GB on the RTX 5070 Ti; report recorded
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ## Phase 25 — Stage 6: ResearchLLM advisor and specialists
 
@@ -892,7 +916,8 @@ returned logs, manifests and reports.
     the frozen stage-6 gates
 - Validation:
   - Owner accepts the update before T114
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T114 — Advisor training data
 - Requirements: SR-M11, SR-M4
@@ -902,7 +927,8 @@ returned logs, manifests and reports.
     owner-approved use of locally collected learning data; held-out research tasks sealed
 - Validation:
   - Manifests and checksums; no evaluation item in training data (overlap scan)
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T115 — Advisor model and chat backend
 - Requirements: SR-M11, SR-M1
@@ -912,7 +938,8 @@ returned logs, manifests and reports.
     replacing the placeholder when qualified
 - Validation:
   - Non-training tests: shapes, decoding on a tiny random-weight model, P2 contract tests
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T116 — Advisor training (owner run)
 - Requirements: SR-M11, SR-M3
@@ -921,7 +948,8 @@ returned logs, manifests and reports.
   - Prepared pretraining and fine-tuning commands with budgets and stop rules; intake checks
 - Validation:
   - Logs and manifests match; validation analysis per stage-6 gate
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T117 — Reasoning and verification specialists
 - Requirements: SR-M11
@@ -930,7 +958,8 @@ returned logs, manifests and reports.
   - Specialist heads or models (claim verification, contradiction, plan checking) per ADR-020, prepared owner runs
 - Validation:
   - Non-training tests; owner-run results reported per gate
-- Status: pending
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
 
 ### T118 — Stage-6 held-out evaluation; the model is finished
 - Requirements: SR-M11, SR-M12
@@ -939,4 +968,80 @@ returned logs, manifests and reports.
   - Held-out evaluation commands (owner run) and readiness report for every stage-6 gate
 - Validation:
   - All stage-6 gates pass on held-out data in English (ADR-022); the owner records "the model is finished"; otherwise NOT QUALIFIED
+- Status: superseded
+- Note: Superseded 2026-11-20 by D48 (owner decision): ResearchLLM is an open-weight third-party LLM with NLP techniques, a harness and a loop over the Obsidian brain; the self-trained model is dropped, so this task is not run. Measured evidence of earlier tasks is kept (reports/verification). NOT a qualification of any model.
+
+## Phase 44 — ResearchLLM on an open-weight LLM (D48)
+
+### T227 — Decision D48: open-weight LLM replaces the self-trained model
+- Requirements: SR-M11
+- Depends: none
+- Deliverables:
+  - Spec decision D48 and a note under section 7.8; every open task of this programme (T99-T118, T188-T189, T209, T220-T226) set to `superseded`; `superseded` added to the validator; T162 no longer depends on T118; Phase 44 tasks T228-T234
+- Validation:
+  - `python scripts/validate_spec.py` passes
+- Status: done
+- Note: Owner decision 2026-11-20 ("loại bỏ toàn bộ model tự train, dùng 1 model llm opensource về khoa học suy luận (no code) để làm ResearchLLM, kết hợp NLP, harness và loop dựa trên brain obsidian"). Scope confirmed by the owner: remove every trace of the self-trained model (code, configs, scripts, documents, artifacts) but keep the learning-data collection and export (`laris-policy` learning, `laris learn`, SFT/retrieval/preference JSONL), which trains nothing; retrieval over the vault starts with TF-IDF and BM25 (no embedding model); the LLM is proposed by the agent from official model cards and licences and chosen by the owner (T228). The earlier decision not to distil from Claude outputs stands. Reports of measured results (T205 and others) are kept as evidence of why the self-trained route was dropped.
+
+### T228 — Open-weight LLM selection report
+- Requirements: SR-M11
+- Depends: T227
+- Deliverables:
+  - `reports/verification/T228-open-llm-selection.md`: candidates that fit an RTX 5070 Ti (16 GB) with a general reasoning (not code) focus; per candidate the licence as stated on the official model card (link, date read), size and quantisation, context length, reasoning mode, published science-reasoning figures with the source; the new runtime dependency that each needs; nothing downloaded
+- Validation:
+  - Every statement links its source; the owner picks the model and the runtime in writing
+- Status: pending
+
+### T229 — Prefilter: deterministic answers before the model
+- Requirements: SR-M11
+- Depends: T227
+- Deliverables:
+  - A `Prefilter` step in `laris-policy` ahead of the redactor that returns `Answer(text)` or `Pass` for the user's message by deterministic rules (greeting, help, version, fixed refusals such as a request to enable training, injection patterns); canned texts and rules live in `.laris/` (policy change, owner approval, `laris-server policy lock`); each hit is recorded as evidence; tests with fixtures
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`; a hit never reaches the model
+- Status: pending
+
+### T230 — Lexical retrieval over the vault: TF-IDF and BM25
+- Requirements: SR-M11
+- Depends: T227
+- Deliverables:
+  - TF-IDF and BM25 passage retrieval over the Obsidian vault in the Rust retrieval and vault crates, returning passages with note path and character span; tokenisation and rank fusion documented; fixtures and a latency check
+- Validation:
+  - Cargo checks as in T229; the top-k of fixture queries equals hand-computed values
+- Status: pending
+
+### T231 — Chat backend on the chosen open-weight LLM
+- Requirements: SR-M1, SR-M11
+- Depends: T228
+- Deliverables:
+  - The model service chat route served by the model chosen in T228 through the runtime the owner approved (replacing the PLACEHOLDER backend); reasoning text kept out of the chat body as before; contract tests of P2 against it
+- Validation:
+  - P2 contract tests; one prompt through `/v1/chat/completions` on this machine; GPU memory reported
+- Status: pending
+
+### T232 — Harness loop: prompt, draft, evidence check, retry over the brain
+- Requirements: SR-M11
+- Depends: T229, T230, T231
+- Deliverables:
+  - The runner builds the prompt from the Prefilter result and the retrieved passages, calls the model, checks the draft with the evidence gate (every claim cites a passage), and retries within a bounded number of loops or abstains; scripted scenario tests; no claim of model qualification
+- Validation:
+  - Cargo checks; scenarios: grounded answer, missing source (abstains), injected passage (ignored)
+- Status: pending
+
+### T233 — Remove the self-trained model from the repository
+- Requirements: SR-M11
+- Depends: T231
+- Deliverables:
+  - Removal of the self-trained encoder code, training and evaluation code, tokenizer and data preparation scripts, configs, owner runbooks and tests that exist only for it, with imports and docs updated; learning export kept; measured reports kept; ledger and documents agree
+- Validation:
+  - Test suite, `python scripts/validate_spec.py`, docs validation pass; a search for the removed names finds only history and reports
+- Status: pending
+
+### T234 — Remove local artifacts of the self-trained model (owner)
+- Requirements: SR-M3
+- Depends: T233
+- Deliverables:
+  - The owner deletes `artifacts/checkpoints` (about 39 GB), `tokenizer`, `pilots`, `colab`, `profiles`, `llm_similarity`, `weights` and the Drive copies when sure
+- Validation:
+  - The owner confirms; the agent does not delete these files
 - Status: pending
