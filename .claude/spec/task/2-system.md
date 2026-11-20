@@ -1748,3 +1748,44 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
 - Note: 2026-11-20 (owner reports on 1.0.1: the screen reloads constantly while typing and answering, and the icon changes between purple and purple-on-blue). Causes found in the code: the spinner advanced every 40 ms tick (25 redraws a second, each erasing and printing the live block), and the glyph U+2733 is drawn as a coloured emoji box on Windows. Fixed: `Screen::draw` writes one `CSI ?2026h ... ?2026l` update per frame; the spinner steps every 120 ms and only while running; U+2733 became U+273A, and a test lists emoji-capable characters that no frame may use. Committed on `main`, not pushed, not released, not tried on Windows; the causes are read from the code, not seen on the owner's terminal. Banner (owner: three plain lines like Claude Code): `✻ Laris v<version>`, `<server host> · <mode>`, `<folder with ~>`; the box, the session id, the `/help` hint and the `cwd:` label are gone; snapshots under `crates/laris-tui/tests/snapshots` regenerated and read. Not done: the second line of the owner's example is `<model> · <plan>`; the client does not know the model name or the account role at start (`ready` carries neither), so it shows the server and the mode instead. Showing them needs two optional fields in the `ready` event and a call to the server at start.
 Closes when 1.0.2 is released and the owner confirms.
 
+## Phase 49 — The Laris model family
+
+Owner's direction 2026-11-20: the banner shows the current model, and the models are a family named **Laris**: **Laris Optimus** for everyday questions and answers (frequent, fast, no thinking), and **Laris Megatron**, the strongest one, which activates the most layers or parameters and is meant for deep reasoning with thinking. The names are LARIS names for configurations of third-party open-weight models (D48); they are not models LARIS trained, and none is qualified.
+
+### T245 — ADR-026: the Laris model family (Optimus and Megatron)
+- Requirements: SR-M1, SR-S6
+- Depends: T236
+- Deliverables:
+  - An ADR that fixes: what each name stands for (underlying open-weight model, quantisation, thinking on or off, token budget, and for Megatron how it "activates more": a larger dense model, a mixture-of-experts model with more active parameters, or the same model with thinking and a larger budget); the VRAM budget of the owner's machine (16 GB: Qwen3.5-9B at 8 bit already takes 11.6 GB, so a bigger Megatron needs more memory or another host, and two models cannot be resident at once); how a model is chosen (a default, a client setting, a `/model` command, a per-request field, a server policy that may refuse Megatron to a role or a quota); naming rules so the names claim nothing the weights do not do
+  - What each model may be called in the interface and in reports (system names, not capability claims)
+- Validation:
+  - The owner accepts the ADR; no code before it
+- Status: pending
+
+### T246 — Server model catalogue and per-request model choice
+- Requirements: SR-M1, SR-S6, SR-S2
+- Depends: T245
+- Deliverables:
+  - A model table in the server and model-service configuration (name, backend, weights path, quantisation, thinking, token budget, VRAM, allowed roles); `/v1/models` lists the names; the chat route takes a model name, refuses an unknown or forbidden one with a typed error, and the GPU queue loads and unloads the right weights; usage and traces record the model name; nothing is hardcoded
+- Validation:
+  - Contract and server tests with scripted backends: the default is Optimus, Megatron runs with thinking and its larger budget, a role without access is refused, two models never exceed the VRAM budget; the compose stack runs both on this machine if the ADR's sizes fit
+- Status: pending
+
+### T247 — Client: the current model in the banner, `/model` and the account role
+- Requirements: SR-C1, SR-C4
+- Depends: T246
+- Deliverables:
+  - The `ready` event gains optional `model` and `role` fields (older peers ignore them; the schema is regenerated and checked); the client asks the server for its model list and the account at start; the banner's second line becomes `Laris Optimus · admin` (the server address leaves the banner); `/model` lists and switches between the models; the `model` setting defaults to Optimus; the status line shows the model; snapshots regenerated
+- Validation:
+  - Protocol schema check, contract tests, emulator tests of the banner and of `/model`; an unreachable server still starts the client with a banner that says the model is unknown
+- Status: pending
+
+### T248 — Optimus and Megatron compared as system measurements
+- Requirements: SR-K7, SR-M1
+- Depends: T246
+- Deliverables:
+  - The cognitive evaluation (T172) and a latency and token measurement run with each model as the advisor, on the same questions, through the server; a report with the figures and what they do not show
+- Validation:
+  - The owner reviews the report; it states system measurements only, claims no qualification of either model and does not say Megatron is better unless the measurements say so
+- Status: pending
+
