@@ -8,14 +8,9 @@
   API key:
  enter to sign in · esc to leave
 ──── step 2 ────
-╭──────────────────────────────────────────────────────────────╮
-│ ✻ Laris  v2.1.0                                              │
-│                                                              │
-│ cwd: /work/demo                                              │
-│ session abcdef12 · mode default                              │
-│ server: https://laris.example                                │
-│ /help for help                                               │
-╰──────────────────────────────────────────────────────────────╯
+✻ Laris v2.1.0
+  laris.example · default
+  /work/demo
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ > Type a message, or / for commands                                                              │
@@ -23,14 +18,9 @@
  laris-base · default · develop · 1000 tokens left · sandbox ready
  shift+enter for a new line · ctrl+c twice to exit
 ──── step 3 ────
-╭──────────────────────────────────────────────────────────────╮
-│ ✻ Laris  v2.1.0                                              │
-│                                                              │
-│ cwd: /work/demo                                              │
-│ session abcdef12 · mode default                              │
-│ server: https://laris.example                                │
-│ /help for help                                               │
-╰──────────────────────────────────────────────────────────────╯
+✻ Laris v2.1.0
+  laris.example · default
+  /work/demo
 
 > hello
 

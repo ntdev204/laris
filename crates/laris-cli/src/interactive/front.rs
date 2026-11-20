@@ -123,7 +123,7 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
             version: laris_protocol::CORE_VERSION.to_owned(),
             engine: engine_version.to_owned(),
             session: self.w.session.clone(),
-            cwd: self.w.project.display().to_string(),
+            cwd: home_short(&self.w.project),
             mode: mode_name(self.w.engine.mode()).to_owned(),
             server: self.w.server.clone(),
         }
@@ -440,5 +440,19 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
     /// The driver, for tests.
     pub fn driver(&self) -> &Driver<M, R, FollowModel> {
         &self.driver
+    }
+}
+
+/// A folder as the banner shows it: the home directory is written `~`.
+fn home_short(path: &std::path::Path) -> String {
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"));
+    match home
+        .as_deref()
+        .map(std::path::Path::new)
+        .and_then(|h| path.strip_prefix(h).ok())
+    {
+        Some(rest) if rest.as_os_str().is_empty() => "~".to_owned(),
+        Some(rest) => format!("~{}{}", std::path::MAIN_SEPARATOR, rest.display()),
+        None => path.display().to_string(),
     }
 }

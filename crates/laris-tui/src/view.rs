@@ -17,7 +17,6 @@ pub(crate) const SPINNER_STEP_MS: u64 = 120;
 /// Glyphs with no emoji form: ✳ (U+2733) is drawn as a coloured emoji box on Windows, so it is not used.
 const SPINNER: [&str; 6] = ["✻", "✽", "✶", "✺", "✢", "·"];
 const BOX_ROWS: usize = 8;
-const BANNER_WIDTH: usize = 64;
 
 /// The screen at one width.
 #[derive(Debug, Clone, PartialEq)]
@@ -79,59 +78,40 @@ fn banner(app: &App, width: usize) -> Vec<Line> {
         return Vec::new();
     };
     let theme = app.theme;
-    let outer = width.clamp(20, BANNER_WIDTH);
-    let inner = outer - 4;
-    let row = |content: Line| {
-        let mut body = truncate(&content, inner);
-        body.pad(inner);
-        let mut line = Line::styled("│ ", theme.border());
-        line.0.extend(body.0);
-        line.push(" │", theme.border());
-        line
-    };
-    let title = {
-        let mut l = Line::styled("✻ ", theme.accent());
-        l.push("Laris", theme.accent());
-        l.push(format!("  v{}", clean(&info.engine)), theme.dim());
-        l
-    };
-    let mut lines = vec![Line::styled(
-        format!("╭{}╮", "─".repeat(outer - 2)),
-        theme.border(),
-    )];
-    lines.push(row(title));
-    lines.push(row(Line::blank()));
-    let cwd = app.text(
-        "ui.banner_cwd",
-        &[("cwd", &middle(&clean(&info.cwd), inner.saturating_sub(8)))],
+    // three plain lines, as the other terminal assistants show them:
+    //   ✻ Laris v1.0.1
+    //     server · mode
+    //     ~/folder
+    let mut title = Line::styled("✻ ", theme.accent());
+    title.push("Laris", theme.accent());
+    title.push(format!(" v{}", clean(&info.engine)), theme.dim());
+    let place = server_host(&clean(&info.server));
+    let second = app.text(
+        "ui.banner_line",
+        &[("server", &place), ("mode", &clean(&info.mode))],
     );
-    lines.push(row(Line::styled(cwd, theme.dim())));
-    let session = clean(&info.session);
-    let short: String = session.chars().take(8).collect();
-    let session_line = app.text(
-        "ui.banner_session",
-        &[("session", &short), ("mode", &clean(&info.mode))],
-    );
-    lines.push(row(Line::styled(session_line, theme.dim())));
-    if !info.server.is_empty() {
-        let server = app.text(
-            "ui.banner_server",
-            &[(
-                "server",
-                &middle(&clean(&info.server), inner.saturating_sub(9)),
-            )],
-        );
-        lines.push(row(Line::styled(server, theme.dim())));
-    }
-    lines.push(row(Line::styled(
-        app.text("ui.hint_help", &[]),
-        theme.dim(),
-    )));
-    lines.push(Line::styled(
-        format!("╰{}╯", "─".repeat(outer - 2)),
-        theme.border(),
-    ));
-    lines
+    let second = if place.is_empty() {
+        clean(&info.mode)
+    } else {
+        second
+    };
+    let cwd = middle(&clean(&info.cwd), width.saturating_sub(2).max(10));
+    vec![
+        truncate(&title, width),
+        truncate(&Line::styled(format!("  {second}"), theme.dim()), width),
+        truncate(&Line::styled(format!("  {cwd}"), theme.dim()), width),
+    ]
+}
+
+/// The server address as a person says it: no scheme, no `/v1`.
+fn server_host(address: &str) -> String {
+    let rest = address
+        .strip_prefix("https://")
+        .or_else(|| address.strip_prefix("http://"))
+        .unwrap_or(address);
+    rest.trim_end_matches('/')
+        .trim_end_matches("/v1")
+        .to_owned()
 }
 
 fn short_value(value: &Value) -> String {
