@@ -24,7 +24,7 @@ change_summary: "Superseded 2026-11-20 by D48 (spec.md): the self-trained model 
 - **Qualification:** the foundation model is NOT QUALIFIED. This ADR changes a resource limit of owner runs; it is not a result.
 
 ## 1. Context
-Training and profile runs of the language encoder enforced a fixed ceiling of 14.5 GB (the safe envelope of the 16 GB RTX 5070 Ti, formerly ADR-005 on `laris-v1`).
+Training and profile runs of the language encoder enforced a fixed ceiling of 14.5 GB (the safe envelope of the 16 GB RTX 5070 Ti, formerly ADR-005 of the Python generation).
 The owner now has a Colab A100 (40 GB) and keeps a GPU program running locally. The fixed ceiling would waste the A100 and make its speed profile impossible.
 
 ## 2. Decision

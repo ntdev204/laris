@@ -29,7 +29,7 @@ change_summary: "Owner confirmed D27-D43 and the release tools (task T120)."
   backend prove mechanics only (SR-S9).
 
 ## 1. Context
-Generation 1 (Python, release 2.2.0, frozen on `laris-v1`) delivered a client, harness, brain, server and model
+Generation 1 (Python, release 2.2.0, branch since removed) delivered a client, harness, brain, server and model
 service. Generation 2 rebuilds the system, server and client in Rust and keeps the model block in Python. The owner
 approved the toolchain and crate list in T119 (2026-11-13). This ADR records each decision of spec section 6 so that
 later tasks cite one place.
@@ -55,7 +55,7 @@ recommendations the owner confirms or changes; the "Alternative" column is what 
 | D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | proposed, confirmed 2026-11-13 | Check on the server only: the server cannot see local tool results; check twice: duplicate logic (ADR-004) |
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | proposed, confirmed 2026-11-13 | Collect on the server: privacy and confidentiality |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | proposed, confirmed 2026-11-13 | NLP in Rust: re-implements the model block and breaks D27 |
-| D42 | Branches | `laris-v2` integrates; one feature branch per task is cut from it; `main` receives release 1.0.0 | proposed, confirmed 2026-11-13 | Git flow with `develop`: generation 1 uses it, but two integration lines would split the ledger |
+| D42 | Branches | `laris-v2` integrates; one feature branch per task is cut from it; `main` receives release 1.0.0 | proposed, confirmed 2026-11-13 | Git flow with `develop` (used by generation 1) rejected: two integration lines would split the ledger |
 | D43 | Generation-1 data | Readable without loss: vaults, `~/.laris`, project SQLite, JSONL, `integrity.lock`, server PostgreSQL | decided | Migration tool that rewrites data: risk of loss |
 
 ## 3. Confirmation of D28 against the ladder wording of 2026-11-13
@@ -99,7 +99,7 @@ supersedes D35 (wire compatibility), D43 (generation-1 data stays readable) and 
 migration, adoption or parity with generation 1. `.laris/` is rewritten (Markdown for text, TOML for structure) and
 the TOML format, with the `toml` crate and its transitive crates, was approved for it. Work already done under the
 old rule (T142 migrations, T143 key digests, T145 parity fixtures, the P1/P2 fixtures) is listed in T215 for removal.
-`laris-v1` itself stays frozen and untouched.
+The `laris-v1` branch was removed on 2026-11-20.
 
 ## Addendum 2026-11-19: signing in T159
 

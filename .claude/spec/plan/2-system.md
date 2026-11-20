@@ -12,7 +12,7 @@ Version 2.0.0-draft · 2026-11-13 · Implements [spec.md](../spec.md) sections 5
 - One task, one feature branch cut from `laris-v2` (`feature/Txx-<slug>`), one session; report each step.
 - A task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, the spec check
   and a pull request into `laris-v2`. No dependency without the owner's approval (T119).
-- Generation 2 does not depend on generation 1 (owner decision 2026-11-18). `laris-v1` may be read for ideas; nothing
+- Generation 2 does not depend on generation 1 (owner decision 2026-11-18). its branch `laris-v1` was removed (2026-11-20); nothing
   from it is reused or kept compatible.
 - With the placeholder backend, scenarios prove mechanics only; capability claims wait for a qualified model.
 

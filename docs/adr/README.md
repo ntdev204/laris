@@ -28,7 +28,7 @@ Architecture Decision Records (ADRs) capture significant architectural decisions
 
 ## ADR Registry
 
-On `laris-v2` only the principle ADRs remain; the decisions about the Python generation's structure (ADR-001, 005, 006, 009 to 019) are on the frozen branch `laris-v1`.
+On `laris-v2` only the principle ADRs remain; the decisions about the Python generation's structure (ADR-001, 005, 006, 009 to 019) were removed with the Python generation.
 
 | ADR ID | Title | Status | Date Accepted | Primary Layer Impact |
 | :--- | :--- | :--- | :--- | :--- |

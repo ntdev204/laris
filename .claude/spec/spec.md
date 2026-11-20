@@ -1,8 +1,8 @@
 # LARIS — System specification (generation 2)
 
 Version 2.0.0-draft · 2026-11-13 · Status: ledger established (task T92 done) · The single specification of the
-whole system: model, system (harness), server, client and brain. It stands alone: the earlier Python system lives on
-the frozen branch `laris-v1`, which this ledger does not depend on.
+whole system: model, system (harness), server, client and brain. It stands alone: the earlier Python system has no
+branch any more, and this ledger does not depend on it.
 
 Plans and tasks are split by programme (section 2):
 
@@ -198,7 +198,7 @@ Acceptance: a failing gate blocks merge; a seeded training call fails CI.
 Owner: governance
 One task, one branch, one session; pull requests only; push, merge, tag and release only with the owner's explicit
 authorisation. Release 1.0.0 (tag `v1.0.0`) merges `laris-v2` into `main` when programme 2 passes its acceptance checklist.
-Acceptance: release checklist recorded in the task note; `laris-v1` untouched.
+Acceptance: release checklist recorded in the task note.
 
 ### SR-G5 — Threat model and security suite
 Owner: governance
@@ -560,7 +560,7 @@ Acceptance: one command produces the report; results stated as system measuremen
   dependency without approval.
 - Policy in `.laris/` and `LARIS.md` changes only with the owner's approval and stays under the integrity lock.
 - Every limit, path, endpoint and message is configuration or catalogue (SR-L1).
-- Nothing on `laris-v1` is deleted. This system does not depend on it (owner decision 2026-11-18, ADR-021 addendum).
+- This system does not depend on the Python generation; its branch `laris-v1` was removed on 2026-11-20 (owner decision, ADR-021 addendum).
 - No gate threshold is relaxed; a missing metric is NOT VERIFIED, never a pass (ADR-008).
 
 ## 9. Threat model summary

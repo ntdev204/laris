@@ -17,7 +17,7 @@ change_summary: "Removes documents of the dropped self-trained model (D48)."
 
 # LARIS Documentation Index
 
-Start with the repository [README](../README.md), then the sections below. Superseded material is removed; history lives in git and `CHANGELOG.md`. On `laris-v2` the documents of the Python generation's architecture, deployment and configuration are removed (they remain on `laris-v1`); the Rust generation is specified in the ledger `.claude/spec/spec.md` until its new documents exist.
+Start with the repository [README](../README.md), then the sections below. Superseded material is removed; history lives in git and `CHANGELOG.md`. The documents of the earlier Python generation are removed; the Rust generation is specified in the ledger `.claude/spec/spec.md` until its new documents exist.
 
 | Area | Document | Purpose |
 | :--- | :--- | :--- |

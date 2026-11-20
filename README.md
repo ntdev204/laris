@@ -6,8 +6,8 @@ is done.
 
 ## Status of this branch (`laris-v2`)
 
-- The Python generation (client, server, Ink front end, packaging, CI, Docker) is frozen on the
-  protected branch `laris-v1` (version 2.2.0).
+- The earlier Python generation (client, server, Ink front end, packaging, CI, Docker) has no branch any more;
+  LARIS 1.0.0 is the first release of this Rust generation.
 - This branch is being rebuilt: the harness in Rust, the model side kept in Python. The specification, plan and tasks are the ledger in
   [`.claude/spec/`](.claude/spec/spec.md).
 - What remains in Python here: the model service (`src/laris/model`), research and evaluation code

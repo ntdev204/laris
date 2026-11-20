@@ -9,8 +9,8 @@ plan and task together, and run `python scripts/validate_spec.py` before startin
 
 - Branches: `laris-v2` integrates. Cut one feature branch per task from it (`feature/Txx-<slug>`), one task per
   session. After a task, cross-check it against plan and spec, then commit and merge it into `laris-v2`
-  (owner authorisation of 2026-11-13). Push, tag and release stay with the owner (ADR-021 D42; `docs/development/GIT_FLOW.md` describes
-  generation 1). `laris-v1` is frozen.
+  (owner authorisation of 2026-11-13). Push, tag and release stay with the owner (ADR-021 D42). Release 1.0.0 exists; `main` and `laris-v2` are the only branches.
+  `laris-v1` was removed (2026-11-20).
 - A Rust task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test` and `cargo deny check`
   (available from T121). Only crates and tools approved in T119 / ADR-021 may be added.
 - Do not execute neural training, tokenizer fitting, backward/optimizer steps, or
@@ -23,7 +23,7 @@ plan and task together, and run `python scripts/validate_spec.py` before startin
   the automated test suite, measured reports outside normative specifications, and
   local model weights/datasets (and collected fine-tune data) outside Git.
 - Generation 2 stands alone (owner decision 2026-11-18, ADR-021 addendum): do not reuse, migrate or stay compatible
-  with generation 1. `laris-v1` is frozen and may be read for ideas only.
+  with generation 1. The Python generation no longer has a branch.
 - Policy lives in `.laris/` (`policy.toml`, `prompts/`, `rules/`, `workflows/`, `help.md`) and is covered by
   `integrity.toml`. Change it only with the owner's approval, then refresh the lock with `laris-server policy lock`.
   No tunable, endpoint or secret is hardcoded: configuration and environment only.
