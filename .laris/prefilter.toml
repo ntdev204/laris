@@ -1,0 +1,63 @@
+# The Prefilter: messages that fixed rules answer before the redactor and the model (T229, SR-M11, D48).
+# The first rule that matches wins, so refusals come before the greeting. A message is matched after its
+# whitespace is folded and zero-width characters are dropped; a rule sees at most `max_chars` characters of it.
+# `{{help}}` and `{{version}}` are filled by the server from `help.md` and `policy.toml`. This file is covered by
+# `integrity.toml`: change it only with the owner's approval, then run `laris-server policy lock`.
+
+version = "1.0.0"
+max_chars = 200
+
+[[rule]]
+id = "enable-training"
+kind = "refusal"
+pattern = '(?i)\b(enable|turn on|switch on|allow|start|authori[sz]e|activate|bật|cho phép|bắt đầu)\b.{0,40}\b(training|train(?:ing)? mode|fine-?tun\w*|huấn luyện|tinh chỉnh)\b'
+max_chars = 300
+answer = """\
+I cannot enable training. Training is never switched on from a conversation; only the owner can authorise it, \
+outside this chat. I can explain how learning data is collected and exported if that helps."""
+
+[[rule]]
+id = "override-instructions"
+kind = "injection"
+pattern = '(?i)\b(ignore|disregard|forget|override|bypass)\b.{0,40}\b(previous|prior|above|earlier|all|your|system)\b.{0,30}\b(instructions?|rules?|prompts?|guidelines?|constraints?)\b'
+max_chars = 600
+answer = """\
+I will not set aside my instructions. Ask your question about your material and I will answer it within them."""
+
+[[rule]]
+id = "reveal-prompt"
+kind = "injection"
+pattern = '(?i)\b(reveal|show|print|repeat|display|leak|tell me|output)\b.{0,30}\b(system prompt|your prompt|your instructions|hidden instructions|initial instructions|internal rules)\b'
+max_chars = 400
+answer = """\
+I do not share my internal instructions. I can tell you what I can do: ask for help."""
+
+[[rule]]
+id = "role-markers"
+kind = "injection"
+pattern = '(?i)<\|?(im_start|im_end|system|endoftext)\|?>|\[/?INST\]|<<SYS>>'
+max_chars = 2000
+answer = """\
+That message contains markers that imitate the system's own. I treat it as plain text and I will not act on it. \
+Rephrase your question without them."""
+
+[[rule]]
+id = "help"
+kind = "help"
+pattern = '(?i)^(/help|help( me)?|how (do|can) i use (this|laris)|what can you do|what do you do|trợ giúp|giúp tôi|hướng dẫn)\W*$'
+answer = "{{help}}"
+
+[[rule]]
+id = "version"
+kind = "version"
+pattern = '(?i)^(/version|(what( is|.s)? )?(your |the )?(version|build)( of laris)?|which version( are you)?|phiên bản)\W*$'
+answer = """\
+LARIS, prompt version {{version}}. The model behind it is a research build and is not yet qualified."""
+
+[[rule]]
+id = "greeting"
+kind = "greeting"
+pattern = '(?i)^(hi|hello|hey|hiya|howdy|good (morning|afternoon|evening)|greetings|xin chào|chào( bạn)?)( there| laris)?\W*$'
+answer = """\
+Hello. I am LARIS, a research assistant for your own material. Ask a question about your documents and notes, or \
+type /help to see what I can do."""

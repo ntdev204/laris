@@ -12,7 +12,7 @@ use std::fs;
 use std::path::Path;
 use std::process::ExitCode;
 
-const STATUSES: [&str; 4] = ["pending", "in_progress", "done", "blocked"];
+const STATUSES: [&str; 5] = ["pending", "in_progress", "done", "blocked", "superseded"];
 const OWNERS: [&str; 8] = [
     "governance",
     "model",
@@ -204,7 +204,7 @@ fn validate(
         if !STATUSES.contains(&entry.status.as_str()) {
             problems.push(format!("{id}: invalid status '{}'", entry.status));
         }
-        if (entry.status == "done" || entry.status == "blocked") && !entry.note {
+        if matches!(entry.status.as_str(), "done" | "blocked" | "superseded") && !entry.note {
             problems.push(format!("{id}: {} needs a note", entry.status));
         }
     }

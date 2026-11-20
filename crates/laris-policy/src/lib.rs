@@ -19,6 +19,10 @@
 //!   ([`load_layers`], the project's only in a trusted folder), the pinned items ([`PinBoard`]) and the plan, inside
 //!   the model budget, with autocompact (SR-H3).
 //!
+//! * [`Prefilter`] answers a greeting, a help or version request, a request to enable training and an attempt to
+//!   override the instructions from the owner's rules (`.laris/prefilter.toml`), before the redactor and the model
+//!   ([`PrefilterModel`]); each hit is recorded without the message text (T229).
+//!
 //! * [`learning`] derives training examples from the event log and exports them as JSONL (SR-H11).
 //!
 //! Not here: the OS sandbox and the refusal of installs outside it (T135).
@@ -27,6 +31,7 @@ mod engine;
 mod gate;
 mod hooks;
 pub mod learning;
+mod prefilter;
 mod preview;
 mod prompted;
 mod redact;
@@ -40,6 +45,10 @@ pub use gate::{
     writes_of,
 };
 pub use hooks::{HookOutcome, HookRunner, Notice, OUTPUT_CAP, clean};
+pub use prefilter::{
+    HIT_EVENT, Hit, HitSink, NoSink, Outcome, Prefilter, PrefilterError, PrefilterModel, StoreSink,
+    latest_user_message,
+};
 pub use preview::{diff, preview};
 pub use prompted::{PinBoard, Prompted, Report, Sources, load_layers};
 pub use redact::{MASK, RedactingModel, Redactor};

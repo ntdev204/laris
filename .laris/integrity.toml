@@ -3,6 +3,7 @@ algorithm = "sha256"
 [files]
 ".laris/help.md" = "d84a3e2022ec66e698c7dabc436d275c7bde6b883ecab46732b0bba6b24438ad"
 ".laris/policy.toml" = "2254e784666e7b3a23728a6fdb98b425e477bc83cdc521c09697f26fc0e3c76c"
+".laris/prefilter.toml" = "82fb89198de40588111bde62c14543fe78cbc9f60beaeadd30cf2e131dc2dd0e"
 ".laris/prompts/confidentiality.md" = "52901813558cebfe31d598e1021e40526ae74e323ab7221a7254592c78526fe9"
 ".laris/prompts/environment.md" = "3b4305693170efecd741508fb01786552389ed82e4a1d4a330ab94f753739ac5"
 ".laris/prompts/identity.md" = "bd13262b14156f97a6c13e283f69fec589a4a3a9bb63590a80cbcaece37715a9"

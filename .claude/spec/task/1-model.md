@@ -1000,7 +1000,8 @@ returned logs, manifests and reports.
   - A `Prefilter` step in `laris-policy` ahead of the redactor that returns `Answer(text)` or `Pass` for the user's message by deterministic rules (greeting, help, version, fixed refusals such as a request to enable training, injection patterns); canned texts and rules live in `.laris/` (policy change, owner approval, `laris-server policy lock`); each hit is recorded as evidence; tests with fixtures
 - Validation:
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`; a hit never reaches the model
-- Status: pending
+- Status: done
+- Note: Done 2026-11-20. `crates/laris-policy/src/prefilter.rs`: `Prefilter` (rules from `.laris/prefilter.toml`, first match wins, message normalised, per-rule `max_chars`), `Outcome::{Answer(Hit), Pass}`, `PrefilterModel` (a `Model` placed outside `RedactingModel`; a hit returns the canned text and the wrapped model is not called; only the user's latest message is checked), `HitSink` with `StoreSink` (a `prefilter_hit` event with rule, kind, length and SHA-256 of the message, never the text). Rules shipped: enable-training and override/reveal/role-marker injection refusals, help, version, greeting. `prefilter.toml` is added to the integrity-protected files and the lock refreshed (`laris-server policy lock`). Dependencies: `toml`, `serde`, `thiserror` added to `laris-policy` (same crates and versions already in the workspace). Not done here: the running server does not apply the Prefilter (it must not link `laris-policy`, which would pull the client engine into the server image); wiring it into the harness runner is T232. NOT a qualification of any model.
 
 ### T230 — Lexical retrieval over the vault: TF-IDF and BM25
 - Requirements: SR-M11
