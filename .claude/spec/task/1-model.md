@@ -697,7 +697,8 @@ returned logs, manifests and reports.
   - The owner deletes `artifacts/checkpoints` (about 39 GB), `tokenizer`, `pilots`, `colab`, `profiles`, `llm_similarity`, `weights` and the Drive copies when sure
 - Validation:
   - The owner confirms; the agent does not delete these files
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 (owner: "thực hiện T234"). Local part: checked, nothing left to delete. `artifacts/` holds no `checkpoints`, `tokenizer`, `pilots`, `colab`, `profiles`, `llm_similarity` or `weights` folder, and no `*.pt`, `*.safetensors` or `tokenizer.model` file over 50 MB exists under the home directory outside the Hugging Face cache (Qwen3.5-9B and DistilBERT). `scripts/colab` is a source folder in the repository and was left alone; `data/` (75 GB of datasets) is not in this task's list and was left alone. Drive part: found, not deleted. The folder `laris/runs` (Drive id 1KQtUpRfOhQMVVunu7CuOFmK6ODsqkNKx, created 2026-11-18 to 2026-11-20) holds the runs `english-r1-stage1-rerun`, `english-r1-stage2`, `english-r1-stage2-long-step1000` and `english-r1-control`, with `model.pt` (2.2 GB) and `training_state.pt` (4.4 GB) files and logs, about 28 GB in all. Closes when the owner confirms which Drive items go.
 
 ### T235 — Serve the open-weight chat model in the compose stack
 - Requirements: SR-M1, SR-S8

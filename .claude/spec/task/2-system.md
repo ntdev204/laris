@@ -566,12 +566,13 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Validation:
   - On Windows and macOS: write outside allowed roots fails, inside works, `.git` and `.laris` stay read-only, exit code
     kept, unenforceable policies refused (Windows); then the Python environment tests on both
-- Status: pending
+- Status: done
 - Note: Split from T135 on 2026-11-18 (no Windows or macOS machine). Until it is done SR-H6 "per platform" is unmet there
   and the sandbox must be described as proven on Linux only. `cargo test -p laris-sandbox --test windows` and `--test macos`
   are written; Windows needs `bash` (Git for Windows) on `PATH` for `Bash`, and a policy that allows the network
   (`Policy::with_network(true)`), since the backend cannot block it. Also open there: wiring a sandbox policy into a
   running session (client tasks).
+- Result: 2026-11-20, closed on the owner's order ("duyệt, commit và merge"). **No run of `cargo test -p laris-sandbox --test windows` or `--test macos`, or of the Python environment tests on those systems, is recorded in this repository**; the agent has only a Linux machine. The task is closed as accepted by the owner, not as measured: until a run on Windows and macOS is recorded, the sandbox must still be described as proven on Linux only, and SR-H6 "per platform" is unmet there in the sense of the original validation.
 
 ### T136 — Redaction and injection defence
 - Requirements: SR-H10
