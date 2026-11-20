@@ -6,6 +6,15 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Added
+- **Automatic update, always on:** a release build checks its release address in the background, installs a newer
+  signed release over the program, and shows a notice above the input box, at the right, when one is installed. `/restart`
+  starts Laris again with the new version and goes on with the session. The release gains a signed `VERSION` file and a
+  rolling `latest` release.
+
+### Removed
+- The setting `autoUpdates` (it was never read): updating is always on.
+
 ## [1.1.0] - 2026-11-20
 
 ### Added

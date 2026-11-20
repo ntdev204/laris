@@ -67,6 +67,31 @@ impl Default for Server {
     }
 }
 
+/// Where the client finds its own new releases. Updating is always on: with no address (a development build) there
+/// is nothing to check. A release build carries both values (`LARIS_BUILD_DEFAULTS`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Update {
+    /// Release address (`https://.../<version>/<file>` is a release file); empty for none.
+    pub url: String,
+    /// The release signing key, PEM or its base64 body; empty for none. A release is installed only when its
+    /// checksum list is signed with this key.
+    pub signature_verifier: String,
+    /// Minutes between two checks while the client runs.
+    #[schemars(extend("minimum" = 1))]
+    pub interval_minutes: u64,
+}
+
+impl Default for Update {
+    fn default() -> Self {
+        Self {
+            url: String::new(),
+            signature_verifier: String::new(),
+            interval_minutes: 360,
+        }
+    }
+}
+
 /// Permission mode and rules.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
@@ -617,8 +642,8 @@ pub struct Settings {
     pub extra_instructions: String,
     /// Days to keep session data; 0 keeps none.
     pub cleanup_period_days: u32,
-    /// Check for updates.
-    pub auto_updates: bool,
+    /// Automatic updates of the client (always on; this says where the releases are).
+    pub update: Update,
 }
 
 impl Default for Settings {
@@ -640,7 +665,7 @@ impl Default for Settings {
             learning: Learning::default(),
             extra_instructions: String::new(),
             cleanup_period_days: 30,
-            auto_updates: true,
+            update: Update::default(),
         }
     }
 }
@@ -716,6 +741,9 @@ impl Settings {
         let url = &self.server.url;
         if !url.is_empty() && !url.starts_with("http://") && !url.starts_with("https://") {
             return Err(ConfigError::at("server.url", ErrorKind::UrlScheme));
+        }
+        if !self.update.url.is_empty() && !self.update.url.starts_with("https://") {
+            return Err(ConfigError::at("update.url", ErrorKind::UrlScheme));
         }
         if !is_fingerprint(&self.server.ca_fingerprint) {
             return Err(ConfigError::at(

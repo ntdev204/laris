@@ -112,6 +112,16 @@ impl Controller {
         self.handle = Some(handle);
     }
 
+    /// Where background work (the updater) sends events for the interface.
+    pub fn sender(&self) -> Sender<Event> {
+        self.events.clone()
+    }
+
+    /// The session id the interface was told about, for `/restart` to resume.
+    pub fn session(&self) -> Option<String> {
+        self.app.info().map(|info| info.session.clone())
+    }
+
     /// Takes the events the session produced. `true` when there were some.
     pub fn pump(&mut self) -> bool {
         let mut any = false;

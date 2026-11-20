@@ -234,6 +234,9 @@ pub struct App {
     pub(crate) menu: Option<Menu>,
     pub(crate) asked: Option<(String, Trigger, usize, bool)>,
     pub(crate) flash: Option<String>,
+    /// The version an automatic update installed, once it is on disk and this session still runs the old one.
+    pub(crate) update: Option<String>,
+    restart: bool,
     next_id: u64,
     next_live: u64,
     clear: bool,
@@ -268,6 +271,8 @@ impl App {
             menu: None,
             asked: None,
             flash: None,
+            update: None,
+            restart: false,
             next_id: 0,
             next_live: 0,
             clear: false,
@@ -299,6 +304,16 @@ impl App {
     /// Whether the user asked to leave.
     pub fn should_quit(&self) -> bool {
         self.quit
+    }
+
+    /// Whether the person asked for `/restart`: the program leaves and starts again (with the new version).
+    pub fn restart_requested(&self) -> bool {
+        self.restart
+    }
+
+    /// The version waiting to be applied by `/restart`, if an update was installed.
+    pub fn update_ready(&self) -> Option<&str> {
+        self.update.as_deref()
     }
 
     /// Whether the interface refuses to go on (the core speaks another version).
@@ -867,6 +882,11 @@ impl App {
                     self.quit = true;
                     return vec![Command::Shutdown {}];
                 }
+                "restart" => {
+                    self.quit = true;
+                    self.restart = true;
+                    return vec![Command::Shutdown {}];
+                }
                 "clear" => {
                     self.items.clear();
                     self.clear = true;
@@ -1022,6 +1042,13 @@ impl App {
             }
             Event::Status { kind, data } => match kind.as_str() {
                 "line" => self.line = data,
+                "update" => {
+                    self.update = data
+                        .get("version")
+                        .and_then(Value::as_str)
+                        .map(crate::view::clean)
+                        .filter(|v| !v.is_empty());
+                }
                 "queued" => {
                     self.queued = data.get("count").and_then(Value::as_u64).unwrap_or(0);
                     // the core says which message it took; only the one waiting first moves into the conversation

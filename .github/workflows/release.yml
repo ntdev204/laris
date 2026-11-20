@@ -6,7 +6,9 @@ name: release-build
 # With the input `publish` (owner's order, 2026-11-20, D42 amended) it also creates the GitHub release named by the
 # workspace version (tag without `v`, the layout the installers expect) with the signed archives, and publishes the npm
 # package with the secret NPM_TOKEN. The variable LARIS_DEFAULT_SERVER_URL (optional) is compiled into the client as its
-# default server address (`LARIS_BUILD_DEFAULTS`), so that a user only has to enter a key. Without it, nothing is published.
+# default server address (`LARIS_BUILD_DEFAULTS`), so that a user only has to enter a key. The same defaults carry the
+# update source (T251): LARIS_RELEASE_URL and the public half of the signing key, so a client updates itself from the
+# release named `latest`. Without it, nothing is published.
 
 on:
   workflow_dispatch:
@@ -35,11 +37,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain from rust-toolchain.toml
         run: rustup show active-toolchain
-      - name: Packaged defaults (the server address clients start with)
+      - name: Packaged defaults (the server address and the update source clients start with)
         shell: bash
+        env:
+          KEY: ${{ secrets.LARIS_RELEASE_KEY }}
         run: |
-          url="${{ vars.LARIS_DEFAULT_SERVER_URL }}"
-          [ -z "$url" ] || echo "LARIS_BUILD_DEFAULTS={\"server\":{\"url\":\"$url\"}}" >> "$GITHUB_ENV"
+          # the update source is the release address and the public half of the signing key (T251)
+          server="${{ vars.LARIS_DEFAULT_SERVER_URL }}"
+          release="${{ vars.LARIS_RELEASE_URL }}"
+          verifier=""
+          if [ -n "$release" ] && [ -n "$KEY" ]; then
+            umask 077
+            printf '%s\n' "$KEY" > "$RUNNER_TEMP/release.key"
+            verifier=$(openssl ec -pubout -in "$RUNNER_TEMP/release.key" -outform DER 2>/dev/null | base64 | tr -d '\n')
+            rm -f "$RUNNER_TEMP/release.key"
+          fi
+          parts=""
+          [ -z "$server" ] || parts="\"server\":{\"url\":\"$server\"}"
+          if [ -n "$release" ] && [ -n "$verifier" ]; then
+            [ -z "$parts" ] || parts="$parts,"
+            parts="$parts\"update\":{\"url\":\"$release\",\"signatureVerifier\":\"$verifier\"}"
+          fi
+          [ -z "$parts" ] || echo "LARIS_BUILD_DEFAULTS={$parts}" >> "$GITHUB_ENV"
       - name: Build with cross (static Linux)
         if: matrix.cross
         run: |
@@ -110,7 +129,15 @@ jobs:
           awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
           gh release view "$version" >/dev/null 2>&1 && echo "release $version exists: kept" || \
           gh release create "$version" --target "${{ github.sha }}" --title "LARIS $version" --notes-file notes.md --latest \
-            out/laris-* out/SHA256SUMS out/SHA256SUMS.sig out/installers/install.sh out/installers/install.ps1
+            out/laris-* out/SHA256SUMS out/SHA256SUMS.sig out/VERSION out/installers/install.sh out/installers/install.ps1
+          # the rolling release named `latest` is what the installers and the client's updater read:
+          # `<address>/latest/SHA256SUMS`, `.sig` and `VERSION` say which version is current, and its archives are
+          # the current ones (not the newest release by date, so it is never marked as the GitHub "latest")
+          gh release view latest >/dev/null 2>&1 || \
+          gh release create latest --target "${{ github.sha }}" --title "LARIS latest (rolling)" --latest=false \
+            --notes "The files of the current release, read by the installers and by the client's automatic update."
+          gh release upload latest --clobber \
+            out/laris-* out/SHA256SUMS out/SHA256SUMS.sig out/VERSION
           echo "VERSION=$version" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
