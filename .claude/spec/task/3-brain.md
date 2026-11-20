@@ -14,8 +14,8 @@ Status values and rules as in [task/1-model.md](1-model.md).
     abstention, answer assembly, the cold-start rule decider, held-out gates and owner runs
 - Validation:
   - Owner accepts the ADR
-- Status: pending
-- Note: Waiting for the owner to open the gate; the dependencies may be waived by the owner for the design only. 2026-11-20 (D48): T118 is superseded (the self-trained model is dropped), so it is no longer a dependency; the brain works with the open-weight LLM of Phase 44.
+- Status: blocked
+- Note: 2026-11-20: the owner opened the gate ("Thực hiện T162"); the agent drafted `docs/adr/ADR-024-main-brain-design.md` (status PROPOSED; gate thresholds N1-N8 are proposals). Blocked only on the owner's acceptance of the ADR (SR-K1); no brain code before it. Earlier note: Waiting for the owner to open the gate; the dependencies may be waived by the owner for the design only. 2026-11-20 (D48): T118 is superseded (the self-trained model is dropped), so it is no longer a dependency; the brain works with the open-weight LLM of Phase 44.
 
 ## Phase 38 — Knowledge base and write gate
 

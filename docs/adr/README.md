@@ -41,6 +41,7 @@ Only the principle ADRs remain; the decisions about the Python generation's stru
 | [ADR-021](ADR-021-rust-generation.md) | Rust generation: system, server, client; decisions D27-D43 | ACCEPTED | 2026-11-13 | System, server, client |
 | [ADR-022](ADR-022-english-only-foundation.md) | English-only foundation encoder | SUPERSEDED by D48 (spec.md) | 2026-11-14 | Model block |
 | [ADR-023](ADR-023-vram-ceiling-by-device.md) | VRAM ceiling by device for training and profile runs | SUPERSEDED by D48 (spec.md) | 2026-11-18 | Model block, owner runs |
+| [ADR-024](ADR-024-main-brain-design.md) | Main brain: the brain decides, the model advises (notes, write gate, decision network, gates) | PROPOSED (owner acceptance pending) | — | Brain, harness, server |
 
 ## Freeze Register
 
