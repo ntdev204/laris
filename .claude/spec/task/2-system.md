@@ -1822,10 +1822,11 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - No flicker while typing or while a turn runs: one synchronised frame per redraw and a slower spinner that moves only while a turn runs; no spinner glyph that a terminal can draw as a colour emoji; a test for each; a release that carries them (1.0.2, GitHub release and npm)
 - Validation:
   - Emulator tests pass; the owner sees no flicker and no purple-on-blue icon on Windows Terminal
-- Status: in_progress
+- Status: done
 - Note: 2026-11-20 (owner reports on 1.0.1: the screen reloads constantly while typing and answering, and the icon changes between purple and purple-on-blue). Causes found in the code: the spinner advanced every 40 ms tick (25 redraws a second, each erasing and printing the live block), and the glyph U+2733 is drawn as a coloured emoji box on Windows. Fixed: `Screen::draw` writes one `CSI ?2026h ... ?2026l` update per frame; the spinner steps every 120 ms and only while running; U+2733 became U+273A, and a test lists emoji-capable characters that no frame may use. Committed on `main`, not pushed, not released, not tried on Windows; the causes are read from the code, not seen on the owner's terminal. Banner (owner: three plain lines like Claude Code): `✻ Laris v<version>`, `<server host> · <mode>`, `<folder with ~>`; the box, the session id, the `/help` hint and the `cwd:` label are gone; snapshots under `crates/laris-tui/tests/snapshots` regenerated and read. Not done: the second line of the owner's example is `<model> · <plan>`; the client does not know the model name or the account role at start (`ready` carries neither), so it shows the server and the mode instead. Showing them needs two optional fields in the `ready` event and a call to the server at start.
 Closes when 1.0.2 is released and the owner confirms.
 Release 1.0.2 ordered by the owner 2026-11-20 ("publish 1.0.2"): version raised in the workspace, CHANGELOG written; `cargo fmt`, `clippy -D warnings`, `cargo test` (one earlier run showed 2 failed tests in one binary that two later full runs did not reproduce; not identified) and `cargo deny` pass. Closes when the owner confirms on Windows.
+Closed 2026-11-20 by the owner ("Đã duyệt task icon, đóng"): the owner reviewed the icon and flicker fix and approved it. The `<model> · <plan>` banner line stays not done (needs two optional `ready` fields); it is not part of this closure.
 
 ## Phase 49 — The Laris model family
 
