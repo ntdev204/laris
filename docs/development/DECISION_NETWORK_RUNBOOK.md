@@ -84,3 +84,25 @@ or when validation loss is far above train loss.
 
 T171 measures the gates on the sealed split, once, against the rule decider. Nothing from this run's validation
 analysis may be quoted as held-out performance.
+
+## 5. Held-out gates (T171)
+
+The gates N1 to N8 of ADR-024 section 8 are measured on the sealed held-out split, against the rule decider, with
+inference only (no training authorisation is needed or used). Thresholds are in `configs/decision-net-gates.json`.
+
+```bash
+cargo run --release -p xtask -- decision-gates --dataset data/decision/RUN_DATE \
+    --dataset-config data/decision/config-RUN_DATE.json --net artifacts/decision-net/RUN_DIR/net.json \
+    --gates configs/decision-net-gates.json --out SCRATCH/pre.json --scores-out SCRATCH/scores.json
+uv run python scripts/decision_net_parity.py --net artifacts/decision-net/RUN_DIR/net.json \
+    --dataset data/decision/RUN_DATE --scores SCRATCH/scores.json --out SCRATCH/parity.json
+cargo run --release -p xtask -- decision-gates --dataset data/decision/RUN_DATE \
+    --dataset-config data/decision/config-RUN_DATE.json --net artifacts/decision-net/RUN_DIR/net.json \
+    --gates configs/decision-net-gates.json --out reports/brain/T171-decision-net-gates.json --parity SCRATCH/parity.json
+```
+
+The first command is the same measurement as the last; it exists only to write the scores for the parity check
+(N6). Do not change the network, the thresholds or the dataset after reading a number. A gate that was not measured is
+`NOT VERIFIED` and is not a pass; the command exits 1 unless all eight pass. Even then the promotion is the owner's
+decision, recorded in the task note. N7 is timed on the machine that runs the command: the specification does not
+define the reference CPU, so say which machine it was.

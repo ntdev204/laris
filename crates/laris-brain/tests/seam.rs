@@ -8,7 +8,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use laris_brain::answer::{ABSTENTION, AnswerSettings, compose};
-use laris_brain::decide::{Act, Choice, RuleDecider, RuleSettings, Signals};
+use laris_brain::decide::{Act, Choice, Chooser, RuleDecider, RuleSettings, Signals, legal};
 use laris_brain::seam::{Brain, BrainDecider};
 use laris_brain::{ClaimProposal, Gate, GateSettings, MetadataCheck, Proposer, SourceProposal};
 use laris_config::Catalogue;
@@ -119,7 +119,7 @@ impl Brain for TestBrain {
     }
 }
 
-type Rig = Driver<ScriptedModel, Tools, BrainDecider<RuleDecider, TestBrain>>;
+type Rig<C = RuleDecider> = Driver<ScriptedModel, Tools, BrainDecider<C, TestBrain>>;
 
 fn vault() -> Temp {
     let t = Temp::new();
@@ -154,6 +154,16 @@ fn vault() -> Temp {
 }
 
 fn rig(dir: &Path, vault: &Path, script: Vec<ModelAnswer>, spent: bool) -> (Rig, ChoiceLog) {
+    rig_with(dir, vault, script, spent, RuleDecider::new(RULES))
+}
+
+fn rig_with<C: Chooser>(
+    dir: &Path,
+    vault: &Path,
+    script: Vec<ModelAnswer>,
+    spent: bool,
+    chooser: C,
+) -> (Rig<C>, ChoiceLog) {
     let log = Rc::new(RefCell::new(Vec::new()));
     let brain = TestBrain {
         vault: vault.to_owned(),
@@ -162,7 +172,7 @@ fn rig(dir: &Path, vault: &Path, script: Vec<ModelAnswer>, spent: bool) -> (Rig,
     };
     let decider = BrainDecider::new(
         FollowModel::new(Agent::default(), Catalogue::english()),
-        RuleDecider::new(RULES),
+        chooser,
         brain,
     );
     let store = Store::open(dir.join("space.sqlite"), DEFAULT_BUSY_TIMEOUT).expect("store");
@@ -193,7 +203,7 @@ fn done(events: &[Event]) -> (&str, &str) {
     }
 }
 
-fn assert_replays(rig: &Rig) {
+fn assert_replays<C: Chooser>(rig: &Rig<C>) {
     let events = rig.recorder().store().events("s1", 0).expect("events");
     let records: Vec<Record> = events
         .iter()
@@ -265,4 +275,62 @@ fn a_spent_budget_stops_the_turn_with_its_limit() {
     assert!(rig.model().seen().is_empty());
     assert_eq!(*log.borrow(), [("R1-limit".to_owned(), Act::Stop)]);
     assert_replays(&rig);
+}
+
+/// A chooser that returns one fixed act whenever it is legal, and the most cautious legal one otherwise. It stands for
+/// the worst network: whatever its weights, it can only name an act.
+struct Forced(Act);
+
+impl Chooser for Forced {
+    fn choose(&mut self, signals: &Signals) -> Choice {
+        let candidates = legal(signals, &RULES);
+        let act = if candidates.contains(&self.0) {
+            self.0
+        } else {
+            Act::Abstain
+        };
+        Choice {
+            act,
+            rule: "network".to_owned(),
+            reason: "forced by the test".to_owned(),
+            limit: None,
+            signals: signals.clone(),
+            candidates,
+            confidence: Some(1.0),
+        }
+    }
+}
+
+#[test]
+fn a_chooser_cannot_bypass_the_tool_gate_or_the_composer() {
+    // an uncovered question and an advisor that proposes a false claim: whichever act a chooser forces, the turn ends
+    // and the user never reads the advisor's text. `Tools` panics if any tool runs, so a forced act cannot run a tool
+    // that the loop did not propose and pass through its own gate.
+    for act in Act::ALL {
+        let (dir, v) = (Temp::new(), vault());
+        let (mut rig, log) = rig_with(
+            &dir.0,
+            &v.0,
+            vec![
+                reply("Ibuprofen cures influenza."),
+                reply("Ibuprofen cures influenza."),
+            ],
+            false,
+            Forced(act),
+        );
+        let events = rig.send("does ibuprofen cure influenza").expect("turn");
+        let (_, answer) = done(&events);
+        assert!(
+            !answer.contains("Ibuprofen cures influenza"),
+            "forced {act:?}: the advisor's text reached the user: {answer}"
+        );
+        assert!(
+            log.borrow()
+                .iter()
+                .all(|(rule, a)| rule == "network" && (*a == act || *a == Act::Abstain)),
+            "forced {act:?}: {:?}",
+            log.borrow()
+        );
+        assert_replays(&rig);
+    }
 }

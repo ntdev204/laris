@@ -1,0 +1,14 @@
+{
+  "min_gain_points": 3.0,
+  "confidence_pct": 95.0,
+  "bootstrap_resamples": 2000,
+  "bootstrap_seed": 171,
+  "max_unsupported_rate": 0.01,
+  "max_ece": 0.05,
+  "ece_bins": 10,
+  "min_abstain_recall": 0.90,
+  "max_overabstain_margin_points": 5.0,
+  "max_parity_diff": 1e-5,
+  "max_p95_ms": 10.0,
+  "latency_repeats": 5
+}

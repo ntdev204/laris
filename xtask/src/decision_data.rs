@@ -21,12 +21,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-struct Config {
-    rules: RuleSettings,
-    split: SplitSettings,
+pub(crate) struct Config {
+    pub(crate) rules: RuleSettings,
+    pub(crate) split: SplitSettings,
 }
 
-fn read_config(path: &Path) -> Result<Config, String> {
+pub(crate) fn read_config(path: &Path) -> Result<Config, String> {
     let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let v: Value = serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
     let r = v.get("rules").ok_or("config: `rules` is missing")?;

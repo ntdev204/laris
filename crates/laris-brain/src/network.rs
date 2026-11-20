@@ -274,6 +274,16 @@ impl NetworkChooser {
         NetworkChooser { network, rules }
     }
 
+    /// The calibrated probability of every legal candidate, in the order of [`Act::ALL`].
+    pub fn scores(&self, signals: &Signals) -> Vec<(Act, f64)> {
+        let candidates = legal(signals, &self.rules.settings());
+        let n = candidates.len();
+        candidates
+            .into_iter()
+            .map(|act| (act, self.network.probability(&features(signals, act, n))))
+            .collect()
+    }
+
     /// The network's pick among the legal candidates and its calibrated confidence. The first of the best wins a tie
     /// (the order of [`Act::ALL`]), so the result is deterministic.
     pub fn pick(&self, signals: &Signals) -> (Act, f64, Vec<Act>) {

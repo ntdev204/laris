@@ -1,10 +1,11 @@
 //! `cargo xtask <command>`: governance helpers of the workspace.
 //!
-//! Commands: `decision-data` builds or verifies the decision dataset (T168); `dist` packages, signs and checks a release (T159); `security` runs the security suite of the threat model (T154); `bench` measures the performance budgets (T154); `eval` is the model-free evaluation runner (T140); `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
+//! Commands: `decision-data` builds or verifies the decision dataset (T168); `decision-gates` measures the held-out gates of the decision network (T171); `dist` packages, signs and checks a release (T159); `security` runs the security suite of the threat model (T154); `bench` measures the performance budgets (T154); `eval` is the model-free evaluation runner (T140); `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
 //! no-training guard over the Rust sources and CI files; `scan` finds hardcoded endpoints and secrets.
 
 mod bench;
 mod decision_data;
+mod decision_gates;
 mod dist;
 mod eval;
 mod guard;
@@ -29,6 +30,7 @@ fn main() -> ExitCode {
     let root = workspace_root();
     match args.next().as_deref() {
         Some("decision-data") => decision_data::run(&args.collect::<Vec<_>>()),
+        Some("decision-gates") => decision_gates::run(&args.collect::<Vec<_>>()),
         Some("dist") => dist::run_dist(&root, &args.collect::<Vec<_>>()),
         Some("eval") => eval::run(&root, &args.collect::<Vec<_>>()),
         Some("spec") => spec::run(&root),
