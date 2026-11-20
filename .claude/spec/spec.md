@@ -162,7 +162,7 @@ changes in the ADR named in the task.
 | D39 | Evidence check | The server returns the system-brain evidence of a turn in `LarisMeta`; the client gate checks once before display | confirmed 2026-11-13 (ADR-021) |
 | D40 | Learning data | Derived on the client from the event log; never sent; outside Git | confirmed 2026-11-13 (ADR-021) |
 | D41 | Scientific NLP | Python in the model block, reached as remote tools; the Rust client contains no NLP | confirmed 2026-11-13 (ADR-021) |
-| D42 | Branches | `laris-v2` integrates; one feature branch per task cut from it; `main` receives release 1.0.0 | confirmed 2026-11-13 (ADR-021) |
+| D42 | Branches | `main` integrates; one feature branch per task cut from it; release 1.0.0 is tagged on `main` | confirmed 2026-11-13 (ADR-021); `laris-v2` merged into `main` and removed 2026-11-20 |
 | D43 | Stands alone | No reading, migration or compatibility with the earlier Python system; its data, formats and fixtures are not carried over | owner decision 2026-11-18 (ADR-021 addendum) |
 | D44 | What "LLM" means for ResearchLLM | The stage-6 generative advisor is self-built (ADR-002); its architecture, size, data and compute budget are fixed in ADR-020 before any work on stage 6 | accepted, owner-delegated 2026-11-13: Option C on A2 (T93) |
 | D45 | Human gold | Gates that need human labels (G12, evidence, OCR, discourse, reasoning) follow the D05 protocol; skipping labels defers a gate, never waives it | decided (D05 protocol) |
@@ -197,7 +197,7 @@ Acceptance: a failing gate blocks merge; a seeded training call fails CI.
 ### SR-G4 — Git flow and releases
 Owner: governance
 One task, one branch, one session; pull requests only; push, merge, tag and release only with the owner's explicit
-authorisation. Release 1.0.0 (tag `v1.0.0`) merges `laris-v2` into `main` when programme 2 passes its acceptance checklist.
+authorisation. Release 1.0.0 (tag `v1.0.0`) was cut on `main` after programme 2 passed its acceptance checklist.
 Acceptance: release checklist recorded in the task note.
 
 ### SR-G5 — Threat model and security suite

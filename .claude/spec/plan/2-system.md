@@ -9,9 +9,9 @@ Version 2.0.0-draft · 2026-11-13 · Implements [spec.md](../spec.md) sections 5
   **LLM → RAG → Agent → Agentic** (phases 31-34), each rung closed by an end-to-end scenario (SR-S9). The client
   follows once the model is finished (phase 35, after T118).
 - Programme 1 has priority: phases 26-34 run while the next programme-1 task waits for the owner (spec section 2).
-- One task, one feature branch cut from `laris-v2` (`feature/Txx-<slug>`), one session; report each step.
+- One task, one feature branch cut from `main` (`feature/Txx-<slug>`), one session; report each step.
 - A task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, the spec check
-  and a pull request into `laris-v2`. No dependency without the owner's approval (T119).
+  and a merge into `main`. No dependency without the owner's approval (T119).
 - Generation 2 does not depend on generation 1 (owner decision 2026-11-18). its branch `laris-v1` was removed (2026-11-20); nothing
   from it is reused or kept compatible.
 - With the placeholder backend, scenarios prove mechanics only; capability claims wait for a qualified model.

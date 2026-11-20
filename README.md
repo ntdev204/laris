@@ -4,7 +4,7 @@
 brain) around an open-weight third-party language model (D48). The model advises; the system decides how the work
 is done.
 
-## Status of this branch (`laris-v2`)
+## Status
 
 - The earlier Python generation (client, server, Ink front end, packaging, CI, Docker) has no branch any more;
   LARIS 1.0.0 is the first release of this Rust generation.

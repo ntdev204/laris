@@ -7,9 +7,9 @@ last (programme 3). The working ledger is `.claude/spec/spec.md` with `plan/` an
 plan and task together, and run `python scripts/validate_spec.py` before starting the next task (from T121:
 `cargo xtask spec`). The earlier `.agents/` ledger is retired; do not recreate it.
 
-- Branches: `laris-v2` integrates. Cut one feature branch per task from it (`feature/Txx-<slug>`), one task per
-  session. After a task, cross-check it against plan and spec, then commit and merge it into `laris-v2`
-  (owner authorisation of 2026-11-13). Push, tag and release stay with the owner (ADR-021 D42). Release 1.0.0 exists; `main` and `laris-v2` are the only branches.
+- Branches: `main` integrates (the `laris-v2` branch was merged and removed 2026-11-20). Cut one feature branch per task from it (`feature/Txx-<slug>`), one task per
+  session. After a task, cross-check it against plan and spec, then commit and merge it into `main`
+  (owner authorisation of 2026-11-13). Push, tag and release stay with the owner (ADR-021 D42). Release 1.0.0 exists; `main` is the only branch.
   `laris-v1` was removed (2026-11-20).
 - A Rust task ends with `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test` and `cargo deny check`
   (available from T121). Only crates and tools approved in T119 / ADR-021 may be added.
@@ -28,5 +28,5 @@ plan and task together, and run `python scripts/validate_spec.py` before startin
   `integrity.toml`. Change it only with the owner's approval, then refresh the lock with `laris-server policy lock`.
   No tunable, endpoint or secret is hardcoded: configuration and environment only.
 - Preserve measured evidence and existing changes. Push, tag and release only within explicit owner
-  authorization; merging a finished task into `laris-v2` follows the branch rule above.
+  authorization; merging a finished task into `main` follows the branch rule above.
 - Do not install new dependencies without owner approval.
