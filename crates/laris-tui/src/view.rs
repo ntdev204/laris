@@ -14,7 +14,8 @@ use serde_json::{Map, Value};
 
 /// How long one spinner glyph stays, in milliseconds.
 pub(crate) const SPINNER_STEP_MS: u64 = 120;
-const SPINNER: [&str; 6] = ["✻", "✽", "✶", "✳", "✢", "·"];
+/// Glyphs with no emoji form: ✳ (U+2733) is drawn as a coloured emoji box on Windows, so it is not used.
+const SPINNER: [&str; 6] = ["✻", "✽", "✶", "✺", "✢", "·"];
 const BOX_ROWS: usize = 8;
 const BANNER_WIDTH: usize = 64;
 
@@ -787,5 +788,29 @@ impl App {
     /// The whole screen as text without styles: what a person would read.
     pub fn screen_text(&self, width: usize) -> String {
         crate::style::plain(&self.layout(width).all())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SPINNER;
+
+    /// Characters that terminals may draw as colour emoji (Unicode `Emoji=Yes` in the Dingbats block).
+    const EMOJI: [char; 30] = [
+        '\u{2702}', '\u{2705}', '\u{2708}', '\u{2709}', '\u{270A}', '\u{270B}', '\u{270C}',
+        '\u{270D}', '\u{270F}', '\u{2712}', '\u{2714}', '\u{2716}', '\u{271D}', '\u{2721}',
+        '\u{2728}', '\u{2733}', '\u{2734}', '\u{2744}', '\u{2747}', '\u{274C}', '\u{274E}',
+        '\u{2753}', '\u{2754}', '\u{2755}', '\u{2757}', '\u{2763}', '\u{2764}', '\u{2795}',
+        '\u{2796}', '\u{2797}',
+    ];
+
+    #[test]
+    fn no_spinner_glyph_can_turn_into_a_colour_emoji() {
+        for glyph in SPINNER {
+            assert!(
+                glyph.chars().all(|c| !EMOJI.contains(&c)),
+                "{glyph} may be drawn as an emoji"
+            );
+        }
     }
 }
