@@ -198,6 +198,11 @@ model_service:
   model_name: laris-core
   placeholder_name: laris-placeholder
   backend: ''
+  chat_model_id: ''
+  chat_quantization: 8bit
+  chat_max_new_tokens: 1024
+  chat_thinking: false
+  chat_temperature: 0.0
   checkpoint: ''
   tokenizer_model: ''
   device: ''
