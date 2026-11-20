@@ -23,12 +23,16 @@
 //!   override the instructions from the owner's rules (`.laris/prefilter.toml`), before the redactor and the model
 //!   ([`PrefilterModel`]); each hit is recorded without the message text (T229).
 //!
+//! * [`HarnessModel`] answers from retrieved passages: the Prefilter's pass, the passages (those that give orders
+//!   dropped), the draft, the evidence gate, a bounded retry, or an abstention (T232).
+//!
 //! * [`learning`] derives training examples from the event log and exports them as JSONL (SR-H11).
 //!
 //! Not here: the OS sandbox and the refusal of installs outside it (T135).
 
 mod engine;
 mod gate;
+mod harness;
 mod hooks;
 pub mod learning;
 mod prefilter;
@@ -43,6 +47,10 @@ pub use engine::{Decision, Engine, PolicyError, Remember, Verdict, mode_name};
 pub use gate::{
     Answer, ApprovalRequest, Approver, HookedRunner, NoApprover, PolicyGate, ShieldedRunner,
     writes_of,
+};
+pub use harness::{
+    Ending, HarnessConfig, HarnessError, HarnessModel, NoTurnSink, Passage, PassageSource,
+    StoreTurnSink, TURN_EVENT, Turn, TurnSink, VaultSource,
 };
 pub use hooks::{HookOutcome, HookRunner, Notice, OUTPUT_CAP, clean};
 pub use prefilter::{
