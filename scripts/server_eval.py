@@ -66,7 +66,7 @@ def events(raw: str) -> list[dict]:
 
 
 def sentences(text: str) -> list[str]:
-    text = re.sub(r"\[\[[^\]]*\]\]", "", text)
+    text = re.sub(r"\[\[[^\]]*\]\]|\(level: [a-z]+\)", "", text)
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
 
 
@@ -75,14 +75,14 @@ def words(text: str) -> set[str]:
 
 
 def read_turn(raw: str) -> dict:
-    steps, evidence, text = [], [], ""
+    steps, evidence, text, decision = [], [], "", None
     for event in events(raw):
         laris = event.get("laris") or {}
         steps.extend(laris.get("steps") or [])
         evidence.extend(laris.get("evidence") or [])
+        decision = laris.get("decision") or decision
         for choice in event.get("choices") or []:
             text += (choice.get("delta") or {}).get("content") or ""
-    decision = next((s["decision"] for s in steps if s.get("decision")), None)
     return {"steps": steps, "evidence": evidence, "text": text, "decision": decision}
 
 
@@ -136,7 +136,11 @@ def main() -> int:
         seconds = round(time.monotonic() - started, 2)
         stages = [s.get("stage") for s in turn["steps"]]
         # a sentence is "inside the accepted set" when its words are all words of one accepted claim
-        outside = [s for s in sentences(turn["text"]) if not any(words(s) <= w for w in accepted_words)]
+        # the system's own abstention or stop text (a step with outcome "stop") is not an answer to be checked
+        ended = any(s.get("outcome") == "stop" for s in turn["steps"])
+        outside = [] if ended else [s for s in sentences(turn["text"]) if not any(words(s) <= w for w in accepted_words)]
+        wanted = next((c["statement"] for c in config["claims"] if c["id"] == question.get("claim")), None)
+        extra = [s for s in sentences(turn["text"]) if wanted and s != wanted and any(words(s) <= w for w in accepted_words)]
         decision = turn["decision"] or {}
         rows.append(
             {
@@ -148,7 +152,9 @@ def main() -> int:
                 "model_stage_ran": "model" in stages,
                 "server_evidence": sum(1 for e in turn["evidence"] if e.get("origin") == "server"),
                 "answer_chars": len(turn["text"]),
+                "ended_by_the_system": ended,
                 "sentences_outside_accepted_claims": len(outside),
+                "other_accepted_claims_shown": len(extra),
                 "seconds": seconds,
                 "error": error,
             }
@@ -156,7 +162,7 @@ def main() -> int:
 
     answerable = [r for r in rows if r["expect"] == "answer"]
     unanswerable = [r for r in rows if r["expect"] == "abstain"]
-    abstained = [r for r in rows if r["action"] == "abstain" or "no_evidence" in json.dumps(r["stages"])]
+    abstained = [r for r in rows if r["ended_by_the_system"]]
     report = {
         "task": "T243",
         "label": args.label,
@@ -167,6 +173,7 @@ def main() -> int:
             "answered_from_brain": sum(1 for r in answerable if r["action"] == "answer" and r["server_evidence"] > 0),
             "model_called": sum(1 for r in answerable if r["model_stage_ran"]),
             "with_sentences_outside_accepted_claims": sum(1 for r in answerable if r["sentences_outside_accepted_claims"]),
+            "showing_other_accepted_claims_too": sum(1 for r in answerable if r["other_accepted_claims_shown"]),
         },
         "unanswerable": {
             "total": len(unanswerable),

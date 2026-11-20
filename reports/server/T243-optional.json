@@ -1,0 +1,178 @@
+{
+  "task": "T243",
+  "label": "optional",
+  "seeded": {
+    "sources": [
+      "accepted"
+    ],
+    "claims": [
+      "refused",
+      "refused",
+      "refused"
+    ]
+  },
+  "questions": 7,
+  "answerable": {
+    "total": 3,
+    "answered_from_brain": 3,
+    "model_called": 0,
+    "with_sentences_outside_accepted_claims": 0,
+    "showing_other_accepted_claims_too": 2
+  },
+  "unanswerable": {
+    "total": 4,
+    "abstained": 3,
+    "reached_the_model_or_answered": 1,
+    "with_sentences_outside_accepted_claims": 1
+  },
+  "errors": 0,
+  "rows": [
+    {
+      "id": "q1",
+      "expect": "answer",
+      "action": "answer",
+      "rule": "R3-covered",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "assembly"
+      ],
+      "model_stage_ran": false,
+      "server_evidence": 2,
+      "answer_chars": 249,
+      "ended_by_the_system": false,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 1,
+      "seconds": 0.01,
+      "error": null
+    },
+    {
+      "id": "q2",
+      "expect": "answer",
+      "action": "answer",
+      "rule": "R3-covered",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "assembly"
+      ],
+      "model_stage_ran": false,
+      "server_evidence": 2,
+      "answer_chars": 249,
+      "ended_by_the_system": false,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 1,
+      "seconds": 0.01,
+      "error": null
+    },
+    {
+      "id": "q3",
+      "expect": "answer",
+      "action": "answer",
+      "rule": "R3-covered",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "assembly"
+      ],
+      "model_stage_ran": false,
+      "server_evidence": 1,
+      "answer_chars": 134,
+      "ended_by_the_system": false,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 0,
+      "seconds": 0.01,
+      "error": null
+    },
+    {
+      "id": "q4",
+      "expect": "abstain",
+      "action": "ask_advisor",
+      "rule": "R7-ask-advisor",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "model",
+        "gate"
+      ],
+      "model_stage_ran": true,
+      "server_evidence": 0,
+      "answer_chars": 41,
+      "ended_by_the_system": true,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 0,
+      "seconds": 1.26,
+      "error": null
+    },
+    {
+      "id": "q5",
+      "expect": "abstain",
+      "action": "ask_advisor",
+      "rule": "R7-ask-advisor",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "model",
+        "gate"
+      ],
+      "model_stage_ran": true,
+      "server_evidence": 0,
+      "answer_chars": 41,
+      "ended_by_the_system": true,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 0,
+      "seconds": 1.25,
+      "error": null
+    },
+    {
+      "id": "q6",
+      "expect": "abstain",
+      "action": "ask_advisor",
+      "rule": "R7-ask-advisor",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider",
+        "model",
+        "gate"
+      ],
+      "model_stage_ran": true,
+      "server_evidence": 0,
+      "answer_chars": 41,
+      "ended_by_the_system": true,
+      "sentences_outside_accepted_claims": 0,
+      "other_accepted_claims_shown": 0,
+      "seconds": 1.26,
+      "error": null
+    },
+    {
+      "id": "q7",
+      "expect": "abstain",
+      "action": "ask_advisor",
+      "rule": "R7-ask-advisor",
+      "stages": [
+        "prefilter",
+        "retrieval",
+        "decider"
+      ],
+      "model_stage_ran": false,
+      "server_evidence": 0,
+      "answer_chars": 32,
+      "ended_by_the_system": false,
+      "sentences_outside_accepted_claims": 1,
+      "other_accepted_claims_shown": 0,
+      "seconds": 1.5,
+      "error": null
+    }
+  ],
+  "does_not_show": [
+    "Any capability of the model: the numbers are the pipeline's behaviour on seven hand-made questions.",
+    "Meaning: 'outside the accepted claims' compares vocabulary; a rearrangement that keeps every word is not seen.",
+    "Free answers (optional grounding) are not checked against any source; they are the model's own text."
+  ]
+}
