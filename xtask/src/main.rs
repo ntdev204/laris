@@ -1,9 +1,10 @@
 //! `cargo xtask <command>`: governance helpers of the workspace.
 //!
-//! Commands: `dist` packages, signs and checks a release (T159); `security` runs the security suite of the threat model (T154); `bench` measures the performance budgets (T154); `eval` is the model-free evaluation runner (T140); `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
+//! Commands: `decision-data` builds or verifies the decision dataset (T168); `dist` packages, signs and checks a release (T159); `security` runs the security suite of the threat model (T154); `bench` measures the performance budgets (T154); `eval` is the model-free evaluation runner (T140); `schema [--check]` writes or checks the P1/P2 JSON Schema; `spec` checks the ledger (port of `scripts/validate_spec.py`); `guard` is the
 //! no-training guard over the Rust sources and CI files; `scan` finds hardcoded endpoints and secrets.
 
 mod bench;
+mod decision_data;
 mod dist;
 mod eval;
 mod guard;
@@ -27,6 +28,7 @@ fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
     let root = workspace_root();
     match args.next().as_deref() {
+        Some("decision-data") => decision_data::run(&args.collect::<Vec<_>>()),
         Some("dist") => dist::run_dist(&root, &args.collect::<Vec<_>>()),
         Some("eval") => eval::run(&root, &args.collect::<Vec<_>>()),
         Some("spec") => spec::run(&root),
@@ -37,7 +39,7 @@ fn main() -> ExitCode {
         Some("guard") => guard::run(&args.next().map_or(root, PathBuf::from)),
         _ => {
             eprintln!(
-                "usage: cargo xtask <spec | dist <subcommand> | eval [options] | security [options] | bench [options] | guard [root] | scan [root] | schema [--check]>"
+                "usage: cargo xtask <spec | decision-data --config FILE (--out DIR --date D [--log FILE]... | --verify DIR) | dist <subcommand> | eval [options] | security [options] | bench [options] | guard [root] | scan [root] | schema [--check]>"
             );
             ExitCode::from(2)
         }
