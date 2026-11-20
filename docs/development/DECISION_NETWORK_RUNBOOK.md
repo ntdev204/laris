@@ -106,3 +106,41 @@ The first command is the same measurement as the last; it exists only to write t
 `NOT VERIFIED` and is not a pass; the command exits 1 unless all eight pass. Even then the promotion is the owner's
 decision, recorded in the task note. N7 is timed on the machine that runs the command: the specification does not
 define the reference CPU, so say which machine it was.
+
+## 6. Cognitive evaluation (T172)
+
+One command writes the report of SR-K7. It uses the real write gate, rule decider, answer assembly and prompt layer, with
+advisors given as data:
+
+```bash
+cargo run --release -p laris-brain --example cognitive_eval -- \
+    --config configs/cognitive-eval.json --out reports/brain/T172-cognitive-evaluation.json
+```
+
+The four advisors in the configuration are scripted profiles, labelled as such in the report. To measure ResearchLLM
+(or any other advisor), record its answers (inference only) and label them:
+
+```bash
+HOME=SCRATCH/home HF_HUB_OFFLINE=1 LARIS_MODEL_SERVICE__CHAT_MODEL_ID=MODEL_DIR \
+    uv run python scripts/record_advisor.py --config configs/cognitive-eval.json --name NAME --out RAW.json
+```
+
+`RAW.json` has every label `null`. Read each entry against the accepted claims, fill the labels and save the file in
+`reports/brain/advisors/`. The shape of that file is:
+
+```json
+{
+  "name": "researchllm-RUN_DATE",
+  "kind": "recorded: ResearchLLM checkpoint, prompt and decoding settings",
+  "replies":    {"q1": {"text": "...", "supported": true}, "...": {}},
+  "rewordings": {"c1": {"text": "...", "faithful": true}, "...": {}},
+  "proposals":  [{"statement": "...", "source": "Paper", "quote": "...", "supported": false}]
+}
+```
+
+`replies` has one entry per question id and `rewordings` one per claim id of the configuration. `supported` and
+`faithful` are labels that **you** assign by reading the reply against the accepted claims (a reply that asserts
+nothing outside them is supported); the harness trusts them, so label before looking at the numbers. Then add
+`--advisors that-file.json` (repeatable) to the command. The file's checksum is written to the report. The report is a
+set of system measurements; it never qualifies the model, and `tests/cognition.rs` keeps checking the invariants of
+the system with the scripted advisors only.

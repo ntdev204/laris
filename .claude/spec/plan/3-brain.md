@@ -36,7 +36,7 @@ Exit criteria:
   gates and the owner promotes it.
 
 ### Phase 40 — Integration and evaluation
-Goal: the whole cognitive loop with ResearchLLM as advisor, measured.
+Goal: the whole cognitive loop with ResearchLLM (Qwen3.5-9B, D48) as advisor, measured against at least one other advisor.
 Tasks: T172
 Exit criteria:
 - The cognitive evaluation report (SR-K7) is produced with more than one advisor and reviewed by the owner.

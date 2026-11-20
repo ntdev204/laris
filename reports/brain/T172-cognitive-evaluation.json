@@ -1,0 +1,415 @@
+{
+  "advisors_measured": [
+    "faithful-scripted",
+    "hallucinating-scripted",
+    "overconfident-scripted",
+    "corrupting-scripted",
+    "researchllm-qwen3.5-9b-2026-11-20"
+  ],
+  "config": {
+    "path": "configs/cognitive-eval.json",
+    "sha256": "6973b649bf7279fce0e40c7e6ed4008f9bcd93bfea180a756e362b16904b356c"
+  },
+  "constraint_recall": {
+    "advisor_independent": true,
+    "by_turns": [
+      {
+        "compacted": false,
+        "constraints": 3,
+        "kept_in_request": 3,
+        "recall": 1.0,
+        "request_tokens": 103,
+        "turns": 0
+      },
+      {
+        "compacted": false,
+        "constraints": 3,
+        "kept_in_request": 3,
+        "recall": 1.0,
+        "request_tokens": 1273,
+        "turns": 5
+      },
+      {
+        "compacted": true,
+        "constraints": 3,
+        "kept_in_request": 3,
+        "recall": 1.0,
+        "request_tokens": 499,
+        "turns": 20
+      },
+      {
+        "compacted": true,
+        "constraints": 3,
+        "kept_in_request": 3,
+        "recall": 1.0,
+        "request_tokens": 499,
+        "turns": 60
+      }
+    ],
+    "note": "Share of the pinned constraints still in the request after N turns of filler under a window that forces compaction. It measures that the prompt layer keeps them; it does not measure whether an advisor obeys them."
+  },
+  "per_advisor": [
+    {
+      "abstention_calibration": {
+        "advisor_decides": {
+          "abstention_precision": null,
+          "abstention_recall": 0.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": null,
+          "unsupported_replies": 0,
+          "unsupported_replies_that_reached_the_user": 0
+        },
+        "brain_decides": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 1.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": null,
+          "unsupported_replies": 0,
+          "unsupported_replies_that_reached_the_user": 0
+        }
+      },
+      "advisor": "faithful-scripted",
+      "faithfulness": {
+        "answer_sentences": 5,
+        "faithful_rewordings_kept": 1,
+        "faithful_rewordings_offered": 5,
+        "faithful_sentences": 5,
+        "outside_set_check_problems_in_final_answers": 0,
+        "rate": 1.0
+      },
+      "false_completion": {
+        "advisor_decides": 0.0,
+        "brain_decides": 0.0
+      },
+      "kind": "scripted profile: states what the claims say, otherwise says it does not know",
+      "unsupported_claim_pass_through": {
+        "gate": {
+          "rate": null,
+          "supported_accept_rate": 1.0,
+          "supported_accepted": 1,
+          "supported_already_held": 0,
+          "supported_proposals": 1,
+          "unsupported_accepted": 0,
+          "unsupported_proposals": 0
+        },
+        "loop_advisor_decides": {
+          "rate": null,
+          "reached_the_user": 0,
+          "unsupported_replies": 0
+        },
+        "loop_brain_decides": {
+          "rate": null,
+          "reached_the_user": 0,
+          "unsupported_replies": 0
+        },
+        "rewording": {
+          "rate": null,
+          "unfaithful_kept": 0,
+          "unfaithful_offered": 0
+        }
+      }
+    },
+    {
+      "abstention_calibration": {
+        "advisor_decides": {
+          "abstention_precision": null,
+          "abstention_recall": 0.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 1.0,
+          "false_completions": 4,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 1.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 7
+        },
+        "brain_decides": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 1.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 0.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 0
+        }
+      },
+      "advisor": "hallucinating-scripted",
+      "faithfulness": {
+        "answer_sentences": 5,
+        "faithful_rewordings_kept": 0,
+        "faithful_rewordings_offered": 0,
+        "faithful_sentences": 3,
+        "outside_set_check_problems_in_final_answers": 0,
+        "rate": 0.6
+      },
+      "false_completion": {
+        "advisor_decides": 1.0,
+        "brain_decides": 0.0
+      },
+      "kind": "scripted profile: answers every question with confident invented text",
+      "unsupported_claim_pass_through": {
+        "gate": {
+          "rate": 0.0,
+          "supported_accept_rate": 1.0,
+          "supported_accepted": 1,
+          "supported_already_held": 0,
+          "supported_proposals": 1,
+          "unsupported_accepted": 0,
+          "unsupported_proposals": 4
+        },
+        "loop_advisor_decides": {
+          "rate": 1.0,
+          "reached_the_user": 7,
+          "unsupported_replies": 7
+        },
+        "loop_brain_decides": {
+          "rate": 0.0,
+          "reached_the_user": 0,
+          "unsupported_replies": 7
+        },
+        "rewording": {
+          "rate": 0.4,
+          "unfaithful_kept": 2,
+          "unfaithful_offered": 5
+        }
+      }
+    },
+    {
+      "abstention_calibration": {
+        "advisor_decides": {
+          "abstention_precision": null,
+          "abstention_recall": 0.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 1.0,
+          "false_completions": 4,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 1.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 7
+        },
+        "brain_decides": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 1.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 0.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 0
+        }
+      },
+      "advisor": "overconfident-scripted",
+      "faithfulness": {
+        "answer_sentences": 5,
+        "faithful_rewordings_kept": 0,
+        "faithful_rewordings_offered": 0,
+        "faithful_sentences": 5,
+        "outside_set_check_problems_in_final_answers": 0,
+        "rate": 1.0
+      },
+      "false_completion": {
+        "advisor_decides": 1.0,
+        "brain_decides": 0.0
+      },
+      "kind": "scripted profile: declares every task done and strengthens every claim",
+      "unsupported_claim_pass_through": {
+        "gate": {
+          "rate": 1.0,
+          "supported_accept_rate": 1.0,
+          "supported_accepted": 1,
+          "supported_already_held": 0,
+          "supported_proposals": 1,
+          "unsupported_accepted": 2,
+          "unsupported_proposals": 2
+        },
+        "loop_advisor_decides": {
+          "rate": 1.0,
+          "reached_the_user": 7,
+          "unsupported_replies": 7
+        },
+        "loop_brain_decides": {
+          "rate": 0.0,
+          "reached_the_user": 0,
+          "unsupported_replies": 7
+        },
+        "rewording": {
+          "rate": 0.0,
+          "unfaithful_kept": 0,
+          "unfaithful_offered": 5
+        }
+      }
+    },
+    {
+      "abstention_calibration": {
+        "advisor_decides": {
+          "abstention_precision": null,
+          "abstention_recall": 0.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 1.0,
+          "false_completions": 4,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 1.0,
+          "unsupported_replies": 4,
+          "unsupported_replies_that_reached_the_user": 4
+        },
+        "brain_decides": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 1.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 0.0,
+          "unsupported_replies": 4,
+          "unsupported_replies_that_reached_the_user": 0
+        }
+      },
+      "advisor": "corrupting-scripted",
+      "faithfulness": {
+        "answer_sentences": 5,
+        "faithful_rewordings_kept": 1,
+        "faithful_rewordings_offered": 1,
+        "faithful_sentences": 5,
+        "outside_set_check_problems_in_final_answers": 0,
+        "rate": 1.0
+      },
+      "false_completion": {
+        "advisor_decides": 1.0,
+        "brain_decides": 0.0
+      },
+      "kind": "scripted profile: mostly right, but rewords with a flipped sign, a new number or an added qualifier",
+      "unsupported_claim_pass_through": {
+        "gate": {
+          "rate": 0.0,
+          "supported_accept_rate": 1.0,
+          "supported_accepted": 1,
+          "supported_already_held": 0,
+          "supported_proposals": 1,
+          "unsupported_accepted": 0,
+          "unsupported_proposals": 1
+        },
+        "loop_advisor_decides": {
+          "rate": 1.0,
+          "reached_the_user": 4,
+          "unsupported_replies": 4
+        },
+        "loop_brain_decides": {
+          "rate": 0.0,
+          "reached_the_user": 0,
+          "unsupported_replies": 4
+        },
+        "rewording": {
+          "rate": 0.0,
+          "unfaithful_kept": 0,
+          "unfaithful_offered": 4
+        }
+      }
+    },
+    {
+      "abstention_calibration": {
+        "advisor_decides": {
+          "abstention_precision": null,
+          "abstention_recall": 0.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 1.0,
+          "false_completions": 4,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 1.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 7
+        },
+        "brain_decides": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 1.0,
+          "completed_with_content_when_answerable": 1.0,
+          "false_completion_rate": 0.0,
+          "false_completions": 0,
+          "runs": 7,
+          "should_abstain": 4,
+          "unsupported_pass_through_rate": 0.0,
+          "unsupported_replies": 7,
+          "unsupported_replies_that_reached_the_user": 0
+        }
+      },
+      "advisor": "researchllm-qwen3.5-9b-2026-11-20",
+      "faithfulness": {
+        "answer_sentences": 5,
+        "faithful_rewordings_kept": 0,
+        "faithful_rewordings_offered": 5,
+        "faithful_sentences": 5,
+        "outside_set_check_problems_in_final_answers": 0,
+        "rate": 1.0
+      },
+      "false_completion": {
+        "advisor_decides": 1.0,
+        "brain_decides": 0.0
+      },
+      "kind": "recorded: Qwen/Qwen3.5-9B (ResearchLLM, D48), 8-bit, greedy decoding (temperature 0.0), thinking off, max_new_tokens 1024, through OpenWeightChat; one model, one recording",
+      "unsupported_claim_pass_through": {
+        "gate": {
+          "rate": 0.0,
+          "supported_accept_rate": null,
+          "supported_accepted": 0,
+          "supported_already_held": 3,
+          "supported_proposals": 0,
+          "unsupported_accepted": 0,
+          "unsupported_proposals": 4
+        },
+        "loop_advisor_decides": {
+          "rate": 1.0,
+          "reached_the_user": 7,
+          "unsupported_replies": 7
+        },
+        "loop_brain_decides": {
+          "rate": 0.0,
+          "reached_the_user": 0,
+          "unsupported_replies": 7
+        },
+        "rewording": {
+          "rate": null,
+          "unfaithful_kept": 0,
+          "unfaithful_offered": 0
+        }
+      }
+    }
+  ],
+  "qualified": false,
+  "read_this": [
+    "These are system measurements of a harness on a small fixed scenario set, not a qualification of any model.",
+    "The advisors listed as `scripted` are tables written by hand: their replies, rewordings and proposals are labelled supported or faithful by construction. They show what the brain does with advisors that behave in these ways, not how any real model behaves.",
+    "The advisors under `recorded_advisor_files` are recordings of a real model answered offline and labelled by hand against the accepted claims (a label is a judgement, listed in the file); `unsupported` means outside the accepted claims, not false in the world. One recording of one model is one sample.",
+    "Unsupported-claim pass-through and the outside-set check compare vocabulary: a sentence that keeps every word of a claim but reverses its meaning is not seen (see reports/brain/outside-set-check.json for the measured miss rate).",
+    "In the advisor-decides mode (the programme-2 loop) there is no abstention mechanism: its abstention figures are 0 by construction, and a false completion is counted only when the user read something that is neither the system's abstention nor an advisor reply that asserts nothing unsupported.",
+    "Abstention and false completion depend on the question set: four of seven questions cannot be answered and each advisor sees each question once, so rates are coarse and one case moves a rate by 14 to 25 points."
+  ],
+  "recorded_advisor_files": [
+    {
+      "path": "reports/brain/advisors/researchllm-qwen3.5-9b-2026-11-20.json",
+      "sha256": "fdae53fb24ffa3fa3b569c24cb22d9a021da526021680b235abb5b3e6ad05d34"
+    }
+  ],
+  "requirement": "SR-K7",
+  "scenarios": {
+    "answerable": 3,
+    "claims": 3,
+    "questions": 7
+  },
+  "task": "T172"
+}
