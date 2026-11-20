@@ -21,7 +21,7 @@ wildcards = "deny"
 # `allow` makes every crate outside the list a failure, workspace crates included.
 allow = [
     # workspace crates
-    "xtask", "laris-protocol", "laris-config", "laris-vault", "laris-retrieval", "laris-model-client", "laris-store", "laris-core", "laris-tools", "laris-policy", "laris-sandbox", "laris-evidence", "laris-server", "laris-tui", "laris-cli",
+    "xtask", "laris-protocol", "laris-config", "laris-vault", "laris-retrieval", "laris-brain", "laris-model-client", "laris-store", "laris-core", "laris-tools", "laris-policy", "laris-sandbox", "laris-evidence", "laris-server", "laris-tui", "laris-cli",
     # approved in T119 (direct use; add each when the task that needs it lands)
     "tokio", "axum", "tower-http", "rustls", "reqwest", "serde", "serde_json", "schemars",
     "sqlx", "rusqlite", "ratatui", "crossterm", "clap", "tracing", "thiserror", "sha2", "hmac",

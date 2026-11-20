@@ -882,6 +882,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "laris-brain"
+version = "1.0.0"
+dependencies = [
+ "laris-retrieval",
+ "laris-vault",
+ "regex",
+ "serde_json",
+]
+
+[[package]]
 name = "laris-cli"
 version = "1.0.0"
 dependencies = [

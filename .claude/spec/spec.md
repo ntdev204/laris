@@ -90,6 +90,7 @@ crates/
   laris-config             settings, environment, packaged defaults, catalogue        (shared)
   laris-vault              Obsidian format: parse, index, write, schema, lint         (shared)
   laris-retrieval          BM25, TF-IDF, graph expansion, fusion (shared)
+  laris-brain              main brain: write gate, verification, answer assembly      (brain)
   laris-model-client       P1 client                                                  (harness, loop)
   laris-store              client SQLite                                              (harness, loop)
   laris-core               state machine, event log, decider seam, context            (harness, loop + prompt)
