@@ -6,6 +6,12 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-21
+
+### Changed
+- `/usage`, `/context` and `/config` look like Claude Code's: progress bars for the session and the key, a context grid
+  with a legend (used, free space, autocompact buffer), and an aligned, titled settings list.
+
 ## [1.2.0] - 2026-11-20
 
 ### Added
