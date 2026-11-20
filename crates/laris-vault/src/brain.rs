@@ -28,11 +28,11 @@ types:
     folder: Sources
   claim:
     required: [type, level, source_ref, span_start, span_end, span_sha256, created]
-    links: [source_ref, corroborated_by, tool_run_ref]
+    links: [source_ref, corroborated_by, tool_run_ref, conflict_refs]
     folder: Claims
   theory:
     required: [type, attributed_to, source_ref, span_start, span_end, span_sha256, created]
-    links: [source_ref]
+    links: [source_ref, conflict_refs]
     folder: Theories
   conflict:
     required: [type, status, sides, created]

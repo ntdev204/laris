@@ -1,0 +1,16 @@
+[package]
+name = "laris-brain"
+description = "Main brain: the write gate, verification and answer assembly (ADR-024)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+laris-vault = { path = "../laris-vault", version = "1.0.0" }
+laris-retrieval = { path = "../laris-retrieval", version = "1.0.0" }
+serde_json = "1"
+regex = "1"
