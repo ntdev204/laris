@@ -1,0 +1,103 @@
+{
+  "cases": [
+    {
+      "caught": true,
+      "label": "number changed",
+      "sentence": "Aspirin reduces fever in adults at 900 mg."
+    },
+    {
+      "caught": true,
+      "label": "number changed in a dose",
+      "sentence": "A dose of 800 mg was used in 2020."
+    },
+    {
+      "caught": true,
+      "label": "polarity flipped to positive",
+      "sentence": "The vaccine was tested in children."
+    },
+    {
+      "caught": true,
+      "label": "polarity flipped to negative",
+      "sentence": "Aspirin does not reduce fever in adults."
+    },
+    {
+      "caught": true,
+      "label": "hedge dropped",
+      "sentence": "Vitamin D raises serum calcium in adults."
+    },
+    {
+      "caught": true,
+      "label": "hedge added",
+      "sentence": "Aspirin always reduces fever in adults."
+    },
+    {
+      "caught": true,
+      "label": "quantifier added",
+      "sentence": "Aspirin reduces fever in all adults."
+    },
+    {
+      "caught": true,
+      "label": "new name",
+      "sentence": "Dr Smith reported 12 adverse events at Mercy Hospital."
+    },
+    {
+      "caught": true,
+      "label": "new content",
+      "sentence": "Aspirin cures fever and prevents strokes in adults."
+    },
+    {
+      "caught": true,
+      "label": "opposite verb",
+      "sentence": "Aspirin increases fever in adults."
+    },
+    {
+      "caught": true,
+      "label": "stronger verb",
+      "sentence": "Aspirin lowers fever in adults."
+    },
+    {
+      "caught": true,
+      "label": "no citation",
+      "sentence": "Aspirin prevents heart attacks."
+    },
+    {
+      "caught": true,
+      "label": "made-up citation",
+      "sentence": "Aspirin prevents heart attacks."
+    },
+    {
+      "caught": false,
+      "label": "words kept, roles swapped",
+      "sentence": "Fever reduces aspirin in adults."
+    },
+    {
+      "caught": false,
+      "label": "words kept, names swapped",
+      "sentence": "Mercy Hospital reported 12 adverse events at Dr Lee."
+    },
+    {
+      "caught": false,
+      "label": "two claims spliced",
+      "sentence": "A dose of 500 mg reduces fever in adults."
+    }
+  ],
+  "caught": 13,
+  "date": "2026-11-20",
+  "faithful_kept": 6,
+  "faithful_rewordings": 8,
+  "false_reject_rate": 0.25,
+  "fixture": "tests/answer.rs: 5 claims, 16 inserted unsupported sentences, 8 faithful rewordings",
+  "miss_rate": 0.1875,
+  "missed": 3,
+  "missed_cases": [
+    "words kept, roles swapped",
+    "words kept, names swapped",
+    "two claims spliced"
+  ],
+  "reading": "A filter on vocabulary, not a proof. It misses rearrangements that keep every word, and it rejects free paraphrase; the system is faithful to accepted Claims up to the measured miss rate on this fixture.",
+  "report": "outside-set check (ADR-024 6.3, T166)",
+  "settings": {
+    "min_cover": 0.8
+  },
+  "unsupported_sentences": 16
+}
