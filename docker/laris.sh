@@ -5,9 +5,18 @@
 #   down    stops everything (volumes, keys and the certificate authority are kept)
 #   status  what runs, and the address clients use
 #   key     makes an admin key (default label "full", 1000000000 tokens) and prints it once
-# Settings are environment variables with the defaults below; nothing is written outside docker/tls and the volumes.
+# Settings: set in docker/laris.env (see laris.env.example) or with the defaults below; nothing is written outside docker/tls and the volumes.
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
+# the settings come from docker/laris.env (git-ignored) or the defaults below, never from variables left in the shell
+unset LARIS_PROJECT LARIS_DOMAIN LARIS_HTTP_PORT LARIS_HTTPS_PORT LARIS_EDGE_SUBNET LARIS_EDGE_GATEWAY LARIS_SUBNET \
+    LARIS_MODELS_DIR LARIS_CHAT_SNAPSHOT
+if [ -f "$here/laris.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$here/laris.env"
+    set +a
+fi
 project=${LARIS_PROJECT:-laris-qwen}
 export LARIS_HTTP_PORT=${LARIS_HTTP_PORT:-38080} LARIS_HTTPS_PORT=${LARIS_HTTPS_PORT:-38443}
 export LARIS_EDGE_SUBNET=${LARIS_EDGE_SUBNET:-172.31.61.0/24} LARIS_EDGE_GATEWAY=${LARIS_EDGE_GATEWAY:-172.31.61.1}
@@ -64,10 +73,18 @@ key)
     cacert=""
     [ -f "$here/tls/tailscale.caddy" ] || cacert="--cacert $work/root.crt"
     # shellcheck disable=SC2086
-    curl -s $cacert -X POST "$address/v1/admin/keys" \
+    # the built-in admin key works only from this machine: connect through 127.0.0.1, keep the name for TLS
+    answer=$(curl -sS --max-time 30 $cacert --resolve "$domain:$LARIS_HTTPS_PORT:127.0.0.1" -X POST "$address/v1/admin/keys" \
         -H "Authorization: Bearer $(tr -d '\n' < "$work/admin_key")" -H 'X-Laris-Protocol: 1' -H 'Content-Type: application/json' \
-        -d "{\"label\":\"${2:-full}\",\"role\":\"admin\",\"token_limit\":${3:-1000000000}}" \
-        | sed -n 's/.*"key":"\([^"]*\)".*/\1/p'
+        -d "{\"label\":\"${2:-full}\",\"role\":\"admin\",\"token_limit\":${3:-1000000000}}" 2>&1) || true
+    key=$(printf '%s' "$answer" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+    if [ -n "$key" ]; then
+        echo "$key"
+    else
+        echo "no key was made. Server said: $answer" >&2
+        echo "address used: $address (start the stack with 'docker/laris.sh up' so that it serves this name)" >&2
+        exit 1
+    fi
     ;;
 *)
     echo "usage: docker/laris.sh up | down | status | key [label] [tokens]" >&2

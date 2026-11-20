@@ -94,3 +94,16 @@ Goal: the owner starts and stops the server with one command and a user enters o
 Tasks: T236
 Exit criteria:
 - `docker/laris.sh` runs the stack; the client release carries its server address; release 1.0.1 is published.
+
+### Phase 46 — Full-screen terminal interface
+Goal: the client fills the terminal like `vim` and keeps the history of a session.
+Tasks: T237
+Exit criteria:
+- Full-screen layout, scrolling and restore on exit are tested in an emulator; a resumed session shows its history; the owner approves on Windows.
+
+### Phase 47 — Request pipeline in the server
+Goal: a request is checked, filtered, grounded and decided in the server before the model is asked.
+Tasks: T238, T239, T240, T241, T242, T243
+Exit criteria:
+- ADR-025 accepted; the server runs the Prefilter, retrieval, brain decider and evidence gate; the client shows the stages; the smoke test and the cognitive evaluation pass through the server. The model stays NOT QUALIFIED.
+

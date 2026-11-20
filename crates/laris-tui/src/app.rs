@@ -215,6 +215,8 @@ pub struct App {
     pub(crate) armed_ms: Option<u64>,
     pub(crate) elapsed_ms: u64,
     pub(crate) frame: u64,
+    /// Milliseconds since the spinner last advanced.
+    pub(crate) frame_ms: u64,
     quit: bool,
     pub(crate) blocked: bool,
     pub(crate) approval: Option<Approval>,
@@ -248,6 +250,7 @@ impl App {
             armed_ms: None,
             elapsed_ms: 0,
             frame: 0,
+            frame_ms: 0,
             quit: false,
             blocked: false,
             approval: None,
@@ -319,9 +322,18 @@ impl App {
                 Vec::new()
             }
             Input::Tick(ms) => {
-                self.frame = self.frame.wrapping_add(1);
+                // the spinner moves only while something runs, and slowly: every step redraws the live block
                 if self.running {
                     self.elapsed_ms += ms;
+                    self.frame_ms += ms;
+                    if self.frame_ms >= crate::view::SPINNER_STEP_MS {
+                        self.frame = self
+                            .frame
+                            .wrapping_add(self.frame_ms / crate::view::SPINNER_STEP_MS);
+                        self.frame_ms %= crate::view::SPINNER_STEP_MS;
+                    }
+                } else {
+                    self.frame_ms = 0;
                 }
                 if let Some(armed) = self.armed_ms {
                     let armed = armed + ms;

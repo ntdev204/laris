@@ -12,6 +12,8 @@ use crate::width::{str_width, truncate, wrap};
 use laris_protocol::events::Decision;
 use serde_json::{Map, Value};
 
+/// How long one spinner glyph stays, in milliseconds.
+pub(crate) const SPINNER_STEP_MS: u64 = 120;
 const SPINNER: [&str; 6] = ["✻", "✽", "✶", "✳", "✢", "·"];
 const BOX_ROWS: usize = 8;
 const BANNER_WIDTH: usize = 64;

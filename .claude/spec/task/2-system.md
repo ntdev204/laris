@@ -1664,3 +1664,73 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Status: in_progress
 - Note: 2026-11-20 (owner: "1 lệnh để bật/tắt server, client chỉ nhập key", then "phát hành"). Script written and its `status` checked; `up`, `down` and `key` were not run by the agent. The release address is the tailnet name (`https://vthlab.tail3e814e.ts.net:38443`), reachable from the owner's tailnet only; `tailscale cert` needs `sudo tailscale set --operator=$USER` once. Version raised to 1.0.1 because npm cannot replace a published version.
 
+## Phase 46 — Full-screen terminal interface
+
+### T237 — Full-screen interface with the session history kept
+- Requirements: SR-C1
+- Depends: T236
+- Deliverables:
+  - The interactive client runs on the alternate screen like `vim`: a header, a conversation area that scrolls (keys and mouse wheel), the input box and the status line fixed at the bottom; on exit the terminal is restored. The conversation of a session is read back from the event log when it is resumed (`--resume`), so the history of a session is kept; no flicker (one synchronised frame, a slow spinner)
+- Validation:
+  - Terminal emulator tests of the full-screen layout, the scrolling and the restore on exit and on a panic; the existing T158 scenarios still pass; the owner tries it on Windows Terminal
+- Status: pending
+- Note: 2026-11-20 (owner: "giống vim, nhưng lịch sử hội thoại vẫn giữ theo session"). The flicker part is already done in T236's follow-up: `Screen::draw` writes one synchronised update (`CSI ?2026h/l`) per frame and the spinner advances every 120 ms and only while a turn runs (it ran at 25 frames a second). Not yet verified on Windows.
+
+## Phase 47 — Request pipeline in the server
+
+Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan and tasks only): a request goes client, then the server, which authenticates, applies policy, runs the Prefilter, lexical retrieval, the main brain and the harness, and only then asks the model; the answer returns through the evidence gate. This reopens the decision of 2026-11-13 to keep the engine on the client; T238 settles what moves.
+
+### T238 — ADR-025: request pipeline in the server
+- Requirements: SR-S4, SR-S5, SR-K1
+- Depends: T236
+- Deliverables:
+  - An ADR that fixes the order of stages (auth, policy, Prefilter, retrieval, brain decider, model, evidence gate, answer assembly), what stays on the client (tool execution in the sandbox, files, approvals) and what moves to the server (the decision loop, the vault and brain, the model call), where the vault and the main brain live (per user or shared), what the protocol P1 carries (step events, evidence list), the failure modes (model down, vault empty) and the threat-model changes
+- Validation:
+  - The owner accepts the ADR; no pipeline code before it
+- Status: pending
+
+### T239 — Server pipeline core: Prefilter, retrieval and harness in the chat route
+- Requirements: SR-S4, SR-M11
+- Depends: T238
+- Deliverables:
+  - `PrefilterModel` and `HarnessModel` (T229, T232) wired into the server's chat route behind configuration; a Prefilter hit never reaches the model; retrieved passages come from the server's vault; every stage and its time is recorded in the audit row without message text
+- Validation:
+  - Server tests with a scripted model: a Prefilter hit, a grounded answer, a missing source (abstains), an injected passage (ignored); the capability ladder still passes
+- Status: pending
+
+### T240 — Server-side vault and main brain
+- Requirements: SR-S5, SR-K3
+- Depends: T238, T239
+- Deliverables:
+  - The server holds the main-brain vault and the write gate (T164) behind its own storage and roles; clients cannot write it except through the gate; ingestion and retraction are admin operations
+- Validation:
+  - Tests: a model-only claim is refused through the API, a retracted source downgrades its claims, access follows the roles
+- Status: pending
+
+### T241 — Brain decider in the server turn
+- Requirements: SR-K5, SR-S4
+- Depends: T239, T240
+- Deliverables:
+  - The rule decider (T167) behind the server's decision seam, choosing among answer, abstain, ask, retrieve and ask the advisor; the decision network stays off (not promoted, T171); every decision is logged with its rule
+- Validation:
+  - Scenario tests through the HTTP API: stop on budget, abstain on no evidence, answer from accepted claims without calling the model
+- Status: pending
+
+### T242 — Protocol P1 step events and client display
+- Requirements: SR-S1, SR-C1
+- Depends: T239
+- Deliverables:
+  - P1 gains step events (stage name, outcome, time) and the evidence list in the answer; the schema is regenerated and checked; the client shows the stages in the interface (for example "checking the knowledge base", "asking the model") and the sources of an answer
+- Validation:
+  - Schema check, contract tests, emulator tests of the display
+- Status: pending
+
+### T243 — End-to-end acceptance of the pipeline with Qwen3.5-9B
+- Requirements: SR-S8, SR-K7
+- Depends: T241, T242
+- Deliverables:
+  - The compose stack runs the full pipeline; the smoke test is extended (a covered question is answered without the model, an uncovered one abstains, a free question reaches the model); the cognitive evaluation (T172) is repeated through the server; runbook and threat model updated
+- Validation:
+  - Smoke test passes; the report states system measurements only and no model qualification; the owner reviews
+- Status: pending
+

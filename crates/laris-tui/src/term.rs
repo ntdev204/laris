@@ -187,6 +187,9 @@ impl<W: Write> Screen<W> {
             return Ok(());
         }
         self.last = Some((layout.clone(), rows));
+        // one atomic frame: the terminal shows the finished frame, not the erase and the redraw (no flicker); a
+        // terminal that does not know the mode ignores it
+        write!(self.out, "\x1b[?2026h\x1b[?25l")?;
         self.erase_live()?;
         if layout.committed.len() < self.printed {
             write!(self.out, "\x1b[2J\x1b[3J\x1b[H")?;
@@ -224,6 +227,7 @@ impl<W: Write> Screen<W> {
             }
             _ => write!(self.out, "\x1b[?25l")?,
         }
+        write!(self.out, "\x1b[?2026l")?;
         self.out.flush()
     }
 

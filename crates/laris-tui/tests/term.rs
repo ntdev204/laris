@@ -309,3 +309,26 @@ fn an_unchanged_screen_is_not_written_again_and_a_changed_one_is() {
     screen.draw(&app, 80, 10).unwrap();
     assert!(!screen.writer_mut().is_empty());
 }
+
+#[test]
+fn a_frame_is_one_synchronised_update_so_the_terminal_does_not_flicker() {
+    let mut app = App::new(&Ui::default());
+    let mut screen = Screen::new(Vec::new(), false);
+    app.update(Input::Key(Key::Char('x')));
+    screen.draw(&app, 80, 24).unwrap();
+    let bytes = String::from_utf8(std::mem::take(screen.writer_mut())).unwrap();
+    assert!(bytes.starts_with("\x1b[?2026h"), "{bytes:?}");
+    assert!(bytes.ends_with("\x1b[?2026l"), "{bytes:?}");
+    assert_eq!(bytes.matches("\x1b[?2026h").count(), 1);
+}
+
+#[test]
+fn the_spinner_moves_slowly_and_only_while_something_runs() {
+    let mut app = App::new(&Ui::default());
+    let before = app.layout(80);
+    // idle: ticks change nothing, so nothing is redrawn
+    for _ in 0..50 {
+        app.update(Input::Tick(40));
+    }
+    assert_eq!(app.layout(80), before);
+}

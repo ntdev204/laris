@@ -26,7 +26,7 @@ services:
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
-    cap_add: [NET_BIND_SERVICE]
+    cap_add: [NET_BIND_SERVICE, DAC_READ_SEARCH]   # DAC_READ_SEARCH: read the 0600 key that `tailscale cert` writes (docker/tls)
     security_opt: ["no-new-privileges:true"]
 
   server:

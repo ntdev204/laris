@@ -99,3 +99,4 @@ release.key
 data/decision/
 docker/tls/*
 !docker/tls/.gitkeep
+docker/laris.env
