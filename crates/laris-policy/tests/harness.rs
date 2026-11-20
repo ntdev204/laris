@@ -458,3 +458,13 @@ fn a_bad_configuration_is_refused() {
         Err(HarnessError::Syntax(_))
     ));
 }
+
+#[test]
+fn the_shipped_settings_load() {
+    let text = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.laris/harness.toml"),
+    )
+    .expect("the settings file");
+    let config = HarnessConfig::from_toml(&text).expect("the shipped settings load");
+    assert_eq!((config.passages, config.max_attempts), (5, 3));
+}
