@@ -1,0 +1,1981 @@
+{
+ "cases": [
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain"
+   ],
+   "chosen": "verify",
+   "confidence": 0.563057411301072,
+   "logits": {
+    "abstain": 0.052049697298694575,
+    "acquire": 0.12373743975747042,
+    "answer": 0.328941144052588,
+    "ask_advisor": 0.12950517980182735,
+    "ask_user": 0.21487052526902617,
+    "run_tool": 0.23979299703897633,
+    "verify": 0.4310856367821966
+   },
+   "probabilities": {
+    "abstain": 0.5076537693534433,
+    "acquire": 0.5181886528755015,
+    "answer": 0.5482233337158593,
+    "ask_advisor": 0.5190356744321526,
+    "ask_user": 0.5315566066570155,
+    "run_tool": 0.5352053236955268,
+    "verify": 0.563057411301072
+   },
+   "signals": {
+    "accepted": 7,
+    "acquisition_allowed": true,
+    "acquisitions": 0,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 7,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.1561,
+    "call": "none",
+    "coverage": 0.4384,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 1,
+    "repeats": 7,
+    "retracted_dependencies": 1,
+    "retrievals": 2,
+    "steps_left": 6,
+    "time_left_seconds": 343.837,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "run_tool",
+    "answer",
+    "ask_user",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.5320395833591168,
+   "logits": {
+    "answer": 0.006497416266049355,
+    "ask_user": 0.2181681040802158,
+    "retrieve": -0.24782887877965837,
+    "run_tool": -0.27643552678578687,
+    "stop": -0.2735903227769835
+   },
+   "probabilities": {
+    "answer": 0.5009555012289222,
+    "ask_user": 0.5320395833591168,
+    "retrieve": 0.46361898553216935,
+    "run_tool": 0.4594370568183065,
+    "stop": 0.45985274355269506
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": true,
+    "acquisitions": 4,
+    "advisor_accept_rate": 0.9579,
+    "advisor_agreement": null,
+    "advisor_asks": 7,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.5567,
+    "call": "legal",
+    "coverage": 0.9091,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 1,
+    "pending_candidates": 0,
+    "repeats": 3,
+    "retracted_dependencies": 0,
+    "retrievals": 5,
+    "steps_left": 5,
+    "time_left_seconds": 13.403,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "verify",
+    "ask_user",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.42195988590110745,
+   "logits": {
+    "ask_advisor": -0.983750849689338,
+    "ask_user": -0.5673936005310839,
+    "retrieve": -0.9532656642689191,
+    "stop": -0.8464694175558657,
+    "verify": -0.5350461261935324
+   },
+   "probabilities": {
+    "ask_advisor": 0.35923707954122663,
+    "ask_user": 0.4173258105353424,
+    "retrieve": 0.3633752123486064,
+    "stop": 0.37802885159196403,
+    "verify": 0.42195988590110745
+   },
+   "signals": {
+    "accepted": 3,
+    "acquisition_allowed": false,
+    "acquisitions": 0,
+    "advisor_accept_rate": 0.0531,
+    "advisor_agreement": null,
+    "advisor_asks": 9,
+    "below_required": 2,
+    "best_level": "corroborated",
+    "budget_left": 1.058,
+    "call": "refused",
+    "coverage": 0.3003,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 2,
+    "repeats": 4,
+    "retracted_dependencies": 1,
+    "retrievals": 2,
+    "steps_left": 11,
+    "time_left_seconds": 74.048,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "acquire",
+   "confidence": 0.5601108565929341,
+   "logits": {
+    "abstain": -0.2829890957624822,
+    "acquire": 0.41074035575489465,
+    "answer": 0.16261759892051852,
+    "ask_advisor": -0.38591178211289895,
+    "ask_user": -0.06067879782301236,
+    "retrieve": -0.16892444309896903,
+    "run_tool": -0.06929019049488319,
+    "stop": 0.24861569881001377,
+    "verify": 0.1708042523073176
+   },
+   "probabilities": {
+    "abstain": 0.4584797904497589,
+    "acquire": 0.5601108565929341,
+    "answer": 0.5238961340808037,
+    "ask_advisor": 0.4434907295038057,
+    "ask_user": 0.491077594635429,
+    "retrieve": 0.47517859037457694,
+    "run_tool": 0.48981167654533564,
+    "stop": 0.5364961087570282,
+    "verify": 0.525097163291817
+   },
+   "signals": {
+    "accepted": 11,
+    "acquisition_allowed": true,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.4606,
+    "advisor_agreement": 0.8873,
+    "advisor_asks": 0,
+    "below_required": 1,
+    "best_level": null,
+    "budget_left": 1.0269,
+    "call": "refused",
+    "coverage": 0.4024,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 2,
+    "repeats": 2,
+    "retracted_dependencies": 0,
+    "retrievals": 1,
+    "steps_left": 13,
+    "time_left_seconds": 300.192,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "verify",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.44811976935938946,
+   "logits": {
+    "abstain": -1.1480175553171708,
+    "ask_advisor": -0.9409498231804087,
+    "ask_user": -0.8304512016846427,
+    "retrieve": -1.0777337549608283,
+    "run_tool": -1.25564195090432,
+    "stop": -1.041533041113313,
+    "verify": -0.35405986742896023
+   },
+   "probabilities": {
+    "abstain": 0.33731010641584663,
+    "ask_advisor": 0.36505278822184956,
+    "ask_user": 0.38024682634978146,
+    "retrieve": 0.34661292909581265,
+    "run_tool": 0.3233075360881722,
+    "stop": 0.3514511746285223,
+    "verify": 0.44811976935938946
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": true,
+    "acquisitions": 4,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.2129,
+    "advisor_asks": 8,
+    "below_required": 2,
+    "best_level": "reviewed",
+    "budget_left": 0.6041,
+    "call": "legal",
+    "coverage": 0.6587,
+    "fresh_since_retrieve": true,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 0,
+    "repeats": 4,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 11,
+    "time_left_seconds": 141.459,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.38428725238767547,
+   "logits": {
+    "abstain": -1.2892096257606487,
+    "acquire": -1.0640282428088494,
+    "answer": -0.8096958201947593,
+    "ask_advisor": -1.1101841228910003,
+    "ask_user": -0.971024052880873,
+    "retrieve": -1.0671989087638516,
+    "run_tool": -1.0725162336861338,
+    "stop": -1.0103884329031132,
+    "verify": -0.8013633568870477
+   },
+   "probabilities": {
+    "abstain": 0.31900273721243977,
+    "acquire": 0.348441015317903,
+    "answer": 0.3831281774952597,
+    "ask_advisor": 0.3423026724680925,
+    "ask_user": 0.3609621410657291,
+    "retrieve": 0.34801770222139883,
+    "run_tool": 0.3473083292133988,
+    "stop": 0.35563827118876035,
+    "verify": 0.38428725238767547
+   },
+   "signals": {
+    "accepted": 0,
+    "acquisition_allowed": false,
+    "acquisitions": 1,
+    "advisor_accept_rate": 0.7192,
+    "advisor_agreement": 0.1683,
+    "advisor_asks": 0,
+    "below_required": 2,
+    "best_level": "corroborated",
+    "budget_left": 0.5597,
+    "call": "legal",
+    "coverage": 0.6838,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 2,
+    "repeats": 1,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 4,
+    "time_left_seconds": 303.134,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.5433368977607668,
+   "logits": {
+    "abstain": -0.2573834463881953,
+    "acquire": -0.3381195107771676,
+    "answer": 0.08726326363247255,
+    "ask_advisor": -0.22003045687952494,
+    "ask_user": 0.29543218901833024,
+    "retrieve": -0.1362684621173062,
+    "run_tool": -0.27928667194268153,
+    "stop": -0.16522747404898555,
+    "verify": 0.12912049456199248
+   },
+   "probabilities": {
+    "abstain": 0.46222163041215325,
+    "acquire": 0.450439813193054,
+    "answer": 0.5128300158541194,
+    "ask_advisor": 0.4676876754002306,
+    "ask_user": 0.5433368977607668,
+    "retrieve": 0.47997124334603203,
+    "run_tool": 0.45902055869096087,
+    "stop": 0.47572095152571203,
+    "verify": 0.5189791848263547
+   },
+   "signals": {
+    "accepted": 0,
+    "acquisition_allowed": false,
+    "acquisitions": 3,
+    "advisor_accept_rate": 0.2416,
+    "advisor_agreement": null,
+    "advisor_asks": 5,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.4503,
+    "call": "legal",
+    "coverage": 0.0636,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 1,
+    "pending_candidates": 0,
+    "repeats": 0,
+    "retracted_dependencies": 0,
+    "retrievals": 0,
+    "steps_left": 13,
+    "time_left_seconds": 350.645,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "run_tool",
+    "answer",
+    "ask_user"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.3817520800424326,
+   "logits": {
+    "answer": -0.8609721812584792,
+    "ask_user": -0.8196008536491044,
+    "retrieve": -1.097015032944399,
+    "run_tool": -1.1660697218777336
+   },
+   "probabilities": {
+    "answer": 0.37602510526762034,
+    "ask_user": 0.3817520800424326,
+    "retrieve": 0.3440487836608912,
+    "run_tool": 0.334940553554223
+   },
+   "signals": {
+    "accepted": 1,
+    "acquisition_allowed": false,
+    "acquisitions": 3,
+    "advisor_accept_rate": 0.5734,
+    "advisor_agreement": 0.393,
+    "advisor_asks": 1,
+    "below_required": 2,
+    "best_level": "corroborated",
+    "budget_left": 0.8937,
+    "call": "refused",
+    "coverage": 0.9107,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 0,
+    "repeats": 0,
+    "retracted_dependencies": 1,
+    "retrievals": 5,
+    "steps_left": 1,
+    "time_left_seconds": 347.484,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.45885045254854684,
+   "logits": {
+    "abstain": -0.6572766172963005,
+    "acquire": -0.49398573160884723,
+    "answer": -0.3522573363343043,
+    "ask_advisor": -0.799321811841292,
+    "retrieve": -0.5635334136676805,
+    "run_tool": -0.6901371833612345,
+    "stop": -0.5380915344696499,
+    "verify": -0.2804512489937483
+   },
+   "probabilities": {
+    "abstain": 0.4045280261896993,
+    "acquire": 0.42786191804628887,
+    "answer": 0.44838200796982863,
+    "ask_advisor": 0.384571439559963,
+    "retrieve": 0.4178780682401497,
+    "run_tool": 0.39988050013017135,
+    "stop": 0.42152300312893665,
+    "verify": 0.45885045254854684
+   },
+   "signals": {
+    "accepted": 5,
+    "acquisition_allowed": false,
+    "acquisitions": 5,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 2,
+    "below_required": 1,
+    "best_level": "verified",
+    "budget_left": 0.6311,
+    "call": "none",
+    "coverage": 0.6501,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 2,
+    "repeats": 7,
+    "retracted_dependencies": 0,
+    "retrievals": 4,
+    "steps_left": 13,
+    "time_left_seconds": 85.048,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "verify",
+    "answer",
+    "ask_user",
+    "stop"
+   ],
+   "chosen": "answer",
+   "confidence": 0.3587301313956165,
+   "logits": {
+    "answer": -0.9874959957713755,
+    "ask_advisor": -1.3758649331569224,
+    "ask_user": -1.009556244375287,
+    "retrieve": -1.304679878463579,
+    "stop": -1.2650230422793647,
+    "verify": -1.0007830438801268
+   },
+   "probabilities": {
+    "answer": 0.3587301313956165,
+    "ask_advisor": 0.30803279386528976,
+    "ask_user": 0.35575045797698696,
+    "retrieve": 0.3170290854291831,
+    "stop": 0.32210142512985207,
+    "verify": 0.35693412943856107
+   },
+   "signals": {
+    "accepted": 0,
+    "acquisition_allowed": false,
+    "acquisitions": 4,
+    "advisor_accept_rate": 0.242,
+    "advisor_agreement": 0.1457,
+    "advisor_asks": 8,
+    "below_required": 0,
+    "best_level": "sourced",
+    "budget_left": 0.2472,
+    "call": "legal",
+    "coverage": 0.596,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 1,
+    "repeats": 7,
+    "retracted_dependencies": 0,
+    "retrievals": 3,
+    "steps_left": 3,
+    "time_left_seconds": 212.282,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "acquire",
+    "verify",
+    "answer",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5662518329802613,
+   "logits": {
+    "abstain": -0.584127143693628,
+    "acquire": -0.13726435334488102,
+    "answer": 0.12547637054894867,
+    "ask_advisor": -0.3121999238821478,
+    "retrieve": -0.2617015496559044,
+    "stop": -0.1809048182597593,
+    "verify": 0.45317717441972427
+   },
+   "probabilities": {
+    "abstain": 0.4149342397947142,
+    "acquire": 0.4798250254752079,
+    "answer": 0.5184440348150124,
+    "ask_advisor": 0.45421684862588596,
+    "retrieve": 0.4615903013350221,
+    "stop": 0.4734214269849806,
+    "verify": 0.5662518329802613
+   },
+   "signals": {
+    "accepted": 0,
+    "acquisition_allowed": true,
+    "acquisitions": 1,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.5617,
+    "advisor_asks": 3,
+    "below_required": 2,
+    "best_level": null,
+    "budget_left": 0.3044,
+    "call": "none",
+    "coverage": 0.633,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 3,
+    "pending_candidates": 1,
+    "repeats": 2,
+    "retracted_dependencies": 1,
+    "retrievals": 0,
+    "steps_left": 0,
+    "time_left_seconds": 219.304,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "verify",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.4120146002220084,
+   "logits": {
+    "abstain": -0.8757850136616825,
+    "ask_user": -0.6045936629160987,
+    "stop": -0.9914020646347902,
+    "verify": -0.6618139201052575
+   },
+   "probabilities": {
+    "abstain": 0.3739828900456331,
+    "ask_user": 0.4120146002220084,
+    "stop": 0.3582017366048395,
+    "verify": 0.40388526761985527
+   },
+   "signals": {
+    "accepted": 8,
+    "acquisition_allowed": true,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.2216,
+    "advisor_agreement": null,
+    "advisor_asks": 2,
+    "below_required": 0,
+    "best_level": "verified",
+    "budget_left": 0.3964,
+    "call": "refused",
+    "coverage": 0.3273,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 2,
+    "repeats": 4,
+    "retracted_dependencies": 0,
+    "retrievals": 3,
+    "steps_left": 5,
+    "time_left_seconds": 314.636,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "acquire",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.5529405212470464,
+   "logits": {
+    "abstain": -0.08210673797394445,
+    "acquire": 0.25067678154067397,
+    "answer": 0.2487184642221832,
+    "ask_user": 0.3613499453352771,
+    "retrieve": 0.15860346934616731,
+    "stop": 0.23846397700416455
+   },
+   "probabilities": {
+    "abstain": 0.4879278263531091,
+    "acquire": 0.5367975809044834,
+    "answer": 0.5365111407668083,
+    "ask_user": 0.5529405212470464,
+    "retrieve": 0.5233071362825261,
+    "stop": 0.5350108431754038
+   },
+   "signals": {
+    "accepted": 2,
+    "acquisition_allowed": false,
+    "acquisitions": 1,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 7,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.4637,
+    "call": "legal",
+    "coverage": 0.2723,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 2,
+    "repeats": 9,
+    "retracted_dependencies": 1,
+    "retrievals": 4,
+    "steps_left": 6,
+    "time_left_seconds": 355.254,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "answer",
+    "ask_user",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.41259737545505754,
+   "logits": {
+    "acquire": -0.8481509179683896,
+    "answer": -0.6969667723829773,
+    "ask_advisor": -1.02436787236448,
+    "ask_user": -0.6005050202396877,
+    "run_tool": -0.9526668215682882,
+    "stop": -0.9156712210031978
+   },
+   "probabilities": {
+    "acquire": 0.3777963152608829,
+    "answer": 0.39891680784279426,
+    "ask_advisor": 0.35375609026029947,
+    "ask_user": 0.41259737545505754,
+    "run_tool": 0.36345670596286694,
+    "stop": 0.36850630643956284
+   },
+   "signals": {
+    "accepted": 6,
+    "acquisition_allowed": true,
+    "acquisitions": 2,
+    "advisor_accept_rate": 0.3742,
+    "advisor_agreement": 0.1958,
+    "advisor_asks": 7,
+    "below_required": 0,
+    "best_level": "corroborated",
+    "budget_left": 1.0222,
+    "call": "refused",
+    "coverage": 0.8704,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 3,
+    "pending_candidates": 0,
+    "repeats": 8,
+    "retracted_dependencies": 1,
+    "retrievals": 4,
+    "steps_left": 3,
+    "time_left_seconds": 64.796,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "answer"
+   ],
+   "chosen": "answer",
+   "confidence": 0.41509768770289807,
+   "logits": {
+    "answer": -0.5829826339992924,
+    "retrieve": -0.8017671864597543
+   },
+   "probabilities": {
+    "answer": 0.41509768770289807,
+    "retrieve": 0.38423104784969253
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": false,
+    "acquisitions": 0,
+    "advisor_accept_rate": 0.1554,
+    "advisor_agreement": 0.2835,
+    "advisor_asks": 5,
+    "below_required": 0,
+    "best_level": "verified",
+    "budget_left": 0.5151,
+    "call": "none",
+    "coverage": 0.6741,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 1,
+    "repeats": 6,
+    "retracted_dependencies": 0,
+    "retrievals": 3,
+    "steps_left": 7,
+    "time_left_seconds": -8.692,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "run_tool",
+    "acquire",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "stop",
+   "confidence": 0.5324888184804808,
+   "logits": {
+    "abstain": -0.052717025949218926,
+    "acquire": 0.13683993888751222,
+    "retrieve": 0.02115845745942485,
+    "run_tool": -0.17667473886022067,
+    "stop": 0.22123567622386991
+   },
+   "probabilities": {
+    "abstain": 0.4922481173717732,
+    "acquire": 0.5201126619376738,
+    "retrieve": 0.5031114976958008,
+    "run_tool": 0.474041780418376,
+    "stop": 0.5324888184804808
+   },
+   "signals": {
+    "accepted": 2,
+    "acquisition_allowed": true,
+    "acquisitions": 1,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.725,
+    "advisor_asks": 0,
+    "below_required": 0,
+    "best_level": "corroborated",
+    "budget_left": 0.6681,
+    "call": "refused",
+    "coverage": 0.1608,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 0,
+    "repeats": 4,
+    "retracted_dependencies": 1,
+    "retrievals": 5,
+    "steps_left": 7,
+    "time_left_seconds": 64.251,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire"
+   ],
+   "chosen": "retrieve",
+   "confidence": 0.4355614515303375,
+   "logits": {
+    "acquire": -0.5267876301824368,
+    "ask_advisor": -0.487945120230722,
+    "retrieve": -0.4406325633902466,
+    "run_tool": -0.5736240427772443
+   },
+   "probabilities": {
+    "acquire": 0.42314523155106915,
+    "ask_advisor": 0.4287319743212851,
+    "retrieve": 0.4355614515303375,
+    "run_tool": 0.41643489009495804
+   },
+   "signals": {
+    "accepted": 8,
+    "acquisition_allowed": false,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.3338,
+    "advisor_agreement": 0.3342,
+    "advisor_asks": 1,
+    "below_required": 0,
+    "best_level": "verified",
+    "budget_left": 0.5313,
+    "call": "none",
+    "coverage": 0.3425,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 3,
+    "pending_candidates": 2,
+    "repeats": 9,
+    "retracted_dependencies": 0,
+    "retrievals": 3,
+    "steps_left": 5,
+    "time_left_seconds": -19.347,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.46273332862491684,
+   "logits": {
+    "abstain": -1.087952589527558,
+    "acquire": -0.6194431433206107,
+    "answer": -0.4905747159538873,
+    "ask_user": -0.6306592178227862,
+    "retrieve": -0.7289093251252233,
+    "stop": -0.7038015332155861,
+    "verify": -0.2538841912704656
+   },
+   "probabilities": {
+    "abstain": 0.3452528436574054,
+    "acquire": 0.4099001129473979,
+    "answer": 0.4283531674099682,
+    "ask_user": 0.40830520409372845,
+    "retrieve": 0.39442003674674186,
+    "stop": 0.3979531690523041,
+    "verify": 0.46273332862491684
+   },
+   "signals": {
+    "accepted": 1,
+    "acquisition_allowed": false,
+    "acquisitions": 3,
+    "advisor_accept_rate": 0.5576,
+    "advisor_agreement": 0.1076,
+    "advisor_asks": 8,
+    "below_required": 0,
+    "best_level": "verified",
+    "budget_left": 0.9982,
+    "call": "refused",
+    "coverage": 0.8576,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 2,
+    "repeats": 7,
+    "retracted_dependencies": 1,
+    "retrievals": 4,
+    "steps_left": 12,
+    "time_left_seconds": 348.552,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "verify",
+    "ask_user"
+   ],
+   "chosen": "verify",
+   "confidence": 0.4847508501289518,
+   "logits": {
+    "ask_user": -0.3242507873475999,
+    "verify": -0.1037263873420322
+   },
+   "probabilities": {
+    "ask_user": 0.4524600990159059,
+    "verify": 0.4847508501289518
+   },
+   "signals": {
+    "accepted": 2,
+    "acquisition_allowed": false,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.2236,
+    "advisor_agreement": 0.936,
+    "advisor_asks": 4,
+    "below_required": 1,
+    "best_level": "reviewed",
+    "budget_left": 0.1483,
+    "call": "refused",
+    "coverage": 0.2209,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 1,
+    "repeats": 5,
+    "retracted_dependencies": 0,
+    "retrievals": 4,
+    "steps_left": 10,
+    "time_left_seconds": 19.705,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "answer",
+    "ask_user"
+   ],
+   "chosen": "answer",
+   "confidence": 0.5589029130848592,
+   "logits": {
+    "answer": 0.4024083183253455,
+    "ask_advisor": 0.14524637118802536,
+    "ask_user": 0.2767664191787979
+   },
+   "probabilities": {
+    "answer": 0.5589029130848592,
+    "ask_advisor": 0.5213467763954287,
+    "ask_user": 0.5406112831902792
+   },
+   "signals": {
+    "accepted": 5,
+    "acquisition_allowed": true,
+    "acquisitions": 5,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 4,
+    "below_required": 1,
+    "best_level": null,
+    "budget_left": 0.3704,
+    "call": "none",
+    "coverage": 0.6748,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 0,
+    "repeats": 8,
+    "retracted_dependencies": 1,
+    "retrievals": 2,
+    "steps_left": 13,
+    "time_left_seconds": 225.765,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "run_tool",
+    "verify",
+    "ask_user"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5101655594910247,
+   "logits": {
+    "ask_user": -0.20896506078909355,
+    "retrieve": -0.15023134415916284,
+    "run_tool": -0.4984068891476151,
+    "verify": 0.06913533138698946
+   },
+   "probabilities": {
+    "ask_user": 0.469308478683609,
+    "retrieve": 0.4779215218915712,
+    "run_tool": 0.42722540128530007,
+    "verify": 0.5101655594910247
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": true,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.6326,
+    "advisor_agreement": null,
+    "advisor_asks": 6,
+    "below_required": 0,
+    "best_level": "corroborated",
+    "budget_left": 0.8619,
+    "call": "none",
+    "coverage": 0.1012,
+    "fresh_since_retrieve": true,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 2,
+    "repeats": 4,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 13,
+    "time_left_seconds": 327.14,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "acquire",
+    "answer"
+   ],
+   "chosen": "answer",
+   "confidence": 0.39950336223561367,
+   "logits": {
+    "acquire": -0.9536184895156145,
+    "answer": -0.692809263979037
+   },
+   "probabilities": {
+    "acquire": 0.3633272017347005,
+    "answer": 0.39950336223561367
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": true,
+    "acquisitions": 2,
+    "advisor_accept_rate": 0.8122,
+    "advisor_agreement": 0.0418,
+    "advisor_asks": 6,
+    "below_required": 1,
+    "best_level": "verified",
+    "budget_left": 0.2623,
+    "call": "refused",
+    "coverage": 0.0742,
+    "fresh_since_retrieve": true,
+    "missing_slot": "drug",
+    "open_conflicts": 2,
+    "pending_candidates": 1,
+    "repeats": 0,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 4,
+    "time_left_seconds": 148.925,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "verify",
+    "abstain"
+   ],
+   "chosen": "verify",
+   "confidence": 0.4086156433978144,
+   "logits": {
+    "abstain": -1.252280218357352,
+    "verify": -0.6284750206049954
+   },
+   "probabilities": {
+    "abstain": 0.32374032192116614,
+    "verify": 0.4086156433978144
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": false,
+    "acquisitions": 4,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 2,
+    "below_required": 0,
+    "best_level": "verified",
+    "budget_left": 0.5726,
+    "call": "refused",
+    "coverage": 0.434,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 1,
+    "repeats": 3,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 9,
+    "time_left_seconds": 152.544,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "answer",
+    "stop"
+   ],
+   "chosen": "answer",
+   "confidence": 0.5215472655255659,
+   "logits": {
+    "answer": 0.1466122102971758,
+    "stop": -0.0775279999872111
+   },
+   "probabilities": {
+    "answer": 0.5215472655255659,
+    "stop": 0.4886007991240505
+   },
+   "signals": {
+    "accepted": 9,
+    "acquisition_allowed": true,
+    "acquisitions": 5,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 4,
+    "below_required": 0,
+    "best_level": "sourced",
+    "budget_left": 0.854,
+    "call": "legal",
+    "coverage": 0.9299,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 0,
+    "repeats": 0,
+    "retracted_dependencies": 0,
+    "retrievals": 0,
+    "steps_left": 7,
+    "time_left_seconds": 245.982,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "verify"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5199449176859658,
+   "logits": {
+    "ask_advisor": -0.45091624811287584,
+    "verify": 0.13569744470788725
+   },
+   "probabilities": {
+    "ask_advisor": 0.4340748473329608,
+    "verify": 0.5199449176859658
+   },
+   "signals": {
+    "accepted": 8,
+    "acquisition_allowed": true,
+    "acquisitions": 0,
+    "advisor_accept_rate": 0.8598,
+    "advisor_agreement": null,
+    "advisor_asks": 1,
+    "below_required": 2,
+    "best_level": null,
+    "budget_left": 0.1946,
+    "call": "refused",
+    "coverage": 0.9709,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 1,
+    "repeats": 9,
+    "retracted_dependencies": 1,
+    "retrievals": 4,
+    "steps_left": 1,
+    "time_left_seconds": 227.857,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5397163007582817,
+   "logits": {
+    "abstain": -0.35451853464639255,
+    "acquire": -0.1628580067545813,
+    "answer": 0.04759011565836807,
+    "ask_advisor": -0.4203408380112007,
+    "ask_user": -0.04922509964104825,
+    "run_tool": -0.4709684143447832,
+    "verify": 0.2706410126505759
+   },
+   "probabilities": {
+    "abstain": 0.44805304542624075,
+    "acquire": 0.47606859269752555,
+    "answer": 0.5069980894076723,
+    "ask_advisor": 0.43849818928817574,
+    "ask_user": 0.49276152050809535,
+    "run_tool": 0.4311795486049711,
+    "verify": 0.5397163007582817
+   },
+   "signals": {
+    "accepted": 2,
+    "acquisition_allowed": true,
+    "acquisitions": 1,
+    "advisor_accept_rate": 0.8377,
+    "advisor_agreement": null,
+    "advisor_asks": 4,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.3263,
+    "call": "refused",
+    "coverage": 0.7295,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 5,
+    "pending_candidates": 1,
+    "repeats": 2,
+    "retracted_dependencies": 1,
+    "retrievals": 4,
+    "steps_left": 7,
+    "time_left_seconds": 182.662,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "answer",
+    "ask_user",
+    "abstain"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.3427839196350346,
+   "logits": {
+    "abstain": -1.5177272782938602,
+    "acquire": -1.6135201477140662,
+    "answer": -1.3527211352552282,
+    "ask_advisor": -1.604363155252,
+    "ask_user": -1.1065513810971752,
+    "retrieve": -1.4848573595933576,
+    "run_tool": -1.6330932934417408
+   },
+   "probabilities": {
+    "abstain": 0.29053631135887475,
+    "acquire": 0.27905992052159734,
+    "answer": 0.3109421570452457,
+    "ask_advisor": 0.28014488788870595,
+    "ask_user": 0.3427839196350346,
+    "retrieve": 0.2945378700644425,
+    "run_tool": 0.27674945125888223
+   },
+   "signals": {
+    "accepted": 2,
+    "acquisition_allowed": true,
+    "acquisitions": 3,
+    "advisor_accept_rate": 0.2725,
+    "advisor_agreement": 0.2697,
+    "advisor_asks": 1,
+    "below_required": 0,
+    "best_level": "reviewed",
+    "budget_left": 0.071,
+    "call": "refused",
+    "coverage": 0.6821,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 3,
+    "pending_candidates": 0,
+    "repeats": 2,
+    "retracted_dependencies": 0,
+    "retrievals": 5,
+    "steps_left": 7,
+    "time_left_seconds": 145.266,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "run_tool",
+    "acquire",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "acquire",
+   "confidence": 0.5799848279814881,
+   "logits": {
+    "abstain": 0.03600034995774923,
+    "acquire": 0.5486088871141582,
+    "answer": 0.5405747091837755,
+    "ask_user": 0.2878200725923357,
+    "retrieve": 0.259778306358863,
+    "run_tool": 0.10581680753914524,
+    "stop": 0.41629141972384875
+   },
+   "probabilities": {
+    "abstain": 0.5052939712720773,
+    "acquire": 0.5799848279814881,
+    "answer": 0.5788331328670545,
+    "ask_user": 0.5422256646341921,
+    "retrieve": 0.5381285256217375,
+    "run_tool": 0.5155562728676033,
+    "stop": 0.560915232258015
+   },
+   "signals": {
+    "accepted": 1,
+    "acquisition_allowed": false,
+    "acquisitions": 0,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.0762,
+    "advisor_asks": 0,
+    "below_required": 2,
+    "best_level": null,
+    "budget_left": 0.1966,
+    "call": "none",
+    "coverage": 0.8062,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 2,
+    "repeats": 4,
+    "retracted_dependencies": 1,
+    "retrievals": 5,
+    "steps_left": 3,
+    "time_left_seconds": 209.253,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.48980650857334923,
+   "logits": {
+    "abstain": -0.45107938753483195,
+    "acquire": -0.4998205985116857,
+    "answer": -0.10293204489871494,
+    "ask_advisor": -0.2945442529234514,
+    "ask_user": -0.11203310612299533,
+    "retrieve": -0.24158895542571193,
+    "run_tool": -0.5215490328792423,
+    "stop": -0.3910163109745833,
+    "verify": -0.0693253473091776
+   },
+   "probabilities": {
+    "abstain": 0.434051273463856,
+    "acquire": 0.4270219194143666,
+    "answer": 0.48486755736849957,
+    "ask_advisor": 0.45679270305383596,
+    "ask_user": 0.4835305034408377,
+    "retrieve": 0.4645318839503266,
+    "run_tool": 0.4238975895700246,
+    "stop": 0.44274977817485417,
+    "verify": 0.48980650857334923
+   },
+   "signals": {
+    "accepted": 5,
+    "acquisition_allowed": true,
+    "acquisitions": 1,
+    "advisor_accept_rate": 0.7566,
+    "advisor_agreement": null,
+    "advisor_asks": 6,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.0815,
+    "call": "refused",
+    "coverage": 0.6293,
+    "fresh_since_retrieve": false,
+    "missing_slot": "drug",
+    "open_conflicts": 1,
+    "pending_candidates": 2,
+    "repeats": 7,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 0,
+    "time_left_seconds": 136.098,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5563117555422394,
+   "logits": {
+    "abstain": -0.40461830948209476,
+    "acquire": -0.011202468399179377,
+    "ask_advisor": -0.07497616638314933,
+    "ask_user": 0.37153292556541995,
+    "retrieve": -0.28388840598836546,
+    "run_tool": -0.35581845646495414,
+    "stop": -0.0174249885615943,
+    "verify": 0.38455136421401515
+   },
+   "probabilities": {
+    "abstain": 0.44077662320084504,
+    "acquire": 0.49835258413803285,
+    "ask_advisor": 0.48897588006649906,
+    "ask_user": 0.5544207563786998,
+    "retrieve": 0.45834845380192796,
+    "run_tool": 0.44786395139736795,
+    "stop": 0.49743752411705994,
+    "verify": 0.5563117555422394
+   },
+   "signals": {
+    "accepted": 6,
+    "acquisition_allowed": false,
+    "acquisitions": 5,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.5092,
+    "advisor_asks": 9,
+    "below_required": 1,
+    "best_level": null,
+    "budget_left": 0.0712,
+    "call": "refused",
+    "coverage": 0.5599,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 1,
+    "pending_candidates": 0,
+    "repeats": 4,
+    "retracted_dependencies": 0,
+    "retrievals": 0,
+    "steps_left": 5,
+    "time_left_seconds": 135.196,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.40873584746934266,
+   "logits": {
+    "abstain": -0.8914506415459088,
+    "acquire": -1.2209753960733472,
+    "answer": -0.8759153799657363,
+    "ask_advisor": -1.0813870807394115,
+    "ask_user": -0.6276294233866637,
+    "retrieve": -0.967452009060004,
+    "run_tool": -1.2057914224896438,
+    "verify": -0.6944386771157539
+   },
+   "probabilities": {
+    "abstain": 0.3718279771659679,
+    "acquire": 0.3277848904804482,
+    "answer": 0.37396493650241674,
+    "ask_advisor": 0.3461263970234565,
+    "ask_user": 0.40873584746934266,
+    "retrieve": 0.3614469636422063,
+    "run_tool": 0.3297559483052416,
+    "verify": 0.39927344504366563
+   },
+   "signals": {
+    "accepted": 8,
+    "acquisition_allowed": true,
+    "acquisitions": 4,
+    "advisor_accept_rate": 0.6858,
+    "advisor_agreement": null,
+    "advisor_asks": 7,
+    "below_required": 2,
+    "best_level": "reviewed",
+    "budget_left": 0.4939,
+    "call": "refused",
+    "coverage": 0.3728,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 0,
+    "repeats": 4,
+    "retracted_dependencies": 0,
+    "retrievals": 0,
+    "steps_left": 8,
+    "time_left_seconds": 287.251,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "verify",
+    "answer",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.38398704966569763,
+   "logits": {
+    "abstain": -1.231141518101964,
+    "answer": -0.8349648078899441,
+    "ask_advisor": -1.1444164372055088,
+    "stop": -1.1194639287461152,
+    "verify": -0.8035205709670556
+   },
+   "probabilities": {
+    "abstain": 0.32646858929372974,
+    "answer": 0.3796213357548066,
+    "ask_advisor": 0.3377837783778406,
+    "stop": 0.34107480478739777,
+    "verify": 0.38398704966569763
+   },
+   "signals": {
+    "accepted": 10,
+    "acquisition_allowed": false,
+    "acquisitions": 4,
+    "advisor_accept_rate": null,
+    "advisor_agreement": 0.0445,
+    "advisor_asks": 7,
+    "below_required": 2,
+    "best_level": "verified",
+    "budget_left": 0.6802,
+    "call": "legal",
+    "coverage": 0.9033,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 2,
+    "repeats": 6,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 2,
+    "time_left_seconds": 208.464,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire"
+   ],
+   "chosen": "acquire",
+   "confidence": 0.3778815797640889,
+   "logits": {
+    "acquire": -0.8475343121119047,
+    "ask_advisor": -1.075420008959469,
+    "run_tool": -0.919338104125285
+   },
+   "probabilities": {
+    "acquire": 0.3778815797640889,
+    "ask_advisor": 0.3469212284834973,
+    "run_tool": 0.36800449707874
+   },
+   "signals": {
+    "accepted": 1,
+    "acquisition_allowed": true,
+    "acquisitions": 0,
+    "advisor_accept_rate": 0.1388,
+    "advisor_agreement": 0.4348,
+    "advisor_asks": 5,
+    "below_required": 0,
+    "best_level": "reviewed",
+    "budget_left": 0.8828,
+    "call": "legal",
+    "coverage": 0.8732,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 3,
+    "pending_candidates": 0,
+    "repeats": 2,
+    "retracted_dependencies": 1,
+    "retrievals": 2,
+    "steps_left": 12,
+    "time_left_seconds": 124.379,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "verify",
+    "answer",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.5185800001970897,
+   "logits": {
+    "abstain": -0.12305376104185768,
+    "answer": 0.1069155159687496,
+    "ask_advisor": -0.09120728617399482,
+    "ask_user": 0.126402204266384,
+    "retrieve": 0.07155085125008864,
+    "run_tool": -0.024610669086540166,
+    "stop": -0.01238851106546257,
+    "verify": 0.04579445283597183
+   },
+   "probabilities": {
+    "abstain": 0.4819117557984759,
+    "answer": 0.5157176896053176,
+    "ask_advisor": 0.486590380239078,
+    "ask_user": 0.5185800001970897,
+    "retrieve": 0.5105206309786472,
+    "run_tool": 0.4963808471660234,
+    "stop": 0.49817816819988187,
+    "verify": 0.5067340711475997
+   },
+   "signals": {
+    "accepted": 8,
+    "acquisition_allowed": true,
+    "acquisitions": 0,
+    "advisor_accept_rate": 0.4555,
+    "advisor_agreement": null,
+    "advisor_asks": 6,
+    "below_required": 1,
+    "best_level": null,
+    "budget_left": 0.6586,
+    "call": "none",
+    "coverage": 0.0851,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 1,
+    "repeats": 9,
+    "retracted_dependencies": 0,
+    "retrievals": 3,
+    "steps_left": 12,
+    "time_left_seconds": 88.849,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "stop"
+   ],
+   "chosen": "acquire",
+   "confidence": 0.5266108955617828,
+   "logits": {
+    "acquire": 0.18112523516360368,
+    "ask_advisor": -0.11931909068241765,
+    "run_tool": 0.04264526498892063,
+    "stop": -0.005793695659053771
+   },
+   "probabilities": {
+    "acquire": 0.5266108955617828,
+    "ask_advisor": 0.48246027482361376,
+    "run_tool": 0.5062710336489189,
+    "stop": 0.49914798675715893
+   },
+   "signals": {
+    "accepted": 6,
+    "acquisition_allowed": false,
+    "acquisitions": 1,
+    "advisor_accept_rate": 0.4204,
+    "advisor_agreement": 0.5449,
+    "advisor_asks": 2,
+    "below_required": 1,
+    "best_level": null,
+    "budget_left": 0.9837,
+    "call": "none",
+    "coverage": 0.6414,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 0,
+    "repeats": 3,
+    "retracted_dependencies": 0,
+    "retrievals": 1,
+    "steps_left": 5,
+    "time_left_seconds": 211.066,
+    "tool_risk": 1
+   }
+  },
+  {
+   "candidates": [
+    "retrieve",
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "ask_user",
+    "abstain",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5218281737626592,
+   "logits": {
+    "abstain": -0.2166041732545444,
+    "acquire": -0.10350109561020264,
+    "ask_advisor": -0.2754678901609209,
+    "ask_user": -0.018707929355496394,
+    "retrieve": -0.17497983540737616,
+    "run_tool": -0.5301719614552245,
+    "stop": -0.16617725006427092,
+    "verify": 0.14852598699459607
+   },
+   "probabilities": {
+    "abstain": 0.4681894688330334,
+    "acquire": 0.4847839505160252,
+    "ask_advisor": 0.4595784230507627,
+    "ask_user": 0.4972488616824287,
+    "retrieve": 0.47429036552999243,
+    "run_tool": 0.4226593691434668,
+    "stop": 0.4755816098092796,
+    "verify": 0.5218281737626592
+   },
+   "signals": {
+    "accepted": 7,
+    "acquisition_allowed": false,
+    "acquisitions": 5,
+    "advisor_accept_rate": 0.2304,
+    "advisor_agreement": null,
+    "advisor_asks": 4,
+    "below_required": 0,
+    "best_level": null,
+    "budget_left": 0.1853,
+    "call": "refused",
+    "coverage": 0.8568,
+    "fresh_since_retrieve": true,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 1,
+    "repeats": 5,
+    "retracted_dependencies": 1,
+    "retrievals": 1,
+    "steps_left": 12,
+    "time_left_seconds": 44.126,
+    "tool_risk": 0
+   }
+  },
+  {
+   "candidates": [
+    "acquire",
+    "answer",
+    "ask_user",
+    "abstain"
+   ],
+   "chosen": "ask_user",
+   "confidence": 0.42267070250815497,
+   "logits": {
+    "abstain": -0.7308308167859904,
+    "acquire": -0.9187932193589204,
+    "answer": -0.6847427031182736,
+    "ask_user": -0.5300930057344724
+   },
+   "probabilities": {
+    "abstain": 0.39415009616527663,
+    "acquire": 0.36807904597695174,
+    "answer": 0.400642239292794,
+    "ask_user": 0.42267070250815497
+   },
+   "signals": {
+    "accepted": 11,
+    "acquisition_allowed": true,
+    "acquisitions": 4,
+    "advisor_accept_rate": 0.5424,
+    "advisor_agreement": null,
+    "advisor_asks": 3,
+    "below_required": 1,
+    "best_level": "sourced",
+    "budget_left": 0.9284,
+    "call": "refused",
+    "coverage": 0.6441,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 1,
+    "pending_candidates": 1,
+    "repeats": 8,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 0,
+    "time_left_seconds": 230.563,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "verify"
+   ],
+   "chosen": "verify",
+   "confidence": 0.4188392563088182,
+   "logits": {
+    "ask_advisor": -0.9433862145554327,
+    "run_tool": -0.863449550794486,
+    "verify": -0.5568182992829545
+   },
+   "probabilities": {
+    "ask_advisor": 0.3647206587900589,
+    "run_tool": 0.3756832460475064,
+    "verify": 0.4188392563088182
+   },
+   "signals": {
+    "accepted": 6,
+    "acquisition_allowed": true,
+    "acquisitions": 2,
+    "advisor_accept_rate": 0.622,
+    "advisor_agreement": 0.0594,
+    "advisor_asks": 9,
+    "below_required": 0,
+    "best_level": "sourced",
+    "budget_left": 0.2186,
+    "call": "legal",
+    "coverage": 0.5642,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 2,
+    "pending_candidates": 2,
+    "repeats": 5,
+    "retracted_dependencies": 1,
+    "retrievals": 3,
+    "steps_left": 6,
+    "time_left_seconds": 128.628,
+    "tool_risk": 3
+   }
+  },
+  {
+   "candidates": [
+    "acquire",
+    "verify",
+    "answer",
+    "ask_user",
+    "stop"
+   ],
+   "chosen": "verify",
+   "confidence": 0.5309293789501364,
+   "logits": {
+    "acquire": -0.10459999436990683,
+    "answer": 0.10082421032966443,
+    "ask_user": 0.02166046659066137,
+    "stop": -0.06462808422664457,
+    "verify": 0.21058865774705016
+   },
+   "probabilities": {
+    "acquire": 0.48462249901323406,
+    "answer": 0.5148227451148116,
+    "ask_user": 0.503185319640758,
+    "stop": 0.49049701445951865,
+    "verify": 0.5309293789501364
+   },
+   "signals": {
+    "accepted": 7,
+    "acquisition_allowed": true,
+    "acquisitions": 1,
+    "advisor_accept_rate": 0.9185,
+    "advisor_agreement": 0.905,
+    "advisor_asks": 8,
+    "below_required": 2,
+    "best_level": "sourced",
+    "budget_left": 1.0466,
+    "call": "none",
+    "coverage": 0.9543,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 0,
+    "pending_candidates": 1,
+    "repeats": 4,
+    "retracted_dependencies": 0,
+    "retrievals": 2,
+    "steps_left": 11,
+    "time_left_seconds": 136.776,
+    "tool_risk": 2
+   }
+  },
+  {
+   "candidates": [
+    "ask_advisor",
+    "run_tool",
+    "acquire",
+    "verify",
+    "answer",
+    "stop"
+   ],
+   "chosen": "answer",
+   "confidence": 0.4039134661679687,
+   "logits": {
+    "acquire": -0.8707548471174144,
+    "answer": -0.6616148147625038,
+    "ask_advisor": -1.0771256679626067,
+    "run_tool": -0.9752936776191189,
+    "stop": -0.9074815110354953,
+    "verify": -0.7887864228529571
+   },
+   "probabilities": {
+    "acquire": 0.37467588971969334,
+    "answer": 0.4039134661679687,
+    "ask_advisor": 0.3466939423197471,
+    "run_tool": 0.3603830095897475,
+    "stop": 0.36962808697762256,
+    "verify": 0.38603923562428905
+   },
+   "signals": {
+    "accepted": 0,
+    "acquisition_allowed": true,
+    "acquisitions": 3,
+    "advisor_accept_rate": null,
+    "advisor_agreement": null,
+    "advisor_asks": 8,
+    "below_required": 1,
+    "best_level": "corroborated",
+    "budget_left": 0.9348,
+    "call": "legal",
+    "coverage": 0.2388,
+    "fresh_since_retrieve": false,
+    "missing_slot": null,
+    "open_conflicts": 4,
+    "pending_candidates": 1,
+    "repeats": 5,
+    "retracted_dependencies": 1,
+    "retrievals": 5,
+    "steps_left": 1,
+    "time_left_seconds": 128.313,
+    "tool_risk": 2
+   }
+  }
+ ]
+}

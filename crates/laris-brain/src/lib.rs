@@ -8,6 +8,7 @@
 //! * [`tools`]: search, acquisition, metadata and quote verification, corroboration and checks, all feeding the gate.
 //! * [`dataset`]: decision examples from logs and scenarios, the sealed split and the text that may train ResearchLLM.
 //! * [`decide`]: the closed action set, the measured signals and the rule decider that chooses among them.
+//! * [`network`]: inference of the exported decision network, with the rule decider as the fallback.
 //! * [`seam`]: the adapter that puts a chooser behind the loop's `Decider` seam.
 //! * [`text`]: the rule check on statements that the gate and the answer check share.
 //!
@@ -19,6 +20,7 @@ pub mod audit;
 pub mod dataset;
 pub mod decide;
 pub mod gate;
+pub mod network;
 pub mod seam;
 pub mod text;
 pub mod tools;
