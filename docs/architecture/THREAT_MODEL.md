@@ -155,6 +155,10 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
   (exact test names per id; a renamed or missing test fails the run) and writes `reports/security/report.json`. Of the
   30 ids, 27 pass, `SEC-SUP-01` passes as **partial** (`cargo deny`, the guard and the scan run; release signing waits
   for T159) and none is deferred any more (`SEC-BRAIN-01` since T240, `SEC-DATA-03` since 2026-11-20, which runs the T168 dataset tests).
+  Since T243 the compose stack runs the pipeline (ADR-025 D56): the controls of 4.6 are active in the default
+  deployment, and `docker/smoke_test.sh` checks the Prefilter, a grounded answer, the free path and the abstention
+  through Caddy. Two limits stay: the gate and decider thresholds are untuned starting values, and the main brain
+  lives in the server's state volume, so its backup is the volume (not `docker/backup.sh`, which dumps PostgreSQL).
   A deferral to a task that is already done fails the suite. The PostgreSQL tests (`SEC-KEY-01`
   to `SEC-KEY-04`, `SEC-QUOTA-01`, part of `SEC-KEY-02` and `SEC-HTTP-02`) need `LARIS_TEST_PG_DSN`; without it they
   are reported `not_run` and the suite fails, unless `--without-postgres` is given. `SEC-DEP-01` and `SEC-NET-01` are

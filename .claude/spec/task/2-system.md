@@ -1810,7 +1810,8 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - The compose stack runs the full pipeline; the smoke test is extended (a covered question is answered without the model, an uncovered one abstains, a free question reaches the model); the cognitive evaluation (T172) is repeated through the server; runbook and threat model updated
 - Validation:
   - Smoke test passes; the report states system measurements only and no model qualification; the owner reviews
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 built, **not closed**. `docker/compose.yaml` now runs the pipeline by default (Prefilter on, grounding `optional`, rule decider on, compose-without-model on, main brain in `/state/brain`); every setting is a `LARIS_*` variable and the gate and decider thresholds are the untuned values of the tests. `docker/smoke_test.sh` gained five steps (Prefilter refusal without the model; brain seeded through the write gate; covered question answered from the brain with server evidence and no model stage; free question reaches the model; with grounding `required` an uncovered question abstains, the script restarts the server for it) and **passed** with the placeholder backend (mechanics only). `scripts/server_eval.py` repeats the T172 questions through the server and writes a report; it has **not been run** (it needs Qwen on the GPU, which means restarting the owner's `laris-qwen` stack). RUNBOOK and THREAT_MODEL updated. Open: the real-model run in both grounding modes, `reports/server/T243-*.json`, and the owner's review. D56 holds: the pipeline is on by default only because the smoke test passed; the model stays NOT QUALIFIED.
 
 ## Phase 48 — Client fixes found in use
 
