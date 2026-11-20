@@ -1886,3 +1886,20 @@ access plus a guard for dangerous commands"; the guard list lives in configurati
   - Mode tests: auto allows writes and commands, asks for each default guard, deny still wins, an allow rule overrides the guard, a user `autoAsk` replaces the default list, `default` still asks; the default mode is `auto`; `cargo fmt --check`, `clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-20 built. `PermissionMode::Auto` (`"auto"`) is the `#[default]` of the settings; `Permissions` gained `autoAsk` (camelCase; its default list is `laris_config::settings::default_auto_ask`, a settings default like the other ones, replaced whole by a list in the settings). The engine allows a state-changing call in `auto` after deny, plan, `ask` and `allow` rules, unless an `autoAsk` rule fits any command of the line (then `Ask`, reason "auto mode asks for <rule>"); with nobody to answer (headless) that ask becomes `approval_denied`. Shift+Tab cycles `auto`, `default`, `acceptEdits`, `plan`, (`bypass`). A `bypass` refused by the policy still falls back to `default`, not `auto`. Protocol `Mode::Auto`, headless `--permission-mode auto`, `/mode auto`, catalogue (en, vi), CLIENT guide, SR-H5, settings and protocol schemas regenerated. Tests that are about the approval flow now choose `default` explicitly (policy `common::asking()`, the interactive rig's `LARIS_PERMISSIONS__DEFAULT_MODE=default`, the server support); new tests: `modes.rs` (auto default, auto allows, each guard asks, deny wins and an allow passes the guard, own guard list), `headless.rs` (auto write runs, guarded `git push` refused without an answerer), `interactive.rs` (auto write with no prompt). `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace` (123 test binaries ok; `laris-brain/tests/cognition.rs` failed once in the first run and passed in the two later full runs, not identified), `cargo deny check`, `cargo xtask schema --check` pass. Limits: the guard is a pattern list over command text, not a sandbox: a destructive command spelled differently (a script, an alias, `find -delete`) is not caught; the OS sandbox (SR-H6) and folder scope stay the boundary. Not tried on Windows.
+
+## Phase 51 — Client interface refresh
+
+Owner's direction 2026-11-20: make the client interface like the familiar terminal assistants and add their default informational commands.
+
+### T250 — Client interface and default slash commands
+- Requirements: SR-C1, SR-C2
+- Depends: T249
+- Deliverables:
+  - Input box drawn as two horizontal rules with a `>` prompt (no side borders or corners); banner of two lines (name and version, folder); status line without mode, branch and sandbox; pipeline stage notices hidden unless a stage fails
+  - `/quit` removed (`/exit` stays)
+  - `Metered` model wrapper and `Meter`: token use of the session, an `usage` event after each answer (the status line's `context N%`)
+  - `/usage` (session tokens and the key's used, limit, left from `GET /v1/laris/account`), `/context`, `/model` (lists `GET /v1/models`), `/config`, `/export [file]`; catalogue (en, vi) and client guide updated
+- Validation:
+  - Snapshot, interface and controller tests; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`
+- Status: done
+- Note: 2026-11-20 built. `/model` only lists the server's models: the named model family, the banner's model and the role switch stay with T245-T247. `/copy` is not built (it needs clipboard access the client does not have).

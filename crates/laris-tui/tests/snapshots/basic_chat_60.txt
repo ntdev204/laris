@@ -1,16 +1,14 @@
 ──── step 0 ────
 ✻ Laris v2.0.0
-  laris.example · default
   /work/demo
 
-╭──────────────────────────────────────────────────────────╮
-│ > Type a message, or / for commands                      │
-╰──────────────────────────────────────────────────────────╯
- laris-base · default · context 15% · develop
+────────────────────────────────────────────────────────────
+> Type a message, or / for commands
+────────────────────────────────────────────────────────────
+ laris-base · context 15% · 750 tokens left
  shift+enter for a new line · ctrl+c twice to exit
 ──── step 1 ────
 ✻ Laris v2.0.0
-  laris.example · default
   /work/demo
 
 > hello
@@ -26,9 +24,9 @@
   │ for i in range(3):
   │     print(i)  # count
 
-╭──────────────────────────────────────────────────────────╮
-│ > Type a message, or / for commands                      │
-╰──────────────────────────────────────────────────────────╯
- laris-base · default · context 19% · develop
+────────────────────────────────────────────────────────────
+> Type a message, or / for commands
+────────────────────────────────────────────────────────────
+ laris-base · context 19% · 500 tokens left
  shift+enter for a new line · ctrl+c twice to exit
 ──── basic_chat @ 60 ────

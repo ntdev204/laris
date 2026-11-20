@@ -367,10 +367,7 @@ fn the_box_grows_with_the_text_and_keeps_the_cursor_inside_it() {
     );
     let (row, col) = layout.cursor.unwrap();
     let line = layout.live[row].text();
-    assert_eq!(
-        &line[..line.char_indices().nth(col).unwrap().0],
-        "│   third"
-    );
+    assert_eq!(&line[..line.char_indices().nth(col).unwrap().0], "  third");
     // a very long unbroken line wraps by columns and stays inside the box
     a.update(Input::Paste("x".repeat(200)));
     for line in a.layout(60).live {

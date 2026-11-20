@@ -793,7 +793,15 @@ impl App {
         };
         let last = menu.items.len().saturating_sub(1);
         match key {
-            Key::Tab | Key::Down => {
+            // Tab takes the highlighted suggestion; the arrows move the highlight; Enter is not used here, it sends.
+            Key::Tab => {
+                if let Some(menu) = self.menu.take()
+                    && let Some(item) = menu.items.get(menu.selected)
+                {
+                    self.accept(&item.value.clone(), menu.trigger, menu.start);
+                }
+            }
+            Key::Down => {
                 menu.selected = if menu.selected >= last {
                     0
                 } else {
@@ -806,13 +814,6 @@ impl App {
                 } else {
                     menu.selected - 1
                 };
-            }
-            Key::Enter => {
-                if let Some(menu) = self.menu.take()
-                    && let Some(item) = menu.items.get(menu.selected)
-                {
-                    self.accept(&item.value.clone(), menu.trigger, menu.start);
-                }
             }
             Key::Esc => {
                 self.menu = None;
@@ -862,7 +863,7 @@ impl App {
         {
             let (name, args) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
             match name {
-                "exit" | "quit" => {
+                "exit" => {
                     self.quit = true;
                     return vec![Command::Shutdown {}];
                 }
@@ -1035,9 +1036,8 @@ impl App {
                 "pipeline" => {
                     let stage = data.get("stage").and_then(Value::as_str).unwrap_or("");
                     let failed = data.get("outcome").and_then(Value::as_str) == Some("error");
-                    if !stage.is_empty()
-                        && data.get("outcome").and_then(Value::as_str) != Some("skipped")
-                    {
+                    // the working stages (checking, deciding, asking) stay out of the client; only a failed one shows
+                    if !stage.is_empty() && failed {
                         let key = match stage {
                             "prefilter" | "retrieval" | "decider" | "model" | "gate"
                             | "assembly" => {

@@ -12,12 +12,10 @@
  enter to sign in · esc to leave
 ──── step 3 ────
 ✻ Laris v2.1.0
-  laris.internal:8443 · default
   /work/demo
 
-╭──────────────────────────────────────────────────────────╮
-│ > Type a message, or / for commands                      │
-╰──────────────────────────────────────────────────────────╯
- default
+────────────────────────────────────────────────────────────
+> Type a message, or / for commands
+────────────────────────────────────────────────────────────
  shift+enter for a new line · ctrl+c twice to exit
 ──── login_trust @ 60 ────

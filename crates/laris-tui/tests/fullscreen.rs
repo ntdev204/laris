@@ -142,7 +142,7 @@ fn the_header_is_on_top_and_the_input_and_status_are_fixed_at_the_bottom() {
     show(&mut screen, &mut window, &app);
     let text = window.text();
     assert!(text[0].contains("Laris"), "header: {text:?}");
-    assert!(text[2].contains("/work"), "header: {text:?}");
+    assert!(text[1].contains("/work"), "header: {text:?}");
     let last = text.len() - 1;
     assert!(
         !text[last].is_empty(),

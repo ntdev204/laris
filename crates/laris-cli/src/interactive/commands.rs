@@ -13,13 +13,17 @@ use std::fs;
 use std::path::Path;
 
 /// The built-in commands: name and the catalogue key of its description.
-pub const BUILTIN: [(&str, &str); 9] = [
+pub const BUILTIN: [(&str, &str); 13] = [
     ("help", "commands.help"),
     ("clear", "commands.clear"),
     ("exit", "commands.exit"),
-    ("quit", "commands.quit"),
     ("mode", "commands.mode"),
     ("status", "commands.status"),
+    ("usage", "commands.usage"),
+    ("context", "commands.context"),
+    ("model", "commands.model"),
+    ("config", "commands.config"),
+    ("export", "commands.export"),
     ("rewind", "commands.rewind"),
     ("login", "commands.login"),
     ("logout", "commands.logout"),

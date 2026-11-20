@@ -6,6 +6,7 @@
 
 use super::commands::{CommandSet, expand};
 use super::files;
+use super::meter::Meter;
 use crate::headless::args::mode_of;
 use crate::headless::real::SharedRegistry;
 use laris_config::Catalogue;
@@ -25,6 +26,10 @@ const BANG_KEEP: usize = 8000;
 
 /// Where events go.
 pub type Emit = Rc<dyn Fn(Event)>;
+
+/// Asks the server for a JSON answer: the path after `/v1` (`/laris/account`, `/models`). `Err` is a message for the
+/// person.
+pub type Remote = Rc<dyn Fn(&str) -> Result<Value, String>>;
 
 /// What a front needs besides the loop.
 pub struct Wiring {
@@ -50,6 +55,10 @@ pub struct Wiring {
     pub sandbox: bool,
     /// Where events go.
     pub emit: Emit,
+    /// What the session has used (`/context`, `/usage`).
+    pub meter: Meter,
+    /// How `/usage` and `/model` ask the server.
+    pub remote: Remote,
 }
 
 /// The session behind the interface.
@@ -333,7 +342,12 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
                 self.done();
             }
             "rewind" => self.rewind(args),
-            "login" | "logout" | "exit" | "quit" | "clear" => {
+            "usage" => self.usage(),
+            "context" => self.context_command(),
+            "model" => self.model_command(),
+            "config" => self.config_command(),
+            "export" => self.export(args),
+            "login" | "logout" | "exit" | "clear" => {
                 // the interface and the loop around the session answer these; one that reaches here is a mistake
                 self.error(
                     "command_failed",
@@ -350,6 +364,189 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
                     self.text("commands.unknown", &[("name", other)]),
                 ),
             },
+        }
+    }
+
+    /// Answers a command with plain text.
+    fn show(&self, text: String) {
+        self.emit(Event::Text {
+            delta: format!("{text}\n"),
+        });
+        self.done();
+    }
+
+    fn usage(&mut self) {
+        let t = self.w.meter.tally();
+        let mut out = self.text(
+            "commands.usage_session",
+            &[
+                ("prompt", &t.prompt.to_string()),
+                ("completion", &t.completion.to_string()),
+                ("total", &(t.prompt + t.completion).to_string()),
+                ("requests", &t.requests.to_string()),
+            ],
+        );
+        match (self.w.remote)("/laris/account") {
+            Ok(account) => {
+                let number = |key: &str| account.get(key).and_then(Value::as_u64);
+                let show = |n: Option<u64>| {
+                    n.map_or_else(|| self.text("commands.unlimited", &[]), |n| n.to_string())
+                };
+                out.push('\n');
+                out.push_str(
+                    &self.text(
+                        "commands.usage_account",
+                        &[
+                            (
+                                "role",
+                                account.get("role").and_then(Value::as_str).unwrap_or("?"),
+                            ),
+                            (
+                                "used",
+                                &number("tokens_used")
+                                    .map_or_else(|| "?".to_owned(), |n| n.to_string()),
+                            ),
+                            ("limit", &show(number("token_limit"))),
+                            ("left", &show(number("tokens_left"))),
+                        ],
+                    ),
+                );
+            }
+            Err(detail) => {
+                out.push('\n');
+                out.push_str(&self.text("commands.remote_failed", &[("detail", &detail)]));
+            }
+        }
+        self.show(out);
+    }
+
+    fn context_command(&mut self) {
+        let t = self.w.meter.tally();
+        if t.requests == 0 {
+            let text = self.text(
+                "commands.context_none",
+                &[("window", &self.w.meter.window.to_string())],
+            );
+            self.show(text);
+            return;
+        }
+        let window = self.w.meter.window.max(1);
+        let percent = (t.context * 100 / window).min(100);
+        let filled = usize::try_from(percent / 5).unwrap_or(20).min(20);
+        let bar = format!("{}{}", "█".repeat(filled), "░".repeat(20 - filled));
+        let compact = (self.w.meter.threshold * 100.0).round();
+        let text = self.text(
+            "commands.context_line",
+            &[
+                ("bar", &bar),
+                ("percent", &percent.to_string()),
+                ("tokens", &t.context.to_string()),
+                ("window", &window.to_string()),
+                ("compact", &format!("{compact:.0}")),
+            ],
+        );
+        self.show(text);
+    }
+
+    fn model_command(&mut self) {
+        match (self.w.remote)("/models") {
+            Ok(list) => {
+                let names: Vec<&str> = list
+                    .get("data")
+                    .and_then(Value::as_array)
+                    .map(|a| {
+                        a.iter()
+                            .filter_map(|m| m.get("id").and_then(Value::as_str))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let text = if names.is_empty() {
+                    self.text("commands.model_none", &[])
+                } else {
+                    self.text("commands.model_list", &[("list", &names.join(", "))])
+                };
+                self.show(text);
+            }
+            Err(detail) => self.error(
+                "command_failed",
+                self.text("commands.remote_failed", &[("detail", &detail)]),
+            ),
+        }
+    }
+
+    fn config_command(&mut self) {
+        let text = self.text(
+            "commands.config_line",
+            &[
+                ("server", &self.w.server),
+                ("project", &self.w.project.display().to_string()),
+                ("mode", mode_name(self.w.engine.mode())),
+                ("sandbox", if self.w.sandbox { "on" } else { "off" }),
+                ("window", &self.w.meter.window.to_string()),
+                ("compact", &format!("{:.0}", self.w.meter.threshold * 100.0)),
+                ("session", &self.w.session),
+            ],
+        );
+        self.show(text);
+    }
+
+    /// `/export [file]`: the conversation as Markdown, by default in `exports/<session>.md` next to the project's
+    /// notes file.
+    fn export(&mut self, args: &str) {
+        use laris_protocol::chat::{Content, Role};
+        let mut out = String::new();
+        for message in self.driver.recorder().session().messages() {
+            let who = match message.role {
+                Role::System => continue,
+                Role::User => "User",
+                Role::Assistant => "Laris",
+                Role::Tool => "Tool",
+            };
+            let body = match &message.content {
+                Some(Content::Text(t)) => t.clone(),
+                Some(Content::Parts(parts)) => parts
+                    .iter()
+                    .filter_map(|p| p.get("text").and_then(Value::as_str))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                None => String::new(),
+            };
+            if body.trim().is_empty() {
+                continue;
+            }
+            out.push_str(&format!("## {who}\n\n{}\n\n", body.trim()));
+        }
+        if out.is_empty() {
+            self.notice(self.text("commands.export_none", &[]));
+            self.done();
+            return;
+        }
+        let path = match args.trim() {
+            "" => self
+                .w
+                .note_file
+                .parent()
+                .unwrap_or(&self.w.project)
+                .join("exports")
+                .join(format!("{}.md", self.w.session)),
+            name => self.w.project.join(name),
+        };
+        let written = path
+            .parent()
+            .map_or(Ok(()), std::fs::create_dir_all)
+            .and_then(|()| std::fs::write(&path, out));
+        match written {
+            Ok(()) => {
+                self.notice(self.text(
+                    "commands.exported",
+                    &[("file", &path.display().to_string())],
+                ));
+                self.done();
+            }
+            Err(e) => self.error(
+                "command_failed",
+                self.text("commands.export_failed", &[("detail", &e.to_string())]),
+            ),
         }
     }
 

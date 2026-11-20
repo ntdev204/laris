@@ -83,40 +83,17 @@ fn banner(app: &App, width: usize) -> Vec<Line> {
         return Vec::new();
     };
     let theme = app.theme;
-    // three plain lines, as the other terminal assistants show them:
+    // two plain lines, as the other terminal assistants show them:
     //   ✻ Laris v1.0.1
-    //     server · mode
     //     ~/folder
     let mut title = Line::styled("✻ ", theme.accent());
     title.push("Laris", theme.accent());
     title.push(format!(" v{}", clean(&info.engine)), theme.dim());
-    let place = server_host(&clean(&info.server));
-    let second = app.text(
-        "ui.banner_line",
-        &[("server", &place), ("mode", &clean(&info.mode))],
-    );
-    let second = if place.is_empty() {
-        clean(&info.mode)
-    } else {
-        second
-    };
     let cwd = middle(&clean(&info.cwd), width.saturating_sub(2).max(10));
     vec![
         truncate(&title, width),
-        truncate(&Line::styled(format!("  {second}"), theme.dim()), width),
         truncate(&Line::styled(format!("  {cwd}"), theme.dim()), width),
     ]
-}
-
-/// The server address as a person says it: no scheme, no `/v1`.
-fn server_host(address: &str) -> String {
-    let rest = address
-        .strip_prefix("https://")
-        .or_else(|| address.strip_prefix("http://"))
-        .unwrap_or(address);
-    rest.trim_end_matches('/')
-        .trim_end_matches("/v1")
-        .to_owned()
 }
 
 fn short_value(value: &Value) -> String {
@@ -545,8 +522,7 @@ fn spinner_line(app: &App, width: usize) -> Line {
 fn input_box(app: &App, width: usize) -> (Vec<Line>, (usize, usize)) {
     let theme = app.theme;
     let width = width.max(12);
-    let inner = width - 4;
-    let text_cols = inner - 2;
+    let text_cols = width - 2;
     let searching = app.search.as_ref().map(|search| {
         let mut shown = crate::input::InputBuffer::new();
         if let Some(entry) = search.found.and_then(|i| app.input.history().get(i)) {
@@ -558,10 +534,7 @@ fn input_box(app: &App, width: usize) -> (Vec<Line>, (usize, usize)) {
     let (rows, (cursor_row, cursor_col)) = source.rows(text_cols);
     let first_visible = (cursor_row + 1).saturating_sub(BOX_ROWS);
     let shown: Vec<&String> = rows.iter().skip(first_visible).take(BOX_ROWS).collect();
-    let mut lines = vec![Line::styled(
-        format!("╭{}╮", "─".repeat(width - 2)),
-        theme.border(),
-    )];
+    let mut lines = vec![Line::styled("─".repeat(width), theme.border())];
     for (i, row) in shown.iter().enumerate() {
         let lead = if first_visible + i == 0 { "> " } else { "  " };
         let mut body = if source.is_empty() && i == 0 {
@@ -573,17 +546,12 @@ fn input_box(app: &App, width: usize) -> (Vec<Line>, (usize, usize)) {
             Line::plain((*row).clone())
         };
         body.pad(text_cols);
-        let mut line = Line::styled("│ ", theme.border());
-        line.push(lead, theme.dim());
+        let mut line = Line::styled(lead, theme.dim());
         line.0.extend(body.0);
-        line.push(" │", theme.border());
         lines.push(line);
     }
-    lines.push(Line::styled(
-        format!("╰{}╯", "─".repeat(width - 2)),
-        theme.border(),
-    ));
-    let col = 2 + 2 + cursor_col;
+    lines.push(Line::styled("─".repeat(width), theme.border()));
+    let col = 2 + cursor_col;
     (lines, (1 + cursor_row - first_visible, col))
 }
 
@@ -602,9 +570,6 @@ fn status_line(app: &App, width: usize) -> Option<Line> {
     if let Some(model) = text("model") {
         parts.push(model);
     }
-    if let Some(mode) = text("mode").or_else(|| app.info.as_ref().map(|i| clean(&i.mode))) {
-        parts.push(mode);
-    }
     let context = app
         .usage
         .filter(|&(_, window)| window > 0)
@@ -617,14 +582,8 @@ fn status_line(app: &App, width: usize) -> Option<Line> {
     if let Some(percent) = context {
         parts.push(app.text("ui.context", &[("percent", &percent.to_string())]));
     }
-    if let Some(branch) = text("branch") {
-        parts.push(branch);
-    }
     if let Some(left) = get("tokens_left").and_then(Value::as_u64) {
         parts.push(app.text("ui.tokens_left", &[("count", &left.to_string())]));
-    }
-    if let Some(state) = text("sandbox") {
-        parts.push(app.text("ui.sandbox", &[("state", &state)]));
     }
     if app.queued > 0 {
         parts.push(app.text("ui.queued", &[("count", &app.queued.to_string())]));

@@ -3,7 +3,8 @@
 
 use super::commands::CommandSet;
 use super::control::{Controller, Starter};
-use super::front::{Front, Wiring};
+use super::front::{Front, Remote, Wiring};
+use super::meter::{Meter, Metered};
 use super::worker::{Handle, spawn};
 use crate::headless::args::{Format, Options, Resume};
 use crate::headless::real::build;
@@ -130,9 +131,18 @@ pub fn start_real(
             .map_err(|e| format!("cannot open the session {id}: {e}"))?;
         let words = Catalogue::new(started.settings.ui.language);
         let decider = FollowModel::new(started.settings.agent.clone(), words).with_gate(built.gate);
+        let meter = Meter::new(
+            started.settings.context.window_tokens,
+            started.settings.context.compact_threshold,
+        );
+        let remote: Remote = {
+            let settings = started.settings.server.clone();
+            let key = key.clone();
+            std::rc::Rc::new(move |path: &str| remote_get(&settings, &key, path))
+        };
         let driver = Driver::new(
             recorder,
-            built.model,
+            Metered::new(built.model, meter.clone(), std::rc::Rc::clone(&ports.emit)),
             built.tools,
             decider,
             built.schemas,
@@ -159,9 +169,26 @@ pub fn start_real(
                 waiting: ports.waiting,
                 sandbox,
                 emit: ports.emit,
+                meter,
+                remote,
             },
         ))
     })
+}
+
+/// `GET /v1<path>` as JSON, for `/usage` and `/model`.
+fn remote_get(
+    server: &laris_config::settings::Server,
+    key: &ApiKey,
+    path: &str,
+) -> Result<serde_json::Value, String> {
+    let client = crate::login::connect(server, key, true).map_err(|e| e.to_string())?;
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|e| e.to_string())?
+        .block_on(client.get_json::<serde_json::Value>(path, &laris_model_client::Interrupt::new()))
+        .map_err(|e| e.to_string())
 }
 
 fn wants_colour(env: &[(String, String)]) -> bool {

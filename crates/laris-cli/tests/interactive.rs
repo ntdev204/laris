@@ -206,12 +206,17 @@ fn scripted_handle(
         let id = format!("test-{}-{}", std::process::id(), rand_id());
         let (recorder, _) =
             Recorder::open(store, &id, "interactive", 1.0).map_err(|e| e.to_string())?;
+        let meter = laris_cli::interactive::meter::Meter::new(1000, 0.8);
         let driver = Driver::new(
             recorder,
-            Watching {
-                inner: ScriptedModel::new(answers),
-                users,
-            },
+            laris_cli::interactive::meter::Metered::new(
+                Watching {
+                    inner: ScriptedModel::new(answers),
+                    users,
+                },
+                meter.clone(),
+                Rc::clone(&ports.emit),
+            ),
             registry.clone(),
             decider,
             schemas,
@@ -237,6 +242,8 @@ fn scripted_handle(
                 waiting: ports.waiting,
                 sandbox: false,
                 emit: ports.emit,
+                meter,
+                remote: std::rc::Rc::new(|_| Err("no server in a test".to_owned())),
             },
         ))
     })
@@ -318,8 +325,6 @@ fn a_message_runs_a_turn_and_the_answer_reaches_the_screen() {
     assert!(text.contains("> what is the answer?"), "{text}");
     assert!(text.contains("● The answer is 42."), "{text}");
     assert_eq!(users.lock().unwrap().as_slice(), ["what is the answer?"]);
-    // the status line says the mode
-    assert!(text.contains("default"), "{text}");
 }
 
 #[test]
@@ -990,4 +995,63 @@ fn a_huge_command_file_and_a_huge_attachment_are_left_out() {
     let (text, notes) = files::attach(&ctx.scope, "read @big.txt");
     assert_eq!(text, "read @big.txt");
     assert!(notes.is_empty());
+}
+
+#[test]
+fn context_usage_model_config_and_export_answer_from_what_the_session_knows() {
+    let rig = Rig::signed_in("commands");
+    let counted = ModelAnswer {
+        text: "Forty-two.".to_owned(),
+        usage: Some(laris_protocol::Usage {
+            prompt_tokens: 150,
+            completion_tokens: 50,
+            total_tokens: 200,
+            ..Default::default()
+        }),
+        ..ModelAnswer::default()
+    };
+    let (mut c, _users) = controller(&rig, vec![counted]);
+    ready(&mut c);
+    send(&mut c, "/context");
+    idle(&mut c);
+    assert!(screen(&c).contains("No answer yet"), "{}", screen(&c));
+    send(&mut c, "/export");
+    idle(&mut c);
+    assert!(screen(&c).contains("Nothing to export"), "{}", screen(&c));
+    send(&mut c, "what is the answer?");
+    idle(&mut c);
+    // the status line follows the usage event: 200 of 1000 tokens
+    assert!(screen(&c).contains("context 20%"), "{}", screen(&c));
+    send(&mut c, "/context");
+    idle(&mut c);
+    assert!(
+        screen(&c).contains("200 / 1000 tokens (compacts at 80%)"),
+        "{}",
+        screen(&c)
+    );
+    send(&mut c, "/usage");
+    idle(&mut c);
+    let text = screen(&c);
+    assert!(
+        text.contains("150 prompt + 50 answer = 200 tokens in 1 requests"),
+        "{text}"
+    );
+    assert!(text.contains("Cannot ask the server"), "{text}");
+    send(&mut c, "/model");
+    idle(&mut c);
+    assert!(
+        screen(&c).contains("Cannot ask the server"),
+        "{}",
+        screen(&c)
+    );
+    send(&mut c, "/config");
+    idle(&mut c);
+    assert!(
+        screen(&c).contains("context window 1000 tokens"),
+        "{}",
+        screen(&c)
+    );
+    send(&mut c, "/export");
+    idle(&mut c);
+    assert!(screen(&c).contains("Saved to"), "{}", screen(&c));
 }

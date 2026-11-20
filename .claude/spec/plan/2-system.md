@@ -125,3 +125,9 @@ Tasks: T249
 Exit criteria:
 - `auto` exists in every place a mode is named, is the default, and is covered by mode tests; the guard list is configuration.
 
+
+### Phase 51 — Client interface refresh
+Goal: the client looks and works like the familiar terminal assistants: a plain input box, a quiet status line, no internal stages, and the usual informational slash commands.
+Tasks: T250
+Exit criteria:
+- The input box is two rules and a `>` prompt; the banner is two lines; the status line shows model, context and tokens left; pipeline stages are hidden unless one fails; `/quit` is gone; `/usage`, `/context`, `/model`, `/config` and `/export` exist and are covered by tests; the status line's context figure comes from real usage.
