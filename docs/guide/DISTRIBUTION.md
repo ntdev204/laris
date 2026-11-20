@@ -29,7 +29,7 @@ curl -fsSL <release address>/latest/install.sh | sh
 # Windows (PowerShell)
 irm <release address>/latest/install.ps1 | iex
 # anywhere with Node 18 or later
-npm install -g laris
+npm install -g @ntdev204/laris
 ```
 
 Every route does the same checks before it puts anything in place: it downloads `SHA256SUMS`, `SHA256SUMS.sig` and the

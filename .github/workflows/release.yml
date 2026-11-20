@@ -102,6 +102,7 @@ jobs:
           version=$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
           [ -n "$version" ] || { echo "no workspace version"; exit 1; }
           awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          gh release view "$version" >/dev/null 2>&1 && echo "release $version exists: kept" || \
           gh release create "$version" --target "${{ github.sha }}" --title "LARIS $version" --notes-file notes.md --latest \
             out/laris-* out/SHA256SUMS out/SHA256SUMS.sig out/installers/install.sh out/installers/install.ps1
           echo "VERSION=$version" >> "$GITHUB_ENV"

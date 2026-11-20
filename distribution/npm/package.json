@@ -1,5 +1,5 @@
 {
-  "name": "laris",
+  "name": "@ntdev204/laris",
   "version": "__LARIS_VERSION__",
   "description": "LARIS command-line client (thin wrapper: downloads, verifies and runs the native binary)",
   "license": "Apache-2.0",
