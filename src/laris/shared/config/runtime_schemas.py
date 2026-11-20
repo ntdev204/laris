@@ -208,6 +208,11 @@ class ModelServiceConfig(BaseModel):
     model_name: str = Field(default="laris-core")  # reported when a backend is configured
     placeholder_name: str = Field(default="laris-placeholder")  # reported by the placeholder
     backend: str = Field(default="")  # package.module:ClassName; empty selects the placeholder
+    chat_model_id: str = Field(default="")  # open-weight chat model (Hugging Face id or local dir)
+    chat_quantization: str = Field(default="8bit", pattern="^(none|8bit|4bit)$")
+    chat_max_new_tokens: int = Field(default=1024, ge=1)  # most tokens one reply may generate
+    chat_thinking: bool = Field(default=False)  # let the model reason before it answers
+    chat_temperature: float = Field(default=0.0, ge=0.0)  # 0 is greedy decoding
     checkpoint: str = Field(default="")  # encoder checkpoint for /v1/embeddings
     tokenizer_model: str = Field(default="")  # SentencePiece model for that checkpoint
     device: str = Field(default="")  # cuda or cpu; empty selects automatically
