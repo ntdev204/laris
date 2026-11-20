@@ -24,24 +24,6 @@ from laris.research.reasoning.benchmark import (
     ConflictEvaluationBenchmark,
     ContradictionBenchmarkCase,
 )
-from laris.research.reasoning.calibration import (
-    BENCHMARK_VERSION,
-    EXIT_GATE_MACRO_F1_THRESHOLD,
-    SCIENTIFIC_NLI_BENCHMARK_FIXTURES,
-    SCIENTIFIC_NLI_TEST_FIXTURES,
-    SCIENTIFIC_NLI_TRAIN_FIXTURES,
-    SCIENTIFIC_NLI_VAL_FIXTURES,
-    BenchmarkNLIPair,
-    BenchmarkSplit,
-    NLICalibrationMetrics,
-    NLICalibrationReport,
-    NLIFailureDiagnostic,
-    NLIFailureType,
-    SplitIsolationReport,
-    classify_failure_type,
-    evaluate_nli_calibration,
-    verify_nli_split_isolation,
-)
 from laris.research.reasoning.conflict_detector import ConditionAwareConflictDetector
 from laris.research.reasoning.discourse import (
     CAUSAL_CUES,
@@ -61,11 +43,6 @@ from laris.research.reasoning.gap_evaluation import (
 )
 from laris.research.reasoning.gap_scorer import CalibratedGapScoringEngine
 from laris.research.reasoning.matrix_engine import ComparativeMatrixEngine
-from laris.research.reasoning.nli_engine import (
-    DIRECT_NEGATIONS,
-    SCIENTIFIC_OPPOSITES,
-    DeterministicScientificNLIEngine,
-)
 from laris.research.reasoning.nli_schemas import (
     LN_3,
     PROBABILITY_SUM_TOLERANCE,
@@ -106,9 +83,6 @@ from laris.research.reasoning.schemas import (
     StudyFinding,
     ValidationPlan,
 )
-
-# Canonical aliases
-ScientificNLIEngine = DeterministicScientificNLIEngine
 
 __all__ = [
     # Gap & Matrix Reasoning
@@ -151,10 +125,6 @@ __all__ = [
     "NLIPairBatch",
     "NLIOutputBatch",
     "NLIEngineContract",
-    "DeterministicScientificNLIEngine",
-    "ScientificNLIEngine",
-    "SCIENTIFIC_OPPOSITES",
-    "DIRECT_NEGATIONS",
     "PROBABILITY_SUM_TOLERANCE",
     "LN_3",
     "EquivalenceStatus",
@@ -174,20 +144,4 @@ __all__ = [
     "DiscourseGraphEdge",
     "DiscourseGraph",
     "ScientificDiscourseParser",
-    "BENCHMARK_VERSION",
-    "EXIT_GATE_MACRO_F1_THRESHOLD",
-    "BenchmarkNLIPair",
-    "BenchmarkSplit",
-    "SCIENTIFIC_NLI_BENCHMARK_FIXTURES",
-    "SCIENTIFIC_NLI_TEST_FIXTURES",
-    "SCIENTIFIC_NLI_TRAIN_FIXTURES",
-    "SCIENTIFIC_NLI_VAL_FIXTURES",
-    "NLICalibrationMetrics",
-    "NLICalibrationReport",
-    "NLIFailureDiagnostic",
-    "NLIFailureType",
-    "SplitIsolationReport",
-    "classify_failure_type",
-    "evaluate_nli_calibration",
-    "verify_nli_split_isolation",
 ]

@@ -1,6 +1,5 @@
 """Contract tests for centralized configuration system.
 
-Adheres to DOC-SPEC-TRAIN-001, ADR-001, ADR-002, ADR-005, and Issue #215.
 Tests:
 - All canonical YAML configurations in configs/ conform to LarisConfig schemas
 - Error contracts: FileNotFoundError on missing file, ModuleContractViolationError on bad syntax
@@ -31,11 +30,7 @@ class TestConfigContracts:
 
         assert loaded.config_version == expected.config_version
         assert loaded.environment == expected.environment
-        assert loaded.model.d_model == expected.model.d_model
-        assert loaded.model.vocab_size == expected.model.vocab_size
-        assert loaded.training.batch_size == expected.training.batch_size
-        assert loaded.data.train_ratio == expected.data.train_ratio
-        assert loaded.hardware.max_vram_gb == expected.hardware.max_vram_gb
+        assert loaded == expected
 
     def test_all_canonical_configs_validate(self) -> None:
         """Verifies all YAML files in configs/ parse cleanly against LarisConfig."""
@@ -44,12 +39,11 @@ class TestConfigContracts:
             for f in CONFIGS_DIR.rglob("*.yaml")
             if not {"evaluation", "prompts"} & set(f.relative_to(CONFIGS_DIR).parts)
         ]
-        assert len(yaml_files) >= 4, "Expected at least 4 canonical YAML configs"
+        assert yaml_files, "Expected at least the default YAML config"
 
         for yaml_path in yaml_files:
             cfg = load_config(yaml_path)
             assert isinstance(cfg, LarisConfig)
-            assert cfg.hardware.max_vram_gb <= 14.5
 
     def test_missing_file_raises_filenotfound(self) -> None:
         """Verifies nonexistent config path raises FileNotFoundError."""
@@ -59,7 +53,7 @@ class TestConfigContracts:
     def test_malformed_yaml_raises_contract_violation(self, tmp_path: Path) -> None:
         """Verifies corrupt YAML raises ModuleContractViolationError."""
         bad_file = tmp_path / "corrupt.yaml"
-        bad_file.write_text("model:\n  d_model: [unclosed list\n")
+        bad_file.write_text("agent:\n  max_steps: [unclosed list\n")
 
         with pytest.raises(ModuleContractViolationError, match="Malformed YAML"):
             load_config(bad_file)

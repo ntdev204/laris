@@ -1,4 +1,4 @@
-# The model service (P2): Python code and the `model` extra only. Weights, tokenizer and checkpoints are mounted
+# The model service (P2): Python code and the `model` extra only. Weights are mounted
 # read-only at run time; with none configured the service runs the scripted placeholder backend.
 FROM python:3.12-slim AS build
 WORKDIR /src

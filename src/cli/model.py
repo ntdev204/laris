@@ -1,8 +1,7 @@
-"""`laris-model`: the model block. `laris-model serve` runs the model service (protocol P2);
-`laris-model infer ...` runs single-example predictions on a checkpoint; `data`, `train` and
-`evaluate` are the owner-only research tooling (moved from `laris-server` on `laris-v2`).
+"""`laris-model`: the model block. `laris-model serve` runs the model service (protocol P2).
 
-Host, port, backend and checkpoint come from the `model_service` configuration; flags override it.
+Host, port and backend come from the `model_service` configuration; flags override it. The
+self-trained encoder and its training, evaluation and data tooling were removed in T233 (D48).
 """
 
 import argparse
@@ -10,36 +9,9 @@ import sys
 from pathlib import Path
 from typing import Optional, Sequence
 
-from cli.commands import (
-    calibrate,
-    check,
-    evaluate,
-    infer,
-    language_encoder,
-    partition,
-    readiness,
-    tokenizer,
-)
-from cli.parser import Table, run
-from laris.research.corpus.acquisition import runner as acquisition
+from cli.parser import Table
 
-COMMANDS: Table = {
-    "data": {
-        "acquire": ("Download and verify datasets", acquisition),
-        "partition": ("Physically partition raw datasets (zero training)", partition),
-        "check": ("Verify processed data and tooling before training", check),
-    },
-    "train": {
-        "tokenizer": ("Fit the SentencePiece tokenizer", tokenizer),
-        "language-encoder": ("Train or profile the language encoder", language_encoder),
-    },
-    "evaluate": {
-        "readiness": ("Audit existing reports against formal stage gates (no model)", readiness),
-        "language-encoder": ("Score a checkpoint on the val/test split", evaluate),
-        "calibrate": ("Tighten thresholds from measured val reports", calibrate),
-    },
-    "infer": {name: (f"Run {name} on a checkpoint", cmd) for name, cmd in infer.COMMANDS.items()},
-}
+COMMANDS: Table = {}
 
 
 def _serve_parser() -> argparse.ArgumentParser:
@@ -50,9 +22,6 @@ def _serve_parser() -> argparse.ArgumentParser:
     parser.add_argument("--port", type=int, default=None, help="Port (config: model_service.port)")
     parser.add_argument("--model-name", default=None, help="Name reported by /v1/models")
     parser.add_argument("--backend", default=None, help="package.module:ClassName ChatProvider")
-    parser.add_argument("--checkpoint", default=None, help="Encoder checkpoint for /v1/embeddings")
-    parser.add_argument("--tokenizer-model", default=None, help="SentencePiece .model")
-    parser.add_argument("--device", default=None, help="cuda or cpu (default: auto)")
     return parser
 
 
@@ -61,7 +30,7 @@ def serve(argv: Sequence[str]) -> int:
     import uvicorn
 
     from laris.model.app import create_app
-    from laris.model.service import ModelService, build_embedder, build_queue
+    from laris.model.service import ModelService, build_queue
     from laris.model.tools import Limits, ToolBox
     from laris.shared.backend import load_backend
     from laris.shared.config.loader import load_runtime_config
@@ -70,24 +39,19 @@ def serve(argv: Sequence[str]) -> int:
     spec = args.backend or cfg.backend
     backend = load_backend(spec or None)
     name = args.model_name or (cfg.model_name if spec else cfg.placeholder_name)
-    embedder = build_embedder(
-        args.checkpoint or cfg.checkpoint,
-        args.tokenizer_model or cfg.tokenizer_model,
-        args.device or cfg.device,
-    )
-    queue = build_queue(backend, embedder, cfg)
+    queue = build_queue(backend, cfg)
     app = create_app(
         ModelService(
             backend,
             name,
-            embedder,
+            None,
             queue,
             ToolBox(Limits(cfg.tool_max_chars, cfg.tool_max_documents)),
         ),
         cfg.max_body_bytes,
     )
     host, port = args.host or cfg.host, args.port or cfg.port
-    kind = "custom backend" if spec else "PLACEHOLDER backend (no trained core model)"
+    kind = "custom backend" if spec else "PLACEHOLDER backend (no chat model configured)"
     print(f"LARIS model service on http://{host}:{port}/v1  model={name}  [{kind}]", flush=True)
     uvicorn.run(app, host=host, port=port, log_level="warning")
     return 0
@@ -97,7 +61,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     items = list(sys.argv[1:] if argv is None else argv)
     if items[:1] == ["serve"]:
         return serve(items[1:])
-    return run(COMMANDS, "laris-model", items, interactive=False)
+    print("usage: laris-model serve [--host H] [--port P] [--model-name N] [--backend M:C]")
+    return 2
 
 
 if __name__ == "__main__":

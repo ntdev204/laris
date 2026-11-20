@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **English stage-1 data (T175):** `configs/data/english_sources.yaml` lists 32 English sources (MLM text, NLI, similarity, paraphrase, QA, retrieval); `python -m ... --english-all` acquires them with resume, SHA-256 and row counts; `scripts/check_sts_leakage.py` drops extra similarity pairs that touch STS-B validation or test.
 - **Withdrawn gates (T176):** a gate with `status: withdrawn` and `withdrawn_by` stays listed in `configs/evaluation/foundation.yaml` and is reported as `WITHDRAWN`, never as passed.
 
+### Removed
+- **Self-trained model (T233, D48):** the encoder, tokenizer, training, evaluation and calibration code, the corpus acquisition and partition pipeline, their `laris-model train|evaluate|infer|data` commands, configs, owner runbooks (`docs/training/`), dry-run scripts and tests. Kept: measured reports, `learning` export, the model service (`laris-model serve`, scientific and scholarly tools, GPU queue), `shared.retrieval` without the encoder-backed benchmark. The `model`, `training`, `data` and `hardware` sections of `LarisConfig` and the `checkpoint`, `tokenizer_model` and `embed_vram_bytes` keys of `model_service` are gone, as are the `tokenizer` and `training` extras; `/v1/embeddings` answers an error until an embedder is supplied. The foundation model is NOT QUALIFIED and no model is qualified.
+
 ### Changed
 - **Stage 1 is English only (D46, ADR-022):** gates G02, G08, G09, G11 are withdrawn, G12 is English STEM retrieval; the dataset, budget, benchmark, strategy, gold and runbook documents are amended or marked historical.
 

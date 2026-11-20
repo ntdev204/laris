@@ -41,9 +41,9 @@ In accordance with [ADR-008](../adr/ADR-008-evaluation-before-capability-claims.
 | `BENCH-PROVENANCE-01`| Coordinate Validity | Percentage of claims linked to valid source coordinates; semantic support needs a separate audit. | 100.0% Exact Match |
 | `BENCH-HARDWARE-01` | Local Workstation Resource Safety | Peak VRAM on RTX 5070 Ti, Peak Host RAM. | Peak VRAM $\le 15.0$ GB |
 
-Foundation qualification requires every gate and exact metric protocol in
-[`foundation.yaml`](../../configs/evaluation/foundation.yaml) and section 5 of the
-[training specification](../specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md).
+The self-trained foundation model, its 12 gates and its evaluation configuration were removed in T233
+(D48); the open-weight ResearchLLM is not qualified by any gate here. The text below that names those
+gates is kept as history.
 This suite summary is not a replacement for those 12 gates. The baseline-relative
-floors in `language_encoder.yaml` serve regression checks only. Synthetic fixture
+floors of the removed encoder evaluation config served regression checks only. Synthetic fixture
 scores and the historical six-query pilot cannot certify held-out effectiveness.

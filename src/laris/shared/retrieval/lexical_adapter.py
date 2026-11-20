@@ -3,7 +3,7 @@
 Adheres to DOC-SPEC-MOD-001 (Boundary F), ADR-001, ADR-004, and ADR-010:
 - Deterministic Okapi BM25 scoring with Robertson-Spärck Jones IDF
 - Full metadata filtering and evidence coordinate provenance retention
-- Pluggable scientific tokenizer with regex fallback
+- Pluggable pre-tokenizer with regex fallback
 - Pure Python offline execution without external search engine daemons
 """
 
@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional
 
 from laris.shared.core.errors import ModuleContractViolationError
 from laris.shared.core.schemas import EvidenceCoordinate
-from laris.shared.language.tokenization.tokenizer import ScientificTokenizer
 from laris.shared.retrieval.interfaces import BaseRetrievalAdapter
+from laris.shared.retrieval.plugins import Pretokenizer
 from laris.shared.retrieval.schemas import (
     RetrievalCandidate,
     RetrievalChannel,
@@ -49,7 +49,7 @@ class LexicalBM25Adapter(BaseRetrievalAdapter):
         self,
         k1: float = 1.5,
         b: float = 0.75,
-        tokenizer: Optional[ScientificTokenizer] = None,
+        tokenizer: Optional[Pretokenizer] = None,
         max_index_size: int = 100000,
     ) -> None:
         if k1 < 0.0:
@@ -87,7 +87,7 @@ class LexicalBM25Adapter(BaseRetrievalAdapter):
         return item_id in self._documents
 
     def _tokenize(self, text: str) -> List[str]:
-        """Tokenizes text using scientific tokenizer or regex fallback."""
+        """Tokenizes text using the plugged pre-tokenizer or a regex fallback."""
         if self.tokenizer is not None:
             return [t.lower() for t in self.tokenizer.pre_tokenize(text)]
         return [t.lower() for t in re.findall(r"\w+|[^\s\w]", text) if t.strip()]

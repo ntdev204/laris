@@ -11,7 +11,6 @@ reviewers: []
 source_of_truth: true
 related_documents:
   - "docs/adr/ADR-020-researchllm.md"
-  - "docs/specifications/LANGUAGE_ENCODER_TRAINING_SPECIFICATION.md"
 decision_references:
   - "ADR-020"
   - "ADR-008"
@@ -50,7 +49,7 @@ exposure that the English tasks, which sit furthest from their gates, also need.
 ### 3.1 Progress (2026-11-14)
 | Area | State |
 |---|---|
-| Gates | Done in T173 (training specification 3.1.0) and T176 (`configs/evaluation/foundation.yaml` 1.1.0, readiness reports `WITHDRAWN`). |
+| Gates | Done in T173 (training specification 3.1.0) and T176 (the foundation evaluation config 1.1.0, readiness reports `WITHDRAWN`). |
 | Data | The owner asked for replacement data of at least 20 GB covering the task cases; T175 acquired it (`configs/data/english_sources.yaml`, `DATASET_SPECIFICATION.md` section 2.1). Sources with a non-commercial or undeclared licence are `NEEDS_LICENSE_REVIEW` until the owner records approval. |
 | Held-out sets | STS-B leakage check built (`scripts/check_sts_leakage.py`); an English STEM gold for G12 is still open. |
 | Tokenizer, retraining | Pending: partition and wiring (T177), then the owner's fit and run. |

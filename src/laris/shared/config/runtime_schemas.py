@@ -213,13 +213,10 @@ class ModelServiceConfig(BaseModel):
     chat_max_new_tokens: int = Field(default=1024, ge=1)  # most tokens one reply may generate
     chat_thinking: bool = Field(default=False)  # let the model reason before it answers
     chat_temperature: float = Field(default=0.0, ge=0.0)  # 0 is greedy decoding
-    checkpoint: str = Field(default="")  # encoder checkpoint for /v1/embeddings
-    tokenizer_model: str = Field(default="")  # SentencePiece model for that checkpoint
     device: str = Field(default="")  # cuda or cpu; empty selects automatically
     vram_budget_bytes: int = Field(default=15_569_256_448, ge=1)  # 14.5 GiB: the hard ceiling
     vram_margin_bytes: int = Field(default=1_610_612_736, ge=0)  # kept free below the ceiling
     chat_vram_bytes: int = Field(default=1_048_576, ge=1)  # declared size of the chat model
-    embed_vram_bytes: int = Field(default=1_048_576, ge=1)  # declared size of the encoder
     gpu_workers: int = Field(default=1, ge=1)  # jobs running on the GPU at the same time
     queue_max_waiting: int = Field(default=64, ge=1)  # beyond this, requests get 503
     queue_wait_timeout_s: float = Field(default=60.0, gt=0.0)  # waiting longer gives 504

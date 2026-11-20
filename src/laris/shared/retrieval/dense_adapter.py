@@ -2,7 +2,7 @@
 
 Adheres to DOC-SPEC-MOD-001 (Boundary F), ADR-002, ADR-004, and ADR-010:
 - Compact vector similarity search with unit L2 normalized cosine distance
-- Optional integration with BaseSentenceEncoder for on-the-fly query encoding
+- Optional integration with SentenceEmbedder for on-the-fly query encoding
 - Strict dimension verification and error semantics (EmbeddingDimensionMismatchError)
 - Metadata filtering and first-class provenance coordinate propagation
 """
@@ -18,8 +18,8 @@ from laris.shared.core.errors import (
     ModuleContractViolationError,
 )
 from laris.shared.core.schemas import EvidenceCoordinate
-from laris.shared.language.encoder.sentence_encoder import BaseSentenceEncoder
 from laris.shared.retrieval.interfaces import BaseRetrievalAdapter
+from laris.shared.retrieval.plugins import SentenceEmbedder
 from laris.shared.retrieval.schemas import (
     RetrievalCandidate,
     RetrievalChannel,
@@ -49,7 +49,7 @@ class DenseVectorAdapter(BaseRetrievalAdapter):
 
     def __init__(
         self,
-        encoder: Optional[BaseSentenceEncoder] = None,
+        encoder: Optional[SentenceEmbedder] = None,
         expected_dim: Optional[int] = None,
     ) -> None:
         self.encoder = encoder

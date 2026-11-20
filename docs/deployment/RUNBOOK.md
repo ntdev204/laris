@@ -1,18 +1,36 @@
+---
+document_id: "DOC-DEPLOY-RUNBOOK-001"
+title: "Deployment runbook"
+document_type: "architecture"
+status: "DRAFT"
+version: "0.1.0"
+created_at: "2026-11-19"
+updated_at: "2026-11-20"
+owner: "LARIS Architecture Team"
+reviewers: []
+source_of_truth: true
+related_documents:
+  - "docs/adr/ADR-021-rust-generation.md"
+decision_references:
+  - "ADR-021"
+change_summary: "Front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
+---
+
 # Deployment runbook (SR-S8)
 
 One machine runs four containers from `docker/compose.yaml`: **Caddy** (the only one that publishes ports),
 **laris-server** (static, non-root Rust API), the **model service** (Python, P2) and **PostgreSQL**. The server,
 model and database sit on an internal network with no route out.
 
-The placeholder backend answers chat until a qualified model exists. A green smoke test proves the mechanics of the
-stack, not a capability: the foundation model is NOT QUALIFIED.
+The placeholder backend answers chat until a chat model is configured (`model_service.backend`). A green smoke test
+proves the mechanics of the stack, not a capability: no model is qualified.
 
 ## What is where
 
 | Thing | Where | How it reaches the container |
 |---|---|---|
 | Policy (`.laris/`) | the repository | bind mount, read-only; the server refuses to start if it differs from `integrity.toml` |
-| Weights, tokenizer | `LARIS_MODELS_DIR` (default `artifacts/weights`) | bind mount, read-only |
+| Weights | `LARIS_MODELS_DIR` (default `artifacts/weights`) | bind mount, read-only |
 | Master secret, database URL, database password | `docker/secrets/*` (git-ignored) | Docker secrets (files, never environment) |
 | First admin key | volume `server_state`, file `first_admin_key` | written once at the first start |
 | TLS authority and certificates | volume `caddy_data` | **never remove it** |
@@ -25,16 +43,17 @@ Images hold code only: `docker/verify-images.sh` fails if one holds policy, weig
 ```sh
 docker/init-secrets.sh                    # once; never overwrites
 export LARIS_DOMAIN=host.example.org      # or localhost / an IP address (Caddy's own authority)
-export LARIS_MODELS_DIR=/path/to/models   # optional: encoder checkpoint and tokenizer, read-only
+export LARIS_MODELS_DIR=/path/to/models   # optional: chat model weights, read-only
 docker compose -f docker/compose.yaml up -d --build --wait
 docker/verify-images.sh
 docker compose -f docker/compose.yaml cp server:/state/first_admin_key -   # the first admin key, shown once
 ```
 
 Ports default to 80 and 443; set `LARIS_HTTP_PORT` and `LARIS_HTTPS_PORT` to move them (the trial server uses 18080
-and 18443). To serve the trained encoder set `LARIS_MODEL_CHECKPOINT` and `LARIS_MODEL_TOKENIZER` to paths under
-`/weights` (for example `/weights/compact-1024-04/best` and `/weights/tokenizer.model`). A GPU needs a compose
-override that reserves the device; none is shipped because the placeholder runs on CPU.
+and 18443). To serve an open-weight chat model set `LARIS_MODEL_BACKEND` to
+`laris.model.inference.open_llm:OpenWeightChat` and `LARIS_MODEL_SERVICE__CHAT_MODEL_ID` to a path under `/weights`
+(the image installs only the `model` extra, so the `chat` extra would have to be added first; see T231). A GPU needs
+a compose override that reserves the device; none is shipped because the placeholder runs on CPU.
 
 ## Smoke test
 

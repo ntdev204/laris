@@ -1,6 +1,6 @@
 #!/bin/sh
 # Smoke test of the whole stack through Caddy, with curl only (the client is not needed):
-# build, start, health, an admin key, a user key, one chat answer, one embed call, an account, one trace, and
+# build, start, health, an admin key, a user key, one chat answer, an account, one trace, and
 # the rule that only Caddy publishes ports.
 #   docker/smoke_test.sh [--keep]
 # --keep leaves the stack running (default: remove the smoke project and its own volumes; the trial
