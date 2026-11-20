@@ -115,9 +115,16 @@ Every stage is off by default; with all of them off the chat route is the policy
 | :--- | :--- |
 | `LARIS_SERVER__PIPELINE_PREFILTER` | `true` runs the Prefilter rules (`.laris/prefilter.toml`) on the latest user message; a hit is the answer and the model is not called |
 | `LARIS_SERVER__PIPELINE_GROUNDING` | `off`, `optional` (answer from passages when there are some, else a free answer) or `required` (no passages, no answer) |
-| `LARIS_SERVER__PIPELINE_VAULT` | the vault retrieval reads; required when grounding is on; an unreadable vault is reported as a skipped stage, never as a grounded answer |
+| `LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS` | most characters of main-brain passages one answer may carry (6144) |
 | `LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS` | largest buffered draft (65536); a longer one is an error, not a truncation |
 | `LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS` | longest one model call inside the pipeline (120000) |
+
+Grounding reads the **main brain**, one shared vault on the server: `LARIS_SERVER__MAIN_BRAIN_DIR` plus the five gate
+thresholds `LARIS_SERVER__MAIN_BRAIN_MIN_SUPPORT`, `_MIN_EQUIVALENCE`, `_SUBJECT_OVERLAP` (0 to 1), `_SEARCH_DEPTH` and
+`_MAX_BYTES`, which have no defaults. Only the write gate writes it, through admin routes that need `brain.manage`:
+`POST /v1/admin/brain/sources` (title, kind, identifier, text, metadata), `POST /v1/admin/brain/claims` (statement,
+source, quote, requested level, evidence) and `POST /v1/admin/brain/retract` (title, reason). A caller needs `brain.read`
+(default on for `user`) to have an answer grounded in it. No route returns a note.
 
 Attempts, passages and the abstention texts are the owner's policy in `.laris/harness.toml`. Each stage and its time
 are in the trace row (`stages`, `GET /v1/admin/traces`), never the message. The database needs migration 0003, which

@@ -27,6 +27,10 @@ pub mod perm {
     pub const TRACES_READ: &str = "traces.read";
     /// Create, revoke and limit keys.
     pub const KEYS_MANAGE: &str = "keys.manage";
+    /// Let the request pipeline ground an answer in the main brain (ADR-025 D50).
+    pub const BRAIN_READ: &str = "brain.read";
+    /// Ingest Sources and Claims into the main brain through its write gate, and retract Sources.
+    pub const BRAIN_MANAGE: &str = "brain.manage";
 }
 
 /// A role table that cannot be used.
@@ -56,6 +60,7 @@ impl Default for Roles {
             "workflows",
             "help",
             "account",
+            "brain.read",
         ];
         let mut roles = BTreeMap::new();
         roles.insert("user".to_string(), set(&user));
@@ -73,6 +78,7 @@ impl Default for Roles {
             "reasoning.read",
             "traces.read",
             "keys.manage",
+            "brain.manage",
         ]));
         roles.insert("admin".to_string(), admin);
         Self {
@@ -83,6 +89,7 @@ impl Default for Roles {
                 "reasoning.read",
                 "traces.read",
                 "keys.manage",
+                "brain.manage",
             ]),
         }
     }

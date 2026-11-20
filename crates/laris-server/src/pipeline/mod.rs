@@ -22,24 +22,22 @@
 
 mod adapter;
 
-use crate::backend::{Backend, ChunkStream, StreamFailure};
+use crate::backend::{Backend, Caller, ChunkStream, StreamFailure};
 use crate::config::ConfigError;
 use crate::error::ApiError;
+use crate::mainbrain::MainBrain;
 use futures_util::future::BoxFuture;
 use futures_util::{StreamExt, stream};
 use laris_core::{Model, ModelRequest};
 use laris_policy::{
     Ending, HarnessConfig, HarnessModel, NoTurnSink, Outcome, Passage, PassageSource, Prefilter,
-    Redactor, Shield, VaultSource, latest_user_message,
+    Redactor, Shield, latest_user_message,
 };
 use laris_protocol::chat::{FinishReason, Usage};
 use laris_protocol::p1::{ChatRequest, ChatResponseChunk, Kind, LarisMeta};
 use laris_protocol::p2::{ChunkChoice, ChunkDelta, ChunkObject};
-use laris_retrieval::{Scorer, VaultPassages};
-use laris_vault::VaultIndex;
 use serde_json::{Map, Value, json};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -64,8 +62,9 @@ pub struct PipelineConfig {
     pub prefilter: bool,
     /// Retrieval and harness (`LARIS_SERVER__PIPELINE_GROUNDING`: `off`, `optional` or `required`).
     pub grounding: Grounding,
-    /// The vault retrieval reads (`LARIS_SERVER__PIPELINE_VAULT`).
-    pub vault: Option<PathBuf>,
+    /// Most characters of main-brain passages one answer may carry (`LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS`):
+    /// the budget that keeps a prompt from reading the brain out one answer at a time (TM-33).
+    pub max_evidence_chars: usize,
     /// Longest draft the server buffers, in characters (`LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS`).
     pub max_draft_chars: usize,
     /// Longest one call to the model may take inside the pipeline (`LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS`).
@@ -77,7 +76,7 @@ impl Default for PipelineConfig {
         Self {
             prefilter: false,
             grounding: Grounding::Off,
-            vault: None,
+            max_evidence_chars: 6 * 1024,
             max_draft_chars: 64 * 1024,
             stage_timeout: Duration::from_secs(120),
         }
@@ -121,7 +120,6 @@ impl PipelineConfig {
                 }
             };
         }
-        cfg.vault = get("LARIS_SERVER__PIPELINE_VAULT").map(PathBuf::from);
         let number = |name: &'static str| -> Result<Option<u64>, ConfigError> {
             match get(name) {
                 None => Ok(None),
@@ -134,11 +132,11 @@ impl PipelineConfig {
         if let Some(n) = number("LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS")? {
             cfg.max_draft_chars = usize::try_from(n).unwrap_or(usize::MAX);
         }
+        if let Some(n) = number("LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS")? {
+            cfg.max_evidence_chars = usize::try_from(n).unwrap_or(usize::MAX);
+        }
         if let Some(n) = number("LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS")? {
             cfg.stage_timeout = Duration::from_millis(n);
-        }
-        if cfg.grounding != Grounding::Off && cfg.vault.is_none() {
-            return Err(ConfigError::Missing("LARIS_SERVER__PIPELINE_VAULT"));
         }
         Ok(cfg)
     }
@@ -153,6 +151,9 @@ pub enum PipelineError {
     /// Grounding is on but `.laris/harness.toml` is not there (fail closed).
     #[error("grounding is on but .laris/harness.toml is missing")]
     NoHarness,
+    /// Grounding is on but there is no main brain to read (`LARIS_SERVER__MAIN_BRAIN_DIR`).
+    #[error("grounding is on but no main brain is configured")]
+    NoBrain,
 }
 
 /// The passages of one turn, found before the harness runs; the harness takes them as its source.
@@ -192,7 +193,7 @@ struct Inner {
     backend: Arc<dyn Backend>,
     prefilter: Option<Arc<Prefilter>>,
     harness: Option<HarnessConfig>,
-    source: Option<Arc<VaultSource>>,
+    brain: Option<Arc<MainBrain>>,
     shield: Arc<Shield>,
     config: PipelineConfig,
 }
@@ -211,6 +212,7 @@ impl Pipeline {
         config: PipelineConfig,
         prefilter: Option<Arc<Prefilter>>,
         harness: Option<HarnessConfig>,
+        brain: Option<Arc<MainBrain>>,
     ) -> Result<Self, PipelineError> {
         if config.prefilter && prefilter.is_none() {
             return Err(PipelineError::NoPrefilter);
@@ -218,17 +220,15 @@ impl Pipeline {
         if config.grounding != Grounding::Off && harness.is_none() {
             return Err(PipelineError::NoHarness);
         }
-        let source = (config.grounding != Grounding::Off)
-            .then_some(config.vault.as_deref())
-            .flatten()
-            .and_then(|root| VaultIndex::build(root, None).ok())
-            .map(|index| Arc::new(VaultSource::new(VaultPassages::new(&index), Scorer::Fused)));
+        if config.grounding != Grounding::Off && brain.is_none() {
+            return Err(PipelineError::NoBrain);
+        }
         Ok(Self {
             inner: Arc::new(Inner {
                 backend,
                 prefilter: config.prefilter.then_some(prefilter).flatten(),
                 harness,
-                source,
+                brain,
                 shield: Arc::new(Shield::new(Arc::new(Redactor::standard()))),
                 config,
             }),
@@ -243,14 +243,29 @@ impl Backend for Pipeline {
 
     fn chat_for(
         &self,
-        mut request: ChatRequest,
+        request: ChatRequest,
         caller: Option<&str>,
+    ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        // a caller the HTTP layer did not describe is a server without keys: it may read the brain
+        self.chat_as(
+            request,
+            &Caller {
+                key_id: caller.map(str::to_owned),
+                brain_read: true,
+            },
+        )
+    }
+
+    fn chat_as(
+        &self,
+        mut request: ChatRequest,
+        caller: &Caller,
     ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
         for key in SERVER_ONLY_KEYS {
             request.laris.extra.remove(key);
         }
         let this = self.inner.clone();
-        let caller = caller.map(str::to_owned);
+        let caller = caller.clone();
         Box::pin(async move { run(this, request, caller).await })
     }
 
@@ -353,11 +368,9 @@ fn ready(chunks: Vec<ChatResponseChunk>) -> ChunkStream {
     stream::iter(chunks.into_iter().map(Ok)).boxed()
 }
 
-async fn run(
-    this: Arc<Inner>,
-    request: ChatRequest,
-    caller: Option<String>,
-) -> Result<ChunkStream, ApiError> {
+async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<ChunkStream, ApiError> {
+    let brain_read = who.brain_read;
+    let caller = who.key_id;
     // a summary, a workflow-free continuation after a tool result and a pipeline with every stage off are not turns
     // this pipeline checks
     let question = (this.config.enabled() && request.laris.kind == Kind::Turn)
@@ -390,23 +403,28 @@ async fn run(
         return free(this.clone(), request, caller, steps).await;
     };
     let started = Instant::now();
-    let passages = match &this.source {
+    let source = if brain_read {
+        this.brain.as_ref().and_then(|b| b.source())
+    } else {
+        None
+    };
+    let passages = match source {
         None => {
-            steps.push(Step::new(
-                "retrieval",
-                "skipped",
-                started,
-                "vault_unavailable",
-            ));
+            let code = if brain_read {
+                "vault_unavailable"
+            } else {
+                "no_permission"
+            };
+            steps.push(Step::new("retrieval", "skipped", started, code));
             Vec::new()
         }
         Some(source) => {
-            let (source, limit, text) = (source.clone(), harness.passages, question.clone());
+            let (limit, text) = (harness.passages, question.clone());
             let found = tokio::task::spawn_blocking(move || source.passages(&text, limit)).await;
             match found {
                 Ok(found) => {
                     steps.push(Step::new("retrieval", "ok", started, ""));
-                    found
+                    within_budget(found, this.config.max_evidence_chars)
                 }
                 Err(_) => {
                     steps.push(Step::new("retrieval", "error", started, "retrieval_failed"));
@@ -417,12 +435,12 @@ async fn run(
     };
     if passages.is_empty() {
         if this.config.grounding == Grounding::Required {
-            let code = if steps.last().is_some_and(|s| s.outcome == "ok") {
-                "no_evidence"
-            } else {
-                "vault_unavailable"
+            let code = match steps.last() {
+                Some(last) if last.outcome == "ok" => "no_evidence".to_owned(),
+                Some(last) => last.code.clone(),
+                None => "no_evidence".to_owned(),
             };
-            steps.push(Step::new("gate", "stop", Instant::now(), code));
+            steps.push(Step::new("gate", "stop", Instant::now(), &code));
             let mut out: Vec<ChatResponseChunk> = steps.iter().map(step_chunk).collect();
             out.extend(canned(&harness.abstain_no_source));
             return Ok(ready(out));
@@ -443,6 +461,19 @@ async fn run(
         rx.recv().await.map(|item| (item, rx))
     })
     .boxed())
+}
+
+/// The passages that fit the per-answer budget, best first. A passage is never cut: the quote check needs it whole, so
+/// the first one that does not fit ends the list.
+fn within_budget(passages: Vec<Passage>, budget: usize) -> Vec<Passage> {
+    let mut used = 0usize;
+    passages
+        .into_iter()
+        .take_while(|p| {
+            used = used.saturating_add(p.text.chars().count());
+            used <= budget
+        })
+        .collect()
 }
 
 /// A free answer: the inner stream, unbuffered, behind the step events so far.

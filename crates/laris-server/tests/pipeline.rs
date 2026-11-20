@@ -3,10 +3,12 @@
 
 use futures_util::future::BoxFuture;
 use futures_util::{StreamExt, stream};
+use laris_brain::gate::GateSettings;
 use laris_policy::{HarnessConfig, Prefilter};
 use laris_protocol::chat::ToolCall;
 use laris_protocol::p1::{ChatRequest, ChatResponseChunk, EmbedRequest, EmbedResponse, LarisMeta};
 use laris_protocol::p2::{ChunkChoice, ChunkDelta, ChunkObject};
+use laris_server::mainbrain::{MainBrain, MainBrainConfig};
 use laris_server::pipeline::{Grounding, Pipeline, PipelineConfig};
 use laris_server::policy::{MemoryReasoning, Policy, PolicyConfig, PolicyGateway};
 use laris_server::trace::{MemoryTraces, StageRecord, TraceRecord};
@@ -97,7 +99,10 @@ struct Server {
     _stop: tokio::sync::oneshot::Sender<()>,
 }
 
-async fn start(config: PipelineConfig, scripts: Vec<Script>) -> Server {
+type Setup = (PipelineConfig, Option<Arc<MainBrain>>);
+
+async fn start(setup: Setup, scripts: Vec<Script>) -> Server {
+    let (config, brain) = setup;
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     let mut cfg = ServerConfig::with_bind(addr);
@@ -123,6 +128,7 @@ async fn start(config: PipelineConfig, scripts: Vec<Script>) -> Server {
             config,
             policy.prefilter().cloned(),
             policy.harness().cloned(),
+            brain,
         )
         .expect("the pipeline starts"),
     );
@@ -234,13 +240,31 @@ async fn trace_rows(server: &Server, at_least: usize) -> Vec<TraceRecord> {
     panic!("expected {at_least} traces");
 }
 
-fn config(grounding: Grounding, notes: &[(&str, &str)]) -> PipelineConfig {
-    PipelineConfig {
-        prefilter: true,
-        grounding,
-        vault: Some(vault(notes)),
-        ..PipelineConfig::default()
-    }
+const GATE: GateSettings = GateSettings {
+    min_support: 0.9,
+    min_equivalence: 0.6,
+    subject_overlap: 0.5,
+    search_depth: 10,
+    max_bytes: 100_000,
+};
+
+fn brain(notes: &[(&str, &str)]) -> Arc<MainBrain> {
+    let config = MainBrainConfig {
+        dir: vault(notes),
+        gate: GATE,
+    };
+    Arc::new(MainBrain::open(&config).expect("the main brain opens"))
+}
+
+fn config(grounding: Grounding, notes: &[(&str, &str)]) -> Setup {
+    (
+        PipelineConfig {
+            prefilter: true,
+            grounding,
+            ..PipelineConfig::default()
+        },
+        Some(brain(notes)),
+    )
 }
 
 fn abstentions() -> HarnessConfig {
@@ -384,18 +408,16 @@ async fn a_passage_that_gives_orders_never_reaches_the_model() {
 }
 
 #[tokio::test]
-async fn an_unreadable_vault_is_skipped_and_never_presented_as_grounded() {
-    let mut cfg = config(Grounding::Required, NOTES);
-    cfg.vault = Some(PathBuf::from("/nonexistent/laris-vault"));
-    let server = start(cfg, vec![text("from memory")]).await;
+async fn an_empty_vault_abstains_and_is_never_presented_as_grounded() {
+    let server = start(config(Grounding::Required, &[]), vec![text("from memory")]).await;
     let reply = chat(&server, ask(QUESTION)).await;
     assert_eq!(reply.text, abstentions().abstain_no_source);
     assert_eq!(
         stages(&reply),
         [
             s("prefilter", "ok", ""),
-            s("retrieval", "skipped", "vault_unavailable"),
-            s("gate", "stop", "vault_unavailable"),
+            s("retrieval", "ok", ""),
+            s("gate", "stop", "no_evidence"),
         ]
     );
     assert!(server.seen.lock().unwrap().is_empty());
@@ -422,7 +444,7 @@ async fn a_model_that_fails_is_a_typed_error_and_a_step() {
 #[tokio::test]
 async fn a_draft_larger_than_the_buffer_is_an_error_not_a_truncation() {
     let mut cfg = config(Grounding::Required, NOTES);
-    cfg.max_draft_chars = 20;
+    cfg.0.max_draft_chars = 20;
     let server = start(cfg, vec![text(DRAFT)]).await;
     let reply = chat(&server, ask(QUESTION)).await;
     assert!(reply.error);
@@ -496,7 +518,8 @@ async fn steps_decision_and_evidence_in_a_request_are_dropped() {
         scripts: Mutex::new(vec![text("ok")].into()),
         seen: seen.clone(),
     };
-    let pipeline = Pipeline::new(Arc::new(model), PipelineConfig::default(), None, None).unwrap();
+    let pipeline =
+        Pipeline::new(Arc::new(model), PipelineConfig::default(), None, None, None).unwrap();
     let request: ChatRequest = serde_json::from_value(json!({
         "messages": [{"role": "user", "content": "Tell me something"}], "stream": true,
         "laris": {"kind": "turn", "session_id": "sess-1",
@@ -513,7 +536,7 @@ async fn steps_decision_and_evidence_in_a_request_are_dropped() {
 
 #[tokio::test]
 async fn with_every_stage_off_the_route_is_the_policy_gateway_alone() {
-    let server = start(PipelineConfig::default(), vec![text("plain")]).await;
+    let server = start((PipelineConfig::default(), None), vec![text("plain")]).await;
     let reply = chat(&server, ask("hello")).await;
     assert_eq!(reply.text, "plain");
     assert!(reply.steps.is_empty());
@@ -527,18 +550,50 @@ fn a_stage_that_is_on_without_its_policy_file_does_not_start() {
     let on = |prefilter, grounding| PipelineConfig {
         prefilter,
         grounding,
-        vault: Some(PathBuf::from("v")),
         ..PipelineConfig::default()
     };
-    assert!(Pipeline::new(gateway.clone(), on(true, Grounding::Off), None, None).is_err());
-    assert!(Pipeline::new(gateway.clone(), on(false, Grounding::Optional), None, None).is_err());
+    assert!(Pipeline::new(gateway.clone(), on(true, Grounding::Off), None, None, None).is_err());
+    assert!(
+        Pipeline::new(
+            gateway.clone(),
+            on(false, Grounding::Optional),
+            None,
+            None,
+            None
+        )
+        .is_err()
+    );
     let rules = Prefilter::from_toml("version = \"x\"", &Default::default()).unwrap();
     assert!(
         Pipeline::new(
-            gateway,
+            gateway.clone(),
             on(true, Grounding::Off),
             Some(Arc::new(rules)),
+            None,
             None
+        )
+        .is_ok()
+    );
+    // grounding needs the harness policy and a main brain
+    let harness = Some(abstentions());
+    assert!(
+        Pipeline::new(
+            gateway.clone(),
+            on(false, Grounding::Required),
+            None,
+            harness.clone(),
+            None
+        )
+        .is_err(),
+        "no main brain"
+    );
+    assert!(
+        Pipeline::new(
+            gateway,
+            on(false, Grounding::Required),
+            None,
+            harness,
+            Some(brain(NOTES))
         )
         .is_ok()
     );
@@ -558,15 +613,12 @@ fn the_settings_come_from_the_environment_and_default_to_off() {
     let on = env(&[
         ("LARIS_SERVER__PIPELINE_PREFILTER", "true"),
         ("LARIS_SERVER__PIPELINE_GROUNDING", "required"),
-        ("LARIS_SERVER__PIPELINE_VAULT", "/vault"),
         ("LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS", "100"),
+        ("LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS", "500"),
     ])
     .unwrap();
     assert!(on.prefilter && on.grounding == Grounding::Required && on.max_draft_chars == 100);
-    assert!(
-        env(&[("LARIS_SERVER__PIPELINE_GROUNDING", "required")]).is_err(),
-        "needs a vault"
-    );
+    assert_eq!(on.max_evidence_chars, 500);
     assert!(env(&[("LARIS_SERVER__PIPELINE_PREFILTER", "yes")]).is_err());
     assert!(env(&[("LARIS_SERVER__PIPELINE_GROUNDING", "maybe")]).is_err());
 }

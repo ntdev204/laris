@@ -132,7 +132,7 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
 
 | Id | Threat | Attacker | Control | Req | Task | Test id |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| TM-28 | Model-generated text becomes knowledge in the main brain | X2, X6 | Single write gate; a Claim needs a resolvable Source span; model-only claims refused; dependants downgraded on retraction | SR-K3, SR-K2 | T164 | SEC-BRAIN-01 |
+| TM-28 | Model-generated text becomes knowledge in the main brain | X2, X6 | Single write gate; a Claim needs a resolvable Source span; model-only claims refused; dependants downgraded on retraction; on the server the gate is reached only by `brain.manage` (admin) and no client write route exists | SR-K3, SR-K2 | T164, T240 | SEC-BRAIN-01 |
 | TM-29 | Poisoned or leaked data enters training or a held-out split | X6 | Sealed test splits and data checksums; manifests with provenance; a seeded model-generated example is excluded; agents never train | SR-M3, SR-M4, SR-K6 | T168 | SEC-DATA-03 |
 | TM-30 | Unapproved or malicious dependency, or a training call, enters the build | X7 | `cargo deny` allow-list from T119; vendoring; the no-training guard; signed releases | SR-G2, SR-G3, SR-C6 | T121, T159 | SEC-SUP-01 |
 
@@ -142,6 +142,7 @@ Requirement ids refer to `.claude/spec/spec.md`. "Task" is the task that builds 
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | TM-31 | A modified client skips the Prefilter, retrieval or the gate | X4 | Stages run on the server; `steps`, `decision` and `evidence` in a request are dropped | SR-S4 | T239, T242 | SEC-PIPE-01 |
 | TM-32 | A retrieved passage carries instructions | X1, X6 | Passages are redacted, folded to one line and read by the shield; one that gives orders is dropped before the model sees it; the gate checks the draft against the passages | SR-S4, SR-M11 | T239 | SEC-PIPE-02 |
+| TM-33 | Bulk reading of the main brain through answers | X8 | `brain.read` permission (default on for `user`), a per-answer evidence budget (`LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS`), per-key quota; no route returns a note or lists the vault | SR-S5, SR-K2 | T240 | SEC-PIPE-03 |
 | TM-34 | Unbounded buffering or retries exhaust memory or the model | X4 | `max_draft_chars` (an error, never a truncation), `max_attempts` of the harness policy, the model concurrency limit, the stage timeout | SR-S4, SR-S6 | T239 | SEC-PIPE-04 |
 
 ## 5. Coverage rules and current state

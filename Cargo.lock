@@ -1020,6 +1020,7 @@ dependencies = [
  "hmac",
  "hyper",
  "hyper-util",
+ "laris-brain",
  "laris-config",
  "laris-core",
  "laris-evidence",

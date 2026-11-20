@@ -1,7 +1,7 @@
 //! The router and its handlers: body validation before any work, then the backend.
 
 use crate::access::{Access, Principal, Reservation, Used, perm};
-use crate::backend::{Backend, ChunkStream, StreamFailure};
+use crate::backend::{Backend, Caller, ChunkStream, StreamFailure};
 use crate::config::ServerConfig;
 use crate::error::ApiError;
 use crate::log::RequestScope;
@@ -36,6 +36,8 @@ pub struct AppState {
     pub reasoning: Option<Arc<dyn crate::policy::ReasoningStore>>,
     /// Where the operator reads the traces, and where each request's trace goes. `None` keeps none.
     pub traces: Option<Arc<dyn crate::trace::TraceStore>>,
+    /// The main brain and its write gate (T240). `None` serves no brain routes.
+    pub main_brain: Option<Arc<crate::mainbrain::MainBrain>>,
 }
 
 impl AppState {
@@ -48,6 +50,7 @@ impl AppState {
             policy: None,
             reasoning: None,
             traces: None,
+            main_brain: None,
         }
     }
 
@@ -68,6 +71,12 @@ impl AppState {
         self
     }
 
+    /// The same state serving the main brain's admin routes.
+    pub fn with_main_brain(mut self, brain: Arc<crate::mainbrain::MainBrain>) -> Self {
+        self.main_brain = Some(brain);
+        self
+    }
+
     /// State that accepts every caller. For tests of the HTTP layer only.
     pub fn open(config: ServerConfig, backend: Arc<dyn Backend>) -> Self {
         Self {
@@ -77,6 +86,7 @@ impl AppState {
             policy: None,
             reasoning: None,
             traces: None,
+            main_brain: None,
         }
     }
 }
@@ -106,6 +116,18 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route(
             "/v1/admin/keys",
             get(crate::admin::keys_list).post(crate::admin::keys_create),
+        )
+        .route(
+            "/v1/admin/brain/sources",
+            post(crate::mainbrain::submit_source),
+        )
+        .route(
+            "/v1/admin/brain/claims",
+            post(crate::mainbrain::submit_claim),
+        )
+        .route(
+            "/v1/admin/brain/retract",
+            post(crate::mainbrain::retract_source),
         )
         .route("/v1/admin/keys/{id}/revoke", post(crate::admin::key_revoke))
         .route("/v1/admin/keys/{id}/limit", post(crate::admin::key_limit))
@@ -160,11 +182,11 @@ async fn chat_inner(
     let session = body.laris.session_id.clone().unwrap_or_default();
     scope.trace(|t| t.set_session(&session));
     let meter = reserve_for(state, principal.as_ref(), length, "chat", session).await?;
-    let stream = match state
-        .backend
-        .chat_for(body, principal.as_ref().map(|p| p.key_id.as_str()))
-        .await
-    {
+    let caller = Caller {
+        key_id: principal.as_ref().map(|p| p.key_id.clone()),
+        brain_read: principal.as_ref().is_none_or(|p| p.can(perm::BRAIN_READ)),
+    };
+    let stream = match state.backend.chat_as(body, &caller).await {
         Ok(stream) => stream,
         Err(error) => {
             if let Some(m) = &meter {

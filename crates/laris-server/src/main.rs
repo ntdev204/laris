@@ -167,6 +167,14 @@ async fn main() -> ExitCode {
         Err(e) => return fail(e, 2),
     };
     let gateway = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
+    let main_brain = match laris_server::mainbrain::MainBrainConfig::from_env(&env) {
+        Ok(Some(c)) => match laris_server::mainbrain::MainBrain::open(&c) {
+            Ok(b) => Some(Arc::new(b)),
+            Err(e) => return fail(format!("cannot open the main brain: {}", e.kind()), 1),
+        },
+        Ok(None) => None,
+        Err(e) => return fail(e, 2),
+    };
     let pipeline_config = match laris_server::pipeline::PipelineConfig::from_env(&env) {
         Ok(c) => c,
         Err(e) => return fail(e, 2),
@@ -177,6 +185,7 @@ async fn main() -> ExitCode {
             pipeline_config,
             policy.prefilter().cloned(),
             policy.harness().cloned(),
+            main_brain.clone(),
         ) {
             Ok(p) => Arc::new(p),
             Err(e) => return fail(e, 1),
@@ -185,11 +194,13 @@ async fn main() -> ExitCode {
         gateway
     };
     let traces = Arc::new(PgTraces::spawn(storage.clone()));
-    let state = Arc::new(
-        AppState::new(config, backend, access)
-            .with_policy(policy, reasoning)
-            .with_traces(traces.clone()),
-    );
+    let mut state = AppState::new(config, backend, access)
+        .with_policy(policy, reasoning)
+        .with_traces(traces.clone());
+    if let Some(brain) = main_brain {
+        state = state.with_main_brain(brain);
+    }
+    let state = Arc::new(state);
     let stop = async {
         let _ = tokio::signal::ctrl_c().await;
     };

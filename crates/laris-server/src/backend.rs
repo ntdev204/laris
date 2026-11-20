@@ -21,6 +21,16 @@ pub struct StreamFailure {
 /// The chunks of one answer.
 pub type ChunkStream = BoxStream<'static, Result<ChatResponseChunk, StreamFailure>>;
 
+/// Who is asking, as far as the pipeline needs to know.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Caller {
+    /// The key's id, when the request came with one.
+    pub key_id: Option<String>,
+    /// Whether the key may have an answer grounded in the main brain (`brain.read`). A server without keys (tests of
+    /// the HTTP layer) grants it.
+    pub brain_read: bool,
+}
+
 /// What answers requests.
 pub trait Backend: Send + Sync + 'static {
     /// Starts an answer. An `Err` here is an HTTP status; failures after this returns go in the stream.
@@ -33,6 +43,15 @@ pub trait Backend: Send + Sync + 'static {
         _caller: Option<&str>,
     ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
         self.chat(request)
+    }
+    /// Starts an answer for `caller`. A backend that decides by permission overrides this; the default is
+    /// [`Backend::chat_for`].
+    fn chat_as(
+        &self,
+        request: ChatRequest,
+        caller: &Caller,
+    ) -> BoxFuture<'static, Result<ChunkStream, ApiError>> {
+        self.chat_for(request, caller.key_id.as_deref())
     }
     /// Embeds texts.
     fn embed(&self, request: EmbedRequest) -> BoxFuture<'static, Result<EmbedResponse, ApiError>>;
