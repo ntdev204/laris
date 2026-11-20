@@ -1,0 +1,125 @@
+{
+  "dataset": {
+    "date": "2026-11-20",
+    "heldout_examples": 6454,
+    "heldout_sha256": "f6d7a3d8adb601dd8a45fd56ee8c600d3beb4e9d6e2856844a52832376da7f61",
+    "heldout_states": 939,
+    "manifest_sha256": "21269d28ef9056a199952ee3d06e889e90692bc437c21b063d568a511fb71374",
+    "path": "data/decision/2026-11-20",
+    "scenario_share": 1.0
+  },
+  "dataset_config": {
+    "path": "data/decision/config-2026-11-20.json",
+    "sha256": "0c0c9de3ac6206fac2ac5d6cabbcc36be53835bb2dd2a6f7767d654abab8016a"
+  },
+  "gates": [
+    {
+      "gate": "N1",
+      "measured": {
+        "bootstrap_gain_points_lower": 0.0,
+        "bootstrap_gain_points_upper": 0.0,
+        "gain_points": 0.0,
+        "network_accuracy": 1.0,
+        "required_gain_points": 3.0,
+        "rule_accuracy": 1.0,
+        "set": "heldout",
+        "states": 939
+      },
+      "note": "Accuracy is the share of states where the chosen action's outcome was good. The gate needs the gain and a bootstrap lower bound above zero; a rule decider that is already right leaves no room for either.",
+      "status": "FAIL"
+    },
+    {
+      "gate": "N2",
+      "measured": {
+        "limit": 0.01,
+        "network_answers": 77,
+        "network_rate": 0.0,
+        "network_unsupported": 0,
+        "rule_answers": 77,
+        "rule_rate": 0.0,
+        "rule_unsupported": 0,
+        "set": "heldout"
+      },
+      "note": "An `answer` is unsupported when the outcome label of `answer` in that state is not good (the accepted set did not cover the question).",
+      "status": "PASS"
+    },
+    {
+      "gate": "N3",
+      "measured": {
+        "chosen_ece": 0.0026315656406240124,
+        "fell_back_to_rules": 4,
+        "limit": 0.05,
+        "pair_ece": 0.00038286980769676004,
+        "pairs": 6454
+      },
+      "note": "The gate is the error over every (state, legal candidate) probability against its outcome label.",
+      "status": "PASS"
+    },
+    {
+      "gate": "N4",
+      "measured": {
+        "max_margin_points": 5.0,
+        "min_recall": 0.9,
+        "network_over_abstention": 0.0,
+        "network_recall": 1.0,
+        "required_abstentions": 3,
+        "rule_over_abstention": 0.0,
+        "rule_recall": 1.0
+      },
+      "note": "Required abstentions are the states where `abstain` was labelled good. Over-abstention is the share of all states where the decider abstained although `abstain` was not good.",
+      "status": "PASS"
+    },
+    {
+      "gate": "N5",
+      "measured": {
+        "states": 0
+      },
+      "note": "The dataset has no withheld advisor: every example is a scenario example with no advisor, so there is nothing unseen to measure.",
+      "status": "NOT VERIFIED"
+    },
+    {
+      "gate": "N6",
+      "measured": {
+        "limit": 0.00001,
+        "max_abs_diff": 1.1379786002407857e-15
+      },
+      "note": "Python float64 reference against the Rust forward pass, on every (state, candidate) of the held-out set.",
+      "status": "PASS"
+    },
+    {
+      "gate": "N7",
+      "measured": {
+        "decisions_timed": 4695,
+        "limit_ms": 10.0,
+        "max_ms": 0.013316999999999999,
+        "p95_ms": 0.010446
+      },
+      "note": "One `choose` call, measured on the machine that ran the command. The specification does not define the reference CPU: the owner confirms that this machine is it, or repeats the run on it.",
+      "status": "PASS"
+    },
+    {
+      "gate": "N8",
+      "measured": {
+        "decisions": 939,
+        "outside_legal_list": 0
+      },
+      "note": "Zero decisions outside the legal list is measured here. Zero policy bypass is not a property of the scores: the chooser returns an `Act` only, and the seam runs every act through the same tool gate; `tests/seam.rs::a_chooser_cannot_bypass_the_tool_gate_or_the_composer` checks it with a chooser forced to every legal act.",
+      "status": "PASS"
+    }
+  ],
+  "gates_config": {
+    "path": "configs/decision-net-gates.json",
+    "sha256": "1c8e75598d207b4d01a4fc16d15cc95adff973e0721c76e5c2f2c7664b1af48a"
+  },
+  "machine": {
+    "cpu": "Intel(R) Core(TM) i5-14600KF"
+  },
+  "network": {
+    "path": "artifacts/decision-net/2026-11-20-seed170/net.json",
+    "sha256": "814b684292ecfb90e8ab5f29e4f828e2e138e039826405fd03a8de72ffb5ce95"
+  },
+  "qualified": false,
+  "read_this": "Every held-out example is a scenario example: the labels come from a hand-made oracle, so a gate measures agreement with that oracle, not decision quality in the world. The network is NOT QUALIFIED; the rule decider stays in charge unless the owner promotes the network.",
+  "status": "NOT PROMOTED",
+  "task": "T171"
+}

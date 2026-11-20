@@ -646,6 +646,29 @@ pub fn verify(dir: &Path, settings: &SplitSettings) -> Result<Vec<String>, Datas
     Ok(problems)
 }
 
+/// Reads the examples of one split of a dataset directory (T171 reads the sealed held-out split with it). The file's
+/// checksum must match the manifest; a line that does not parse is an error, not a skip, so a measurement never rests
+/// on a silently reduced set.
+pub fn read_split(dir: &Path, split: Split) -> Result<Vec<Example>, DatasetError> {
+    let name = format!("{}.jsonl", split.as_str());
+    let manifest: Value =
+        serde_json::from_str(&fs::read_to_string(dir.join("manifest.json")).map_err(io)?)
+            .map_err(|e| DatasetError(e.to_string()))?;
+    let body = fs::read_to_string(dir.join(&name)).map_err(io)?;
+    if manifest["files"][&name]["sha256"].as_str() != Some(&sha256_hex(body.as_bytes())) {
+        return Err(DatasetError(format!(
+            "{name}: checksum differs from the manifest"
+        )));
+    }
+    body.lines()
+        .map(|line| {
+            Example::parse(line)
+                .map(|(e, _, _)| e)
+                .ok_or_else(|| DatasetError(format!("{name}: a line does not parse")))
+        })
+        .collect()
+}
+
 /// One piece of text that may be used to train ResearchLLM.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextItem {
