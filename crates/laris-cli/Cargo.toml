@@ -15,15 +15,15 @@ name = "laris"
 path = "src/main.rs"
 
 [dependencies]
-laris-config = { path = "../laris-config", version = "1.1.0" }
-laris-core = { path = "../laris-core", version = "1.1.0" }
-laris-model-client = { path = "../laris-model-client", version = "1.1.0" }
-laris-protocol = { path = "../laris-protocol", version = "1.1.0" }
-laris-policy = { path = "../laris-policy", version = "1.1.0" }
-laris-sandbox = { path = "../laris-sandbox", version = "1.1.0" }
-laris-store = { path = "../laris-store", version = "1.1.0" }
-laris-tools = { path = "../laris-tools", version = "1.1.0" }
-laris-tui = { path = "../laris-tui", version = "1.1.0" }
+laris-config = { path = "../laris-config", version = "1.2.0" }
+laris-core = { path = "../laris-core", version = "1.2.0" }
+laris-model-client = { path = "../laris-model-client", version = "1.2.0" }
+laris-protocol = { path = "../laris-protocol", version = "1.2.0" }
+laris-policy = { path = "../laris-policy", version = "1.2.0" }
+laris-sandbox = { path = "../laris-sandbox", version = "1.2.0" }
+laris-store = { path = "../laris-store", version = "1.2.0" }
+laris-tools = { path = "../laris-tools", version = "1.2.0" }
+laris-tui = { path = "../laris-tui", version = "1.2.0" }
 ring = "0.17"
 serde_json = "1"
 tokio = { version = "1", default-features = false, features = ["rt", "time", "net"] }

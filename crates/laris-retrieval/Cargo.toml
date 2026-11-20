@@ -10,7 +10,7 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-laris-vault = { path = "../laris-vault", version = "1.1.0" }
+laris-vault = { path = "../laris-vault", version = "1.2.0" }
 
 [dev-dependencies]
 serde_json = "1"

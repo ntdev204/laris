@@ -6,6 +6,8 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-20
+
 ### Added
 - **Automatic update, always on:** a release build checks its release address in the background, installs a newer
   signed release over the program, and shows a notice above the input box, at the right, when one is installed. `/restart`
