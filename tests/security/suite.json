@@ -2,10 +2,34 @@
   "note": "Test ids of docs/architecture/THREAT_MODEL.md and the tests that exercise them. `cargo xtask security` runs every entry and fails when a threat row has no entry, a named test does not exist, or an entry marked deferred belongs to a task that is already done. A run lists exact test names: renaming a test breaks the suite on purpose.",
   "tests": {
     "SEC-BRAIN-01": {
-      "deferred": {
-        "task": "T164",
-        "reason": "the main brain and its single write gate are programme 3"
-      }
+      "runs": [
+        {
+          "package": "laris-brain",
+          "target": "gate",
+          "tests": [
+            "model_only_claims_are_refused_and_change_nothing",
+            "a_retracted_source_downgrades_its_dependants"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "mainbrain",
+          "tests": [
+            "a_model_only_claim_is_refused_through_the_api_and_a_sourced_one_is_stored",
+            "what_the_gate_stored_grounds_the_next_answer_and_a_retraction_ends_it",
+            "a_proposer_in_the_body_is_refused_not_trusted",
+            "the_default_roles_give_brain_read_to_users_and_brain_manage_to_admins_only"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "mainbrain",
+          "tests": [
+            "only_an_admin_may_write_the_brain_and_a_user_may_read_through_the_pipeline"
+          ],
+          "needs": "postgres"
+        }
+      ]
     },
     "SEC-DATA-01": {
       "runs": [
@@ -635,6 +659,27 @@
             "a_passage_that_gives_orders_never_reaches_the_model",
             "a_draft_that_fails_the_gate_is_retried_then_the_turn_abstains"
           ]
+        }
+      ]
+    },
+    "SEC-PIPE-03": {
+      "runs": [
+        {
+          "package": "laris-server",
+          "target": "mainbrain",
+          "tests": [
+            "the_evidence_of_one_answer_stays_within_its_budget",
+            "no_route_returns_a_note_or_lists_the_vault",
+            "the_pipeline_skips_retrieval_for_a_caller_without_brain_read"
+          ]
+        },
+        {
+          "package": "laris-server",
+          "target": "mainbrain",
+          "tests": [
+            "a_role_without_brain_read_gets_no_grounding_and_the_permission_cannot_be_lent"
+          ],
+          "needs": "postgres"
         }
       ]
     },

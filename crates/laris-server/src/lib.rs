@@ -14,6 +14,7 @@ pub mod brain;
 pub mod config;
 pub mod error;
 pub mod log;
+pub mod mainbrain;
 pub mod model;
 pub mod pipeline;
 pub mod policy;
@@ -24,7 +25,7 @@ pub mod storage;
 pub mod trace;
 
 pub use app::{AppState, router};
-pub use backend::{Backend, ChunkStream, NoBackend, StreamFailure};
+pub use backend::{Backend, Caller, ChunkStream, NoBackend, StreamFailure};
 pub use config::{ConfigError, ServerConfig};
 pub use error::ApiError;
 pub use log::{AccessRecord, LogSink, MemorySink, StderrSink};

@@ -1735,7 +1735,26 @@ Owner's direction 2026-11-20 ("tích hợp toàn bộ vào hệ thống", plan a
   - The server holds the main-brain vault and the write gate (T164) behind its own storage and roles; clients cannot write it except through the gate; ingestion and retraction are admin operations
 - Validation:
   - Tests: a model-only claim is refused through the API, a retracted source downgrades its claims, access follows the roles
-- Status: pending
+- Status: in_progress
+- Note: 2026-11-20 built (ADR-025 section 5, D50). `laris-server::mainbrain`: `MainBrain` holds the write gate of `laris-brain`
+  (`Gate`) over one vault (`LARIS_SERVER__MAIN_BRAIN_DIR`; the five gate thresholds `LARIS_SERVER__MAIN_BRAIN_MIN_SUPPORT`,
+  `_MIN_EQUIVALENCE`, `_SUBJECT_OVERLAP`, `_SEARCH_DEPTH`, `_MAX_BYTES` have no defaults and are required together). Writes
+  are admin operations behind the new privileged permission `brain.manage` (admin only; it cannot be lent as an extra to
+  another role): `POST /v1/admin/brain/sources` (ingestion), `/claims` (a proposal; a refusal is a normal answer with the
+  reason, e.g. `model-only`, `span`), `/retract` (the Source's Claims are downgraded or retired; an unknown title is 404).
+  The proposer in the audit is the key id (`key:<id>`); a body that names one is a 400. One writer at a time, and the
+  retrieval index is rebuilt after each write, so a retraction ends grounding on the next turn; a retracted or replaced
+  Source is hidden from retrieval (`BrainSource`). Reads: the pipeline reads the vault only for callers with the new
+  permission `brain.read` (default on for `user` and `admin`); without it stage 4 is `skipped` (`no_permission`) and, with
+  `grounding = required`, the turn abstains. `Backend::chat_as(request, &Caller)` carries the key id and `brain_read`
+  from the HTTP layer to the pipeline. Per-answer evidence budget `LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS` (a passage
+  is never cut: one that does not fit is not shown). No route returns a note or lists the vault. `LARIS_SERVER__PIPELINE_VAULT`
+  of T239 is replaced by the main brain: grounding without one stops the server. Checked: 9 tests in
+  `crates/laris-server/tests/mainbrain.rs` (4 with PostgreSQL, run against the local `laris-test-pg` container) and the T239 tests
+  adapted. Threat rows: TM-33 (SEC-PIPE-03) added, TM-28 extended with T240; `SEC-BRAIN-01` now runs (gate and server tests)
+  instead of being deferred. Seen, not changed: `SEC-DATA-03` is still marked deferred to T168 although T168 is done, so
+  `cargo xtask security` reports FAILED; and `the_retention_task_runs_at_start_reports_a_failure_and_stops` fails about
+  one run in three on `main` as well (timing). The task stays in_progress only because T238 is.
 
 ### T241 — Brain decider in the server turn
 - Requirements: SR-K5, SR-S4
