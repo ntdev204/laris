@@ -480,10 +480,11 @@ fn one_candidate_is_inserted_and_several_open_a_menu() {
         "look at @sr",
         "the text is not changed until a choice"
     );
-    key(&mut a, Key::Tab);
+    key(&mut a, Key::Down);
     assert_eq!(a.menu().map(|m| m.selected), Some(1));
     key(&mut a, Key::Up);
-    key(&mut a, Key::Enter);
+    // Tab takes the highlighted suggestion
+    key(&mut a, Key::Tab);
     // a folder keeps the word open for the next part of the path
     assert_eq!(a.input_text(), "look at @src/");
     assert!(a.menu().is_none());
@@ -549,8 +550,8 @@ fn suggestions_follow_each_character_typed() {
     feed(&mut a, completion(&id, &[("mode", "mode")]));
     assert_eq!(a.menu().map(|m| m.items.len()), Some(1));
     assert!(a.screen_text(80).contains("❯ mode"));
-    // Enter takes the highlighted suggestion; a second Enter sends it
-    key(&mut a, Key::Enter);
+    // Tab takes the highlighted suggestion; Enter would send what is typed
+    key(&mut a, Key::Tab);
     assert_eq!(a.input_text(), "/mode ");
     assert!(a.menu().is_none());
     // no match closes the menu without a message; an ordinary word asks nothing
@@ -600,16 +601,14 @@ fn nothing_to_complete_says_so_and_a_stale_answer_is_ignored() {
 // -- local commands --------------------------------------------------------------------------
 
 #[test]
-fn exit_and_quit_leave_and_clear_empties_the_view_only() {
-    for word in ["/exit", "/quit"] {
-        let mut a = app();
-        type_text(&mut a, word);
-        assert!(matches!(
-            &key(&mut a, Key::Enter)[..],
-            [Command::Shutdown {}]
-        ));
-        assert!(a.should_quit());
-    }
+fn exit_leaves_and_clear_empties_the_view_only() {
+    let mut a = app();
+    type_text(&mut a, "/exit");
+    assert!(matches!(
+        &key(&mut a, Key::Enter)[..],
+        [Command::Shutdown {}]
+    ));
+    assert!(a.should_quit());
     let mut a = app();
     type_text(&mut a, "hello");
     key(&mut a, Key::Enter);
@@ -748,12 +747,7 @@ fn the_stages_of_the_server_pipeline_and_the_sources_of_an_answer_are_shown() {
     );
     assert_eq!(
         notices(&a),
-        [
-            "Checking the knowledge base",
-            "Asking the model",
-            "Checking the answer against its sources",
-            "Sources: Aspirin, Paper A",
-        ],
-        "a skipped stage is not shown"
+        ["Sources: Aspirin, Paper A",],
+        "working stages are not shown"
     );
 }

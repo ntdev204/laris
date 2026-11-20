@@ -9,26 +9,24 @@
  enter to sign in · esc to leave
 ──── step 2 ────
 ✻ Laris v2.1.0
-  laris.example · default
   /work/demo
 
-╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ > Type a message, or / for commands                                                              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
- laris-base · default · develop · 1000 tokens left · sandbox ready
+────────────────────────────────────────────────────────────────────────────────────────────────────
+> Type a message, or / for commands
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ laris-base · 1000 tokens left
  shift+enter for a new line · ctrl+c twice to exit
 ──── step 3 ────
 ✻ Laris v2.1.0
-  laris.example · default
   /work/demo
 
 > hello
 
 ● Hi.
 
-╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ > Type a message, or / for commands                                                              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
- laris-base · default · develop · 1000 tokens left · sandbox ready
+────────────────────────────────────────────────────────────────────────────────────────────────────
+> Type a message, or / for commands
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ laris-base · 1000 tokens left
  shift+enter for a new line · ctrl+c twice to exit
 ──── login @ 100 ────

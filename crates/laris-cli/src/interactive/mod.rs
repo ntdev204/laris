@@ -10,6 +10,7 @@ pub mod commands;
 pub mod control;
 pub mod files;
 pub mod front;
+pub mod meter;
 pub mod terminal;
 pub mod worker;
 

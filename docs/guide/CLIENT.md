@@ -61,9 +61,14 @@ Type `/` to list them; each character narrows the list. These are built in:
 | :--- | :--- |
 | `/help` | Show the commands. |
 | `/clear` | Clear the screen (the session goes on). |
-| `/exit`, `/quit` | Leave. |
+| `/exit` | Leave. |
 | `/mode [auto\|default\|acceptEdits\|plan\|bypass]` | Show or change the permission mode. `auto` (the default) runs changes and commands without asking, except those that fit `permissions.autoAsk` (by default: `sudo`, recursive deletion of `/`, `~` or a parent, `git push`, `git reset --hard`, `git clean`, disk and power commands). `bypass` is refused unless the installation's policy allows it. |
 | `/status` | Show the session, server and project. |
+| `/usage` | Tokens this session used (prompt, answer, requests), and the key's used, limit and left from the server. |
+| `/context` | How full the context window is, with the point where compaction starts. Empty until the first answer. |
+| `/model` | The models the server offers. |
+| `/config` | The session's server, project, mode, sandbox, context window and session id. |
+| `/export [file]` | Save the conversation as Markdown, by default to `.laris/exports/<session>.md` in the project. |
 | `/rewind [steps]` | Undo the last file changes the session made (one step by default). |
 | `/login` | Enter an API key. |
 | `/logout` | Remove the saved API key and sign in again. |
