@@ -57,7 +57,10 @@ Status values and rules as in [task/1-model.md](1-model.md).
   - Composer from accepted Claims with note ids; rephrase-only use of the advisor; outside-set assertion check
 - Validation:
   - Inserted unsupported sentences are rejected; the check's miss rate is reported
-- Status: pending
+- Status: done
+- Note: 2026-11-20: `crates/laris-brain/src/answer.rs`. `compose` picks accepted Claims and Theories that match the question (content words only: stop words matched everything), puts a note id and the level on every sentence, presents each open Conflict touching a used note with both sides in the notes' own words, and gives the fixed abstention when nothing is accepted. `assemble` offers each Claim or Theory sentence to a `Rephraser` (rewording only) and keeps the rewording only if `check_sentence` passes and the optional `Judge` does not veto; a judge can veto, never approve; a failed or refused rewording leaves the Claim's own words and is reported. `check_sentence` (ADR-024 6.3): cites accepted notes; every number, name, negation and hedge is in the cited notes; no hedge added or dropped; no opposite word; `min_cover` of the content words in the cited notes. `verify_answer` re-checks a whole answer from the notes (no citation, unknown id, unaccepted note, fake system sentence, altered conflict). Tests `tests/answer.rs` (6): composition, abstention (also after a retraction and above the Claim's level), conflict, advisor limits, inserted sentences rejected. **Miss rate, measured** (`reports/brain/outside-set-check.json`): 16 inserted unsupported sentences, 13 rejected, 3 missed (words kept with roles swapped, names swapped, two Claims spliced) = 18.75 % on this fixture; of 8 faithful rewordings 6 are kept (25 % false-reject: free paraphrase costs the Claim's own wording). The check reads vocabulary, not meaning; the system is faithful to accepted Claims only up to the measured miss rate, and the figure comes from a small hand-made fixture. T164-T166 close Phase 38.
+
+
 
 ## Phase 39 — Decision network
 
