@@ -1565,7 +1565,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   `--continue`/`--resume` for the interface (the session store holds the log; the conversation is not drawn again); a
   server address or certificate prompt in the form (the packaged or configured address is used; the protocol and the
   golden scenarios for it replay); `/workflow`; Shift+Enter shows as a new line only on terminals that report it (Alt+Enter,
-  Ctrl+J and backslash-Enter always work); a chat against the compose stack. The foundation model is NOT QUALIFIED.
+  Ctrl+J and backslash-Enter always work); a chat against the compose stack. The foundation model is NOT QUALIFIED. Follow-up 2026-11-20 (owner request, branch `feature/T158b-slash-suggestions`): suggestions while typing, as in Claude Code. `/` as first word or an `@` word asks the core after every edit (ids `s<n>`, apart from the Tab ids), the answer opens the menu without a Tab, each character narrows it, no match or another word closes it silently; Enter chooses, Esc closes. `/name` candidates are names that start with the text, then names that contain it. Tests: `suggestions_follow_each_character_typed` and the menu test changed; the screenshot review is still the owner's.
 
 ### T159 — Distribution
 - Requirements: SR-C6
@@ -1574,9 +1574,9 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - Release builds per platform, `install.sh`, `install.ps1`, checksums and signatures, npm wrapper, size report
 - Validation:
   - One-command install on a clean machine per platform; tampered binary refused
-- Status: in_progress
-- Note: implemented and merged, NOT closed: the validation asks for a clean machine per platform and only Linux
-  x86_64 with a local mirror was run. Branch `feature/T159-distribution`. Signing: the owner chose `openssl` on
+- Status: done
+- Note: CLOSED by the owner on 2026-11-20 ("duyệt T159") although the validation asks for a clean machine per platform and only Linux
+  x86_64 with a local mirror was run; the macOS, Windows and aarch64 runs and `install.ps1` stay unverified and are recorded as accepted risk. Branch `feature/T159-distribution`. Signing: the owner chose `openssl` on
   2026-11-19 because `minisign` is not installed and no tool may be installed without approval; the signature is ECDSA
   P-256 over SHA-256 (not Ed25519, which Windows PowerShell cannot check), recorded in the ADR-021 addendum.
   `[profile.release]` (fat LTO, one codegen unit, stripped symbols); `laris --version`. `cargo xtask dist`: `keygen`,

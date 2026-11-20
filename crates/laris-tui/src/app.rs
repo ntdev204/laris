@@ -221,9 +221,10 @@ pub struct App {
     pub(crate) sign_in: Option<SignIn>,
     pub(crate) search: Option<Search>,
     pub(crate) menu: Option<Menu>,
-    pub(crate) asked: Option<(String, Trigger, usize)>,
+    pub(crate) asked: Option<(String, Trigger, usize, bool)>,
     pub(crate) flash: Option<String>,
     next_id: u64,
+    next_live: u64,
     clear: bool,
 }
 
@@ -256,6 +257,7 @@ impl App {
             asked: None,
             flash: None,
             next_id: 0,
+            next_live: 0,
             clear: false,
         }
     }
@@ -397,6 +399,8 @@ impl App {
             Key::CtrlC => {
                 if !self.input.is_empty() {
                     self.input.clear();
+                    self.menu = None;
+                    self.asked = None;
                 } else if was_armed {
                     self.quit = true;
                     return vec![Command::Shutdown {}];
@@ -437,6 +441,8 @@ impl App {
                     self.input.continue_line();
                     return Vec::new();
                 }
+                self.menu = None;
+                self.asked = None;
                 let text = self.input.take();
                 let text = text.trim();
                 if text.is_empty() {
@@ -446,7 +452,7 @@ impl App {
             }
             other => {
                 self.input.edit(other);
-                Vec::new()
+                self.suggest()
             }
         }
     }
@@ -670,6 +676,21 @@ impl App {
 
     /// Tab: asks the core for completions of the word at the cursor when it starts with `/` (first word) or `@`.
     fn complete(&mut self) -> Vec<Command> {
+        self.ask_completion(false)
+    }
+
+    /// After an edit: the suggestions follow what is typed. A `/` first word or an `@` word opens (or narrows) the
+    /// menu as each character arrives; any other word closes it.
+    fn suggest(&mut self) -> Vec<Command> {
+        let commands = self.ask_completion(true);
+        if commands.is_empty() {
+            self.menu = None;
+            self.asked = None;
+        }
+        commands
+    }
+
+    fn ask_completion(&mut self, live: bool) -> Vec<Command> {
         let chars = self.input.chars();
         let cursor = self.input.cursor();
         let start = chars[..cursor]
@@ -682,9 +703,15 @@ impl App {
             Some('@') => Trigger::At,
             _ => return Vec::new(),
         };
-        self.next_id += 1;
-        let id = format!("c{}", self.next_id);
-        self.asked = Some((id.clone(), trigger, start));
+        // Suggestions while typing have their own ids, so the ids of Tab requests stay what a scenario recorded.
+        self.next_live += u64::from(live);
+        self.next_id += u64::from(!live);
+        let id = if live {
+            format!("s{}", self.next_live)
+        } else {
+            format!("c{}", self.next_id)
+        };
+        self.asked = Some((id.clone(), trigger, start, live));
         vec![Command::Complete {
             id,
             trigger,
@@ -731,21 +758,31 @@ impl App {
                     self.accept(&item.value.clone(), menu.trigger, menu.start);
                 }
             }
-            Key::Esc => self.menu = None,
-            _ => {
+            Key::Esc => {
                 self.menu = None;
-                return false;
+                self.asked = None;
             }
+            // Typing goes on with the menu open: the edit asks again and narrows it.
+            _ => return false,
         }
         true
     }
 
     fn on_completion(&mut self, id: &str, items: Vec<CompletionItem>) {
-        let Some((asked, trigger, start)) = self.asked.take() else {
+        let Some((asked, trigger, start, live)) = self.asked.take() else {
             return;
         };
         if asked != id {
-            self.asked = Some((asked, trigger, start));
+            self.asked = Some((asked, trigger, start, live));
+            return;
+        }
+        if live {
+            self.menu = (!items.is_empty()).then_some(Menu {
+                items,
+                selected: 0,
+                trigger,
+                start,
+            });
             return;
         }
         match items.len() {

@@ -192,26 +192,25 @@ impl CommandSet {
         self.words.get(key, &[]).unwrap_or_default()
     }
 
-    /// Candidates for `/prefix`: built-in and custom names that start with it, built-in first.
+    /// Candidates for `/prefix`: names that start with it, then names that contain it; built-in first within each.
     pub fn complete(&self, prefix: &str) -> Vec<CompletionItem> {
-        let mut out: Vec<CompletionItem> = BUILTIN
+        let mut all: Vec<CompletionItem> = BUILTIN
             .iter()
-            .filter(|(name, _)| name.starts_with(prefix))
             .map(|(name, key)| CompletionItem {
                 value: (*name).to_owned(),
                 description: self.describe(key),
             })
             .collect();
-        out.extend(
-            self.custom
-                .iter()
-                .filter(|c| c.name.starts_with(prefix))
-                .map(|c| CompletionItem {
-                    value: c.name.clone(),
-                    description: c.description.clone(),
-                }),
-        );
-        out
+        all.extend(self.custom.iter().map(|c| CompletionItem {
+            value: c.name.clone(),
+            description: c.description.clone(),
+        }));
+        let (mut starts, contains): (Vec<_>, Vec<_>) = all
+            .into_iter()
+            .filter(|item| item.value.contains(prefix))
+            .partition(|item| item.value.starts_with(prefix));
+        starts.extend(contains);
+        starts
     }
 
     /// The text `/help` answers: every command with its description, then the ways of typing.
