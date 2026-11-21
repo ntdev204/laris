@@ -9,7 +9,7 @@ this is the first release of the Rust generation. History lives in git.
 ### Added
 - **MCP servers and web search:** the client starts MCP servers from `mcp.servers` inside the OS sandbox (network on,
   one writable folder) and offers their tools as `mcp__<server>__<tool>`. Defaults: `fetch` (reads a page, via `uvx`)
-  and `firecrawl` (search and scrape, via `npx`, needs `FIRECRAWL_API_KEY`). `/mcp` shows what runs. Permission rules
+  and `duckduckgo` (web search, via `uvx`; no key, nothing for the user to set up). `/mcp` shows what runs. Permission rules
   may end a tool name in `*` (`mcp__fetch__*`).
 
 ## [1.3.0] - 2026-11-21

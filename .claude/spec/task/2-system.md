@@ -1948,10 +1948,20 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Depends: T252
 - Deliverables:
   - `laris-tools::mcp`: MCP client over standard input and output (`initialize`, `tools/list`, `tools/call`), `McpRemote` as a `RemoteTools` source with names `mcp__<server>__<tool>`, call time limit, restart of a dead or timed-out server; servers start in parallel inside a sandbox with a network and one writable folder (`~/.laris/mcp/`), none without a sandbox
-  - Settings `mcp.enabled` and `mcp.servers.<name>` (`enabled`, `command`, `args`, `env` names, `startTimeoutSeconds`, `callTimeoutSeconds`); defaults `fetch` (`uvx mcp-server-fetch`) and `firecrawl` (`npx -y firecrawl-mcp`, needs `FIRECRAWL_API_KEY`); `permissions.allow` defaults to `mcp__fetch__*` and `mcp__firecrawl__*`; the schema is regenerated
+  - Settings `mcp.enabled` and `mcp.servers.<name>` (`enabled`, `command`, `args`, `env` names, `startTimeoutSeconds`, `callTimeoutSeconds`); defaults `fetch` (`uvx mcp-server-fetch`) and `duckduckgo` (`uvx duckduckgo-mcp-server`; T254 replaced Firecrawl); `permissions.allow` defaults to `mcp__fetch__*` and `mcp__duckduckgo__*`; the schema is regenerated
   - Permission rules: a tool name ending in `*` matches by prefix
   - `/mcp` command (catalogue en, vi), client guide section, prompt rule 7 in `.laris/prompts/tools.md` (lock refreshed), changelog
 - Validation:
   - Tests: scripted server through the sandbox (handshake, list, call, tool error, timeout, crash and restart, skipped and failed, no sandbox); rule prefix form; planted settings add no server; `/mcp` in the interface; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
-- Note: 2026-11-21 built. The real `uvx mcp-server-fetch` and `npx firecrawl-mcp` are NOT tried here (no downloads were run; they need `uv`, Node and, for Firecrawl, a key from the owner). Setting a list in `permissions.allow` replaces the two default allow rules. The first start may wait up to `startTimeoutSeconds` while a server downloads. Windows is not tried.
+- Note: 2026-11-21 built. The real `uvx mcp-server-fetch` and `uvx duckduckgo-mcp-server` are NOT tried here (no downloads were run; they need `uv`). Setting a list in `permissions.allow` replaces the two default allow rules. The first start may wait up to `startTimeoutSeconds` while a server downloads. Windows is not tried.
+
+### T254 — Keyless search replaces Firecrawl
+- Requirements: SR-H16
+- Depends: T253
+- Deliverables:
+  - The default `firecrawl` server (needed an API key) is replaced by `duckduckgo` (`uvx duckduckgo-mcp-server`, no key); the default allow rule is `mcp__duckduckgo__*`; schema, guide, changelog updated
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction: search is the system's job, the user sets up nothing. The server is NOT tried here (no download); it needs `uv` on the machine, and DuckDuckGo may throttle heavy use from one address.
