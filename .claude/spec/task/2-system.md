@@ -2140,3 +2140,14 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, third end-to-end run of research-gap: eleven PaperSearch calls were refused for `"open_access_only": "True"`, the model then called WebSearch outside the workflow (the client ran it), and the turn stopped as `cyclic` with no answer after five good searches. The model stays NOT QUALIFIED.
+
+### T269 — The input budget keeps the user's question
+- Requirements: SR-P1
+- Depends: T268
+- Deliverables:
+  - `fit_to_budget` (T262) never shortens or drops the user's latest question, keeps the latest message together with the call its tool results answer, and may shorten a trailing tool result (data, not the question)
+  - Test: two long tool turns are fitted while the question and the last result stay
+- Validation:
+  - `uv run pytest tests/unit/model`, `ruff check` and `ruff format --check` on the changed files, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, fourth end-to-end run of research-gap: after two PaperSearch results (40 kB) the budget dropped the oldest turn, which was the user's question; the Qwen chat template refused ("No user query found in messages") and every retry answered 502. The same loop could also delete the latest message itself (IndexError). The model stays NOT QUALIFIED.

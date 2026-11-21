@@ -76,3 +76,26 @@ def test_a_long_prompt_is_shortened_to_the_budget_without_touching_system_or_las
     assert all(m["role"] != "tool" for m in small)
     with pytest.raises(ProviderError):
         fit_to_budget(messages, measure, 100)
+
+
+def test_the_users_question_is_kept_when_tool_turns_are_dropped():
+    from laris.model.inference.open_llm import fit_to_budget
+
+    messages = [
+        {"role": "system", "content": "S" * 1000},
+        {"role": "user", "content": "find research gaps"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "1"}]},
+        {"role": "tool", "content": "paper " * 3000},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "2"}]},
+        {"role": "tool", "content": "paper " * 3000},
+    ]
+
+    def measure(items):
+        return sum(len(str(m.get("content") or "")) for m in items)
+
+    fitted = fit_to_budget(messages, measure, 2600)
+    assert measure(fitted) <= 2600
+    roles = [m["role"] for m in fitted]
+    assert roles[0] == "system" and "user" in roles
+    assert next(m for m in fitted if m["role"] == "user")["content"] == "find research gaps"
+    assert fitted[-1]["role"] == "tool"
