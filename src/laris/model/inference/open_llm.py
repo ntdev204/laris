@@ -12,7 +12,7 @@ import json
 import re
 import threading
 import uuid
-from typing import Any, Dict, Iterator, List, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Tuple
 
 from laris.protocol import AssistantTurn, ChatProvider, ProviderError, ToolCall
 
@@ -85,6 +85,51 @@ def template_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
+_CUT_MARK = "\n[... shortened to fit the model's context budget ...]\n"
+_MIN_KEEP = 400  # a message is never shortened below this many characters
+
+
+def _shorten(text: str) -> str:
+    keep = max(_MIN_KEEP, len(text) // 2)
+    head = keep * 3 // 5
+    return text[:head] + _CUT_MARK + text[len(text) - (keep - head) :]
+
+
+def fit_to_budget(
+    messages: List[Dict[str, Any]], measure: Callable[[List[Dict[str, Any]]], int], budget: int
+) -> List[Dict[str, Any]]:
+    """`messages`, with the oldest bulky content shortened until `measure` says it fits `budget`.
+
+    Tool results are what grow a prompt (pages, passages), so they go first, largest first; the
+    system message and the latest message are left alone. If shortening is not enough, the oldest
+    turns after the system message are dropped, always keeping the latest message. `budget <= 0`
+    turns this off.
+    """
+    if budget <= 0 or measure(messages) <= budget:
+        return messages
+    work = [dict(m) for m in messages]
+    protected = {len(work) - 1} | {i for i, m in enumerate(work) if m.get("role") == "system"}
+    while measure(work) > budget:
+        candidates = [
+            (len(str(m.get("content") or "")), i)
+            for i, m in enumerate(work)
+            if i not in protected and len(str(m.get("content") or "")) > _MIN_KEEP * 2
+        ]
+        if not candidates:
+            break
+        _, index = max(candidates, key=lambda c: (work[c[1]].get("role") == "tool", c[0]))
+        work[index]["content"] = _shorten(str(work[index]["content"]))
+    while measure(work) > budget:
+        droppable = [i for i in range(len(work) - 1) if work[i].get("role") != "system"]
+        if not droppable:
+            raise ProviderError("the conversation does not fit the model's input budget")
+        del work[droppable[0]]
+        # never leave a tool result without the call that asked for it
+        while droppable and len(work) > 1 and work[droppable[0]].get("role") == "tool":
+            del work[droppable[0]]
+    return work
+
+
 class OpenWeightChat(ChatProvider):
     name = "open-llm"
 
@@ -144,18 +189,44 @@ class OpenWeightChat(ChatProvider):
             return 0
 
     # -- generation ----------------------------------------------------------------------------
-    def _inputs(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> Any:
-        self.load()
-        prompt = self._tokenizer.apply_chat_template(
+    def _prompt(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> str:
+        return self._tokenizer.apply_chat_template(
             template_messages(messages),
             tools=tools or None,
             add_generation_prompt=True,
             tokenize=False,
             enable_thinking=self.cfg.chat_thinking,
         )
-        return self._tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(
-            self._model.device
-        )
+
+    def _inputs(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> Any:
+        self.load()
+
+        def measure(items: List[Dict[str, Any]]) -> int:
+            return len(
+                self._tokenizer(self._prompt(items, tools), add_special_tokens=False)["input_ids"]
+            )
+
+        # The prompt (tool schemas plus every earlier tool result) is what makes memory climb during
+        # tool use: the activations and the cache of one call grow with its length. Bound it.
+        fitted = fit_to_budget(messages, measure, self.cfg.chat_max_input_tokens)
+        return self._tokenizer(
+            self._prompt(fitted, tools), return_tensors="pt", add_special_tokens=False
+        ).to(self._model.device)
+
+    def _release(self) -> None:
+        """Hand the memory of a finished call back to the GPU, so tool turns do not pile up."""
+        if not self.cfg.chat_release_cache:
+            return
+        try:
+            import gc
+
+            import torch
+
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
 
     def _gen_kwargs(self) -> Dict[str, Any]:
         cfg = self.cfg
@@ -181,9 +252,13 @@ class OpenWeightChat(ChatProvider):
                 with torch.inference_mode():
                     out = self._model.generate(**inputs, **self._gen_kwargs())
             except torch.cuda.OutOfMemoryError as exc:
+                self._release()
                 raise ProviderError("GPU out of memory while generating") from exc
             new = out[0][inputs["input_ids"].shape[1] :]
-            return self._turn(self._tokenizer.decode(new, skip_special_tokens=True))
+            text = self._tokenizer.decode(new, skip_special_tokens=True)
+            del out, new, inputs
+            self._release()
+            return self._turn(text)
 
     def stream(
         self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]
@@ -225,6 +300,8 @@ class OpenWeightChat(ChatProvider):
                     yield {"type": "text", "delta": visible[sent_text:]}
                     sent_text = len(visible)
             worker.join()
+            inputs = streamer = None  # let the prompt tensors go before the cache is released
+            self._release()
             if failure:
                 raise ProviderError(f"generation failed: {type(failure[0]).__name__}")
             turn = self._turn(raw)

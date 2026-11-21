@@ -44,3 +44,35 @@ def test_template_messages_decode_arguments():
         ]
     )
     assert out[0]["content"] == "" and out[0]["tool_calls"][0]["function"]["arguments"] == {"a": 2}
+
+
+def test_a_long_prompt_is_shortened_to_the_budget_without_touching_system_or_last_message():
+    import pytest
+
+    from laris.model.inference.open_llm import fit_to_budget
+    from laris.protocol import ProviderError
+
+    messages = [
+        {"role": "system", "content": "S" * 3000},
+        {"role": "user", "content": "question"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "1"}]},
+        {"role": "tool", "content": "page " * 4000},
+        {"role": "user", "content": "now answer"},
+    ]
+
+    def measure(items):
+        return sum(len(str(m.get("content") or "")) for m in items)
+
+    assert fit_to_budget(messages, measure, 0) is messages  # off
+    fitted = fit_to_budget(messages, measure, 4500)
+    assert measure(fitted) <= 4500
+    assert fitted[0]["content"] == messages[0]["content"] and fitted[-1] == messages[-1]
+    assert "shortened" in fitted[3]["content"]
+    assert messages[3]["content"].startswith("page ")  # the input is not changed
+    assert len(messages[3]["content"]) == 20000
+    # when shortening is not enough, old turns go, and a tool result never loses its call
+    small = fit_to_budget(messages, measure, 3200)
+    assert small[0]["role"] == "system" and small[-1]["content"] == "now answer"
+    assert all(m["role"] != "tool" for m in small)
+    with pytest.raises(ProviderError):
+        fit_to_budget(messages, measure, 100)

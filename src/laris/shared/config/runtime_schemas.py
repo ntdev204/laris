@@ -211,6 +211,8 @@ class ModelServiceConfig(BaseModel):
     chat_model_id: str = Field(default="")  # open-weight chat model (Hugging Face id or local dir)
     chat_quantization: str = Field(default="8bit", pattern="^(none|8bit|4bit)$")
     chat_max_new_tokens: int = Field(default=1024, ge=1)  # most tokens one reply may generate
+    chat_max_input_tokens: int = Field(default=8192, ge=0)  # prompt budget; older tool results are shortened (0: off)
+    chat_release_cache: bool = Field(default=True)  # return GPU memory to the driver after every reply
     chat_thinking: bool = Field(default=False)  # let the model reason before it answers
     chat_temperature: float = Field(default=0.0, ge=0.0)  # 0 is greedy decoding
     device: str = Field(default="")  # cuda or cpu; empty selects automatically
