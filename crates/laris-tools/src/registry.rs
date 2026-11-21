@@ -109,6 +109,7 @@ impl Registry {
         all.push(crate::bash::tool(&ctx));
         all.extend(crate::memory::tools(&ctx));
         all.extend(crate::knowledge::tools(&ctx));
+        all.extend(crate::web::tools(&ctx));
         for tool in all {
             registry
                 .register(tool)

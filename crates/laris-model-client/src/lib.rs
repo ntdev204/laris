@@ -17,6 +17,7 @@ mod http;
 mod interrupt;
 mod pin;
 mod transport;
+mod web;
 
 pub use client::{ChatStream, ModelClient};
 pub use config::{API_KEY_ENV, ApiKey, ClientConfig};
@@ -25,3 +26,4 @@ pub use http::{HttpOptions, ReqwestBody, ReqwestTransport};
 pub use interrupt::Interrupt;
 pub use pin::{Pin, Trust};
 pub use transport::{BodyStream, HttpRequest, Method, ResponseHead, Transport, TransportError};
+pub use web::{WebClient, WebError, WebOptions, WebPage, check_url, is_public};

@@ -1948,7 +1948,7 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Depends: T252
 - Deliverables:
   - `laris-tools::mcp`: MCP client over standard input and output (`initialize`, `tools/list`, `tools/call`), `McpRemote` as a `RemoteTools` source with names `mcp__<server>__<tool>`, call time limit, restart of a dead or timed-out server; servers start in parallel inside a sandbox with a network and one writable folder (`~/.laris/mcp/`), none without a sandbox
-  - Settings `mcp.enabled` and `mcp.servers.<name>` (`enabled`, `command`, `args`, `env` names, `startTimeoutSeconds`, `callTimeoutSeconds`); defaults `fetch` (`uvx mcp-server-fetch`) and `duckduckgo` (`uvx duckduckgo-mcp-server`; T254 replaced Firecrawl); `permissions.allow` defaults to `mcp__fetch__*` and `mcp__duckduckgo__*`; the schema is regenerated
+  - Settings `mcp.enabled` and `mcp.servers.<name>` (`enabled`, `command`, `args`, `env` names, `startTimeoutSeconds`, `callTimeoutSeconds`); defaults `fetch` (`uvx mcp-server-fetch`) and `duckduckgo` (`uvx duckduckgo-mcp-server`; T254 replaced Firecrawl); `permissions.allow` defaults to `mcp__fetch__*` and (removed by T255); the schema is regenerated
   - Permission rules: a tool name ending in `*` matches by prefix
   - `/mcp` command (catalogue en, vi), client guide section, prompt rule 7 in `.laris/prompts/tools.md` (lock refreshed), changelog
 - Validation:
@@ -1960,8 +1960,21 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Requirements: SR-H16
 - Depends: T253
 - Deliverables:
-  - The default `firecrawl` server (needed an API key) is replaced by `duckduckgo` (`uvx duckduckgo-mcp-server`, no key); the default allow rule is `mcp__duckduckgo__*`; schema, guide, changelog updated
+  - The default `firecrawl` server (needed an API key) is replaced by `duckduckgo` (`uvx duckduckgo-mcp-server`, no key); the default allow rule is (removed by T255); schema, guide, changelog updated
 - Validation:
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's direction: search is the system's job, the user sets up nothing. The server is NOT tried here (no download); it needs `uv` on the machine, and DuckDuckGo may throttle heavy use from one address.
+
+### T255 — Web tools and clock; no default MCP servers
+- Requirements: SR-H16, SR-H17
+- Depends: T254
+- Deliverables:
+  - The default MCP servers are removed (`mcp.servers` is empty, `permissions.allow` is empty); the mechanism stays
+  - `laris-model-client::web`: `WebClient` (`reqwest`, no proxy, a resolver that keeps only public addresses, redirects followed by hand and re-checked, byte and time limits) and `check_url`
+  - `laris-tools::web`: `WebFetch`, `WebSearch` (DuckDuckGo-style HTML results, `uddg` links unwrapped, ads dropped, check pages reported) and `Now`, over the `WebTransport` trait; output untrusted; secrets refused in address and query
+  - Settings `web` (`enabled`, `searchUrl`, `timeoutSeconds`, `maxBytes`, `maxRedirects`, `maxResults`, `userAgent`); client wiring `headless::web::WebBridge`; guide, changelog, prompt rule, schema
+- Validation:
+  - Tests: scripted transport (page text, search parse, typed errors, secret refusal, switches), inside-address table, civil date; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction ("remove MCP search, keep the mechanism; build the tools to know and act on the world"). Built: knowing (`Now`, `WebFetch`, `WebSearch`). NOT built: tools that act on the world (HTTP POST/PUT, email, calendar and the like); they need a permission design first. The real network is NOT tried here. The default search page is DuckDuckGo's HTML page, which may show a check page under heavy use from one address (the tool reports it); it is a setting. Tools are asked about like reads (they do not write), so a model fooled by a page could still leak data in a URL; the secret check narrows this but does not close it. No `no_proxy` exception: a machine that needs a proxy cannot use these tools yet. `laris-model-client` gains `tokio` DNS use only (no new crate).

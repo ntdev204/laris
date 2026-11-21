@@ -17,6 +17,7 @@ pub mod args;
 pub mod real;
 mod run;
 mod server;
+pub mod web;
 
 pub use args::{Format, Options, Resume, USAGE, parse};
 pub use run::{

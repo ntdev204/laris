@@ -26,6 +26,7 @@ pub mod project_vault;
 mod registry;
 mod scope;
 mod search;
+mod web;
 
 pub use args::{object_schema, validate};
 pub use bash::{kill_tree, shell};
@@ -36,3 +37,4 @@ pub use glob::glob_to_regex;
 pub use mcp::{McpLaunch, McpRemote, McpSpec, McpState, McpStatus};
 pub use registry::{LocalTool, Registry, RemoteTools, ToolInfo, function_schema};
 pub use scope::Scope;
+pub use web::{Page, WebTransport};
