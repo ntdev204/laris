@@ -123,10 +123,10 @@ impl Default for Permissions {
     }
 }
 
-/// The rules that allow when the settings name none: the tools of the two default MCP servers, so searching the web
+/// The rules that allow when the settings name none: the tools of the two default MCP servers (page reading and keyless web search), so searching the web
 /// and reading a page do not ask. A list in the settings replaces this one.
 pub fn default_allow() -> Vec<String> {
-    vec!["mcp__fetch__*".to_owned(), "mcp__firecrawl__*".to_owned()]
+    vec!["mcp__fetch__*".to_owned(), "mcp__duckduckgo__*".to_owned()]
 }
 
 /// The guard of `auto` mode when the settings name none: privilege escalation, recursive deletion of `/`, `~`, the
@@ -315,8 +315,8 @@ impl Default for Mcp {
                     server("uvx", &["mcp-server-fetch"], &[]),
                 ),
                 (
-                    "firecrawl".to_owned(),
-                    server("npx", &["-y", "firecrawl-mcp"], &["FIRECRAWL_API_KEY"]),
+                    "duckduckgo".to_owned(),
+                    server("uvx", &["duckduckgo-mcp-server"], &[]),
                 ),
             ]),
         }

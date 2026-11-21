@@ -290,6 +290,16 @@
             "$ref": "#/$defs/McpServer"
           },
           "default": {
+            "duckduckgo": {
+              "args": [
+                "duckduckgo-mcp-server"
+              ],
+              "callTimeoutSeconds": 60,
+              "command": "uvx",
+              "enabled": true,
+              "env": [],
+              "startTimeoutSeconds": 120
+            },
             "fetch": {
               "args": [
                 "mcp-server-fetch"
@@ -298,19 +308,6 @@
               "command": "uvx",
               "enabled": true,
               "env": [],
-              "startTimeoutSeconds": 120
-            },
-            "firecrawl": {
-              "args": [
-                "-y",
-                "firecrawl-mcp"
-              ],
-              "callTimeoutSeconds": 60,
-              "command": "npx",
-              "enabled": true,
-              "env": [
-                "FIRECRAWL_API_KEY"
-              ],
               "startTimeoutSeconds": 120
             }
           },
@@ -412,7 +409,7 @@
         "allow": {
           "default": [
             "mcp__fetch__*",
-            "mcp__firecrawl__*"
+            "mcp__duckduckgo__*"
           ],
           "description": "Rules that allow.",
           "items": {
@@ -1038,6 +1035,16 @@
       "default": {
         "enabled": true,
         "servers": {
+          "duckduckgo": {
+            "args": [
+              "duckduckgo-mcp-server"
+            ],
+            "callTimeoutSeconds": 60,
+            "command": "uvx",
+            "enabled": true,
+            "env": [],
+            "startTimeoutSeconds": 120
+          },
           "fetch": {
             "args": [
               "mcp-server-fetch"
@@ -1046,19 +1053,6 @@
             "command": "uvx",
             "enabled": true,
             "env": [],
-            "startTimeoutSeconds": 120
-          },
-          "firecrawl": {
-            "args": [
-              "-y",
-              "firecrawl-mcp"
-            ],
-            "callTimeoutSeconds": 60,
-            "command": "npx",
-            "enabled": true,
-            "env": [
-              "FIRECRAWL_API_KEY"
-            ],
             "startTimeoutSeconds": 120
           }
         }
@@ -1076,7 +1070,7 @@
         "additionalDirectories": [],
         "allow": [
           "mcp__fetch__*",
-          "mcp__firecrawl__*"
+          "mcp__duckduckgo__*"
         ],
         "ask": [],
         "autoAsk": [

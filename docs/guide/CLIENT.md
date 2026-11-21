@@ -90,9 +90,9 @@ The client can start MCP servers (the Model Context Protocol) and offer their to
 | Server | Started with | Gives |
 | :--- | :--- | :--- |
 | `fetch` | `uvx mcp-server-fetch` | reads a web page and returns it as text |
-| `firecrawl` | `npx -y firecrawl-mcp` | web search and page scraping; needs `FIRECRAWL_API_KEY` in the environment, and is skipped while it is unset |
+| `duckduckgo` | `uvx duckduckgo-mcp-server` | web search (and page text); no key or account |
 
-The programs download on first use, so `uv` (for `uvx`) and Node (for `npx`) must be installed and the first start may take a minute. Each server runs inside the OS sandbox with a network, and may write only to `~/.laris/mcp/`; without a sandbox none is started. The results of MCP tools are untrusted data, like any tool result. The tools of the two default servers are allowed by `permissions.allow`; any other server's tools ask first, unless a rule such as `mcp__myserver__*` allows them. To add a server, add an entry to `mcp.servers` (`command`, `args`, `env` as variable names whose values are read from the environment); to turn all of it off, set `mcp.enabled` to `false`. Only the user's own settings are read: a project cannot add a server. `/mcp` shows what is running.
+Neither needs a key or any set-up by the user: search is the system's own business. The programs download on first use through `uv` (`uvx`), which must be installed, and the first start may take a minute. DuckDuckGo may throttle heavy automated use from one address. Each server runs inside the OS sandbox with a network, and may write only to `~/.laris/mcp/`; without a sandbox none is started. The results of MCP tools are untrusted data, like any tool result. The tools of the two default servers are allowed by `permissions.allow`; any other server's tools ask first, unless a rule such as `mcp__myserver__*` allows them. To add a server, add an entry to `mcp.servers` (`command`, `args`, `env` as variable names whose values are read from the environment); to turn all of it off, set `mcp.enabled` to `false`. Only the user's own settings are read: a project cannot add a server. `/mcp` shows what is running.
 
 ## Input forms
 
