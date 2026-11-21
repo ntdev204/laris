@@ -2151,3 +2151,14 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `uv run pytest tests/unit/model`, `ruff check` and `ruff format --check` on the changed files, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, fourth end-to-end run of research-gap: after two PaperSearch results (40 kB) the budget dropped the oldest turn, which was the user's question; the Qwen chat template refused ("No user query found in messages") and every retry answered 502. The same loop could also delete the latest message itself (IndexError). The model stays NOT QUALIFIED.
+
+### T270 — Open archives first for the full text
+- Requirements: SR-H17, SR-H4
+- Depends: T269
+- Deliverables:
+  - `PaperSearch` reads every location of a work: `pdf_url` is an arXiv copy when there is one, then the other free copies; `other_pdf_urls` keeps up to three more
+  - `research-gap.toml` 1.3.0 (owner's direction 2026-11-21; lock refreshed): try `other_pdf_urls` when a copy is refused, fall back to the abstract and say so, stop searching after 5 to 8 papers read
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, fifth end-to-end run: one arXiv paper was read, while MDPI answered 403, HAL showed a bot check and a repository handle gave an empty page; the turn then spent its time budget on more searches. The model stays NOT QUALIFIED.
