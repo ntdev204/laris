@@ -3,7 +3,7 @@
 #   docker compose -p laris-qwen -f docker/compose.yaml -f docker/compose.chat.yaml up -d --build --wait
 # LARIS_MODELS_DIR is the Hugging Face hub cache (mounted read-only at /weights): the model's blobs live in a store
 # shared with other models, so its own folder alone would hold broken links. The snapshot is the folder name under
-# models--Qwen--Qwen3.5-9B/snapshots/. The container has no route out: nothing is downloaded, the weights must be there.
+# models--Qwen--<LARIS_CHAT_MODEL, default Qwen3.5-4B>/snapshots/. The container has no route out: nothing is downloaded, the weights must be there.
 # Needs the NVIDIA container runtime. A different project name (-p) keeps its own volumes and certificate authority.
 services:
   model:
@@ -13,7 +13,7 @@ services:
     image: laris-model-chat:${LARIS_TAG:-dev}
     environment:
       LARIS_MODEL_SERVICE__BACKEND: laris.model.inference.open_llm:OpenWeightChat
-      LARIS_MODEL_SERVICE__CHAT_MODEL_ID: /weights/models--Qwen--Qwen3.5-9B/snapshots/${LARIS_CHAT_SNAPSHOT:?set LARIS_CHAT_SNAPSHOT to the snapshot folder name}
+      LARIS_MODEL_SERVICE__CHAT_MODEL_ID: /weights/models--Qwen--${LARIS_CHAT_MODEL:-Qwen3.5-4B}/snapshots/${LARIS_CHAT_SNAPSHOT:?set LARIS_CHAT_SNAPSHOT to the snapshot folder name}
       HF_HUB_OFFLINE: "1"
       HOME: /tmp
     deploy:
