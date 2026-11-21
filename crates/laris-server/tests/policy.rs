@@ -952,7 +952,7 @@ async fn workflows_and_help_tell_the_client_the_limits_and_nothing_more() {
     assert_eq!(status, 200);
     let parsed: laris_protocol::p1::WorkflowsResponse = serde_json::from_slice(&body).unwrap();
     let names: Vec<&str> = parsed.workflows.iter().map(|w| w.name.as_str()).collect();
-    assert_eq!(names.len(), 7);
+    assert_eq!(names.len(), 8);
     assert!(names.contains(&"grounded-qa"));
     let qa = parsed
         .workflows
