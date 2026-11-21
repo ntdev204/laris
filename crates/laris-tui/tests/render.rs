@@ -260,6 +260,33 @@ fn shift_tab_asks_for_the_next_mode_and_a_slash_line_is_a_command() {
 }
 
 #[test]
+fn a_loop_refusal_is_not_drawn_but_a_real_tool_error_is() {
+    use laris_protocol::Event;
+    let mut a = app();
+    for (id, code) in [("a", "too_many_calls"), ("b", "not_found")] {
+        a.update(Input::Event(Event::ToolCall {
+            id: id.into(),
+            name: "Read".into(),
+            arguments: serde_json::from_value(serde_json::json!({"path": id})).unwrap(),
+        }));
+        a.update(Input::Event(Event::ToolResult {
+            id: id.into(),
+            name: "Read".into(),
+            result: serde_json::json!({"error": {"code": code, "message": "m"}}),
+        }));
+    }
+    let text = ansi(&a.layout(80).all(), false);
+    assert!(
+        !text.contains("too_many_calls") && !text.contains("path: a"),
+        "{text}"
+    );
+    assert!(
+        text.contains("Read"),
+        "the other call is still drawn: {text}"
+    );
+}
+
+#[test]
 fn what_the_core_sends_cannot_move_the_cursor_or_paint_outside_the_interface() {
     use laris_protocol::Event;
     let mut a = app();

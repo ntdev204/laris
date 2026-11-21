@@ -21,6 +21,8 @@ fn norm(text: &str) -> String {
 
 /// Milliseconds the "press Ctrl-C again" prompt stays armed.
 pub const EXIT_WINDOW_MS: u64 = 3000;
+/// Error codes of the loop's own refusals that are shown to the model only: the tool line is left off the screen.
+const HIDDEN_ERRORS: [&str; 1] = ["too_many_calls"];
 
 /// What reaches the interface.
 #[derive(Debug, Clone, PartialEq)]
@@ -983,6 +985,17 @@ impl App {
                 });
             }
             Event::ToolResult { id, result, .. } => {
+                // a refusal that is only the loop's own bookkeeping is for the model, not for the person
+                if result
+                    .pointer("/error/code")
+                    .and_then(Value::as_str)
+                    .is_some_and(|code| HIDDEN_ERRORS.contains(&code))
+                {
+                    self.items.retain(
+                        |item| !matches!(item, Item::Tool { id: found, .. } if *found == id),
+                    );
+                    return;
+                }
                 for item in self.items.iter_mut().rev() {
                     if let Item::Tool {
                         id: found,
