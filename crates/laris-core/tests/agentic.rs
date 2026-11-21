@@ -738,6 +738,19 @@ fn an_empty_corpus_is_told_once_and_spends_no_replan() {
 // -- limits of the loop itself -----------------------------------------------------------------
 
 #[test]
+fn by_default_a_step_may_call_as_many_tools_as_the_model_asks() {
+    let calls: Vec<ToolCall> = (1..=9)
+        .map(|i| search(&format!("s{i}"), &format!("perovskite {i}")))
+        .collect();
+    let script = vec![turn("", calls), turn(CITED, vec![])];
+    let tools = Tools::default();
+    let ran = tools.ran.clone();
+    let mut rig = make_rig(&temp_dir("nocap"), script, Agent::default(), tools);
+    rig.send("perovskite?").expect("turn");
+    assert_eq!(ran.borrow().len(), 9, "no cap by default");
+}
+
+#[test]
 fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
     let calls: Vec<ToolCall> = (1..=5)
         .map(|i| search(&format!("s{i}"), &format!("perovskite {i}")))
@@ -745,7 +758,11 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
     let script = vec![turn("", calls), turn(CITED, vec![])];
     let tools = Tools::default();
     let ran = tools.ran.clone();
-    let mut rig = make_rig(&temp_dir("many"), script, Agent::default(), tools);
+    let capped = Agent {
+        max_tool_calls_per_step: 4,
+        ..Agent::default()
+    };
+    let mut rig = make_rig(&temp_dir("many"), script, capped, tools);
     let events = rig.send("perovskite?").expect("turn");
     assert_eq!(ran.borrow().len(), 4, "the fifth call is over the cap");
     let refused = events.iter().any(|e| matches!(e, Event::ToolResult { result, .. } if result["error"]["code"] == "too_many_calls"));

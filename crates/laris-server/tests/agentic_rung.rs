@@ -531,7 +531,7 @@ async fn autonomy_stays_inside_its_limits() {
     assert_eq!(done(&run.events).0, "completed");
 
     // 5c. the plan does not widen the tool set of a step: more calls than the limit are refused without running
-    let limit = Agent::default().max_tool_calls_per_step as usize;
+    let limit = 4;
     let many: Vec<Value> = (0..=limit)
         .map(|i| {
             json!({"index": i, "id": format!("c{i}"), "type": "function",
@@ -552,7 +552,14 @@ async fn autonomy_stays_inside_its_limits() {
     ];
     let server = start(vec![burst, answer("Too many calls at once; I stop.")]).await;
     let project = support::project("burst");
-    let run = ask(&server, &project, GOAL, Yes::default()).await;
+    let capped = support::Options {
+        agent: Agent {
+            max_tool_calls_per_step: 4,
+            ..Agent::default()
+        },
+        ..support::Options::default()
+    };
+    let run = support::ask_with(&server, &project, GOAL, Yes::default(), &capped).await;
     assert_eq!(run.ran.len(), limit, "the call over the cap did not run");
     let refused = result_of(&run, "Read")
         .iter()

@@ -207,7 +207,8 @@ impl FollowModel {
                 change,
             };
         }
-        if *index >= self.agent.max_tool_calls_per_step as usize {
+        let cap = self.agent.max_tool_calls_per_step as usize;
+        if cap != 0 && *index >= cap {
             return self.reject(id, "too_many_calls", "loop.too_many_calls");
         }
         if self

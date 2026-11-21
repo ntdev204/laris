@@ -146,6 +146,6 @@ Exit criteria:
 
 ### Phase 54 — MCP tools and web search
 Goal: the client can reach the web through MCP servers, confined and asked about like every other tool.
-Tasks: T253, T254, T255
+Tasks: T253, T254, T255, T256
 Exit criteria:
 - SR-H16 and SR-H17 hold: the MCP bridge (no default servers), the web tools and the clock, `/mcp`, the `*` rule form and the guide are built and tested; the real network is tried by the owner on a networked machine.

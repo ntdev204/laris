@@ -518,8 +518,9 @@ pub struct Agent {
     /// Longest time of one turn, in seconds.
     #[schemars(extend("exclusiveMinimum" = 0))]
     pub time_budget_seconds: f64,
-    /// Tool calls run in one model step; more are refused.
-    #[schemars(range(min = 1, max = 16))]
+    /// Tool calls run in one model step; more are refused. 0 sets no limit (the default): a step is still bounded by
+    /// `maxSteps` and `timeBudgetSeconds`.
+    #[schemars(range(min = 0, max = 64))]
     pub max_tool_calls_per_step: u32,
     /// Planning.
     pub plan: PlanSettings,
@@ -532,7 +533,7 @@ impl Default for Agent {
         Self {
             max_steps: 10,
             time_budget_seconds: 180.0,
-            max_tool_calls_per_step: 4,
+            max_tool_calls_per_step: 0,
             plan: PlanSettings::default(),
             reflect: Reflect::default(),
         }
