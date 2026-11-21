@@ -8,7 +8,7 @@
 //!
 //! It does not guess. A PDF it cannot read says so: encrypted files, filters other than `FlateDecode`, composite
 //! fonts without a `ToUnicode` map, and files that hold pictures of pages (scans) each give their own error. A scan
-//! has no text layer; reading it waits for the stage-3 OCR model.
+//! has no text layer; `super::ocr` reads it with external OCR programs.
 
 use super::inflate::zlib;
 use regex::bytes::Regex;
@@ -26,8 +26,8 @@ pub enum PdfError {
     Encrypted,
     /// The pages are pictures: nothing to read without OCR.
     #[error(
-        "this PDF has no text layer (it looks like a scan); reading scans needs the stage-3 OCR model, \
-         which is not available yet"
+        "this PDF has no text layer (it looks like a scan); reading scans needs OCR (pdftoppm and tesseract, \
+         see vault.ocr)"
     )]
     NoTextLayer,
     /// A feature this reader does not handle.

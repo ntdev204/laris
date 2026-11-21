@@ -204,3 +204,42 @@ fn now_gives_a_plausible_date() {
     assert!(out["unix"].as_u64().unwrap_or(0) > 1_700_000_000);
     assert!(out.get("untrusted").is_none(), "the clock is ours");
 }
+
+#[test]
+fn a_pdf_is_read_not_refused_and_a_scan_goes_to_ocr() {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ingest");
+    let text_pdf = std::fs::read(dir.join("report.pdf")).expect("fixture");
+    let scan_pdf = std::fs::read(dir.join("scanned_text.pdf")).expect("fixture");
+    let web = script(move |url| {
+        let body = if url.ends_with("/scan") {
+            &scan_pdf
+        } else {
+            &text_pdf
+        };
+        Ok(Page {
+            body: body.clone(),
+            ..page("application/pdf", "")?
+        })
+    });
+    let mut r = registry("web-pdf", Some(web), |_| {});
+    let out = r.call("WebFetch", leak(json!({"url": "https://e.org/paper.pdf"})));
+    assert_eq!(out["read_by"], "text_layer", "{out}");
+    assert!(
+        out["content"]
+            .as_str()
+            .expect("content")
+            .contains("Perovskite solar cells"),
+        "{out}"
+    );
+    let has = |p: &str| std::process::Command::new(p).arg("-v").output().is_ok();
+    if has("pdftoppm") && has("tesseract") {
+        let out = r.call("WebFetch", leak(json!({"url": "https://e.org/scan"})));
+        assert_eq!(out["read_by"], "ocr", "{out}");
+        assert!(
+            out["content"]
+                .as_str()
+                .expect("content")
+                .contains("perovskite")
+        );
+    }
+}

@@ -353,6 +353,60 @@
       },
       "type": "object"
     },
+    "Ocr": {
+      "additionalProperties": false,
+      "description": "External programs that read a PDF when the built-in reader gives no usable text (T261). Names are looked up on\n`PATH`; nothing is installed or downloaded. An empty command turns that step off.",
+      "properties": {
+        "dpi": {
+          "default": 200,
+          "description": "Resolution the pages are rendered at.",
+          "format": "uint32",
+          "maximum": 600,
+          "minimum": 72,
+          "type": "integer"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Try the external readers at all.",
+          "type": "boolean"
+        },
+        "languages": {
+          "default": "eng",
+          "description": "Recognition languages, joined by `+` (`eng+vie`).",
+          "type": "string"
+        },
+        "maxPages": {
+          "default": 60,
+          "description": "Most pages recognised in one document.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "ocrCommand": {
+          "default": "tesseract",
+          "description": "Program that reads an image (`tesseract`).",
+          "type": "string"
+        },
+        "renderCommand": {
+          "default": "pdftoppm",
+          "description": "Program that renders PDF pages to PNG images (`pdftoppm`).",
+          "type": "string"
+        },
+        "textCommand": {
+          "default": "pdftotext",
+          "description": "Program that prints the text layer of a PDF (`pdftotext`); tried before OCR.",
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "default": 120,
+          "description": "Longest one external program may run, in seconds.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "PermissionMode": {
       "description": "Permission mode.",
       "oneOf": [
@@ -896,6 +950,20 @@
           "minimum": 0,
           "type": "integer"
         },
+        "ocr": {
+          "$ref": "#/$defs/Ocr",
+          "default": {
+            "dpi": 200,
+            "enabled": true,
+            "languages": "eng",
+            "maxPages": 60,
+            "ocrCommand": "tesseract",
+            "renderCommand": "pdftoppm",
+            "textCommand": "pdftotext",
+            "timeoutSeconds": 120
+          },
+          "description": "Reading PDFs the built-in reader cannot (scans, unusual fonts)."
+        },
         "passageMaxChars": {
           "default": 1200,
           "description": "Longest passage cut from a document, in characters.",
@@ -1210,6 +1278,16 @@
         "ingestMaxBytes": 20000000,
         "maxNoteChars": 60000,
         "maxWritesPerMinute": 120,
+        "ocr": {
+          "dpi": 200,
+          "enabled": true,
+          "languages": "eng",
+          "maxPages": 60,
+          "ocrCommand": "tesseract",
+          "renderCommand": "pdftoppm",
+          "textCommand": "pdftotext",
+          "timeoutSeconds": 120
+        },
         "passageMaxChars": 1200,
         "searchMaxResults": 10
       },

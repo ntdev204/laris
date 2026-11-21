@@ -1,7 +1,7 @@
 //! The knowledge tools (SR-H4, SR-H8, SR-H13): `ingest_document`, `search_corpus`, `write_vault_note` and
 //! `propose_note`.
 //!
-//! * `ingest_document` reads a text, Markdown or PDF file of the project, cuts it into passages with exact character
+//! * `ingest_document` reads a text, Markdown or PDF file (a scan by OCR, T261) of the project, cuts it into passages with exact character
 //!   spans, keeps them in the project database and writes the document's Source note in the vault. The same file
 //!   again replaces its passages and changes nothing in the note.
 //! * `search_corpus` ranks the passages of every ingested document and the notes of the vault (never the proposals
@@ -83,8 +83,8 @@ fn ingest_tool(ctx: &Arc<Context>) -> LocalTool {
     let ctx = Arc::clone(ctx);
     LocalTool::new(
         "ingest_document",
-        "Read a text, Markdown or PDF (text layer) file of the project, keep its passages for search_corpus and write \
-         its Source note in the vault. A scanned PDF is refused.",
+        "Read a text, Markdown or PDF file of the project, keep its passages for search_corpus and write its \
+         Source note in the vault. A scanned PDF is read by OCR when the programs are installed; `read_by` says how.",
         object_schema(
             json!({"path": {"type": "string"},
                    "domain": {"type": "string", "description": "Optional domain hub the Source note joins."}}),
@@ -101,9 +101,13 @@ fn ingest_tool(ctx: &Arc<Context>) -> LocalTool {
                 return Err(ToolError::new("not_found", "no such file"));
             }
             let origin = ctx.scope.display(&path);
-            let document =
-                ingest::read_document(&path, ctx.vault.ingest_max_bytes, &pdf_limits(&ctx))
-                    .map_err(|e| ToolError::new("cannot_ingest", e.to_string()))?;
+            let (document, method) = ingest::read_document_with(
+                &path,
+                ctx.vault.ingest_max_bytes,
+                &pdf_limits(&ctx),
+                Some(&ctx.vault.ocr),
+            )
+            .map_err(|e| ToolError::new("cannot_ingest", e.to_string()))?;
             let max = usize::try_from(ctx.vault.passage_max_chars).unwrap_or(usize::MAX);
             let passages = ingest::split(&document.text, max);
             let rows: Vec<(usize, usize, String)> = passages
@@ -126,6 +130,7 @@ fn ingest_tool(ctx: &Arc<Context>) -> LocalTool {
             Ok(json!({
                 "title": document.title,
                 "kind": document.kind.as_str(),
+                "read_by": method.as_str(),
                 "characters": document.text.chars().count(),
                 "passages": passages.len(),
                 "source_note": note.path,
