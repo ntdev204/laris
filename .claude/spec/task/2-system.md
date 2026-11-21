@@ -1989,3 +1989,13 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's direction ("remove the limit, I want it like Claude"): parallel web searches hit `too_many_calls` at 4. Repeats of an identical call are still refused (separate rule).
+
+### T257 — The loop's own refusals are not drawn
+- Requirements: SR-C1
+- Depends: T256
+- Deliverables:
+  - The interface leaves the tool line off the screen when its result is the loop's own refusal `too_many_calls`; the model still receives it
+- Validation:
+  - Interface test (a refused call is not drawn, a real tool error is); `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction. With T256 the refusal only appears when the user sets a cap. `WebFetch` is kept: Claude Code has a WebFetch tool too (it is the tool behind its web-fetch agent).
