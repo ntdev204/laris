@@ -36,7 +36,7 @@
   },
   "reflect": {
     "step_failed": "The last step did not get anywhere: {issues}. {left} replans left. Change approach (other keywords, another tool, another source) and update the plan through update_plan, or conclude clearly that no evidence was found.",
-    "permanent": "{issues}. Other keywords or tools cannot help. Do not call that tool again. Answer directly and say clearly that there is no data to answer from, with how to fix it (for example ingest documents).",
+    "permanent": "{issues}. Other keywords or the same tool cannot help this turn. Do not call that tool again. Answer with what you already have and say clearly what could not be found and why, with how to fix it (for example ingest documents, or try the search again later).",
     "budget_out": "The replans are used up. Do not retry the same way. Answer with what you have and say clearly what is missing and why.",
     "empty": "{tool} returned nothing",
     "error": "{tool} failed with {code}"
@@ -44,7 +44,7 @@
   "loop": {
     "tool_not_allowed": "This tool is not allowed in the active workflow.",
     "too_many_calls": "Too many calls in one step.",
-    "cyclic_call": "The same call was repeated.",
+    "cyclic_call": "This exact call was already made in this turn and its result is above. Do not repeat it: use that result, change the arguments or the tool, or answer with what you have.",
     "approval_denied": "This action was not approved.",
     "cyclic": "Stopped: the same tool call was repeated.",
     "max_steps": "Stopped: the allowed steps ran out before a final answer. Say whether to continue.",

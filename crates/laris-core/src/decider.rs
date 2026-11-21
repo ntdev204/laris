@@ -6,7 +6,7 @@
 use crate::action::{Action, AutoStep, Mark, Notice, NoticeKind, PlanChange};
 use crate::model::ModelError;
 use crate::plan::{PLAN_TOOL, StepStatus, open_steps, parse_plan, render};
-use crate::session::{Pending, Session, arguments_of, call_key};
+use crate::session::{Pending, Session, Turn, arguments_of, call_key};
 use laris_config::Catalogue;
 use laris_config::settings::{Agent, PlanMode};
 use serde_json::{Map, Value};
@@ -231,6 +231,11 @@ impl FollowModel {
         Action::RunTool { id: id.to_owned() }
     }
 
+    /// Whether the model keeps repeating a refused call, so the turn must stop.
+    fn cyclic(&self, turn: &Turn) -> bool {
+        turn.repeats() >= self.agent.max_repeated_calls.max(1)
+    }
+
     fn reflect(&self, session: &Session) -> Action {
         let reflect = &self.agent.reflect;
         let mut marks = Vec::new();
@@ -326,7 +331,7 @@ impl Decider for FollowModel {
         match session.pending() {
             Pending::Idle => None,
             Pending::Model => {
-                if turn.cyclic() {
+                if self.cyclic(turn) {
                     return Some(self.stop("cyclic", "loop.cyclic"));
                 }
                 if session.asked().is_some() {
@@ -345,7 +350,7 @@ impl Decider for FollowModel {
                     note: self.note(session),
                 })
             }
-            Pending::Tools(_) | Pending::Reflect if turn.cyclic() => {
+            Pending::Tools(_) | Pending::Reflect if self.cyclic(turn) => {
                 Some(self.stop("cyclic", "loop.cyclic"))
             }
             Pending::Tools(_) => Some(self.tools(session)),

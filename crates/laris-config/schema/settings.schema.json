@@ -4,6 +4,14 @@
       "additionalProperties": false,
       "description": "Limits of the agent loop.",
       "properties": {
+        "maxRepeatedCalls": {
+          "default": 3,
+          "description": "Identical calls refused in one turn before the turn stops. Each refusal is returned to the model as an error so\nit can change approach or answer; 1 stops at the first repeat.",
+          "format": "uint32",
+          "maximum": 10,
+          "minimum": 1,
+          "type": "integer"
+        },
         "maxSteps": {
           "default": 10,
           "description": "Model calls in one turn (the orchestration specification caps it at 10).",
@@ -44,7 +52,9 @@
             "enabled": true,
             "maxReplans": 2,
             "permanentErrors": [
-              "no_documents"
+              "no_documents",
+              "search_blocked",
+              "web_unavailable"
             ]
           },
           "description": "Reflection and completion check."
@@ -540,7 +550,9 @@
         },
         "permanentErrors": {
           "default": [
-            "no_documents"
+            "no_documents",
+            "search_blocked",
+            "web_unavailable"
           ],
           "description": "Error codes no change of approach can fix: the loop says so once instead of asking for a replan.",
           "items": {
@@ -966,6 +978,7 @@
     "agent": {
       "$ref": "#/$defs/Agent",
       "default": {
+        "maxRepeatedCalls": 3,
         "maxSteps": 10,
         "maxToolCallsPerStep": 0,
         "plan": {
@@ -986,7 +999,9 @@
           "enabled": true,
           "maxReplans": 2,
           "permanentErrors": [
-            "no_documents"
+            "no_documents",
+            "search_blocked",
+            "web_unavailable"
           ]
         },
         "timeBudgetSeconds": 180.0
