@@ -2019,3 +2019,25 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   cancellation, history after reload, rename, search, deletion and sending on mobile against a scripted P1 gateway.
   Webpack is used because Turbopack's IPC port is restricted in the development environment. The live model was not
   exercised. The foundation model stays NOT QUALIFIED.
+
+### T259 — A repeated call is refused, not a stop; a blocked search is permanent
+- Requirements: SR-H16, SR-H17
+- Depends: T258
+- Deliverables:
+  - An identical call in one turn is refused with a typed `cyclic_call` error that tells the model to use the earlier result, change the call or answer; the turn stops with `cyclic` only after `agent.maxRepeatedCalls` refusals (default 3, range 1 to 10)
+  - `reflect.permanentErrors` defaults to `no_documents`, `search_blocked`, `web_unavailable`; the permanent notice no longer assumes a missing corpus (English and Vietnamese)
+  - Tests: one repeat is refused and the model still answers; repeats past the limit stop the turn; schema regenerated
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction ("do it like Claude"). Cause: `WebSearch` returned `search_blocked`, the model retried, and the first identical call stopped the whole turn with no answer and 16 open plan steps. The block itself comes from the search page (a setting). `cargo deny check` was not run for this task (no dependency changed).
+
+### T260 — Packaged server defaults to the 4B chat model
+- Requirements: SR-P1
+- Depends: T259
+- Deliverables:
+  - `docker/laris.sh` and `docker/compose.chat.yaml` read the chat model name from `LARIS_CHAT_MODEL` (default `Qwen3.5-4B`); `down` and `status` need no weights
+- Validation:
+  - `bash -n docker/laris.sh`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction. The weights stay outside Git; the live model was not started here. The model stays NOT QUALIFIED.

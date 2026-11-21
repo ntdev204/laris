@@ -152,7 +152,9 @@ Exit criteria:
 
 ### Phase 55 — Browser chat
 Goal: a browser client for the existing LARIS chat gateway, with a conversation sidebar and text attachments.
-Tasks: T258
+Tasks: T258, T259, T260
 Exit criteria:
 - SR-C7 holds through the Next.js app and the current P1 protocol.
 - The production build, P1 fixture tests and browser smoke check pass.
+- A blocked search or a repeated call no longer ends a turn without an answer (T259); the packaged server runs the 4B chat model (T260).
+
