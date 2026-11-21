@@ -60,6 +60,8 @@ pub struct Wiring {
     pub meter: Meter,
     /// How `/usage` and `/model` ask the server.
     pub remote: Remote,
+    /// What became of each MCP server (`/mcp`).
+    pub mcp: Vec<laris_tools::McpStatus>,
 }
 
 /// The session behind the interface.
@@ -347,6 +349,7 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
             "context" => self.context_command(),
             "model" => self.model_command(),
             "config" => self.config_command(),
+            "mcp" => self.mcp_command(),
             "export" => self.export(args),
             "login" | "logout" | "exit" | "clear" => {
                 // the interface and the loop around the session answer these; one that reaches here is a mistake
@@ -525,6 +528,35 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
                 self.text("commands.remote_failed", &[("detail", &detail)]),
             ),
         }
+    }
+
+    fn mcp_command(&mut self) {
+        use laris_tools::McpState;
+        if self.w.mcp.is_empty() {
+            let text = self.text("commands.mcp_none", &[]);
+            return self.show(text);
+        }
+        let rows: Vec<(String, String)> = self
+            .w
+            .mcp
+            .iter()
+            .map(|s| {
+                let state = match &s.state {
+                    McpState::Running(n) => {
+                        self.text("commands.mcp_running", &[("count", &n.to_string())])
+                    }
+                    McpState::Skipped(why) => self.text("commands.mcp_skipped", &[("why", why)]),
+                    McpState::Failed(why) => self.text("commands.mcp_failed", &[("why", why)]),
+                };
+                (s.name.clone(), state)
+            })
+            .collect();
+        let text = format!(
+            "{}\n{}",
+            self.text("commands.panel_mcp_title", &[]),
+            panels::table(&rows)
+        );
+        self.show_block(&text);
     }
 
     fn config_command(&mut self) {

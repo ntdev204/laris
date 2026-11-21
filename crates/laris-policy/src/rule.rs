@@ -174,6 +174,14 @@ fn pattern_matches(
     }
 }
 
+/// Whether the tool part of a rule fits a tool name: equal, `*`, or a prefix before a final `*` (`mcp__fetch__*`).
+fn tool_fits(rule_tool: &str, tool: &str) -> bool {
+    match rule_tool.strip_suffix('*') {
+        Some(prefix) => tool.starts_with(prefix),
+        None => rule_tool == tool,
+    }
+}
+
 /// Whether `rule` fits the call of `tool` with `arguments`. With `any_part` (`deny` and `ask` rules) a rule fits a
 /// command line when it fits any command in it.
 pub fn rule_matches(
@@ -186,7 +194,7 @@ pub fn rule_matches(
     let Some(parsed) = parse_rule(rule) else {
         return false;
     };
-    if parsed.tool != "*" && parsed.tool != tool.trim().to_lowercase() {
+    if !tool_fits(&parsed.tool, &tool.trim().to_lowercase()) {
         return false;
     }
     parsed

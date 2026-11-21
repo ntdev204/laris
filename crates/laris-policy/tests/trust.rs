@@ -58,9 +58,18 @@ fn planted_project_settings_are_ignored() {
     let settings = load(&r);
     assert!(settings.hooks.is_empty(), "no project hook");
     assert!(settings.env.is_empty());
+    assert_eq!(
+        settings.mcp,
+        laris_config::settings::Mcp::default(),
+        "no planted MCP server"
+    );
     assert_eq!(settings.model, "");
     assert_eq!(settings.server.url, "");
-    assert!(settings.permissions.allow.is_empty());
+    assert_eq!(
+        settings.permissions.allow,
+        laris_config::settings::default_allow(),
+        "only the defaults, nothing planted"
+    );
     assert_eq!(settings.permissions.deny, ["Bash(rm:*)"]);
     assert_eq!(
         settings.permissions.default_mode,

@@ -1939,3 +1939,19 @@ Owner's direction 2026-11-21: `/usage`, `/context` and `/config` look like Claud
 - Status: done
 - Note: 2026-11-21 built. The panels are fenced blocks because the renderer reflows Markdown paragraphs. `/config` stays read-only; editing settings from it is not built.
 
+## Phase 54 — MCP tools and web search
+
+Owner's direction 2026-11-21: the client must be able to reach the network and search; add an MCP mechanism and a few default servers.
+
+### T253 — MCP bridge and default search servers
+- Requirements: SR-H16
+- Depends: T252
+- Deliverables:
+  - `laris-tools::mcp`: MCP client over standard input and output (`initialize`, `tools/list`, `tools/call`), `McpRemote` as a `RemoteTools` source with names `mcp__<server>__<tool>`, call time limit, restart of a dead or timed-out server; servers start in parallel inside a sandbox with a network and one writable folder (`~/.laris/mcp/`), none without a sandbox
+  - Settings `mcp.enabled` and `mcp.servers.<name>` (`enabled`, `command`, `args`, `env` names, `startTimeoutSeconds`, `callTimeoutSeconds`); defaults `fetch` (`uvx mcp-server-fetch`) and `firecrawl` (`npx -y firecrawl-mcp`, needs `FIRECRAWL_API_KEY`); `permissions.allow` defaults to `mcp__fetch__*` and `mcp__firecrawl__*`; the schema is regenerated
+  - Permission rules: a tool name ending in `*` matches by prefix
+  - `/mcp` command (catalogue en, vi), client guide section, prompt rule 7 in `.laris/prompts/tools.md` (lock refreshed), changelog
+- Validation:
+  - Tests: scripted server through the sandbox (handshake, list, call, tool error, timeout, crash and restart, skipped and failed, no sandbox); rule prefix form; planted settings add no server; `/mcp` in the interface; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 built. The real `uvx mcp-server-fetch` and `npx firecrawl-mcp` are NOT tried here (no downloads were run; they need `uv`, Node and, for Firecrawl, a key from the owner). Setting a list in `permissions.allow` replaces the two default allow rules. The first start may wait up to `startTimeoutSeconds` while a server downloads. Windows is not tried.

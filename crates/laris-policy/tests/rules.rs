@@ -82,6 +82,19 @@ fn rule_matching_table() {
         ("Bash(ls)", "Read", json!({"path": "a"}), false),
         ("not a rule(", "Bash", json!({"command": "ls"}), false),
         (
+            "mcp__fetch__*",
+            "mcp__fetch__fetch",
+            json!({"url": "https://x"}),
+            true,
+        ),
+        (
+            "mcp__fetch__*",
+            "mcp__other__fetch",
+            json!({"url": "https://x"}),
+            false,
+        ),
+        ("mcp__fetch__*", "Bash", json!({"command": "ls"}), false),
+        (
             "search(perov*)",
             "search",
             json!({"query": "perovskite"}),

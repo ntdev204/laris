@@ -68,6 +68,7 @@ Type `/` to list them; each character narrows the list. These are built in:
 | `/usage` | Tokens this session used (prompt, answer, requests), and the key's used, limit and left from the server. |
 | `/context` | How full the context window is, with the point where compaction starts. Empty until the first answer. |
 | `/model` | The models the server offers. |
+| `/mcp` | The MCP servers (web search and page reading by default), whether each runs, and how many tools it gave. |
 | `/config` | The session's server, project, mode, sandbox, context window and session id. |
 | `/export [file]` | Save the conversation as Markdown, by default to `.laris/exports/<session>.md` in the project. |
 | `/rewind [steps]` | Undo the last file changes the session made (one step by default). |
@@ -81,6 +82,17 @@ makes a prefix (`review/pr.md` is `/review:pr`). The project's file wins over th
 replaces a built-in one. An optional header says `description:`. The body is sent as your message with `$ARGUMENTS`
 replaced by everything typed after the name and `$1` to `$9` by its words; a body without a placeholder gets the
 arguments added at the end. Files larger than 64 KiB and links are ignored.
+
+## MCP servers and web search
+
+The client can start MCP servers (the Model Context Protocol) and offer their tools to the model as `mcp__<server>__<tool>`. Two are configured by default under `mcp.servers` in `~/.laris/settings.json`:
+
+| Server | Started with | Gives |
+| :--- | :--- | :--- |
+| `fetch` | `uvx mcp-server-fetch` | reads a web page and returns it as text |
+| `firecrawl` | `npx -y firecrawl-mcp` | web search and page scraping; needs `FIRECRAWL_API_KEY` in the environment, and is skipped while it is unset |
+
+The programs download on first use, so `uv` (for `uvx`) and Node (for `npx`) must be installed and the first start may take a minute. Each server runs inside the OS sandbox with a network, and may write only to `~/.laris/mcp/`; without a sandbox none is started. The results of MCP tools are untrusted data, like any tool result. The tools of the two default servers are allowed by `permissions.allow`; any other server's tools ask first, unless a rule such as `mcp__myserver__*` allows them. To add a server, add an entry to `mcp.servers` (`command`, `args`, `env` as variable names whose values are read from the environment); to turn all of it off, set `mcp.enabled` to `false`. Only the user's own settings are read: a project cannot add a server. `/mcp` shows what is running.
 
 ## Input forms
 

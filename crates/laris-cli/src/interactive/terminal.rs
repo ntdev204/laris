@@ -172,6 +172,7 @@ pub fn start_real(
                 emit: ports.emit,
                 meter,
                 remote,
+                mcp: built.mcp,
             },
         ))
     })

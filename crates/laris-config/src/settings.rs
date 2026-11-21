@@ -114,13 +114,19 @@ impl Default for Permissions {
     fn default() -> Self {
         Self {
             default_mode: PermissionMode::default(),
-            allow: Vec::new(),
+            allow: default_allow(),
             ask: Vec::new(),
             deny: Vec::new(),
             additional_directories: Vec::new(),
             auto_ask: default_auto_ask(),
         }
     }
+}
+
+/// The rules that allow when the settings name none: the tools of the two default MCP servers, so searching the web
+/// and reading a page do not ask. A list in the settings replaces this one.
+pub fn default_allow() -> Vec<String> {
+    vec!["mcp__fetch__*".to_owned(), "mcp__firecrawl__*".to_owned()]
 }
 
 /// The guard of `auto` mode when the settings name none: privilege escalation, recursive deletion of `/`, `~`, the
@@ -245,6 +251,74 @@ impl Default for Sandbox {
             inherit_env: false,
             index_url: String::new(),
             python_source: String::new(),
+        }
+    }
+}
+
+/// One MCP server the client starts as a child process and talks to over standard input and output.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct McpServer {
+    /// Whether the server is started.
+    pub enabled: bool,
+    /// Program to run (for example `uvx` or `npx`).
+    pub command: String,
+    /// Arguments of the program.
+    pub args: Vec<String>,
+    /// Names of environment variables passed to the server; the values are read from this process's environment
+    /// and never stored in the settings. The server is skipped while one of them is unset.
+    pub env: Vec<String>,
+    /// Seconds the start (handshake and tool list) may take; the first start may download the server.
+    #[schemars(extend("minimum" = 1))]
+    pub start_timeout_seconds: u64,
+    /// Seconds one tool call may take.
+    #[schemars(extend("minimum" = 1))]
+    pub call_timeout_seconds: u64,
+}
+
+impl Default for McpServer {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            command: String::new(),
+            args: Vec::new(),
+            env: Vec::new(),
+            start_timeout_seconds: 120,
+            call_timeout_seconds: 60,
+        }
+    }
+}
+
+/// MCP servers (SR-H12): extra tools, such as web search and page reading. Read from the user's own settings only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Mcp {
+    /// Whether MCP servers are started at all.
+    pub enabled: bool,
+    /// Servers by name; the name becomes part of the tool names (`mcp__<name>__<tool>`).
+    pub servers: BTreeMap<String, McpServer>,
+}
+
+impl Default for Mcp {
+    fn default() -> Self {
+        let server = |command: &str, args: &[&str], env: &[&str]| McpServer {
+            command: command.to_owned(),
+            args: args.iter().map(|a| (*a).to_owned()).collect(),
+            env: env.iter().map(|e| (*e).to_owned()).collect(),
+            ..McpServer::default()
+        };
+        Self {
+            enabled: true,
+            servers: BTreeMap::from([
+                (
+                    "fetch".to_owned(),
+                    server("uvx", &["mcp-server-fetch"], &[]),
+                ),
+                (
+                    "firecrawl".to_owned(),
+                    server("npx", &["-y", "firecrawl-mcp"], &["FIRECRAWL_API_KEY"]),
+                ),
+            ]),
         }
     }
 }
@@ -644,6 +718,8 @@ pub struct Settings {
     pub cleanup_period_days: u32,
     /// Automatic updates of the client (always on; this says where the releases are).
     pub update: Update,
+    /// MCP servers.
+    pub mcp: Mcp,
 }
 
 impl Default for Settings {
@@ -666,6 +742,7 @@ impl Default for Settings {
             extra_instructions: String::new(),
             cleanup_period_days: 30,
             update: Update::default(),
+            mcp: Mcp::default(),
         }
     }
 }
