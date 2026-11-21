@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--secondary);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-primary);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light;
+  --background: #f8faf8;
+  --foreground: #182721;
+  --card: #fff;
+  --primary: #235e4b;
+  --primary-foreground: #fff;
+  --secondary: #eaf1ed;
+  --muted-foreground: #50655c;
+  --destructive: #a3273b;
+  --border: #dce5df;
+  --sidebar: #142923;
+  --sidebar-foreground: #f0f6ef;
+  --sidebar-primary: #d4ed98;
+  --sidebar-accent: #264139;
+  --sidebar-border: #395247;
+  --radius: 0.65rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+.brand-mark {
+  @apply grid size-9 shrink-0 place-items-center rounded-xl;
+  background: var(--sidebar-primary);
+  color: var(--sidebar);
+}
+
+.brand-mark svg {
+  @apply size-[1.15rem];
+}
+
+.welcome-mark {
+  @apply size-13 rounded-2xl;
+  transform: rotate(-6deg);
+}
+
+.welcome-mark svg {
+  @apply size-6;
+}
+
+.new-chat {
+  background: var(--sidebar-primary);
+  color: var(--sidebar);
+}
+
+.new-chat:hover {
+  background: #e3f5b9;
+}
+
+.sidebar-search {
+  @apply border-sidebar-border bg-sidebar-accent/35 text-sidebar-foreground;
+}
+
+.sidebar-search [data-slot="input-group-addon"],
+.sidebar-search input::placeholder {
+  color: #b7c9bf;
+}
+
+.composer {
+  box-shadow: 0 5px 24px rgba(20, 41, 35, 0.07);
+}
+
+.user-message {
+  @apply min-w-0 max-w-[88%] rounded-2xl rounded-tr-none bg-secondary px-4 py-3 text-base;
+}
+
+.reply-label {
+  @apply mb-2 flex items-center gap-2 text-sm font-semibold;
+}
+
+.reply-label svg {
+  @apply size-4 text-primary;
+}
+
+.markdown {
+  @apply text-base leading-7;
+  overflow-wrap: anywhere;
+}
+
+.markdown > * + * {
+  margin-top: 0.75rem;
+}
+
+.markdown h1, .markdown h2, .markdown h3, .markdown h4 {
+  @apply text-lg font-semibold leading-snug;
+}
+
+.markdown ul {
+  @apply list-disc pl-6;
+}
+
+.markdown ol {
+  @apply list-decimal pl-6;
+}
+
+.markdown a {
+  @apply text-primary underline underline-offset-2;
+}
+
+.markdown blockquote {
+  @apply border-l-2 pl-4 text-muted-foreground;
+}
+
+.markdown code {
+  @apply rounded bg-secondary px-1 py-0.5 font-mono text-sm;
+}
+
+.markdown pre {
+  @apply overflow-x-auto rounded-xl bg-secondary p-4 leading-relaxed;
+}
+
+.markdown pre code {
+  @apply bg-transparent p-0;
+}
+
+.markdown table {
+  @apply block max-w-full overflow-x-auto text-sm;
+}
+
+.markdown td, .markdown th {
+  @apply border px-3 py-1;
+}

@@ -149,3 +149,10 @@ Goal: the client can reach the web through MCP servers, confined and asked about
 Tasks: T253, T254, T255, T256, T257
 Exit criteria:
 - SR-H16 and SR-H17 hold: the MCP bridge (no default servers), the web tools and the clock, `/mcp`, the `*` rule form and the guide are built and tested; the real network is tried by the owner on a networked machine.
+
+### Phase 55 — Browser chat
+Goal: a browser client for the existing LARIS chat gateway, with a conversation sidebar and text attachments.
+Tasks: T258
+Exit criteria:
+- SR-C7 holds through the Next.js app and the current P1 protocol.
+- The production build, P1 fixture tests and browser smoke check pass.

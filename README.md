@@ -19,3 +19,5 @@ is done.
 ## Documentation
 
 Start at the [documentation index](docs/README.md). Working rules for agents are in `AGENTS.md`.
+
+See the [browser chat setup guide](apps/web/README.md) to use Laris from a browser.

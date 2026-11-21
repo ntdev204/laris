@@ -8,6 +8,7 @@ version, licence and origin. `deny.toml` is the machine-checked allowlist; this 
 | Component | Origin | Licence | Used by | Task |
 | --- | --- | --- | --- | --- |
 | Sandbox (OS confinement) | codex (`github.com/openai/codex`), commit `aa5f492031f7edb75a40973d19eda8efb9512c61` (ADR-021 D30) | Apache-2.0 | `laris-sandbox` | T134 (measured, planned), T135 (Linux, macOS and Windows parts rewritten after the codex approach; macOS and Windows never run, T214) |
+| shadcn/ui components and mobile hook | shadcn registry, generated with CLI 4.23.0 | [MIT](apps/web/components/ui/LICENSE.md) | `apps/web` | T258 |
 
 Files planned for the fork (T134, `docs/architecture/SANDBOX_MEASUREMENT.md`). T135 copied only `seatbelt_base_policy.sbpl` and `seatbelt_network_policy.sbpl` (headers kept, origin noted, in `crates/laris-sandbox/src/macos/`); the bubblewrap, seccomp, Landlock and Seatbelt generator code was rewritten against the LARIS `Policy` after the codex approach, with an attribution note in each file, not copied; no Windows file is taken yet; each copied file keeps
 its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit). Cut approved by the owner on 2026-11-18 (option A):
