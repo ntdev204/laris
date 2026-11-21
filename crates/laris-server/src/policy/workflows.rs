@@ -268,6 +268,29 @@ impl Workflows {
             .get(name.trim().trim_start_matches('/').to_lowercase().as_str())
     }
 
+    /// The workflow one of whose trigger phrases the request contains, compared without case. When several match, the
+    /// longest phrase wins, then the first name. A client that names no workflow still gets the one its user asked
+    /// for in words.
+    pub fn triggered_by(&self, request: &str) -> Option<&Workflow> {
+        let text = request.to_lowercase();
+        let mut best: Option<(usize, &Workflow)> = None;
+        for workflow in self.by_name.values() {
+            let longest = workflow
+                .triggers
+                .iter()
+                .map(|t| t.trim().to_lowercase())
+                .filter(|t| !t.is_empty() && text.contains(t.as_str()))
+                .map(|t| t.chars().count())
+                .max();
+            if let Some(length) = longest
+                && best.is_none_or(|(b, _)| length > b)
+            {
+                best = Some((length, workflow));
+            }
+        }
+        best.map(|(_, w)| w)
+    }
+
     /// All workflows, by name.
     pub fn all(&self) -> impl Iterator<Item = &Workflow> {
         self.by_name.values()

@@ -2094,3 +2094,14 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
 - Status: pending
 - Note: 2026-11-21 owner's direction. MarkItDown reads a text layer (pdfminer); it does not OCR scans by itself, so scans keep the Tesseract path unless an OCR plugin is installed. Nothing is installed by LARIS; the owner installs the tool.
+
+### T265 — A trigger phrase selects the workflow
+- Requirements: SR-H4
+- Depends: T263
+- Deliverables:
+  - The gateway runs the workflow the client names, else the one whose `triggers` phrase the latest user message contains (without case; the longest phrase wins, then the first name); it narrows the tools, adds the phases and the brain brief as a named workflow does
+  - Test: a trigger in a longer message selects the workflow, also on the step after a tool result; a message without one keeps every tool
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, found while running the research-gap workflow end to end for the owner's report. Cause: no client sends `laris.workflow` (neither the terminal client nor the web client), and the server read `triggers` without using them, so no workflow could ever run. The quality of the gaps the 4B model finds is not a qualification; the model stays NOT QUALIFIED.

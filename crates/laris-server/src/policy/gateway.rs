@@ -237,26 +237,27 @@ impl PolicyGateway {
                 self.prepared(session, String::new(), &canary, false, caller),
             ));
         }
-        let (workflow, workflow_text) = match &laris.workflow {
-            None => (None, String::new()),
-            Some(w) => {
-                let found = policy.workflows.get(&w.name).ok_or_else(|| {
-                    ApiError::BadRequest("invalid request: unknown workflow".into())
-                })?;
-                let request_text: String = w.request.chars().take(2_000).collect();
-                (
-                    Some(found),
-                    found.render(&request_text, policy.composer.settings().workflow_max_chars),
-                )
-            }
-        };
-        // a skill the user named loads before the first step; any other is loaded by the model when it needs it
         let latest = messages
             .iter()
             .rev()
             .find(|m| m.role == Role::User)
             .map(text_of)
             .unwrap_or_default();
+        // the workflow the client names, else the one whose trigger the user's latest message contains
+        let (workflow, request_text) = match &laris.workflow {
+            None => (policy.workflows.triggered_by(&latest), latest.clone()),
+            Some(w) => (
+                Some(policy.workflows.get(&w.name).ok_or_else(|| {
+                    ApiError::BadRequest("invalid request: unknown workflow".into())
+                })?),
+                w.request.clone(),
+            ),
+        };
+        let workflow_text = workflow.map_or_else(String::new, |found| {
+            let request_text: String = request_text.chars().take(2_000).collect();
+            found.render(&request_text, policy.composer.settings().workflow_max_chars)
+        });
+        // a skill the user named loads before the first step; any other is loaded by the model when it needs it
         let skill_tool_allowed = policy.skills.offered()
             && workflow.is_none_or(|w| w.allowed_tools.iter().any(|t| t == SKILL_TOOL));
         let named = if skill_tool_allowed {
@@ -277,10 +278,7 @@ impl PolicyGateway {
         };
         let brain_tool_allowed = policy.brain.offered()
             && workflow.is_none_or(|w| w.allowed_tools.iter().any(|t| t == BRAIN_TOOL));
-        let brief = laris
-            .workflow
-            .as_ref()
-            .and_then(|w| policy.brain.brief(&w.name));
+        let brief = workflow.and_then(|w| policy.brain.brief(&w.name));
         let own: Vec<(String, String)> = laris
             .layers
             .instructions
