@@ -2069,3 +2069,28 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `uv run pytest tests/unit/model`, `ruff check` on the changed files, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's report (5-7 GB in plain chat, 11 GB with tools). Cause found by reading the code: the prompt grows with the tool schemas and every earlier tool result (a fetched page is about 5,000 tokens), the memory of one call grows with its length, and nothing was ever handed back to the driver. The live model was not run, so the new peak is NOT measured: the owner should watch `nvidia-smi` on a tool turn. If it is still high, lower `chat_max_input_tokens` or set `chat_quantization: 4bit`.
+
+### T263 — Research-gap workflow with paper ids
+- Requirements: SR-H4
+- Depends: T262
+- Deliverables:
+  - `.laris/workflows/research-gap.toml` (owner approved 2026-11-21; lock refreshed): input is a PDF, a folder of PDFs or keywords; phases collect, extract, synthesise, gaps, report
+  - Every paper gets an id `P1..Pn` with title and origin in a paper register; each extracted field (abstract, introduction, methods, results, limitations, future work) and each gap names its paper id and section; a section not found is written "not found"
+  - A gap is stated as a gap among the papers read, never from absence alone
+  - `ingest_document` also returns `origin` and `cite_as` so the id table maps to `[source #rank]`
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction. The 4B model still has to follow the workflow; how well it finds real gaps is NOT measured and the model stays NOT QUALIFIED.
+
+### T264 — Open-source document reader (MarkItDown) for papers
+- Requirements: SR-H13
+- Depends: T263
+- Deliverables:
+  - `vault.ocr` gains `markitdownCommand` (empty by default): Microsoft MarkItDown (MIT) is tried before `pdftotext` and returns Markdown with headings, so Abstract, Introduction and Limitations can be found as sections; `read_by` reports `markitdown`
+  - The same reader serves DOCX and PPTX when ingested; a setup note in the guide gives the install command (`pipx install markitdown[pdf]`), an OCR plugin or image reader is chosen by the owner
+  - Tests with a scripted stand-in program; a scan still falls through to `pdftoppm` + `tesseract`
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
+- Status: pending
+- Note: 2026-11-21 owner's direction. MarkItDown reads a text layer (pdfminer); it does not OCR scans by itself, so scans keep the Tesseract path unless an OCR plugin is installed. Nothing is installed by LARIS; the owner installs the tool.

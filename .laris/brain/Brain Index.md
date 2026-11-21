@@ -44,6 +44,7 @@ Machine-read: a workflow name or task type selects one hub.
 route: literature-mining -> [[Literature Mining]]
 route: literature-map -> [[Literature Mining]]
 route: research-brief -> [[Literature Mining]]
+route: research-gap -> [[Literature Mining]]
 route: research-qa -> [[Research QA]]
 route: grounded-qa -> [[Research QA]]
 route: citation-analysis -> [[Citation Analysis]]

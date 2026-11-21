@@ -133,6 +133,8 @@ fn ingest_tool(ctx: &Arc<Context>) -> LocalTool {
                 "read_by": method.as_str(),
                 "characters": document.text.chars().count(),
                 "passages": passages.len(),
+                "origin": origin,
+                "cite_as": document.title,
                 "source_note": note.path,
                 "note_status": format!("{:?}", note.status).to_lowercase(),
             }))
