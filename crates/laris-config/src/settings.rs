@@ -114,19 +114,13 @@ impl Default for Permissions {
     fn default() -> Self {
         Self {
             default_mode: PermissionMode::default(),
-            allow: default_allow(),
+            allow: Vec::new(),
             ask: Vec::new(),
             deny: Vec::new(),
             additional_directories: Vec::new(),
             auto_ask: default_auto_ask(),
         }
     }
-}
-
-/// The rules that allow when the settings name none: the tools of the two default MCP servers (page reading and keyless web search), so searching the web
-/// and reading a page do not ask. A list in the settings replaces this one.
-pub fn default_allow() -> Vec<String> {
-    vec!["mcp__fetch__*".to_owned(), "mcp__duckduckgo__*".to_owned()]
 }
 
 /// The guard of `auto` mode when the settings name none: privilege escalation, recursive deletion of `/`, `~`, the
@@ -289,7 +283,7 @@ impl Default for McpServer {
     }
 }
 
-/// MCP servers (SR-H12): extra tools, such as web search and page reading. Read from the user's own settings only.
+/// MCP servers (SR-H16): extra tools the user adds. None is configured by default. Read from the user's own settings only.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields, default)]
 pub struct Mcp {
@@ -301,24 +295,46 @@ pub struct Mcp {
 
 impl Default for Mcp {
     fn default() -> Self {
-        let server = |command: &str, args: &[&str], env: &[&str]| McpServer {
-            command: command.to_owned(),
-            args: args.iter().map(|a| (*a).to_owned()).collect(),
-            env: env.iter().map(|e| (*e).to_owned()).collect(),
-            ..McpServer::default()
-        };
         Self {
             enabled: true,
-            servers: BTreeMap::from([
-                (
-                    "fetch".to_owned(),
-                    server("uvx", &["mcp-server-fetch"], &[]),
-                ),
-                (
-                    "duckduckgo".to_owned(),
-                    server("uvx", &["duckduckgo-mcp-server"], &[]),
-                ),
-            ]),
+            servers: BTreeMap::new(),
+        }
+    }
+}
+
+/// The web tools `WebSearch` and `WebFetch` (SR-H17): they run in the client, with the client's address.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Web {
+    /// Whether the web tools are offered.
+    pub enabled: bool,
+    /// Address of the HTML search page; the query is added as `q`. Empty turns `WebSearch` off.
+    pub search_url: String,
+    /// Seconds one request may take, redirects included.
+    #[schemars(extend("minimum" = 1))]
+    pub timeout_seconds: u64,
+    /// Most bytes read from one page.
+    #[schemars(extend("minimum" = 1024))]
+    pub max_bytes: u64,
+    /// Most redirects followed; every hop is checked again.
+    pub max_redirects: u32,
+    /// Most search results returned.
+    #[schemars(extend("minimum" = 1))]
+    pub max_results: u32,
+    /// `User-Agent` sent.
+    pub user_agent: String,
+}
+
+impl Default for Web {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            search_url: "https://html.duckduckgo.com/html/".to_owned(),
+            timeout_seconds: 20,
+            max_bytes: 2 * 1024 * 1024,
+            max_redirects: 5,
+            max_results: 8,
+            user_agent: "Mozilla/5.0 (compatible; Laris)".to_owned(),
         }
     }
 }
@@ -720,6 +736,8 @@ pub struct Settings {
     pub update: Update,
     /// MCP servers.
     pub mcp: Mcp,
+    /// Web tools.
+    pub web: Web,
 }
 
 impl Default for Settings {
@@ -743,6 +761,7 @@ impl Default for Settings {
             cleanup_period_days: 30,
             update: Update::default(),
             mcp: Mcp::default(),
+            web: Web::default(),
         }
     }
 }
@@ -818,6 +837,12 @@ impl Settings {
         let url = &self.server.url;
         if !url.is_empty() && !url.starts_with("http://") && !url.starts_with("https://") {
             return Err(ConfigError::at("server.url", ErrorKind::UrlScheme));
+        }
+        if !self.web.search_url.is_empty()
+            && !self.web.search_url.starts_with("https://")
+            && !self.web.search_url.starts_with("http://")
+        {
+            return Err(ConfigError::at("web.searchUrl", ErrorKind::UrlScheme));
         }
         if !self.update.url.is_empty() && !self.update.url.starts_with("https://") {
             return Err(ConfigError::at("update.url", ErrorKind::UrlScheme));

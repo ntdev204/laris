@@ -68,7 +68,7 @@ Type `/` to list them; each character narrows the list. These are built in:
 | `/usage` | Tokens this session used (prompt, answer, requests), and the key's used, limit and left from the server. |
 | `/context` | How full the context window is, with the point where compaction starts. Empty until the first answer. |
 | `/model` | The models the server offers. |
-| `/mcp` | The MCP servers (web search and page reading by default), whether each runs, and how many tools it gave. |
+| `/mcp` | The MCP servers the user configured, whether each runs, and how many tools it gave. |
 | `/config` | The session's server, project, mode, sandbox, context window and session id. |
 | `/export [file]` | Save the conversation as Markdown, by default to `.laris/exports/<session>.md` in the project. |
 | `/rewind [steps]` | Undo the last file changes the session made (one step by default). |
@@ -83,16 +83,21 @@ replaces a built-in one. An optional header says `description:`. The body is sen
 replaced by everything typed after the name and `$1` to `$9` by its words; a body without a placeholder gets the
 arguments added at the end. Files larger than 64 KiB and links are ignored.
 
-## MCP servers and web search
+## Web tools and the clock
 
-The client can start MCP servers (the Model Context Protocol) and offer their tools to the model as `mcp__<server>__<tool>`. Two are configured by default under `mcp.servers` in `~/.laris/settings.json`:
+Three tools are built in, so the model can know what day it is and look things up without anything to set up:
 
-| Server | Started with | Gives |
-| :--- | :--- | :--- |
-| `fetch` | `uvx mcp-server-fetch` | reads a web page and returns it as text |
-| `duckduckgo` | `uvx duckduckgo-mcp-server` | web search (and page text); no key or account |
+| Tool | What it does |
+| :--- | :--- |
+| `Now` | The current date and time (UTC), the time zone setting, the operating system. |
+| `WebFetch` | Reads a public web page (http or https) and returns its text; HTML is reduced to readable text, a page is cut at `web.maxBytes`. |
+| `WebSearch` | Searches through the HTML search page at `web.searchUrl` (DuckDuckGo's by default; no key, no account) and returns titles, addresses and snippets. |
 
-Neither needs a key or any set-up by the user: search is the system's own business. The programs download on first use through `uv` (`uvx`), which must be installed, and the first start may take a minute. DuckDuckGo may throttle heavy automated use from one address. Each server runs inside the OS sandbox with a network, and may write only to `~/.laris/mcp/`; without a sandbox none is started. The results of MCP tools are untrusted data, like any tool result. The tools of the two default servers are allowed by `permissions.allow`; any other server's tools ask first, unless a rule such as `mcp__myserver__*` allows them. To add a server, add an entry to `mcp.servers` (`command`, `args`, `env` as variable names whose values are read from the environment); to turn all of it off, set `mcp.enabled` to `false`. Only the user's own settings are read: a project cannot add a server. `/mcp` shows what is running.
+They run in the client, with the user's own network address, and use no proxy. Only public addresses are read: an address on the user's machine or network (`localhost`, `10.x`, `192.168.x`, a name that resolves inside, a redirect that leads inside) is refused, and so is an address with a user name or password. A request whose address or query contains something that looks like a secret is not sent. Pages and results are third-party data and are marked untrusted. A search page may ask for a check (a CAPTCHA) when it is used heavily from one address; the tool then says so. Settings: `web.enabled`, `web.searchUrl` (empty turns `WebSearch` off), `web.timeoutSeconds`, `web.maxBytes`, `web.maxRedirects`, `web.maxResults`, `web.userAgent`.
+
+## MCP servers
+
+The client can start other tools as MCP servers (the Model Context Protocol) and offer their tools to the model as `mcp__<server>__<tool>`. None is configured by default. To add one, put an entry in `mcp.servers` in `~/.laris/settings.json` (`command`, `args`, `env` as variable names whose values are read from the environment, `startTimeoutSeconds`, `callTimeoutSeconds`); `mcp.enabled` turns the mechanism off. Each server runs inside the OS sandbox with a network, and may write only to `~/.laris/mcp/`; without a sandbox none is started. Their results are untrusted data, and their tools ask first unless a rule such as `mcp__myserver__*` allows them. Only the user's own settings are read: a project cannot add a server. `/mcp` shows what is running.
 
 ## Input forms
 

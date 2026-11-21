@@ -185,6 +185,24 @@ pub fn build(
             &engine_state,
         ))
         .with_redactor(redactor.for_tools());
+    let web = &started.settings.web;
+    if web.enabled {
+        let options = laris_model_client::WebOptions {
+            timeout: std::time::Duration::from_secs(web.timeout_seconds),
+            max_bytes: usize::try_from(web.max_bytes).unwrap_or(usize::MAX),
+            max_redirects: web.max_redirects,
+            user_agent: web.user_agent.clone(),
+        };
+        match laris_model_client::WebClient::new(options) {
+            Ok(client) => {
+                ctx = ctx.with_web(Arc::new(super::web::WebBridge {
+                    client,
+                    runtime: Arc::clone(&runtime),
+                }));
+            }
+            Err(e) => warnings.push(format!("web tools left out: {}", e.message)),
+        }
+    }
     match Sandbox::detect(SandboxPolicy::workspace([started.project.clone()]), None) {
         Ok(sandbox) => ctx = ctx.with_sandbox(Arc::new(sandbox)),
         Err(e) => warnings.push(format!(

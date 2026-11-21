@@ -65,11 +65,7 @@ fn planted_project_settings_are_ignored() {
     );
     assert_eq!(settings.model, "");
     assert_eq!(settings.server.url, "");
-    assert_eq!(
-        settings.permissions.allow,
-        laris_config::settings::default_allow(),
-        "only the defaults, nothing planted"
-    );
+    assert!(settings.permissions.allow.is_empty());
     assert_eq!(settings.permissions.deny, ["Bash(rm:*)"]);
     assert_eq!(
         settings.permissions.default_mode,

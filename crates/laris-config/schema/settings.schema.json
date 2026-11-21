@@ -278,7 +278,7 @@
     },
     "Mcp": {
       "additionalProperties": false,
-      "description": "MCP servers (SR-H12): extra tools, such as web search and page reading. Read from the user's own settings only.",
+      "description": "MCP servers (SR-H16): extra tools the user adds. None is configured by default. Read from the user's own settings only.",
       "properties": {
         "enabled": {
           "default": true,
@@ -289,28 +289,7 @@
           "additionalProperties": {
             "$ref": "#/$defs/McpServer"
           },
-          "default": {
-            "duckduckgo": {
-              "args": [
-                "duckduckgo-mcp-server"
-              ],
-              "callTimeoutSeconds": 60,
-              "command": "uvx",
-              "enabled": true,
-              "env": [],
-              "startTimeoutSeconds": 120
-            },
-            "fetch": {
-              "args": [
-                "mcp-server-fetch"
-              ],
-              "callTimeoutSeconds": 60,
-              "command": "uvx",
-              "enabled": true,
-              "env": [],
-              "startTimeoutSeconds": 120
-            }
-          },
+          "default": {},
           "description": "Servers by name; the name becomes part of the tool names (`mcp__<name>__<tool>`).",
           "type": "object"
         }
@@ -407,10 +386,7 @@
           "type": "array"
         },
         "allow": {
-          "default": [
-            "mcp__fetch__*",
-            "mcp__duckduckgo__*"
-          ],
+          "default": [],
           "description": "Rules that allow.",
           "items": {
             "type": "string"
@@ -924,6 +900,56 @@
         }
       },
       "type": "object"
+    },
+    "Web": {
+      "additionalProperties": false,
+      "description": "The web tools `WebSearch` and `WebFetch` (SR-H17): they run in the client, with the client's address.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the web tools are offered.",
+          "type": "boolean"
+        },
+        "maxBytes": {
+          "default": 2097152,
+          "description": "Most bytes read from one page.",
+          "format": "uint64",
+          "minimum": 1024,
+          "type": "integer"
+        },
+        "maxRedirects": {
+          "default": 5,
+          "description": "Most redirects followed; every hop is checked again.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxResults": {
+          "default": 8,
+          "description": "Most search results returned.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "searchUrl": {
+          "default": "https://html.duckduckgo.com/html/",
+          "description": "Address of the HTML search page; the query is added as `q`. Empty turns `WebSearch` off.",
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "default": 20,
+          "description": "Seconds one request may take, redirects included.",
+          "format": "uint64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "userAgent": {
+          "default": "Mozilla/5.0 (compatible; Laris)",
+          "description": "`User-Agent` sent.",
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1034,28 +1060,7 @@
       "$ref": "#/$defs/Mcp",
       "default": {
         "enabled": true,
-        "servers": {
-          "duckduckgo": {
-            "args": [
-              "duckduckgo-mcp-server"
-            ],
-            "callTimeoutSeconds": 60,
-            "command": "uvx",
-            "enabled": true,
-            "env": [],
-            "startTimeoutSeconds": 120
-          },
-          "fetch": {
-            "args": [
-              "mcp-server-fetch"
-            ],
-            "callTimeoutSeconds": 60,
-            "command": "uvx",
-            "enabled": true,
-            "env": [],
-            "startTimeoutSeconds": 120
-          }
-        }
+        "servers": {}
       },
       "description": "MCP servers."
     },
@@ -1068,10 +1073,7 @@
       "$ref": "#/$defs/Permissions",
       "default": {
         "additionalDirectories": [],
-        "allow": [
-          "mcp__fetch__*",
-          "mcp__duckduckgo__*"
-        ],
+        "allow": [],
         "ask": [],
         "autoAsk": [
           "Bash(sudo:*)",
@@ -1197,6 +1199,19 @@
         "searchMaxResults": 10
       },
       "description": "Vault recording."
+    },
+    "web": {
+      "$ref": "#/$defs/Web",
+      "default": {
+        "enabled": true,
+        "maxBytes": 2097152,
+        "maxRedirects": 5,
+        "maxResults": 8,
+        "searchUrl": "https://html.duckduckgo.com/html/",
+        "timeoutSeconds": 20,
+        "userAgent": "Mozilla/5.0 (compatible; Laris)"
+      },
+      "description": "Web tools."
     }
   },
   "title": "LARIS client settings (~/.laris/settings.json)",

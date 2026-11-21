@@ -5,8 +5,9 @@ use crate::checkpoints::Checkpoints;
 use crate::error::ToolError;
 use crate::knowledge::Knowledge;
 use crate::scope::Scope;
+use crate::web::WebTransport;
 use laris_config::Settings;
-use laris_config::settings::{Tools, Vault};
+use laris_config::settings::{Tools, Vault, Web};
 use laris_sandbox::{PythonEnv, Sandbox};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -41,6 +42,10 @@ pub struct Context {
     pub vault: Vault,
     /// The project vault and database; `None` leaves the knowledge tools out.
     pub knowledge: Option<Arc<Knowledge>>,
+    /// How the web tools reach the network; `None` leaves `WebFetch` and `WebSearch` out.
+    pub web: Option<Arc<dyn WebTransport>>,
+    /// Settings of the web tools.
+    pub web_settings: Web,
 }
 
 impl Context {
@@ -65,6 +70,8 @@ impl Context {
             redact: Box::new(str::to_owned),
             vault: settings.vault.clone(),
             knowledge: None,
+            web: None,
+            web_settings: settings.web.clone(),
         })
     }
 
@@ -108,6 +115,13 @@ impl Context {
     #[must_use]
     pub fn with_knowledge(mut self, knowledge: Knowledge) -> Self {
         self.knowledge = Some(Arc::new(knowledge));
+        self
+    }
+
+    /// Turns the web tools on, reaching the network through `transport`.
+    #[must_use]
+    pub fn with_web(mut self, transport: Arc<dyn WebTransport>) -> Self {
+        self.web = Some(transport);
         self
     }
 

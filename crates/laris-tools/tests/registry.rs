@@ -55,7 +55,7 @@ fn arguments_are_checked_before_a_tool_runs() {
 }
 
 #[test]
-fn the_eight_local_tools_are_registered_with_their_flags() {
+fn the_nine_local_tools_are_registered_with_their_flags() {
     let r = rig("flags");
     let names: Vec<String> = r
         .registry
@@ -73,7 +73,8 @@ fn the_eight_local_tools_are_registered_with_their_flags() {
             "Grep",
             "Bash",
             "save_memory",
-            "use_skill"
+            "use_skill",
+            "Now"
         ]
     );
     let flags = |name: &str| {
@@ -88,6 +89,7 @@ fn the_eight_local_tools_are_registered_with_their_flags() {
     assert_eq!(flags("Bash"), (true, true, false));
     assert_eq!(flags("save_memory"), (true, false, false));
     assert_eq!(flags("use_skill"), (false, false, false));
+    assert_eq!(flags("Now"), (false, false, false));
     assert!(
         r.registry
             .schemas()
@@ -205,7 +207,7 @@ fn a_remote_tool_is_offered_checked_marked_and_limited_like_a_local_one() {
     });
     assert_eq!(
         r.registry.schemas().len(),
-        10,
+        11,
         "local tools first, then the remote ones"
     );
     assert_eq!(
@@ -298,7 +300,7 @@ fn a_name_cannot_be_registered_twice() {
     );
     assert_eq!(
         r.registry.schemas().len(),
-        10,
+        11,
         "a refused source adds nothing"
     );
 }
