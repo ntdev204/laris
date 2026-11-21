@@ -160,7 +160,7 @@ Exit criteria:
 
 ### Phase 56 — Reading papers for research gaps
 Goal: the chat can read real papers (text, scanned or fetched), stay inside the VRAM it had for plain chat, and work as a research-gap finder.
-Tasks: T261, T262, T263, T264, T265, T266
+Tasks: T261, T262, T263, T264, T265, T266, T267
 Exit criteria:
 - A scanned or oddly encoded PDF, from disk or from `WebFetch`, is read by OCR when the programs are installed (T261).
 - A tool turn is bounded by an input-token budget and returns its GPU memory after the reply (T262); the new peak is the owner's to measure.

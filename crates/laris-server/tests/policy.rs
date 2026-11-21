@@ -448,7 +448,12 @@ async fn a_workflow_narrows_the_tools_and_unknown_ones_are_refused() {
 async fn a_trigger_phrase_selects_the_workflow_when_the_client_names_none() {
     let policy = load(&[]);
     let tool = |n: &str| json!({"type": "function", "function": {"name": n}});
-    let tools = json!([tool("WebSearch"), tool("Bash"), tool("ingest_document")]);
+    let tools = json!([
+        tool("PaperSearch"),
+        tool("WebSearch"),
+        tool("Bash"),
+        tool("ingest_document")
+    ]);
     let (gw, seen, _) = gateway(&policy, vec![Ok(stop()), Ok(stop())]);
     // the trigger matches without case, inside a longer message, also after a tool result of the same turn
     ask(
@@ -456,7 +461,7 @@ async fn a_trigger_phrase_selects_the_workflow_when_the_client_names_none() {
         json!({"tools": tools, "messages": [
             {"role": "user", "content": "Please FIND RESEARCH GAPS in model predictive control"},
             {"role": "assistant", "content": null, "tool_calls": [{"id": "c1", "type": "function",
-                "function": {"name": "WebSearch", "arguments": "{}"}}]},
+                "function": {"name": "PaperSearch", "arguments": "{}"}}]},
             {"role": "tool", "tool_call_id": "c1", "content": "results"}]}),
     )
     .await;
@@ -469,7 +474,7 @@ async fn a_trigger_phrase_selects_the_workflow_when_the_client_names_none() {
             .map(|t| t.function.name.clone())
             .collect()
     };
-    assert_eq!(names(0), ["WebSearch", "ingest_document"]);
+    assert_eq!(names(0), ["PaperSearch", "ingest_document"]);
     let system = system_of(&seen, 0);
     assert!(
         system.contains("Paper register") && system.contains("Task: Please FIND RESEARCH GAPS")

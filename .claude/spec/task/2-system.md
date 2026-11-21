@@ -2117,3 +2117,13 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, found in the end-to-end run of the research-gap workflow: after one result page DuckDuckGo answered with a check (`search_blocked`) and the 4B model fetched three IEEE addresses it had made up, so no paper was read. No dependency was added (JSON through `serde_json`). The model stays NOT QUALIFIED.
+
+### T267 — Research-gap searches with PaperSearch only
+- Requirements: SR-H4
+- Depends: T266
+- Deliverables:
+  - `research-gap.toml` 1.2.0 (owner's direction 2026-11-21; lock refreshed): `WebSearch` leaves `allowed_tools`, so papers are found only through `PaperSearch`; the model is told to call one tool at a time and read the result first
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, second end-to-end run: with both tools offered the 4B model ignored the instruction and sent 16 `WebSearch` calls in one step, all blocked, until the repeat limit stopped the turn. The system decides the tool set instead of asking the model (D48). The model stays NOT QUALIFIED.
