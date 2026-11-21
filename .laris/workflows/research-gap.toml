@@ -1,0 +1,60 @@
+name = "research-gap"
+version = "1.0.0"
+description = "From PDFs, a folder of PDFs or keywords: read the papers, build what they know, and propose research gaps with evidence."
+triggers = ["find research gaps", "research gap", "khoảng trống nghiên cứu", "tìm gap"]
+allowed_tools = ["WebSearch", "WebFetch", "Glob", "Read", "ingest_document", "search_corpus", "Write", "update_plan"]
+max_steps = 10
+require_citations = true
+approval = "ask"
+output_sections = ["Paper register", "What is known", "Conflicts", "Research gaps", "Not read", "Sources"]
+stop_conditions = ["no paper could be read", "the user declines to write the report"]
+
+[[phases]]
+id = "collect"
+goal = "Get the papers and give each one an id: P1, P2, ... with its title and where it came from."
+instructions = """
+Use Glob for a folder and ingest_document for each PDF (it reads scans by OCR; note `read_by`). Its `cite_as` is the
+name to cite and `origin` is the file. For keywords, run several different WebSearch queries together, then WebFetch
+the most relevant results (a PDF link is read as text); the address is the origin. Aim for 5 to 15 papers; never fetch
+the same address twice. Keep the id table (Pn, title, origin, cite_as) and use these ids everywhere after this step.
+A paper that cannot be read goes to "Not read" with the reason; never fill it in from memory.
+"""
+exit = "A paper register (id, title, origin) of papers actually read, and a list of papers not read with the reason."
+
+[[phases]]
+id = "extract"
+goal = "For each paper id read its abstract, introduction, methods, results, limitations and future work, and record them under that id."
+instructions = """
+Use search_corpus (for example "limitations", "future work", "we did not", "remains unclear") to find those passages in
+the ingested papers; for fetched pages use the text you already have. Record per paper id: problem, method, data or
+setting, main result, and the limitations and future work the authors themselves state. Every item names its paper
+id and the section it came from (abstract, introduction, methods, results, limitations, future work). If a section
+cannot be found, write "not found" for it; do not invent it.
+"""
+exit = "One record per paper id, each field tagged with its section and, for ingested papers, its [cite_as #rank]."
+
+[[phases]]
+id = "synthesise"
+goal = "Combine the records into what the field knows: shared findings, shared methods, and where papers disagree."
+instructions = """
+Compare papers on the same attributes (problem, method, data, result). Write every point with the ids that support it,
+for example "(P2, P5)". Mark a claim that only one paper makes. Put disagreements between papers, or results that do
+not replicate, under Conflicts.
+"""
+exit = "What is known and Conflicts lists, every point with its paper ids."
+
+[[phases]]
+id = "gaps"
+goal = "Infer research gaps from the synthesis and rank them."
+instructions = """
+A gap is one of: a limitation or future-work item several papers state; a conflict no paper resolves; a combination of
+method, data or setting that the papers cover separately but never together; a weakness in how the evidence was
+obtained. For each gap give: the gap in one sentence, the evidence (paper ids, section and cited passage), why the
+other papers read do not close it, and one study that would. Never announce a gap from the absence of a paper alone:
+say it is a gap among the papers read, not in the whole literature. If the papers do not support any gap, say so.
+"""
+exit = "Ranked gaps, each with paper ids, evidence, scope and a suggested study."
+
+[[phases]]
+id = "report"
+goal = "Summarise in the chat, with the paper register, and offer to write the report to a file."

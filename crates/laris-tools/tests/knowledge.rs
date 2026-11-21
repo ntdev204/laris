@@ -475,6 +475,10 @@ fn ingest_then_search_gives_hits_the_evidence_gate_accepts() {
         json!({"path": "docs/perovskite.md", "domain": "energy"}),
     );
     assert_eq!(
+        (a["cite_as"].as_str(), a["origin"].as_str()),
+        (a["title"].as_str(), Some("docs/perovskite.md"))
+    );
+    assert_eq!(
         (a["kind"].as_str(), a["source_note"].as_str()),
         (Some("markdown"), Some("Sources/Perovskite Solar Cells.md"))
     );
