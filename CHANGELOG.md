@@ -6,6 +6,8 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-21
+
 ### Added
 - **Web tools and clock, built in:** `Now` (date, time, machine), `WebFetch` (reads a public page as text) and `WebSearch`
   (keyless search through a configurable HTML search page). They run in the client, read public addresses only, and
