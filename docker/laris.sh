@@ -21,9 +21,10 @@ project=${LARIS_PROJECT:-laris-qwen}
 export LARIS_HTTP_PORT=${LARIS_HTTP_PORT:-38080} LARIS_HTTPS_PORT=${LARIS_HTTPS_PORT:-38443}
 export LARIS_EDGE_SUBNET=${LARIS_EDGE_SUBNET:-172.31.61.0/24} LARIS_EDGE_GATEWAY=${LARIS_EDGE_GATEWAY:-172.31.61.1}
 export LARIS_SUBNET=${LARIS_SUBNET:-172.31.60.0/24}
+export LARIS_CHAT_MODEL=${LARIS_CHAT_MODEL:-Qwen3.5-4B}
 export LARIS_MODELS_DIR=${LARIS_MODELS_DIR:-$HOME/.cache/huggingface/hub}
 if [ -z "${LARIS_CHAT_SNAPSHOT:-}" ]; then
-    LARIS_CHAT_SNAPSHOT=$(ls "$LARIS_MODELS_DIR/models--Qwen--Qwen3.5-9B/snapshots" 2>/dev/null | head -1)
+    LARIS_CHAT_SNAPSHOT=$(ls "$LARIS_MODELS_DIR/models--Qwen--$LARIS_CHAT_MODEL/snapshots" 2>/dev/null | head -1)
 fi
 export LARIS_CHAT_SNAPSHOT
 compose="docker compose -p $project -f $here/compose.yaml -f $here/compose.chat.yaml"
@@ -41,7 +42,7 @@ address="https://$domain:$LARIS_HTTPS_PORT"
 
 case "${1:-}" in
 up)
-    [ -n "$LARIS_CHAT_SNAPSHOT" ] || { echo "no Qwen3.5-9B snapshot under $LARIS_MODELS_DIR (set LARIS_MODELS_DIR / LARIS_CHAT_SNAPSHOT)" >&2; exit 1; }
+    [ -n "$LARIS_CHAT_SNAPSHOT" ] || { echo "no $LARIS_CHAT_MODEL snapshot under $LARIS_MODELS_DIR (set LARIS_MODELS_DIR / LARIS_CHAT_SNAPSHOT)" >&2; exit 1; }
     "$here/init-secrets.sh" >/dev/null
     mkdir -p "$here/tls"
     rm -f "$here/tls/tailscale.caddy"
@@ -58,10 +59,12 @@ up)
     echo "server up: $address"
     ;;
 down)
+    export LARIS_CHAT_SNAPSHOT=${LARIS_CHAT_SNAPSHOT:-none} # stopping needs no weights
     $compose stop
     echo "server stopped (volumes kept)"
     ;;
 status)
+    export LARIS_CHAT_SNAPSHOT=${LARIS_CHAT_SNAPSHOT:-none}
     $compose ps --format 'table {{.Service}}\t{{.Status}}'
     echo "address: $address"
     ;;
