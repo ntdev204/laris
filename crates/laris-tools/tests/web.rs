@@ -251,7 +251,8 @@ const WORKS: &str = r#"{"meta": {"count": 2}, "results": [
                   {"author": {"display_name": "C. Three"}}, {"author": {"display_name": "D. Four"}},
                   {"author": {"display_name": "E. Five"}}],
   "abstract_inverted_index": {"control": [1], "We": [0], "drones.": [2]},
-  "best_oa_location": {"pdf_url": "https://arxiv.org/pdf/1"},
+  "best_oa_location": {"pdf_url": "https://publisher.org/1.pdf"},
+  "locations": [{"pdf_url": null}, {"pdf_url": "https://publisher.org/1.pdf"}, {"pdf_url": "https://arxiv.org/pdf/1"}],
   "primary_location": {"landing_page_url": "https://arxiv.org/abs/1"}},
  {"id": "https://openalex.org/W2", "doi": null, "title": "No text", "publication_year": 2020,
   "authorships": [], "abstract_inverted_index": null, "best_oa_location": null,
@@ -271,6 +272,10 @@ fn paper_search_returns_papers_with_abstract_and_free_text() {
     assert_eq!(papers[0]["authors"], "A. One, B. Two, C. Three et al.");
     assert_eq!(papers[0]["abstract"], "We control drones.");
     assert_eq!(papers[0]["pdf_url"], "https://arxiv.org/pdf/1");
+    assert_eq!(
+        papers[0]["other_pdf_urls"],
+        json!(["https://publisher.org/1.pdf"])
+    );
     assert_eq!(papers[0]["url"], "https://arxiv.org/abs/1");
     assert_eq!(papers[1]["pdf_url"], "https://e.org/paper");
     assert_eq!(papers[1]["url"], "https://openalex.org/W2");
