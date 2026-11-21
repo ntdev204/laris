@@ -16,15 +16,15 @@ Run `python scripts/validate_spec.py` after any change to these files (programme
 
 ## 1. Purpose and scope
 
-LARIS is a system for scientific work in English and Vietnamese: a terminal client, an agent harness, an
+LARIS is a system for scientific work in English and Vietnamese: terminal and browser clients, an agent harness, an
 Obsidian-compatible brain, a policy gateway server and a model service. Its three goals, in the owner's order
 (2026-11-13):
 
 1. **Finish the model** (ResearchLLM): the self-built language foundation and its specialist stages up to a
    generative research advisor, each stage qualified on held-out gates. Highest priority.
-2. **Rebuild the system, server and client in Rust**, keeping the model block in Python: the system follows the
-   layers loop → harness → prompt; the server climbs the ladder LLM → RAG → Agent → Agentic; the client follows once
-   the model is finished.
+2. **Rebuild the system, server and terminal client in Rust**, keeping the model block in Python: the system follows the
+   layers loop → harness → prompt; the server climbs the ladder LLM → RAG → Agent → Agentic. A Next.js browser
+   client uses the same P1 gateway.
 3. **Build the main brain**: the Obsidian brain holds verified knowledge, a non-generative decision network decides,
    ResearchLLM advises and the system executes.
 
@@ -40,7 +40,7 @@ Task ids continue one global sequence and are unique across all task files.
 | Programme | Content | Order rule |
 |---|---|---|
 | 1. Model | ResearchLLM stages 1-6 (section 6.8) | First and highest priority. Agents prepare code, data, configuration, evaluation and commands; the owner trains and returns measurements |
-| 2. System, server, client | Rust rewrite (sections 6.2-6.7) | Its system and server phases run only when the next programme-1 task waits for the owner (a training run, a decision, labels). Its client phase starts after the model is finished (T118) |
+| 2. System, server, client | Rust rewrite (sections 6.2-6.7), browser chat over P1 (T258) | Its system and server phases run only when the next programme-1 task waits for the owner (a training run, a decision, labels). Its client phase starts after the model is finished (T118), with browser chat added on the owner's direction |
 | 3. Brain | Cognitive architecture (section 6.9) | After programme 2 is accepted and the model is finished |
 
 "The model is finished" means: every stage of section 6.8 passed its held-out gates and the owner recorded the
@@ -59,7 +59,7 @@ values. One requirement has one implementation (owner decision: no duplication).
 | `shared` | library crates used by server and client | configuration, vault format, retrieval | SR-L |
 | `harness` | library crates (the system) | loop, harness and prompt layers | SR-H |
 | `server` | binary `laris-server` | API, keys, storage, gateway, system brain, model proxy, traces, deployment, capability ladder | SR-S |
-| `client` | binary `laris` | terminal interface, commands, settings, login, headless mode, distribution | SR-C |
+| `client` | binary `laris`, `apps/web` | terminal interface, commands, settings, login, headless mode, distribution, browser chat | SR-C |
 | `brain` | across blocks | knowledge base, write gate, decision network, answer assembly | SR-K |
 
 ## 4. Definitions
@@ -101,6 +101,7 @@ crates/
   laris-server             binary laris-server                                        (server)
   laris-tui                terminal interface                                         (client)
   laris-cli                binary laris                                               (client)
+apps/web/                  Next.js browser chat over P1                               (client)
 xtask/                     validate-spec, release helpers                             (governance)
 src/laris/                 Python model block: model service, language, research      (model)
 configs/  docs/  experiments/  reports/  tests/  .laris/
@@ -476,6 +477,15 @@ checksum; the running session is not touched and a notice above the input box at
 Acceptance: one-command install and start on a clean machine per platform; a tampered binary is refused; a tampered list or
 archive is never installed by an update.
 
+### SR-C7 — Browser chat
+Owner: client
+A responsive Next.js interface composed from shadcn/ui sends messages to the configured P1 gateway and renders streamed
+replies. Users can start, find, rename and delete conversations, stop a reply and retry a failed turn. The browser stores
+chat history and attachments locally and keeps the API key in tab memory. UTF-8 files are sent as text with the user's
+message and share the gateway request limit.
+Acceptance: a desktop and mobile viewport can send a chat and manage its history. An attached UTF-8 file reaches P1 as
+message text, and a streamed error preserves the partial answer for the user.
+
 ### 7.7 Model service
 
 ### SR-M1 — Model service and P2
@@ -614,4 +624,4 @@ gate, brain write gate with provenance, sealed test splits and data checksums. L
 The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T98.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257.
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T258.

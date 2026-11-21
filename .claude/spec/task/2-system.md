@@ -1999,3 +1999,23 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - Interface test (a refused call is not drawn, a real tool error is); `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's direction. With T256 the refusal only appears when the user sets a cap. `WebFetch` is kept: Claude Code has a WebFetch tool too (it is the tool behind its web-fetch agent).
+
+## Phase 55 — Browser chat
+
+### T258 — Next.js chat client
+- Requirements: SR-C7, SR-P1
+- Depends: T257
+- Deliverables:
+  - A responsive Vietnamese chat client in `apps/web`, built with Next.js and shadcn/ui. It provides a searchable
+    conversation sidebar, new chat, rename, delete and a multiline composer with UTF-8 attachments.
+  - A same-origin route forwards chat to the configured P1 gateway. The app renders streamed replies, supports stop
+    and retry, and saves history with attachments in IndexedDB. The API key stays in the current tab's memory.
+  - Setup guide and fixture tests for P1 streaming, interruption and file validation.
+- Validation:
+  - `npm run typecheck`, `npm test`, Next.js production build, desktop and mobile browser smoke check, `cargo xtask spec`.
+- Status: done
+- Note: Next.js 16.4.6 and shadcn/ui CLI 4.23.0. Type checking, five fixture and file checks, and the production
+  build passed. Chromium at desktop and mobile sizes exercised authentication, UTF-8 upload, streaming, upstream
+  cancellation, history after reload, rename, search, deletion and sending on mobile against a scripted P1 gateway.
+  Webpack is used because Turbopack's IPC port is restricted in the development environment. The live model was not
+  exercised. The foundation model stays NOT QUALIFIED.
