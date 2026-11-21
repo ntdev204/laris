@@ -286,3 +286,64 @@ fn files_that_cannot_be_ingested_say_why() {
         "{scan}"
     );
 }
+
+fn has(program: &str) -> bool {
+    std::process::Command::new(program)
+        .arg("-v")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok()
+}
+
+#[test]
+fn a_scanned_pdf_is_read_by_ocr_and_says_so() {
+    if !(has("pdftoppm") && has("tesseract")) {
+        eprintln!("skipped: pdftoppm or tesseract is not installed");
+        return;
+    }
+    let cfg = laris_config::settings::Ocr::default();
+    let (doc, method) = laris_tools::ingest::read_document_with(
+        &fixture("scanned_text.pdf"),
+        1 << 20,
+        &LIMITS,
+        Some(&cfg),
+    )
+    .unwrap();
+    assert_eq!(method, laris_tools::ingest::Method::Ocr);
+    assert!(
+        doc.text.contains("perovskite") && doc.text.contains("encapsulation"),
+        "{}",
+        doc.text
+    );
+}
+
+#[test]
+fn a_clean_text_pdf_stays_with_the_built_in_reader() {
+    let cfg = laris_config::settings::Ocr::default();
+    let (_, method) = laris_tools::ingest::read_document_with(
+        &fixture("report.pdf"),
+        1 << 20,
+        &LIMITS,
+        Some(&cfg),
+    )
+    .unwrap();
+    assert_eq!(method, laris_tools::ingest::Method::TextLayer);
+}
+
+#[test]
+fn missing_programs_are_named_in_the_error() {
+    let cfg = laris_config::settings::Ocr {
+        text_command: "laris-no-such-program".into(),
+        render_command: "laris-no-such-program".into(),
+        ..Default::default()
+    };
+    let err =
+        laris_tools::ingest::read_document_with(&fixture("scan.pdf"), 1 << 20, &LIMITS, Some(&cfg))
+            .unwrap_err()
+            .to_string();
+    assert!(
+        err.contains("no text layer") && err.contains("laris-no-such-program"),
+        "{err}"
+    );
+}

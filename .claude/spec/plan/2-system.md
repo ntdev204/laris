@@ -158,3 +158,9 @@ Exit criteria:
 - The production build, P1 fixture tests and browser smoke check pass.
 - A blocked search or a repeated call no longer ends a turn without an answer (T259); the packaged server runs the 4B chat model (T260).
 
+### Phase 56 — Reading papers for research gaps
+Goal: the chat can read real papers (text, scanned or fetched), stay inside the VRAM it had for plain chat, and work as a research-gap finder.
+Tasks: T261
+Exit criteria:
+- A scanned or oddly encoded PDF, from disk or from `WebFetch`, is read by OCR when the programs are installed (T261).
+- (more tasks follow)

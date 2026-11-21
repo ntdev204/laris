@@ -360,9 +360,10 @@ Acceptance: tests on recorded fixtures, version and pin mismatch, interrupted st
 
 ### SR-H13 — Document ingestion
 Owner: harness
-Text, Markdown and PDF with a text layer into passages with spans and Source notes; scanned documents wait for the stage-3
-OCR model and say so.
-Acceptance: passages of text and Markdown point to the exact source characters; PDF fixtures produce spans; scanned input gives a clear message.
+Text, Markdown and PDF into passages with spans and Source notes. A PDF the built-in reader cannot use (a scan, fonts it cannot
+decode) is read by external programs named in `vault.ocr` (`pdftotext`, then `pdftoppm` and `tesseract`), also when `WebFetch` meets a PDF (T261);
+`read_by` says how. When they are missing the error names each reason.
+Acceptance: passages of text and Markdown point to the exact source characters; PDF fixtures produce spans; a scanned fixture is read by OCR; missing programs give a clear message.
 
 ### SR-H14 — Decider seam
 Owner: harness
@@ -624,4 +625,4 @@ gate, brain write gate with provenance, sealed test splits and data checksums. L
 The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T98.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260.
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260. Phase 56: T261-T261.

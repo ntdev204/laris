@@ -5,18 +5,22 @@
 //!   everywhere. A PDF goes through [`pdf`], which reads the text layer and nothing else.
 //! * [`passages::split`] cuts the text into passages with exact character spans.
 //!
-//! A scanned PDF has no text layer. It is refused with a message that says the stage-3 OCR model is needed, not
-//! guessed at.
+//! A PDF the built-in reader cannot use (a scan, or fonts it cannot decode) goes to [`ocr`], which runs the programs
+//! named in `vault.ocr` (T261). When they are missing or read nothing, the error says so; nothing is guessed.
 
 pub mod inflate;
+pub mod ocr;
 pub mod passages;
 pub mod pdf;
 
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
+pub use ocr::Method;
 pub use passages::{Passage, split};
 pub use pdf::{PdfError, PdfLimits};
+
+use laris_config::settings::Ocr;
 
 /// What a file is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,6 +72,14 @@ pub enum IngestError {
     /// A PDF problem.
     #[error(transparent)]
     Pdf(#[from] PdfError),
+    /// The built-in reader and the external readers all failed.
+    #[error("{builtin}; the external readers also failed: {external}")]
+    ReaderFailed {
+        /// What the built-in reader said.
+        builtin: String,
+        /// What the external readers said.
+        external: String,
+    },
     /// The file holds no text.
     #[error("the file holds no text")]
     Empty,
@@ -79,6 +91,16 @@ pub fn read_document(
     max_bytes: u64,
     limits: &PdfLimits,
 ) -> Result<Document, IngestError> {
+    read_document_with(path, max_bytes, limits, None).map(|(d, _)| d)
+}
+
+/// Like [`read_document`], with the external PDF readers `ocr` and the method that gave the text.
+pub fn read_document_with(
+    path: &Path,
+    max_bytes: u64,
+    limits: &PdfLimits,
+    ocr: Option<&Ocr>,
+) -> Result<(Document, Method), IngestError> {
     let extension = path
         .extension()
         .and_then(|e| e.to_str())
@@ -96,7 +118,7 @@ pub fn read_document(
         return Err(IngestError::TooLarge(max_bytes));
     }
     let bytes = std::fs::read(path).map_err(|e| IngestError::Unreadable(e.kind().to_string()))?;
-    document_from(kind, path, &bytes, limits)
+    document_from_with(kind, path, &bytes, limits, ocr)
 }
 
 /// A document from bytes already read.
@@ -106,6 +128,17 @@ pub fn document_from(
     bytes: &[u8],
     limits: &PdfLimits,
 ) -> Result<Document, IngestError> {
+    document_from_with(kind, path, bytes, limits, None).map(|(d, _)| d)
+}
+
+/// Like [`document_from`]; a PDF the built-in reader cannot use goes to the external readers when `ocr` is given.
+pub fn document_from_with(
+    kind: Kind,
+    path: &Path,
+    bytes: &[u8],
+    limits: &PdfLimits,
+    ocr: Option<&Ocr>,
+) -> Result<(Document, Method), IngestError> {
     let stem = path
         .file_stem()
         .and_then(|s| s.to_str())
@@ -115,8 +148,34 @@ pub fn document_from(
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect();
+    let mut method = Method::TextLayer;
     let (text, title) = match kind {
-        Kind::Pdf => (pdf::extract(bytes, limits)?.text(), stem),
+        Kind::Pdf => {
+            let builtin = pdf::extract(bytes, limits).map(|p| p.text());
+            match (builtin, ocr) {
+                (Ok(text), _) if ocr::readable(&text) => (text, stem),
+                (Ok(text), None) => (text, stem),
+                (Err(e), None) => return Err(e.into()),
+                (built, Some(cfg)) => {
+                    let said = match &built {
+                        Ok(_) => "the built-in reader found only unreadable text".to_owned(),
+                        Err(e) => e.to_string(),
+                    };
+                    match ocr::read(bytes, cfg) {
+                        Ok((text, how)) => {
+                            method = how;
+                            (text, stem)
+                        }
+                        Err(external) => {
+                            return Err(IngestError::ReaderFailed {
+                                builtin: said,
+                                external,
+                            });
+                        }
+                    }
+                }
+            }
+        }
         Kind::Text | Kind::Markdown => {
             let raw = String::from_utf8_lossy(bytes)
                 .replace("\r\n", "\n")
@@ -132,12 +191,15 @@ pub fn document_from(
     if text.trim().is_empty() {
         return Err(IngestError::Empty);
     }
-    Ok(Document {
-        kind,
-        title,
-        text,
-        sha256,
-    })
+    Ok((
+        Document {
+            kind,
+            title,
+            text,
+            sha256,
+        },
+        method,
+    ))
 }
 
 /// The `title` of the front matter, or the first level-one heading.

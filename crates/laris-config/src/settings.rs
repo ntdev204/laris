@@ -642,6 +642,49 @@ pub struct Vault {
     /// Passages `search_corpus` returns at most.
     #[schemars(range(min = 1))]
     pub search_max_results: u32,
+    /// Reading PDFs the built-in reader cannot (scans, unusual fonts).
+    pub ocr: Ocr,
+}
+
+/// External programs that read a PDF when the built-in reader gives no usable text (T261). Names are looked up on
+/// `PATH`; nothing is installed or downloaded. An empty command turns that step off.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+pub struct Ocr {
+    /// Try the external readers at all.
+    pub enabled: bool,
+    /// Program that prints the text layer of a PDF (`pdftotext`); tried before OCR.
+    pub text_command: String,
+    /// Program that renders PDF pages to PNG images (`pdftoppm`).
+    pub render_command: String,
+    /// Program that reads an image (`tesseract`).
+    pub ocr_command: String,
+    /// Recognition languages, joined by `+` (`eng+vie`).
+    pub languages: String,
+    /// Resolution the pages are rendered at.
+    #[schemars(range(min = 72, max = 600))]
+    pub dpi: u32,
+    /// Most pages recognised in one document.
+    #[schemars(range(min = 1))]
+    pub max_pages: u32,
+    /// Longest one external program may run, in seconds.
+    #[schemars(range(min = 1))]
+    pub timeout_seconds: u32,
+}
+
+impl Default for Ocr {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            text_command: "pdftotext".into(),
+            render_command: "pdftoppm".into(),
+            ocr_command: "tesseract".into(),
+            languages: "eng".into(),
+            dpi: 200,
+            max_pages: 60,
+            timeout_seconds: 120,
+        }
+    }
 }
 
 impl Default for Vault {
@@ -654,6 +697,7 @@ impl Default for Vault {
             ingest_max_bytes: 20_000_000,
             passage_max_chars: 1200,
             search_max_results: 10,
+            ocr: Ocr::default(),
         }
     }
 }

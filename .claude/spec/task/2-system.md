@@ -2041,3 +2041,18 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `bash -n docker/laris.sh`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's direction. The weights stay outside Git; the live model was not started here. The model stays NOT QUALIFIED.
+
+## Phase 56 — Reading papers for research gaps
+
+### T261 — PDFs the built-in reader cannot use are read by OCR
+- Requirements: SR-H13
+- Depends: T260
+- Deliverables:
+  - `vault.ocr` settings (`enabled`, `textCommand`, `renderCommand`, `ocrCommand`, `languages`, `dpi`, `maxPages`, `timeoutSeconds`); no path or program is hardcoded
+  - `ingest/ocr.rs`: when the built-in reader errors or gives text that is not readable, run `pdftotext`, then `pdftoppm` + `tesseract`; a missing program, failure or timeout is named in the error
+  - `ingest_document` and `WebFetch` use it (`WebFetch` used to refuse `application/pdf`); both report `read_by` (`text_layer`, `pdftotext`, `ocr`)
+  - Tests: a scanned fixture is read by OCR (skipped when the programs are absent), a clean PDF stays with the built-in reader, missing programs are named, a fetched PDF is read; schema regenerated
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's report ("OCR cannot be used"). Cause: the hand-written reader refused every scan and several real encodings, and `WebFetch` refused PDFs, so "search, then read the paper" could not work. The external programs run in the client, where the tools run; the distroless server image is unchanged. Install them with `sudo apt install poppler-utils tesseract-ocr tesseract-ocr-vie`; set `vault.ocr.languages` to `eng+vie` for Vietnamese papers.
