@@ -1011,6 +1011,11 @@
           "minimum": 1,
           "type": "integer"
         },
+        "paperSearchUrl": {
+          "default": "https://api.openalex.org/works",
+          "description": "Address of a scholarly works API with the OpenAlex interface (`search`, `per-page`, `filter`, `select`); no key\nis needed. Empty turns `PaperSearch` off.",
+          "type": "string"
+        },
         "searchUrl": {
           "default": "https://html.duckduckgo.com/html/",
           "description": "Address of the HTML search page; the query is added as `q`. Empty turns `WebSearch` off.",
@@ -1300,6 +1305,7 @@
         "maxBytes": 2097152,
         "maxRedirects": 5,
         "maxResults": 8,
+        "paperSearchUrl": "https://api.openalex.org/works",
         "searchUrl": "https://html.duckduckgo.com/html/",
         "timeoutSeconds": 20,
         "userAgent": "Mozilla/5.0 (compatible; Laris)"

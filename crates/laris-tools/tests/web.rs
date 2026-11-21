@@ -243,3 +243,67 @@ fn a_pdf_is_read_not_refused_and_a_scan_goes_to_ocr() {
         );
     }
 }
+
+const WORKS: &str = r#"{"meta": {"count": 2}, "results": [
+ {"id": "https://openalex.org/W1", "doi": "https://doi.org/10.1/x", "title": "Embedded  NMPC",
+  "publication_year": 2024,
+  "authorships": [{"author": {"display_name": "A. One"}}, {"author": {"display_name": "B. Two"}},
+                  {"author": {"display_name": "C. Three"}}, {"author": {"display_name": "D. Four"}},
+                  {"author": {"display_name": "E. Five"}}],
+  "abstract_inverted_index": {"control": [1], "We": [0], "drones.": [2]},
+  "best_oa_location": {"pdf_url": "https://arxiv.org/pdf/1"},
+  "primary_location": {"landing_page_url": "https://arxiv.org/abs/1"}},
+ {"id": "https://openalex.org/W2", "doi": null, "title": "No text", "publication_year": 2020,
+  "authorships": [], "abstract_inverted_index": null, "best_oa_location": null,
+  "open_access": {"oa_url": "https://e.org/paper"}, "primary_location": null}]}"#;
+
+#[test]
+fn paper_search_returns_papers_with_abstract_and_free_text() {
+    let web = script(|_| page("application/json", WORKS));
+    let mut r = registry("paper-search", Some(web.clone()), |_| {});
+    let out = r.call(
+        "PaperSearch",
+        leak(json!({"query": "nmpc & mcu", "max_results": 2, "from_year": 2020})),
+    );
+    let papers = out["results"].as_array().expect("results");
+    assert_eq!(papers.len(), 2, "{out}");
+    assert_eq!(papers[0]["title"], "Embedded NMPC");
+    assert_eq!(papers[0]["authors"], "A. One, B. Two, C. Three et al.");
+    assert_eq!(papers[0]["abstract"], "We control drones.");
+    assert_eq!(papers[0]["pdf_url"], "https://arxiv.org/pdf/1");
+    assert_eq!(papers[0]["url"], "https://arxiv.org/abs/1");
+    assert_eq!(papers[1]["pdf_url"], "https://e.org/paper");
+    assert_eq!(papers[1]["url"], "https://openalex.org/W2");
+    assert_eq!(out["total"], 2);
+    let sent = web.seen.lock().expect("lock")[0].clone();
+    assert!(
+        sent.starts_with("https://api.openalex.org/works?search=nmpc+%26+mcu&per-page=2&"),
+        "{sent}"
+    );
+    assert!(
+        sent.ends_with("&filter=is_oa:true,from_publication_date:2020-01-01"),
+        "{sent}"
+    );
+    // a secret never leaves; a page that is not JSON is a failed search; an empty address removes the tool
+    assert_eq!(
+        r.call("PaperSearch", leak(json!({"query": "sk-secret-123"})))["error"]["code"],
+        "secret_in_request"
+    );
+    let mut bad = registry(
+        "paper-bad",
+        Some(script(|_| page("text/html", "<html>"))),
+        |_| {},
+    );
+    assert_eq!(
+        bad.call("PaperSearch", leak(json!({"query": "x"})))["error"]["code"],
+        "search_failed"
+    );
+    let off = registry("paper-off", Some(script(|_| page("text/plain", ""))), |s| {
+        s.web.paper_search_url.clear()
+    });
+    assert!(
+        !off.schemas()
+            .iter()
+            .any(|s| s.function.name == "PaperSearch")
+    );
+}

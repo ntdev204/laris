@@ -1,8 +1,8 @@
 name = "research-gap"
-version = "1.0.0"
+version = "1.1.0"
 description = "From PDFs, a folder of PDFs or keywords: read the papers, build what they know, and propose research gaps with evidence."
 triggers = ["find research gaps", "research gap", "khoảng trống nghiên cứu", "tìm gap"]
-allowed_tools = ["WebSearch", "WebFetch", "Glob", "Read", "ingest_document", "search_corpus", "Write", "update_plan"]
+allowed_tools = ["PaperSearch", "WebSearch", "WebFetch", "Glob", "Read", "ingest_document", "search_corpus", "Write", "update_plan"]
 max_steps = 10
 require_citations = true
 approval = "ask"
@@ -14,9 +14,11 @@ id = "collect"
 goal = "Get the papers and give each one an id: P1, P2, ... with its title and where it came from."
 instructions = """
 Use Glob for a folder and ingest_document for each PDF (it reads scans by OCR; note `read_by`). Its `cite_as` is the
-name to cite and `origin` is the file. For keywords, run several different WebSearch queries together, then WebFetch
-the most relevant results (a PDF link is read as text); the address is the origin. Aim for 5 to 15 papers; never fetch
-the same address twice. Keep the id table (Pn, title, origin, cite_as) and use these ids everywhere after this step.
+name to cite and `origin` is the file. For keywords, call PaperSearch with two or three different queries, one after
+the other; its `abstract` is the paper's abstract. Then WebFetch the `pdf_url` of the most relevant papers (a PDF is read
+as text); that address is the origin. Use WebSearch only when PaperSearch finds nothing. Fetch only an address that a
+search result or the user gave: never write an address yourself. Aim for 5 to 15 papers; never fetch the same address
+twice. Keep the id table (Pn, title, origin, cite_as) and use these ids everywhere after this step.
 A paper that cannot be read goes to "Not read" with the reason; never fill it in from memory.
 """
 exit = "A paper register (id, title, origin) of papers actually read, and a list of papers not read with the reason."
@@ -58,3 +60,7 @@ exit = "Ranked gaps, each with paper ids, evidence, scope and a suggested study.
 [[phases]]
 id = "report"
 goal = "Summarise in the chat, with the paper register, and offer to write the report to a file."
+instructions = """
+Write the answer under the required sections, in the user's language, even when a tool failed or few papers were read:
+then say so under "Not read". Every point names its paper ids, and each gap says it is a gap among the papers read.
+"""
