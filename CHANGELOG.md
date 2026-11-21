@@ -6,6 +6,21 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-21
+
+### Added
+- **Reading real papers:** a PDF the built-in reader cannot use (scan, unusual fonts) is read by `pdftotext`, then by
+  `pdftoppm` + `tesseract` (`vault.ocr`; nothing hardcoded). `WebFetch` now reads PDF links. `ingest_document` and
+  `WebFetch` report `read_by`; `ingest_document` also returns `origin` and `cite_as`.
+- **`research-gap` workflow:** from PDFs, a folder or keywords to a paper register (`P1..Pn`), per-paper abstract,
+  methods, limitations and future work, conflicts, and ranked research gaps with paper ids as evidence.
+
+### Changed
+- **VRAM on tool turns:** the model service bounds the prompt (`model_service.chat_max_input_tokens`, default 8192) by
+  shortening old tool results, and returns GPU memory after every reply (`chat_release_cache`). The new peak is not yet
+  measured.
+- A repeated identical call is refused instead of ending the turn; the packaged server defaults to the 4B chat model.
+
 ## [1.4.1] - 2026-11-21
 
 ### Fixed
