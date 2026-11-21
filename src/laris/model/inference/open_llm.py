@@ -101,14 +101,25 @@ def fit_to_budget(
     """`messages`, with the oldest bulky content shortened until `measure` says it fits `budget`.
 
     Tool results are what grow a prompt (pages, passages), so they go first, largest first; the
-    system message and the latest message are left alone. If shortening is not enough, the oldest
-    turns after the system message are dropped, always keeping the latest message. `budget <= 0`
-    turns this off.
+    system message, the user's latest question and the latest message (unless it is a tool result)
+    are left alone. If shortening is not enough, the oldest turns after the system message are
+    dropped, always keeping the latest message with the call it answers and the user's latest
+    question (a chat template refuses a conversation without one).
+    `budget <= 0` turns this off.
     """
     if budget <= 0 or measure(messages) <= budget:
         return messages
     work = [dict(m) for m in messages]
-    protected = {len(work) - 1} | {i for i, m in enumerate(work) if m.get("role") == "system"}
+
+    def question(items: List[Dict[str, Any]]) -> int:
+        users = [i for i, m in enumerate(items) if m.get("role") == "user"]
+        return users[-1] if users else -1
+
+    # the latest message is kept whole unless it is a tool result: data, not the question
+    last = len(work) - 1
+    protected = {question(work)} | {i for i, m in enumerate(work) if m.get("role") == "system"}
+    if work[last].get("role") != "tool":
+        protected.add(last)
     while measure(work) > budget:
         candidates = [
             (len(str(m.get("content") or "")), i)
@@ -119,14 +130,24 @@ def fit_to_budget(
             break
         _, index = max(candidates, key=lambda c: (work[c[1]].get("role") == "tool", c[0]))
         work[index]["content"] = _shorten(str(work[index]["content"]))
+
+    def tail(items: List[Dict[str, Any]]) -> int:
+        """Start of the last block: the latest message, with the call its tool results answer."""
+        start = len(items) - 1
+        while start > 0 and items[start].get("role") == "tool":
+            start -= 1
+        return start if items[-1].get("role") == "tool" else len(items) - 1
+
     while measure(work) > budget:
-        droppable = [i for i in range(len(work) - 1) if work[i].get("role") != "system"]
+        asked = question(work)
+        droppable = [i for i in range(tail(work)) if work[i].get("role") != "system" and i != asked]
         if not droppable:
             raise ProviderError("the conversation does not fit the model's input budget")
-        del work[droppable[0]]
+        first = droppable[0]
+        del work[first]
         # never leave a tool result without the call that asked for it
-        while droppable and len(work) > 1 and work[droppable[0]].get("role") == "tool":
-            del work[droppable[0]]
+        while first < tail(work) and work[first].get("role") == "tool":
+            del work[first]
     return work
 
 
