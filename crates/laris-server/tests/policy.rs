@@ -445,6 +445,40 @@ async fn a_workflow_narrows_the_tools_and_unknown_ones_are_refused() {
 }
 
 #[tokio::test]
+async fn a_trigger_phrase_selects_the_workflow_when_the_client_names_none() {
+    let policy = load(&[]);
+    let tool = |n: &str| json!({"type": "function", "function": {"name": n}});
+    let tools = json!([tool("WebSearch"), tool("Bash"), tool("ingest_document")]);
+    let (gw, seen, _) = gateway(&policy, vec![Ok(stop()), Ok(stop())]);
+    // the trigger matches without case, inside a longer message, also after a tool result of the same turn
+    ask(
+        &gw,
+        json!({"tools": tools, "messages": [
+            {"role": "user", "content": "Please FIND RESEARCH GAPS in model predictive control"},
+            {"role": "assistant", "content": null, "tool_calls": [{"id": "c1", "type": "function",
+                "function": {"name": "WebSearch", "arguments": "{}"}}]},
+            {"role": "tool", "tool_call_id": "c1", "content": "results"}]}),
+    )
+    .await;
+    // a message with no trigger keeps every tool and no workflow
+    ask(&gw, json!({"tools": tools})).await;
+    let names = |i: usize| -> Vec<String> {
+        seen.lock().unwrap()[i]
+            .tools
+            .iter()
+            .map(|t| t.function.name.clone())
+            .collect()
+    };
+    assert_eq!(names(0), ["WebSearch", "ingest_document"]);
+    let system = system_of(&seen, 0);
+    assert!(
+        system.contains("Paper register") && system.contains("Task: Please FIND RESEARCH GAPS")
+    );
+    assert!(names(1).contains(&"Bash".to_owned()));
+    assert!(!system_of(&seen, 1).contains("Paper register"));
+}
+
+#[tokio::test]
 async fn reasoning_never_reaches_the_client_whatever_form_it_takes() {
     let policy = load(&[]);
     let chunks = vec![
@@ -1339,7 +1373,7 @@ async fn the_model_loads_a_skill_and_the_server_answers_and_goes_on() {
         ],
     ]);
     let tool = json!({"type": "function", "function": {"name": "Grep"}});
-    let got = ask(&gw, json!({"tools": [tool], "messages": [{"role": "user", "content": "Is this research gap real?"}]})).await;
+    let got = ask(&gw, json!({"tools": [tool], "messages": [{"role": "user", "content": "Is this gap in the literature real?"}]})).await;
     // the client sees one continuous answer: text of both steps, no skill call, one finish, one usage event
     assert_eq!(got.text, "Let me check. The gap is real.");
     assert!(got.calls.is_empty() && got.finish.as_deref() == Some("stop"));
