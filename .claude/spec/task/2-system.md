@@ -1978,3 +1978,14 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - Tests: scripted transport (page text, search parse, typed errors, secret refusal, switches), inside-address table, civil date; `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's direction ("remove MCP search, keep the mechanism; build the tools to know and act on the world"). Built: knowing (`Now`, `WebFetch`, `WebSearch`). NOT built: tools that act on the world (HTTP POST/PUT, email, calendar and the like); they need a permission design first. The real network is NOT tried here. The default search page is DuckDuckGo's HTML page, which may show a check page under heavy use from one address (the tool reports it); it is a setting. Tools are asked about like reads (they do not write), so a model fooled by a page could still leak data in a URL; the secret check narrows this but does not close it. No `no_proxy` exception: a machine that needs a proxy cannot use these tools yet. `laris-model-client` gains `tokio` DNS use only (no new crate).
+
+### T256 — No cap on tool calls in one step
+- Requirements: SR-H16, SR-H17
+- Depends: T255
+- Deliverables:
+  - `agent.maxToolCallsPerStep` defaults to `0`, meaning no limit (range 0 to 64); a step stays bounded by `maxSteps` and `timeBudgetSeconds`; a positive value still caps and gives the typed `too_many_calls` refusal
+  - Tests: nine calls in one step all run by default; the two cap tests set the cap to 4 themselves
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's direction ("remove the limit, I want it like Claude"): parallel web searches hit `too_many_calls` at 4. Repeats of an identical call are still refused (separate rule).

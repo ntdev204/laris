@@ -13,11 +13,11 @@
           "type": "integer"
         },
         "maxToolCallsPerStep": {
-          "default": 4,
-          "description": "Tool calls run in one model step; more are refused.",
+          "default": 0,
+          "description": "Tool calls run in one model step; more are refused. 0 sets no limit (the default): a step is still bounded by\n`maxSteps` and `timeBudgetSeconds`.",
           "format": "uint32",
-          "maximum": 16,
-          "minimum": 1,
+          "maximum": 64,
+          "minimum": 0,
           "type": "integer"
         },
         "plan": {
@@ -967,7 +967,7 @@
       "$ref": "#/$defs/Agent",
       "default": {
         "maxSteps": 10,
-        "maxToolCallsPerStep": 4,
+        "maxToolCallsPerStep": 0,
         "plan": {
           "maxSteps": 12,
           "minRequestWords": 12,

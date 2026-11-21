@@ -6,6 +6,10 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Changed
+- A step may call as many tools as the model asks: `agent.maxToolCallsPerStep` now defaults to `0` (no limit), so several
+  searches in parallel no longer fail with `too_many_calls`. Set a positive value to cap it again.
+
 ## [1.4.0] - 2026-11-21
 
 ### Added
