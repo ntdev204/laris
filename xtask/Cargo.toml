@@ -10,11 +10,11 @@ publish.workspace = true
 regex = "1"
 sha2 = "0.10"
 serde_json = "1"
-laris-retrieval = { path = "../crates/laris-retrieval", version = "=1.4.0" }
-laris-brain = { path = "../crates/laris-brain", version = "=1.4.0" }
-laris-vault = { path = "../crates/laris-vault", version = "=1.4.0" }
-laris-protocol = { path = "../crates/laris-protocol", version = "=1.4.0" }
-laris-config = { path = "../crates/laris-config", version = "=1.4.0" }
+laris-retrieval = { path = "../crates/laris-retrieval", version = "=1.4.1" }
+laris-brain = { path = "../crates/laris-brain", version = "=1.4.1" }
+laris-vault = { path = "../crates/laris-vault", version = "=1.4.1" }
+laris-protocol = { path = "../crates/laris-protocol", version = "=1.4.1" }
+laris-config = { path = "../crates/laris-config", version = "=1.4.1" }
 
 [lints]
 workspace = true

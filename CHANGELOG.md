@@ -6,6 +6,8 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-21
+
 ### Fixed
 - The interface no longer draws the loop's own `too_many_calls` refusal as a failed tool.
 
