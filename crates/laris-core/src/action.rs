@@ -51,6 +51,8 @@ pub enum NoticeKind {
     BudgetOut,
     /// No change of approach can help; said once.
     Permanent,
+    /// Calls kept repeating: the tools are closed and the model must answer now; said once.
+    Wrapup,
 }
 
 /// A message the loop adds to the conversation for the model.

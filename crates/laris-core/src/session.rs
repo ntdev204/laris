@@ -43,6 +43,7 @@ pub struct Turn {
     completion_retries: u32,
     budget_told: bool,
     permanent_told: bool,
+    wrapup_told: bool,
     repeats: u32,
     leftover: bool,
     asked: Option<Option<String>>,
@@ -77,6 +78,11 @@ impl Turn {
     /// Whether the model was told once that a failure is permanent.
     pub fn permanent_told(&self) -> bool {
         self.permanent_told
+    }
+
+    /// Whether the model was told that the tools are closed and it must answer now.
+    pub fn wrapup_told(&self) -> bool {
+        self.wrapup_told
     }
 
     /// Identical calls refused so far in this turn.
@@ -525,6 +531,10 @@ impl Session {
             NoticeKind::Permanent => {
                 self.turn.permanent_told = true;
                 data.insert("permanent".to_owned(), Value::from(true));
+            }
+            NoticeKind::Wrapup => {
+                self.turn.wrapup_told = true;
+                data.insert("wrapup".to_owned(), Value::from(true));
             }
         }
         Event::Status {

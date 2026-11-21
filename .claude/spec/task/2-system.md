@@ -2127,3 +2127,16 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, second end-to-end run: with both tools offered the 4B model ignored the instruction and sent 16 `WebSearch` calls in one step, all blocked, until the repeat limit stopped the turn. The system decides the tool set instead of asking the model (D48). The model stays NOT QUALIFIED.
+
+### T268 — The loop survives a small model's slips
+- Requirements: SR-H4, SR-H16
+- Depends: T267
+- Deliverables:
+  - Tool arguments: text that plainly names the boolean, integer or number the schema asks for (`"True"`, `" 2 "`) is read as that value before the check; other text is still refused
+  - Repeats: past `agent.maxRepeatedCalls` the open calls are answered `tools_closed` without running, the model is told once (notice `wrapup`) to answer now from what it has, and only a tool call after that stops the turn as `cyclic`
+  - Workflow tools: a call to a tool the active workflow did not offer is answered by the server (`tool_not_allowed`, with the offered names) and never reaches the client
+  - Messages in English and Vietnamese; tests for each
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, third end-to-end run of research-gap: eleven PaperSearch calls were refused for `"open_access_only": "True"`, the model then called WebSearch outside the workflow (the client ran it), and the turn stopped as `cyclic` with no answer after five good searches. The model stays NOT QUALIFIED.

@@ -307,3 +307,29 @@ fn paper_search_returns_papers_with_abstract_and_free_text() {
             .any(|s| s.function.name == "PaperSearch")
     );
 }
+
+#[test]
+fn text_that_plainly_names_a_boolean_or_number_is_read_as_one() {
+    let web = script(|_| page("application/json", WORKS));
+    let mut r = registry("paper-coerce", Some(web.clone()), |_| {});
+    let out = r.call(
+        "PaperSearch",
+        leak(json!({"query": "nmpc", "open_access_only": "True", "max_results": " 2 "})),
+    );
+    assert_eq!(out["results"].as_array().map(Vec::len), Some(2), "{out}");
+    assert!(web.seen.lock().expect("lock")[0].contains("per-page=2&"));
+    let out = r.call(
+        "PaperSearch",
+        leak(json!({"query": "nmpc", "open_access_only": "False"})),
+    );
+    assert!(
+        !web.seen.lock().expect("lock")[1].contains("is_oa"),
+        "{out}"
+    );
+    // text that names nothing is still refused
+    let out = r.call(
+        "PaperSearch",
+        leak(json!({"query": "nmpc", "max_results": "tài nguyên"})),
+    );
+    assert_eq!(out["error"]["code"], "invalid_arguments");
+}

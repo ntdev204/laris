@@ -41,6 +41,42 @@ pub fn validate(schema: &Value, arguments: &Map<String, Value>) -> Result<(), To
     Ok(())
 }
 
+/// `arguments` with each text value read as the boolean, integer or number its schema asks for, when the text plainly
+/// names one (`"true"`, `"False"`, `"10"`, `"0.5"`). Other values are left as they are for [`validate`] to judge.
+pub fn coerce(schema: &Value, arguments: &Map<String, Value>) -> Map<String, Value> {
+    let properties = schema.get("properties").and_then(Value::as_object);
+    arguments
+        .iter()
+        .map(|(name, value)| {
+            let kind = properties
+                .and_then(|p| p.get(name))
+                .and_then(|spec| spec.get("type"))
+                .and_then(Value::as_str);
+            let read = match (kind, value.as_str().map(str::trim)) {
+                (Some("boolean"), Some(text)) if text.eq_ignore_ascii_case("true") => {
+                    Some(Value::Bool(true))
+                }
+                (Some("boolean"), Some(text)) if text.eq_ignore_ascii_case("false") => {
+                    Some(Value::Bool(false))
+                }
+                (Some("integer"), Some(text)) => text
+                    .parse::<i64>()
+                    .ok()
+                    .map(Value::from)
+                    .or_else(|| text.parse::<u64>().ok().map(Value::from)),
+                (Some("number"), Some(text)) => text
+                    .parse::<f64>()
+                    .ok()
+                    .filter(|n| n.is_finite())
+                    .and_then(serde_json::Number::from_f64)
+                    .map(Value::Number),
+                _ => None,
+            };
+            (name.clone(), read.unwrap_or_else(|| value.clone()))
+        })
+        .collect()
+}
+
 fn misfit(spec: &Value, value: &Value) -> Option<String> {
     if let Some(kind) = spec.get("type").and_then(Value::as_str) {
         let fits = match kind {

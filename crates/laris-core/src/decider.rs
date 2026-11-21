@@ -331,7 +331,8 @@ impl Decider for FollowModel {
         match session.pending() {
             Pending::Idle => None,
             Pending::Model => {
-                if self.cyclic(turn) {
+                // after the wrap-up notice the model gets one more call to answer from what it has
+                if self.cyclic(turn) && !turn.wrapup_told() {
                     return Some(self.stop("cyclic", "loop.cyclic"));
                 }
                 if session.asked().is_some() {
@@ -350,9 +351,27 @@ impl Decider for FollowModel {
                     note: self.note(session),
                 })
             }
-            Pending::Tools(_) | Pending::Reflect if self.cyclic(turn) => {
+            // calls kept repeating: answer the open ones without running them, tell the model once that the tools
+            // are closed and it must answer now; a tool call after that ends the turn
+            Pending::Tools(_) | Pending::Reflect if self.cyclic(turn) && turn.wrapup_told() => {
                 Some(self.stop("cyclic", "loop.cyclic"))
             }
+            Pending::Tools(_) if self.cyclic(turn) => {
+                let calls = session.open_calls();
+                let id = calls
+                    .first()
+                    .and_then(|(_, c)| c.id.clone())
+                    .unwrap_or_default();
+                Some(self.reject(&id, "tools_closed", "loop.tools_closed"))
+            }
+            Pending::Reflect if self.cyclic(turn) => Some(Action::Reflect {
+                marks: Vec::new(),
+                notices: vec![Notice {
+                    kind: NoticeKind::Wrapup,
+                    text: self.text("reflect.wrapup", &[]),
+                    issues: vec!["repeated tool calls".to_owned()],
+                }],
+            }),
             Pending::Tools(_) => Some(self.tools(session)),
             Pending::Reflect => Some(self.reflect(session)),
             Pending::Check => Some(self.check(session)),

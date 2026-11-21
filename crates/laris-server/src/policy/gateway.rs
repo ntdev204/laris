@@ -334,6 +334,8 @@ impl PolicyGateway {
         prepared.skill_tool = skill_tool_allowed;
         prepared.brain_tool = brain_tool_allowed;
         prepared.brain = brief.map(|b| b.titles).unwrap_or_default();
+        prepared.offered =
+            workflow.map(|_| sent.tools.iter().map(|t| t.function.name.clone()).collect());
         Ok((sent, prepared))
     }
 
@@ -361,6 +363,7 @@ impl PolicyGateway {
             brain_tool: false,
             brain: Vec::new(),
             tools,
+            offered: None,
         }
     }
 }
@@ -382,6 +385,8 @@ struct Prepared {
     brain: Vec<String>,
     /// Whether tool calls may be passed on (a summary has none).
     tools: bool,
+    /// The tools a workflow left the model, when one narrowed them: a call to any other is answered here.
+    offered: Option<Vec<String>>,
 }
 
 impl Backend for PolicyGateway {
@@ -614,7 +619,13 @@ impl Filter {
                 }
                 if (self.prepared.skill_tool && c.name == SKILL_TOOL)
                     || (self.prepared.brain_tool && c.name == BRAIN_TOOL)
+                    || self
+                        .prepared
+                        .offered
+                        .as_ref()
+                        .is_some_and(|offered| !offered.contains(&c.name))
                 {
+                    // a tool the workflow did not offer never reaches the client: the server refuses it
                     mine.push(c);
                     continue;
                 }
@@ -738,6 +749,21 @@ impl Run {
                 (
                     BRAIN_TOOL,
                     self.policy.brain.consult(&args, &mut self.consulted),
+                )
+            } else if call.name != SKILL_TOOL {
+                let offered = self
+                    .filter
+                    .prepared
+                    .offered
+                    .clone()
+                    .unwrap_or_default()
+                    .join(", ");
+                (
+                    call.name.as_str(),
+                    Err(super::skills::LoadError(format!(
+                        "Error: tool_not_allowed. {} is not part of the active workflow; use one of: {offered}.",
+                        call.name
+                    ))),
                 )
             } else {
                 let name = args
