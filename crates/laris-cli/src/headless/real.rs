@@ -19,7 +19,7 @@ use laris_protocol::ToolSchema;
 use laris_protocol::events::LoginReason;
 use laris_sandbox::{Policy as SandboxPolicy, Sandbox};
 use laris_store::slug_of;
-use laris_tools::{Context, Registry, Scope};
+use laris_tools::{Context, McpLaunch, McpRemote, McpSpec, McpState, McpStatus, Registry, Scope};
 use serde_json::{Map, Value};
 use std::cell::RefCell;
 use std::io::Read;
@@ -70,6 +70,76 @@ pub struct Built {
     pub registry: SharedRegistry,
     /// What the machine lacks (no sandbox, no remote tools): worth a line to the user.
     pub warnings: Vec<String>,
+    /// What became of each MCP server (`/mcp`).
+    pub mcp: Vec<McpStatus>,
+}
+
+/// Starts the MCP servers of the settings (SR-H12), each inside a sandbox that has a network and may write only to
+/// its own folder under the home folder. Servers that cannot start are reported, never fatal.
+fn start_mcp(
+    started: &Started,
+    registry: &mut Registry,
+    warnings: &mut Vec<String>,
+) -> Vec<McpStatus> {
+    let settings = &started.settings.mcp;
+    if !settings.enabled {
+        return Vec::new();
+    }
+    let home = started.home.root().join("mcp");
+    let sandbox = match Sandbox::detect(
+        SandboxPolicy::workspace([home.clone()]).with_network(true),
+        None,
+    ) {
+        Ok(sandbox) => Some(Arc::new(sandbox)),
+        Err(e) => {
+            warnings.push(format!("MCP servers are not started: {e}"));
+            None
+        }
+    };
+    let specs: Vec<Result<McpSpec, McpStatus>> = settings
+        .servers
+        .iter()
+        .map(|(name, server)| {
+            let status = |state| McpStatus {
+                name: name.clone(),
+                state,
+            };
+            if !server.enabled || server.command.is_empty() {
+                return Err(status(McpState::Skipped("disabled".to_owned())));
+            }
+            let mut env = Vec::new();
+            for var in &server.env {
+                let value = started
+                    .env
+                    .iter()
+                    .find(|(k, _)| k == var)
+                    .map(|(_, v)| v.clone())
+                    .or_else(|| std::env::var(var).ok())
+                    .filter(|v| !v.is_empty());
+                match value {
+                    Some(value) => env.push((var.clone(), value)),
+                    None => {
+                        return Err(status(McpState::Skipped(format!("{var} is not set"))));
+                    }
+                }
+            }
+            Ok(McpSpec {
+                name: name.clone(),
+                command: server.command.clone(),
+                args: server.args.clone(),
+                env,
+                start_timeout: std::time::Duration::from_secs(server.start_timeout_seconds),
+                call_timeout: std::time::Duration::from_secs(server.call_timeout_seconds),
+            })
+        })
+        .collect();
+    let (remote, statuses) = McpRemote::start(specs, &McpLaunch { sandbox, home });
+    if !remote.is_empty()
+        && let Err(e) = registry.add_remote(Box::new(remote))
+    {
+        warnings.push(format!("MCP tools left out: {e}"));
+    }
+    statuses
 }
 
 /// Builds the parts of a run for `session_id` against the server with `key`. `approver` answers calls that need
@@ -131,6 +201,8 @@ pub fn build(
         Err(e) => warnings.push(format!("remote tools left out: {e}")),
     }
 
+    let mcp = start_mcp(started, &mut registry, &mut warnings);
+
     let engine =
         Arc::new(engine(started, options, scope).map_err(|m| fail("usage", m, exit::USAGE))?);
     let mode = mode_name(engine.mode()).to_owned();
@@ -179,6 +251,7 @@ pub fn build(
         mode,
         registry: shared,
         warnings,
+        mcp,
     })
 }
 

@@ -244,6 +244,7 @@ fn scripted_handle(
                 emit: ports.emit,
                 meter,
                 remote: std::rc::Rc::new(|_| Err("no server in a test".to_owned())),
+                mcp: Vec::new(),
             },
         ))
     })
@@ -1033,6 +1034,9 @@ fn context_usage_model_config_and_export_answer_from_what_the_session_knows() {
         "{text}"
     );
     assert!(text.contains("Cannot ask the server"), "{text}");
+    send(&mut c, "/mcp");
+    idle(&mut c);
+    assert!(screen(&c).contains("No MCP servers"), "{}", screen(&c));
     send(&mut c, "/model");
     idle(&mut c);
     assert!(

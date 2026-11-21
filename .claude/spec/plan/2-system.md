@@ -144,3 +144,8 @@ Tasks: T252
 Exit criteria:
 - The three commands show their panels as described in T252; tests and the Rust task checks pass.
 
+### Phase 54 — MCP tools and web search
+Goal: the client can reach the web through MCP servers, confined and asked about like every other tool.
+Tasks: T253
+Exit criteria:
+- SR-H16 holds: the bridge, the two default servers, `/mcp`, the `*` rule form and the guide are built and tested; the real servers are tried by the owner on a networked machine.
