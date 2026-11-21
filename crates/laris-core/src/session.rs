@@ -43,7 +43,7 @@ pub struct Turn {
     completion_retries: u32,
     budget_told: bool,
     permanent_told: bool,
-    cyclic: bool,
+    repeats: u32,
     leftover: bool,
     asked: Option<Option<String>>,
     cleared: Vec<String>,
@@ -79,9 +79,9 @@ impl Turn {
         self.permanent_told
     }
 
-    /// Whether an identical call was repeated.
-    pub fn cyclic(&self) -> bool {
-        self.cyclic
+    /// Identical calls refused so far in this turn.
+    pub fn repeats(&self) -> u32 {
+        self.repeats
     }
 
     /// Whether the plan is one carried over from an earlier turn that this turn has not touched.
@@ -337,7 +337,7 @@ impl Session {
             Action::RejectTool { id, code, message } => {
                 let call = self.open_call(id)?;
                 if code == "cyclic_call" {
-                    self.turn.cyclic = true;
+                    self.turn.repeats += 1;
                 }
                 let result = json!({"error": {"code": code, "message": message}});
                 let mut events = vec![tool_call_event(&call)];

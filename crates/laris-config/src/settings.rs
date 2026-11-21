@@ -500,7 +500,9 @@ impl Default for Reflect {
             enabled: true,
             max_replans: 2,
             completion_retries: 2,
-            permanent_errors: vec!["no_documents".to_owned()],
+            permanent_errors: ["no_documents", "search_blocked", "web_unavailable"]
+                .map(str::to_owned)
+                .to_vec(),
             empty_keys: ["hits", "passages", "results", "matches", "items"]
                 .map(str::to_owned)
                 .to_vec(),
@@ -522,6 +524,10 @@ pub struct Agent {
     /// `maxSteps` and `timeBudgetSeconds`.
     #[schemars(range(min = 0, max = 64))]
     pub max_tool_calls_per_step: u32,
+    /// Identical calls refused in one turn before the turn stops. Each refusal is returned to the model as an error so
+    /// it can change approach or answer; 1 stops at the first repeat.
+    #[schemars(range(min = 1, max = 10))]
+    pub max_repeated_calls: u32,
     /// Planning.
     pub plan: PlanSettings,
     /// Reflection and completion check.
@@ -534,6 +540,7 @@ impl Default for Agent {
             max_steps: 10,
             time_budget_seconds: 180.0,
             max_tool_calls_per_step: 0,
+            max_repeated_calls: 3,
             plan: PlanSettings::default(),
             reflect: Reflect::default(),
         }

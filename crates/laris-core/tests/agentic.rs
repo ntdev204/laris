@@ -798,7 +798,7 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
             .all(|s| !s.tools.contains(&"write_file".to_owned()))
     );
 
-    // An identical call twice in one task stops the turn.
+    // An identical call is refused, the model sees the refusal and may still answer.
     let script = vec![
         turn("", vec![search("a", "perovskite")]),
         turn("", vec![search("b", "perovskite")]),
@@ -808,6 +808,25 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
         &temp_dir("cyclic"),
         script,
         Agent::default(),
+        Tools::default(),
+    );
+    let events = rig.send("perovskite?").expect("turn");
+    assert_ne!(done(&events).0, "cyclic");
+    assert!(events.iter().any(|e| matches!(e, Event::ToolResult { result, .. } if result["error"]["code"] == "cyclic_call")));
+    assert_consistent(rig.session().messages());
+    assert_replays(&rig);
+
+    // A model that keeps repeating past `maxRepeatedCalls` stops the turn.
+    let script = vec![
+        turn("", vec![search("a", "perovskite")]),
+        turn("", vec![search("b", "perovskite")]),
+        turn("", vec![search("c", "perovskite")]),
+        turn(CITED, vec![]),
+    ];
+    let mut rig = make_rig(
+        &temp_dir("cyclic-stop"),
+        script,
+        agent(|a| a.max_repeated_calls = 2),
         Tools::default(),
     );
     let events = rig.send("perovskite?").expect("turn");
