@@ -1989,3 +1989,33 @@ async fn brain_notes_are_not_in_the_prompt_unless_a_brief_names_them() {
     assert!(system.contains("Scientific NLP"));
     assert!(!system.contains("Citation Analysis Playbook"));
 }
+
+#[tokio::test]
+async fn a_call_to_a_tool_the_workflow_did_not_offer_is_refused_by_the_server() {
+    let call = |name: &str| {
+        vec![
+            Ok(chunk(
+                json!({"tool_calls": [{"index": 0, "id": "c1", "type": "function",
+                "function": {"name": name, "arguments": "{\"query\": \"x\"}"}}]}),
+                None,
+            )),
+            Ok(chunk(json!({}), Some("tool_calls"))),
+        ]
+    };
+    let (gw, seen, _) = stepped(vec![call("WebSearch"), vec![Ok(text("Done.")), Ok(stop())]]);
+    let tool = |n: &str| json!({"type": "function", "function": {"name": n}});
+    let got = ask(
+        &gw,
+        json!({"tools": [tool("PaperSearch"), tool("WebSearch")],
+               "messages": [{"role": "user", "content": "find research gaps in NMPC"}]}),
+    )
+    .await;
+    // the client never sees the call; the model is told why and answers
+    assert!(got.calls.is_empty() && got.text == "Done.", "{}", got.wire);
+    let second = serde_json::to_string(&seen.lock().unwrap()[1].messages).unwrap();
+    assert!(second.contains("tool_not_allowed") && second.contains("PaperSearch"));
+    // without a workflow the same call goes to the client
+    let (gw, _, _) = stepped(vec![call("WebSearch")]);
+    let got = ask(&gw, json!({"tools": [tool("WebSearch")]})).await;
+    assert_eq!(got.calls.len(), 1);
+}

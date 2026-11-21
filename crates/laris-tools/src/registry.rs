@@ -4,7 +4,7 @@
 //! local or remote: a typed error instead of a failure, the output limit, and the untrusted marking. The loop
 //! cannot tell them apart (SR-H4; threat TM-25).
 
-use crate::args::validate;
+use crate::args::{coerce, validate};
 use crate::checkpoints::Rewound;
 use crate::context::Context;
 use crate::error::ToolError;
@@ -193,6 +193,10 @@ impl Registry {
             .iter()
             .find(|s| s.function.name == name)
             .and_then(|s| s.function.parameters.as_ref());
+        // a small model writes `"true"` or `"10"` where the schema says boolean or integer: such text is read as the
+        // value it plainly names, anything else is still refused
+        let coerced = schema.map(|s| coerce(s, arguments));
+        let arguments = coerced.as_ref().unwrap_or(arguments);
         if let Some(schema) = schema
             && let Err(error) = validate(schema, arguments)
         {

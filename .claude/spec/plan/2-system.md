@@ -160,7 +160,7 @@ Exit criteria:
 
 ### Phase 56 — Reading papers for research gaps
 Goal: the chat can read real papers (text, scanned or fetched), stay inside the VRAM it had for plain chat, and work as a research-gap finder.
-Tasks: T261, T262, T263, T264, T265, T266, T267
+Tasks: T261, T262, T263, T264, T265, T266, T267, T268
 Exit criteria:
 - A scanned or oddly encoded PDF, from disk or from `WebFetch`, is read by OCR when the programs are installed (T261).
 - A tool turn is bounded by an input-token budget and returns its GPU memory after the reply (T262); the new peak is the owner's to measure.
@@ -168,3 +168,4 @@ Exit criteria:
 - MarkItDown is an optional first reader that gives section-structured Markdown (T264).
 - A workflow is reached when the user's message contains one of its trigger phrases (T265).
 - Papers are found through a keyless scholarly index that does not ask for a check, and only addresses a result gave are read (T266).
+- A small model's loose arguments, repeated calls and calls outside the workflow end in an answer, not an empty stop (T268).

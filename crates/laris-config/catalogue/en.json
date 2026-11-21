@@ -38,6 +38,7 @@
     "step_failed": "The last step did not get anywhere: {issues}. {left} replans left. Change approach (other keywords, another tool, another source) and update the plan through update_plan, or conclude clearly that no evidence was found.",
     "permanent": "{issues}. Other keywords or the same tool cannot help this turn. Do not call that tool again. Answer with what you already have and say clearly what could not be found and why, with how to fix it (for example ingest documents, or try the search again later).",
     "budget_out": "The replans are used up. Do not retry the same way. Answer with what you have and say clearly what is missing and why.",
+    "wrapup": "The same tool calls keep repeating, so the tools are closed for the rest of this turn. Do not call any tool. Write the final answer now from the results above, in the sections the task asks for, and say clearly what could not be done.",
     "empty": "{tool} returned nothing",
     "error": "{tool} failed with {code}"
   },
@@ -45,6 +46,7 @@
     "tool_not_allowed": "This tool is not allowed in the active workflow.",
     "too_many_calls": "Too many calls in one step.",
     "cyclic_call": "This exact call was already made in this turn and its result is above. Do not repeat it: use that result, change the arguments or the tool, or answer with what you have.",
+    "tools_closed": "The tools are closed for the rest of this turn because calls kept repeating; answer with what you have.",
     "approval_denied": "This action was not approved.",
     "cyclic": "Stopped: the same tool call was repeated.",
     "max_steps": "Stopped: the allowed steps ran out before a final answer. Say whether to continue.",

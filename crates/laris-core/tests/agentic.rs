@@ -816,7 +816,7 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
     assert_consistent(rig.session().messages());
     assert_replays(&rig);
 
-    // A model that keeps repeating past `maxRepeatedCalls` stops the turn.
+    // A model that keeps repeating past `maxRepeatedCalls` is told the tools are closed and answers from what it has.
     let script = vec![
         turn("", vec![search("a", "perovskite")]),
         turn("", vec![search("b", "perovskite")]),
@@ -824,14 +824,45 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
         turn(CITED, vec![]),
     ];
     let mut rig = make_rig(
-        &temp_dir("cyclic-stop"),
+        &temp_dir("cyclic-wrapup"),
         script,
         agent(|a| a.max_repeated_calls = 2),
         Tools::default(),
     );
     let events = rig.send("perovskite?").expect("turn");
+    assert_ne!(done(&events).0, "cyclic");
+    assert!(events.iter().any(|e| matches!(e, Event::Status { kind, data } if kind == "reflect" && data.get("wrapup") == Some(&json!(true)))));
+    assert!(
+        rig.session()
+            .messages()
+            .iter()
+            .any(|m| format!("{m:?}").contains("tools are closed"))
+    );
+    assert_consistent(rig.session().messages());
+    assert_replays(&rig);
+
+    // A tool call after that ends the turn; open calls are answered without running.
+    let script = vec![
+        turn("", vec![search("a", "perovskite")]),
+        turn(
+            "",
+            vec![search("b", "perovskite"), search("b2", "perovskite")],
+        ),
+        turn("", vec![search("d", "other")]),
+        turn(CITED, vec![]),
+    ];
+    let tools = Tools::default();
+    let ran = tools.ran.clone();
+    let mut rig = make_rig(
+        &temp_dir("cyclic-stop"),
+        script,
+        agent(|a| a.max_repeated_calls = 2),
+        tools,
+    );
+    let events = rig.send("perovskite?").expect("turn");
     assert_eq!(done(&events).0, "cyclic");
     assert!(done(&events).1.contains("repeated"));
+    assert_eq!(ran.borrow().len(), 1, "only the first search ran");
     assert_consistent(rig.session().messages());
     assert_replays(&rig);
 }

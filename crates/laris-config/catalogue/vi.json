@@ -38,6 +38,7 @@
     "step_failed": "Bước vừa rồi chưa đạt: {issues}. Còn {left} lần lập lại kế hoạch. Hãy đổi cách (từ khóa khác, công cụ khác, nguồn khác) và cập nhật kế hoạch bằng update_plan, hoặc kết luận rõ rằng chưa tìm thấy bằng chứng.",
     "permanent": "{issues}. Đổi từ khóa hay gọi lại công cụ đó cũng không giúp được trong lượt này. Đừng gọi lại công cụ đó. Trả lời bằng những gì đã có và nói rõ phần nào không tìm được và vì sao, kèm cách khắc phục (ví dụ nạp tài liệu bằng ingest, hoặc thử tìm lại sau).",
     "budget_out": "Đã hết số lần lập lại kế hoạch. Đừng thử lại cách cũ. Trả lời bằng những gì đã có, nói rõ phần nào còn thiếu và vì sao.",
+    "wrapup": "Các lệnh gọi công cụ cứ lặp lại, nên công cụ đã đóng cho phần còn lại của lượt này. Đừng gọi công cụ nào nữa. Hãy viết câu trả lời cuối cùng ngay từ các kết quả ở trên, theo các mục mà nhiệm vụ yêu cầu, và nói rõ phần nào chưa làm được.",
     "empty": "{tool} không trả kết quả",
     "error": "{tool} lỗi {code}"
   },
@@ -45,6 +46,7 @@
     "tool_not_allowed": "Công cụ này không được phép trong quy trình đang chạy.",
     "too_many_calls": "Quá nhiều lệnh gọi trong một bước.",
     "cyclic_call": "Lệnh gọi y hệt đã được thực hiện trong lượt này, kết quả ở phía trên. Đừng lặp lại: hãy dùng kết quả đó, đổi tham số hoặc công cụ, hoặc trả lời bằng những gì đã có.",
+    "tools_closed": "Công cụ đã đóng cho phần còn lại của lượt này vì các lệnh gọi cứ lặp lại; hãy trả lời bằng những gì đã có.",
     "approval_denied": "Hành động này chưa được duyệt.",
     "cyclic": "Đã dừng: cùng một lệnh gọi công cụ bị lặp lại.",
     "max_steps": "Đã dừng: hết số bước cho phép trước khi có câu trả lời cuối. Hãy cho biết có muốn tiếp tục không.",
