@@ -162,6 +162,8 @@ model_service:
   chat_model_id: ''
   chat_quantization: 8bit
   chat_max_new_tokens: 1024
+  chat_max_input_tokens: 8192
+  chat_release_cache: true
   chat_thinking: false
   chat_temperature: 0.0
   device: ''

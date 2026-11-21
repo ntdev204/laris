@@ -2056,3 +2056,16 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21 owner's report ("OCR cannot be used"). Cause: the hand-written reader refused every scan and several real encodings, and `WebFetch` refused PDFs, so "search, then read the paper" could not work. The external programs run in the client, where the tools run; the distroless server image is unchanged. Install them with `sudo apt install poppler-utils tesseract-ocr tesseract-ocr-vie`; set `vault.ocr.languages` to `eng+vie` for Vietnamese papers.
+
+### T262 — Tool turns stay inside the VRAM of plain chat
+- Requirements: SR-P1
+- Depends: T261
+- Deliverables:
+  - `model_service.chat_max_input_tokens` (default 8192, 0 turns it off): before a call, the oldest and largest tool results are shortened, then the oldest turns dropped, until the prompt fits; the system message and the latest message are kept
+  - `model_service.chat_release_cache` (default true): the prompt tensors are released and `torch.cuda.empty_cache()` runs after every reply and after an out-of-memory error
+  - `docker/compose.chat.yaml` sets `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
+  - Test: the budget shortens tool results, keeps system and last message, never leaves a tool result without its call, leaves the input unchanged, and refuses when nothing fits
+- Validation:
+  - `uv run pytest tests/unit/model`, `ruff check` on the changed files, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21 owner's report (5-7 GB in plain chat, 11 GB with tools). Cause found by reading the code: the prompt grows with the tool schemas and every earlier tool result (a fetched page is about 5,000 tokens), the memory of one call grows with its length, and nothing was ever handed back to the driver. The live model was not run, so the new peak is NOT measured: the owner should watch `nvidia-smi` on a tool turn. If it is still high, lower `chat_max_input_tokens` or set `chat_quantization: 4bit`.
