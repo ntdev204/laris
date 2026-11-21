@@ -85,15 +85,16 @@ arguments added at the end. Files larger than 64 KiB and links are ignored.
 
 ## Web tools and the clock
 
-Three tools are built in, so the model can know what day it is and look things up without anything to set up:
+Four tools are built in, so the model can know what day it is and look things up without anything to set up:
 
 | Tool | What it does |
 | :--- | :--- |
 | `Now` | The current date and time (UTC), the time zone setting, the operating system. |
 | `WebFetch` | Reads a public web page (http or https) and returns its text; HTML is reduced to readable text, a page is cut at `web.maxBytes`. |
 | `WebSearch` | Searches through the HTML search page at `web.searchUrl` (DuckDuckGo's by default; no key, no account) and returns titles, addresses and snippets. |
+| `PaperSearch` | Searches scholarly papers through the works API at `web.paperSearchUrl` (OpenAlex by default; no key, no account) and returns title, year, authors, DOI, abstract and the address of a free full text (`pdf_url`). Unlike a search page it does not ask for a check. |
 
-They run in the client, with the user's own network address, and use no proxy. Only public addresses are read: an address on the user's machine or network (`localhost`, `10.x`, `192.168.x`, a name that resolves inside, a redirect that leads inside) is refused, and so is an address with a user name or password. A request whose address or query contains something that looks like a secret is not sent. Pages and results are third-party data and are marked untrusted. A search page may ask for a check (a CAPTCHA) when it is used heavily from one address; the tool then says so. Settings: `web.enabled`, `web.searchUrl` (empty turns `WebSearch` off), `web.timeoutSeconds`, `web.maxBytes`, `web.maxRedirects`, `web.maxResults`, `web.userAgent`.
+They run in the client, with the user's own network address, and use no proxy. Only public addresses are read: an address on the user's machine or network (`localhost`, `10.x`, `192.168.x`, a name that resolves inside, a redirect that leads inside) is refused, and so is an address with a user name or password. A request whose address or query contains something that looks like a secret is not sent. Pages and results are third-party data and are marked untrusted. A search page may ask for a check (a CAPTCHA) when it is used heavily from one address; the tool then says so. Settings: `web.enabled`, `web.searchUrl` (empty turns `WebSearch` off), `web.paperSearchUrl` (empty turns `PaperSearch` off), `web.timeoutSeconds`, `web.maxBytes`, `web.maxRedirects`, `web.maxResults`, `web.userAgent`.
 
 ## MCP servers
 

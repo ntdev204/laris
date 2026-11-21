@@ -310,6 +310,9 @@ pub struct Web {
     pub enabled: bool,
     /// Address of the HTML search page; the query is added as `q`. Empty turns `WebSearch` off.
     pub search_url: String,
+    /// Address of a scholarly works API with the OpenAlex interface (`search`, `per-page`, `filter`, `select`); no key
+    /// is needed. Empty turns `PaperSearch` off.
+    pub paper_search_url: String,
     /// Seconds one request may take, redirects included.
     #[schemars(extend("minimum" = 1))]
     pub timeout_seconds: u64,
@@ -330,6 +333,7 @@ impl Default for Web {
         Self {
             enabled: true,
             search_url: "https://html.duckduckgo.com/html/".to_owned(),
+            paper_search_url: "https://api.openalex.org/works".to_owned(),
             timeout_seconds: 20,
             max_bytes: 2 * 1024 * 1024,
             max_redirects: 5,
@@ -895,6 +899,12 @@ impl Settings {
             && !self.web.search_url.starts_with("http://")
         {
             return Err(ConfigError::at("web.searchUrl", ErrorKind::UrlScheme));
+        }
+        if !self.web.paper_search_url.is_empty()
+            && !self.web.paper_search_url.starts_with("https://")
+            && !self.web.paper_search_url.starts_with("http://")
+        {
+            return Err(ConfigError::at("web.paperSearchUrl", ErrorKind::UrlScheme));
         }
         if !self.update.url.is_empty() && !self.update.url.starts_with("https://") {
             return Err(ConfigError::at("update.url", ErrorKind::UrlScheme));

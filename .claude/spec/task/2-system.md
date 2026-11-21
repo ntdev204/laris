@@ -2105,3 +2105,15 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, found while running the research-gap workflow end to end for the owner's report. Cause: no client sends `laris.workflow` (neither the terminal client nor the web client), and the server read `triggers` without using them, so no workflow could ever run. The quality of the gaps the 4B model finds is not a qualification; the model stays NOT QUALIFIED.
+
+### T266 — PaperSearch: scholarly search that is not blocked
+- Requirements: SR-H17, SR-H4
+- Depends: T265
+- Deliverables:
+  - `PaperSearch` (client web tool): keywords to papers through `web.paperSearchUrl` (default the OpenAlex works API, keyless), with title, year, authors, DOI, abstract (rebuilt from the inverted index) and `pdf_url` of a free full text; `open_access_only` (default true) and `from_year` filters; secrets are never sent; empty address turns it off
+  - `research-gap.toml` 1.1.0 (owner's direction 2026-11-21; lock refreshed): PaperSearch first, WebSearch only when it finds nothing, fetch only an address a result or the user gave, and the report keeps its sections when a tool failed
+  - Client guide and settings schema
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+- Status: done
+- Note: 2026-11-21, found in the end-to-end run of the research-gap workflow: after one result page DuckDuckGo answered with a check (`search_blocked`) and the 4B model fetched three IEEE addresses it had made up, so no paper was read. No dependency was added (JSON through `serde_json`). The model stays NOT QUALIFIED.
