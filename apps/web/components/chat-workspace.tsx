@@ -277,6 +277,10 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
           <Button className="new-chat w-full justify-start" onClick={() => openChat(null)}>
             <Plus /> Chat mới
           </Button>
+          {/* the research-gap pipeline: papers read, rules, baselines and judgements (T272) */}
+          <a href="/gap" className="flex items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent">
+            <Sparkles className="size-4" /> Tìm khoảng trống nghiên cứu
+          </a>
           <InputGroup className="sidebar-search h-9">
             <InputGroupAddon><Search /></InputGroupAddon>
             <InputGroupInput
