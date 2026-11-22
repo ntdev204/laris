@@ -2181,3 +2181,21 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Status: done
 - Note: 2026-11-21, owner's request: every tool failed in the terminal client (DuckDuckGo answered every query with a check, so `WebSearch` always failed; repeats were answered `cyclic_call` then `tools_closed`; and the loop's wrap-up notice was compacted as a new turn, so the server's vault harness answered "Your vault does not answer this question."). The model stays NOT QUALIFIED.
 - Note: 2026-11-22, `cargo deny check` fails only on RUSTSEC-2026-0592 (`url` 2.5.8, via reqwest and sqlx), an advisory published after this task; the fix (`url` 2.5.9) needs re-vendoring, which waits for the owner.
+
+### T272 — Research-gap analysis in the system, measured
+- Requirements: SR-H4, SR-H13, SR-H17
+- Depends: T271
+- Deliverables:
+  - `crates/laris-gap`: sections of a paper; extraction excerpts by rule and lenient reading of the model's record; quotation check (verbatim, normalised, missing) with the section that holds it; concept tags with the term that matched; links with their source; rules G1–G4 with their filters and reasons; the conflict rule `r ⊥ r′` with its explanation conditions (a) different settings, (b) the negative paper itself reports the method working, (c) unknown setting; the ranking `s(g) = w1·papers + w2·[G1∨G2] + w3·verified − w4·[one paper]`; the report; the closed-book, full-context and plain-RAG (BM25 fused by RRF) baselines; the citation audit (nonexistent citations, fabricated quotations, uncited claims, unscoped claims from absence); extraction precision and recall, tag precision, expert ratings and the time split
+  - `.laris/gap.toml` 1.1.0 (owner's request 2026-11-22; 1.1.0 of 2026-11-23 shows the JSON shape in the extraction prompt; lock refreshed): weights, rule parameters, budgets, cue words and prompts; nothing is a constant of the code
+  - Server routes `GET /v1/laris/gap/policy`, `POST /v1/laris/gap/extract`, `/baseline`, `/analyze`; the model is called directly with the policy's prompts at temperature 0
+  - `laris gap run | collect | score | sheet`: PDFs read on the client (text layer, `pdftotext`, OCR), works-index collection, every intermediate result in a run folder, unresolved references looked up in the works index
+  - Web client: `/gap` (runs, every step of a run, the person's tag verdicts, metrics) and `/gap/rate` (blind expert sheet, 1–5 for grounding and value)
+  - `vault.ocr.preferTextCommand`: `pdftotext` before the built-in PDF reader; `pdftotext` reads in reading order (no `-layout`)
+  - Rule G2 also reads the sentences of a paper's abstract and introduction, verbatim; a reference inside a quotation found in a paper is that paper's, not the answer's
+  - Docker: `LARIS_CHAT_MAX_NEW_TOKENS`, `LARIS_CHAT_MAX_INPUT_TOKENS`, `LARIS_MAX_BODY_BYTES` reach the services
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`; `npm run typecheck` and `npm run build` in `apps/web`
+- Status: done
+- Note: 2026-11-22, the teacher's review of the research-gap report: the first experiment ran on scratch scripts outside the system, with no ranking, no explanation check for conflicts and no baseline. The model stays NOT QUALIFIED; the measured numbers are a run on two topics, not a capability claim.
+- Evidence (outside Git, `artifacts/gap-eval/`): runs on MPC (8 and 18 papers, up to 2024) and RAG hallucination detection (18 papers, up to 2024), an image-only OCR check and a works-index collection; metrics against a gold standard of 384 items; a blind sheet of 84 gaps for expert ratings; screenshots of the web client. The person's tag verdicts and the expert ratings are the people's to give.

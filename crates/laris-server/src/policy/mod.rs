@@ -64,7 +64,7 @@ pub enum PolicyError {
     /// The guard cannot be built.
     #[error("guard: {0}")]
     Guard(String),
-    /// `prefilter.toml` or `harness.toml` does not load.
+    /// `prefilter.toml`, `harness.toml` or `gap.toml` does not load.
     #[error("{0}")]
     Pipeline(String),
     /// No source of randomness.
@@ -309,6 +309,12 @@ impl Policy {
             ),
             None => None,
         };
+        let gap = match snapshot.text(integrity::GAP_FILE) {
+            Some(text) => Some(Arc::new(
+                laris_gap::Settings::from_toml(text?).map_err(PolicyError::Pipeline)?,
+            )),
+            None => None,
+        };
         Ok(Self {
             composer,
             workflows,
@@ -321,6 +327,7 @@ impl Policy {
             secret,
             prefilter,
             harness,
+            gap,
         })
     }
 }

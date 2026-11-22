@@ -12,6 +12,7 @@ workspace = true
 [dependencies]
 laris-brain = { path = "../laris-brain", version = "1.5.0" }
 laris-core = { path = "../laris-core", version = "1.5.0" }
+laris-gap = { path = "../laris-gap", version = "1.5.0" }
 laris-policy = { path = "../laris-policy", version = "1.5.0" }
 laris-protocol = { path = "../laris-protocol", version = "1.5.0" }
 laris-retrieval = { path = "../laris-retrieval", version = "1.5.0" }

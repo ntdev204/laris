@@ -13,6 +13,7 @@ pub mod backend;
 pub mod brain;
 pub mod config;
 pub mod error;
+pub mod gap;
 pub mod log;
 pub mod mainbrain;
 pub mod model;
