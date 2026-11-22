@@ -151,7 +151,18 @@ pub fn document_from_with(
     let mut method = Method::TextLayer;
     let (text, title) = match kind {
         Kind::Pdf => {
-            let builtin = pdf::extract(bytes, limits).map(|p| p.text());
+            // vault.ocr.preferTextCommand: the fuller external reader first, when it gives readable text
+            let preferred = ocr
+                .filter(|c| c.enabled && c.prefer_text_command)
+                .and_then(|c| ocr::read(bytes, c).ok())
+                .filter(|(t, _)| ocr::readable(t));
+            let builtin = match &preferred {
+                Some((t, _)) => Ok(t.clone()),
+                None => pdf::extract(bytes, limits).map(|p| p.text()),
+            };
+            if let Some((_, how)) = preferred {
+                method = how;
+            }
             match (builtin, ocr) {
                 (Ok(text), _) if ocr::readable(&text) => (text, stem),
                 (Ok(text), None) => (text, stem),

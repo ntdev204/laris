@@ -166,6 +166,7 @@ async fn main() -> ExitCode {
         }
         Err(e) => return fail(e, 2),
     };
+    let gap_model = model.clone();
     let gateway = Arc::new(PolicyGateway::new(policy.clone(), model, reasoning.clone()));
     let main_brain = match laris_server::mainbrain::MainBrainConfig::from_env(&env) {
         Ok(Some(c)) => match laris_server::mainbrain::MainBrain::open(&c) {
@@ -205,7 +206,8 @@ async fn main() -> ExitCode {
     let traces = Arc::new(PgTraces::spawn(storage.clone()));
     let mut state = AppState::new(config, backend, access)
         .with_policy(policy, reasoning)
-        .with_traces(traces.clone());
+        .with_traces(traces.clone())
+        .with_gap_model(gap_model);
     if let Some(brain) = main_brain {
         state = state.with_main_brain(brain);
     }

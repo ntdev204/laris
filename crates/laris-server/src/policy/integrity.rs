@@ -1,6 +1,6 @@
 //! The integrity lock of the protected policy files (SR-S4).
 //!
-//! `.laris/integrity.toml` holds a SHA-256 per file of `policy.toml`, `help.md`, `prefilter.toml`, `harness.toml` and everything under
+//! `.laris/integrity.toml` holds a SHA-256 per file of `policy.toml`, `help.md`, `prefilter.toml`, `harness.toml`, `gap.toml` and everything under
 //! `.laris/prompts`, `rules` and `workflows`. The server reads every protected file once into a [`Snapshot`], hashes
 //! those bytes, compares them with the lock, and builds everything it serves from the same bytes: a file that
 //! changes on disk after the check cannot slip into the prompt. A problem is reported by name and kind only, never
@@ -21,6 +21,8 @@ pub const HELP_FILE: &str = ".laris/help.md";
 pub const PREFILTER_FILE: &str = ".laris/prefilter.toml";
 /// The harness loop's settings and texts.
 pub const HARNESS_FILE: &str = ".laris/harness.toml";
+/// The research-gap policy (T272): prompts, rule parameters and ranking weights.
+pub const GAP_FILE: &str = ".laris/gap.toml";
 /// Folders whose files are protected.
 pub const PROTECTED_DIRS: [&str; 3] = [".laris/prompts", ".laris/rules", ".laris/workflows"];
 
@@ -66,7 +68,13 @@ impl Snapshot {
         let mut snapshot = Self::default();
         let mut total = 0u64;
         let mut paths = Vec::new();
-        for single in [MANIFEST_FILE, HELP_FILE, PREFILTER_FILE, HARNESS_FILE] {
+        for single in [
+            MANIFEST_FILE,
+            HELP_FILE,
+            PREFILTER_FILE,
+            HARNESS_FILE,
+            GAP_FILE,
+        ] {
             let path = root.join(single);
             if path.is_file() {
                 paths.push(path);

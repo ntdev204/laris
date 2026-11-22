@@ -14,6 +14,8 @@ services:
     environment:
       LARIS_MODEL_SERVICE__BACKEND: laris.model.inference.open_llm:OpenWeightChat
       LARIS_MODEL_SERVICE__CHAT_MODEL_ID: /weights/models--Qwen--${LARIS_CHAT_MODEL:-Qwen3.5-4B}/snapshots/${LARIS_CHAT_SNAPSHOT:?set LARIS_CHAT_SNAPSHOT to the snapshot folder name}
+      LARIS_MODEL_SERVICE__CHAT_MAX_NEW_TOKENS: ${LARIS_CHAT_MAX_NEW_TOKENS:-1024}   # most tokens one reply may generate
+      LARIS_MODEL_SERVICE__CHAT_MAX_INPUT_TOKENS: ${LARIS_CHAT_MAX_INPUT_TOKENS:-8192}   # prompt budget of one request
       HF_HUB_OFFLINE: "1"
       PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True   # no fragmentation: memory freed after a reply really is free
       HOME: /tmp

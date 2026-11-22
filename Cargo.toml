@@ -13,6 +13,7 @@ members = [
     "crates/laris-policy",
     "crates/laris-sandbox",
     "crates/laris-evidence",
+    "crates/laris-gap",
     "crates/laris-server",
     "crates/laris-tui",
     "crates/laris-cli",

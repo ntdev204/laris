@@ -3,6 +3,7 @@
 
 pub mod account;
 pub mod credentials;
+pub mod gap;
 pub mod headless;
 pub mod interactive;
 pub mod learn;

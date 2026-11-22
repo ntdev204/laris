@@ -140,7 +140,8 @@ pub fn read(bytes: &[u8], cfg: &Ocr) -> Result<(String, Method), String> {
     if !cfg.text_command.is_empty() {
         match run(
             &cfg.text_command,
-            &["-layout", "-enc", "UTF-8", "input.pdf", "-"],
+            // reading order, not -layout: two columns side by side would mix the sentences and hide the headings
+            &["-enc", "UTF-8", "input.pdf", "-"],
             &scratch.0,
             limit,
         ) {

@@ -38,6 +38,8 @@ pub struct AppState {
     pub traces: Option<Arc<dyn crate::trace::TraceStore>>,
     /// The main brain and its write gate (T240). `None` serves no brain routes.
     pub main_brain: Option<Arc<crate::mainbrain::MainBrain>>,
+    /// The model the research-gap routes call directly (T272). `None` answers them 502.
+    pub gap_model: Option<Arc<dyn Backend>>,
 }
 
 impl AppState {
@@ -51,6 +53,7 @@ impl AppState {
             reasoning: None,
             traces: None,
             main_brain: None,
+            gap_model: None,
         }
     }
 
@@ -77,6 +80,12 @@ impl AppState {
         self
     }
 
+    /// The same state serving the research-gap routes with `model` (T272).
+    pub fn with_gap_model(mut self, model: Arc<dyn Backend>) -> Self {
+        self.gap_model = Some(model);
+        self
+    }
+
     /// State that accepts every caller. For tests of the HTTP layer only.
     pub fn open(config: ServerConfig, backend: Arc<dyn Backend>) -> Self {
         Self {
@@ -87,6 +96,7 @@ impl AppState {
             reasoning: None,
             traces: None,
             main_brain: None,
+            gap_model: None,
         }
     }
 }
@@ -110,6 +120,10 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/laris/account", get(crate::admin::account))
         .route("/v1/laris/workflows", get(crate::policy::workflows_route))
         .route("/v1/laris/help", get(crate::policy::help))
+        .route("/v1/laris/gap/policy", get(crate::gap::policy))
+        .route("/v1/laris/gap/extract", post(crate::gap::extract_route))
+        .route("/v1/laris/gap/baseline", post(crate::gap::baseline_route))
+        .route("/v1/laris/gap/analyze", post(crate::gap::analyze_route))
         .route("/v1/admin/reasoning", get(crate::policy::reasoning_route))
         .route("/v1/admin/traces", get(crate::admin::traces))
         .route("/v1/admin/usage", get(crate::admin::usage))

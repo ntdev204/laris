@@ -387,6 +387,11 @@
           "description": "Program that reads an image (`tesseract`).",
           "type": "string"
         },
+        "preferTextCommand": {
+          "default": false,
+          "description": "Ask `textCommand` before the built-in reader (T272): its fuller reader keeps word spaces, ligatures and\nsmall-capital headings that the built-in one may lose while its text still looks readable.",
+          "type": "boolean"
+        },
         "renderCommand": {
           "default": "pdftoppm",
           "description": "Program that renders PDF pages to PNG images (`pdftoppm`).",
@@ -958,6 +963,7 @@
             "languages": "eng",
             "maxPages": 60,
             "ocrCommand": "tesseract",
+            "preferTextCommand": false,
             "renderCommand": "pdftoppm",
             "textCommand": "pdftotext",
             "timeoutSeconds": 120
@@ -1294,6 +1300,7 @@
           "languages": "eng",
           "maxPages": 60,
           "ocrCommand": "tesseract",
+          "preferTextCommand": false,
           "renderCommand": "pdftoppm",
           "textCommand": "pdftotext",
           "timeoutSeconds": 120

@@ -664,6 +664,9 @@ pub struct Ocr {
     pub enabled: bool,
     /// Program that prints the text layer of a PDF (`pdftotext`); tried before OCR.
     pub text_command: String,
+    /// Ask `textCommand` before the built-in reader (T272): its fuller reader keeps word spaces, ligatures and
+    /// small-capital headings that the built-in one may lose while its text still looks readable.
+    pub prefer_text_command: bool,
     /// Program that renders PDF pages to PNG images (`pdftoppm`).
     pub render_command: String,
     /// Program that reads an image (`tesseract`).
@@ -686,6 +689,7 @@ impl Default for Ocr {
         Self {
             enabled: true,
             text_command: "pdftotext".into(),
+            prefer_text_command: false,
             render_command: "pdftoppm".into(),
             ocr_command: "tesseract".into(),
             languages: "eng".into(),

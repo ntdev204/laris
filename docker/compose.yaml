@@ -54,6 +54,7 @@ services:
       LARIS_SERVER__PIPELINE_MAX_EVIDENCE_CHARS: ${LARIS_PIPELINE_MAX_EVIDENCE_CHARS:-6144}
       LARIS_SERVER__PIPELINE_MAX_DRAFT_CHARS: ${LARIS_PIPELINE_MAX_DRAFT_CHARS:-65536}
       LARIS_SERVER__PIPELINE_STAGE_TIMEOUT_MS: ${LARIS_PIPELINE_STAGE_TIMEOUT_MS:-120000}
+      LARIS_SERVER__MAX_BODY_BYTES: ${LARIS_MAX_BODY_BYTES:-1048576}   # the research-gap analysis sends every paper's text (T272)
       # The main brain: one vault in the state volume, written only through the write gate (admin routes).
       # The thresholds are starting values, not tuned on any measurement (see the T243 report).
       LARIS_SERVER__MAIN_BRAIN_DIR: /state/brain

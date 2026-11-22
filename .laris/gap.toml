@@ -1,0 +1,104 @@
+# Research gaps (laris-gap, T272): the policy of the server's gap routes. Every number and word the analysis uses
+# is here; the code holds none. Covered by integrity.toml: change it only with the owner's approval, then
+# `laris-server policy lock`.
+version = "1.1.0"
+
+limitation_cues = [
+  "\\blimitation", "\\bfuture (work|research|direction)", "\\bwe (plan|intend|leave|hope) to\\b", "left (for|to) future",
+  "\\bremains? (an? )?(open|challeng|unclear|difficult|unsolved|unexplored)", "\\bdoes not (consider|capture|account|address|handle|guarantee)",
+  "\\bis not (considered|addressed|guaranteed|feasible)", "\\bnot (yet )?(been )?(tested|validated|evaluated|explored)",
+  "\\bdrawback", "\\bshortcoming", "\\bonly (valid|applicable|tested|evaluated)", "\\bin future\\b", "\\bcould be (extended|improved)",
+  "\\bwe assume\\b", "\\bassumption", "\\bfails? (to|when|on)\\b", "\\bcannot\\b", "\\bbeyond the scope",
+]
+
+rag_queries = [
+  "{question}",
+  "{question} limitations",
+  "limitation drawback shortcoming of our approach",
+  "future work we plan to extend",
+  "remains an open challenge not addressed",
+  "fails when does not generalize assumption",
+]
+
+absence_patterns = [
+  "\\bno (prior|previous|existing|other|current)? ?(work|study|studies|research|paper|method|approach)s? (has|have|exist|addresses?|considers?|explores?)",
+  "\\bha(s|ve) (not|never|rarely) been (studied|explored|investigated|addressed|considered|examined|proposed)",
+  "\\b(remains?|is|are) (largely )?(unexplored|understudied|unaddressed|uninvestigated)",
+  "\\bto the best of (our|my) knowledge",
+  "\\b(no one|nobody|none of the)\\b",
+  "\\black of (any )?(research|studies|work)",
+  "chưa (ai|có (nghiên cứu|công trình|bài|ai)|được (nghiên cứu|khám phá))",
+]
+
+scope_patterns = [
+  "\\bamong the (papers|works|studies) (read|reviewed|considered|given)",
+  "\\bin the (papers|works|studies|corpus) (read|reviewed|considered|given|provided)",
+  "\\b(papers|works) read\\b",
+  "\\bin R\\b",
+  "trong (các|số) bài (đã đọc|được cung cấp)",
+]
+
+# 1.1.0 (2026-11-23): the extraction prompt shows the JSON shape; under 1.0.0 the 4B model gave plain strings for
+# the lists of 5 of 8 papers, so their items had no quotation to check.
+
+# s(g) = w1·papers + w2·[G1 or G2] + w3·verified quotes − w4·[one paper]. Set by hand before the first run
+# (2026-11-22) to order the presentation: a gap several papers support first, the two rule types that rest on the
+# authors' own words next, and a gap of one paper last. They do not measure scientific value.
+[weights]
+w1 = 1.0
+w2 = 2.0
+w3 = 0.5
+w4 = 1.5
+
+[rules]
+min_papers_g1 = 2
+min_verified_g1 = 1
+g3_needs_common_issue = true
+
+[budget]
+extract_chars = 24000
+context_chars = 36000
+rag_passages = 14
+passage_chars = 800
+
+[prompts]
+extract = """You read one scientific paper (excerpts below, each block headed by its section).
+Return ONLY a JSON object with these keys:
+"problem": the problem the paper addresses (one sentence),
+"method": the method it proposes or uses (one sentence),
+"setting": the hardware, system, data or benchmark it is evaluated on (short),
+"result": the main result it reports (one sentence, with numbers if given),
+"limitations": the limitations of THIS paper's own method, study or evidence that the authors state,
+"future_work": the future work the authors propose.
+Do not list weaknesses of other work that the paper gives as motivation.
+"limitations" and "future_work" are LISTS of objects, never plain strings. Each object is
+{"text": short paraphrase, "quote": an exact phrase of 5 to 20 words copied from the excerpts}.
+If the paper states none, give an empty list []. Do not invent anything that is not in the excerpts.
+The answer has exactly this shape:
+{"problem": "...", "method": "...", "setting": "...", "result": "...",
+ "limitations": [{"text": "...", "quote": "..."}],
+ "future_work": [{"text": "...", "quote": "..."}, {"text": "...", "quote": "..."}]}
+
+EXCERPTS:
+{excerpts}"""
+
+closed = """{question}
+List the research gaps of this field (5 to 10). For each gap say why it is a gap and name the papers that support it (authors, year and title), with a short quotation from them where you can."""
+
+context = """These are the papers to use:
+{register}
+
+Excerpts of each paper:
+{excerpts}
+
+Question: {question}
+List the research gaps (5 to 10) that these papers show. For each gap say why it is a gap, cite the papers by their ids in square brackets, for example [P2], and quote the passages that support it in double quotes."""
+
+rag = """These are the papers to use:
+{register}
+
+Passages retrieved from them, each marked with its paper id:
+{passages}
+
+Question: {question}
+List the research gaps (5 to 10) that these passages show. For each gap say why it is a gap, cite the papers by their ids in square brackets, for example [P2], and quote the passages that support it in double quotes."""

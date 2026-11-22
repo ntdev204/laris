@@ -901,6 +901,7 @@ version = "1.5.0"
 dependencies = [
  "laris-config",
  "laris-core",
+ "laris-gap",
  "laris-model-client",
  "laris-policy",
  "laris-protocol",
@@ -942,6 +943,17 @@ dependencies = [
  "laris-protocol",
  "regex",
  "serde_json",
+]
+
+[[package]]
+name = "laris-gap"
+version = "1.5.0"
+dependencies = [
+ "laris-retrieval",
+ "regex",
+ "serde",
+ "serde_json",
+ "toml",
 ]
 
 [[package]]
@@ -1025,6 +1037,7 @@ dependencies = [
  "laris-config",
  "laris-core",
  "laris-evidence",
+ "laris-gap",
  "laris-model-client",
  "laris-policy",
  "laris-protocol",

@@ -96,7 +96,7 @@ fn main() -> ExitCode {
     }
     if !matches!(
         name,
-        Some("login" | "logout" | "status" | "learn" | "replay")
+        Some("login" | "logout" | "status" | "learn" | "replay" | "gap")
     ) {
         eprintln!("{USAGE}");
         return ExitCode::from(2);
@@ -145,6 +145,7 @@ fn main() -> ExitCode {
             "replay",
         ),
         Some("logout") => report(account::logout(&started), "logout"),
+        Some("gap") => report(laris_cli::gap::main(&started, &args[1..]), "gap"),
         Some("status") => report(Ok(account::status(&started)), "status"),
         _ => {
             let now = std::time::SystemTime::now()
