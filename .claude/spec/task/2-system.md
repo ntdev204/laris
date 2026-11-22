@@ -2198,4 +2198,5 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`; `npm run typecheck` and `npm run build` in `apps/web`
 - Status: done
 - Note: 2026-11-22, the teacher's review of the research-gap report: the first experiment ran on scratch scripts outside the system, with no ranking, no explanation check for conflicts and no baseline. The model stays NOT QUALIFIED; the measured numbers are a run on two topics, not a capability claim.
+- Note: 2026-11-23, the owner's request: the web client takes the terminal's accent (purple) and its sidebar links the research-gap pages; the web chat runs no client tools, so a research-gap request there points to `/gap`.
 - Evidence (outside Git, `artifacts/gap-eval/`): runs on MPC (8 and 18 papers, up to 2024) and RAG hallucination detection (18 papers, up to 2024), an image-only OCR check and a works-index collection; metrics against a gold standard of 384 items; a blind sheet of 84 gaps for expert ratings; screenshots of the web client. The person's tag verdicts and the expert ratings are the people's to give.

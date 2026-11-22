@@ -37,21 +37,22 @@
 }
 
 :root {
+  /* purple, the accent of the terminal client (ANSI magenta) */
   color-scheme: light;
-  --background: #f8faf8;
-  --foreground: #182721;
+  --background: #faf9fc;
+  --foreground: #1e1730;
   --card: #fff;
-  --primary: #235e4b;
+  --primary: #7c3aed;
   --primary-foreground: #fff;
-  --secondary: #eaf1ed;
-  --muted-foreground: #50655c;
+  --secondary: #f1ecfb;
+  --muted-foreground: #5f5670;
   --destructive: #a3273b;
-  --border: #dce5df;
-  --sidebar: #142923;
-  --sidebar-foreground: #f0f6ef;
-  --sidebar-primary: #d4ed98;
-  --sidebar-accent: #264139;
-  --sidebar-border: #395247;
+  --border: #e4ddf2;
+  --sidebar: #1d1530;
+  --sidebar-foreground: #f3effa;
+  --sidebar-primary: #c4a7ff;
+  --sidebar-accent: #2f2447;
+  --sidebar-border: #43355f;
   --radius: 0.65rem;
 }
 
@@ -90,7 +91,7 @@
 }
 
 .new-chat:hover {
-  background: #e3f5b9;
+  background: #ddd0ff;
 }
 
 .sidebar-search {
@@ -99,7 +100,7 @@
 
 .sidebar-search [data-slot="input-group-addon"],
 .sidebar-search input::placeholder {
-  color: #b7c9bf;
+  color: #b9add0;
 }
 
 .composer {
