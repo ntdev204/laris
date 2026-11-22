@@ -40,7 +40,9 @@ pub(crate) fn tools(ctx: &Arc<Context>) -> Vec<LocalTool> {
     let mut all = vec![now()];
     if ctx.web.is_some() && ctx.web_settings.enabled {
         all.push(fetch(ctx));
-        if !ctx.web_settings.search_url.is_empty() {
+        if !ctx.web_settings.search_url.is_empty()
+            || !ctx.web_settings.fallback_search_url.is_empty()
+        {
             all.push(search(ctx));
         }
         if !ctx.web_settings.paper_search_url.is_empty() {
@@ -91,6 +93,10 @@ fn run_fetch(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
         "text/html,application/xhtml+xml,application/pdf,text/plain,application/json;q=0.9,*/*;q=0.1",
     )?;
     if page.status >= 400 {
+        // a publisher's page that refuses a program: the paper's record in the works index, when the address names it
+        if let Some(record) = paper_record(ctx, url, &page.url) {
+            return Ok(record);
+        }
         return Err(ToolError::new(
             "http_status",
             format!("the server answered {}", page.status),
@@ -141,12 +147,78 @@ fn run_fetch(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
             format!("this is {kind}, not text"),
         ));
     };
+    // a page with almost no text (a script redirect, a check page) about a paper: the paper's record instead
+    if !is_pdf
+        && body.chars().count() < 300
+        && let Some(record) = paper_record(ctx, url, &page.url)
+    {
+        return Ok(record);
+    }
     let limit = opt_u64(args, "max_chars").map_or(20_000, |n| n.clamp(200, 200_000)) as usize;
     let cut = body.chars().count() > limit;
     let content: String = body.chars().take(limit).collect();
     Ok(
         json!({"url": page.url, "status": page.status, "title": title, "content": content,
               "truncated": cut || page.truncated, "read_by": read_by}),
+    )
+}
+
+/// The DOI an address names (`https://doi.org/10.1234/x`, `.../doi/10.1234/x`, `.../doi/abs/10.1234/x`).
+fn doi_in(url: &str) -> Option<String> {
+    static DOI: OnceLock<Regex> = OnceLock::new();
+    let found = pattern(&DOI, r"(?i)\b(10\.\d{4,9}/[^\s?#]+)").captures(url)?;
+    let doi = percent_decode(&found[1]);
+    Some(doi.trim_end_matches(['/', '.', ',']).to_owned())
+}
+
+/// The record of the paper `url` names, from the works index: title, authors, abstract and its free copies. `None`
+/// when the address names no DOI or the index does not know it.
+fn paper_record(ctx: &Context, asked: &str, landed: &str) -> Option<Value> {
+    let base = &ctx.web_settings.paper_search_url;
+    if base.is_empty() {
+        return None;
+    }
+    let doi = doi_in(asked).or_else(|| doi_in(landed))?;
+    let transport = ctx.web.as_ref()?;
+    let url = format!(
+        "{}/doi:{}",
+        base.trim_end_matches('/'),
+        percent_encode(&doi).replace("%2F", "/")
+    );
+    let page = transport.get(&url, "application/json").ok()?;
+    if page.status >= 400 {
+        return None;
+    }
+    let work: Value = serde_json::from_slice(&page.body).ok()?;
+    let paper = paper_of(&work);
+    let title = paper["title"].as_str().unwrap_or_default().to_owned();
+    if title.is_empty() {
+        return None;
+    }
+    let mut lines = vec![
+        format!("{title} ({})", paper["year"]),
+        format!("Authors: {}", paper["authors"].as_str().unwrap_or_default()),
+        format!("DOI: {doi}"),
+        String::new(),
+        format!(
+            "Abstract: {}",
+            paper["abstract"].as_str().unwrap_or("(none in the index)")
+        ),
+    ];
+    let copies: Vec<&str> = std::iter::once(&paper["pdf_url"])
+        .chain(paper["other_pdf_urls"].as_array().into_iter().flatten())
+        .filter_map(Value::as_str)
+        .filter(|u| !u.is_empty())
+        .collect();
+    if !copies.is_empty() {
+        lines.push(String::new());
+        lines.push(format!("Free full text: {}", copies.join(" ; ")));
+    }
+    Some(
+        json!({"url": asked, "status": 200, "title": title, "content": lines.join("\n"),
+                "truncated": false, "read_by": "paper_index",
+                "note": "the publisher's page gave no readable text to a program; this is the paper's record from the index (abstract only)",
+                "pdf_url": paper["pdf_url"], "other_pdf_urls": paper["other_pdf_urls"]}),
     )
 }
 
@@ -165,11 +237,17 @@ pub(crate) fn html_to_text(html: &str) -> (String, String) {
         .captures(html)
         .map(|c| collapse(&decode_entities(&strip_tags(&c[1]))))
         .unwrap_or_default();
+    static MAIN: OnceLock<Regex> = OnceLock::new();
     let body = pattern(
         &DROP,
-        r"(?is)<(script|style|noscript|svg|template|head)\b.*?</(script|style|noscript|svg|template|head)>|<!--.*?-->",
+        r"(?is)<(script|style|noscript|svg|template|head|nav|aside|form|button|select)\b.*?</(script|style|noscript|svg|template|head|nav|aside|form|button|select)>|<!--.*?-->",
     )
     .replace_all(html, " ");
+    // the page's own content, when it marks it, without the site's menus around it
+    let body = match pattern(&MAIN, r"(?is)<main\b[^>]*>(.*)</main>").captures(&body) {
+        Some(main) if main[1].len() > 500 => main[1].to_owned(),
+        _ => body.into_owned(),
+    };
     let body = pattern(
         &BLOCK,
         r"(?i)</?(p|div|br|li|ul|ol|h[1-6]|tr|table|section|article|header|footer|nav|pre|blockquote)\b[^>]*>",
@@ -212,6 +290,15 @@ fn decode_entities(text: &str) -> String {
                     "ndash" => Some('–'),
                     "mdash" => Some('—'),
                     "hellip" => Some('…'),
+                    "middot" => Some('·'),
+                    "lsquo" => Some('‘'),
+                    "rsquo" => Some('’'),
+                    "ldquo" => Some('“'),
+                    "rdquo" => Some('”'),
+                    "copy" => Some('©'),
+                    "times" => Some('×'),
+                    "laquo" => Some('«'),
+                    "raquo" => Some('»'),
                     _ => None,
                 }
             };
@@ -249,28 +336,238 @@ fn run_search(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
         .web
         .as_ref()
         .ok_or_else(|| ToolError::new("web_unavailable", "the web tools are off"))?;
-    let base = &ctx.web_settings.search_url;
+    let wanted = opt_u64(args, "max_results")
+        .map_or(u64::from(ctx.web_settings.max_results), |n| n.clamp(1, 20))
+        as usize;
+    let settings = &ctx.web_settings;
+    // the search page first; when it refuses a program or finds too little, the keyless APIs made for programs
+    let mut sources: Vec<(&str, Source<'_>)> = Vec::new();
+    if !settings.search_url.is_empty() {
+        sources.push((
+            "web",
+            Box::new(|| page_search(transport.as_ref(), &settings.search_url, query, wanted)),
+        ));
+    }
+    if !settings.fallback_search_url.is_empty() {
+        sources.push((
+            "encyclopedia",
+            Box::new(|| {
+                wiki_search(
+                    transport.as_ref(),
+                    &settings.fallback_search_url,
+                    query,
+                    wanted,
+                )
+            }),
+        ));
+    }
+    if !settings.paper_search_url.is_empty() {
+        sources.push((
+            "papers",
+            Box::new(|| {
+                works_search(
+                    transport.as_ref(),
+                    &settings.paper_search_url,
+                    query,
+                    wanted,
+                )
+            }),
+        ));
+    }
+    let mut hits: Vec<Hit> = Vec::new();
+    let mut used = Vec::new();
+    let mut first_error = None;
+    let mut failures = 0;
+    for (name, run) in &sources {
+        if hits.len() >= wanted {
+            break;
+        }
+        match run() {
+            Ok(found) => {
+                let before = hits.len();
+                for hit in found {
+                    if !hits.iter().any(|h| h.url == hit.url) {
+                        hits.push(hit);
+                    }
+                }
+                if hits.len() > before {
+                    used.push(*name);
+                }
+            }
+            Err(e) => {
+                failures += 1;
+                first_error.get_or_insert(e);
+            }
+        }
+    }
+    // only when every source failed is there nothing to say but the failure
+    if hits.is_empty()
+        && failures == sources.len()
+        && let Some(error) = first_error
+    {
+        return Err(error);
+    }
+    hits.truncate(wanted);
+    let results: Vec<Value> = hits
+        .into_iter()
+        .map(|h| json!({"title": h.title, "url": h.url, "snippet": h.snippet}))
+        .collect();
+    let mut out = json!({"query": query, "results": results, "sources": used});
+    if out["results"].as_array().is_some_and(Vec::is_empty) {
+        out["note"] = json!("nothing matched these words; try fewer or other words");
+    }
+    Ok(out)
+}
+
+/// One place a search asks, run when its turn comes.
+type Source<'a> = Box<dyn Fn() -> Result<Vec<Hit>, ToolError> + 'a>;
+
+/// One search result.
+struct Hit {
+    title: String,
+    url: String,
+    snippet: String,
+}
+
+/// Results of the configured search page: a DuckDuckGo-style HTML page, or the JSON of a SearXNG-style instance.
+fn page_search(
+    transport: &dyn WebTransport,
+    base: &str,
+    query: &str,
+    wanted: usize,
+) -> Result<Vec<Hit>, ToolError> {
     let joiner = if base.contains('?') { '&' } else { '?' };
     let url = format!("{base}{joiner}q={}", percent_encode(query));
-    let page = transport.get(&url, "text/html")?;
+    let page = transport.get(&url, "text/html,application/json;q=0.9")?;
     if page.status >= 400 {
         return Err(ToolError::new(
             "search_failed",
             format!("the search page answered {}", page.status),
         ));
     }
+    if page.content_type.to_ascii_lowercase().contains("json") {
+        let parsed: Value = serde_json::from_slice(&page.body).map_err(|_| {
+            ToolError::new("search_failed", "the search page did not answer with JSON")
+        })?;
+        let text = |v: &Value| v.as_str().unwrap_or_default().to_owned();
+        return Ok(parsed["results"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|r| Hit {
+                title: collapse(&text(&r["title"])),
+                url: text(&r["url"]),
+                snippet: collapse(&text(&r["content"])),
+            })
+            .filter(|h| h.url.starts_with("http"))
+            .take(wanted)
+            .collect());
+    }
     let html = String::from_utf8_lossy(&page.body);
-    let wanted = opt_u64(args, "max_results")
-        .map_or(u64::from(ctx.web_settings.max_results), |n| n.clamp(1, 20))
-        as usize;
     let results = parse_results(&html, wanted);
     if results.is_empty() && is_blocked(&html) {
         return Err(ToolError::new(
             "search_blocked",
-            "the search page asked for a check instead of results; try again later or read a known page with WebFetch",
+            "the search page asked for a check instead of results",
         ));
     }
-    Ok(json!({"query": query, "results": results}))
+    Ok(results)
+}
+
+/// Pages of a MediaWiki site (`list=search`), with their addresses on that site.
+fn wiki_search(
+    transport: &dyn WebTransport,
+    base: &str,
+    query: &str,
+    wanted: usize,
+) -> Result<Vec<Hit>, ToolError> {
+    let base = if is_vietnamese(query) {
+        base.replacen("://en.wikipedia.org", "://vi.wikipedia.org", 1)
+    } else {
+        base.to_owned()
+    };
+    let joiner = if base.contains('?') { '&' } else { '?' };
+    let url = format!(
+        "{base}{joiner}action=query&list=search&format=json&utf8=1&srlimit={wanted}&srsearch={}",
+        percent_encode(query)
+    );
+    let page = transport.get(&url, "application/json")?;
+    if page.status >= 400 {
+        return Err(ToolError::new(
+            "search_failed",
+            format!("the encyclopedia answered {}", page.status),
+        ));
+    }
+    let parsed: Value = serde_json::from_slice(&page.body).map_err(|_| {
+        ToolError::new("search_failed", "the encyclopedia did not answer with JSON")
+    })?;
+    let site = base
+        .split("/w/api.php")
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches('/')
+        .to_owned();
+    Ok(parsed["query"]["search"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|r| {
+            let title = r["title"].as_str()?.to_owned();
+            let snippet = collapse(&decode_entities(&strip_tags(
+                r["snippet"].as_str().unwrap_or_default(),
+            )));
+            let path = percent_encode(&title.replace(' ', "_")).replace("%2F", "/");
+            Some(Hit {
+                url: format!("{site}/wiki/{path}"),
+                title,
+                snippet,
+            })
+        })
+        .collect())
+}
+
+/// Papers of the works index, as search results (the paper's free full text when there is one).
+fn works_search(
+    transport: &dyn WebTransport,
+    base: &str,
+    query: &str,
+    wanted: usize,
+) -> Result<Vec<Hit>, ToolError> {
+    let parsed = works_query(transport, base, query, wanted as u64, &[])?;
+    Ok(parsed["results"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(paper_of)
+        .filter_map(|p| {
+            let url = [&p["pdf_url"], &p["url"]]
+                .into_iter()
+                .filter_map(Value::as_str)
+                .find(|u| u.starts_with("http"))?
+                .to_owned();
+            let year = p["year"]
+                .as_u64()
+                .map(|y| format!(" ({y})"))
+                .unwrap_or_default();
+            let snippet: String = p["abstract"]
+                .as_str()
+                .unwrap_or_default()
+                .chars()
+                .take(300)
+                .collect();
+            Some(Hit {
+                title: format!("{}{year}", p["title"].as_str().unwrap_or_default()),
+                url,
+                snippet,
+            })
+        })
+        .collect())
+}
+
+/// Whether the text is written in Vietnamese (it has letters only Vietnamese uses).
+fn is_vietnamese(text: &str) -> bool {
+    text.chars()
+        .any(|c| "ăâđêôơưĂÂĐÊÔƠƯạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ".contains(c))
 }
 
 fn is_blocked(html: &str) -> bool {
@@ -281,7 +578,7 @@ fn is_blocked(html: &str) -> bool {
 }
 
 /// Results of a DuckDuckGo-style HTML page: links classed `result__a` with `result__snippet` links after them.
-fn parse_results(html: &str, limit: usize) -> Vec<Value> {
+fn parse_results(html: &str, limit: usize) -> Vec<Hit> {
     static LINK: OnceLock<Regex> = OnceLock::new();
     static HREF: OnceLock<Regex> = OnceLock::new();
     let link = pattern(&LINK, r#"(?is)<a\b([^>]*)>(.*?)</a>"#);
@@ -305,7 +602,11 @@ fn parse_results(html: &str, limit: usize) -> Vec<Value> {
     found
         .into_iter()
         .take(limit)
-        .map(|(title, url, snippet)| json!({"title": title, "url": url, "snippet": snippet}))
+        .map(|(title, url, snippet)| Hit {
+            title,
+            url,
+            snippet,
+        })
         .collect()
 }
 
@@ -420,7 +721,28 @@ fn run_paper_search(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
     if let Some(year) = opt_u64(args, "from_year") {
         filters.push(format!("from_publication_date:{year}-01-01"));
     }
-    let base = &ctx.web_settings.paper_search_url;
+    let parsed = works_query(
+        transport.as_ref(),
+        &ctx.web_settings.paper_search_url,
+        query,
+        wanted,
+        &filters,
+    )?;
+    let papers: Vec<Value> = parsed["results"]
+        .as_array()
+        .map(|works| works.iter().map(paper_of).collect())
+        .unwrap_or_default();
+    Ok(json!({"query": query, "total": parsed["meta"]["count"], "results": papers}))
+}
+
+/// One page of the works index for `query`.
+fn works_query(
+    transport: &dyn WebTransport,
+    base: &str,
+    query: &str,
+    wanted: u64,
+    filters: &[String],
+) -> Result<Value, ToolError> {
     let joiner = if base.contains('?') { '&' } else { '?' };
     let mut url = format!(
         "{base}{joiner}search={}&per-page={wanted}&select=id,doi,title,publication_year,authorships,\
@@ -437,13 +759,8 @@ fn run_paper_search(ctx: &Context, args: &Args) -> Result<Value, ToolError> {
             format!("the paper index answered {}", page.status),
         ));
     }
-    let parsed: Value = serde_json::from_slice(&page.body)
-        .map_err(|_| ToolError::new("search_failed", "the paper index did not answer with JSON"))?;
-    let papers: Vec<Value> = parsed["results"]
-        .as_array()
-        .map(|works| works.iter().map(paper_of).collect())
-        .unwrap_or_default();
-    Ok(json!({"query": query, "total": parsed["meta"]["count"], "results": papers}))
+    serde_json::from_slice(&page.body)
+        .map_err(|_| ToolError::new("search_failed", "the paper index did not answer with JSON"))
 }
 
 /// One paper of an OpenAlex `works` answer, reduced to what a reader needs.

@@ -99,3 +99,23 @@ def test_the_users_question_is_kept_when_tool_turns_are_dropped():
     assert roles[0] == "system" and "user" in roles
     assert next(m for m in fitted if m["role"] == "user")["content"] == "find research gaps"
     assert fitted[-1]["role"] == "tool"
+
+
+def test_generation_stops_at_the_end_of_an_assistant_turn():
+    from types import SimpleNamespace
+
+    from laris.model.inference.open_llm import OpenWeightChat
+
+    class Tokenizer:
+        eos_token_id = 7
+
+        def get_vocab(self):
+            return {"<|im_end|>": 9, "<|endoftext|>": 7, "hello": 3}
+
+    chat = OpenWeightChat.__new__(OpenWeightChat)
+    chat.cfg = SimpleNamespace(chat_max_new_tokens=64, chat_temperature=0)
+    chat._tokenizer = Tokenizer()
+    kwargs = chat._gen_kwargs()
+    assert kwargs["eos_token_id"] == [7, 9]
+    assert kwargs["pad_token_id"] == 7
+    assert kwargs["max_new_tokens"] == 64

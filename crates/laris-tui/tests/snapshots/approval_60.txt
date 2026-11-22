@@ -12,9 +12,6 @@
 
 > write a note
 
-● write_file(path: "a.txt")
-  ⎿ …
-
 ╭───────────────────────────────────────────────────────────
  Allow write_file?
    path: "a.txt"
@@ -36,9 +33,6 @@
   /work/demo
 
 > write a note
-
-● write_file(path: "a.txt")
-  ⎿ ok
 
   ⎿ +1 −0
     --- a/a.txt

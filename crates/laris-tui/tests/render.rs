@@ -55,8 +55,6 @@ fn the_chat_scenario_passes_through_the_interface_at_both_widths() {
         for want in [
             "> hello",
             "● Hi, this is bold and code.",
-            "● search_papers(query: \"graphs\")",
-            "⎿ 2 results",
             "● Found 2 passages.",
             "│ for i in range(3):",
             "│     print(i)  # count",
@@ -68,6 +66,10 @@ fn the_chat_scenario_passes_through_the_interface_at_both_widths() {
                 "{want:?} missing at {width}:\n{screen}"
             );
         }
+        assert!(
+            !screen.contains("search_papers") && !screen.contains("2 results"),
+            "the tool call is not drawn:\n{screen}"
+        );
         assert!(
             !screen.contains("**") && !screen.contains('`'),
             "markers are gone:\n{screen}"
@@ -260,7 +262,7 @@ fn shift_tab_asks_for_the_next_mode_and_a_slash_line_is_a_command() {
 }
 
 #[test]
-fn a_loop_refusal_is_not_drawn_but_a_real_tool_error_is() {
+fn tool_calls_and_their_errors_are_not_drawn() {
     use laris_protocol::Event;
     let mut a = app();
     for (id, code) in [("a", "too_many_calls"), ("b", "not_found")] {
@@ -275,14 +277,23 @@ fn a_loop_refusal_is_not_drawn_but_a_real_tool_error_is() {
             result: serde_json::json!({"error": {"code": code, "message": "m"}}),
         }));
     }
+    a.update(Input::Event(Event::ToolCall {
+        id: "c".into(),
+        name: "Edit".into(),
+        arguments: serde_json::from_value(serde_json::json!({"path": "x.txt"})).unwrap(),
+    }));
+    a.update(Input::Event(Event::ToolResult {
+        id: "c".into(),
+        name: "Edit".into(),
+        result: serde_json::json!({"path": "x.txt", "diff": "--- a/x.txt\n+++ b/x.txt\n-old\n+new\n"}),
+    }));
     let text = ansi(&a.layout(80).all(), false);
+    for hidden in ["too_many_calls", "not_found", "Read", "path: a", "Edit("] {
+        assert!(!text.contains(hidden), "{hidden} is drawn: {text}");
+    }
     assert!(
-        !text.contains("too_many_calls") && !text.contains("path: a"),
-        "{text}"
-    );
-    assert!(
-        text.contains("Read"),
-        "the other call is still drawn: {text}"
+        text.contains("+new"),
+        "the change to a file is still shown: {text}"
     );
 }
 

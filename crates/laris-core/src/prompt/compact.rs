@@ -25,11 +25,18 @@ fn clip(text: &str, keep: usize) -> String {
     format!("{head}...")
 }
 
-/// Splits a conversation into turns: each starts at a user message (a summary is not a turn of its own).
+/// Splits a conversation into turns: each starts at a user message (a summary is not a turn of its own). A user
+/// message that follows a tool result is the loop speaking to the model inside the running turn (a replan or
+/// wrap-up notice), not a new request, so it stays in that turn with the results it is about.
 fn turns(messages: &[ChatMessage]) -> Vec<&[ChatMessage]> {
     let mut starts = vec![0];
     for (i, m) in messages.iter().enumerate().skip(1) {
-        if m.role == Role::User && !is_summary(m) {
+        let inside_tool_work = messages[..i]
+            .iter()
+            .rev()
+            .find(|p| p.role != Role::User)
+            .is_some_and(|p| p.role == Role::Tool);
+        if m.role == Role::User && !is_summary(m) && !inside_tool_work {
             starts.push(i);
         }
     }

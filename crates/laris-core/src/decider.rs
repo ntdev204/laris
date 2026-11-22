@@ -32,6 +32,12 @@ pub trait Decider {
         let _ = name;
         true
     }
+
+    /// Whether tools are offered at all on the next model call (`false` once the model must answer from what it has).
+    fn tools_open(&self, session: &Session) -> bool {
+        let _ = session;
+        true
+    }
 }
 
 /// A refusal of a tool call before it runs.
@@ -225,7 +231,12 @@ impl FollowModel {
                 message: refusal.message,
             };
         }
-        if session.turn().has_seen(&call_key(call)) {
+        let key = call_key(call);
+        if session.turn().has_seen(&key) {
+            // the same call again: its result again, not an error; past the limit the model is asked without tools
+            if session.turn().answer_of(&key).is_some() {
+                return Action::ReuseResult { id: id.to_owned() };
+            }
             return self.reject(id, "cyclic_call", "loop.cyclic_call");
         }
         Action::RunTool { id: id.to_owned() }
@@ -351,18 +362,10 @@ impl Decider for FollowModel {
                     note: self.note(session),
                 })
             }
-            // calls kept repeating: answer the open ones without running them, tell the model once that the tools
-            // are closed and it must answer now; a tool call after that ends the turn
+            // calls kept repeating: the open ones are still answered (a repeat with its earlier result), the model is
+            // told once to answer now and is then asked without tools; a tool call after that ends the turn
             Pending::Tools(_) | Pending::Reflect if self.cyclic(turn) && turn.wrapup_told() => {
                 Some(self.stop("cyclic", "loop.cyclic"))
-            }
-            Pending::Tools(_) if self.cyclic(turn) => {
-                let calls = session.open_calls();
-                let id = calls
-                    .first()
-                    .and_then(|(_, c)| c.id.clone())
-                    .unwrap_or_default();
-                Some(self.reject(&id, "tools_closed", "loop.tools_closed"))
             }
             Pending::Reflect if self.cyclic(turn) => Some(Action::Reflect {
                 marks: Vec::new(),
@@ -380,6 +383,10 @@ impl Decider for FollowModel {
 
     fn model_failed(&mut self, _session: &Session, _error: &ModelError) -> Action {
         self.stop("provider_error", "loop.provider_error")
+    }
+
+    fn tools_open(&self, session: &Session) -> bool {
+        !(self.cyclic(session.turn()) && session.turn().wrapup_told())
     }
 
     fn offers(&self, name: &str) -> bool {

@@ -21,8 +21,9 @@ fn norm(text: &str) -> String {
 
 /// Milliseconds the "press Ctrl-C again" prompt stays armed.
 pub const EXIT_WINDOW_MS: u64 = 3000;
-/// Error codes of the loop's own refusals that are shown to the model only: the tool line is left off the screen.
-const HIDDEN_ERRORS: [&str; 1] = ["too_many_calls"];
+
+/// The start of the id of a tool call the person made themselves (`!command`): only those are drawn.
+pub const USER_COMMAND_PREFIX: &str = "bang-";
 
 /// What reaches the interface.
 #[derive(Debug, Clone, PartialEq)]
@@ -971,41 +972,37 @@ impl App {
                     }),
                 }
             }
+            // tool calls and their results (errors included) are the model's working steps: they are not drawn, only
+            // a change they made to a file is; a command the person ran (`!command`) is theirs and is drawn
             Event::ToolCall {
                 id,
                 name,
                 arguments,
             } => {
                 self.close_answer();
-                self.items.push(Item::Tool {
-                    id,
-                    name,
-                    arguments,
-                    result: None,
-                });
+                self.running = true;
+                if id.starts_with(USER_COMMAND_PREFIX) {
+                    self.items.push(Item::Tool {
+                        id,
+                        name,
+                        arguments,
+                        result: None,
+                    });
+                }
             }
             Event::ToolResult { id, result, .. } => {
-                // a refusal that is only the loop's own bookkeeping is for the model, not for the person
-                if result
-                    .pointer("/error/code")
-                    .and_then(Value::as_str)
-                    .is_some_and(|code| HIDDEN_ERRORS.contains(&code))
-                {
-                    self.items.retain(
-                        |item| !matches!(item, Item::Tool { id: found, .. } if *found == id),
-                    );
-                    return;
-                }
-                for item in self.items.iter_mut().rev() {
-                    if let Item::Tool {
-                        id: found,
-                        result: slot,
-                        ..
-                    } = item
-                        && *found == id
-                    {
-                        *slot = Some(result.clone());
-                        break;
+                if id.starts_with(USER_COMMAND_PREFIX) {
+                    for item in self.items.iter_mut().rev() {
+                        if let Item::Tool {
+                            id: found,
+                            result: slot,
+                            ..
+                        } = item
+                            && *found == id
+                        {
+                            *slot = Some(result.clone());
+                            break;
+                        }
                     }
                 }
                 if let Some(diff) = result.get("diff").and_then(Value::as_str)

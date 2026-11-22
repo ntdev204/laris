@@ -442,6 +442,16 @@ fn canned(text: &str) -> Vec<ChatResponseChunk> {
         .collect()
 }
 
+/// Whether the last user messages follow a tool result: the client's loop speaking to the model in the middle of a
+/// turn (a replan or wrap-up notice), not a new question of the person, so retrieval and the harness leave it alone.
+fn continues_tool_work(messages: &[laris_protocol::ChatMessage]) -> bool {
+    messages
+        .iter()
+        .rev()
+        .find(|m| m.role != laris_protocol::Role::User)
+        .is_some_and(|m| m.role == laris_protocol::Role::Tool)
+}
+
 fn ready(chunks: Vec<ChatResponseChunk>) -> ChunkStream {
     stream::iter(chunks.into_iter().map(Ok)).boxed()
 }
@@ -451,9 +461,11 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
     let caller = who.key_id;
     // a summary, a workflow-free continuation after a tool result and a pipeline with every stage off are not turns
     // this pipeline checks
-    let question = (this.config.enabled() && request.laris.kind == Kind::Turn)
-        .then(|| latest_user_message(&request.messages))
-        .flatten();
+    let question = (this.config.enabled()
+        && request.laris.kind == Kind::Turn
+        && !continues_tool_work(&request.messages))
+    .then(|| latest_user_message(&request.messages))
+    .flatten();
     let Some(question) = question else {
         return this.backend.chat_for(request, caller.as_deref()).await;
     };
@@ -808,5 +820,41 @@ async fn grounded(
                 }))
                 .await;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::continues_tool_work;
+    use laris_protocol::{ChatMessage, Content, Role};
+
+    fn said(role: Role, text: &str) -> ChatMessage {
+        ChatMessage {
+            role,
+            content: Some(Content::Text(text.to_owned())),
+            tool_calls: Vec::new(),
+            tool_call_id: None,
+            name: None,
+            extra: serde_json::Map::new(),
+        }
+    }
+
+    #[test]
+    fn a_notice_after_a_tool_result_is_not_a_new_question() {
+        let question = vec![said(Role::User, "what is MPC?")];
+        assert!(!continues_tool_work(&question));
+        let next = vec![
+            said(Role::User, "what is MPC?"),
+            said(Role::Assistant, "It is a control method."),
+            said(Role::User, "and NMPC?"),
+        ];
+        assert!(!continues_tool_work(&next));
+        let notice = vec![
+            said(Role::User, "find papers"),
+            said(Role::Assistant, ""),
+            said(Role::Tool, "{\"results\":[]}"),
+            said(Role::User, "Write the final answer now."),
+        ];
+        assert!(continues_tool_work(&notice));
     }
 }

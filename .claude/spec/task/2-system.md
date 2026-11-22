@@ -2162,3 +2162,22 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`
 - Status: done
 - Note: 2026-11-21, fifth end-to-end run: one arXiv paper was read, while MDPI answered 403, HAL showed a bot check and a repository handle gave an empty page; the turn then spent its time budget on more searches. The model stays NOT QUALIFIED.
+
+### T271 — Tools that work, quietly
+- Requirements: SR-H17, SR-H4, SR-C1
+- Depends: T270
+- Deliverables:
+  - `WebSearch` asks the search page, then the keyless MediaWiki search API (`web.fallbackSearchUrl`, default English Wikipedia; a Vietnamese query goes to `vi.`), then the works index; a page that asks for a check is no longer an error when another source answers, and an empty search is a result with a note
+  - `WebFetch`: a page that refuses a program (status 4xx) or gives almost no text (a script redirect) and names a DOI is answered with the paper's record from the works index (abstract, free copies); menus, forms and asides are left out of page text
+  - Loop: an exact repeat of a call that ran gets that result again (`ReuseResult`, marked `repeated`) instead of `cyclic_call`; past `agent.maxRepeatedCalls` the model is told once and then asked without tools; `tools_closed` is gone
+  - Prompt: a user message that follows a tool result (a loop notice) stays in the running turn when the conversation is compacted, so the question and its results are not folded into one summary line
+  - Server pipeline: a turn whose last user messages follow a tool result is a continuation and never goes through retrieval and the vault harness
+  - Terminal client: tool calls and their results (errors included) are not drawn; a change to a file is still shown
+  - Model service: generation also stops at the chat end-of-turn markers (`<|im_end|>`), for a snapshot without `generation_config.json`
+  - `crates/laris-cli/tests/live_tools.rs`: every client tool run for real over the network (ignored by default)
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask schema --check`, `cargo xtask spec`
+  - `cargo test -p laris-cli --test live_tools -- --ignored`; `uv run pytest tests/unit/model`, `ruff check` and `ruff format --check` on the changed files
+- Status: done
+- Note: 2026-11-21, owner's request: every tool failed in the terminal client (DuckDuckGo answered every query with a check, so `WebSearch` always failed; repeats were answered `cyclic_call` then `tools_closed`; and the loop's wrap-up notice was compacted as a new turn, so the server's vault harness answered "Your vault does not answer this question."). The model stays NOT QUALIFIED.
+- Note: 2026-11-22, `cargo deny check` fails only on RUSTSEC-2026-0592 (`url` 2.5.8, via reqwest and sqlx), an advisory published after this task; the fix (`url` 2.5.9) needs re-vendoring, which waits for the owner.

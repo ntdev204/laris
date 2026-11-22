@@ -432,8 +432,8 @@ fn a_refused_write_does_not_happen_and_the_model_is_told() {
     assert!(!rig.project.join("a.txt").exists());
     let text = screen(&c);
     assert!(
-        text.contains("approval_denied"),
-        "the model's tool result shows the refusal:\n{text}"
+        !text.contains("approval_denied"),
+        "the refusal is for the model, not drawn:\n{text}"
     );
     assert!(text.contains("● I could not write."), "{text}");
 }

@@ -798,21 +798,31 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
             .all(|s| !s.tools.contains(&"write_file".to_owned()))
     );
 
-    // An identical call is refused, the model sees the refusal and may still answer.
+    // An identical call is not run again and is not an error: it gets the earlier result again.
     let script = vec![
         turn("", vec![search("a", "perovskite")]),
         turn("", vec![search("b", "perovskite")]),
         turn(CITED, vec![]),
     ];
-    let mut rig = make_rig(
-        &temp_dir("cyclic"),
-        script,
-        Agent::default(),
-        Tools::default(),
-    );
+    let tools = Tools::default();
+    let ran = tools.ran.clone();
+    let mut rig = make_rig(&temp_dir("cyclic"), script, Agent::default(), tools);
     let events = rig.send("perovskite?").expect("turn");
     assert_ne!(done(&events).0, "cyclic");
-    assert!(events.iter().any(|e| matches!(e, Event::ToolResult { result, .. } if result["error"]["code"] == "cyclic_call")));
+    assert_eq!(ran.borrow().len(), 1, "the repeat did not run");
+    let results: Vec<&Value> = events
+        .iter()
+        .filter_map(|e| match e {
+            Event::ToolResult { result, .. } => Some(result),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(results.len(), 2);
+    assert!(
+        results.iter().all(|r| r.get("error").is_none()),
+        "{results:?}"
+    );
+    assert!(results[1].get("repeated").is_some());
     assert_consistent(rig.session().messages());
     assert_replays(&rig);
 
@@ -837,6 +847,17 @@ fn too_many_calls_unlisted_tools_and_repeats_are_refused_without_running() {
             .messages()
             .iter()
             .any(|m| format!("{m:?}").contains("tools are closed"))
+    );
+    let asked = rig.model().seen();
+    assert!(
+        asked.last().is_some_and(|s| s.tools.is_empty()),
+        "after the wrap-up the model is asked without tools"
+    );
+    assert!(asked[0].tools.len() > 1);
+    assert!(
+        !events.iter().any(
+            |e| matches!(e, Event::ToolResult { result, .. } if result.get("error").is_some())
+        )
     );
     assert_consistent(rig.session().messages());
     assert_replays(&rig);

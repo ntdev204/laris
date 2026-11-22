@@ -173,10 +173,11 @@ impl<M: Model, R: ToolRunner, D: Decider> Driver<M, R, D> {
     }
 
     fn ask(&mut self, note: Option<&str>) -> Result<Vec<Event>, CoreError> {
+        let open = self.decider.tools_open(self.recorder.session());
         let offered: Vec<ToolSchema> = self
             .schemas
             .iter()
-            .filter(|t| self.decider.offers(&t.function.name))
+            .filter(|t| open && self.decider.offers(&t.function.name))
             .cloned()
             .collect();
         let request = ModelRequest {

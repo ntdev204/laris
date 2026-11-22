@@ -17,6 +17,8 @@ from typing import Any, Callable, Dict, Iterator, List, Tuple
 from laris.protocol import AssistantTurn, ChatProvider, ProviderError, ToolCall
 
 THINK_OPEN, THINK_CLOSE = "<think>", "</think>"
+# Markers that end an assistant turn in the chat templates of the open models (ChatML, Llama 3).
+END_OF_TURN_MARKS = ("<|im_end|>", "<|endoftext|>", "<|eot_id|>")
 _TOOL_BLOCK = re.compile(r"<tool_call>\s*(.*?)\s*</tool_call>", re.DOTALL)
 _FUNCTION = re.compile(r"<function=([^>\s]+)>\s*(.*?)\s*</function>", re.DOTALL)
 _PARAMETER = re.compile(r"<parameter=([^>\s]+)>\n?(.*?)\n?</parameter>", re.DOTALL)
@@ -252,11 +254,30 @@ class OpenWeightChat(ChatProvider):
     def _gen_kwargs(self) -> Dict[str, Any]:
         cfg = self.cfg
         kwargs: Dict[str, Any] = {"max_new_tokens": cfg.chat_max_new_tokens}
+        stops = self._stop_ids()
+        if stops:
+            # a snapshot without generation_config.json would only stop at its end-of-text
+            # token and write the next turns of the conversation itself; the end of an
+            # assistant turn is a stop as well
+            kwargs.update(eos_token_id=stops, pad_token_id=stops[0])
         if cfg.chat_temperature > 0:
             kwargs.update(do_sample=True, temperature=cfg.chat_temperature)
         else:
             kwargs.update(do_sample=False, temperature=None, top_p=None, top_k=None)
         return kwargs
+
+    def _stop_ids(self) -> List[int]:
+        """The tokens that end an assistant turn: the tokenizer's end token and the
+        chat end-of-turn markers its vocabulary has."""
+        tokenizer = self._tokenizer
+        ids: List[int] = []
+        candidates = [getattr(tokenizer, "eos_token_id", None)]
+        vocab = tokenizer.get_vocab() if hasattr(tokenizer, "get_vocab") else {}
+        candidates += [vocab.get(mark) for mark in END_OF_TURN_MARKS]
+        for value in candidates:
+            if isinstance(value, int) and value not in ids:
+                ids.append(value)
+        return ids
 
     @staticmethod
     def _turn(raw: str) -> AssistantTurn:

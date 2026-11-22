@@ -250,7 +250,7 @@ impl<M: Model + 'static, R: ToolRunner> Front<M, R> {
             return;
         }
         self.bang += 1;
-        let id = format!("bang-{}", self.bang);
+        let id = format!("{}{}", laris_tui::app::USER_COMMAND_PREFIX, self.bang);
         let mut arguments = Map::new();
         arguments.insert("command".into(), Value::String(command.to_owned()));
         self.emit(Event::ToolCall {

@@ -108,4 +108,8 @@ impl<C: Chooser, B: Brain> Decider for BrainDecider<C, B> {
     fn offers(&self, name: &str) -> bool {
         self.inner.offers(name)
     }
+
+    fn tools_open(&self, session: &Session) -> bool {
+        self.inner.tools_open(session)
+    }
 }

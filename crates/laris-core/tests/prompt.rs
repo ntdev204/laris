@@ -272,6 +272,33 @@ fn over_the_trigger_old_turns_become_one_summary_and_the_latest_turn_stays() {
 }
 
 #[test]
+fn a_loop_notice_after_tool_results_stays_in_the_running_turn() {
+    // older turns, then the running one: the question, two tool results and the loop's wrap-up notice
+    let mut convo = conversation(10, 150);
+    let filler = "word ".repeat(150);
+    convo.push(msg(Role::User, "the real question"));
+    convo.push(calls("r1", "WebSearch"));
+    convo.push(result("r1", &format!("first results {filler}")));
+    convo.push(calls("r2", "WebFetch"));
+    convo.push(result("r2", &format!("page text {filler}")));
+    convo.push(msg(
+        Role::User,
+        "Write the final answer now from the results above.",
+    ));
+    let b = budget(4096);
+    let out = assemble(&input(&[], &[], None, &convo), &b).expect("assemble");
+    assert!(out.compaction.is_some());
+    let kept: Vec<String> = out.messages.iter().map(text).collect();
+    assert!(kept.iter().any(|t| t == "the real question"), "{kept:?}");
+    assert!(kept.iter().any(|t| t.starts_with("page text")), "{kept:?}");
+    assert_eq!(
+        kept.last().map(String::as_str),
+        Some("Write the final answer now from the results above.")
+    );
+    assert_valid(&out.messages);
+}
+
+#[test]
 fn compaction_is_deterministic_and_summaries_carry_forward() {
     let convo = conversation(12, 150);
     let b = budget(4096);
