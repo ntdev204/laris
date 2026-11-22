@@ -990,6 +990,11 @@
           "description": "Whether the web tools are offered.",
           "type": "boolean"
         },
+        "fallbackSearchUrl": {
+          "default": "https://en.wikipedia.org/w/api.php",
+          "description": "Address of a MediaWiki search API (`action=query&list=search`, no key) that `WebSearch` also asks when the search\npage refuses or finds too little; a Vietnamese query goes to the `vi.` site of a Wikipedia address. Empty turns\nthe fallback off.",
+          "type": "string"
+        },
         "maxBytes": {
           "default": 2097152,
           "description": "Most bytes read from one page.",
@@ -1302,6 +1307,7 @@
       "$ref": "#/$defs/Web",
       "default": {
         "enabled": true,
+        "fallbackSearchUrl": "https://en.wikipedia.org/w/api.php",
         "maxBytes": 2097152,
         "maxRedirects": 5,
         "maxResults": 8,

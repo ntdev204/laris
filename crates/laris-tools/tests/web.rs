@@ -153,16 +153,102 @@ fn search_returns_results_and_encodes_the_query() {
 }
 
 #[test]
-fn a_check_page_is_reported_not_taken_for_no_results() {
+fn a_check_page_is_reported_when_no_other_source_is_set() {
     let web = script(|_| {
         page(
             "text/html",
             "<html>Unfortunately, bots use DuckDuckGo too. anomaly detected</html>",
         )
     });
-    let mut r = registry("web-blocked", Some(web), |_| {});
+    let mut r = registry("web-blocked", Some(web), |s| {
+        s.web.fallback_search_url.clear();
+        s.web.paper_search_url.clear();
+    });
     let out = r.call("WebSearch", leak(json!({"query": "x"})));
     assert_eq!(out["error"]["code"], "search_blocked");
+}
+
+#[test]
+fn a_blocked_search_page_falls_back_to_the_encyclopedia_and_the_paper_index() {
+    let web = script(|url| {
+        if url.contains("duckduckgo") {
+            page("text/html", "<html>anomaly detected</html>")
+        } else if url.contains("wikipedia.org/w/api.php") {
+            page(
+                "application/json",
+                r#"{"query":{"search":[{"title":"Model predictive control","snippet":"<span class=\"searchmatch\">MPC</span> is a method"}]}}"#,
+            )
+        } else if url.contains("openalex") {
+            page(
+                "application/json",
+                r#"{"meta":{"count":1},"results":[{"id":"https://openalex.org/W1","doi":"https://doi.org/10.1/x","title":"Tiny MPC","publication_year":2024,"locations":[{"pdf_url":"https://arxiv.org/pdf/1"}]}]}"#,
+            )
+        } else {
+            page("text/plain", "")
+        }
+    });
+    let mut r = registry("web-fallback", Some(web.clone()), |_| {});
+    let out = r.call(
+        "WebSearch",
+        leak(json!({"query": "model predictive control"})),
+    );
+    assert!(out.get("error").is_none(), "{out}");
+    let results = out["results"].as_array().expect("results");
+    assert_eq!(
+        results[0]["url"],
+        "https://en.wikipedia.org/wiki/Model_predictive_control"
+    );
+    assert_eq!(results[0]["snippet"], "MPC is a method");
+    assert_eq!(results[1]["title"], "Tiny MPC (2024)");
+    assert_eq!(results[1]["url"], "https://arxiv.org/pdf/1");
+    assert_eq!(out["sources"], json!(["encyclopedia", "papers"]));
+    // a Vietnamese query asks the Vietnamese encyclopedia
+    let _ = r.call("WebSearch", leak(json!({"query": "điều khiển dự báo"})));
+    assert!(
+        web.seen
+            .lock()
+            .expect("lock")
+            .iter()
+            .any(|u| u.starts_with("https://vi.wikipedia.org/w/api.php"))
+    );
+}
+
+#[test]
+fn a_refused_paper_page_gives_the_record_from_the_index() {
+    let web = script(|url| {
+        if url.contains("openalex") {
+            assert!(url.ends_with("/doi:10.3390/electronics14142775"), "{url}");
+            page(
+                "application/json",
+                r#"{"id":"https://openalex.org/W2","title":"Tracking control on microcontrollers","publication_year":2025,
+                   "authorships":[{"author":{"display_name":"A. Lee"}}],
+                   "abstract_inverted_index":{"NMPC":[0],"runs":[1],"fast":[2]},
+                   "locations":[{"pdf_url":"https://www.mdpi.com/x.pdf"}]}"#,
+            )
+        } else {
+            Ok(Page {
+                status: 403,
+                url: url.to_owned(),
+                content_type: "text/html".into(),
+                body: b"Access Denied".to_vec(),
+                truncated: false,
+            })
+        }
+    });
+    let mut r = registry("web-record", Some(web), |_| {});
+    let out = r.call(
+        "WebFetch",
+        leak(json!({"url": "https://doi.org/10.3390/electronics14142775"})),
+    );
+    assert!(out.get("error").is_none(), "{out}");
+    assert_eq!(out["read_by"], "paper_index");
+    let content = out["content"].as_str().expect("content");
+    assert!(content.contains("Tracking control on microcontrollers (2025)"));
+    assert!(content.contains("Abstract: NMPC runs fast"));
+    assert!(content.contains("https://www.mdpi.com/x.pdf"));
+    // an address that names no paper is still a refusal
+    let out = r.call("WebFetch", leak(json!({"url": "https://example.org/page"})));
+    assert_eq!(out["error"]["code"], "http_status");
 }
 
 #[test]
@@ -186,7 +272,10 @@ fn the_tools_follow_the_settings_and_the_transport() {
     let no_search = registry(
         "web-nosearch",
         Some(script(|_| page("text/plain", ""))),
-        |s| s.web.search_url.clear(),
+        |s| {
+            s.web.search_url.clear();
+            s.web.fallback_search_url.clear();
+        },
     );
     assert!(names(&no_search).contains(&"WebFetch".to_owned()));
     assert!(!names(&no_search).contains(&"WebSearch".to_owned()));

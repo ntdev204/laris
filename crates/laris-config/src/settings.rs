@@ -310,6 +310,10 @@ pub struct Web {
     pub enabled: bool,
     /// Address of the HTML search page; the query is added as `q`. Empty turns `WebSearch` off.
     pub search_url: String,
+    /// Address of a MediaWiki search API (`action=query&list=search`, no key) that `WebSearch` also asks when the search
+    /// page refuses or finds too little; a Vietnamese query goes to the `vi.` site of a Wikipedia address. Empty turns
+    /// the fallback off.
+    pub fallback_search_url: String,
     /// Address of a scholarly works API with the OpenAlex interface (`search`, `per-page`, `filter`, `select`); no key
     /// is needed. Empty turns `PaperSearch` off.
     pub paper_search_url: String,
@@ -333,6 +337,7 @@ impl Default for Web {
         Self {
             enabled: true,
             search_url: "https://html.duckduckgo.com/html/".to_owned(),
+            fallback_search_url: "https://en.wikipedia.org/w/api.php".to_owned(),
             paper_search_url: "https://api.openalex.org/works".to_owned(),
             timeout_seconds: 20,
             max_bytes: 2 * 1024 * 1024,
@@ -899,6 +904,15 @@ impl Settings {
             && !self.web.search_url.starts_with("http://")
         {
             return Err(ConfigError::at("web.searchUrl", ErrorKind::UrlScheme));
+        }
+        if !self.web.fallback_search_url.is_empty()
+            && !self.web.fallback_search_url.starts_with("https://")
+            && !self.web.fallback_search_url.starts_with("http://")
+        {
+            return Err(ConfigError::at(
+                "web.fallbackSearchUrl",
+                ErrorKind::UrlScheme,
+            ));
         }
         if !self.web.paper_search_url.is_empty()
             && !self.web.paper_search_url.starts_with("https://")

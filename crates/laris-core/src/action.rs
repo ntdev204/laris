@@ -91,6 +91,12 @@ pub enum Action {
         /// Message for the model.
         message: String,
     },
+    /// Answer the call `id`, an exact repeat of a call that already ran in this turn, with that call's result again,
+    /// without running it.
+    ReuseResult {
+        /// The call.
+        id: String,
+    },
     /// Apply `update_plan` for the call `id`.
     SetPlan {
         /// The call.

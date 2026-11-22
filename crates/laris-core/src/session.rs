@@ -49,6 +49,7 @@ pub struct Turn {
     asked: Option<Option<String>>,
     cleared: Vec<String>,
     seen: Vec<String>,
+    answers: Vec<(String, Value)>,
     auto: Vec<(String, usize)>,
     results: Vec<StepResult>,
     resolved: u32,
@@ -85,7 +86,7 @@ impl Turn {
         self.wrapup_told
     }
 
-    /// Identical calls refused so far in this turn.
+    /// Identical calls answered again (or refused) so far in this turn.
     pub fn repeats(&self) -> u32 {
         self.repeats
     }
@@ -113,6 +114,11 @@ impl Turn {
     /// Whether this call was already run in the turn.
     pub fn has_seen(&self, key: &str) -> bool {
         self.seen.iter().any(|s| s == key)
+    }
+
+    /// The result the call with this key came to when it ran in this turn.
+    pub fn answer_of(&self, key: &str) -> Option<&Value> {
+        self.answers.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
 
     /// The plan position of the step the loop made for the call `id`.
@@ -348,6 +354,31 @@ impl Session {
                 let result = json!({"error": {"code": code, "message": message}});
                 let mut events = vec![tool_call_event(&call)];
                 events.extend(self.resolve(id, &call.function.name, &result, true));
+                Ok(events)
+            }
+            Action::ReuseResult { id } => {
+                let call = self.open_call(id)?;
+                let key = call_key(&call);
+                let Some(earlier) = self.turn.answer_of(&key).cloned() else {
+                    return Err(CoreError::Unexpected(format!(
+                        "tool call {id} repeats no call that ran"
+                    )));
+                };
+                self.turn.repeats += 1;
+                let result = match earlier {
+                    Value::Object(mut map) => {
+                        map.insert(
+                            "repeated".to_owned(),
+                            Value::from(
+                                "the same call already ran in this turn; this is its result again",
+                            ),
+                        );
+                        Value::Object(map)
+                    }
+                    other => other,
+                };
+                let mut events = vec![tool_call_event(&call)];
+                events.extend(self.resolve(id, &call.function.name, &result, false));
                 Ok(events)
             }
             Action::SetPlan { id, change } => {
@@ -592,12 +623,13 @@ impl Session {
         name: &str,
         result: &Value,
     ) -> Result<Vec<Event>, CoreError> {
-        self.open_call(id)?;
+        let call = self.open_call(id)?;
         if !self.turn.is_cleared(id) {
             return Err(CoreError::Unexpected(format!(
                 "tool call {id} was not cleared to run"
             )));
         }
+        self.turn.answers.push((call_key(&call), result.clone()));
         Ok(self.resolve(id, name, result, true))
     }
 

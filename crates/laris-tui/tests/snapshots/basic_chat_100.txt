@@ -15,9 +15,6 @@
 
 ● Hi, this is bold and code.
 
-● search_papers(query: "graphs")
-  ⎿ 2 results
-
 ● Found 2 passages.
 
   python
