@@ -121,6 +121,7 @@ fn settings(v: &Value) -> Res<Settings> {
             min_cover: num(a, "min_cover")?,
             min_level: level(a, "min_level")?,
             max_notes: whole(a, "max_notes")? as usize,
+            admissible: None,
         },
         rules: RuleSettings {
             required_level: level(r, "required_level")?,
@@ -269,6 +270,7 @@ fn vault(cfg: &Value, s: &Settings) -> Res<Temp> {
             cites: vec![],
             dataset: None,
             metadata: MetadataCheck::Verified("fixture-registry".into()),
+            admission: None,
             proposer: proposer.clone(),
         })
         .map_err(|e| e.to_string())?;
@@ -574,7 +576,7 @@ fn through_the_loop(
             RuleDecider::new(s.rules),
             EvalBrain {
                 vault: v.0.clone(),
-                answer: s.answer,
+                answer: s.answer.clone(),
                 rules: s.rules,
                 steps: s.steps,
                 seconds: s.seconds,

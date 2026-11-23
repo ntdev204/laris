@@ -10,8 +10,9 @@
 //!   returns for each query, as JSON lines, for measuring recall offline. Nothing leaves the machine.
 
 use crate::mainbrain::{MainBrain, MainBrainConfig};
+use laris_brain::certain::{self, Admissibility};
 use laris_brain::gate::{
-    ClaimProposal, Decision, Evidence, Gate, MetadataCheck, Proposer, SourceProposal,
+    Admission, ClaimProposal, Decision, Evidence, Gate, MetadataCheck, Proposer, SourceProposal,
 };
 use laris_policy::PassageSource;
 use laris_vault::brain::{Level, sha256_hex};
@@ -29,6 +30,20 @@ struct MetadataLine {
     kind: String,
     #[serde(default)]
     registry: String,
+}
+
+/// The admission record of a document Source (T285), as the importer found it.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AdmissionLine {
+    class: String,
+    resolved_by: String,
+    resolution_sha256: String,
+    licence: String,
+    #[serde(default)]
+    venue: Option<String>,
+    #[serde(default)]
+    retraction_check: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -56,6 +71,8 @@ enum Line {
         #[serde(default)]
         dataset: Option<String>,
         metadata: MetadataLine,
+        #[serde(default)]
+        admission: Option<Box<AdmissionLine>>,
         proposer: String,
     },
     Claim {
@@ -151,6 +168,7 @@ pub fn import(config: &MainBrainConfig, path: &Path, date: &str) -> Result<Json,
                 cites,
                 dataset,
                 metadata: check,
+                admission,
                 proposer,
             } => {
                 let proposal = SourceProposal {
@@ -163,6 +181,14 @@ pub fn import(config: &MainBrainConfig, path: &Path, date: &str) -> Result<Json,
                     cites,
                     dataset,
                     metadata: metadata(check).map_err(|e| format!("line {}: {e}", number + 1))?,
+                    admission: admission.map(|a| Admission {
+                        class: a.class,
+                        resolved_by: a.resolved_by,
+                        resolution_sha256: a.resolution_sha256,
+                        licence: a.licence,
+                        venue: a.venue,
+                        retraction_check: a.retraction_check,
+                    }),
                     proposer: Proposer(proposer),
                 };
                 let decision = gate.submit_source(proposal).map_err(|e| e.0)?;
@@ -291,14 +317,32 @@ struct Query {
 }
 
 /// For every query in `queries` (JSON lines `{"id", "query"}`), the best `k` passages of the server's retrieval over
-/// the vault in `config`, written to `out` as JSON lines `{"id", "hits": [{"source", "start", "end", "text"}]}`.
+/// the vault in `config`, written to `out` as JSON lines `{"id", "hits": [{"source", "start", "end", "text"}]}`. With
+/// `admissible`, each hit also carries `certain` and, when it is not, the `reason` ([`certain::check`]).
 pub fn retrieve(
     config: &MainBrainConfig,
     queries: &Path,
     k: usize,
+    admissible: Option<&Admissibility>,
     out: &mut dyn Write,
 ) -> Result<u64, String> {
     let brain = MainBrain::open(config).map_err(|e| e.to_string())?;
+    let index = brain
+        .index()
+        .ok_or_else(|| "the vault cannot be indexed".to_string())?;
+    // with source classes, every hit says whether it is a certain Claim, and if not, why (T285)
+    let verdict = |path: &str| -> Json {
+        let Some(rules) = admissible else {
+            return Json::Null;
+        };
+        match index.notes.get(path) {
+            Some(note) => match certain::check(&index, note, rules, Level::Sourced) {
+                Ok(()) => json!({"certain": true}),
+                Err(why) => json!({"certain": false, "reason": why.as_str()}),
+            },
+            None => json!({"certain": false, "reason": "no-note"}),
+        }
+    };
     let source = brain
         .source()
         .ok_or_else(|| "the vault cannot be indexed".to_string())?;
@@ -314,10 +358,53 @@ pub fn retrieve(
         let hits: Vec<Json> = source
             .passages(&q.query, k)
             .into_iter()
-            .map(|p| json!({"source": p.source, "start": p.start, "end": p.end, "text": p.text}))
+            .map(|p| {
+                let mut hit =
+                    json!({"source": p.source, "start": p.start, "end": p.end, "text": p.text});
+                if let Json::Object(v) = verdict(&p.source) {
+                    hit.as_object_mut().expect("object").extend(v);
+                }
+                hit
+            })
             .collect();
         writeln!(out, "{}", json!({"id": q.id, "hits": hits})).map_err(|e| e.to_string())?;
         count += 1;
     }
     Ok(count)
+}
+
+/// Counts of the vault under the source classes `rules` (T285): Sources by class and by why they are not admissible,
+/// Claims certain and not certain by reason, and certain Claims by source class.
+pub fn certify(dir: &Path, rules: &Admissibility) -> Result<Json, String> {
+    let index = VaultIndex::build(dir, None).map_err(|e| e.to_string())?;
+    let mut sources: BTreeMap<String, u64> = BTreeMap::new();
+    let mut claims: BTreeMap<String, u64> = BTreeMap::new();
+    let mut by_class: BTreeMap<String, u64> = BTreeMap::new();
+    let text = |n: &laris_vault::Note, k: &str| n.prop(k).map(|v| v.py_str()).unwrap_or_default();
+    for note in index.notes.values() {
+        match text(note, "type").as_str() {
+            "source" if text(note, "kind") == "document" => {
+                let key = match certain::admissible(note, rules) {
+                    Ok(class) => format!("admitted:{class}"),
+                    Err(why) => format!("not:{}", why.as_str()),
+                };
+                *sources.entry(key).or_default() += 1;
+            }
+            "claim" => {
+                let key = match certain::check(&index, note, rules, Level::Sourced) {
+                    Ok(()) => {
+                        let source =
+                            index.find(&laris_vault::note::link_name(&text(note, "source_ref")));
+                        let class = source.map(|s| text(s, "source_class")).unwrap_or_default();
+                        *by_class.entry(class).or_default() += 1;
+                        "certain".to_string()
+                    }
+                    Err(why) => format!("not:{}", why.as_str()),
+                };
+                *claims.entry(key).or_default() += 1;
+            }
+            _ => {}
+        }
+    }
+    Ok(json!({"sources": sources, "claims": claims, "certain_by_class": by_class}))
 }

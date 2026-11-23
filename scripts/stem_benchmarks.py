@@ -525,11 +525,12 @@ def cmd_solver(args: argparse.Namespace) -> int:
 
 def retrieve_notes(
     hcfg: Dict[str, Any], work: List[Any], out_dir: Path, run: str
-) -> Tuple[Dict[str, List[str]], float, str]:
+) -> Tuple[Dict[str, List[str]], Dict[str, List[str]], float, str]:
     """Passages of the frozen brain snapshot for every item in `work` (pairs of bench and item),
     through the server's own retrieval (`laris-server brain retrieve`), queried with the question
-    and its options as in T277. Returns the passages per id, the wall seconds and the snapshot
-    hash. The query file lives in the ignored run folder and is deleted afterwards."""
+    and its options as in T277. Returns the passages per id, the certain Claims among them per id
+    (only with `retrieval.source_classes`, T285: the server's rule decides), the wall seconds and
+    the snapshot hash. The query file lives in the ignored run folder and is deleted afterwards."""
     import os
     import subprocess
 
@@ -538,7 +539,7 @@ def retrieve_notes(
     folder = ROOT / brain["data_dir"] / "snapshots" / rcfg["snapshot"]
     snapshot = json.loads((folder / "snapshot.json").read_text("utf-8"))["snapshot_sha256"]
     if not work:
-        return {}, 0.0, snapshot
+        return {}, {}, 0.0, snapshot
     gate = brain["gate"]
     env = {k: v for k, v in os.environ.items() if not k.startswith("LARIS_SERVER__")}
     env.update(
@@ -559,7 +560,8 @@ def retrieve_notes(
     began = time.perf_counter()
     try:
         result = subprocess.run(
-            [str(ROOT / rcfg["server_bin"]), "brain", "retrieve", str(queries), str(rcfg["k"])],
+            [str(ROOT / rcfg["server_bin"]), "brain", "retrieve", str(queries), str(rcfg["k"])]
+            + ([str(ROOT / rcfg["source_classes"])] if rcfg.get("source_classes") else []),
             env=env,
             check=True,
             text=True,
@@ -568,11 +570,12 @@ def retrieve_notes(
     finally:
         queries.unlink()
     seconds = time.perf_counter() - began
-    notes = {}
+    notes, certain = {}, {}
     for line in result.stdout.splitlines():
         row = json.loads(line)
         notes[row["id"]] = [hit["text"] for hit in row["hits"]]
-    return notes, seconds, snapshot
+        certain[row["id"]] = [hit["text"] for hit in row["hits"] if hit.get("certain") is True]
+    return notes, certain, seconds, snapshot
 
 
 class VramSampler:
@@ -633,7 +636,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
     wanted = [
         (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
     ]
-    notes, retrieval_s, snapshot = retrieve_notes(hcfg, wanted, out_dir, run)
+    notes, certain, retrieval_s, snapshot = retrieve_notes(hcfg, wanted, out_dir, run)
     retrieval_share = retrieval_s / len(wanted) if wanted else 0.0
     print(f"retrieval: {len(wanted)} items, {retrieval_s:.1f} s", flush=True)
 
@@ -667,7 +670,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
         began = time.perf_counter()
         seed = seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
         has_notes = item["id"] in notes
-        trace = harness.answer(item, seed, notes.get(item["id"]))
+        trace = harness.answer(item, seed, notes.get(item["id"]), certain.get(item["id"]))
         seconds = time.perf_counter() - began + (retrieval_share if has_notes else 0.0)
         final = score_answer(item, trace.final, eq)
         draft = score_answer(item, trace.draft, eq) if trace.draft is not None else False

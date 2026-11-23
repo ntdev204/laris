@@ -24,11 +24,12 @@ use std::collections::HashMap;
 
 /// Settings of the decider stage (`LARIS_SERVER__DECIDER_*`). Nothing has a default: set `ENABLED` and every other
 /// value is required, so a threshold is never an unnoticed constant.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DeciderConfig {
     /// Thresholds of the rule decider.
     pub rules: RuleSettings,
-    /// Assembly of an answer from Claims.
+    /// Assembly of an answer from Claims; its source classes (`LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES`, a JSON
+    /// file, required) make only certain Claims count for coverage and the answer (T285).
     pub answer: AnswerSettings,
     /// Steps one turn may take; the client's count is clamped to it.
     pub max_steps: u32,
@@ -93,6 +94,16 @@ impl DeciderConfig {
                 ));
             }
         };
+        // the source classes a brain-only answer needs (T285): a file, so the lists are configuration, not code
+        let admissible = laris_brain::certain::Admissibility::load(std::path::Path::new(text(
+            "LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES",
+        )?))
+        .map_err(|_| {
+            invalid(
+                "LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES",
+                "expected a readable JSON file with valid source classes",
+            )
+        })?;
         let compose = match get("LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL") {
             None | Some("false") => false,
             Some("true") => true,
@@ -116,6 +127,7 @@ impl DeciderConfig {
                 min_cover: ratio("LARIS_SERVER__DECIDER_ANSWER_MIN_COVER")?,
                 min_level: level("LARIS_SERVER__DECIDER_ANSWER_MIN_LEVEL")?,
                 max_notes: count("LARIS_SERVER__DECIDER_ANSWER_MAX_NOTES")? as usize,
+                admissible: Some(std::sync::Arc::new(admissible)),
             },
             max_steps: count("LARIS_SERVER__DECIDER_MAX_STEPS")?,
             max_seconds: seconds,

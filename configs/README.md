@@ -6,6 +6,7 @@ Declarative configuration files, organised by function.
 |---|---|
 | `default.yaml` | Canonical defaults for `LarisConfig` |
 | `stem-brain.json` | Main-brain STEM sources (OpenStax pins at CC BY 4.0 commits, CODATA), sections left out, gate thresholds and retrieval k of the snapshot build (T277) |
+| `admissible-sources.json` | Source classes a brain-only answer may rest on (textbook, reference table, journal paper: registries, licences, venues, retraction check) read by `laris-brain::certain`, the server decider and `laris-server brain retrieve/certify`; acquisition settings and the approved papers of `scripts/acquire_papers.py` (T285) |
 | `stem-benchmarks.json` | STEM benchmark sources (pinned revisions), split seeds, leakage n-gram, equivalence and baseline settings (T275, ADR-026) |
 
 ## Guidelines

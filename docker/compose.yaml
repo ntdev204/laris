@@ -74,9 +74,12 @@ services:
       LARIS_SERVER__DECIDER_ANSWER_MAX_NOTES: ${LARIS_DECIDER_ANSWER_MAX_NOTES:-8}
       LARIS_SERVER__DECIDER_MAX_STEPS: ${LARIS_DECIDER_MAX_STEPS:-10}
       LARIS_SERVER__DECIDER_MAX_SECONDS: ${LARIS_DECIDER_MAX_SECONDS:-180}
+      # the source classes a brain-only answer needs (T285): only a certain Claim answers without the model
+      LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES: /config/admissible-sources.json
     secrets: [database_url, master_secret]
     volumes:
       - ../.laris:/policy/.laris:ro
+      - ../configs/admissible-sources.json:/config/admissible-sources.json:ro
       - server_state:/state
     networks: [internal]
     depends_on:

@@ -1,0 +1,524 @@
+{
+  "version": 1,
+  "note": "T285: the source classes a brain-only answer may rest on (read by laris-brain::certain, the server's LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES and laris-server brain retrieve/certify) and the acquisition of journal papers (scripts/acquire_papers.py). Venues and papers chosen by the agent at the owner's delegation, 2026-11-23.",
+  "classes": {
+    "textbook": {
+      "registries": [
+        "openstax-catalogue"
+      ],
+      "licences": [
+        "cc-by-4.0"
+      ],
+      "venues": null,
+      "retraction_check": false
+    },
+    "reference_table": {
+      "registries": [
+        "nist-codata",
+        "ciaaw"
+      ],
+      "licences": [
+        "us-public-domain-17usc105",
+        "factual-data"
+      ],
+      "venues": null,
+      "retraction_check": false
+    },
+    "journal_paper": {
+      "registries": [
+        "crossref"
+      ],
+      "licences": [
+        "cc-by-4.0",
+        "cc-by-3.0",
+        "cc0-1.0"
+      ],
+      "venues": [
+        "2041-1723",
+        "2399-3642",
+        "2050-084X",
+        "1544-9173",
+        "1553-734X",
+        "2375-2548",
+        "2041-6520",
+        "2374-7943",
+        "2691-3704"
+      ],
+      "retraction_check": true
+    }
+  },
+  "papers": {
+    "data_dir": "data/brain/raw/papers",
+    "user_agent": "laris-brain-build",
+    "registries": {
+      "crossref": "https://api.crossref.org/works/",
+      "openalex": "https://api.openalex.org/works",
+      "full_text": "https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML"
+    },
+    "venues": [
+      {
+        "name": "Nature Communications",
+        "issn_l": "2041-1723",
+        "issns": [
+          "2041-1723"
+        ]
+      },
+      {
+        "name": "Communications Biology",
+        "issn_l": "2399-3642",
+        "issns": [
+          "2399-3642"
+        ]
+      },
+      {
+        "name": "eLife",
+        "issn_l": "2050-084X",
+        "issns": [
+          "2050-084X"
+        ]
+      },
+      {
+        "name": "PLOS Biology",
+        "issn_l": "1544-9173",
+        "issns": [
+          "1544-9173",
+          "1545-7885"
+        ]
+      },
+      {
+        "name": "PLOS Computational Biology",
+        "issn_l": "1553-734X",
+        "issns": [
+          "1553-734X",
+          "1553-7358"
+        ]
+      },
+      {
+        "name": "Science Advances",
+        "issn_l": "2375-2548",
+        "issns": [
+          "2375-2548"
+        ]
+      },
+      {
+        "name": "Chemical Science",
+        "issn_l": "2041-6520",
+        "issns": [
+          "2041-6520",
+          "2041-6539"
+        ]
+      },
+      {
+        "name": "ACS Central Science",
+        "issn_l": "2374-7943",
+        "issns": [
+          "2374-7943",
+          "2374-7951"
+        ]
+      },
+      {
+        "name": "JACS Au",
+        "issn_l": "2691-3704",
+        "issns": [
+          "2691-3704"
+        ]
+      }
+    ],
+    "proposal": {
+      "type": "review",
+      "from_year": 2015,
+      "to_year": 2024,
+      "per_venue": 10,
+      "order": "cited_by_count desc, then DOI"
+    },
+    "licence_urls": {
+      "creativecommons.org/licenses/by/4.0": "cc-by-4.0",
+      "creativecommons.org/licenses/by/3.0": "cc-by-3.0",
+      "creativecommons.org/publicdomain/zero/1.0": "cc0-1.0"
+    },
+    "retraction_update_types": [
+      "retraction",
+      "withdrawal",
+      "removal",
+      "partial_retraction"
+    ],
+    "claims": {
+      "min_words": 8,
+      "max_words": 60,
+      "left_out_words": [
+        "we",
+        "our",
+        "us",
+        "here",
+        "herein",
+        "this review",
+        "this article",
+        "this paper",
+        "in this",
+        "perspective"
+      ]
+    },
+    "approved": [
+      {
+        "doi": "10.1038/s41467-019-14108-y",
+        "pmcid": "PMC6957485"
+      },
+      {
+        "doi": "10.1038/s41467-019-13668-3",
+        "pmcid": "PMC6941980"
+      },
+      {
+        "doi": "10.1038/s41467-020-15355-0",
+        "pmcid": "PMC7096394"
+      },
+      {
+        "doi": "10.1038/ncomms12150",
+        "pmcid": "PMC4935811"
+      },
+      {
+        "doi": "10.1038/s41467-020-18794-x",
+        "pmcid": "PMC7547708"
+      },
+      {
+        "doi": "10.1038/s41467-018-05470-4",
+        "pmcid": "PMC6098093"
+      },
+      {
+        "doi": "10.1038/s41467-018-03705-y",
+        "pmcid": "PMC5897557"
+      },
+      {
+        "doi": "10.1038/s41467-018-04252-2",
+        "pmcid": "PMC5953931"
+      },
+      {
+        "doi": "10.1038/s41467-020-19741-6",
+        "pmcid": "PMC7726563"
+      },
+      {
+        "doi": "10.1038/ncomms12647",
+        "pmcid": "PMC5023960"
+      },
+      {
+        "doi": "10.1038/s42003-021-02825-4",
+        "pmcid": "PMC8602722"
+      },
+      {
+        "doi": "10.1038/s42003-020-01615-8",
+        "pmcid": "PMC7810758"
+      },
+      {
+        "doi": "10.1038/s42003-018-0261-x",
+        "pmcid": "PMC6323052"
+      },
+      {
+        "doi": "10.1038/s42003-021-02910-8",
+        "pmcid": "PMC8664924"
+      },
+      {
+        "doi": "10.1038/s42003-024-07219-w",
+        "pmcid": "PMC11577046"
+      },
+      {
+        "doi": "10.1038/s42003-022-03240-z",
+        "pmcid": "PMC8979968"
+      },
+      {
+        "doi": "10.1038/s42003-021-02586-0",
+        "pmcid": "PMC8429579"
+      },
+      {
+        "doi": "10.1038/s42003-018-0237-x",
+        "pmcid": "PMC6323056"
+      },
+      {
+        "doi": "10.1038/s42003-021-02285-w",
+        "pmcid": "PMC8217569"
+      },
+      {
+        "doi": "10.1038/s42003-021-02483-6",
+        "pmcid": "PMC8368044"
+      },
+      {
+        "doi": "10.7554/elife.57443",
+        "pmcid": "PMC7546738"
+      },
+      {
+        "doi": "10.7554/elife.40070",
+        "pmcid": "PMC6307855"
+      },
+      {
+        "doi": "10.7554/elife.05826",
+        "pmcid": "PMC4373459"
+      },
+      {
+        "doi": "10.7554/elife.71601",
+        "pmcid": "PMC8651293"
+      },
+      {
+        "doi": "10.7554/elife.63425",
+        "pmcid": "PMC8118651"
+      },
+      {
+        "doi": "10.7554/elife.05849",
+        "pmcid": "PMC4373675"
+      },
+      {
+        "doi": "10.7554/elife.62852",
+        "pmcid": "PMC7846274"
+      },
+      {
+        "doi": "10.7554/elife.61834",
+        "pmcid": "PMC7704107"
+      },
+      {
+        "doi": "10.7554/elife.57243",
+        "pmcid": "PMC7769568"
+      },
+      {
+        "doi": "10.7554/elife.69016",
+        "pmcid": "PMC8337078"
+      },
+      {
+        "doi": "10.1371/journal.pbio.1002380",
+        "pmcid": "PMC4774904"
+      },
+      {
+        "doi": "10.1371/journal.pbio.2002173",
+        "pmcid": "PMC5593172"
+      },
+      {
+        "doi": "10.1371/journal.pbio.1002203",
+        "pmcid": "PMC4512706"
+      },
+      {
+        "doi": "10.1371/journal.pbio.2005987",
+        "pmcid": "PMC5933808"
+      },
+      {
+        "doi": "10.1371/journal.pbio.2002654",
+        "pmcid": "PMC5526496"
+      },
+      {
+        "doi": "10.1371/journal.pbio.1002468",
+        "pmcid": "PMC4886956"
+      },
+      {
+        "doi": "10.1371/journal.pbio.3000243",
+        "pmcid": "PMC6544332"
+      },
+      {
+        "doi": "10.1371/journal.pbio.3001009",
+        "pmcid": "PMC8168858"
+      },
+      {
+        "doi": "10.1371/journal.pbio.3001511",
+        "pmcid": "PMC8812914"
+      },
+      {
+        "doi": "10.1371/journal.pbio.3002917",
+        "pmcid": "PMC11627563"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004977",
+        "pmcid": "PMC4939962"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1005993",
+        "pmcid": "PMC5886388"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1005420",
+        "pmcid": "PMC5466358"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1007084",
+        "pmcid": "PMC6622478"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004066",
+        "pmcid": "PMC4390279"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004591",
+        "pmcid": "PMC4721667"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004619",
+        "pmcid": "PMC4849799"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004522",
+        "pmcid": "PMC4675544"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1006577",
+        "pmcid": "PMC6438454"
+      },
+      {
+        "doi": "10.1371/journal.pcbi.1004182",
+        "pmcid": "PMC4520494"
+      },
+      {
+        "doi": "10.1126/sciadv.aax1420",
+        "pmcid": "PMC7043912"
+      },
+      {
+        "doi": "10.1126/sciadv.1601649",
+        "pmcid": "PMC5466371"
+      },
+      {
+        "doi": "10.1126/sciadv.adf3700",
+        "pmcid": "PMC9931212"
+      },
+      {
+        "doi": "10.1126/sciadv.aaz0888",
+        "pmcid": "PMC6881164"
+      },
+      {
+        "doi": "10.1126/sciadv.aax8978",
+        "pmcid": "PMC6954058"
+      },
+      {
+        "doi": "10.1126/sciadv.adc9317",
+        "pmcid": "PMC9481132"
+      },
+      {
+        "doi": "10.1126/sciadv.1501822",
+        "pmcid": "PMC4956192"
+      },
+      {
+        "doi": "10.1126/sciadv.aba0099",
+        "pmcid": "PMC7494334"
+      },
+      {
+        "doi": "10.1126/sciadv.adn2877",
+        "pmcid": "PMC11152139"
+      },
+      {
+        "doi": "10.1126/sciadv.1603043",
+        "pmcid": "PMC5415336"
+      },
+      {
+        "doi": "10.1039/c5sc02223a",
+        "pmcid": "PMC5508697"
+      },
+      {
+        "doi": "10.1039/c7sc05371a",
+        "pmcid": "PMC5933221"
+      },
+      {
+        "doi": "10.1039/d0sc00809e",
+        "pmcid": "PMC8159237"
+      },
+      {
+        "doi": "10.1039/d0sc04082g",
+        "pmcid": "PMC8163330"
+      },
+      {
+        "doi": "10.1039/d0sc01432j",
+        "pmcid": "PMC8159423"
+      },
+      {
+        "doi": "10.1039/c5sc03892h",
+        "pmcid": "PMC5529997"
+      },
+      {
+        "doi": "10.1039/c5sc01946j",
+        "pmcid": "PMC5502404"
+      },
+      {
+        "doi": "10.1039/c7sc04004k",
+        "pmcid": "PMC5890329"
+      },
+      {
+        "doi": "10.1039/d0sc06000c",
+        "pmcid": "PMC8179471"
+      },
+      {
+        "doi": "10.1039/d0sc06928k",
+        "pmcid": "PMC8179477"
+      },
+      {
+        "doi": "10.1021/acscentsci.2c01196",
+        "pmcid": "PMC9801510"
+      },
+      {
+        "doi": "10.1021/acscentsci.9b00397",
+        "pmcid": "PMC6661864"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c01275",
+        "pmcid": "PMC10906252"
+      },
+      {
+        "doi": "10.1021/acscentsci.7b00146",
+        "pmcid": "PMC5492258"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c00395",
+        "pmcid": "PMC10375889"
+      },
+      {
+        "doi": "10.1021/acscentsci.6b00015",
+        "pmcid": "PMC4827522"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c01340",
+        "pmcid": "PMC10906246"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c01163",
+        "pmcid": "PMC10755851"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c00301",
+        "pmcid": "PMC10311662"
+      },
+      {
+        "doi": "10.1021/acscentsci.3c01022",
+        "pmcid": "PMC10683485"
+      },
+      {
+        "doi": "10.1021/jacsau.4c00527",
+        "pmcid": "PMC11350580"
+      },
+      {
+        "doi": "10.1021/jacsau.3c00014",
+        "pmcid": "PMC10301682"
+      },
+      {
+        "doi": "10.1021/jacsau.2c00489",
+        "pmcid": "PMC9795568"
+      },
+      {
+        "doi": "10.1021/jacsau.1c00438",
+        "pmcid": "PMC8889618"
+      },
+      {
+        "doi": "10.1021/jacsau.1c00251",
+        "pmcid": "PMC8479775"
+      },
+      {
+        "doi": "10.1021/jacsau.2c00055",
+        "pmcid": "PMC9326828"
+      },
+      {
+        "doi": "10.1021/jacsau.1c00303",
+        "pmcid": "PMC8549037"
+      },
+      {
+        "doi": "10.1021/jacsau.2c00309",
+        "pmcid": "PMC9327084"
+      },
+      {
+        "doi": "10.1021/jacsau.2c00255",
+        "pmcid": "PMC9326826"
+      },
+      {
+        "doi": "10.1021/jacsau.1c00252",
+        "pmcid": "PMC8397362"
+      }
+    ]
+  }
+}

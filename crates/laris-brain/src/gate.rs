@@ -83,8 +83,29 @@ pub struct SourceProposal {
     pub dataset: Option<String>,
     /// The metadata check.
     pub metadata: MetadataCheck,
+    /// The admission record (T285), stored with the Source; `None` for a Source that is never certain.
+    pub admission: Option<Admission>,
     /// Who proposed it.
     pub proposer: Proposer,
+}
+
+/// What the importer found about a document Source at import (T285): its class, the registry that resolved it with
+/// the hash of that registry's response, its licence, its venue and the retraction check. The gate stores it; whether
+/// it makes a Claim certain is decided when the Claim is read ([`crate::certain`]), against the configured classes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Admission {
+    /// Source class name (configuration).
+    pub class: String,
+    /// The registry that resolved the identifier.
+    pub resolved_by: String,
+    /// SHA-256 of the registry's response.
+    pub resolution_sha256: String,
+    /// The licence, as the class lists it.
+    pub licence: String,
+    /// The venue (ISSN), when the class has a venue list.
+    pub venue: Option<String>,
+    /// `REGISTRY:none` or `REGISTRY:retracted`, when the class needs a check.
+    pub retraction_check: Option<String>,
 }
 
 /// Evidence for a level above `sourced` (ADR-024 3.2).
@@ -554,6 +575,34 @@ impl Gate {
         }
         if let Some(dataset) = &p.dataset {
             props.push(("dataset".to_string(), Value::Str(dataset.clone())));
+        }
+        if let Some(a) = &p.admission {
+            let filled = |v: &str| !v.trim().is_empty();
+            if p.kind != "document"
+                || ![&a.class, &a.resolved_by, &a.resolution_sha256, &a.licence]
+                    .iter()
+                    .all(|v| filled(v))
+                || a.venue.as_deref().is_some_and(|v| !filled(v))
+                || a.retraction_check
+                    .as_deref()
+                    .is_some_and(|v| !v.contains(':'))
+            {
+                return refuse(
+                    Refusal::Shape,
+                    "an admission record belongs to a document and needs class, registry, response hash and licence",
+                );
+            }
+            let mut add = |k: &str, v: &str| props.push((k.to_string(), Value::Str(v.to_string())));
+            add("source_class", &a.class);
+            add("resolved_by", &a.resolved_by);
+            add("resolution_sha256", &a.resolution_sha256);
+            add("licence", &a.licence);
+            if let Some(v) = &a.venue {
+                add("venue", v);
+            }
+            if let Some(v) = &a.retraction_check {
+                add("retraction_check", v);
+            }
         }
         let text = render_note(&props, &body).map_err(|e| (Refusal::Shape, e.message))?;
         self.write_new(&rel, &text)

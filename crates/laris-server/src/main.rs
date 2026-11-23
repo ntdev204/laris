@@ -44,11 +44,12 @@ fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
     }
 }
 
-const BRAIN_USAGE: &str = "usage: laris-server brain import PROPOSALS --date YYYY-MM-DD | freeze OUT | retrieve QUERIES K";
+const BRAIN_USAGE: &str = "usage: laris-server brain import PROPOSALS --date YYYY-MM-DD | freeze OUT | retrieve QUERIES K [SOURCE_CLASSES] | certify SOURCE_CLASSES";
 
 /// `laris-server brain import|freeze|retrieve`: offline ingestion through the write gate, the snapshot manifest and
 /// the retrieval the pipeline uses (T277). The vault and the gate's thresholds come from `LARIS_SERVER__MAIN_BRAIN_*`.
 fn brain_command(args: &[String], env: &HashMap<String, String>) -> ExitCode {
+    use laris_brain::certain::Admissibility;
     use laris_server::brain_ingest;
     let config = match laris_server::mainbrain::MainBrainConfig::from_env(env) {
         Ok(Some(c)) => c,
@@ -83,15 +84,27 @@ fn brain_command(args: &[String], env: &HashMap<String, String>) -> ExitCode {
             }
             Err(e) => fail(e, 1),
         },
-        (Some("retrieve"), Some(queries), Some(k), None) => {
+        (Some("retrieve"), Some(queries), Some(k), classes) => {
             let Ok(k) = k.parse::<usize>() else {
                 return fail(BRAIN_USAGE, 2);
             };
+            let rules = match classes.map(|p| Admissibility::load(std::path::Path::new(p))) {
+                None => None,
+                Some(Ok(rules)) => Some(rules),
+                Some(Err(e)) => return fail(e, 2),
+            };
             let stdout = std::io::stdout();
             let mut lock = stdout.lock();
-            match brain_ingest::retrieve(&config, std::path::Path::new(queries), k, &mut lock) {
+            let queries = std::path::Path::new(queries);
+            match brain_ingest::retrieve(&config, queries, k, rules.as_ref(), &mut lock) {
                 Ok(_) => ExitCode::SUCCESS,
                 Err(e) => fail(e, 1),
+            }
+        }
+        (Some("certify"), Some(classes), None, None) => {
+            match Admissibility::load(std::path::Path::new(classes)) {
+                Ok(rules) => printed(brain_ingest::certify(&config.dir, &rules)),
+                Err(e) => fail(e, 2),
             }
         }
         _ => fail(BRAIN_USAGE, 2),

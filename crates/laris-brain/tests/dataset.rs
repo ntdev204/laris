@@ -331,6 +331,7 @@ fn source(gate: &Gate, title: &str, id: &str, text: &str) {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: Proposer("advisor".into()),
     })
     .expect("io");

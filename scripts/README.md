@@ -14,6 +14,8 @@ compatibility wrappers plus documentation tooling.
 - `validate_spec.py`: validates the ledger (`.claude/spec`).
 - `benchmark_vault.py`: latency of the vault index.
 - `stem_benchmarks.py`: STEM benchmark download, seeded dev / sealed splits, 13-gram leakage scan and the bare-model baseline (T275, ADR-026; settings in `configs/stem-benchmarks.json`). Inference only.
+- `acquire_openstax.py`, `build_stem_brain.py`: the pinned OpenStax books and the STEM main-brain snapshot build, B6 scan and retrieval recall (T277; settings in `configs/stem-brain.json`).
+- `acquire_papers.py`: proposes (OpenAlex) and fetches (Crossref, Europe PMC) the journal papers of T285 with each paper's verdict; `build_stem_brain.py build NAME --sources configs/admissible-sources.json`, `certify NAME` and `brain-only NAME` build and measure a snapshot with admission records. Network only at acquisition.
 
 The dataset acquisition, partition, tokenizer and encoder training scripts were removed in T233 (D48).
 

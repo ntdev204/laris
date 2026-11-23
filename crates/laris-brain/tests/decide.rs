@@ -49,6 +49,7 @@ const ANSWER: AnswerSettings = AnswerSettings {
     min_cover: 0.8,
     min_level: Level::Sourced,
     max_notes: 8,
+    admissible: None,
 };
 const RULES_CFG: RuleSettings = RuleSettings {
     required_level: Level::Sourced,
@@ -77,6 +78,7 @@ fn source(title: &str, id: &str, text: &str) -> SourceProposal {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: who(),
     }
 }

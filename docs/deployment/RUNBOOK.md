@@ -164,9 +164,15 @@ source, quote, requested level, evidence) and `POST /v1/admin/brain/retract` (ti
 The **decider** (stage 5, the rule decider of `laris-brain`) is off unless `LARIS_SERVER__DECIDER_ENABLED=true`; then every
 value is required, none has a default: `_REQUIRED_LEVEL` and `_ANSWER_MIN_LEVEL` (`sourced`, `corroborated`, `verified`,
 `reviewed`), `_MIN_COVERAGE` and `_ANSWER_MIN_COVER` (0 to 1), `_MAX_RETRIEVALS`, `_MAX_ADVISOR_ASKS`, `_MAX_REPEATS`,
-`_ANSWER_MAX_NOTES`, `_MAX_STEPS` and `_MAX_SECONDS` (the caps the client's loop counters are clamped to).
-`LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` lets the composer answer from accepted Claims without calling the model
-when the decider chooses `answer`. The decision network cannot be enabled (it is not promoted); setting
+`_ANSWER_MAX_NOTES`, `_MAX_STEPS` and `_MAX_SECONDS` (the caps the client's loop counters are clamped to), and
+`_ADMISSIBLE_SOURCES`, the JSON file of source classes (`configs/admissible-sources.json`, mounted read-only at
+`/config/admissible-sources.json`, T285). Only a **certain** Claim counts for coverage and for an answer: level `sourced`
+or higher, a Source admitted under a configured class (registry, response hash, licence, venue, retraction check,
+recorded at offline import by `laris-server brain import`), and its quote found again at its span with its hash. A Source
+added through `POST /v1/admin/brain/sources` carries no admission record, so its Claims are context for the model, never
+a brain-only answer. `laris-server brain certify FILE` counts a vault's Sources and Claims under the classes.
+`LARIS_SERVER__PIPELINE_COMPOSE_WITHOUT_MODEL=true` lets the composer answer from certain Claims without calling the
+model when the decider chooses `answer`. The decision network cannot be enabled (it is not promoted); setting
 `LARIS_SERVER__DECIDER_NETWORK` stops the server. Each decision is a step with the code `action:rule`. A stop and a question to the user end the turn with `decider_stop` and `decider_ask_user` of `.laris/harness.toml`.
 
 Attempts, passages and the abstention texts are the owner's policy in `.laris/harness.toml`. Each stage and its time

@@ -121,8 +121,15 @@ def split_parts(text: str, limit: int) -> List[str]:
     return parts
 
 
-def source_line(title: str, identifier: str, text: str, registry: str, proposer: str) -> Dict:
-    return {
+def source_line(
+    title: str,
+    identifier: str,
+    text: str,
+    registry: str,
+    proposer: str,
+    admission: Optional[Dict[str, Any]] = None,
+) -> Dict:
+    line = {
         "type": "source",
         "title": title,
         "kind": "document",
@@ -131,6 +138,10 @@ def source_line(title: str, identifier: str, text: str, registry: str, proposer:
         "metadata": {"kind": "verified", "registry": registry},
         "proposer": proposer,
     }
+    if admission is not None:
+        # the admission record of T285: whether a Claim is certain is decided from it when read
+        line["admission"] = dict(admission)
+    return line
 
 
 def claim_line(statement: str, source: str, proposer: str, solver: Optional[str]) -> Dict:
@@ -232,9 +243,12 @@ def openstax_lines(
     links: SolverLinks,
     overlaps: Overlap = never,
     span: int = 13,
+    admitted: bool = False,
 ) -> Tuple[List[Dict], List[Dict], Dict[str, Any]]:
     """Source and Claim lines of every pinned book, and counts. Blocks that `overlaps` flags are
-    left out of the Source text (and so are the statements they held)."""
+    left out of the Source text (and so are the statements they held). With `admitted` (T285),
+    every Source carries the admission record of the class `textbook`: resolved against the
+    openstax.org catalogue (the hash of its response at acquisition) under the book's licence."""
     build = config["build"]
     reader = Reader(build["dropped_elements"], build["dropped_classes"])
     proposer = build["proposer"]
@@ -305,8 +319,23 @@ def openstax_lines(
                 if len(parts) > 1:
                     identifier += f"#part-{n}"
                 note = f"Part {n} of {len(parts)}.\n" if len(parts) > 1 else ""
+                admission = None
+                if admitted:
+                    admission = {
+                        "class": "textbook",
+                        "resolved_by": "openstax-catalogue",
+                        "resolution_sha256": provenance["catalogue_sha256"],
+                        "licence": textbook_licence(book["licence_url"]),
+                    }
                 sources.append(
-                    source_line(title, identifier, header + note + "\n" + part, registry, proposer)
+                    source_line(
+                        title,
+                        identifier,
+                        header + note + "\n" + part,
+                        registry,
+                        proposer,
+                        admission,
+                    )
                 )
                 counts["sources"] += 1
                 folded = " ".join(part.split())
@@ -356,8 +385,10 @@ def codata_lines(
     sha_expected: str,
     links: SolverLinks,
     overlaps: Overlap = never,
+    admitted: bool = False,
 ) -> Tuple[List[Dict], List[Dict], Dict[str, Any]]:
-    """One Source for NIST's table and one Claim per constant."""
+    """One Source for NIST's table and one Claim per constant. With `admitted` (T285) the Source
+    carries the admission record of the class `reference_table` (the pinned table's hash)."""
     raw = table.read_bytes()
     digest = sha256(raw)
     if digest != sha_expected:
@@ -374,7 +405,17 @@ def codata_lines(
     if overlaps(text):
         raise ValueError("the CODATA table shares a word sequence with a benchmark item")
     title = "NIST CODATA 2022 fundamental physical constants"
-    sources = [source_line(title, spec["identifier"], header + text, spec["registry"], proposer)]
+    admission = None
+    if admitted:
+        admission = {
+            "class": "reference_table",
+            "resolved_by": "nist-codata",
+            "resolution_sha256": digest,
+            "licence": "us-public-domain-17usc105",
+        }
+    sources = [
+        source_line(title, spec["identifier"], header + text, spec["registry"], proposer, admission)
+    ]
     claims: List[Dict] = []
     started = False
     for line in text.splitlines():
@@ -390,6 +431,70 @@ def codata_lines(
         solver = links.link({"operation": "constant", "constant": name})
         claims.append(claim_line(statement, title, proposer, solver))
     return sources, claims, {"constants": len(claims)}
+
+
+def textbook_licence(url: str) -> str:
+    """`cc-by-4.0` for the CC BY 4.0 URL the acquisition checked; anything else is refused."""
+    if "creativecommons.org/licenses/by/4.0" not in url:
+        raise ValueError(f"not a CC BY 4.0 licence: {url}")
+    return "cc-by-4.0"
+
+
+def ciaaw_lines(
+    table: Path, sha_expected: str, proposer: str, overlaps: Overlap = never
+) -> Tuple[List[Dict], List[Dict], Dict[str, Any]]:
+    """One Source for CIAAW's abridged standard atomic weights (the table the solver packages,
+    T276) with each row written as a sentence, and one Claim per element that has a value. The
+    Source carries the admission record of the class `reference_table` (T285)."""
+    raw = table.read_bytes()
+    digest = sha256(raw)
+    if digest != sha_expected:
+        raise ValueError("the CIAAW table differs from the pinned hash")
+    lines = raw.decode("utf-8").splitlines()
+    page_sha = next(
+        (ln.split(":", 1)[1].strip() for ln in lines if ln.startswith("# source_sha256:")), ""
+    )
+    release = lines[0].lstrip("# ").strip() if lines else ""
+    sentences: List[str] = []
+    for line in lines:
+        if line.startswith("#") or not line.strip():
+            continue
+        cells = line.split("\t")
+        if len(cells) < 5 or not cells[3].strip():
+            continue
+        z, symbol, element, value, uncertainty = (c.strip() for c in cells[:5])
+        sentences.append(
+            f"The abridged standard atomic weight of {element} ({symbol}, atomic number {z}) "
+            f"is {value} with uncertainty {uncertainty}."
+        )
+    sentences = [s for s in sentences if not overlaps(s)]
+    header = (
+        f"Source: {release}.\n"
+        "Location: https://www.ciaaw.org/abridged-atomic-weights.htm (page SHA-256 "
+        f"{page_sha}); table as packaged for the solver (SHA-256 {digest}).\n"
+        "Licence: factual data (atomic weights), no licence stated; attribution: IUPAC CIAAW.\n"
+        "Changes: each row of the table written as one sentence; units g/mol as printed.\n\n"
+    )
+    title = "CIAAW abridged standard atomic weights 2024"
+    admission = {
+        "class": "reference_table",
+        "resolved_by": "ciaaw",
+        "resolution_sha256": page_sha if len(page_sha) == 64 else digest,
+        "licence": "factual-data",
+    }
+    text = header + "\n".join(sentences) + "\n"
+    sources = [
+        source_line(
+            title,
+            "https://www.ciaaw.org/abridged-atomic-weights.htm",
+            text,
+            "ciaaw",
+            proposer,
+            admission,
+        )
+    ]
+    claims = [claim_line(s, title, proposer, None) for s in sentences]
+    return sources, claims, {"atomic_weights": len(claims)}
 
 
 def write_lines(path: Path, groups: Iterable[List[Dict]]) -> int:
