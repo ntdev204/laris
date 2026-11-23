@@ -1,0 +1,25 @@
+{
+ "abstained_to_rule": 30,
+ "bootstrap": [
+  -1.092896174863388,
+  1.092896174863388
+ ],
+ "decided_by_network": 513,
+ "ece": 0.01910548845943741,
+ "gain_points": 0.0,
+ "gates": {
+  "N1": "FAIL",
+  "N2": "PASS",
+  "N3": "PASS",
+  "N4": "PASS"
+ },
+ "gates_sha256": "daa01805accb8fb070337003386282deefb28b7bf519933835cc77723d2c59b3",
+ "heldout_sha256": "d1c2f82180cee53e9247e87010f930dbbea3e3e917bc54ee101728a557fd1e66",
+ "items": 549,
+ "net_sha256": "0c1b893009b21538f2a8c018e7c12857f0a69d18ce41aba51e924882bf0848d1",
+ "verdict": "NOT PROMOTED: the rule router stays",
+ "wrong_deterministic": {
+  "network": 0,
+  "rule": 0
+ }
+}

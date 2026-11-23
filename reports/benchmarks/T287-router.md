@@ -5,8 +5,8 @@ BF16, the same engine and seeds as T275, T278 and T286. Development splits only;
 and the system are **NOT QUALIFIED**: these are development numbers, not gate results. No item text is reproduced;
 run records and the router dataset hold features, labels and counts only.
 
-**The router network was not trained.** Training is the owner's (SR-M3); the code, the sealed dataset and the command
-are ready (section 6). Its gates are **NOT VERIFIED** and the rule router of T278 stays.
+**The router network was trained once at the owner's authorisation (section 4) and failed N1** (gain 0.0 points on
+the sealed held-out part); it is not promoted and the rule router of T278 stays.
 
 ## 1. What was run
 
@@ -124,6 +124,22 @@ to choose anything, and the network has not seen them.
 
 `router-gates` without a network: **N1-N4 NOT VERIFIED, verdict "NOT VERIFIED: no trained network"**, exit 1.
 
+**Owner run, 2026-11-24.** The owner authorised the agent in this session to run the training once ("tôi cho phép");
+the standing rule of `AGENTS.md` and every training-authorisation setting are unchanged. Training
+(`configs/stem-router-training.json`, SHA-256 `1128c1e7…`) read `pool.jsonl` only; cross-fitted on the pool the
+network's choices were right on 1,119 of 1,376 items, the rule router's on 1,128. Network `net.json` (outside Git),
+SHA-256 `0c1b8930…48d1`. Gates on the sealed held-out part, read once (`reports/benchmarks/T287-router-gates.json`):
+
+| Gate | Result | Value |
+|---|---|---|
+| N1 gain ≥ 1 point, bootstrap lower bound > 0 | **FAIL** | gain 0.0 points, 95 % interval [−1.09, +1.09] on 549 items |
+| N2 wrong deterministic ≤ rule router | PASS | 0 and 0 |
+| N3 ECE ≤ 0.05 | PASS | 0.019 |
+| N4 abstention below 0.6 | PASS | 513 decided by the network, 30 abstained to the rule router |
+
+Verdict: **NOT PROMOTED, the rule router stays.** `harness.router.network` remains null. As expected in advance, the
+shape features carry no routing signal beyond the classes.
+
 What to expect, stated before the owner trains: the features read the item's shape only, the labels carry the
 engine noise of section 3, and the per-class differences are within it. A pass of N1 (+1 point, lower bound above 0
 on 549 items) would need a network that finds structure the classes do not show. A failure is the likely outcome and
@@ -137,7 +153,7 @@ leaves the rule router in place.
   candidate for T280, to be measured with repeated seeds before any rule changes.
 - The Phase 57 exit criterion "the router beats the bare model and plain retrieval on development" holds on
   MATH-500 and MMLU-Pro STEM and **does not hold yet on GPQA**; it stays open for T280.
-- Network: NOT TRAINED, NOT VERIFIED, NOT PROMOTED. The model and the system are NOT QUALIFIED.
+- Network: trained once at the owner's authorisation, N1 FAILED on the held-out part, NOT PROMOTED. The model and the system are NOT QUALIFIED.
 
 ## 6. Owner commands
 
