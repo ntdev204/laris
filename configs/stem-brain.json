@@ -182,6 +182,12 @@
       "splash",
       "ap-science-practices",
       "ost-assignable"
+    ],
+    "module_titles_left_out": [
+      "^(Appendix [A-Z] )?Review Exercises",
+      "Practice Tests",
+      "^Solution Sheets$",
+      "^Lab [0-9]"
     ]
   },
   "gate": {

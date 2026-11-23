@@ -263,3 +263,56 @@ def test_blocks_sharing_a_benchmark_sequence_are_left_out_alone_or_across_a_boun
         lambda p: solve(p, SolverSettings(isolate=False)), "tool:test", lambda t: "v_0" in t
     )
     assert links.formula("v = v_0+a*t") is None, "a run whose text overlaps is not linked"
+
+
+def test_whole_exercise_modules_are_left_out_by_title(tmp_path: Path):
+    repo, commit = "osbooks-fixture", "c" * 40
+    folder = tmp_path / "data" / "raw" / "openstax" / f"{repo}@{commit[:12]}"
+    (folder / "collections").mkdir(parents=True)
+    (folder / "collections" / "book.collection.xml").write_text(
+        '<col:collection xmlns:col="http://cnx.rice.edu/collxml" xmlns:md="http://cnx.rice.edu/mdml">'
+        "<col:metadata><md:title>Fixture Book</md:title></col:metadata><col:content>"
+        '<col:module document="m1"/><col:module document="m2"/></col:content></col:collection>',
+        encoding="utf-8",
+    )
+    for mid, title in (
+        ("m1", "Motion Along a Line"),
+        ("m2", "Practice Tests (1-4) and Final Exams"),
+    ):
+        (folder / "modules" / mid).mkdir(parents=True)
+        (folder / "modules" / mid / "index.cnxml").write_text(
+            MODULE.replace("Motion Along a Line", title), encoding="utf-8"
+        )
+    rels = {f"modules/{m}/index.cnxml": "0" * 64 for m in ("m1", "m2")}
+    provenance = {
+        "files": {str(folder.relative_to(tmp_path)): rels},
+        "books": [
+            {
+                "repo": repo,
+                "commit": commit,
+                "title": "Fixture Book",
+                "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+            }
+        ],
+    }
+    config = {
+        "data_dir": "data",
+        "catalogue_registry": "fixture",
+        "source_part_bytes": 90000,
+        "openstax": [{"repo": repo, "commit": commit, "collections": ["book"]}],
+        "build": {
+            "proposer": "tool:test",
+            "dropped_elements": ["exercise"],
+            "dropped_classes": ["review-problems"],
+            "max_statement_bytes": 1200,
+            "module_titles_left_out": ["Practice Tests"],
+        },
+    }
+    sources, claims, counts = build.openstax_lines(
+        config, tmp_path, provenance, build.SolverLinks(None, "tool:test")
+    )
+    assert counts["modules"] == 1 and len(sources) == 1
+    assert counts["modules_left_out_by_title"] == ["m2 Practice Tests (1-4) and Final Exams"]
+    assert sources[0]["text"].startswith('Source: OpenStax, Fixture Book, module 1: "Motion')
+    assert "Licence: https://creativecommons.org/licenses/by/4.0/" in sources[0]["text"]
+    assert claims and all(c["source"] == sources[0]["title"] for c in claims)

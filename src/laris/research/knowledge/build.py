@@ -240,6 +240,8 @@ def openstax_lines(
     proposer = build["proposer"]
     registry = config["catalogue_registry"]
     limit = int(config["source_part_bytes"])
+    # whole modules of exercises (review exercises, practice tests, solution sheets, lab sheets)
+    left_out_titles = [re.compile(p) for p in build.get("module_titles_left_out", [])]
     sources: List[Dict] = []
     claims: List[Dict] = []
     counts: Dict[str, Any] = {
@@ -248,6 +250,7 @@ def openstax_lines(
         "statements": {},
         "books": {},
         "benchmark_overlap": {"blocks_left_out": 0, "modules_touched": 0},
+        "modules_left_out_by_title": [],
     }
     files = provenance["files"]
     seen_titles: Dict[str, str] = {}
@@ -273,6 +276,9 @@ def openstax_lines(
             module = reader.module(
                 mid, path.read_text(encoding="utf-8"), int(build["max_statement_bytes"])
             )
+            if any(p.search(module.title) for p in left_out_titles):
+                counts["modules_left_out_by_title"].append(f"{mid} {module.title}")
+                continue
             counts["modules"] += 1
             places = modules[mid]
             for place in places:
