@@ -171,7 +171,7 @@ model_service:
   chat_server_timeout_s: 600.0
   chat_server_gpu_share: 0.0
   gpu_memory_bytes: 0
-  vram_budget_bytes: 15000000000
+  vram_budget_bytes: 15569256448
   vram_margin_bytes: 1610612736
   chat_vram_bytes: 1048576
   gpu_workers: 1

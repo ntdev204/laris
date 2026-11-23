@@ -220,7 +220,7 @@ class ModelServiceConfig(BaseModel):
     chat_server_timeout_s: float = Field(default=600.0, gt=0.0)  # longest server request
     chat_server_gpu_share: float = Field(default=0.0, ge=0.0, le=1.0)  # GPU share it reserves
     gpu_memory_bytes: int = Field(default=0, ge=0)  # memory of the server's GPU (0: unknown)
-    vram_budget_bytes: int = Field(default=15_000_000_000, ge=1)  # 15 GB: the owner's ceiling
+    vram_budget_bytes: int = Field(default=15_569_256_448, ge=1)  # 14.5 GiB: the hard ceiling
     vram_margin_bytes: int = Field(default=1_610_612_736, ge=0)  # kept free below the ceiling
     chat_vram_bytes: int = Field(default=1_048_576, ge=1)  # declared size of the chat model
     gpu_workers: int = Field(default=1, ge=1)  # jobs running on the GPU at the same time

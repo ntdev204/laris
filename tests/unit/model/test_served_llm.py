@@ -227,13 +227,13 @@ def test_queue_counts_the_server_reservation(server):
     gib = 1024**3
     cfg = _cfg(
         server.url,
-        chat_server_gpu_share=0.78,
+        chat_server_gpu_share=0.85,
         gpu_memory_bytes=16 * gib,
-        vram_budget_bytes=15_000_000_000,
+        vram_budget_bytes=int(14.5 * gib),
         gpu_workers=4,
     )
     chat = ServedChat(cfg)
-    assert chat.vram_bytes == int(0.78 * 16 * gib)
+    assert chat.vram_bytes == int(0.85 * 16 * gib)
     queue = build_queue(chat, cfg)
     assert queue.models["chat"].size_bytes == chat.vram_bytes
     service = ModelService(chat, "laris-core", queue=queue)
@@ -246,7 +246,7 @@ def test_queue_counts_the_server_reservation(server):
         server.url,
         chat_server_gpu_share=0.95,
         gpu_memory_bytes=16 * gib,
-        vram_budget_bytes=15_000_000_000,
+        vram_budget_bytes=int(14.5 * gib),
     )
     with pytest.raises(ValueError, match="larger than the VRAM budget"):
         build_queue(ServedChat(too_big), too_big)
