@@ -72,7 +72,7 @@ and the server wait for it. Its settings are environment variables with defaults
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `LARIS_ENGINE_GPU_SHARE` | 0.85 | share of GPU memory vLLM reserves; the model service's GPU queue counts the same share of `LARIS_GPU_MEMORY_BYTES` and refuses to start if it exceeds `vram_budget_bytes` |
+| `LARIS_ENGINE_GPU_SHARE` | 0.78 | share of GPU memory vLLM reserves; the model service's GPU queue counts the same share of `LARIS_GPU_MEMORY_BYTES` and refuses to start if it exceeds `vram_budget_bytes` (15 GB, the owner's ceiling). vLLM holds about 0.3 GB beyond its share and the desktop about 0.9 GB, so 0.78 keeps the whole GPU below 15 GB |
 | `LARIS_ENGINE_MAX_MODEL_LEN` | 20480 | context of one request; the prompt budget is capped at this minus `LARIS_CHAT_MAX_NEW_TOKENS` |
 | `LARIS_ENGINE_MAX_SEQS` | 64 | requests vLLM batches at once (the default 256 exceeds the state blocks of the linear-attention layers) |
 | `LARIS_CHAT_CONCURRENCY` | 8 | chats the model service sends to vLLM at the same time |

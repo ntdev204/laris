@@ -23,7 +23,7 @@ services:
       LARIS_MODEL_SERVICE__CHAT_MAX_INPUT_TOKENS: ${LARIS_CHAT_MAX_INPUT_TOKENS:-8192}   # prompt budget of one request
       LARIS_MODEL_SERVICE__CHAT_SERVER_TIMEOUT_S: ${LARIS_CHAT_SERVER_TIMEOUT_S:-600}
       # the GPU queue counts the server's reservation: its share of this GPU's memory
-      LARIS_MODEL_SERVICE__CHAT_SERVER_GPU_SHARE: ${LARIS_ENGINE_GPU_SHARE:-0.85}
+      LARIS_MODEL_SERVICE__CHAT_SERVER_GPU_SHARE: ${LARIS_ENGINE_GPU_SHARE:-0.78}
       LARIS_MODEL_SERVICE__GPU_MEMORY_BYTES: ${LARIS_GPU_MEMORY_BYTES:?set LARIS_GPU_MEMORY_BYTES to the GPU memory in bytes}
       LARIS_MODEL_SERVICE__GPU_WORKERS: ${LARIS_CHAT_CONCURRENCY:-8}   # chats the server batches at the same time
       LARIS_MODEL_SERVICE__QUEUE_WAIT_TIMEOUT_S: ${LARIS_CHAT_QUEUE_WAIT_S:-120}
@@ -43,7 +43,7 @@ services:
       - --max-model-len
       - ${LARIS_ENGINE_MAX_MODEL_LEN:-20480}   # prompt budget plus reply, for chat and for the benchmark modes
       - --gpu-memory-utilization
-      - ${LARIS_ENGINE_GPU_SHARE:-0.85}
+      - ${LARIS_ENGINE_GPU_SHARE:-0.78}   # 13.3 GB of 16; the whole GPU stays within the owner's 15 GB (T282)
       - --max-num-seqs
       - ${LARIS_ENGINE_MAX_SEQS:-64}   # the default 256 exceeds the state blocks of the linear-attention layers
       - --enable-prefix-caching
