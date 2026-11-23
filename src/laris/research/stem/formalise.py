@@ -224,6 +224,12 @@ class _Latex:
                 self.i += 1
                 out[-1] = f"factorial({out[-1]})"
                 continue
+            if (
+                last_atom
+                and re.fullmatch(r"\d+(?:\.\d+)?", out[-1])
+                and re.match(r"\\[dt]?frac(?![A-Za-z])", self.s[self.i :])
+            ):
+                raise _Refuse  # 8\frac13 is the mixed number 8 1/3, not a product
             atom = self.atom()
             if last_atom:
                 out.append("*")
@@ -438,4 +444,12 @@ def answer_model_free(item: Dict[str, Any], settings: Any) -> Dict[str, Any]:
         return {"pattern": formal.pattern, "status": f"refused:{exc.code}", "answer": None}
     if result["status"] != "verified":
         return {"pattern": formal.pattern, "status": "proposal", "answer": None}
+    if _complex(result) and "i" not in re.findall(r"[a-z]", formal.problem.get("expression", "")):
+        # SymPy's principal branch ((-27)^(5/3) = -243 (-1)^(2/3)); MATH means the real root
+        return {"pattern": formal.pattern, "status": "complex_branch", "answer": None}
     return {"pattern": formal.pattern, "status": "verified", "answer": formal.read(result)}
+
+
+def _complex(result: Dict[str, Any]) -> bool:
+    text = " ".join(str(result.get(k) or "") for k in ("answer", "numeric", "latex"))
+    return bool(re.search(r"(?<![A-Za-z])I(?![A-Za-z])|\(-1\)\^|\\left\(-1\\right\)\^", text))

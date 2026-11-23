@@ -43,3 +43,32 @@ tokens. On the same 29 items the bare model of T275 (thinking off, 64 concurrent
   letter. The item was refused anyway (a free letter), so no wrong answer was produced; a test now covers it.
 - Atomic weights are not shipped (no approved source), so stoichiometry gives masses only from molar masses the caller
   supplies.
+
+## All of MATH train (7,500 problems), 2026-11-23
+
+The owner asked to measure all of MATH. The sealed MATH-500 test is not read (only a sealed run ordered by the owner
+opens it), so "all of MATH" here is the whole development pool: the 7,500 MATH **train** problems (none matches a
+MATH-500 question by normalised text), of which the 500 development items are a seeded sample. Same settings and
+protocol as above, after two formaliser fixes found by this run (below). Records:
+`data/benchmarks/runs/solver-math-train.jsonl` (outside Git); wall 28.6 s.
+
+| Set | Items | Formalised | Answered (verified) | Correct (`math-equiv-1`) | Precision | Wilson 95 % | Coverage |
+|---|---|---|---|---|---|---|---|
+| MATH train, all | 7,500 | 339 | 321 | 319 | **99.4 %** | 97.8-99.8 | 4.3 % |
+| of which the 500 dev items | 500 | 29 | 29 | 29 | 100 % | 88.3-100 | 5.8 % |
+
+Not answered among the formalised: 14 proposals (mostly `solve_for` whose completeness could not be checked), 3 refused
+as too large, 1 complex branch (below). By subject, answered/correct: Algebra 100/98, Prealgebra 107/107, Counting &
+Probability 31/31, Geometry 23/23, Number Theory 30/30, Precalculus 24/24, Intermediate Algebra 5/5 (after the
+fixes). Answered items took 0.08 s median, 0.09 s at the 95th percentile, in the forked worker.
+
+The first pass (before the fixes) answered 323 with 4 scored wrong. Reading them:
+
+- `(-27)^{5/3}`: SymPy's principal branch, `-243 (-1)^(2/3)`, is complex; MATH means the real cube root, -243. Fixed:
+  a result with a complex unit when the question has no `i` gives no answer (`complex_branch`).
+- `6 \cdot 8\frac{1}{3}`: a mixed number (8 1/3) was read as a product. Fixed: a number directly followed by a
+  fraction is refused.
+- Two `expand` answers are mathematically right (term by term equal to the gold) but scored wrong: the frozen checker
+  does not parse an expression with more than three powers, and the strings differ only in braces (`x^{9}` / `x^9`).
+  They stay counted as wrong here, because the protocol is frozen; whether the answer should be written in MATH's
+  plain style, or the protocol amended, is the owner's choice.
