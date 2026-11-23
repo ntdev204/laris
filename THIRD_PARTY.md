@@ -77,6 +77,7 @@ Crates approved in T119 but not yet used are listed in `deny.toml`; each row is 
 | --- | --- | --- | --- | --- |
 | SymPy | 1.14.0 | BSD-3-Clause | `laris.model.solver` (`solve_stem`), `laris.research.stem.answers` | T276 (owner approval 2026-11-23) |
 | mpmath | 1.3.0 | BSD-3-Clause | SymPy; the solver's independent numeric checks | T276 |
+| CIAAW abridged standard atomic weights 2024 | page of 2024-10-23, SHA-256 `f9e95544…31b907d`; extracted table `6019c080…cddb669` | IUPAC CIAAW data, cited as Atomic Weights 2021 (Prohaska et al., Pure Appl. Chem. 94 (2022) 573-600) with the 2024 revisions | `src/laris/model/solver/data/ciaaw-abridged-atomic-weights.tsv` | T276 follow-up (owner approval 2026-11-23) |
 | CODATA 2022 fundamental physical constants | NIST ASCII table, last modified 2024-05-07, SHA-256 `77fb90e6…3f67e67` | NIST data, cited as CODATA 2022 (NIST) | `src/laris/model/solver/data/codata-2022-allascii.txt` | T276 (owner approval 2026-11-23) |
 
 ## Tools (not vendored)

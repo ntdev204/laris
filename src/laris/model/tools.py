@@ -380,8 +380,13 @@ def _solver_parameters() -> Dict[str, Any]:
             "constant": {**text, "description": "CODATA 2022 name or symbol (c, h, G, k_B)."},
             "reaction": {**text, "description": "Reaction: C3H8 + O2 -> CO2 + H2O; ions as Fe^3+."},
             "species": text,
-            "amount": {**number, "description": "Amount of the species, in mol."},
-            "molar_masses": {"type": "object", "description": "g/mol per species."},
+            "amount": {**number, "description": "Amount of the species (amount_unit)."},
+            "amount_unit": {"type": "string", "enum": ["mol", "g"]},
+            "molar_masses": {
+                "type": "object",
+                "description": "g/mol per species; default: from CIAAW standard atomic weights.",
+            },
+            "formula": {**text, "description": "Chemical formula: CuSO4·5H2O, Ca(OH)2."},
         },
         ["operation"],
     )

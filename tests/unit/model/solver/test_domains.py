@@ -261,11 +261,45 @@ def test_stoichiometry_and_unbalanceable_reactions():
         reaction="H2 + O2 -> H2O",
         species="O2",
         amount="1.5",
-        molar_masses={"H2O": "18.015"},
+        molar_masses={"H2O": "18"},
     )
     assert out["answer"]["moles"] == {"H2": "3", "O2": "3/2", "H2O": "3"}
-    assert out["answer"]["grams"] == {"H2O": "10809/200"}
+    # H2 and O2 from the CIAAW table, H2O from the caller
+    assert out["answer"]["grams"] == {"H2": "6.048", "O2": "47.997", "H2O": "54"}
+    assert out["sources"][0]["name"] == "CIAAW Abridged Standard Atomic Weights 2024"
+    grams = verified(
+        operation="stoichiometry",
+        reaction="C3H8 + O2 -> CO2 + H2O",
+        species="C3H8",
+        amount="44.097",
+        amount_unit="g",
+    )
+    assert grams["answer"]["moles"]["CO2"] == "3" and grams["answer"]["grams"]["H2O"] == "72.06"
     with pytest.raises(SolverError):
         ask(operation="balance", reaction="H2 -> O2")
     with pytest.raises(SolverError):
         ask(operation="balance", reaction="Xx + O2 -> XxO")
+
+
+@pytest.mark.parametrize(
+    "formula, value",
+    [
+        ("H2O", "18.015"),
+        ("CO2", "44.009"),
+        ("NaCl", "58.44"),
+        ("CuSO4·5H2O", "249.677"),
+        ("Ca3(PO4)2", "310.174"),
+        ("SO4^2-", "96.056"),
+        ("C6H12O6", "180.156"),
+    ],
+)
+def test_molar_mass_from_ciaaw(formula, value):
+    out = verified(operation="molar_mass", formula=formula)
+    assert out["answer"]["value"] == value and out["answer"]["unit"] == "g/mol"
+    assert out["sources"][0]["url"] == "https://www.ciaaw.org/abridged-atomic-weights.htm"
+
+
+def test_an_element_without_a_standard_atomic_weight_has_no_molar_mass():
+    with pytest.raises(SolverError) as caught:
+        ask(operation="molar_mass", formula="TcO4^-")
+    assert "no standard atomic weight" in caught.value.message

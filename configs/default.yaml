@@ -200,6 +200,8 @@ model_service:
   solver_unit_tolerance: 1.0e-08
   solver_codata_file: ''
   solver_codata_sha256: 77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67
+  solver_atomic_weights_file: ''
+  solver_atomic_weights_sha256: 6019c080a921af796caca246d415a8e7307ed3363c55c2f4743669988cddb669
 
 # Chat application and document workspace.
 app:

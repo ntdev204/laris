@@ -158,3 +158,29 @@ def test_codata_table_with_a_changed_hash_is_refused(tmp_path):
     with pytest.raises(SolverError) as caught:
         solve({"operation": "constant", "constant": "G"}, settings)
     assert "SHA-256" in caught.value.message
+
+
+def test_wrong_molar_mass(monkeypatch):
+    real = chemistry._mass
+
+    def seeded(counts, weights):
+        value, uncertainty = real(counts, weights)
+        return value + sympy.Rational(1, 1000), uncertainty
+
+    monkeypatch.setattr(chemistry, "_mass", seeded)
+    rejected({"operation": "molar_mass", "formula": "H2O"})
+    rejected(
+        {"operation": "stoichiometry", "reaction": "H2 + O2 -> H2O", "species": "O2", "amount": "1"}
+    )
+
+
+def test_atomic_weights_table_with_a_changed_hash_is_refused(tmp_path):
+    from laris.model.solver import SolverError
+    from laris.model.solver.elements import PACKAGED
+
+    changed = tmp_path / "weights.tsv"
+    changed.write_bytes(PACKAGED.read_bytes().replace(b"15.999", b"15.990"))
+    settings = SolverSettings(isolate=False, atomic_weights_file=str(changed))
+    with pytest.raises(SolverError) as caught:
+        solve({"operation": "molar_mass", "formula": "H2O"}, settings)
+    assert "SHA-256" in caught.value.message

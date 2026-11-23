@@ -11,8 +11,11 @@ smallest positive integers; a reaction whose nullspace is not one-dimensional is
 recounts every element on both sides with the coefficients, in plain integers, from a second
 reading of the formulas.
 
-Masses need molar masses; no table of atomic weights is shipped (no approved source yet), so the
-caller gives `molar_masses` (g/mol per species) and the answer names them as given.
+Molar masses come from the CIAAW abridged standard atomic weights (`elements`, owner approval
+2026-11-23): the sum of count times weight from the first reading, checked by the same sum over
+the second reading in plain fractions. Electrons and the charge pseudo-element add no mass (the
+convention for ions). The uncertainty is the linear sum of count times the tabulated uncertainty,
+an upper bound. A caller's `molar_masses` override the table for the species they name.
 """
 
 from __future__ import annotations
@@ -200,37 +203,120 @@ def balance(ctx) -> Outcome:
     return Outcome(answer, written, [_recount_check(left, right, coefficients)])
 
 
+def _mass(counts: Counter, weights) -> Tuple[object, object]:
+    """`(value, uncertainty)` in g/mol as exact SymPy rationals."""
+    import sympy
+
+    value, uncertainty = sympy.Integer(0), sympy.Integer(0)
+    for element, n in counts.items():
+        if element == CHARGE:
+            continue
+        weight = weights.get(element)
+        value += n * sympy.Rational(weight.value)
+        uncertainty += n * sympy.Rational(weight.uncertainty or "0")
+    return value, uncertainty
+
+
+def _mass_check(formula: str, value, weights) -> bool:
+    from fractions import Fraction
+
+    total = Fraction(0)
+    for element, n in sorted(recount(formula).items()):
+        if element != CHARGE:
+            total += n * Fraction(weights.get(element).value)
+    return total == Fraction(int(value.p), int(value.q))
+
+
+def molar_mass(ctx) -> Outcome:
+    from laris.model.solver import elements
+
+    formula = ctx.text("formula")
+    weights = elements.table(ctx.settings)
+    value, uncertainty = _mass(composition(formula), weights)
+    checks = [
+        Check("sum over a second reading of the formula", _mass_check(formula, value, weights))
+    ]
+    answer = {"value": decimal(value), "uncertainty": decimal(uncertainty), "unit": "g/mol"}
+    out = Outcome(answer, f"{answer['value']} g/mol (+- {answer['uncertainty']})", checks)
+    out.numeric = answer["value"]
+    out.sources.append(weights.source())
+    out.notes.append("uncertainty: linear sum of the tabulated uncertainties (an upper bound)")
+    return out
+
+
+def decimal(value) -> str:
+    """An exact terminating decimal (sums of printed weights), else SymPy's fraction."""
+    from decimal import Decimal, localcontext
+
+    with localcontext() as ctx:
+        ctx.prec = 60
+        exact = Decimal(int(value.p)) / Decimal(int(value.q))
+    if exact * int(value.q) != int(value.p):
+        return show(value)
+    text = format(exact.normalize(), "f")
+    return text
+
+
 def stoichiometry(ctx) -> Outcome:
     import sympy
+
+    from laris.model.solver import elements
 
     reaction = ctx.text("reaction")
     known = ctx.text("species")
     amount = ctx.parser.number(ctx.require("amount"), "amount")
+    unit = ctx.args.get("amount_unit", "mol")
+    if unit not in ("mol", "g"):
+        raise SolverError("invalid_arguments", "amount_unit must be mol or g")
     left, right, coefficients = balance_reaction(reaction, ctx.settings.max_items)
     names = left + right
     if known not in names:
         raise SolverError("invalid_arguments", "species must be one of the reaction's species")
+    given = ctx.args.get("molar_masses") or {}
+    if not isinstance(given, dict):
+        raise SolverError("invalid_arguments", "molar_masses must be an object")
+    for name in given:
+        if name not in names:
+            raise SolverError(
+                "invalid_arguments", "molar_masses names a species not in the reaction"
+            )
+    weights = None
+    molar: Dict[str, object] = {}
+    checks = [_recount_check(left, right, coefficients)]
+    for name in names:
+        if name in given:
+            molar[name] = ctx.parser.number(given[name], f"molar_masses.{name}")
+            continue
+        counts = composition(name)
+        if set(counts) <= {CHARGE}:
+            continue  # the electron
+        try:
+            weights = weights or elements.table(ctx.settings)
+            molar[name], _ = _mass(counts, weights)
+            checks.append(
+                Check(
+                    f"molar mass of {name} over a second reading",
+                    _mass_check(name, molar[name], weights),
+                )
+            )
+        except SolverError:
+            pass  # an element without a standard atomic weight: no mass for this species
+    if unit == "g":
+        if known not in molar:
+            raise SolverError("rejected", "the known species has no molar mass")
+        amount = amount / molar[known]
     coef = dict(zip(names, coefficients))
     moles = {n: amount * sympy.Integer(coef[n]) / coef[known] for n in names}
-    checks = [_recount_check(left, right, coefficients)]
     ratios_ok = all(moles[n] * coef[known] == amount * coef[n] for n in names)
     checks.append(Check("amount ratios equal the coefficient ratios", ratios_ok))
     answer: Dict[str, object] = {
         "equation": _written(left, right, coefficients),
         "moles": {n: show(v) for n, v in moles.items()},
+        "grams": {n: decimal(moles[n] * molar[n]) for n in names if n in molar},
     }
-    masses_given = ctx.args.get("molar_masses")
-    if masses_given is not None:
-        if not isinstance(masses_given, dict):
-            raise SolverError("invalid_arguments", "molar_masses must be an object")
-        masses = {}
-        for name, given in masses_given.items():
-            if name not in names:
-                raise SolverError(
-                    "invalid_arguments", "molar_masses names a species not in the reaction"
-                )
-            masses[name] = show(moles[name] * ctx.parser.number(given, f"molar_masses.{name}"))
-        answer["grams"] = masses
-        ctx.notes.append("masses use the molar masses given by the caller (g/mol)")
-    text = "; ".join(f"{n}: {v} mol" for n, v in answer["moles"].items())
-    return Outcome(answer, text, checks)
+    out = Outcome(answer, "; ".join(f"{n}: {v} mol" for n, v in answer["moles"].items()), checks)
+    if weights is not None:
+        out.sources.append(weights.source())
+    if given:
+        out.notes.append("the molar masses given by the caller replace the table for those species")
+    return out
