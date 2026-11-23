@@ -870,7 +870,7 @@ returned logs, manifests and reports.
   - Measured comparison on development of the levers of ADR-026 section 8 (solver first, thinking budget per class, early exit, self-consistency on uncertainty, BF16 / 8-bit / 4-bit, prefix caching); the light-model choice (D64) with accuracy, seconds per item, tokens and peak VRAM
 - Validation:
   - `reports/benchmarks/T279-cost.md`; every kept lever has a measured accuracy change within noise or an owner-accepted trade
-- Status: pending
+- Status: in_progress
 - Note: from T275 (2026-11-23): thinking with an 8,192-token cap fails by budget (59/121 truncated, 62/62 right when it ended); measure budget forcing (close the thinking at a budget, let the model answer), escalation from thinking off to a budgeted thinking for truncated, missing or inconsistent answers, and repetition detection; vLLM is now the engine (T282).
 - Note: from T278 (2026-11-23): the retry of a truncated draft is the lever that paid (+25 / +50 / +28 on MATH / MMLU-Pro / GPQA dev); latency rose to 1.9-2.3 calls per item and no p95 meets B4; first candidates: skip the review after a solver disagreement (net 0 on MATH for 141 calls), formalise only when the draft is uncertain, and use draft-solver agreement (182 of 185 right) as the early-exit signal.
 
