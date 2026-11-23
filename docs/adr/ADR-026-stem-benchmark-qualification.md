@@ -3,7 +3,7 @@ document_id: "DOC-ADR-026"
 title: "ADR-026: STEM benchmark qualification of the system (light model, harness, RAG, deterministic brain)"
 document_type: "adr"
 status: "ACCEPTED"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-11-23"
 updated_at: "2026-11-23"
 owner: "LARIS Architecture Team"
@@ -19,7 +19,7 @@ decision_references:
   - "ADR-008"
   - "ADR-024"
   - "ADR-025"
-change_summary: "0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
+change_summary: "0.3.0 (T282, 2026-11-23): the owner lowered the VRAM ceiling to 15 GB (\"VRAM tối đa được phép dùng là 15GB\"); B4 peak VRAM at most 15 GB. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
 ---
 
 # ADR-026: STEM benchmark qualification of the system
@@ -101,7 +101,7 @@ check → final answer. Rules:
 | B1 | MATH-500 accuracy (answer equivalence by SymPy plus normalised string, protocol frozen in T275) | ≥ 95.0 % |
 | B2 | MMLU-Pro STEM accuracy, micro-averaged over items | **≥ 84.8 %** (fixed by the owner 2026-11-23: bare-model dev baseline 79.8 %, thinking off, + 5 points; T275 report) |
 | B3 | GPQA Diamond accuracy | open: fixed by the owner after GPQA is measured with a thinking budget (the thinking-off dev baseline, 49.2 %, is far below the model's vendor figure; T275 report) |
-| B4 | Cost and latency on this GPU (RTX 5070 Ti, 16 GB): median and 95th-percentile seconds per item, generated tokens per item, peak VRAM | per benchmark, under the baseline's load (64 concurrent requests): **median ≤ 60 s, p95 ≤ 180 s per item, peak VRAM ≤ 15.5 GB** (fixed by the owner 2026-11-23); generated tokens reported |
+| B4 | Cost and latency on this GPU (RTX 5070 Ti, 16 GB): median and 95th-percentile seconds per item, generated tokens per item, peak VRAM | per benchmark, under the baseline's load (64 concurrent requests): **median ≤ 60 s, p95 ≤ 180 s per item, peak VRAM ≤ 15 GB** (fixed by the owner 2026-11-23; VRAM lowered from 15.5 GB the same day, T282); generated tokens reported |
 | B5 | Model-free answers of the brain: share wrong among those it gave, on all three sealed sets | 0 wrong; coverage reported |
 | B6 | Leakage: 13-gram overlap between the brain snapshot (and few-shot material) and every benchmark question and option | 0 hits |
 
@@ -160,6 +160,7 @@ accepts the trade.
 ## 12. Validation
 
 - 2026-11-23 (T275): B2 and B4 fixed by the owner from the measured baseline (`reports/benchmarks/T275-baseline.md`); B3 open.
+- 2026-11-23 (T282): the owner set 15 GB as the most VRAM LARIS may use; B4's VRAM ceiling is 15 GB (decimal GB, the whole GPU in use, as the runner measures it). The vLLM server reserves 0.78 of the GPU; 16 MATH dev items under load peaked at 13.70 GB.
 
 - Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
 
