@@ -1,0 +1,8 @@
+{
+ "note": "T287: the owner's training run of the STEM router network (scripts/train_stem_router.py). Per model path one logistic score over standardised features; full-batch gradient descent with L2; nothing is defaulted in the script.",
+ "seed": 287,
+ "learning_rate": 0.1,
+ "l2": 0.001,
+ "epochs": 2000,
+ "max_seconds": 600
+}

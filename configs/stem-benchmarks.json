@@ -149,5 +149,17 @@
     "model_solver": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": ["computable", "knowledge", "reasoning"]}},
     "plain_retrieval": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
     "deterministic": {"deterministic_only": true, "model_free": true, "brain_only": {"enabled": true}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"], "snapshot": "stem-t285-2", "source_classes": "configs/admissible-sources.json"}}
+  },
+  "router_analysis": {
+    "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",
+    "gates": "configs/stem-router-gates.json",
+    "runs": {
+      "deterministic": "path-deterministic.jsonl",
+      "notes_model": "path-notes_model.jsonl",
+      "model_solver": "path-model_solver.jsonl",
+      "plain_retrieval": "path-plain_retrieval.jsonl",
+      "bare_model": "baseline-thinking_off.jsonl",
+      "rule": "harness-filter-dev.jsonl"
+    }
   }
 }
