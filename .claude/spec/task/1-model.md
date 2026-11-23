@@ -710,3 +710,84 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-20 (owner: "Tích hợp toàn bộ hệ thống", then "Qwen thật qua server"): project `laris-qwen` (ports 38080/38443, subnets 172.31.60/61, its own volumes and certificate authority; the smoke and trial projects were not touched). Image `laris-model-chat` is built with `MODEL_EXTRAS=chat` (the pins approved in T231). The weights are the Hugging Face hub cache mounted read-only at `/weights`: the whole hub, because the model's blobs sit in a store shared with other models and its own folder alone holds broken links (found by the first run, which failed with "No such file"). One completion inside the model container: "I am Qwen3.5, a large language model developed by Tongyi Lab.", 26 s including the first load, GPU memory 14.7 GB of 16.3 GB in use with the desktop's 3.6 GB (greedy, thinking off, 8-bit). Not yet measured: a chat through Caddy and the server (needs a user key that the owner creates), and the client loop against it. Qwen3.5-9B stays NOT QUALIFIED.
 - Result: 2026-11-20 (owner: "Đo"): project `laris-qwen` rebuilt with the current server (pipeline code of T239-T242, every stage off), healthy in 4 services (model, server, postgres, caddy). A user key made through the admin route; `POST /v1/laris/chat` through Caddy (port 38443) with that key: "What is the capital of France? Answer in one short sentence." returned "The capital of France is Paris." (first call 25 s including the model's wake-up); the account route showed the tokens used. One more question ("who are you") was answered with the output guard's block message, because the guard refuses an answer that looks like internal configuration; it is the guard acting, not a model measurement. This shows the mechanics of the stack, **not** the quality of Qwen3.5-9B, which stays NOT QUALIFIED.
+
+## Phase 57 — STEM benchmark qualification of the system (ADR-026)
+
+### T274 — ADR-026 and STEM gates
+- Requirements: SR-M13, SR-M12
+- Depends: T231, T232
+- Deliverables:
+  - `docs/adr/ADR-026-stem-benchmark-qualification.md` (PROPOSED): benchmarks and splits, the measured unit, the deterministic brain, gates B1-B6, development and sealed-run rules, cost and latency measures, decisions D57-D64; spec decisions D57-D64 and SR-M13; Phase 57 in the plan; tasks T275-T281
+- Validation:
+  - `python scripts/validate_spec.py`, `cargo xtask spec` and `python scripts/validate_docs.py` pass; the owner accepts or changes ADR-026
+- Status: blocked
+- Note: 2026-11-23, owner's direction: qualify the system above 95 % on world STEM benchmarks with a light model carried by harness, RAG and a brain of verified knowledge that can answer without the model; optimise compute cost and response time. Owner's choices to the agent's proposal: (1) MATH-500, MMLU-Pro STEM, GPQA Diamond; (2) MATH-500 ≥ 95 %, the other thresholds after a baseline; (3) SymPy, the three benchmarks, OpenStax and NIST CODATA approved; (4) a light model, optimised harness and RAG. ADR-026 written as PROPOSED; ledger only, no code, nothing downloaded. Blocked on the owner's acceptance of ADR-026. The model (Qwen3.5-4B) and the system are NOT QUALIFIED.
+
+### T275 — Benchmark data, sealed splits, evaluator and bare-model baseline
+- Requirements: SR-M13, SR-M12
+- Depends: T274
+- Deliverables:
+  - Download of MATH-500, MATH train, MMLU-Pro and GPQA (owner accepts the GPQA terms) to `data/benchmarks/` with licence read from the card, source revision and SHA-256; seeded split script (ADR-026 section 3) and a manifest; the runner refuses sealed files outside the sealed run
+  - Evaluator: answer extraction (letter, boxed answer), MATH answer equivalence (SymPy plus normalised string) tested on fixtures and frozen; Wilson intervals; per-item cost record (seconds, prompt and generated tokens, calls, peak VRAM)
+  - 13-gram leakage scanner (B6) over a folder of notes against all benchmark items, tested on seeded hits
+  - `reports/benchmarks/T275-baseline.md`: bare Qwen3.5-4B (thinking on and off) on the development splits; item ids and scores only, no GPQA text
+- Validation:
+  - Tests of extraction, equivalence, splits and scanner pass; the owner fixes B2, B3 and B4 in ADR-026 from the baseline
+- Status: pending
+
+### T276 — Deterministic STEM solver (model-free brain)
+- Requirements: SR-M13, SR-M2
+- Depends: T275
+- Deliverables:
+  - SymPy (version pinned and shown to the owner) in the model block; a solver remote tool: units and dimensions, CODATA constants (NIST, with source and release), algebra, calculus, equations, linear algebra, number theory, stoichiometry; every result re-checked by an independent route or returned as a proposal
+  - Structured problem input (the model or the router fills it); a model-free path for problems already in that form
+- Validation:
+  - Fixture tests per domain; the verification route rejects seeded wrong results; solver precision on development items it accepts is reported
+- Status: pending
+
+### T277 — Verified STEM knowledge in the main brain
+- Requirements: SR-M13, SR-K3
+- Depends: T276
+- Deliverables:
+  - Acquisition of OpenStax textbooks (CC BY 4.0) and NIST CODATA into accepted notes through the write gate with source, licence, location and hash; definitions, laws and formulas with their conditions; formulas linked to solver calls where they compute
+  - A frozen, hashed brain snapshot for evaluation
+- Validation:
+  - Write-gate tests; leakage scan of the snapshot against every benchmark item: 0 hits (B6); retrieval recall on development items reported
+- Status: pending
+
+### T278 — STEM router and harness for benchmark questions
+- Requirements: SR-M13, SR-H14
+- Depends: T277
+- Deliverables:
+  - Router: computable, knowledge or reasoning class per question; the evaluation profile of the pipeline (ADR-026 section 4: closed book, pass@1, answer without citations)
+  - Harness: problem formalisation by the model into the solver input, retrieval of notes, draft, check of the draft against the solver and the notes, retry; a model-free answer when the brain alone is sure
+- Validation:
+  - Tests with a scripted model; development accuracy per benchmark and per class against T275, with cost
+- Status: pending
+
+### T279 — Cost and response time
+- Requirements: SR-M13, SR-M10
+- Depends: T278
+- Deliverables:
+  - Measured comparison on development of the levers of ADR-026 section 8 (solver first, thinking budget per class, early exit, self-consistency on uncertainty, BF16 / 8-bit / 4-bit, prefix caching); the light-model choice (D64) with accuracy, seconds per item, tokens and peak VRAM
+- Validation:
+  - `reports/benchmarks/T279-cost.md`; every kept lever has a measured accuracy change within noise or an owner-accepted trade
+- Status: pending
+
+### T280 — Development iterations
+- Requirements: SR-M13
+- Depends: T279
+- Deliverables:
+  - Error analysis on development items (router, solver, retrieval, model, extraction) and the changes it motivates; each iteration measured and logged; a frozen candidate (code commit, configuration, brain snapshot and model hashes)
+- Validation:
+  - Development results per iteration in `reports/benchmarks/T280-iterations.md`; no sealed file read
+- Status: pending
+
+### T281 — Sealed runs and the owner's decision
+- Requirements: SR-M13, SR-M12
+- Depends: T280
+- Deliverables:
+  - On the owner's order, one sealed run per frozen candidate (at most three) on MATH-500, MMLU-Pro STEM and GPQA Diamond; report with gates B1-B6, Wilson intervals, cost and latency, leakage scan and model-free precision
+- Validation:
+  - Every sealed result is reported, failures included; the owner records qualified or not qualified per gate
+- Status: pending

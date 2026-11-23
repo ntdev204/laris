@@ -80,3 +80,16 @@ Tasks: T227, T228, T229, T230, T231, T232, T233, T234, T235
 Exit criteria:
 - The chat route answers from a third-party open-weight model chosen by the owner; answers cite vault passages or abstain.
 - The self-trained model code is removed; learning export is kept. No model is declared qualified by this phase.
+
+### Phase 57 — STEM benchmark qualification of the system (ADR-026)
+Goal: a light model inside a strong harness, retrieval and deterministic brain passes B1-B6 of ADR-026 on the sealed
+tests of MATH-500, MMLU-Pro STEM and GPQA Diamond, at a measured cost and response time. Owner direction 2026-11-23.
+Tasks: T274, T275, T276, T277, T278, T279, T280, T281
+Execution order: T274 ADR and gates -> T275 benchmark data, sealed splits, evaluator and bare-model baseline (owner fixes
+B2-B4) -> T276 deterministic solver -> T277 verified STEM knowledge in the brain -> T278 STEM router and harness ->
+T279 cost and latency -> T280 development iterations -> T281 sealed runs and the owner's decision.
+Exit criteria:
+- ADR-026 accepted; thresholds B2-B4 recorded by the owner before any tuning on the benchmarks.
+- Every change is measured on development splits only; each sealed test is run once per frozen candidate (at most three).
+- Leakage scan 0 hits (B6) and 0 wrong model-free answers (B5) on the snapshot that is sealed-run.
+- No training, fine-tuning or optimiser step; no network in gate runs. The system stays NOT QUALIFIED until B1-B6 pass.
