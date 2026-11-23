@@ -787,6 +787,79 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-23 (owner: "Thực hiện T278"; harness in Python for the evaluation profile, with a later task for the Rust server: T284; the agent may start and stop the stack for the run). Branch `feature/T278-stem-router-harness`. Done: `laris.research.stem.router` (computable: open answer or at least half of the options with a digit; knowledge: word options, question of at most 40 words; reasoning: the rest; item shape only, never the gold answer) and `laris.research.stem.harness` (model-free path of T276; five passages of the frozen snapshot `stem-t277-2` through `laris-server brain retrieve` before the T275 prompt for knowledge and reasoning; draft with the T275 prompt and seed, one retry with "keep the reasoning short" for an unparsed or truncated draft; the model's formalisation into one solver call, `repair` for mechanical faults (assignment, names the solver keeps, substitutions on an operation that does not read them, unread fields), the solver's `verified` result against the draft, review on disagreement, the solver's answer when no draft is readable; a notes check that asks for a review when exactly one option is backed by one passage and the draft chose another; answers without citations; every step and its cost recorded, no item text); `scripts/stem_benchmarks.py harness` and `harness-report`; section `harness` of `configs/stem-benchmarks.json`. Tests: 26 (31 cases) in `tests/unit/stem/test_harness.py` (scripted model and solver; repairs against the real solver). Result (`reports/benchmarks/T278-harness.md`, development only, vLLM BF16, thinking off, 64 at once, 46.7 min): MATH 451/500 = 90.2 % (87.3-92.5; T275 86.6 %), MMLU-Pro STEM 986/1,175 = 83.9 % (81.7-85.9; T275 79.8 %), GPQA main minus Diamond 150/250 = 60.0 % (53.8-65.9; T275 49.2 %); model-free 29 answered, 0 wrong. The first drafts score as T275 (397+29 / 933 / 122); the gain is the retry of truncated drafts (+25 / +50 / +28); notes in the prompt change nothing measurable; draft and verified solver agree on 185 items, 182 right; a review after a disagreement changes verdicts both ways (MATH 3 and 3) for one more call on 141 items. Cost: 1.9-2.3 model calls per item; median 63.6 / 57.7 / 109.7 s, p95 238.8 / 246.5 / 282.3 s (T275 36.6 / 46.1 / 87.4 and 106.8 / 128.8 / 140.9), peak 15.05 GB: B4's p95 is not met. Found and fixed: `docker/laris.sh` ignores a shell `LARIS_ENGINE_PORT`, so the documented command never opened the port; owner: one port, set only in `docker/laris.env`, read there by the runner too (compose has no default, `LARIS_STEM_ENGINE_URL` removed); the summary's code revision is taken at the start. The owner opened a discussion of the brain's role (certain knowledge as a reference; a certain answer from the brain phrased by Qwen, else brain first, then the reasoning model), which may amend ADR-024 and shape T284; nothing changed yet. The model and the system are NOT QUALIFIED.
 
+### T285 — Admissible sources and the certainty a brain-only answer needs
+- Requirements: SR-M13, SR-K2, SR-K3
+- Depends: T278
+- Deliverables:
+  - Source classes in configuration (no list in code): pinned textbooks (the OpenStax commits of T277), reference
+    tables (NIST CODATA, CIAAW) and peer-reviewed journal papers; a paper is admissible when its DOI resolves (Crossref
+    or OpenAlex, response hash recorded at import), it is not retracted, its venue is on the owner's configured list and
+    its full text has a licence that allows storing it (CC BY or CC0, as T277); acquisition script for papers in the
+    manner of `scripts/acquire_openstax.py` (network at import only; gate and evaluation runs stay offline)
+  - One rule, "certain", used by the model-free answer from the brain (T278) and by the deployed decider: level
+    `sourced` or higher, an admissible Source with its resolution record, and the Claim's quote found again at its
+    recorded location with the recorded hash; anything else is context for the model, never a brain-only answer
+  - A new frozen snapshot (the T277 snapshot stays frozen) with the papers the owner approves; its counts per source
+    class
+- Validation:
+  - Tests: an unresolvable DOI, a retracted paper, a venue off the list, a closed licence and a quote moved or edited
+    are each refused or not certain, by name; a seeded model-only Claim stays refused (SR-K3)
+  - B6 leakage scan 0 hits on the new snapshot; precision of brain-only answers on development items reported (B5
+    needs 0 wrong); counts of what was refused and why
+- Status: pending
+- Note: created 2026-11-23 from the owner's answer on what counts as certain ("tài liệu khoa học như paper ở tạp chí
+  uy tín, kiến thức cơ bản đến nâng cao STEM (sách giáo khoa)") and the agent's analysis the owner accepted ("điểm 1
+  như phân tích"): a source is certain only when it resolves and the quote matches a passage, not by its name alone.
+  Open for the owner: the venue list and the papers to take. Writing model-inferred knowledge back into the brain was
+  set aside by the owner ("Điểm 2 bỏ qua"). The model and the system are NOT QUALIFIED.
+
+### T286 — Prompt filter before the brain
+- Requirements: SR-M13, SR-H10
+- Depends: T285
+- Deliverables:
+  - A deterministic, model-free stage that every prompt passes before retrieval, the router and the model: text
+    normalisation (Unicode, whitespace, LaTeX spelling), language, refusal of injected instructions and of prompts out
+    of the profile's scope (SR-H10), and extraction of quantities, units and named entities as structured fields; its
+    outcome is pass, pass with fields, or stop with a named rule and reason; it never answers and never reads the gold
+    answer
+  - Every stop and every change to the text recorded with the rule that made it; the extracted fields used as a
+    cross-check of the model's solver formalisation (T278), not as a formalisation of their own
+  - Rules and thresholds in configuration
+- Validation:
+  - A labelled fixture (development items, seeded injections, out-of-scope prompts), labelled by a reader other than
+    the one who wrote the rules or reviewed by the owner, with the number of items stated: precision and recall of
+    stop; false stops on development benchmark items reported by count (target 0); precision and recall of the
+    extracted quantities on a labelled sample
+  - Development accuracy and cost of the harness with and without the filter against T278
+- Status: pending
+- Note: created 2026-11-23 at the owner's request ("NLP phải là phần trước khi vào cả brain (lọc prompt, những gì
+  được đi tiếp)"). The model-free prose path tried on 2026-11-23 (0.6 % coverage, removed) showed that shallow NLP
+  cannot answer prose questions; this stage only filters and structures. The model and the system are NOT QUALIFIED.
+
+### T287 — The STEM router measured, and a router network only through a held-out gate
+- Requirements: SR-M13, SR-H14, SR-K5
+- Depends: T286
+- Deliverables:
+  - Every route decision recorded with its input features, rule and thresholds; the rules written down in ADR-026
+  - Routing labels on development items: each path (model-free solver, brain-only answer, notes and model, model and
+    solver, bare model) run on each item, the label is the paths that answer right; routing accuracy and confusion per
+    class; the oracle router as upper bound
+  - Baselines on the same items and engine: (a) the bare model (T275), (b) plain retrieval with no router and no
+    solver (top notes in the prompt), (c) the rule router of T278; accuracy with Wilson intervals, wrong brain-only or
+    solver answers (B5), cost and latency
+  - A small router network over the features only (no free text), in the manner of T169 to T171: prepared training
+    commands for the owner (SR-M3), validation on a cross-fitted part of the development pool, a held-out part of the
+    development pool sealed before training (the benchmark sealed tests are never read); gates fixed by the owner
+    before any number is seen: a gain over the rule router with a bootstrap lower bound above zero, no rise in wrong
+    model-free answers, calibration, abstention to the rule router; inference behind the `Decider` seam
+- Validation:
+  - Tests with a scripted model; the report states every baseline, failures included; the network replaces the rule
+    router only when its gates pass and the owner promotes it, otherwise the rule router stays
+- Status: pending
+- Note: created 2026-11-23 at the owner's request ("quyết định này rất quan trọng, liên quan đến kết quả nên phải kỹ
+  nhất"): rules first, a network only through a held-out gate as in T171, and both against the bare model and plain
+  retrieval. Nothing here trains; the training run is the owner's. The model and the system are NOT QUALIFIED.
+
 ### T279 — Cost and response time
 - Requirements: SR-M13, SR-M10
 - Depends: T278
