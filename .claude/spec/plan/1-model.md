@@ -84,9 +84,9 @@ Exit criteria:
 ### Phase 57 — STEM benchmark qualification of the system (ADR-026)
 Goal: a light model inside a strong harness, retrieval and deterministic brain passes B1-B6 of ADR-026 on the sealed
 tests of MATH-500, MMLU-Pro STEM and GPQA Diamond, at a measured cost and response time. Owner direction 2026-11-23.
-Tasks: T274, T275, T276, T277, T278, T279, T280, T281
+Tasks: T274, T275, T282, T276, T277, T278, T279, T280, T281
 Execution order: T274 ADR and gates -> T275 benchmark data, sealed splits, evaluator and bare-model baseline (owner fixes
-B2-B4) -> T276 deterministic solver -> T277 verified STEM knowledge in the brain -> T278 STEM router and harness ->
+B2-B4) -> T282 one engine for chat and evaluation (vLLM, BF16) -> T276 deterministic solver -> T277 verified STEM knowledge in the brain -> T278 STEM router and harness ->
 T279 cost and latency -> T280 development iterations -> T281 sealed runs and the owner's decision.
 Exit criteria:
 - ADR-026 accepted; thresholds B2-B4 recorded by the owner before any tuning on the benchmarks.

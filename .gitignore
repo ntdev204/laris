@@ -100,3 +100,6 @@ data/decision/
 docker/tls/*
 !docker/tls/.gitkeep
 docker/laris.env
+
+# STEM benchmark data, splits and run records (T275, ADR-026): outside Git; GPQA text never in Git
+data/benchmarks/

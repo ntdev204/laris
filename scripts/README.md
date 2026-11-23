@@ -13,6 +13,7 @@ compatibility wrappers plus documentation tooling.
 - `verify_model_block.py`: the no-training guard plus lint, types and the test suite.
 - `validate_spec.py`: validates the ledger (`.claude/spec`).
 - `benchmark_vault.py`: latency of the vault index.
+- `stem_benchmarks.py`: STEM benchmark download, seeded dev / sealed splits, 13-gram leakage scan and the bare-model baseline (T275, ADR-026; settings in `configs/stem-benchmarks.json`). Inference only.
 
 The dataset acquisition, partition, tokenizer and encoder training scripts were removed in T233 (D48).
 

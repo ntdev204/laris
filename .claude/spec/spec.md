@@ -180,7 +180,7 @@ changes in the ADR named in the task.
 | D55 | P1 additions | Optional `laris.steps`, `decision`, `evidence`; dropped from requests; `X-Laris-Protocol` bumped | accepted 2026-11-20 (ADR-025) |
 | D56 | Rollout | Every stage behind configuration, off by default until T243 passes | accepted 2026-11-20 (ADR-025) |
 | D57 | STEM gate benchmarks | MATH-500, MMLU-Pro (STEM categories), GPQA Diamond | decided by the owner 2026-11-23 (ADR-026, T274) |
-| D58 | STEM thresholds | B1 MATH-500 ≥ 95 %; B2 MMLU-Pro STEM, B3 GPQA Diamond and B4 cost/latency fixed by the owner after the measured baseline (T275) and before tuning | decided by the owner 2026-11-23 (ADR-026) |
+| D58 | STEM thresholds | B1 MATH-500 ≥ 95 %; B2 MMLU-Pro STEM ≥ 84.8 % and B4 median ≤ 60 s, p95 ≤ 180 s per item, peak VRAM ≤ 15.5 GB, fixed from the T275 baseline; B3 GPQA Diamond fixed after GPQA is measured with a thinking budget, before tuning on it | decided by the owner 2026-11-23 (ADR-026 0.2.0) |
 | D59 | Measured unit | The whole pipeline in an evaluation profile, pass@1; abstention, unparseable answer or timeout scores 0 | accepted 2026-11-23 (ADR-026) |
 | D60 | Closed book | No network or web tools in gate runs; frozen, hashed brain snapshot | accepted 2026-11-23 (ADR-026) |
 | D61 | Benchmark splits | Development: MATH train sample, seeded 20 % of MMLU-Pro STEM, GPQA main minus Diamond; sealed test run once per frozen candidate, at most three | accepted 2026-11-23 (ADR-026) |
