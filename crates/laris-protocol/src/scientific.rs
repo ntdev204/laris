@@ -1,5 +1,5 @@
 //! The scientific remote tools (SR-M2, T149): names, arguments and results of the model service's tool routes,
-//! served to the client through `POST /v1/laris/tools/{name}`.
+//! served to the client through `POST /v1/laris/tools/{name}`. `solve_stem` (T276) is the deterministic STEM solver.
 //!
 //! Every tool is deterministic and model-free. Arguments are what the model (or the client) sends in
 //! `ToolRequest.arguments`; results are what comes back in `ToolResponse.result`. A refusal (bad arguments, an input
@@ -25,16 +25,24 @@ pub const PARSE_BIBLIOGRAPHY: &str = "parse_bibliography";
 pub const ANALYSE_CITATIONS: &str = "analyse_citations";
 /// `mine_literature`: statistics over a set of documents.
 pub const MINE_LITERATURE: &str = "mine_literature";
+/// `solve_stem`: a structured STEM problem answered without a model, re-checked by an independent route (T276).
+pub const SOLVE_STEM: &str = "solve_stem";
 
 /// Every scientific tool, sorted by name (the order of `GET /v1/tools`).
-pub const TOOLS: [&str; 6] = [
+pub const TOOLS: [&str; 7] = [
     ANALYSE_CITATIONS,
     DETECT_LIMITATIONS,
     EXTRACT_DISCOURSE,
     MINE_LITERATURE,
     NORMALIZE_QUANTITIES,
     PARSE_BIBLIOGRAPHY,
+    SOLVE_STEM,
 ];
+
+/// `solve_stem` status: an independent route re-checked the answer.
+pub const STATUS_VERIFIED: &str = "verified";
+/// `solve_stem` status: the answer was not (or not fully) re-checked; it must not be presented as checked.
+pub const STATUS_PROPOSAL: &str = "proposal";
 
 /// The arguments or the input were refused as malformed.
 pub const ERR_INVALID_ARGUMENTS: &str = "invalid_arguments";
@@ -44,6 +52,8 @@ pub const ERR_INPUT_TOO_LARGE: &str = "input_too_large";
 pub const ERR_REJECTED: &str = "rejected";
 /// The tool failed unexpectedly; nothing of the failure is reported.
 pub const ERR_TOOL_FAILED: &str = "tool_failed";
+/// The solver's worker ran past `model_service.solver_timeout_s` and was stopped.
+pub const ERR_TIMED_OUT: &str = "timed_out";
 
 /// Arguments of `extract_discourse`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -339,4 +349,74 @@ pub struct CitationResult {
     /// The report of the requested kind.
     #[serde(flatten)]
     pub report: Map<String, Value>,
+}
+
+/// Arguments of `solve_stem`: the operation and the fields it reads (`expression`, `variable`, `matrix`, `integers`,
+/// `value`, `unit`, `target_unit`, `constant`, `reaction`, ...; the tool list carries the full schema). A field the
+/// operation does not read is refused.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct SolveStemArgs {
+    /// One of the solver's operations (`evaluate`, `solve`, `integrate`, `determinant`, `gcd`, `convert_unit`,
+    /// `constant`, `balance`, ...).
+    pub operation: String,
+    /// The operation's fields.
+    #[serde(flatten)]
+    pub fields: Map<String, Value>,
+}
+
+/// One independent check of a `solve_stem` answer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SolverCheck {
+    /// How the answer was re-checked (for example `mpmath identity at seeded points`).
+    pub route: String,
+    /// Whether it agreed.
+    pub passed: bool,
+    /// Why it did not, when it did not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+/// A source of data a `solve_stem` answer used (the CODATA table).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SolverSource {
+    /// Name and release, for example `CODATA 2022 (NIST)`.
+    pub name: String,
+    /// Where the data was published.
+    pub url: String,
+    /// SHA-256 of the file the solver read.
+    pub sha256: String,
+}
+
+/// Result of `solve_stem`. `status` is `verified` only when every check ran and passed; otherwise `proposal`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct SolveStemResult {
+    /// The operation that ran.
+    pub operation: String,
+    /// Its domain (`algebra`, `calculus`, `linear_algebra`, `number_theory`, `units`, `constants`, `chemistry`).
+    pub domain: String,
+    /// `verified` or `proposal`.
+    pub status: String,
+    /// The answer as a JSON value (a string, a list, an object, a number or a boolean).
+    pub answer: Value,
+    /// The answer as one line.
+    pub text: String,
+    /// The independent checks.
+    pub checks: Vec<SolverCheck>,
+    /// Versions of the libraries that computed it.
+    pub engine: BTreeMap<String, String>,
+    /// The answer in LaTeX, when it is an expression.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub latex: Option<String>,
+    /// The numeric value, when the answer is a number.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub numeric: Option<String>,
+    /// Remarks (an unchecked completeness, a constant used).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
+    /// Data sources used.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sources: Vec<SolverSource>,
+    /// Fields of a newer peer.
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
 }

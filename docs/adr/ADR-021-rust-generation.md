@@ -126,3 +126,17 @@ only (the loopback port for the benchmark runner is an opt-in overlay without ma
 system, all capabilities dropped, usage statistics off. The `chat` extra (`torch`, `transformers`, `bitsandbytes`)
 stays for the in-process `OpenWeightChat` and the transformers parity engine of T275; the packaged default no longer
 builds it.
+
+## Addendum 2026-11-23: SymPy and CODATA in the model block (T276)
+
+The owner approved SymPy 1.14.0 and the NIST CODATA 2022 table on 2026-11-23 for the deterministic STEM solver of
+ADR-026 (tool `solve_stem`, package `laris.model.solver`). SymPy (BSD-3-Clause) and its required dependency mpmath
+1.3.0 (BSD-3-Clause) are pinned in the `model` extra, so the model service image carries them; neither was new to the
+lock file (both came in through `torch`), and no other package was added. The CODATA table is NIST's ASCII listing of
+the 2022 adjustment (`https://physics.nist.gov/cuu/Constants/Table/allascii.txt`, last modified 2024-05-07,
+40,801 bytes, SHA-256 `77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67`), shipped as package data;
+the solver refuses a table whose hash differs from `model_service.solver_codata_sha256`. Constraints: input is parsed
+by Python's `ast` against a whitelist and the SymPy tree is built from it (SymPy's own parser, which evaluates
+Python, is never given input); every call runs in a forked worker with `solver_timeout_s` and an address-space
+ceiling of `solver_memory_bytes`. No table of atomic weights is shipped: molar masses come from the caller until the
+owner approves a source.

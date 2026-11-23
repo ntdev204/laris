@@ -179,6 +179,27 @@ model_service:
   queue_wait_timeout_s: 60.0
   tool_max_chars: 2000000
   tool_max_documents: 200
+  solver_timeout_s: 10.0
+  solver_memory_bytes: 2147483648
+  solver_isolate: true
+  solver_max_expression_chars: 4000
+  solver_max_nodes: 2000
+  solver_max_integer_digits: 1000
+  solver_max_exponent: 10000
+  solver_max_matrix_size: 12
+  solver_max_items: 64
+  solver_max_sum_terms: 100000
+  solver_max_result_chars: 20000
+  solver_working_digits: 50
+  solver_output_digits: 15
+  solver_check_points: 6
+  solver_check_seed: 276
+  solver_check_tolerance: 1.0e-20
+  solver_limit_tolerance: 1.0e-06
+  solver_quad_tolerance: 1.0e-15
+  solver_unit_tolerance: 1.0e-08
+  solver_codata_file: ''
+  solver_codata_sha256: 77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67
 
 # Chat application and document workspace.
 app:

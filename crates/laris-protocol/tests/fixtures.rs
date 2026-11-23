@@ -502,6 +502,11 @@ fn scientific_tool_fixtures_round_trip_and_validate() {
         "AnalyseCitationsArgs",
         "CitationResult",
     );
+    tool_pair::<SolveStemArgs, SolveStemResult>(SOLVE_STEM, "SolveStemArgs", "SolveStemResult");
+    let solved: SolveStemResult =
+        serde_json::from_value(scientific("solve_stem.response.json")["result"].clone()).unwrap();
+    assert_eq!(solved.status, STATUS_VERIFIED);
+    assert!(solved.checks.iter().all(|c| c.passed));
     let mining = scientific("mine_literature.request.json");
     round_trip::<MineLiteratureArgs>(&mining["arguments"], MINE_LITERATURE);
     assert_schema(

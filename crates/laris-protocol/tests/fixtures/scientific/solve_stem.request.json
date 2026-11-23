@@ -1,0 +1,7 @@
+{
+ "arguments": {
+  "operation": "solve",
+  "expression": "x^2 - 5*x + 6 = 0",
+  "variable": "x"
+ }
+}

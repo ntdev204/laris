@@ -71,6 +71,14 @@ its Apache-2.0 header and gets a "Modified by LARIS" note plus the origin commit
 
 Crates approved in T119 but not yet used are listed in `deny.toml`; each row is added here when its task vendors it.
 
+## Python packages and data of the model image (not vendored)
+
+| Component | Version | Licence | Used by | Task |
+| --- | --- | --- | --- | --- |
+| SymPy | 1.14.0 | BSD-3-Clause | `laris.model.solver` (`solve_stem`), `laris.research.stem.answers` | T276 (owner approval 2026-11-23) |
+| mpmath | 1.3.0 | BSD-3-Clause | SymPy; the solver's independent numeric checks | T276 |
+| CODATA 2022 fundamental physical constants | NIST ASCII table, last modified 2024-05-07, SHA-256 `77fb90e6…3f67e67` | NIST data, cited as CODATA 2022 (NIST) | `src/laris/model/solver/data/codata-2022-allascii.txt` | T276 (owner approval 2026-11-23) |
+
 ## Tools (not vendored)
 
 `cargo-deny` 0.20.2 (CI and local), `cross` and `minisign` (release, ADR-021 section 4), `uv` (Python environment).

@@ -42,7 +42,7 @@ def spans_through_tool(tools: ToolBox, text: str):
 
 def test_schemas_are_function_schemas_and_stable(tools):
     names = [s["function"]["name"] for s in tools.schemas()]
-    assert names == sorted(names) and len(names) == 6
+    assert names == sorted(names) and len(names) == 7  # six scholarly tools and solve_stem (T276)
     for schema in tools.schemas():
         assert schema["type"] == "function"
         params = schema["function"]["parameters"]
@@ -214,7 +214,7 @@ def test_route_lists_and_runs_tools(app, tools):
         app, "POST", "/v1/tools/normalize_quantities", {"arguments": {"text": "5 K"}}
     )
     assert status == 200 and body["result"][0]["raw_unit"] == "K" and "error" not in body
-    assert call(app, "GET", "/health")[1]["tools"] == 6
+    assert call(app, "GET", "/health")[1]["tools"] == 7
 
 
 def test_route_errors(app):
