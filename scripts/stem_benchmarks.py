@@ -817,7 +817,7 @@ def cmd_filter_eval(args: argparse.Namespace) -> int:
     fcfg = config["harness"]["filter"]
     rules_path = ROOT / fcfg["rules"]
     screen = pf.load(rules_path, ROOT)
-    fixture = ROOT / fcfg["fixture"]
+    fixture = ROOT / (args.fixture or fcfg["fixture"])
     prompts = json.loads((fixture / "prompts.json").read_text(encoding="utf-8"))
     rows = prompts["items"]
     pairs = [
@@ -989,6 +989,7 @@ def main(argv: List[str] | None = None) -> int:
     harness.set_defaults(func=cmd_harness)
     feval = sub.add_parser("filter-eval")
     feval.add_argument("--run", default="")
+    feval.add_argument("--fixture", default="", help="folder with prompts.json and quantities.json")
     feval.set_defaults(func=cmd_filter_eval)
     hrep = sub.add_parser("harness-report")
     hrep.add_argument("summary")
