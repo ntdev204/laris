@@ -1,0 +1,606 @@
+{
+ "labeller": "independent agent, held-out set",
+ "source": "mmlu_pro_stem dev, physics/chemistry/engineering, positions 40-79 by SHA-256 of id",
+ "items": [
+  {
+   "id": "mmlu_pro/4477",
+   "quantities": [
+    {
+     "value": 0.36,
+     "unit": "mol"
+    },
+    {
+     "value": 0.36,
+     "unit": "mol"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4332",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/9410",
+   "quantities": [
+    {
+     "value": 1.0,
+     "unit": "Wb/m^2"
+    },
+    {
+     "value": 1000000.0,
+     "unit": "m/s"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/12049",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/3607",
+   "quantities": [
+    {
+     "value": 1.0,
+     "unit": "g"
+    },
+    {
+     "value": 30.0,
+     "unit": "%"
+    },
+    {
+     "value": 0.6,
+     "unit": "g"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9943",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/9151",
+   "quantities": [
+    {
+     "value": 2.0,
+     "unit": "mm"
+    },
+    {
+     "value": 325.0,
+     "unit": "nm"
+    },
+    {
+     "value": 488.0,
+     "unit": "nm"
+    },
+    {
+     "value": 1.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9697",
+   "quantities": [
+    {
+     "value": 4e-08,
+     "unit": "m"
+    },
+    {
+     "value": 1210000.0,
+     "unit": "m/s"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4337",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/11514",
+   "quantities": [
+    {
+     "value": 100.0,
+     "unit": "%"
+    },
+    {
+     "value": 100.0,
+     "unit": "kPa"
+    },
+    {
+     "value": 25.0,
+     "unit": "°C"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11486",
+   "quantities": [
+    {
+     "value": 0.0,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/12023",
+   "quantities": [
+    {
+     "value": 3.0,
+     "unit": "in"
+    },
+    {
+     "value": 3.0,
+     "unit": "in"
+    },
+    {
+     "value": 100.0,
+     "unit": "rpm"
+    },
+    {
+     "value": 1200.0,
+     "unit": "lbs"
+    },
+    {
+     "value": 0.025,
+     "unit": ""
+    },
+    {
+     "value": 60.0,
+     "unit": "°F"
+    },
+    {
+     "value": 1.0,
+     "unit": "lb/min"
+    },
+    {
+     "value": 0.45,
+     "unit": "Btu/lb*°F"
+    },
+    {
+     "value": 60.0,
+     "unit": "°F"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9226",
+   "quantities": [
+    {
+     "value": 220.0,
+     "unit": "Hz"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/10225",
+   "quantities": [
+    {
+     "value": 560.0,
+     "unit": "cm^-1"
+    },
+    {
+     "value": 0.244,
+     "unit": "cm^-1"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4010",
+   "quantities": [
+    {
+     "value": 40.0,
+     "unit": "ml"
+    },
+    {
+     "value": 0.1,
+     "unit": "M"
+    },
+    {
+     "value": 10.0,
+     "unit": "ml"
+    },
+    {
+     "value": 0.45,
+     "unit": "M"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11693",
+   "quantities": [
+    {
+     "value": 2.0,
+     "unit": "A"
+    },
+    {
+     "value": 20.0,
+     "unit": "J"
+    },
+    {
+     "value": 500.0,
+     "unit": "V"
+    },
+    {
+     "value": 20.0,
+     "unit": "J"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3663",
+   "quantities": [
+    {
+     "value": 106000000.0,
+     "unit": "Kcal/mol"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9255",
+   "quantities": [
+    {
+     "value": 25.0,
+     "unit": "°C"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9759",
+   "quantities": [
+    {
+     "value": 2000.0,
+     "unit": "°K"
+    },
+    {
+     "value": 0.0125,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4105",
+   "quantities": [
+    {
+     "value": 0.751,
+     "unit": "atm*dm^6/mol^2"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9645",
+   "quantities": [
+    {
+     "value": 40000.0,
+     "unit": "N*m^2/C"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11766",
+   "quantities": [
+    {
+     "value": 125.0,
+     "unit": "kW"
+    },
+    {
+     "value": 250.0,
+     "unit": "V"
+    },
+    {
+     "value": 1800.0,
+     "unit": "rev/min"
+    },
+    {
+     "value": 0.025,
+     "unit": "Ω"
+    },
+    {
+     "value": 0.01,
+     "unit": "Ω"
+    },
+    {
+     "value": 30.0,
+     "unit": "Ω"
+    },
+    {
+     "value": 5000.0,
+     "unit": "W"
+    },
+    {
+     "value": 1800.0,
+     "unit": "rev/min"
+    },
+    {
+     "value": 5.0,
+     "unit": "A"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/12126",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/12245",
+   "quantities": [
+    {
+     "value": 0.2248,
+     "unit": "lbm/ft*sec"
+    },
+    {
+     "value": 4.0,
+     "unit": "in"
+    },
+    {
+     "value": 24000.0,
+     "unit": "lbf/ft^2"
+    },
+    {
+     "value": 1.5,
+     "unit": "in"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4615",
+   "quantities": [
+    {
+     "value": 298.15,
+     "unit": "K"
+    },
+    {
+     "value": 1.0,
+     "unit": "atm"
+    },
+    {
+     "value": 100.0,
+     "unit": "atm"
+    },
+    {
+     "value": 298.0,
+     "unit": "K"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4072",
+   "quantities": [
+    {
+     "value": 0.1665,
+     "unit": "mol"
+    },
+    {
+     "value": 500.0,
+     "unit": "mL"
+    },
+    {
+     "value": 0.0003,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3530",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/3764",
+   "quantities": [
+    {
+     "value": 4.0,
+     "unit": ""
+    },
+    {
+     "value": 0.5,
+     "unit": "mol/L"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11576",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/12078",
+   "quantities": [
+    {
+     "value": 0.055,
+     "unit": "Ω"
+    },
+    {
+     "value": 32.0,
+     "unit": "Ω"
+    },
+    {
+     "value": 1400.0,
+     "unit": "r/min"
+    },
+    {
+     "value": 6.0,
+     "unit": "in"
+    },
+    {
+     "value": 57.0,
+     "unit": "lbs"
+    },
+    {
+     "value": 105.0,
+     "unit": ""
+    },
+    {
+     "value": 35.0,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9416",
+   "quantities": [
+    {
+     "value": 2.0,
+     "unit": "cm"
+    },
+    {
+     "value": 18.0,
+     "unit": "m/s"
+    },
+    {
+     "value": 3.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4397",
+   "quantities": [
+    {
+     "value": 10.0,
+     "unit": "g"
+    },
+    {
+     "value": 25.0,
+     "unit": "°C"
+    },
+    {
+     "value": 9.25,
+     "unit": "mmHg"
+    },
+    {
+     "value": 10.0,
+     "unit": "g"
+    },
+    {
+     "value": 0.0821,
+     "unit": "L*atm/mol*°K"
+    },
+    {
+     "value": 1.86,
+     "unit": "°C/m"
+    },
+    {
+     "value": 0.52,
+     "unit": "°C/m"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4028",
+   "quantities": [
+    {
+     "value": 58.7,
+     "unit": ""
+    },
+    {
+     "value": 7.34,
+     "unit": "g"
+    },
+    {
+     "value": 0.25,
+     "unit": "g"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4614",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/11767",
+   "quantities": [
+    {
+     "value": 0.5,
+     "unit": ""
+    },
+    {
+     "value": 1.0,
+     "unit": ""
+    },
+    {
+     "value": 0.5,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4242",
+   "quantities": [
+    {
+     "value": 6.09,
+     "unit": "g/cm^3"
+    },
+    {
+     "value": 35.0,
+     "unit": "°C"
+    },
+    {
+     "value": 1.0,
+     "unit": "atm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9892",
+   "quantities": [
+    {
+     "value": 5.18,
+     "unit": "Ω"
+    },
+    {
+     "value": 200.0,
+     "unit": "cm"
+    },
+    {
+     "value": 0.35,
+     "unit": "Ω"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4648",
+   "quantities": [
+    {
+     "value": 0.5,
+     "unit": "M"
+    },
+    {
+     "value": 0.1,
+     "unit": "mol/L"
+    },
+    {
+     "value": 1.75e-05,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11552",
+   "quantities": [
+    {
+     "value": 8.0,
+     "unit": "kw"
+    },
+    {
+     "value": 20.0,
+     "unit": "A"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11294",
+   "quantities": [
+    {
+     "value": 1500.0,
+     "unit": "lbm"
+    },
+    {
+     "value": 160.0,
+     "unit": "°F"
+    },
+    {
+     "value": 1100.0,
+     "unit": "psig"
+    }
+   ]
+  }
+ ]
+}

@@ -98,6 +98,7 @@
   "harness": {
     "mode": "thinking_off",
     "concurrency": 64,
+    "filter": {"enabled": true, "rules": "configs/prompt-filter.json", "fixture": "tests/fixtures/prompt_filter", "note": "T286: every prompt passes the filter before retrieval, the router and the model; a stop scores 0"},
     "router": {
       "numeric_option_share": 0.5,
       "knowledge_max_question_words": 40
@@ -128,6 +129,7 @@
       "option_rel_tol": 0.02,
       "max_concurrency": 8
     },
+    "formalisation_check": {"action": "record", "free_values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 100, 1000, 0.5, 0.25, 273.15, 273, 60, 3600, 24, 360, 180, 9.8, 9.81, 1.8, 32], "rel_tol": 1e-6, "scale_exponents": [-12, -9, -6, -3, -2, 2, 3, 6, 9, 12], "scale_factors": [60, 3600, 0.01, 1000], "note": "T286: numbers of a verified solver call checked against the quantities the filter found; record: noted only; gate: an ungrounded number makes the result unverified"},
     "notes_check": {
       "enabled": true,
       "min_option_words": 2

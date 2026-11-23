@@ -8,6 +8,7 @@
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
     python scripts/stem_benchmarks.py solver          # T276: model-free solver path on dev splits
     python scripts/stem_benchmarks.py harness [--bench B] [--limit N]  # T278: router and harness
+    python scripts/stem_benchmarks.py filter-eval    # T286: prompt filter on its fixture and dev
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
 splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
@@ -633,6 +634,23 @@ def cmd_harness(args: argparse.Namespace) -> int:
         if args.limit:
             items = items[: args.limit]
         work += [(bench, i) for i in items if i["id"] not in done]
+    fcfg = hcfg.get("filter") or {}
+    screens: Dict[str, Any] = {}
+    stopped: List[Any] = []
+    if fcfg.get("enabled") and not args.no_filter:
+        from laris.research.stem import prompt_filter as pf
+
+        screen = pf.load(ROOT / fcfg["rules"], ROOT)
+        kept = []
+        for bench, item in work:  # the gold answer is not handed to the filter
+            out = screen.screen({"question": item["question"], "options": item["options"]})
+            screens[item["id"]] = out
+            if out.stopped:
+                stopped.append((bench, item))
+            else:
+                kept.append((bench, dict(item, question=out.question, options=out.options)))
+        work = kept
+        print(f"filter: {len(kept)} passed, {len(stopped)} stopped", flush=True)
     wanted = [
         (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
     ]
@@ -670,7 +688,14 @@ def cmd_harness(args: argparse.Namespace) -> int:
         began = time.perf_counter()
         seed = seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
         has_notes = item["id"] in notes
-        trace = harness.answer(item, seed, notes.get(item["id"]), certain.get(item["id"]))
+        screened = screens.get(item["id"])
+        trace = harness.answer(
+            item,
+            seed,
+            notes.get(item["id"]),
+            certain.get(item["id"]),
+            screened.quantities if screened is not None else None,
+        )
         seconds = time.perf_counter() - began + (retrieval_share if has_notes else 0.0)
         final = score_answer(item, trace.final, eq)
         draft = score_answer(item, trace.draft, eq) if trace.draft is not None else False
@@ -693,11 +718,38 @@ def cmd_harness(args: argparse.Namespace) -> int:
             "finished_at": time.time(),
             "cost": cost.as_dict(),
         }
+        if screened is not None:
+            record["filter"] = screened.record()
         trace_dict = trace.as_dict()
         for key in ("prompt_tokens", "generated_tokens", "model_calls", "solver_calls"):
             trace_dict.pop(key)
         record.update(trace_dict)
         return json.dumps(record)
+
+    def stop_record(bench: str, item: Dict[str, Any]) -> str:
+        out = screens[item["id"]]
+        decided = route(item, hcfg["router"])
+        record = {
+            "id": item["id"],
+            "bench": bench,
+            "category": item["category"],
+            "mode": hcfg["mode"],
+            "extracted": None,
+            "correct": False,
+            "draft_correct": False,
+            "finished_at": time.time(),
+            "cost": stats.CostRecord(0.0, 0, 0, 0, 0, 0).as_dict(),
+            "filter": out.record(),
+            "cls": decided.cls,
+            "rule": decided.rule,
+            "final_from": "filter_stop",
+            "steps": [{"step": "filter", "rule": out.rule}],
+        }
+        return json.dumps(record)
+
+    with open(out_path, "a", encoding="utf-8") as handle:
+        for bench, item in stopped:
+            handle.write(stop_record(bench, item) + "\n")
 
     lock, count = threading.Lock(), 0
     with VramSampler() as sampler, ThreadPoolExecutor(max_workers=int(hcfg["concurrency"])) as pool:
@@ -730,6 +782,11 @@ def cmd_harness(args: argparse.Namespace) -> int:
         "harness_config_sha256": hashlib.sha256(
             json.dumps(hcfg, sort_keys=True).encode("utf-8")
         ).hexdigest(),
+        "filter_rules_sha256": (
+            hashlib.sha256((ROOT / fcfg["rules"]).read_bytes()).hexdigest()
+            if fcfg.get("enabled") and not args.no_filter
+            else None
+        ),
         "equivalence_protocol": answers.EQUIVALENCE_PROTOCOL,
         "baseline_run": args.baseline_run if baseline else None,
         "peak_vram_bytes_sampled": peak,
@@ -748,6 +805,78 @@ def cmd_harness(args: argparse.Namespace) -> int:
     summary_path = out_dir / f"{run}.summary.json"
     summary_path.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=1))
+    return 0
+
+
+def cmd_filter_eval(args: argparse.Namespace) -> int:
+    """T286: the prompt filter on its labelled fixture and on every development item (which must
+    all pass); quantities against the labelled sample. Read-only; no model, no network."""
+    from laris.research.stem import prompt_filter as pf
+
+    config = _config(args.config)
+    fcfg = config["harness"]["filter"]
+    rules_path = ROOT / fcfg["rules"]
+    screen = pf.load(rules_path, ROOT)
+    fixture = ROOT / (args.fixture or fcfg["fixture"])
+    prompts = json.loads((fixture / "prompts.json").read_text(encoding="utf-8"))
+    rows = prompts["items"]
+    pairs = [
+        (row["label"], screen.screen({"question": row["text"], "options": []})) for row in rows
+    ]
+    by_kind: Dict[str, Any] = {}
+    for kind in sorted({row["kind"] for row in rows}):
+        by_kind[kind] = pf.stop_scores([p for p, row in zip(pairs, rows) if row["kind"] == kind])
+    misses = [
+        {"id": row["id"], "label": label, "status": s.status, "rule": s.rule}
+        for (label, s), row in zip(pairs, rows)
+        if label.startswith("stop") != s.stopped
+    ]
+    dev: Dict[str, Any] = {}
+    changes: Dict[str, int] = {}
+    for bench in data.BENCHMARKS:
+        items = data.load_items(config, ROOT, bench, "dev")
+        outs = [screen.screen({"question": i["question"], "options": i["options"]}) for i in items]
+        rules: Dict[str, int] = {}
+        langs: Dict[str, int] = {}
+        for out in outs:
+            for rule, n in out.changes.items():
+                changes[rule] = changes.get(rule, 0) + n
+            if out.stopped:
+                rules[out.rule or ""] = rules.get(out.rule or "", 0) + 1
+            langs[out.language] = langs.get(out.language, 0) + 1
+        dev[bench] = {
+            "items": len(items),
+            "stopped": sum(1 for o in outs if o.stopped),
+            "stopped_ids": [i["id"] for i, o in zip(items, outs) if o.stopped],
+            "stop_rules": dict(sorted(rules.items())),
+            "changed_text": sum(1 for o in outs if o.changes),
+            "pass_fields": sum(1 for o in outs if o.status == pf.PASS_FIELDS),
+            "languages": dict(sorted(langs.items())),
+        }
+    sample = json.loads((fixture / "quantities.json").read_text(encoding="utf-8"))
+    items = {i["id"]: i for i in data.load_items(config, ROOT, "mmlu_pro_stem", "dev")}
+    qpairs = [
+        (row["quantities"], screen.quantities(items[row["id"]]["question"]))
+        for row in sample["items"]
+    ]
+    summary = {
+        "rules_sha256": hashlib.sha256(rules_path.read_bytes()).hexdigest(),
+        "fixture_sha256": {
+            name: hashlib.sha256((fixture / name).read_bytes()).hexdigest()
+            for name in ("prompts.json", "quantities.json")
+        },
+        "code_revision": code_revision(),
+        "fixture": pf.stop_scores(pairs),
+        "fixture_by_kind": by_kind,
+        "fixture_errors": misses,
+        "dev": dev,
+        "dev_changes": dict(sorted(changes.items())),
+        "quantities": pf.quantity_scores(qpairs),
+    }
+    out = ROOT / config["data_dir"] / "runs" / f"{args.run or 'filter-eval'}.summary.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(summary, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps(summary, indent=1, ensure_ascii=False))
     return 0
 
 
@@ -856,7 +985,12 @@ def main(argv: List[str] | None = None) -> int:
     harness.add_argument("--limit", type=int, default=0)
     harness.add_argument("--run", default="")
     harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
+    harness.add_argument("--no-filter", action="store_true", help="skip the T286 prompt filter")
     harness.set_defaults(func=cmd_harness)
+    feval = sub.add_parser("filter-eval")
+    feval.add_argument("--run", default="")
+    feval.add_argument("--fixture", default="", help="folder with prompts.json and quantities.json")
+    feval.set_defaults(func=cmd_filter_eval)
     hrep = sub.add_parser("harness-report")
     hrep.add_argument("summary")
     hrep.set_defaults(func=cmd_harness_report)

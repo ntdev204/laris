@@ -259,6 +259,7 @@ class Trace:
     solver_status: str = ""
     agreement: Optional[bool] = None
     notes: int = 0
+    crosscheck: Optional[Dict[str, Any]] = None
     prompt_tokens: int = 0
     generated_tokens: int = 0
     model_calls: int = 0
@@ -343,7 +344,7 @@ class Harness:
         return answer
 
     def _formalise(
-        self, item: Dict[str, Any], trace: Trace, seed: int
+        self, item: Dict[str, Any], trace: Trace, seed: int, quantities: Optional[List[Any]] = None
     ) -> Tuple[Optional[Dict], Optional[Dict]]:
         """The model's solver call and the solver's verified result (or None for either)."""
         template = self.prompts["formalise_choice" if item["options"] else "formalise_math"]
@@ -363,6 +364,15 @@ class Harness:
         trace.solver_status = status
         if status != "verified" or result is None:
             return problem, None
+        check = self.cfg.get("formalisation_check") or {}
+        if quantities is not None and check:
+            from laris.research.stem.prompt_filter import crosscheck
+
+            trace.crosscheck = crosscheck(problem, quantities, check)
+            trace.steps.append(dict(step="crosscheck", **trace.crosscheck))
+            if check.get("action") == "gate" and trace.crosscheck["ungrounded"]:
+                trace.solver_status = "verified_ungrounded"
+                return problem, None
         return problem, result
 
     def _solver_answer(self, item: Dict[str, Any], result: Dict[str, Any]) -> Optional[str]:
@@ -417,10 +427,12 @@ class Harness:
         seed: int,
         notes: Optional[List[str]] = None,
         certain: Optional[List[str]] = None,
+        quantities: Optional[List[Any]] = None,
     ) -> Trace:
         """`notes` are the passages shown to the model; `certain` the texts of the retrieved
         Claims that are certain (T285, `laris-server brain retrieve` with source classes), the
-        only ones a brain-only answer may rest on."""
+        only ones a brain-only answer may rest on; `quantities` those the prompt filter found in
+        the question (T286), read only to cross-check the model's solver formalisation."""
         decided = route(item, self.cfg["router"])
         trace = Trace(cls=decided.cls, rule=decided.rule)
         notes = list(notes or [])
@@ -461,7 +473,7 @@ class Harness:
         trace.final, trace.final_from = trace.draft, "draft"
 
         if decided.cls in self.cfg["formalise"]["classes"]:
-            problem, result = self._formalise(item, trace, seed + 7)
+            problem, result = self._formalise(item, trace, seed + 7, quantities)
             solved = self._solver_answer(item, result) if result is not None else None
             if solved is not None:
                 if trace.draft is None:
@@ -560,6 +572,20 @@ def summarise_records(
         else:
             slot["same"] += 1
     out["review_flips"] = reviews
+    checked = [r for r in rows if r.get("crosscheck")]
+    ungrounded = [r for r in checked if r["crosscheck"]["ungrounded"]]
+    out["crosscheck"] = {
+        "checked": len(checked),
+        "ungrounded": len(ungrounded),
+        "ungrounded_correct": sum(1 for r in ungrounded if r["correct"]),
+        "ungrounded_agreed": sum(1 for r in ungrounded if r.get("agreement") is True),
+        # what `action: gate` would have scored: an ungrounded solver result is ignored, so the
+        # draft stands (and an item that had only the solver's answer has none)
+        "gate_correct": sum(
+            1 for r in rows if (r.get("draft_correct") if r in ungrounded else r["correct"])
+        ),
+    }
+    out["filter_stops"] = sum(1 for r in rows if r.get("final_from") == "filter_stop")
     agreed = [r for r in rows if r.get("agreement") is True]
     out["solver_agreed"] = {"items": len(agreed), "correct": sum(1 for r in agreed if r["correct"])}
     if baseline is not None:

@@ -1,0 +1,663 @@
+{
+ "labeller": "independent agent (did not see the rules)",
+ "source": "mmlu_pro_stem dev, physics/chemistry/engineering, first 40 by SHA-256 of id",
+ "items": [
+  {
+   "id": "mmlu_pro/10194",
+   "quantities": [
+    {
+     "value": -4.5,
+     "unit": "1/m"
+    },
+    {
+     "value": 14.0,
+     "unit": "mm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4044",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/3743",
+   "quantities": [
+    {
+     "value": 0.037,
+     "unit": "nm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/10193",
+   "quantities": [
+    {
+     "value": 20.0,
+     "unit": "cm"
+    },
+    {
+     "value": 40.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4433",
+   "quantities": [
+    {
+     "value": 21.0,
+     "unit": ""
+    },
+    {
+     "value": 15.0,
+     "unit": "g"
+    },
+    {
+     "value": 12.0,
+     "unit": "L"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4149",
+   "quantities": [
+    {
+     "value": 300.0,
+     "unit": "K"
+    },
+    {
+     "value": 1.0,
+     "unit": "atm"
+    },
+    {
+     "value": 0.121,
+     "unit": ""
+    },
+    {
+     "value": 10.0,
+     "unit": "atm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4165",
+   "quantities": [
+    {
+     "value": 0.001,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9187",
+   "quantities": [
+    {
+     "value": 1e-08,
+     "unit": "sec"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3615",
+   "quantities": [
+    {
+     "value": 45.5,
+     "unit": "1/s*g"
+    },
+    {
+     "value": 6.5,
+     "unit": "1/s*g"
+    },
+    {
+     "value": 100.0,
+     "unit": "mg"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3640",
+   "quantities": [
+    {
+     "value": 154.433,
+     "unit": "pm"
+    },
+    {
+     "value": 154.051,
+     "unit": "pm"
+    },
+    {
+     "value": 77.8,
+     "unit": "pm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3719",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/9208",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/11404",
+   "quantities": [
+    {
+     "value": 0.85,
+     "unit": ""
+    },
+    {
+     "value": 0.46,
+     "unit": ""
+    },
+    {
+     "value": 110.0,
+     "unit": "°F"
+    },
+    {
+     "value": 60.0,
+     "unit": "°F"
+    },
+    {
+     "value": 0.05,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4470",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/10191",
+   "quantities": [
+    {
+     "value": 24.0,
+     "unit": "cm"
+    },
+    {
+     "value": 4.0,
+     "unit": "cm"
+    },
+    {
+     "value": 2.0,
+     "unit": "cm"
+    },
+    {
+     "value": 1.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9863",
+   "quantities": [
+    {
+     "value": 5890.0,
+     "unit": "Å"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9088",
+   "quantities": [
+    {
+     "value": 100.0,
+     "unit": "nt"
+    },
+    {
+     "value": 2.0,
+     "unit": "mm^2"
+    },
+    {
+     "value": 2.0,
+     "unit": "m"
+    },
+    {
+     "value": 0.5,
+     "unit": "mm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4362",
+   "quantities": [
+    {
+     "value": 1.0,
+     "unit": "atm"
+    },
+    {
+     "value": 1.01325,
+     "unit": "bar"
+    },
+    {
+     "value": 298.15,
+     "unit": "K"
+    },
+    {
+     "value": 2.0,
+     "unit": "mol"
+    },
+    {
+     "value": 15.0,
+     "unit": "dm^3"
+    },
+    {
+     "value": 300.0,
+     "unit": "K"
+    },
+    {
+     "value": 2.35,
+     "unit": "kJ"
+    },
+    {
+     "value": 341.0,
+     "unit": "K"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3835",
+   "quantities": [
+    {
+     "value": 1300.0,
+     "unit": "°C"
+    },
+    {
+     "value": 50.0,
+     "unit": "kg"
+    },
+    {
+     "value": 5.0,
+     "unit": "%"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9122",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/11878",
+   "quantities": [
+    {
+     "value": 0.31,
+     "unit": ""
+    },
+    {
+     "value": 4.0,
+     "unit": ""
+    },
+    {
+     "value": 2.5,
+     "unit": "mm"
+    },
+    {
+     "value": 291.0,
+     "unit": "K"
+    },
+    {
+     "value": 0.2,
+     "unit": "kmol/m^3"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9401",
+   "quantities": [
+    {
+     "value": 0.91,
+     "unit": "J/gm*K"
+    },
+    {
+     "value": 250.0,
+     "unit": "K"
+    },
+    {
+     "value": 15.0,
+     "unit": "kg"
+    },
+    {
+     "value": 0.39,
+     "unit": "J/gm*K"
+    },
+    {
+     "value": 375.0,
+     "unit": "K"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3876",
+   "quantities": [
+    {
+     "value": 2800000000.0,
+     "unit": ""
+    },
+    {
+     "value": 4500000.0,
+     "unit": ""
+    },
+    {
+     "value": 3.4,
+     "unit": "Å"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/10353",
+   "quantities": [
+    {
+     "value": 50.0,
+     "unit": "mm"
+    },
+    {
+     "value": 25.0,
+     "unit": "mm"
+    },
+    {
+     "value": 200.0,
+     "unit": "lines/mm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9147",
+   "quantities": [
+    {
+     "value": 1.8,
+     "unit": "μC"
+    },
+    {
+     "value": 55.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9100",
+   "quantities": [
+    {
+     "value": 402.0,
+     "unit": "m"
+    },
+    {
+     "value": 80.0,
+     "unit": "m/s"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4274",
+   "quantities": [
+    {
+     "value": 298.15,
+     "unit": "K"
+    },
+    {
+     "value": 29.4,
+     "unit": "kJ/mol"
+    },
+    {
+     "value": 334.88,
+     "unit": "K"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11540",
+   "quantities": [
+    {
+     "value": 1.0,
+     "unit": "ft^2"
+    },
+    {
+     "value": 0.252,
+     "unit": "in"
+    },
+    {
+     "value": 3.0,
+     "unit": "W"
+    },
+    {
+     "value": 24.0,
+     "unit": "°C"
+    },
+    {
+     "value": 26.0,
+     "unit": "°C"
+    },
+    {
+     "value": 25.0,
+     "unit": "°C"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/12145",
+   "quantities": [
+    {
+     "value": 62.4,
+     "unit": "lb/ft^3"
+    },
+    {
+     "value": 0.000672,
+     "unit": "lb/ft*sec"
+    },
+    {
+     "value": 0.25,
+     "unit": "in"
+    },
+    {
+     "value": 1.0,
+     "unit": "fps"
+    },
+    {
+     "value": 10.0,
+     "unit": "ft"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9877",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/12104",
+   "quantities": [
+    {
+     "value": 15.0,
+     "unit": "%"
+    },
+    {
+     "value": 950.0,
+     "unit": "lbs"
+    },
+    {
+     "value": 1300.0,
+     "unit": "rpm"
+    },
+    {
+     "value": 4.0,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/3899",
+   "quantities": [
+    {
+     "value": 35.0,
+     "unit": "g"
+    },
+    {
+     "value": 0.789,
+     "unit": "g/cm^3"
+    },
+    {
+     "value": 1.0,
+     "unit": "atm"
+    },
+    {
+     "value": 3000.0,
+     "unit": "atm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9245",
+   "quantities": [
+    {
+     "value": 300000000.0,
+     "unit": "m/sec"
+    },
+    {
+     "value": 30.0,
+     "unit": "cm"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4582",
+   "quantities": [
+    {
+     "value": 50.0,
+     "unit": "ml"
+    },
+    {
+     "value": 0.0005,
+     "unit": "M"
+    },
+    {
+     "value": 50.0,
+     "unit": "ml"
+    },
+    {
+     "value": 0.0002,
+     "unit": "M"
+    },
+    {
+     "value": 100.0,
+     "unit": "ml"
+    },
+    {
+     "value": 1.7e-10,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11709",
+   "quantities": [
+    {
+     "value": 3100.0,
+     "unit": "lbs"
+    },
+    {
+     "value": 2.5,
+     "unit": "in"
+    },
+    {
+     "value": 4.5,
+     "unit": "in"
+    },
+    {
+     "value": 3.0,
+     "unit": "in"
+    },
+    {
+     "value": 0.5,
+     "unit": "in"
+    },
+    {
+     "value": 38.0,
+     "unit": "in"
+    },
+    {
+     "value": 0.2,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/4545",
+   "quantities": [
+    {
+     "value": 104.0,
+     "unit": "g"
+    },
+    {
+     "value": 44.0,
+     "unit": ""
+    },
+    {
+     "value": 18.0,
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/9936",
+   "quantities": []
+  },
+  {
+   "id": "mmlu_pro/9106",
+   "quantities": [
+    {
+     "value": 1500000.0,
+     "unit": "m/s"
+    },
+    {
+     "value": 1.5,
+     "unit": "T"
+    },
+    {
+     "value": 30.0,
+     "unit": "°"
+    },
+    {
+     "value": 4.0,
+     "unit": "s"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/10047",
+   "quantities": [
+    {
+     "value": 0.5,
+     "unit": "m"
+    },
+    {
+     "value": 100.0,
+     "unit": "kg"
+    },
+    {
+     "value": 1200.0,
+     "unit": "kg/m^3"
+    }
+   ]
+  },
+  {
+   "id": "mmlu_pro/11583",
+   "quantities": [
+    {
+     "value": 1.0,
+     "unit": "lbm"
+    },
+    {
+     "value": 15.0,
+     "unit": "lbm"
+    },
+    {
+     "value": 85.0,
+     "unit": "°F"
+    },
+    {
+     "value": 20.0,
+     "unit": "psia"
+    }
+   ]
+  }
+ ]
+}
