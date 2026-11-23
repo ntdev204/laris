@@ -101,7 +101,8 @@
     "filter": {"enabled": true, "rules": "configs/prompt-filter.json", "fixture": "tests/fixtures/prompt_filter", "note": "T286: every prompt passes the filter before retrieval, the router and the model; a stop scores 0"},
     "router": {
       "numeric_option_share": 0.5,
-      "knowledge_max_question_words": 40
+      "knowledge_max_question_words": 40,
+      "network": null
     },
     "model_free": true,
     "brain_only": {"enabled": false, "min_option_words": 2, "note": "T285: answer from one certain Claim alone; off until B5 (0 wrong) is shown on development"},
@@ -141,6 +142,26 @@
       "formalise_choice": "Translate the problem below into one call of a computer algebra system. Do not solve the problem yourself.\n\nWrite one JSON object inside ```json ... ```: an \"operation\" and its fields. Operations and their fields:\n- evaluate: expression, substitutions (an object: name -> number, or {\"constant\": \"<CODATA symbol, e.g. h, c, k_B, N_A, e, m_e, G>\"})\n- simplify, expand, factor: expression\n- solve: expression (an equation), variable, domain (\"real\" or \"complex\")\n- solve_system: expressions, variables\n- differentiate: expression, variable, order\n- integrate: expression, variable, lower, upper\n- limit: expression, variable, point, direction\n- sum: expression, variable, lower, upper (oo for infinity)\n- determinant, inverse, rank, eigenvalues: matrix; solve_linear: matrix, vector\n- gcd, lcm: integers; mod_pow: base, exponent, modulus; mod_inverse: integer, modulus; crt: integers, moduli\n- totient, divisors, factorial, factor_integer, is_prime: integer; binomial: n, k; to_base: integer, base; from_base: digits, base\n- convert_unit: value, unit, target_unit\n- balance: reaction; molar_mass: formula\nRules: prefer evaluate, with the formula already solved for the quantity asked and the given numbers written into it or into substitutions; only evaluate reads substitutions. Expressions use plain syntax: x^2 - 5*x + 6 = 0, sqrt(2), pi, log(x), exp(x), sin(x); no LaTeX, no units and no other functions. Angles are in radians (40 degrees is 40*pi/180). Every JSON value is a number, a string, a list or an object: write arithmetic only inside the expression string. A CODATA constant is a substitution {\"constant\": \"<symbol>\"}. Put quantities in SI units or in the unit asked for. Example: ```json\n{\"operation\": \"evaluate\", \"expression\": \"h*c/lam\", \"substitutions\": {\"h\": {\"constant\": \"h\"}, \"c\": {\"constant\": \"c\"}, \"lam\": 5e-7}}\n```\nThe call must compute exactly the quantity the question asks for, in the unit of the options. If one call cannot compute it, write NONE.\n\nQuestion: {question}\n\nOptions:\n{options}",
       "review_solver": "\n\nA first answer to this problem was: {draft}\nA computer algebra system computed the formalisation {problem} and got: {value}\nThat computation is exact for the formalisation, but the formalisation may not match the problem. Check the first answer and the formalisation against the problem, then give your final answer in the form asked for above.",
       "review_notes": "\n\nA first answer to this question was {draft}. These notes from reference textbooks bear on option {letter}:\n{notes}\nCheck the first answer against the question and the notes; the notes may not apply. Then give your final answer in the form asked for above."
+    }
+  },
+  "router_paths": {
+    "note": "T287: each path forced on every development item, so each item gets a label (the paths that answer it right). Overrides of the harness section; rule = the router of T278 unchanged.",
+    "notes_model": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}},
+    "model_solver": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": ["computable", "knowledge", "reasoning"]}},
+    "plain_retrieval": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
+    "bare_model": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
+    "deterministic": {"deterministic_only": true, "model_free": true, "brain_only": {"enabled": true}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"], "snapshot": "stem-t285-2", "source_classes": "configs/admissible-sources.json"}}
+  },
+  "router_analysis": {
+    "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",
+    "gates": "configs/stem-router-gates.json",
+    "runs": {
+      "deterministic": "path-deterministic.jsonl",
+      "notes_model": "path-notes_model.jsonl",
+      "model_solver": "path-model_solver.jsonl",
+      "plain_retrieval": "path-plain_retrieval.jsonl",
+      "bare_model": "baseline-thinking_off.jsonl",
+      "rule": "harness-filter-dev.jsonl"
     }
   }
 }

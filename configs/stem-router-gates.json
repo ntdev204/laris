@@ -1,0 +1,15 @@
+{
+ "note": "T287: gates of a STEM router network against the rule router of T278, fixed by the owner on 2026-11-23 before any routing label or number was computed. Nothing here is defaulted in code.",
+ "fixed_by_owner": "2026-11-23",
+ "heldout_share": 0.30,
+ "split_seed": 287,
+ "crossfit_folds": 5,
+ "n1_min_gain_points": 1.0,
+ "n1_bootstrap_resamples": 2000,
+ "n1_bootstrap_seed": 287,
+ "n1_confidence_pct": 95.0,
+ "n2_max_wrong_deterministic": "rule_router",
+ "n3_max_ece": 0.05,
+ "n3_ece_bins": 10,
+ "n4_abstain_below": 0.6
+}

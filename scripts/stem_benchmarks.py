@@ -9,6 +9,9 @@
     python scripts/stem_benchmarks.py solver          # T276: model-free solver path on dev splits
     python scripts/stem_benchmarks.py harness [--bench B] [--limit N]  # T278: router and harness
     python scripts/stem_benchmarks.py filter-eval    # T286: prompt filter on its fixture and dev
+    python scripts/stem_benchmarks.py harness --path P --run path-P   # T287: one path on every item
+    python scripts/stem_benchmarks.py router-report  # T287: labels, baselines, oracle
+    python scripts/stem_benchmarks.py router-dataset --out DIR; router-gates --dataset DIR [--net F]
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
 splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
@@ -620,6 +623,10 @@ def cmd_harness(args: argparse.Namespace) -> int:
     revision = code_revision()  # the code this run executes, taken before it starts
     config = _config(args.config)
     base, hcfg = config["baseline"], config["harness"]
+    path = getattr(args, "path", "rule") or "rule"
+    if path != "rule":  # T287: one path forced on every item
+        hcfg = json.loads(json.dumps(hcfg))
+        hcfg = merge_path(hcfg, config["router_paths"][path])
     mode = base["modes"][hcfg["mode"]]
     run = args.run or "harness-dev"
     out_dir = ROOT / config["data_dir"] / "runs"
@@ -651,9 +658,13 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 kept.append((bench, dict(item, question=out.question, options=out.options)))
         work = kept
         print(f"filter: {len(kept)} passed, {len(stopped)} stopped", flush=True)
-    wanted = [
-        (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
-    ]
+    net_file = hcfg["router"].get("network")
+    if net_file:  # T287: a promoted router network may send any class to a path with notes
+        wanted = list(work)
+    else:
+        wanted = [
+            (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
+        ]
     notes, certain, retrieval_s, snapshot = retrieve_notes(hcfg, wanted, out_dir, run)
     retrieval_share = retrieval_s / len(wanted) if wanted else 0.0
     print(f"retrieval: {len(wanted)} items, {retrieval_s:.1f} s", flush=True)
@@ -680,7 +691,34 @@ def cmd_harness(args: argparse.Namespace) -> int:
         return engine.one(prompt, dict(mode, max_new_tokens=max_tokens), seed)
 
     free = model_free if hcfg["model_free"] else None
-    harness = Harness(hcfg, base, model, solve, config["equivalence"], free)
+    choose = None
+    if net_file:
+        from laris.research.stem import routing
+
+        network = routing.RouterNetwork.from_json(
+            json.loads((ROOT / net_file).read_text(encoding="utf-8"))
+        )
+        gcfg = json.loads((ROOT / config["router_analysis"]["gates"]).read_text("utf-8"))
+        below = float(gcfg["n4_abstain_below"])
+
+        def choose(item: Dict[str, Any], trace: Any) -> Optional[Dict[str, Any]]:
+            screened = screens.get(item["id"])
+            x = routing.feature_vector(trace.features, screened.record() if screened else {})
+            rule_path = "model_solver" if trace.cls == "computable" else "notes_model"
+            decided = routing.decide(network, x, rule_path, below)
+            trace.steps.append(
+                {
+                    "step": "route",
+                    "path": decided.path,
+                    "by": decided.by,
+                    "confidence": decided.confidence,
+                }
+            )
+            if decided.by != "network" or decided.path == rule_path:
+                return None
+            return merge_path(hcfg, config["router_paths"][decided.path])
+
+    harness = Harness(hcfg, base, model, solve, config["equivalence"], free, choose)
     seed0 = int(base["generation_seed"])
     eq = config["equivalence"]
 
@@ -773,6 +811,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 baseline[row["id"]] = bool(row["correct"])
     summary: Dict[str, Any] = {
         "run": run,
+        "path": path,
         "mode": hcfg["mode"],
         "model_id": base["model_id"],
         "settings": mode,
@@ -878,6 +917,193 @@ def cmd_filter_eval(args: argparse.Namespace) -> int:
     out.write_text(json.dumps(summary, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=1, ensure_ascii=False))
     return 0
+
+
+def _records(name: str, config: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    path = ROOT / config["data_dir"] / "runs" / name
+    out: Dict[str, Dict[str, Any]] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line:
+            row = json.loads(line)
+            out[row["id"]] = row
+    return out
+
+
+def _router_runs(config: Dict[str, Any]) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    names = config["router_analysis"]["runs"]
+    return {key: _records(name, config) for key, name in names.items()}
+
+
+def cmd_router_report(args: argparse.Namespace) -> int:
+    """T287: routing labels (each path on each development item), routing accuracy and confusion
+    per class of the rule router, the oracle, and the baselines on the same items: the bare model,
+    plain retrieval and the rule router, with Wilson intervals, wrong deterministic answers (B5),
+    cost and latency. Reads run records only; no model."""
+    from laris.research.stem import routing
+
+    config = _config(args.config)
+    runs = _router_runs(config)
+    label = routing.labels(
+        runs["deterministic"], runs["notes_model"], runs["model_solver"], runs["bare_model"]
+    )
+    rule = runs["rule"]
+    summary: Dict[str, Any] = {
+        "runs": config["router_analysis"]["runs"],
+        "code_revision": code_revision(),
+        "benchmarks": {},
+    }
+    for bench in data.BENCHMARKS:
+        ids = [i for i, r in rule.items() if r["bench"] == bench and i in label]
+        if not ids:
+            continue
+        choice = {i: routing.rule_choice(rule[i]) for i in ids}
+        cls = {i: rule[i]["cls"] for i in ids}
+        rows = {
+            "bare model (T275)": [runs["bare_model"][i] for i in ids],
+            "plain retrieval": [runs["plain_retrieval"][i] for i in ids],
+            "rule router (T278, with T286 filter)": [rule[i] for i in ids],
+            "notes and model, every item": [runs["notes_model"][i] for i in ids],
+            "model and solver, every item": [runs["model_solver"][i] for i in ids],
+        }
+        det = [runs["deterministic"][i] for i in ids]
+        entry = {
+            "items": len(ids),
+            "baselines": [routing.accuracy_row(k, v) for k, v in rows.items()],
+            "deterministic": {
+                path: {
+                    "answered": sum(1 for r in det if r.get("final_from") == path),
+                    "right": sum(1 for r in det if r.get("final_from") == path and r["correct"]),
+                }
+                for path in routing.DETERMINISTIC
+            },
+            "routing": routing.routing_table({i: label[i] for i in ids}, choice, cls),
+        }
+        oracle = entry["routing"]["oracle_correct"]
+        low, high = stats.wilson_interval(oracle, len(ids))
+        entry["oracle"] = {"correct": oracle, "accuracy": oracle / len(ids), "wilson": [low, high]}
+        summary["benchmarks"][bench] = entry
+    out = ROOT / config["data_dir"] / "runs" / "router-report.summary.json"
+    out.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(summary, indent=1))
+    return 0
+
+
+def _router_rows(config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """One row per development item: features (no text), labels, the rule router's path."""
+    from laris.research.stem import prompt_filter as pf
+    from laris.research.stem import routing
+    from laris.research.stem.router import route
+
+    runs = _router_runs(config)
+    label = routing.labels(
+        runs["deterministic"], runs["notes_model"], runs["model_solver"], runs["bare_model"]
+    )
+    screen = pf.load(ROOT / config["harness"]["filter"]["rules"], ROOT)
+    rows = []
+    for bench in data.BENCHMARKS:
+        for item in data.load_items(config, ROOT, bench, "dev"):
+            if item["id"] not in label or item["id"] not in runs["rule"]:
+                continue
+            seen = screen.screen({"question": item["question"], "options": item["options"]})
+            decided = route(
+                dict(item, question=seen.question, options=seen.options),
+                config["harness"]["router"],
+            )
+            rows.append(
+                {
+                    "id": item["id"],
+                    "bench": bench,
+                    "x": routing.feature_vector(decided.features, seen.record()),
+                    "labels": label[item["id"]],
+                    "rule_path": routing.rule_choice(runs["rule"][item["id"]]),
+                }
+            )
+    return rows
+
+
+def cmd_router_dataset(args: argparse.Namespace) -> int:
+    """T287: the router network's dataset, split before any training: a sealed held-out part
+    (`heldout_share` of the development pool, seeded hash of the id) and the training pool with
+    cross-fitting folds; a manifest with the SHA-256 of every file and of the gates."""
+    from laris.research.stem import routing
+
+    config = _config(args.config)
+    gates_path = ROOT / config["router_analysis"]["gates"]
+    gcfg = json.loads(gates_path.read_text(encoding="utf-8"))
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=False)
+    pool, held = [], []
+    for row in _router_rows(config):
+        if routing.is_heldout(row["id"], int(gcfg["split_seed"]), float(gcfg["heldout_share"])):
+            held.append(row)
+        else:
+            row["fold"] = routing.fold_of(
+                row["id"], int(gcfg["split_seed"]), int(gcfg["crossfit_folds"])
+            )
+            pool.append(row)
+    for name, rows in (("pool.jsonl", pool), ("heldout.jsonl", held)):
+        with (out / name).open("w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row, sort_keys=True) + "\n")
+    manifest = {
+        "features": list(routing.FEATURES),
+        "paths": list(routing.PATHS),
+        "model_paths": list(routing.MODEL_PATHS),
+        "pool_items": len(pool),
+        "heldout_items": len(held),
+        "pool_sha256": routing.file_sha256(out / "pool.jsonl"),
+        "heldout_sha256": routing.file_sha256(out / "heldout.jsonl"),
+        "gates_sha256": routing.file_sha256(gates_path),
+        "runs": config["router_analysis"]["runs"],
+        "code_revision": code_revision(),
+        "sealed": "heldout.jsonl is read only by router-gates, once per network",
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(manifest, indent=1))
+    return 0
+
+
+def cmd_router_gates(args: argparse.Namespace) -> int:
+    """T287: N1-N4 of the owner's gates on the sealed held-out part, against the rule router.
+    Refuses when a file no longer matches the manifest. Without `--net` the gates are NOT
+    VERIFIED and the rule router stays. Exit 1 unless every gate passes."""
+    from laris.research.stem import routing
+
+    config = _config(args.config)
+    folder = Path(args.dataset)
+    manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+    gates_path = ROOT / config["router_analysis"]["gates"]
+    for name, key in (("heldout.jsonl", "heldout_sha256"), ("pool.jsonl", "pool_sha256")):
+        if routing.file_sha256(folder / name) != manifest[key]:
+            raise SystemExit(f"router-gates: {name} does not match the manifest")
+    if routing.file_sha256(gates_path) != manifest["gates_sha256"]:
+        raise SystemExit("router-gates: the gates changed after the dataset was sealed")
+    gcfg = json.loads(gates_path.read_text(encoding="utf-8"))
+    network = None
+    if args.net:
+        network = routing.RouterNetwork.from_json(json.loads(Path(args.net).read_text("utf-8")))
+    rows = [json.loads(line) for line in (folder / "heldout.jsonl").read_text("utf-8").splitlines()]
+    report = routing.gates(rows, network, gcfg)
+    report["net_sha256"] = routing.file_sha256(args.net) if args.net else None
+    report["heldout_sha256"] = manifest["heldout_sha256"]
+    report["gates_sha256"] = manifest["gates_sha256"]
+    if args.report:
+        Path(args.report).write_text(routing.dumps(report) + "\n", encoding="utf-8")
+    print(routing.dumps(report))
+    return 0 if report["verdict"].startswith("gates pass") else 1
+
+
+def merge_path(hcfg: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """`hcfg` with the keys of a path override set (nested dicts merged, the rest replaced)."""
+    out = dict(hcfg)
+    for key, value in override.items():
+        if key == "note":
+            continue
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = merge_path(out[key], value)
+        else:
+            out[key] = value
+    return out
 
 
 def code_revision() -> str:
@@ -986,11 +1212,27 @@ def main(argv: List[str] | None = None) -> int:
     harness.add_argument("--run", default="")
     harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
     harness.add_argument("--no-filter", action="store_true", help="skip the T286 prompt filter")
+    harness.add_argument(
+        "--path",
+        default="rule",
+        choices=["rule", "notes_model", "model_solver", "plain_retrieval", "deterministic"],
+        help="T287: force one path on every item (router_paths in the configuration)",
+    )
     harness.set_defaults(func=cmd_harness)
     feval = sub.add_parser("filter-eval")
     feval.add_argument("--run", default="")
     feval.add_argument("--fixture", default="", help="folder with prompts.json and quantities.json")
     feval.set_defaults(func=cmd_filter_eval)
+    rrep = sub.add_parser("router-report")
+    rrep.set_defaults(func=cmd_router_report)
+    rdata = sub.add_parser("router-dataset")
+    rdata.add_argument("--out", required=True)
+    rdata.set_defaults(func=cmd_router_dataset)
+    rgate = sub.add_parser("router-gates")
+    rgate.add_argument("--dataset", required=True)
+    rgate.add_argument("--net", default="")
+    rgate.add_argument("--report", default="")
+    rgate.set_defaults(func=cmd_router_gates)
     hrep = sub.add_parser("harness-report")
     hrep.add_argument("summary")
     hrep.set_defaults(func=cmd_harness_report)

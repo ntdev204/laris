@@ -73,6 +73,7 @@ class Screen:
             "changes": dict(self.changes),
             "language": self.language,
             "quantities": len(self.quantities),
+            "quantities_with_unit": sum(1 for q in self.quantities if q.unit),
             "entities": {k: len(v) for k, v in self.entities.items()},
         }
 

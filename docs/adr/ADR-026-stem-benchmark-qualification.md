@@ -3,9 +3,9 @@ document_id: "DOC-ADR-026"
 title: "ADR-026: STEM benchmark qualification of the system (light model, harness, RAG, deterministic brain)"
 document_type: "adr"
 status: "ACCEPTED"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-11-23"
-updated_at: "2026-11-23"
+updated_at: "2026-11-24"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -19,7 +19,7 @@ decision_references:
   - "ADR-008"
   - "ADR-024"
   - "ADR-025"
-change_summary: "0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
+change_summary: "0.3.0 (T286, T287, 2026-11-24): section 4.1 writes down the prompt filter and the router rules of the evaluation profile with their thresholds, and the gates of a router network, fixed by the owner before any number (configs/stem-router-gates.json); no gate B1-B6 changed. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
 ---
 
 # ADR-026: STEM benchmark qualification of the system
@@ -81,6 +81,33 @@ check → final answer. Rules:
   on in normal chat. The brain snapshot, configuration and model files are frozen and hashed before the sealed run.
 - Model: the light model chosen in T279 from measurements; the default candidate is Qwen3.5-4B. A larger model is not
   used unless the owner changes decision 4.
+
+### 4.1 Prompt filter and router of the evaluation profile (T286, T287)
+
+Written down here as the rules in force; the thresholds live in configuration only.
+
+- **Prompt filter** (T286, `configs/prompt-filter.json`): every prompt passes it before retrieval, the router and the
+  model. It normalises the text (each change named), stops injected instructions and out-of-scope prompts by named
+  rule (the owner's Prefilter rules of kinds injection and refusal, read from `.laris/prefilter.toml`, then the
+  profile's rules), and extracts language, quantities, formulas and constants as fields. A stop scores 0. It never
+  answers and is never handed the gold answer.
+- **Router rules** (T278, `harness.router` of `configs/stem-benchmarks.json`), read from the item's shape only:
+  1. no options -> `computable` (`open_answer`);
+  2. options with a digit in at least `numeric_option_share` (0.5) of them -> `computable` (`numeric_options`);
+  3. a question of at most `knowledge_max_question_words` (40) words -> `knowledge` (`word_options_short_question`);
+  4. otherwise -> `reasoning` (`word_options_long_question`).
+  Every decision records its rule and its features (options, numeric option share, question words).
+- **Paths per class**: `computable` without options tries the model-free solver first (a verified result is the
+  answer, B5); `computable` then drafts and formalises, and the solver checks the draft; `knowledge` and `reasoning`
+  draft with notes of the frozen snapshot and the notes check. The brain-only answer (T285) is off until B5 holds on
+  development.
+- **A router network** (T287) may replace the rules only through the gates the owner fixed on 2026-11-23, before any
+  routing number (`configs/stem-router-gates.json`), on a held-out 30 % of the development pool sealed by hash before
+  training: N1 a gain of at least 1 point over the rule router with a paired bootstrap 95 % lower bound above zero
+  (2,000 resamples, seeded); N2 no more wrong model-free or brain-only answers than the rule router; N3 expected
+  calibration error at most 0.05; N4 below confidence 0.6 the network abstains to the rule router, and it never
+  overrides a model-free or brain-only answer. It reads features only (no free text), is trained by the owner only
+  (SR-M3), and replaces the rules only when every gate passes and the owner promotes it.
 
 ## 5. The deterministic brain ("answers without the model")
 
@@ -164,6 +191,9 @@ accepts the trade.
   catalogue agree); within choice 3 the owner took each book from the newest git commit at which it was CC BY 4.0
   (18 books pinned in `configs/stem-brain.json`; Calculus 1-3 and Organic Chemistry never were CC BY and are not used).
   The snapshot build leaves out every text block that shares a 13-word sequence with a benchmark item (B6).
+
+- 2026-11-24 (T286, T287): section 4.1 records the filter, the router rules and the network gates; reports
+  `reports/benchmarks/T286-filter.md` and `T287-router.md`.
 
 - Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
 
