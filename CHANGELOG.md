@@ -6,6 +6,19 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Changed
+- **One engine for chat and evaluation (T282):** the packaged server (`docker/laris.sh up`) serves Qwen3.5-4B in BF16
+  from a vLLM server container (`vllm/vllm-openai:v0.34.0`, internal network, offline, weights read-only). The model
+  service forwards chat to it (`ServedChat`) with the same reasoning split, tool calls, input budget and streaming as
+  before, and its GPU queue counts the server's reservation (`LARIS_ENGINE_GPU_SHARE`, default 0.85). The model
+  service image no longer carries `torch`. The STEM benchmark runner calls the same server
+  (`LARIS_ENGINE_PORT=38100`, loopback only); `scripts/stem_benchmarks.py engine-up/engine-down` are gone.
+  `model_service.chat_quantization` now defaults to `none` (BF16).
+
+### Fixed
+- With thinking on, reasoning that the chat template opens in the prompt no longer streams as answer text, also when a
+  reply is cut off before `</think>`; a partial `<tool_call>` tag no longer reaches the chat body.
+
 ## [1.5.0] - 2026-11-21
 
 ### Added

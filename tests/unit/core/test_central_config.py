@@ -30,7 +30,7 @@ class TestConfigSchemas:
         assert cfg.environment == "development"
         assert cfg.agent.max_steps == 10
         assert cfg.model_service.port == 8001
-        assert cfg.model_service.chat_quantization == "8bit"
+        assert cfg.model_service.chat_quantization == "none"
 
     def test_invalid_values_are_refused(self) -> None:
         with pytest.raises(ValidationError):
@@ -104,4 +104,4 @@ class TestConfigHashingAndRedaction:
     def test_secret_redaction(self) -> None:
         raw = inspect_config(LarisConfig(), redact_secrets=True)
         assert raw["model_service"]["port"] == 8001
-        assert raw["model_service"]["chat_quantization"] == "8bit"
+        assert raw["model_service"]["chat_quantization"] == "none"

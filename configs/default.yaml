@@ -160,13 +160,17 @@ model_service:
   placeholder_name: laris-placeholder
   backend: ''
   chat_model_id: ''
-  chat_quantization: 8bit
+  chat_quantization: none
   chat_max_new_tokens: 1024
   chat_max_input_tokens: 8192
   chat_release_cache: true
   chat_thinking: false
   chat_temperature: 0.0
   device: ''
+  chat_server_url: ''
+  chat_server_timeout_s: 600.0
+  chat_server_gpu_share: 0.0
+  gpu_memory_bytes: 0
   vram_budget_bytes: 15569256448
   vram_margin_bytes: 1610612736
   chat_vram_bytes: 1048576

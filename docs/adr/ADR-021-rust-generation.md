@@ -114,3 +114,15 @@ no Ed25519. Notarisation and Authenticode remain for release 1.0.0 if the owner 
 The owner accepted ADR-025. The agent loop, tool execution and the project vault stay on the client (D28's reason
 stands); the per-request pipeline (Prefilter, retrieval, brain decider, model call, evidence gate, assembly) runs in
 the server. The evidence check (D39) runs once per piece of evidence, by the side that holds it.
+
+## Addendum 2026-11-23: the inference server image (T282)
+
+The owner approved `vllm/vllm-openai:v0.34.0` (Apache-2.0) on 2026-11-23 so that chat and the STEM evaluation of
+ADR-026 run on one engine and one precision (BF16). It is a container of the compose stack (`docker/compose.chat.yaml`,
+service `vllm`), not a Python dependency: vLLM 0.34.0 pins `fastapi<0.137` and `torch==2.14.0`, which the project
+environment cannot take. The model block reaches it over its OpenAI-compatible API with the standard library only
+(`laris.model.inference.served_llm`). Constraints: weights mounted read-only and the hub offline, internal network
+only (the loopback port for the benchmark runner is an opt-in overlay without masquerading), read-only root file
+system, all capabilities dropped, usage statistics off. The `chat` extra (`torch`, `transformers`, `bitsandbytes`)
+stays for the in-process `OpenWeightChat` and the transformers parity engine of T275; the packaged default no longer
+builds it.
