@@ -5,7 +5,7 @@ import pytest
 
 from laris.model.solver import SolverSettings
 from laris.research.stem.answers import math_equivalent
-from laris.research.stem.formalise import answer_model_free, formalise, latex_to_solver
+from laris.research.stem.formalise import answer_model_free, formalise, latex_to_solver, math_style
 
 S = SolverSettings(isolate=False)
 
@@ -101,3 +101,18 @@ def test_a_mixed_number_is_not_read_as_a_product():
 def test_a_complex_principal_branch_gives_no_answer():
     out = answer_model_free({"question": "Evaluate $(-27)^{5/3}$.", "options": []}, S)
     assert out["answer"] is None and out["status"] == "complex_branch"
+
+
+@pytest.mark.parametrize(
+    "sympy_latex, math",
+    [
+        ("5 x^{26} - 15 x^{9} - 35 x^{4} + 5 x^{2}", "5x^{26}-15x^9-35x^4+5x^2"),
+        ("6 z^{5} + 15 z^{4} - 17 z - 6", "6z^5+15z^4-17z-6"),
+        ("\\frac{3 \\pi}{2}", "\\frac{3\\pi}{2}"),
+        ("2 \\pi x", "2\\pi x"),
+        ("\\left(x + 1\\right)^{2}", "(x+1)^2"),
+        ("\\sqrt{2} a_{1}", "\\sqrt{2}a_1"),
+    ],
+)
+def test_answers_are_written_in_math_style(sympy_latex, math):
+    assert math_style(sympy_latex) == math

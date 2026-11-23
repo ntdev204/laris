@@ -447,7 +447,26 @@ def answer_model_free(item: Dict[str, Any], settings: Any) -> Dict[str, Any]:
     if _complex(result) and "i" not in re.findall(r"[a-z]", formal.problem.get("expression", "")):
         # SymPy's principal branch ((-27)^(5/3) = -243 (-1)^(2/3)); MATH means the real root
         return {"pattern": formal.pattern, "status": "complex_branch", "answer": None}
-    return {"pattern": formal.pattern, "status": "verified", "answer": formal.read(result)}
+    return {
+        "pattern": formal.pattern,
+        "status": "verified",
+        "answer": math_style(formal.read(result)),
+    }
+
+
+def math_style(answer: Any) -> Any:
+    """SymPy LaTeX written as MATH writes answers: `5x^{26}-15x^9`, not `5 x^{26} - 15 x^{9}`.
+
+    Drops `\\left`/`\\right`, braces around a one-character exponent or subscript, and spaces,
+    except the one space that ends a command before a letter (`\\pi x` stays readable as `\\pi x`).
+    The value is unchanged; only the spelling follows the benchmark's.
+    """
+    if not isinstance(answer, str):
+        return answer
+    text = re.sub(r"\\(left|right)(?![A-Za-z])", "", answer)
+    text = re.sub(r"([\^_])\{([A-Za-z0-9])\}", r"\1\2", text)
+    text = re.sub(r"(\\[A-Za-z]+) +(?=[A-Za-z])", "\\1\x00", text)
+    return re.sub(r"\s+", "", text).replace("\x00", " ")
 
 
 def _complex(result: Dict[str, Any]) -> bool:

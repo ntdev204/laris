@@ -54,7 +54,7 @@ protocol as above, after two formaliser fixes found by this run (below). Records
 
 | Set | Items | Formalised | Answered (verified) | Correct (`math-equiv-1`) | Precision | Wilson 95 % | Coverage |
 |---|---|---|---|---|---|---|---|
-| MATH train, all | 7,500 | 339 | 321 | 319 | **99.4 %** | 97.8-99.8 | 4.3 % |
+| MATH train, all | 7,500 | 339 | 321 | 321 | **100 %** | 98.8-100 | 4.3 % |
 | of which the 500 dev items | 500 | 29 | 29 | 29 | 100 % | 88.3-100 | 5.8 % |
 
 Not answered among the formalised: 14 proposals (mostly `solve_for` whose completeness could not be checked), 3 refused
@@ -68,7 +68,11 @@ The first pass (before the fixes) answered 323 with 4 scored wrong. Reading them
   a result with a complex unit when the question has no `i` gives no answer (`complex_branch`).
 - `6 \cdot 8\frac{1}{3}`: a mixed number (8 1/3) was read as a product. Fixed: a number directly followed by a
   fraction is refused.
-- Two `expand` answers are mathematically right (term by term equal to the gold) but scored wrong: the frozen checker
-  does not parse an expression with more than three powers, and the strings differ only in braces (`x^{9}` / `x^9`).
-  They stay counted as wrong here, because the protocol is frozen; whether the answer should be written in MATH's
-  plain style, or the protocol amended, is the owner's choice.
+- Two `expand` answers are mathematically right (term by term equal to the gold) but were scored wrong: the frozen
+  checker does not parse an expression with more than three powers, and the strings differ only in spelling
+  (`5 x^{9}` / `5x^9`). Owner decision (2026-11-23): write the answer as MATH writes it. `math_style` drops
+  `\left`/`\right`, the braces of a one-character exponent or subscript, and spaces (keeping the one that ends a
+  command before a letter); the protocol is unchanged.
+
+After that change: **321 answered, 321 correct** (precision 100 %, Wilson 98.8-100, coverage 4.3 %); the 500 dev items
+stay at 29/29.
