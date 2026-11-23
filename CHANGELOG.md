@@ -14,8 +14,6 @@ this is the first release of the Rust generation. History lives in git.
   service image no longer carries `torch`. The STEM benchmark runner calls the same server
   (`LARIS_ENGINE_PORT=38100`, loopback only); `scripts/stem_benchmarks.py engine-up/engine-down` are gone.
   `model_service.chat_quantization` now defaults to `none` (BF16).
-- **VRAM ceiling 15 GB (owner):** `model_service.vram_budget_bytes` is 15,000,000,000 and the vLLM server reserves 0.78
-  of the GPU by default; measured peak of the whole GPU under benchmark load: 13.70 GB.
 
 ### Fixed
 - With thinking on, reasoning that the chat template opens in the prompt no longer streams as answer text, also when a
