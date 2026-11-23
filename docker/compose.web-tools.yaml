@@ -1,0 +1,19 @@
+# Server tools (T273): the server searches the works index and the web and reads papers for the web client, as
+# Claude's web_search and web_fetch run on the platform. On top of compose.yaml and compose.chat.yaml; docker/laris.sh
+# adds it when LARIS_SERVER_TOOLS=true (docker/laris.env).
+# Only the server gets a route out (network `egress`); the model and PostgreSQL stay on `internal`, which has none.
+# Every address the server fetches must resolve to a public one: this machine, the Docker networks and private
+# ranges are refused, redirects included (laris-model-client WebClient).
+services:
+  server:
+    environment:
+      LARIS_SERVER__SERVER_TOOLS: "true"
+      LARIS_SERVER__SERVER_TOOLS_MAX_CALLS: ${LARIS_SERVER_TOOLS_MAX_CALLS:-12}      # tool calls in one answer
+      LARIS_SERVER__SERVER_TOOLS_GAP_PAPERS: ${LARIS_SERVER_TOOLS_GAP_PAPERS:-4}   # papers, then the gap analysis
+      LARIS_SERVER__SERVER_TOOLS_RESULT_CHARS: ${LARIS_SERVER_TOOLS_RESULT_CHARS:-4000}   # of one result, for the model
+      # a step that reads a paper and extracts it takes one model call: longer than the default 120 s of silence
+      LARIS_SERVER__STREAM_IDLE_MS: ${LARIS_STREAM_IDLE_MS:-300000}
+    networks: [internal, egress]
+
+networks:
+  egress: {}

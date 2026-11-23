@@ -20,6 +20,7 @@ pub mod model;
 pub mod pipeline;
 pub mod policy;
 pub mod proxy;
+pub mod read;
 mod serve;
 mod stall;
 pub mod storage;

@@ -1,7 +1,7 @@
 # Research gaps (laris-gap, T272): the policy of the server's gap routes. Every number and word the analysis uses
 # is here; the code holds none. Covered by integrity.toml: change it only with the owner's approval, then
 # `laris-server policy lock`.
-version = "1.1.0"
+version = "1.2.0"
 
 limitation_cues = [
   "\\blimitation", "\\bfuture (work|research|direction)", "\\bwe (plan|intend|leave|hope) to\\b", "left (for|to) future",
@@ -37,6 +37,22 @@ scope_patterns = [
   "\\bin R\\b",
   "trong (các|số) bài (đã đọc|được cung cấp)",
 ]
+
+# Cue words of rule G2 for a topic that names none: a topic proposed by the model in a chat (T273). A topic file
+# keeps its own. Generic on purpose: they mark "this method fails / is infeasible" and "this method works".
+[conflict]
+negative = [
+  "\\bfails? to\\b", "\\bunreliable\\b", "\\bdoes not (generali[sz]e|scale|work)\\b", "\\bpoor(ly)?\\b", "\\bstruggles?\\b",
+  "\\bnot (effective|reliable|sufficient|robust|feasible|practical)\\b", "\\binfeasible\\b", "\\bimpractical\\b",
+  "\\blimited (performance|effectiveness|ability|applicability)\\b", "\\bcannot (detect|distinguish|identify|handle|run)\\b", "\\bineffective\\b",
+]
+positive = [
+  "\\boutperform", "\\bstate[- ]of[- ]the[- ]art\\b", "\\bimprove[sd]?\\b", "\\bachieve[sd]?\\b", "\\beffective(ly)?\\b",
+  "\\bhigher (auroc|auc|f1|accuracy|precision|recall)\\b", "\\bin real[- ]time\\b", "\\bsuccessfully\\b",
+]
+
+# 1.2.0 (2026-11-23): [conflict] above, for the chat tool `analyze_research_gaps`; the topic files' own cues and
+# every other value are as in 1.1.0.
 
 # 1.1.0 (2026-11-23): the extraction prompt shows the JSON shape; under 1.0.0 the 4B model gave plain strings for
 # the lists of 5 of 8 papers, so their items had no quotation to check.

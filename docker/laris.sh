@@ -10,7 +10,7 @@ set -eu
 here=$(cd "$(dirname "$0")" && pwd)
 # the settings come from docker/laris.env (git-ignored) or the defaults below, never from variables left in the shell
 unset LARIS_PROJECT LARIS_DOMAIN LARIS_HTTP_PORT LARIS_HTTPS_PORT LARIS_EDGE_SUBNET LARIS_EDGE_GATEWAY LARIS_SUBNET \
-    LARIS_MODELS_DIR LARIS_CHAT_SNAPSHOT
+    LARIS_MODELS_DIR LARIS_CHAT_SNAPSHOT LARIS_SERVER_TOOLS
 if [ -f "$here/laris.env" ]; then
     set -a
     # shellcheck disable=SC1091
@@ -28,6 +28,10 @@ if [ -z "${LARIS_CHAT_SNAPSHOT:-}" ]; then
 fi
 export LARIS_CHAT_SNAPSHOT
 compose="docker compose -p $project -f $here/compose.yaml -f $here/compose.chat.yaml"
+# server tools (T273): the server searches and reads for the web client; it alone gets a route out
+if [ "${LARIS_SERVER_TOOLS:-false}" = true ]; then
+    compose="$compose -f $here/compose.web-tools.yaml"
+fi
 
 tailnet_name() {
     command -v tailscale >/dev/null 2>&1 || return 0

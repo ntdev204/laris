@@ -118,6 +118,25 @@ impl Registry {
         registry
     }
 
+    /// Only the web tools (`WebFetch`, `WebSearch`, `PaperSearch`, `now`) over `ctx`: no file, shell or memory tool.
+    /// The server runs these for a client that has no tools of its own, as Claude's server tools are run (T273).
+    pub fn web_only(ctx: Context) -> Self {
+        let ctx = Arc::new(ctx);
+        let mut registry = Self {
+            ctx: Arc::clone(&ctx),
+            locals: Vec::new(),
+            remotes: Vec::new(),
+            schemas: Vec::new(),
+            index: BTreeMap::new(),
+        };
+        for tool in crate::web::tools(&ctx) {
+            registry
+                .register(tool)
+                .expect("the built-in tool names are distinct");
+        }
+        registry
+    }
+
     /// Adds a local tool; its name must be new.
     pub fn register(&mut self, tool: LocalTool) -> Result<(), ToolError> {
         let name = tool.schema.function.name.clone();

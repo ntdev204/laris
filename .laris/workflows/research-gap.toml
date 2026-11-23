@@ -1,8 +1,8 @@
 name = "research-gap"
-version = "1.3.0"
+version = "1.4.0"
 description = "From PDFs, a folder of PDFs or keywords: read the papers, build what they know, and propose research gaps with evidence."
 triggers = ["find research gaps", "research gap", "khoảng trống nghiên cứu", "tìm gap"]
-allowed_tools = ["PaperSearch", "WebFetch", "Glob", "Read", "ingest_document", "search_corpus", "Write", "update_plan"]
+allowed_tools = ["PaperSearch", "WebSearch", "WebFetch", "analyze_research_gaps", "Glob", "Read", "ingest_document", "search_corpus", "Write", "update_plan"]
 max_steps = 10
 require_citations = true
 approval = "ask"
@@ -13,7 +13,8 @@ stop_conditions = ["no paper could be read", "the user declines to write the rep
 id = "collect"
 goal = "Get the papers and give each one an id: P1, P2, ... with its title and where it came from."
 instructions = """
-Use Glob for a folder and ingest_document for each PDF (it reads scans by OCR; note `read_by`). Its `cite_as` is the
+Use only the tools you are given. In the web chat there is no folder: the server searches and reads for you, and
+files the user attached are already registered as P1, P2, .... Otherwise use Glob for a folder and ingest_document for each PDF (it reads scans by OCR; note `read_by`). Its `cite_as` is the
 name to cite and `origin` is the file. For keywords, call PaperSearch with two or three different queries, one after
 the other; its `abstract` is the paper's abstract. Then WebFetch the `pdf_url` of the most relevant papers (a PDF is read
 as text); that address is the origin. When it is refused, try its `other_pdf_urls`; when none can be read, use the
@@ -28,7 +29,10 @@ exit = "A paper register (id, title, origin) of papers actually read, and a list
 id = "extract"
 goal = "For each paper id read its abstract, introduction, methods, results, limitations and future work, and record them under that id."
 instructions = """
-Use search_corpus (for example "limitations", "future work", "we did not", "remains unclear") to find those passages in
+When analyze_research_gaps is offered, do not extract by hand: every paper you WebFetch is registered (its result
+says "Registered as Pn") and extracted by the server. Once 5 to 8 papers are registered, call analyze_research_gaps
+once with the question and 2 to 8 concepts per facet (method, setting, issue), each with the words that mark it in
+the papers, then go to the report. Otherwise use search_corpus (for example "limitations", "future work", "we did not", "remains unclear") to find those passages in
 the ingested papers; for fetched pages use the text you already have. Record per paper id: problem, method, data or
 setting, main result, and the limitations and future work the authors themselves state. Every item names its paper
 id and the section it came from (abstract, introduction, methods, results, limitations, future work). If a section
@@ -62,6 +66,7 @@ exit = "Ranked gaps, each with paper ids, evidence, scope and a suggested study.
 id = "report"
 goal = "Summarise in the chat, with the paper register, and offer to write the report to a file."
 instructions = """
-Write the answer under the required sections, in the user's language, even when a tool failed or few papers were read:
+When analyze_research_gaps gave a report, it is the answer: present it in the user's language with its paper ids,
+sections and quotations unchanged, and add nothing it does not say. Otherwise write the answer under the required sections, in the user's language, even when a tool failed or few papers were read:
 then say so under "Not read". Every point names its paper ids, and each gap says it is a gap among the papers read.
 """

@@ -9,6 +9,7 @@
 use super::compose::{Composer, Inputs};
 use super::guard::{Guard, StreamGuard};
 use super::reasoning::{ReasoningRecord, ReasoningSink, TagPair, ThinkSplitter};
+use super::server_tools::{self, GAP_TOOL};
 use super::skills::SKILL_TOOL;
 use super::workflows::Workflows;
 use crate::backend::{Backend, ChunkStream, StreamFailure};
@@ -58,6 +59,7 @@ pub struct Policy {
     pub(crate) prefilter: Option<Arc<laris_policy::Prefilter>>,
     pub(crate) harness: Option<laris_policy::HarnessConfig>,
     pub(crate) gap: Option<Arc<laris_gap::Settings>>,
+    pub(crate) server_tools: Option<Arc<super::server_tools::ServerTools>>,
 }
 
 impl Policy {
@@ -69,6 +71,32 @@ impl Policy {
     /// The harness settings of `.laris/harness.toml`, when the file exists (stages 6 and 7).
     pub fn harness(&self) -> Option<&laris_policy::HarnessConfig> {
         self.harness.as_ref()
+    }
+
+    /// Whether the server runs its own tools for `request` (T273): the tools are on, the client offers none, and the
+    /// workflow the request names or triggers allows one of them. Such a turn is research on the web, not a question
+    /// for the vault: the pipeline gives it to the tool loop instead of the vault-only harness.
+    pub fn serves_tools(&self, request: &ChatRequest) -> bool {
+        let Some(tools) = &self.server_tools else {
+            return false;
+        };
+        if !request.tools.is_empty() || request.laris.kind != Kind::Turn {
+            return false;
+        }
+        let workflow = match &request.laris.workflow {
+            Some(w) => self.workflows.get(&w.name),
+            None => {
+                let latest = request
+                    .messages
+                    .iter()
+                    .rev()
+                    .find(|m| m.role == Role::User)
+                    .map(text_of)
+                    .unwrap_or_default();
+                self.workflows.triggered_by(&latest)
+            }
+        };
+        workflow.is_some_and(|w| !tools.offered(Some(&w.allowed_tools), &[]).is_empty())
     }
 
     /// The research-gap policy of `.laris/gap.toml`, when the file exists (T272).
@@ -303,6 +331,11 @@ impl PolicyGateway {
             skill: named.map(|k| (k.name.as_str(), k.body.as_str())),
             brain: brief.as_ref().map(|b| (b.route.as_str(), b.text.as_str())),
         });
+        let client_tools: Vec<String> = request
+            .tools
+            .iter()
+            .map(|t| t.function.name.clone())
+            .collect();
         let mut tools: Vec<_> = request
             .tools
             .into_iter()
@@ -323,6 +356,48 @@ impl PolicyGateway {
         {
             tools.push(schema);
         }
+        // a client with no tools of its own (the web client): the server searches and reads for it, as Claude's
+        // server tools do; a client that brings tools keeps its own choice
+        let server_tools: Vec<_> = policy
+            .server_tools
+            .as_ref()
+            .filter(|_| client_tools.is_empty())
+            .map(|s| s.offered(workflow.map(|w| w.allowed_tools.as_slice()), &client_tools))
+            .unwrap_or_default();
+        let mut server_names: Vec<String> = server_tools
+            .iter()
+            .map(|t| t.function.name.clone())
+            .collect();
+        tools.extend(server_tools);
+        // the research-gap analysis, where the workflow asks for it and the server reads the papers itself
+        if policy.server_tools.is_some()
+            && policy.gap.is_some()
+            && client_tools.is_empty()
+            && workflow.is_some_and(|w| w.allowed_tools.iter().any(|t| t == GAP_TOOL))
+        {
+            tools.push(server_tools::gap_schema());
+            server_names.push(GAP_TOOL.to_owned());
+        }
+        // files the user attached (the web client sends their text): papers of this answer
+        let documents: Vec<server_tools::Document> = laris
+            .extra
+            .get("documents")
+            .and_then(serde_json::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|d| {
+                Some(server_tools::Document {
+                    origin: d.get("name")?.as_str()?.to_owned(),
+                    title: d
+                        .get("title")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or_default()
+                        .to_owned(),
+                    text: d.get("text")?.as_str()?.to_owned(),
+                    read_by: "attachment".to_owned(),
+                })
+            })
+            .collect();
         messages.insert(0, system_message(composed.text));
         let sent = ChatRequest {
             messages,
@@ -339,6 +414,8 @@ impl PolicyGateway {
         prepared.skills = named.map(|k| k.name.clone()).into_iter().collect();
         prepared.skill_tool = skill_tool_allowed;
         prepared.brain_tool = brain_tool_allowed;
+        prepared.server_tools = server_names;
+        prepared.documents = documents;
         prepared.brain = brief.map(|b| b.titles).unwrap_or_default();
         prepared.offered =
             workflow.map(|_| sent.tools.iter().map(|t| t.function.name.clone()).collect());
@@ -370,6 +447,8 @@ impl PolicyGateway {
             brain: Vec::new(),
             tools,
             offered: None,
+            server_tools: Vec::new(),
+            documents: Vec::new(),
         }
     }
 }
@@ -393,6 +472,10 @@ struct Prepared {
     tools: bool,
     /// The tools a workflow left the model, when one narrowed them: a call to any other is answered here.
     offered: Option<Vec<String>>,
+    /// The tools the server runs itself in this answer (T273).
+    server_tools: Vec<String>,
+    /// Files the user attached, for the research-gap analysis.
+    documents: Vec<server_tools::Document>,
 }
 
 impl Backend for PolicyGateway {
@@ -625,6 +708,7 @@ impl Filter {
                 }
                 if (self.prepared.skill_tool && c.name == SKILL_TOOL)
                     || (self.prepared.brain_tool && c.name == BRAIN_TOOL)
+                    || self.prepared.server_tools.contains(&c.name)
                     || self
                         .prepared
                         .offered
@@ -695,6 +779,12 @@ struct Run {
     steps: usize,
     loads: usize,
     consulted: Consulted,
+    /// Server tool calls of this answer, their records for the client and the results already given.
+    server_calls: usize,
+    server_records: Vec<serde_json::Value>,
+    server_done: std::collections::HashMap<(String, String), String>,
+    library: server_tools::Library,
+    gap_report: Option<String>,
     usage: Option<Usage>,
     reasoning: String,
     model: String,
@@ -721,6 +811,16 @@ impl Run {
     fn meta(&self, skills: &[String]) -> ChatResponseChunk {
         let mut extra = Map::new();
         extra.insert("skills".to_owned(), serde_json::json!(skills));
+        if !self.server_records.is_empty() {
+            // the whole list so far, like the brain notes
+            extra.insert(
+                "server_tools".to_owned(),
+                serde_json::json!(self.server_records),
+            );
+        }
+        if let Some(report) = &self.gap_report {
+            extra.insert("gap_report".to_owned(), serde_json::json!(report));
+        }
         ChatResponseChunk {
             id: self.id.clone(),
             object: ChunkObject::default(),
@@ -737,6 +837,152 @@ impl Run {
         }
     }
 
+    /// Runs one server tool call: within the limit, once per distinct call; the error is the model's to read.
+    async fn server_call(&mut self, call: &Call) -> String {
+        let Some(tools) = self.policy.server_tools.clone() else {
+            return "Error: the server tools are off.".to_owned();
+        };
+        let key = (call.name.clone(), call.arguments.clone());
+        if let Some(earlier) = self.server_done.get(&key) {
+            return format!(
+                "(the same call was made before in this answer; its result again)\n{earlier}"
+            );
+        }
+        let gap_offered = self
+            .filter
+            .prepared
+            .server_tools
+            .iter()
+            .any(|t| t == GAP_TOOL);
+        // the analysis is the end of the collection, never cut off by it
+        if call.name != GAP_TOOL && self.server_calls >= tools.max_calls() {
+            if gap_offered && !self.library.papers.is_empty() && self.gap_report.is_none() {
+                return format!(
+                    "Error: the limit of search and fetch calls for this answer is reached. {} papers are registered: \
+                     call {GAP_TOOL} now with the question and the concepts.",
+                    self.library.papers.len()
+                );
+            }
+            return "Error: the limit of tool calls for this answer is reached; answer with what you have and say what was not read.".to_owned();
+        }
+        if call.name != GAP_TOOL {
+            self.server_calls += 1;
+        }
+        if call.name == GAP_TOOL {
+            let text = self.gap_call(&call.arguments, &tools).await;
+            self.server_done.insert(key, text.clone());
+            return text;
+        }
+        let mut outcome = tools.call(&call.name, &call.arguments).await;
+        self.library.note_years(&outcome.record);
+        let mut text = outcome.text;
+        if self
+            .filter
+            .prepared
+            .server_tools
+            .iter()
+            .any(|t| t == GAP_TOOL)
+            && let Some(doc) = outcome.document.take()
+            && let Some(id) = self.library.add(doc, tools.same_title())
+        {
+            // read once, extracted now: one model call per paper keeps every step short
+            let note = self.extract(&id).await;
+            outcome.record["paper_id"] = serde_json::json!(id);
+            text = format!("{note}\n{text}");
+        }
+        // the result can carry text of the page: it reaches the model, not the client; the record names sources only
+        self.server_records.push(outcome.record);
+        self.server_done.insert(key, text.clone());
+        text
+    }
+
+    /// Extracts the limitations and future work of paper `id` with the policy's prompt; a line for the model.
+    async fn extract(&mut self, id: &str) -> String {
+        let Some(settings) = self.policy.gap.clone() else {
+            return String::new();
+        };
+        let Some(paper) = self.library.papers.iter().find(|p| p.id == id).cloned() else {
+            return String::new();
+        };
+        let secs = laris_gap::sections::split(&paper.text);
+        let (excerpts, _) = laris_gap::extract::excerpts(
+            &paper.text,
+            &secs,
+            &settings.limitation_cues,
+            settings.budget.extract_chars,
+        );
+        let prompt = laris_gap::extract::prompt(&settings.prompts.extract, &excerpts);
+        let record = match crate::gap::complete(&self.backend, prompt).await {
+            Ok(raw) => laris_gap::extract::parse_record(&raw),
+            Err(e) => Err(e.to_string()),
+        };
+        let note = match &record {
+            Ok(r) => format!(
+                "Registered as {id} for {GAP_TOOL}: {} limitation and {} future-work items extracted. {} papers are \
+                 registered{}",
+                r.limitations.len(),
+                r.future_work.len(),
+                self.library.papers.len(),
+                if self
+                    .policy
+                    .server_tools
+                    .as_ref()
+                    .is_some_and(|t| self.library.papers.len() >= t.gap_papers())
+                {
+                    format!("; that is enough: call {GAP_TOOL} next.")
+                } else {
+                    ".".to_owned()
+                }
+            ),
+            Err(e) => format!("Registered as {id}; its extraction failed: {e}"),
+        };
+        self.library.records.insert(id.to_owned(), record);
+        note
+    }
+
+    /// The research-gap analysis over the papers of this answer; its report goes to the model and to the client.
+    async fn gap_call(&mut self, arguments: &str, tools: &server_tools::ServerTools) -> String {
+        let Some(settings) = self.policy.gap.clone() else {
+            return "Error: the research-gap policy is not loaded.".to_owned();
+        };
+        let args: serde_json::Value =
+            serde_json::from_str(arguments).unwrap_or(serde_json::Value::Null);
+        let topic = match server_tools::topic_from(&args, &settings) {
+            Ok(t) => t,
+            Err(e) => return format!("Error: invalid arguments: {e}."),
+        };
+        if self.library.papers.is_empty() {
+            return format!(
+                "Error: no paper was read in this answer. Find papers with PaperSearch, WebFetch their pdf_url (each \
+                 one is registered), then call {GAP_TOOL} again; or ask the user to attach the PDFs."
+            );
+        }
+        for paper in self.library.unextracted() {
+            self.extract(&paper.id).await;
+        }
+        let analysis = laris_gap::analyze(
+            &topic,
+            &settings,
+            &self.library.papers,
+            &self.library.records,
+        );
+        let report = laris_gap::report::render(&analysis, &topic.title);
+        let audit = laris_gap::audit::audit(&report, &self.library.papers, &settings);
+        self.server_records.push(serde_json::json!({
+            "name": GAP_TOOL,
+            "input": topic.question,
+            "ok": true,
+            "error": "",
+            "sources": self.library.papers.iter().map(|p| serde_json::json!({
+                "title": format!("{} {}", p.id, p.title), "url": p.origin, "year": p.year})).collect::<Vec<_>>(),
+            "counts": analysis.counts,
+            "audit": audit.counts,
+        }));
+        self.gap_report = Some(report.clone());
+        // the client shows the whole report; the model reads it within twice the budget of one result
+        server_tools::cut(&report, tools.result_chars() * 2)
+    }
+
     /// Answers the model's calls for system skills and starts the next step. `false` when the answer ends here.
     async fn next_step(&mut self, calls: Vec<Call>) -> bool {
         let visible = std::mem::take(&mut self.filter.visible);
@@ -744,6 +990,7 @@ impl Run {
         let mut answers = Vec::new();
         let mut loaded = Vec::new();
         let before = self.consulted.titles().len();
+        let records_before = self.server_records.len();
         for (n, call) in calls.into_iter().enumerate() {
             let id = call
                 .id
@@ -756,6 +1003,8 @@ impl Run {
                     BRAIN_TOOL,
                     self.policy.brain.consult(&args, &mut self.consulted),
                 )
+            } else if self.filter.prepared.server_tools.contains(&call.name) {
+                (call.name.as_str(), Ok(self.server_call(&call).await))
             } else if call.name != SKILL_TOOL {
                 let offered = self
                     .filter
@@ -823,14 +1072,23 @@ impl Run {
             extra: Map::new(),
         });
         self.request.messages.extend(answers);
-        if !loaded.is_empty() || self.consulted.titles().len() > before {
+        if !loaded.is_empty()
+            || self.consulted.titles().len() > before
+            || self.server_records.len() > records_before
+        {
             let meta = self.meta(&loaded);
             self.queue.push_back(Ok(meta));
         }
         self.steps += 1;
         // a brain call earns one more step, up to the brain's own limit; skills keep theirs
         let brain_steps = self.consulted.calls().min(self.policy.brain.max_calls());
-        if self.steps > self.policy.skills.max_loads() + brain_steps + 1 {
+        let server_steps = self.server_calls.min(
+            self.policy
+                .server_tools
+                .as_ref()
+                .map_or(0, |s| s.max_calls()),
+        );
+        if self.steps > self.policy.skills.max_loads() + brain_steps + server_steps + 1 {
             let done = self
                 .filter
                 .chunk(ChunkDelta::default(), Some(FinishReason::Stop));
@@ -887,6 +1145,7 @@ fn filtered(
         .unwrap_or_else(|_| prepared.session.clone());
     let id = format!("chatcmpl-{id}");
     let named = prepared.skills.clone();
+    let documents = prepared.documents.clone();
     let seeded = Consulted::seeded(&prepared.brain);
     let mut run = Run {
         inner: Some(inner),
@@ -900,10 +1159,23 @@ fn filtered(
         steps: 0,
         loads: 0,
         consulted: seeded,
+        server_calls: 0,
+        server_records: Vec::new(),
+        server_done: std::collections::HashMap::new(),
+        library: server_tools::Library::default(),
+        gap_report: None,
         usage: None,
         reasoning: String::new(),
         model: String::new(),
     };
+    for doc in documents {
+        let same = run
+            .policy
+            .server_tools
+            .as_ref()
+            .map_or(1.0, |t| t.same_title());
+        run.library.add(doc, same);
+    }
     if !named.is_empty() || !run.consulted.titles().is_empty() {
         // which skill the user named and which brain notes the brief drew on, before the text (names only)
         let meta = run.meta(&named);

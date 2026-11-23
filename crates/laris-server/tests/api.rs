@@ -479,6 +479,26 @@ async fn stalled_stream_ends_with_an_error_event() {
 }
 
 #[tokio::test]
+async fn a_silent_stream_keeps_the_connection_with_comments_until_the_idle_limit() {
+    let h = Harness::start(Script::Stall, |c| {
+        c.stream_idle = Duration::from_millis(400);
+        c.stream_keepalive = Duration::from_millis(100);
+    })
+    .await;
+    let r = h.send(&post("/v1/laris/chat", CHAT, "")).await;
+    let raw = String::from_utf8_lossy(&r.body()).into_owned();
+    assert!(raw.matches(": keep-alive").count() >= 2, "{raw}");
+    // the comments are not events, and the idle limit still ends the answer
+    let events = r.events();
+    assert_eq!(events.len(), 3, "{events:?}");
+    assert_eq!(
+        h.record(|r| r.route == "chat").await.outcome,
+        Some("stream_idle")
+    );
+    h.shutdown().await;
+}
+
+#[tokio::test]
 async fn client_leaving_mid_stream_is_logged() {
     let h = Harness::start(Script::Slow, |c| c.stream_idle = Duration::from_secs(20)).await;
     let mut s = TcpStream::connect(h.addr).await.unwrap();

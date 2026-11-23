@@ -52,12 +52,28 @@ test("sends text file contents and excludes an interrupted assistant turn", asyn
   assert.deepEqual(JSON.parse(makeRequest(chat)), {
     messages: [{ role: "user", content: 'Đọc tài liệu\n\nTệp đính kèm "dữ liệu.csv":\nHàng,Cột\n1,2' }],
     stream: true,
-    laris: { kind: "turn", session_id: "session-1" },
+    laris: {
+      kind: "turn", session_id: "session-1",
+      documents: [{ name: "dữ liệu.csv", text: "Hàng,Cột\n1,2" }],
+    },
   });
 });
 
+test("passes on what the server searched and read, and its report", async () => {
+  const tools = [{ name: "PaperSearch", input: "rag", ok: true, sources: [{ title: "A", url: "https://a.org" }] }];
+  const content = `data: ${JSON.stringify({ choices: [], laris: { server_tools: tools } })}\n\n`
+    + `data: ${JSON.stringify({ choices: [], laris: { server_tools: tools, gap_report: "# R" } })}\n\n`
+    + 'data: {"choices":[{"index":0,"delta":{"content":"Xong"}}]}\n\ndata: [DONE]\n\n';
+  const metas: unknown[] = [];
+  let text = "";
+  await streamReply(splitStream(content), (t) => { text += t; }, (meta) => metas.push(meta));
+  assert.equal(text, "Xong");
+  assert.deepEqual(metas.at(-1), { tools, report: "# R" });
+});
+
 test("rejects unsupported, binary, oversized and invalid UTF-8 files", async () => {
-  await assert.rejects(readAttachment(new File(["mock"], "file.pdf"), 100), /văn bản UTF-8/);
+  await assert.rejects(readAttachment(new File(["mock"], "file.docx"), 100), /văn bản UTF-8/);
+  await assert.rejects(readAttachment(new File(["mock"], "file.pdf"), 2), /dung lượng/);
   await assert.rejects(readAttachment(new File(["\0"], "file.txt"), 100), /nhị phân/);
   await assert.rejects(readAttachment(new File(["mock"], "file.txt"), 2), /dung lượng/);
   await assert.rejects(readAttachment(new File([Uint8Array.of(0xff)], "file.txt"), 100), TypeError);

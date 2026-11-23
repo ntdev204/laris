@@ -1,7 +1,7 @@
 algorithm = "sha256"
 
 [files]
-".laris/gap.toml" = "a7e019a64502e7735bb9dffdfc5fed3b0bc107e485b662994a40c52d2827cb63"
+".laris/gap.toml" = "e63ac80eedf151d3847f616253d432a70f299da6807bce4ab398a63ded7e8950"
 ".laris/harness.toml" = "13893d320432107d2e3a5e069f188ec4c31fe2fa336e2c8d870d84dd239909b6"
 ".laris/help.md" = "d84a3e2022ec66e698c7dabc436d275c7bde6b883ecab46732b0bba6b24438ad"
 ".laris/policy.toml" = "2254e784666e7b3a23728a6fdb98b425e477bc83cdc521c09697f26fc0e3c76c"
@@ -33,4 +33,4 @@ algorithm = "sha256"
 ".laris/workflows/kg-explore.toml" = "6794e6020c00e94c104d60eecf639e8d3f6f95971d1761697829e230536ba480"
 ".laris/workflows/literature-map.toml" = "528579f8d61c9e17cf09de300507ea6e18d31010daaa80f367a9a20cf03c6697"
 ".laris/workflows/research-brief.toml" = "ffdd6e93b47081babd731dad70a939e320829d2cff7e31f24aababc9560ab5c3"
-".laris/workflows/research-gap.toml" = "df2cdc3c9c7e198b3856250b033bcc0355a0b18591b032c9beea906df35c06d4"
+".laris/workflows/research-gap.toml" = "ac63ab8d55ab44fd173b9d639e157752906f5b77416975f9ca202bb91d1f9755"

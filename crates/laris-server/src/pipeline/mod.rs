@@ -199,6 +199,8 @@ struct Inner {
     decider: Option<DeciderConfig>,
     shield: Arc<Shield>,
     config: PipelineConfig,
+    /// The policy, to tell a turn the server researches with its own tools (T273).
+    policy: Option<Arc<crate::policy::Policy>>,
 }
 
 /// A [`Backend`] that runs the Prefilter, retrieval and the harness around another one.
@@ -233,6 +235,7 @@ impl Pipeline {
                 harness,
                 brain,
                 decider: None,
+                policy: None,
                 shield: Arc::new(Shield::new(Arc::new(Redactor::standard()))),
                 config,
             }),
@@ -241,6 +244,15 @@ impl Pipeline {
 }
 
 impl Pipeline {
+    /// Lets a turn that the server researches with its own tools skip the vault harness (T273): its answer comes
+    /// from the papers and pages it reads, not from the vault, so the vault-only gate would refuse it.
+    #[must_use]
+    pub fn with_policy(mut self, policy: Arc<crate::policy::Policy>) -> Self {
+        let inner = Arc::get_mut(&mut self.inner).expect("the pipeline is not shared yet");
+        inner.policy = Some(policy);
+        self
+    }
+
     /// Puts the rule decider (stage 5) behind the decision seam. It needs the main brain and grounding.
     pub fn with_decider(mut self, config: DeciderConfig) -> Result<Self, PipelineError> {
         let inner = Arc::get_mut(&mut self.inner).expect("the pipeline is not shared yet");
@@ -486,6 +498,21 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
                 Outcome::Pass => steps.push(Step::new("prefilter", "ok", started, "")),
             }
         }
+    }
+
+    // a research turn on the server's own tools: the tool loop answers it, from what it reads
+    if this
+        .policy
+        .as_ref()
+        .is_some_and(|p| p.serves_tools(&request))
+    {
+        steps.push(Step::new(
+            "retrieval",
+            "skipped",
+            Instant::now(),
+            "server_tools",
+        ));
+        return free(this.clone(), request, caller, steps).await;
     }
 
     // stage 4: retrieval

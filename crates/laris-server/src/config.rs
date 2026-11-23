@@ -70,6 +70,8 @@ pub struct ServerConfig {
     pub write_stall: Duration,
     /// Longest silence inside an answer stream before it ends with an error event (`LARIS_SERVER__STREAM_IDLE_MS`).
     pub stream_idle: Duration,
+    /// Silence after which a keep-alive comment is sent in an answer stream (`LARIS_SERVER__STREAM_KEEPALIVE_MS`).
+    pub stream_keepalive: Duration,
     /// Connections served at once (`LARIS_SERVER__MAX_CONNECTIONS`).
     pub max_connections: usize,
     /// Most texts in one embed request (`LARIS_SERVER__EMBED_MAX_INPUTS`).
@@ -89,6 +91,7 @@ impl ServerConfig {
             body_timeout: Duration::from_secs(30),
             write_stall: Duration::from_secs(30),
             stream_idle: Duration::from_secs(120),
+            stream_keepalive: Duration::from_secs(15),
             max_connections: 1024,
             embed_max_inputs: 256,
             shutdown_grace: Duration::from_secs(10),
@@ -133,6 +136,9 @@ impl ServerConfig {
         }
         if let Some(n) = number("LARIS_SERVER__STREAM_IDLE_MS", 1)? {
             cfg.stream_idle = Duration::from_millis(n);
+        }
+        if let Some(n) = number("LARIS_SERVER__STREAM_KEEPALIVE_MS", 1)? {
+            cfg.stream_keepalive = Duration::from_millis(n);
         }
         if let Some(n) = number("LARIS_SERVER__SHUTDOWN_GRACE_MS", 0)? {
             cfg.shutdown_grace = Duration::from_millis(n);

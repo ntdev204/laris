@@ -192,6 +192,7 @@ async fn main() -> ExitCode {
             policy.harness().cloned(),
             main_brain.clone(),
         );
+        let built = built.map(|p| p.with_policy(policy.clone()));
         let built = match (built, decider_config) {
             (Ok(p), Some(d)) => p.with_decider(d),
             (other, _) => other,
