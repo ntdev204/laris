@@ -16,6 +16,7 @@ pub mod integrity;
 pub mod reasoning;
 pub mod reasoning_pg;
 mod routes;
+pub mod server_tools;
 pub mod skills;
 pub mod workflows;
 
@@ -87,6 +88,8 @@ pub struct PolicyConfig {
     pub skills: SkillSettings,
     /// The system brain.
     pub brain: BrainSettings,
+    /// The tools the server runs for a client that has none (T273).
+    pub server_tools: server_tools::ServerToolSettings,
 }
 
 impl PolicyConfig {
@@ -99,6 +102,7 @@ impl PolicyConfig {
             think_tags: vec![("<think>".to_owned(), "</think>".to_owned())],
             skills: SkillSettings::default(),
             brain: BrainSettings::default(),
+            server_tools: server_tools::ServerToolSettings::default(),
         }
     }
 
@@ -237,6 +241,51 @@ impl PolicyConfig {
                 *slot = n;
             }
         }
+        if let Some(b) = flag("LARIS_SERVER__SERVER_TOOLS")? {
+            cfg.server_tools.enabled = b;
+        }
+        if let Some(n) = number("LARIS_SERVER__SERVER_TOOLS_MAX_CALLS", 0)? {
+            cfg.server_tools.max_calls = n;
+        }
+        if let Some(v) = get("LARIS_SERVER__SERVER_TOOLS_SAME_TITLE") {
+            cfg.server_tools.same_title = v
+                .parse::<f64>()
+                .ok()
+                .filter(|x| (0.0..=1.0).contains(x))
+                .ok_or(PolicyError::Invalid {
+                    name: "LARIS_SERVER__SERVER_TOOLS_SAME_TITLE",
+                    reason: "expected a number from 0 to 1",
+                })?;
+        }
+        if let Some(n) = number("LARIS_SERVER__SERVER_TOOLS_GAP_PAPERS", 1)? {
+            cfg.server_tools.gap_papers = n;
+        }
+        if let Some(n) = number("LARIS_SERVER__SERVER_TOOLS_RESULT_CHARS", 200)? {
+            cfg.server_tools.result_chars = n;
+        }
+        let web = &mut cfg.server_tools.web;
+        for (name, slot) in [
+            ("LARIS_SERVER__WEB_SEARCH_URL", &mut web.search_url),
+            (
+                "LARIS_SERVER__WEB_FALLBACK_SEARCH_URL",
+                &mut web.fallback_search_url,
+            ),
+            (
+                "LARIS_SERVER__WEB_PAPER_SEARCH_URL",
+                &mut web.paper_search_url,
+            ),
+            ("LARIS_SERVER__WEB_USER_AGENT", &mut web.user_agent),
+        ] {
+            if let Some(v) = get(name) {
+                v.clone_into(slot);
+            }
+        }
+        if let Some(n) = number("LARIS_SERVER__WEB_TIMEOUT_SECONDS", 1)? {
+            web.timeout_seconds = n as u64;
+        }
+        if let Some(n) = number("LARIS_SERVER__WEB_MAX_BYTES", 1024)? {
+            web.max_bytes = n as u64;
+        }
         if let Some(text) = get("LARIS_SERVER__THINK_TAGS") {
             cfg.think_tags = serde_json::from_str::<Vec<(String, String)>>(text).map_err(|_| {
                 PolicyError::Invalid {
@@ -315,7 +364,11 @@ impl Policy {
             )),
             None => None,
         };
+        let server_tools = server_tools::ServerTools::new(config.server_tools.clone())
+            .map_err(PolicyError::Pipeline)?
+            .map(Arc::new);
         Ok(Self {
+            server_tools,
             composer,
             workflows,
             skills,

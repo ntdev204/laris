@@ -124,6 +124,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/laris/gap/extract", post(crate::gap::extract_route))
         .route("/v1/laris/gap/baseline", post(crate::gap::baseline_route))
         .route("/v1/laris/gap/analyze", post(crate::gap::analyze_route))
+        .route("/v1/laris/read", post(crate::read::read_route))
         .route("/v1/admin/reasoning", get(crate::policy::reasoning_route))
         .route("/v1/admin/traces", get(crate::admin::traces))
         .route("/v1/admin/usage", get(crate::admin::usage))
@@ -212,6 +213,7 @@ async fn chat_inner(
     Ok(sse_response(
         stream,
         state.config.stream_idle,
+        state.config.stream_keepalive,
         scope.clone(),
         meter,
     ))
@@ -468,6 +470,10 @@ struct StreamState {
     inner: Option<ChunkStream>,
     pending_done: bool,
     idle: std::time::Duration,
+    /// A comment line is sent after this much silence, so proxies and browsers keep the connection (T273).
+    keepalive: std::time::Duration,
+    /// Silence so far, across keep-alive lines.
+    quiet: std::time::Duration,
     outcome: Option<&'static str>,
     guard: EndGuard,
 }
@@ -545,6 +551,7 @@ impl Drop for EndGuard {
 fn sse_response(
     stream: ChunkStream,
     idle: std::time::Duration,
+    keepalive: std::time::Duration,
     scope: Arc<RequestScope>,
     meter: Option<Meter>,
 ) -> Response {
@@ -552,6 +559,8 @@ fn sse_response(
         inner: Some(stream),
         pending_done: false,
         idle,
+        keepalive,
+        quiet: std::time::Duration::ZERO,
         outcome: None,
         guard: EndGuard {
             scope,
@@ -574,8 +583,15 @@ fn sse_response(
             ));
         }
         let inner = st.inner.as_mut()?;
-        match tokio::time::timeout(st.idle, inner.next()).await {
+        // `next` is cancel-safe: a tick without a chunk sends a comment and waits again, within the idle limit
+        let tick = st.keepalive.min(st.idle.saturating_sub(st.quiet));
+        match tokio::time::timeout(tick, inner.next()).await {
+            Err(_) if st.quiet + tick < st.idle => {
+                st.quiet += tick;
+                Some((Ok(Bytes::from_static(b": keep-alive\n\n")), st))
+            }
             Ok(Some(Ok(chunk))) => {
+                st.quiet = std::time::Duration::ZERO;
                 st.guard.observe(&chunk);
                 Some((Ok(Bytes::from(P1Event::Chunk(chunk).encode())), st))
             }

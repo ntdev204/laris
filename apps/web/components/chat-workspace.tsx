@@ -5,7 +5,7 @@ import {
   type ChangeEvent, type DragEvent, type FormEvent, type KeyboardEvent,
 } from "react";
 import {
-  BookOpen, Check, Copy, FileText, KeyRound, ListChecks, MessageSquare,
+  BookOpen, Check, ChevronRight, Copy, FileSearch, FileText, Globe, KeyRound, ListChecks, Loader2, MessageSquare,
   MoreHorizontal, Paperclip, Pencil, Plus, Search, Send, Sparkles, Square, Trash2, X,
 } from "lucide-react";
 import Markdown from "react-markdown";
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   fileAccept, makeRequest, readAttachment, streamReply, type Attachment, type Chat, type Message,
+  type ToolRecord,
 } from "@/lib/chat";
 import { readHistory, writeHistory } from "@/lib/history";
 
@@ -39,10 +40,75 @@ const suggestions = [
   { icon: BookOpen, label: "Hiểu một chủ đề", text: "Giải thích một chủ đề khoa học bằng ví dụ đơn giản: " },
   { icon: ListChecks, label: "Lập kế hoạch", text: "Giúp mình lập kế hoạch tìm hiểu về: " },
   { icon: FileText, label: "Đọc tài liệu", text: "Tóm tắt tài liệu mình đính kèm và liệt kê các ý chính." },
+  {
+    icon: FileSearch, label: "Tìm khoảng trống nghiên cứu",
+    text: "Tìm khoảng trống nghiên cứu về phát hiện ảo giác trong RAG, trích dẫn từng bài.",
+  },
 ];
 type Draft = typeof emptyDraft;
 type Modal = "key" | "rename" | "delete";
-type LiveReply = { chatId: string; text: string };
+type LiveReply = { chatId: string; text: string; tools?: ToolRecord[]; report?: string };
+
+const toolLabels: Record<string, string> = {
+  PaperSearch: "Tìm bài báo (OpenAlex)",
+  WebSearch: "Tìm trên web",
+  WebFetch: "Đọc",
+  analyze_research_gaps: "Phân tích khoảng trống (G1–G4)",
+};
+
+/** What the server searched and read for an answer, as Claude shows its search and fetch steps. */
+function ToolTrail({ tools, report, running }: { tools?: ToolRecord[]; report?: string; running?: boolean }) {
+  if (!tools?.length && !report) return null;
+  const read = tools?.filter((t) => t.name === "WebFetch" && t.ok).length ?? 0;
+  const searched = tools?.filter((t) => t.name !== "WebFetch" && t.name !== "analyze_research_gaps").length ?? 0;
+  return (
+    <div className="tool-trail mb-3 space-y-2">
+      {!!tools?.length && (
+        <details className="rounded-lg border bg-secondary/40 px-3 py-2 text-sm" open={running}>
+          <summary className="flex cursor-pointer list-none items-center gap-2 font-medium">
+            {running ? <Loader2 className="size-4 animate-spin text-primary" /> : <ChevronRight className="size-4" />}
+            <Globe className="size-4 text-primary" />
+            {running ? "Đang tìm và đọc" : "Đã tìm và đọc"}: {searched} lượt tìm, {read} tài liệu đọc được
+          </summary>
+          <ol className="mt-2 space-y-2">
+            {tools.map((tool, index) => (
+              <li key={index} className="border-l-2 border-primary/40 pl-3">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-medium">{toolLabels[tool.name] ?? tool.name}</span>
+                  {tool.paper_id && <Badge variant="outline">{tool.paper_id}</Badge>}
+                  <span className="text-muted-foreground [overflow-wrap:anywhere]">{tool.input}</span>
+                  {!tool.ok && <span className="text-destructive">không đọc được: {tool.error}</span>}
+                </div>
+                {!!tool.sources?.length && tool.name !== "WebFetch" && (
+                  <ul className="mt-1 space-y-0.5">
+                    {tool.sources.slice(0, 10).map((source, i) => (
+                      <li key={i} className="truncate">
+                        <a href={source.url} target="_blank" rel="noreferrer noopener"
+                          className="text-primary underline-offset-2 hover:underline">{source.title}</a>
+                        {source.year ? <span className="text-muted-foreground"> ({source.year})</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+      {report && (
+        <details className="rounded-lg border bg-secondary/40 px-3 py-2 text-sm">
+          <summary className="flex cursor-pointer list-none items-center gap-2 font-medium">
+            <ChevronRight className="size-4" /><FileSearch className="size-4 text-primary" />
+            Báo cáo đầy đủ của hệ thống (trích dẫn đã kiểm tra trong bài)
+          </summary>
+          <div className="markdown mt-2">
+            <Markdown remarkPlugins={[remarkGfm]} skipHtml>{report}</Markdown>
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
 
 export function ChatWorkspace({ maxRequestBytes }: { maxRequestBytes: number }) {
   return (
@@ -123,7 +189,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
       return;
     }
     setReading((current) => [...current, draftKey]);
-    const results = await Promise.allSettled(files.map((file) => readAttachment(file, maxRequestBytes)));
+    const results = await Promise.allSettled(files.map((file) => readAttachment(file, maxRequestBytes, apiKey)));
     setDrafts((current) => {
       const previous = current[draftKey] ?? emptyDraft;
       const attachments = [...previous.files];
@@ -159,6 +225,8 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
     setLive({ chatId: next.id, text: "" });
     let text = "";
     let interrupted = false;
+    let tools: ToolRecord[] | undefined;
+    let report: string | undefined;
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
       if (apiKey) headers.set("Authorization", `Bearer ${apiKey}`);
@@ -167,7 +235,11 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
       });
       await streamReply(response, (delta) => {
         text += delta;
-        setLive({ chatId: next.id, text });
+        setLive({ chatId: next.id, text, tools, report });
+      }, (meta) => {
+        tools = meta.tools ?? tools;
+        report = meta.report ?? report;
+        setLive({ chatId: next.id, text, tools, report });
       });
     } catch (error) {
       interrupted = true;
@@ -178,8 +250,11 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
           : error instanceof Error ? error.message : "Không gửi được tin nhắn.";
       setIssues((current) => ({ ...current, [next.id]: message }));
     } finally {
-      if (text) {
-        const reply: Message = { id: crypto.randomUUID(), role: "assistant", text, interrupted };
+      if (text || tools?.length) {
+        const reply: Message = {
+          id: crypto.randomUUID(), role: "assistant", text, interrupted,
+          ...(tools?.length ? { tools } : {}), ...(report ? { report } : {}),
+        };
         const finished = { ...next, messages: [...next.messages, reply] };
         setChats((current) => current.map((item) => item.id === next.id ? finished : item));
         persist(finished);
@@ -370,7 +445,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
         >
           {dragging && (
             <div className="pointer-events-none absolute inset-3 z-10 grid place-items-center rounded-2xl border-2 border-dashed border-primary bg-background/95 text-lg font-semibold">
-              Thả tệp văn bản để đính kèm
+              Thả tệp PDF hoặc văn bản để đính kèm
             </div>
           )}
           {chat ? (
@@ -404,6 +479,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                     ) : (
                       <>
                         <div className="reply-label"><Sparkles /> Laris</div>
+                        <ToolTrail tools={message.tools} report={message.report} />
                         <div className="markdown">
                           <Markdown remarkPlugins={[remarkGfm]} skipHtml components={{
                             img: ({ alt }) => alt ? <span>{alt}</span> : null,
@@ -422,8 +498,11 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                 {active && live && (
                   <li className="min-w-0">
                     <div className="reply-label"><Sparkles /> Laris</div>
+                    <ToolTrail tools={live.tools} report={live.report} running={!live.text} />
                     <div className="markdown whitespace-pre-wrap [overflow-wrap:anywhere]">
-                      {live.text || <span className="text-muted-foreground" role="status">Đang chờ phản hồi…</span>}
+                      {live.text || <span className="text-muted-foreground" role="status">
+                        {live.tools?.length ? "Đang đọc tài liệu và soạn câu trả lời…" : "Đang chờ phản hồi…"}
+                      </span>}
                     </div>
                   </li>
                 )}

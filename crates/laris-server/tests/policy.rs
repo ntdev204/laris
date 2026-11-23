@@ -474,7 +474,7 @@ async fn a_trigger_phrase_selects_the_workflow_when_the_client_names_none() {
             .map(|t| t.function.name.clone())
             .collect()
     };
-    assert_eq!(names(0), ["PaperSearch", "ingest_document"]);
+    assert_eq!(names(0), ["PaperSearch", "WebSearch", "ingest_document"]);
     let system = system_of(&seen, 0);
     assert!(
         system.contains("Paper register") && system.contains("Task: Please FIND RESEARCH GAPS")
@@ -2002,11 +2002,11 @@ async fn a_call_to_a_tool_the_workflow_did_not_offer_is_refused_by_the_server() 
             Ok(chunk(json!({}), Some("tool_calls"))),
         ]
     };
-    let (gw, seen, _) = stepped(vec![call("WebSearch"), vec![Ok(text("Done.")), Ok(stop())]]);
+    let (gw, seen, _) = stepped(vec![call("Bash"), vec![Ok(text("Done.")), Ok(stop())]]);
     let tool = |n: &str| json!({"type": "function", "function": {"name": n}});
     let got = ask(
         &gw,
-        json!({"tools": [tool("PaperSearch"), tool("WebSearch")],
+        json!({"tools": [tool("PaperSearch"), tool("Bash")],
                "messages": [{"role": "user", "content": "find research gaps in NMPC"}]}),
     )
     .await;
@@ -2018,4 +2018,115 @@ async fn a_call_to_a_tool_the_workflow_did_not_offer_is_refused_by_the_server() 
     let (gw, _, _) = stepped(vec![call("WebSearch")]);
     let got = ask(&gw, json!({"tools": [tool("WebSearch")]})).await;
     assert_eq!(got.calls.len(), 1);
+}
+
+// ---------------------------------------------------------------- server tools (T273)
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_client_without_tools_gets_the_servers_and_its_calls_are_answered_here() {
+    let mut cfg = config(&repo());
+    cfg.server_tools.enabled = true;
+    let policy = Arc::new(Policy::load(&cfg, std::iter::empty(), None).expect("the policy loads"));
+    let call = json!({"index": 0, "id": "call_1", "type": "function",
+                      "function": {"name": "WebFetch", "arguments": "{\"url\": \"http://127.0.0.1:1/x.pdf\"}"}});
+    let (gw, seen, _) = gateway(
+        &policy,
+        vec![
+            Ok(chunk(json!({"tool_calls": [call]}), None)),
+            Ok(chunk(json!({}), Some("tool_calls"))),
+        ],
+    );
+    let got = ask(&gw, json!({})).await;
+    // the call never reaches the client: the server ran it and gave the model its result
+    assert!(got.calls.is_empty(), "{:?}", got.calls);
+    let sent = seen.lock().unwrap().clone();
+    let names: Vec<&str> = sent[0]
+        .tools
+        .iter()
+        .map(|t| t.function.name.as_str())
+        .collect();
+    assert!(
+        names.contains(&"WebFetch") && names.contains(&"PaperSearch"),
+        "{names:?}"
+    );
+    assert!(!names.contains(&"Bash") && !names.contains(&"Read"));
+    assert!(sent.len() >= 2, "the model was asked again");
+    let answer = sent[1].messages.last().unwrap();
+    assert_eq!(answer.name.as_deref(), Some("WebFetch"));
+    // the client sees what was done (name, address, outcome), not the page
+    assert!(got.wire.contains("\"server_tools\""), "{}", got.wire);
+    assert!(got.wire.contains("127.0.0.1"));
+    // a repeated call is not run again
+    let runs = got.wire.matches("\"name\":\"WebFetch\"").count();
+    assert!(runs >= 1);
+    // a client that brings its own tools (the terminal) gets none of the server's
+    let tool = json!({"type": "function", "function": {"name": "WebFetch"}});
+    let (gw, seen, _) = gateway(&policy, vec![Ok(stop())]);
+    ask(&gw, json!({"tools": [tool]})).await;
+    let sent = seen.lock().unwrap()[0].clone();
+    let names: Vec<&str> = sent
+        .tools
+        .iter()
+        .map(|t| t.function.name.as_str())
+        .collect();
+    assert_eq!(names.iter().filter(|n| **n == "WebFetch").count(), 1);
+    assert!(!names.contains(&"PaperSearch"));
+    // under a workflow, only what it allows
+    let (gw, seen, _) = gateway(&policy, vec![Ok(stop())]);
+    ask(
+        &gw,
+        json!({"laris": {"kind": "turn", "session_id": "s",
+                          "workflow": {"name": "grounded-qa", "request": "what is X?"}}}),
+    )
+    .await;
+    let sent = seen.lock().unwrap()[0].clone();
+    assert!(!sent.tools.iter().any(|t| t.function.name == "PaperSearch"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_research_gap_analysis_runs_on_the_papers_of_the_answer() {
+    let mut cfg = config(&repo());
+    cfg.server_tools.enabled = true;
+    let policy = Arc::new(Policy::load(&cfg, std::iter::empty(), None).expect("the policy loads"));
+    let args = json!({"question": "What are the gaps in probe-based hallucination detection?",
+        "concepts": {"method": {"Probing": ["probe", "probing"]}, "setting": {"QA": ["question answering"]},
+                     "issue": {"Generalization": ["generalize", "generalization"]}}});
+    let call = json!({"index": 0, "id": "call_1", "type": "function",
+                      "function": {"name": "analyze_research_gaps", "arguments": args.to_string()}});
+    let (gw, seen, _) = gateway(
+        &policy,
+        vec![
+            Ok(chunk(json!({"tool_calls": [call]}), None)),
+            Ok(chunk(json!({}), Some("tool_calls"))),
+        ],
+    );
+    let paper = "Abstract. We train a probe on hidden states for question answering. ".repeat(40)
+        + "Limitations. Our probe does not generalize to other domains.";
+    let got = ask(
+        &gw,
+        json!({"messages": [{"role": "user", "content": "tìm khoảng trống nghiên cứu trong bài đính kèm"}],
+               "laris": {"kind": "turn", "session_id": "s", "documents": [{"name": "probe.pdf", "text": paper}]}}),
+    )
+    .await;
+    assert!(got.calls.is_empty());
+    let sent = seen.lock().unwrap().clone();
+    assert!(
+        sent[0]
+            .tools
+            .iter()
+            .any(|t| t.function.name == "analyze_research_gaps"),
+        "offered under research-gap"
+    );
+    // the extraction asked the model once for P1, then the analysis answered the call
+    let answered = sent
+        .iter()
+        .flat_map(|r| &r.messages)
+        .find(|m| m.name.as_deref() == Some("analyze_research_gaps"))
+        .expect("the call was answered");
+    let text = match &answered.content {
+        Some(laris_protocol::chat::Content::Text(t)) => t.clone(),
+        _ => String::new(),
+    };
+    assert!(text.contains("P1"), "{text}");
+    assert!(got.wire.contains("\"gap_report\""));
 }

@@ -78,6 +78,9 @@ pub struct Settings {
     pub scope_patterns: Vec<String>,
     /// The prompts.
     pub prompts: Prompts,
+    /// Cue words of rule G2 for a topic that names none (a topic proposed in a chat, T273).
+    #[serde(default)]
+    pub conflict: ConflictCues,
 }
 
 impl Settings {

@@ -2200,3 +2200,24 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Note: 2026-11-22, the teacher's review of the research-gap report: the first experiment ran on scratch scripts outside the system, with no ranking, no explanation check for conflicts and no baseline. The model stays NOT QUALIFIED; the measured numbers are a run on two topics, not a capability claim.
 - Note: 2026-11-23, the owner's request: the web client takes the terminal's accent (purple) and its sidebar links the research-gap pages; the web chat runs no client tools, so a research-gap request there points to `/gap`.
 - Evidence (outside Git, `artifacts/gap-eval/`): runs on MPC (8 and 18 papers, up to 2024) and RAG hallucination detection (18 papers, up to 2024), an image-only OCR check and a works-index collection; metrics against a gold standard of 384 items; a blind sheet of 84 gaps for expert ratings; screenshots of the web client. The person's tag verdicts and the expert ratings are the people's to give.
+
+### T273 — Server tools: the web chat searches, reads and finds research gaps
+- Requirements: SR-H4, SR-H13, SR-H17, SR-C7
+- Depends: T272
+- Deliverables:
+  - `laris-tools`: `Registry::web_only`, the web tools alone (`WebSearch`, `WebFetch`, `PaperSearch`), no file, shell or memory tool
+  - `laris-server` server tools (`policy/server_tools.rs`): offered to a client that brings no tools, within the workflow's `allowed_tools`; run on the server inside the answer's tool loop through the public-only `WebClient`; a limit of calls per answer, a repeated call answered from its earlier result, results cut for the model and errors given to it as text; a record per call (tool, query or address, outcome, sources, never the page text) streamed as `laris.extra.server_tools`
+  - `analyze_research_gaps`: every paper `WebFetch` reads, and every file the user attached (`laris.documents`), is registered as `Pn` and extracted with the policy's prompt at once (one model call per step); the tool takes the model's question and concept lexicon (checked: three facets, terms), runs `laris_gap::analyze`, the report and its audit; the report goes to the model (cut) and to the client whole (`laris.extra.gap_report`)
+  - The pipeline gives a turn the server researches with its own tools to the tool loop, not to the vault-only harness (`retrieval skipped server_tools`)
+  - `POST /v1/laris/read?name=`: the text of an attached PDF, text or Markdown file with the built-in reader (no OCR in the server image)
+  - Policy (owner's request 2026-11-23, lock refreshed): `research-gap` 1.4.0 allows `WebSearch` and `analyze_research_gaps` and says how to work without a folder; `gap.toml` 1.2.0 adds generic G2 cue words for a topic proposed in a chat
+  - Docker: `compose.web-tools.yaml`, added by `docker/laris.sh` when `LARIS_SERVER_TOOLS=true`: the server alone joins a network with a route out; `LARIS_SERVER__SERVER_TOOLS*`, `LARIS_SERVER__WEB_*`, a longer stream idle for steps that extract a paper
+  - Web client: PDF attachments read through `/api/read`; each answer shows what was searched and read with its sources, and the system's full report, kept in the chat history
+  - An answer stream sends a `: keep-alive` comment after `LARIS_SERVER__STREAM_KEEPALIVE_MS` (15 s) of silence, within the idle limit: a proxy no longer drops a turn whose model thinks or reads for minutes
+  - The analysis does not count against the call limit, and the model is told to run it once `LARIS_SERVER__SERVER_TOOLS_GAP_PAPERS` papers are in; one paper fetched from two addresses is registered once (title overlap `LARIS_SERVER__SERVER_TOOLS_SAME_TITLE`), under the title the works index gave
+  - `deny.toml`: the workspace crate `laris-gap` (T272) is on the allow list
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo xtask spec`; `npm run typecheck`, `npm test`, `npm run build` in `apps/web`; `cargo deny check` fails only on the advisory RUSTSEC-2026-0592 (`url`), which waits for the owner
+- Status: done
+- Note: 2026-11-23, the owner's request: "integrate everything into the web; the web cannot reach the machine's folders, so it must use search tools, like Claude". The model stays NOT QUALIFIED: a 4B model may call the tools poorly; what the server checks is the quotations and citations, not whether a gap is scientifically valuable.
+- Evidence (outside Git, `artifacts/gap-eval/screenshots/web-*.png`): the web client asked "Tìm khoảng trống nghiên cứu về phát hiện ảo giác trong RAG, trích dẫn từng bài" in headless Chrome; the server searched the works index four times, read six documents (one publisher refused with 403, shown as such), registered and extracted four papers, ran the analysis and answered in 324 s. An earlier run's audit of the report: 0 nonexistent citations, 0 fabricated quotations. One run on one question is a working check, not a measurement.

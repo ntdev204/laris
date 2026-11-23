@@ -60,7 +60,7 @@ fn parts(state: &AppState) -> Result<(Arc<dyn Backend>, Arc<Settings>), ApiError
 }
 
 /// The model's whole answer to one user message.
-async fn complete(model: &Arc<dyn Backend>, prompt: String) -> Result<String, ApiError> {
+pub(crate) async fn complete(model: &Arc<dyn Backend>, prompt: String) -> Result<String, ApiError> {
     let mut extra = Map::new();
     extra.insert("temperature".into(), json!(0.0));
     let request = ChatRequest {
