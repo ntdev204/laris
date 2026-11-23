@@ -620,6 +620,10 @@ def cmd_harness(args: argparse.Namespace) -> int:
     revision = code_revision()  # the code this run executes, taken before it starts
     config = _config(args.config)
     base, hcfg = config["baseline"], config["harness"]
+    path = getattr(args, "path", "rule") or "rule"
+    if path != "rule":  # T287: one path forced on every item
+        hcfg = json.loads(json.dumps(hcfg))
+        hcfg = merge_path(hcfg, config["router_paths"][path])
     mode = base["modes"][hcfg["mode"]]
     run = args.run or "harness-dev"
     out_dir = ROOT / config["data_dir"] / "runs"
@@ -773,6 +777,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 baseline[row["id"]] = bool(row["correct"])
     summary: Dict[str, Any] = {
         "run": run,
+        "path": path,
         "mode": hcfg["mode"],
         "model_id": base["model_id"],
         "settings": mode,
@@ -878,6 +883,19 @@ def cmd_filter_eval(args: argparse.Namespace) -> int:
     out.write_text(json.dumps(summary, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=1, ensure_ascii=False))
     return 0
+
+
+def merge_path(hcfg: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """`hcfg` with the keys of a path override set (nested dicts merged, the rest replaced)."""
+    out = dict(hcfg)
+    for key, value in override.items():
+        if key == "note":
+            continue
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = merge_path(out[key], value)
+        else:
+            out[key] = value
+    return out
 
 
 def code_revision() -> str:
@@ -986,6 +1004,12 @@ def main(argv: List[str] | None = None) -> int:
     harness.add_argument("--run", default="")
     harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
     harness.add_argument("--no-filter", action="store_true", help="skip the T286 prompt filter")
+    harness.add_argument(
+        "--path",
+        default="rule",
+        choices=["rule", "notes_model", "model_solver", "plain_retrieval", "deterministic"],
+        help="T287: force one path on every item (router_paths in the configuration)",
+    )
     harness.set_defaults(func=cmd_harness)
     feval = sub.add_parser("filter-eval")
     feval.add_argument("--run", default="")

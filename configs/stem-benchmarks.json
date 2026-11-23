@@ -142,5 +142,12 @@
       "review_solver": "\n\nA first answer to this problem was: {draft}\nA computer algebra system computed the formalisation {problem} and got: {value}\nThat computation is exact for the formalisation, but the formalisation may not match the problem. Check the first answer and the formalisation against the problem, then give your final answer in the form asked for above.",
       "review_notes": "\n\nA first answer to this question was {draft}. These notes from reference textbooks bear on option {letter}:\n{notes}\nCheck the first answer against the question and the notes; the notes may not apply. Then give your final answer in the form asked for above."
     }
+  },
+  "router_paths": {
+    "note": "T287: each path forced on every development item, so each item gets a label (the paths that answer it right). Overrides of the harness section; rule = the router of T278 unchanged.",
+    "notes_model": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}},
+    "model_solver": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": ["computable", "knowledge", "reasoning"]}},
+    "plain_retrieval": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
+    "deterministic": {"deterministic_only": true, "model_free": true, "brain_only": {"enabled": true}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"], "snapshot": "stem-t285-2", "source_classes": "configs/admissible-sources.json"}}
   }
 }

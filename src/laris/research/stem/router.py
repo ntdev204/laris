@@ -16,7 +16,7 @@ configuration; they never read the gold answer. Deterministic and model-free.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict
 
 COMPUTABLE = "computable"
@@ -31,6 +31,17 @@ _DIGIT = re.compile(r"\d")
 class Route:
     cls: str
     rule: str  # which rule decided, for the record
+    features: Dict[str, Any] = field(default_factory=dict)  # what the rules read (T287)
+
+
+def features(item: Dict[str, Any]) -> Dict[str, Any]:
+    """The item-shape features the rules read, recorded with every decision (no text)."""
+    options = item.get("options") or []
+    return {
+        "options": len(options),
+        "numeric_option_share": round(numeric_share(options), 4),
+        "question_words": len(str(item["question"]).split()),
+    }
 
 
 def numeric_share(options: Any) -> float:
@@ -43,11 +54,11 @@ def numeric_share(options: Any) -> float:
 def route(item: Dict[str, Any], cfg: Dict[str, Any]) -> Route:
     """The class of `item` under the router settings `cfg` (`numeric_option_share`,
     `knowledge_max_question_words`)."""
-    options = item.get("options") or []
-    if not options:
-        return Route(COMPUTABLE, "open_answer")
-    if numeric_share(options) >= float(cfg["numeric_option_share"]):
-        return Route(COMPUTABLE, "numeric_options")
-    if len(str(item["question"]).split()) <= int(cfg["knowledge_max_question_words"]):
-        return Route(KNOWLEDGE, "word_options_short_question")
-    return Route(REASONING, "word_options_long_question")
+    seen = features(item)
+    if not seen["options"]:
+        return Route(COMPUTABLE, "open_answer", seen)
+    if numeric_share(item["options"]) >= float(cfg["numeric_option_share"]):
+        return Route(COMPUTABLE, "numeric_options", seen)
+    if seen["question_words"] <= int(cfg["knowledge_max_question_words"]):
+        return Route(KNOWLEDGE, "word_options_short_question", seen)
+    return Route(REASONING, "word_options_long_question", seen)

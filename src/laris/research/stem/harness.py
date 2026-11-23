@@ -249,6 +249,7 @@ class Trace:
 
     cls: str
     rule: str
+    features: Dict[str, Any] = field(default_factory=dict)
     steps: List[Dict[str, Any]] = field(default_factory=list)
     model_free: bool = False
     brain_only: bool = False
@@ -434,7 +435,7 @@ class Harness:
         only ones a brain-only answer may rest on; `quantities` those the prompt filter found in
         the question (T286), read only to cross-check the model's solver formalisation."""
         decided = route(item, self.cfg["router"])
-        trace = Trace(cls=decided.cls, rule=decided.rule)
+        trace = Trace(cls=decided.cls, rule=decided.rule, features=dict(decided.features))
         notes = list(notes or [])
 
         only = self.cfg.get("brain_only") or {}
@@ -461,6 +462,9 @@ class Harness:
                 trace.final_from = "model_free"
                 trace.solver_status = "verified"
                 return trace
+
+        if self.cfg.get("deterministic_only"):
+            return trace  # T287 path: the model-free and brain-only steps alone, no model
 
         base_prompt = prompt_for(item, self.base["prompts"])
         prompt = base_prompt
