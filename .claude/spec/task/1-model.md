@@ -720,8 +720,8 @@ returned logs, manifests and reports.
   - `docs/adr/ADR-026-stem-benchmark-qualification.md` (PROPOSED): benchmarks and splits, the measured unit, the deterministic brain, gates B1-B6, development and sealed-run rules, cost and latency measures, decisions D57-D64; spec decisions D57-D64 and SR-M13; Phase 57 in the plan; tasks T275-T281
 - Validation:
   - `python scripts/validate_spec.py`, `cargo xtask spec` and `python scripts/validate_docs.py` pass; the owner accepts or changes ADR-026
-- Status: blocked
-- Note: 2026-11-23, owner's direction: qualify the system above 95 % on world STEM benchmarks with a light model carried by harness, RAG and a brain of verified knowledge that can answer without the model; optimise compute cost and response time. Owner's choices to the agent's proposal: (1) MATH-500, MMLU-Pro STEM, GPQA Diamond; (2) MATH-500 ≥ 95 %, the other thresholds after a baseline; (3) SymPy, the three benchmarks, OpenStax and NIST CODATA approved; (4) a light model, optimised harness and RAG. ADR-026 written as PROPOSED; ledger only, no code, nothing downloaded. Blocked on the owner's acceptance of ADR-026. The model (Qwen3.5-4B) and the system are NOT QUALIFIED.
+- Status: done
+- Note: 2026-11-23, owner's direction: qualify the system above 95 % on world STEM benchmarks with a light model carried by harness, RAG and a brain of verified knowledge that can answer without the model; optimise compute cost and response time. Owner's choices to the agent's proposal: (1) MATH-500, MMLU-Pro STEM, GPQA Diamond; (2) MATH-500 ≥ 95 %, the other thresholds after a baseline; (3) SymPy, the three benchmarks, OpenStax and NIST CODATA approved; (4) a light model, optimised harness and RAG. ADR-026 written as PROPOSED; ledger only, no code, nothing downloaded. Accepted by the owner 2026-11-23 ("Chấp nhận"): ADR-026 ACCEPTED, D57-D64 accepted; T275 may start. The model (Qwen3.5-4B) and the system are NOT QUALIFIED.
 
 ### T275 — Benchmark data, sealed splits, evaluator and bare-model baseline
 - Requirements: SR-M13, SR-M12
