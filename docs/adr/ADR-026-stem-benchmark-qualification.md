@@ -160,6 +160,10 @@ accepts the trade.
 ## 12. Validation
 
 - 2026-11-23 (T275): B2 and B4 fixed by the owner from the measured baseline (`reports/benchmarks/T275-baseline.md`); B3 open.
+- 2026-11-23 (T277): the live OpenStax STEM editions are CC BY-NC-SA 4.0 (repository metadata and the openstax.org
+  catalogue agree); within choice 3 the owner took each book from the newest git commit at which it was CC BY 4.0
+  (18 books pinned in `configs/stem-brain.json`; Calculus 1-3 and Organic Chemistry never were CC BY and are not used).
+  The snapshot build leaves out every text block that shares a 13-word sequence with a benchmark item (B6).
 
 - Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
 

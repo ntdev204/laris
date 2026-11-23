@@ -88,6 +88,7 @@ fn claim(gate: &Gate, source: Option<&str>, statement: &str, quote: &str) -> Dec
         quote: quote.into(),
         requested: Level::Sourced,
         evidence: vec![],
+        solver: None,
         proposer: who(),
     })
     .expect("io")

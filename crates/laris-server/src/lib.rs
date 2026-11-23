@@ -11,6 +11,7 @@ pub mod admin;
 pub mod app;
 pub mod backend;
 pub mod brain;
+pub mod brain_ingest;
 pub mod config;
 pub mod error;
 pub mod gap;

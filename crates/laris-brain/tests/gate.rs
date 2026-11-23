@@ -72,6 +72,7 @@ fn claim(statement: &str, src: Option<&str>, quote: &str) -> ClaimProposal {
         quote: quote.into(),
         requested: Level::Sourced,
         evidence: vec![],
+        solver: None,
         proposer: who(),
     }
 }

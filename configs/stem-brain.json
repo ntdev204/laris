@@ -1,0 +1,204 @@
+{
+  "data_dir": "data/brain",
+  "licence_required": "creativecommons.org/licenses/by/4.0",
+  "catalogue_url": "https://openstax.org/apps/cms/api/v2/pages/?type=books.Book&fields=title,cnx_id,book_state,license_name&limit=250",
+  "catalogue_registry": "openstax.org catalogue (title and cnx_id)",
+  "openstax": [
+    {
+      "repo": "osbooks-university-physics-bundle",
+      "commit": "2bd5135881a577f903a431ab7b5d9c90d9f5bde7",
+      "collections": [
+        "university-physics-volume-1",
+        "university-physics-volume-2",
+        "university-physics-volume-3"
+      ]
+    },
+    {
+      "repo": "osbooks-college-physics-bundle",
+      "commit": "e7d2174b091f4ee0f4c1e67e7ee3156bfc3ed626",
+      "collections": [
+        "college-physics-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-physics",
+      "commit": "56e71824e73e371c0d20eb68a77611aa438b5f89",
+      "collections": [
+        "physics"
+      ]
+    },
+    {
+      "repo": "osbooks-chemistry-bundle",
+      "commit": "ac55ea98e6240f5d18e81b8d975f1acd6c969f65",
+      "collections": [
+        "chemistry-2e",
+        "chemistry-atoms-first-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-college-algebra-bundle",
+      "commit": "2cd7155f580057eb210b4872a360d4b1013f42e2",
+      "collections": [
+        "college-algebra-2e",
+        "algebra-and-trigonometry-2e",
+        "precalculus-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-prealgebra-bundle",
+      "commit": "c1bbed4b86ff5c80686d339a6ca5e4e48fae2483",
+      "collections": [
+        "intermediate-algebra-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-introductory-statistics-bundle",
+      "commit": "a24e6bd94f7a057a9b8e5a46a6274a5f6c72d61a",
+      "collections": [
+        "introductory-statistics-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-statistics",
+      "commit": "7dea80ae2800386d470b11f6528962f9c4992d15",
+      "collections": [
+        "statistics"
+      ]
+    },
+    {
+      "repo": "osbooks-biology-bundle",
+      "commit": "6a02bc26a2e72702c1f96c41f2d98026b8127c4f",
+      "collections": [
+        "biology-2e",
+        "concepts-biology"
+      ]
+    },
+    {
+      "repo": "osbooks-microbiology",
+      "commit": "195e304d43b988de2b33bd798e59c030a3d84902",
+      "collections": [
+        "microbiology"
+      ]
+    },
+    {
+      "repo": "osbooks-astronomy",
+      "commit": "0c021fb283a7dccabe09b08f49dacdb5f50a20b5",
+      "collections": [
+        "astronomy-2e"
+      ]
+    },
+    {
+      "repo": "osbooks-introduction-python-programming",
+      "commit": "0c482692951f822860e1c7c203da452224d84f5e",
+      "collections": [
+        "introduction-python-programming"
+      ]
+    }
+  ],
+  "codata": {
+    "identifier": "https://physics.nist.gov/cuu/Constants/Table/allascii.txt",
+    "registry": "NIST CODATA 2022 table, SHA-256 pinned in the solver settings (T276)",
+    "licence": "NIST public data (17 U.S.C. 105)"
+  },
+  "build": {
+    "proposer": "tool:stem-brain-build",
+    "dropped_elements": [
+      "exercise",
+      "solution",
+      "problem",
+      "commentary"
+    ],
+    "claim_kinds": [
+      "definition",
+      "key-concept",
+      "key-equation",
+      "law"
+    ],
+    "max_statement_bytes": 1200,
+    "dropped_classes": [
+      "review-problems",
+      "review-conceptual-questions",
+      "review-additional-problems",
+      "review-challenge",
+      "check-understanding",
+      "problem-solving",
+      "practice",
+      "review-questions",
+      "critical-thinking",
+      "section-exercises",
+      "review-exercises",
+      "practice-test",
+      "chapter-review",
+      "summary-exercises",
+      "multiple-choice",
+      "ost-reading-discard",
+      "ost-chapter-review",
+      "review",
+      "visual-exercise",
+      "ost-get-exercise",
+      "ap-test-prep",
+      "free-response",
+      "os-teacher",
+      "interactive",
+      "link-to-learning",
+      "thought-questions",
+      "group-activities",
+      "figuring-for-yourself",
+      "further-exploration",
+      "exercises",
+      "practice-perfect",
+      "coreq-skills",
+      "try",
+      "media",
+      "media-notitle",
+      "media-2",
+      "conceptual-questions",
+      "problems-exercises",
+      "fill-in-the-blank",
+      "short-answer",
+      "true-false",
+      "matching",
+      "check-your-understanding",
+      "extended-response",
+      "performance",
+      "practice-problems",
+      "problems",
+      "references",
+      "writing",
+      "bring-together-homework",
+      "bring-together-exercises",
+      "self-check",
+      "be-prepared",
+      "calculator",
+      "lab",
+      "collab",
+      "snap-lab",
+      "watch-physics",
+      "learning-questions",
+      "practice-program",
+      "guided-slides",
+      "learning-objectives",
+      "chapter-objectives",
+      "splash",
+      "ap-science-practices",
+      "ost-assignable"
+    ]
+  },
+  "gate": {
+    "note": "the deployed server's thresholds (docker/compose.yaml defaults); the snapshot is built under them",
+    "min_support": 0.9,
+    "min_equivalence": 0.6,
+    "subject_overlap": 0.5,
+    "search_depth": 10,
+    "max_bytes": 100000
+  },
+  "source_part_bytes": 90000,
+  "date": "2026-11-23",
+  "retrieval": {
+    "k": [
+      1,
+      5,
+      10
+    ]
+  }
+}

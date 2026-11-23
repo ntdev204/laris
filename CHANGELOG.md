@@ -17,6 +17,19 @@ this is the first release of the Rust generation. History lives in git.
   SymPy 1.14.0 and mpmath 1.3.0 are now in the `model` extra. Molar masses (`molar_mass`, and grams in
   `stoichiometry`, which also takes a known amount in grams) come from the CIAAW abridged standard atomic weights 2024.
 
+- **STEM knowledge in the main brain (T277):** `scripts/acquire_openstax.py` fetches 18 OpenStax textbooks (CNXML only)
+  at the commit where each was still CC BY 4.0 and checks licence and catalogue identity; `scripts/build_stem_brain.py`
+  turns them and NIST's CODATA 2022 table into Sources (provenance in the text), Claims quoted from the books' own
+  markup (glossary definitions, key concepts, key equations, boxed laws) and solver links for formulas, writes them
+  through the gate (`laris-server brain import`), freezes the vault (`brain freeze`, one SHA-256 for the snapshot),
+  scans it against every benchmark item (B6) and measures retrieval (`brain retrieve`). The gate takes a batch of
+  Claims (`Gate::submit_claims`) and a Claim may name its solver run (`solver`, stored as `solver_ref`; lint checks it).
+
+### Fixed
+- The write gate's support check refused a statement identical to its quote when the quote held both words of an
+  opposite pair ("below ... above"); it now refuses only a word whose opposite the quote says and which the quote never
+  says itself. The contradiction search is unchanged.
+
 ### Security
 - `url` 2.5.9 (RUSTSEC-2026-0592: stack overflow in `Url::origin()` on nested `blob:` URLs), vendored.
 

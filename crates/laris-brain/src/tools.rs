@@ -282,6 +282,7 @@ impl Tools<'_> {
             quote: quote.to_string(),
             requested: Level::Sourced,
             evidence: vec![],
+            solver: None,
             proposer: who.clone(),
         })?;
         let Decision::Accepted { path, .. } = &decision else {

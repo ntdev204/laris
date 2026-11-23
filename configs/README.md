@@ -5,6 +5,7 @@ Declarative configuration files, organised by function.
 | Path | Purpose |
 |---|---|
 | `default.yaml` | Canonical defaults for `LarisConfig` |
+| `stem-brain.json` | Main-brain STEM sources (OpenStax pins at CC BY 4.0 commits, CODATA), sections left out, gate thresholds and retrieval k of the snapshot build (T277) |
 | `stem-benchmarks.json` | STEM benchmark sources (pinned revisions), split seeds, leakage n-gram, equivalence and baseline settings (T275, ADR-026) |
 
 ## Guidelines

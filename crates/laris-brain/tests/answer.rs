@@ -107,6 +107,7 @@ impl Brain {
                 quote: statement.into(),
                 requested: Level::Sourced,
                 evidence: vec![],
+                solver: None,
                 proposer: who(),
             })
             .expect("io");

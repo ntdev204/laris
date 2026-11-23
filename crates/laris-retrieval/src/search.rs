@@ -3,6 +3,7 @@
 use std::collections::{BTreeSet, HashMap};
 
 use laris_vault::VaultIndex;
+use laris_vault::note::Note;
 
 use crate::text::{round_to, tokens};
 
@@ -40,9 +41,12 @@ pub struct NoteSearch {
 impl NoteSearch {
     /// Indexes every note (or those whose first path segment is in `folders`, when it is not empty).
     pub fn new(index: &VaultIndex, folders: &[String]) -> NoteSearch {
-        let mut paths = Vec::new();
-        let mut lengths = Vec::new();
-        let mut postings: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
+        let mut search = NoteSearch {
+            paths: Vec::new(),
+            lengths: Vec::new(),
+            avg: 0.0,
+            postings: HashMap::new(),
+        };
         for (path, note) in &index.notes {
             if in_inbox(path) {
                 continue;
@@ -50,37 +54,51 @@ impl NoteSearch {
             if !folders.is_empty() && !folders.iter().any(|f| path.split('/').next() == Some(f)) {
                 continue;
             }
-            let mut words = tokens(&note.body);
-            let title = tokens(&note.title);
-            for _ in 0..TITLE_WEIGHT {
-                words.extend(title.iter().cloned());
-            }
-            let doc = paths.len() as u32;
-            let mut counts: HashMap<&str, u32> = HashMap::new();
-            for word in &words {
-                *counts.entry(word.as_str()).or_insert(0) += 1;
-            }
-            for (word, tf) in counts {
-                postings
-                    .entry(word.to_string())
-                    .or_default()
-                    .push((doc, tf));
-            }
-            lengths.push(words.len());
-            paths.push(path.clone());
+            search.push(path, note);
         }
-        let total: usize = lengths.iter().sum();
-        let avg = if lengths.is_empty() {
+        search.average();
+        search
+    }
+
+    /// Indexes one more note, as if it had been in the index when it was built: a search afterwards scores exactly
+    /// as a fresh [`NoteSearch::new`] over the same notes would. The caller applies the folder filter and adds a path
+    /// once.
+    pub fn add(&mut self, path: &str, note: &Note) {
+        if in_inbox(path) {
+            return;
+        }
+        self.push(path, note);
+        self.average();
+    }
+
+    fn push(&mut self, path: &str, note: &Note) {
+        let mut words = tokens(&note.body);
+        let title = tokens(&note.title);
+        for _ in 0..TITLE_WEIGHT {
+            words.extend(title.iter().cloned());
+        }
+        let doc = self.paths.len() as u32;
+        let mut counts: HashMap<&str, u32> = HashMap::new();
+        for word in &words {
+            *counts.entry(word.as_str()).or_insert(0) += 1;
+        }
+        for (word, tf) in counts {
+            self.postings
+                .entry(word.to_string())
+                .or_default()
+                .push((doc, tf));
+        }
+        self.lengths.push(words.len());
+        self.paths.push(path.to_string());
+    }
+
+    fn average(&mut self) {
+        let total: usize = self.lengths.iter().sum();
+        self.avg = if self.lengths.is_empty() {
             0.0
         } else {
-            total as f64 / lengths.len() as f64
+            total as f64 / self.lengths.len() as f64
         };
-        NoteSearch {
-            paths,
-            lengths,
-            avg,
-            postings,
-        }
     }
 
     /// Number of indexed notes.
