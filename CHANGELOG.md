@@ -14,7 +14,11 @@ this is the first release of the Rust generation. History lives in git.
   numeric roots, quadrature, a second algorithm, plain-integer recounts, `sympy.physics.units`) or `proposal`. Input
   is parsed against a whitelist, never by `eval`; each call runs in a worker with time and memory ceilings
   (`model_service.solver_*`). `scripts/stem_benchmarks.py solver` runs the model-free path on the development splits.
-  SymPy 1.14.0 and mpmath 1.3.0 are now in the `model` extra.
+  SymPy 1.14.0 and mpmath 1.3.0 are now in the `model` extra. Molar masses (`molar_mass`, and grams in
+  `stoichiometry`, which also takes a known amount in grams) come from the CIAAW abridged standard atomic weights 2024.
+
+### Security
+- `url` 2.5.9 (RUSTSEC-2026-0592: stack overflow in `Url::origin()` on nested `blob:` URLs), vendored.
 
 ### Changed
 - **One engine for chat and evaluation (T282):** the packaged server (`docker/laris.sh up`) serves Qwen3.5-4B in BF16

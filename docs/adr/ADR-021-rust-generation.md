@@ -138,5 +138,12 @@ the 2022 adjustment (`https://physics.nist.gov/cuu/Constants/Table/allascii.txt`
 the solver refuses a table whose hash differs from `model_service.solver_codata_sha256`. Constraints: input is parsed
 by Python's `ast` against a whitelist and the SymPy tree is built from it (SymPy's own parser, which evaluates
 Python, is never given input); every call runs in a forked worker with `solver_timeout_s` and an address-space
-ceiling of `solver_memory_bytes`. No table of atomic weights is shipped: molar masses come from the caller until the
-owner approves a source.
+ceiling of `solver_memory_bytes`.
+
+Follow-up the same day (owner: "1. duyệt; 2. duyệt nốt"): (1) `url` 2.5.8 was updated to 2.5.9 in `vendor/`
+(RUSTSEC-2026-0592, stack overflow in `Url::origin()` on nested `blob:` URLs), with `form_urlencoded` 1.2.2 to 1.2.3
+that it requires; no other crate changed. (2) The CIAAW abridged standard atomic weights (IUPAC, release 2024: Atomic
+Weights 2021 with the 2024 revisions of Gd, Lu and Zr; `https://www.ciaaw.org/abridged-atomic-weights.htm`, page
+SHA-256 `f9e95544…31b907d`) are shipped as `data/ciaaw-abridged-atomic-weights.tsv` (SHA-256 `6019c080…cddb669`,
+extracted by `scripts/extract_atomic_weights.py`); the solver refuses a file whose hash differs from
+`model_service.solver_atomic_weights_sha256`.

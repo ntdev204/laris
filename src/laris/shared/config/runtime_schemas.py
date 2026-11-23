@@ -253,6 +253,11 @@ class ModelServiceConfig(BaseModel):
         default="77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67",
         pattern="^[0-9a-f]{64}$",
     )
+    solver_atomic_weights_file: str = Field(default="")  # empty: packaged CIAAW abridged 2024
+    solver_atomic_weights_sha256: str = Field(
+        default="6019c080a921af796caca246d415a8e7307ed3363c55c2f4743669988cddb669",
+        pattern="^[0-9a-f]{64}$",
+    )
 
 
 class ServingConfig(BaseModel):

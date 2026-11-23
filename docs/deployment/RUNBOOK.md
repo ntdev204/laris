@@ -179,7 +179,9 @@ The model service's tool `solve_stem` answers structured STEM problems without t
 10 s) and `solver_memory_bytes` (default 2 GiB) bound it, and a refusal comes back as a tool error (`timed_out`,
 `input_too_large`, `invalid_arguments`, `rejected`). An answer marked `proposal` was not re-checked and must not be
 shown as checked. The constants table is refused when its SHA-256 differs from `solver_codata_sha256`; to use a newer
-CODATA release, set `solver_codata_file` and its hash, which is a policy change for the owner.
+CODATA release, set `solver_codata_file` and its hash, which is a policy change for the owner. Molar masses use the
+packaged CIAAW abridged standard atomic weights 2024 (`solver_atomic_weights_file`, `solver_atomic_weights_sha256`;
+a newer CIAAW table is extracted with `scripts/extract_atomic_weights.py`).
 
 ## Backup and restore
 

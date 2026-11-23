@@ -59,10 +59,11 @@ OPERATIONS: Dict[str, Tuple[str, Callable[[Context], Outcome], Tuple[str, ...]]]
     "dimension": ("units", quantities.dimension, ("unit",)),
     "constant": ("constants", constants.constant, ("constant",)),
     "balance": ("chemistry", chemistry.balance, ("reaction",)),
+    "molar_mass": ("chemistry", chemistry.molar_mass, ("formula",)),
     "stoichiometry": (
         "chemistry",
         chemistry.stoichiometry,
-        ("reaction", "species", "amount", "molar_masses"),
+        ("reaction", "species", "amount", "amount_unit", "molar_masses"),
     ),
 }
 

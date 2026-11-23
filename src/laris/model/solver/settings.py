@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 CODATA_2022_SHA256 = "77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67"
+CIAAW_2024_SHA256 = "6019c080a921af796caca246d415a8e7307ed3363c55c2f4743669988cddb669"
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,8 @@ class SolverSettings:
     unit_tolerance: float = 1e-8  # relative tolerance between the two unit conversion routes
     codata_file: str = ""  # NIST CODATA ASCII table; empty selects the packaged 2022 table
     codata_sha256: str = CODATA_2022_SHA256  # the table is refused when its hash differs
+    atomic_weights_file: str = ""  # CIAAW abridged table; empty selects the packaged 2024 table
+    atomic_weights_sha256: str = CIAAW_2024_SHA256  # refused when its hash differs
 
     @classmethod
     def from_config(cls, cfg: Any) -> "SolverSettings":

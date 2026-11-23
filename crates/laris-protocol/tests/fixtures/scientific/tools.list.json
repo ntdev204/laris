@@ -243,6 +243,7 @@
         "limit",
         "mod_inverse",
         "mod_pow",
+        "molar_mass",
         "rank",
         "simplify",
         "solve",
@@ -447,11 +448,22 @@
         "string",
         "number"
        ],
-       "description": "Amount of the species, in mol."
+       "description": "Amount of the species (amount_unit)."
+      },
+      "amount_unit": {
+       "type": "string",
+       "enum": [
+        "mol",
+        "g"
+       ]
       },
       "molar_masses": {
        "type": "object",
-       "description": "g/mol per species."
+       "description": "g/mol per species; default: from CIAAW standard atomic weights."
+      },
+      "formula": {
+       "type": "string",
+       "description": "Chemical formula: CuSO4·5H2O, Ca(OH)2."
       }
      },
      "required": [
