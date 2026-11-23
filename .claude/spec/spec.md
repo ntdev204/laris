@@ -179,6 +179,14 @@ changes in the ADR named in the task.
 | D54 | Server decider | Rule decider behind the ADR-024 seam; closed action set unchanged; `run_tool`, `acquire`, `verify` not decided by the server pipeline; network off | accepted 2026-11-20 (ADR-025) |
 | D55 | P1 additions | Optional `laris.steps`, `decision`, `evidence`; dropped from requests; `X-Laris-Protocol` bumped | accepted 2026-11-20 (ADR-025) |
 | D56 | Rollout | Every stage behind configuration, off by default until T243 passes | accepted 2026-11-20 (ADR-025) |
+| D57 | STEM gate benchmarks | MATH-500, MMLU-Pro (STEM categories), GPQA Diamond | decided by the owner 2026-11-23 (ADR-026, T274) |
+| D58 | STEM thresholds | B1 MATH-500 ≥ 95 %; B2 MMLU-Pro STEM, B3 GPQA Diamond and B4 cost/latency fixed by the owner after the measured baseline (T275) and before tuning | decided by the owner 2026-11-23 (ADR-026) |
+| D59 | Measured unit | The whole pipeline in an evaluation profile, pass@1; abstention, unparseable answer or timeout scores 0 | proposed (ADR-026) |
+| D60 | Closed book | No network or web tools in gate runs; frozen, hashed brain snapshot | proposed (ADR-026) |
+| D61 | Benchmark splits | Development: MATH train sample, seeded 20 % of MMLU-Pro STEM, GPQA main minus Diamond; sealed test run once per frozen candidate, at most three | proposed (ADR-026) |
+| D62 | Deterministic brain | SymPy solver as a remote tool and verified notes through the write gate; model-free answers gated on precision (B5: 0 wrong) | SymPy and the sources approved by the owner 2026-11-23; design proposed (ADR-026) |
+| D63 | Benchmark leakage | 13-gram scan of brain and few-shot material against every benchmark item, 0 hits (B6); GPQA text never in Git, reports or the brain | proposed (ADR-026) |
+| D64 | Model size | Light model, default candidate Qwen3.5-4B, chosen from measured accuracy, latency and VRAM (T279) | decided by the owner 2026-11-23 (light model); choice measured in T279 |
 
 ## 7. Requirements
 
@@ -550,6 +558,15 @@ checkpoints, non-finite values and validation-only evidence; held-out evaluation
 `docs/specifications/REPORT_SPECIFICATION.md`.
 Acceptance: readiness tests with seeded faulty reports; no gate threshold changed without an ADR.
 
+### SR-M13 — STEM benchmark qualification of the system (ADR-026)
+Owner: model
+The whole pipeline (Prefilter, STEM router, deterministic solver, retrieval over the main brain, light model in the
+harness loop, answer check) is measured closed-book on MATH-500, MMLU-Pro STEM and GPQA Diamond under the frozen
+protocol of ADR-026, with cost and latency per item; development splits guide changes, each sealed test runs once per
+frozen candidate. The system is qualified on STEM only when B1-B6 pass; until then it is NOT QUALIFIED.
+Acceptance: the owner accepts ADR-026; a sealed-run report per candidate with Wilson intervals, cost, latency,
+leakage scan and model-free precision.
+
 ### 7.9 Brain programme
 
 ### SR-K1 — Design gate
@@ -625,4 +642,4 @@ gate, brain write gate with provenance, sealed test splits and data checksums. L
 The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T98.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260. Phase 56: T261-T273.
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260. Phase 56: T261-T273. Phase 57: T274-T281 (STEM benchmark qualification, ADR-026; programme 1).
