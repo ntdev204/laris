@@ -91,3 +91,13 @@ def test_a_solution_set_with_two_roots_gives_no_answer():
 
 def test_multiple_choice_items_are_not_formalised():
     assert formalise({"question": "Compute $2+2$.", "options": ["3", "4"]}) is None
+
+
+def test_a_mixed_number_is_not_read_as_a_product():
+    assert latex_to_solver(r"6 \cdot 8\frac{1}{3}") is None
+    assert latex_to_solver(r"2 \cdot \frac{1}{3}") == "2 * ((1)/(3))"
+
+
+def test_a_complex_principal_branch_gives_no_answer():
+    out = answer_model_free({"question": "Evaluate $(-27)^{5/3}$.", "options": []}, S)
+    assert out["answer"] is None and out["status"] == "complex_branch"
