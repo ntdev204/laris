@@ -554,7 +554,7 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
         }
     };
     // stage 5: the decider
-    if let Some(decider) = this.decider {
+    if let Some(decider) = this.decider.clone() {
         let started = Instant::now();
         let index = if brain_read {
             this.brain.as_ref().and_then(|b| b.index())

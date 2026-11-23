@@ -55,7 +55,7 @@ pub const FRAME_WORDS: [&str; 24] = [
 ];
 
 /// Settings of assembly, filled by the caller; there is no default.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AnswerSettings {
     /// Share of a sentence's content words that must occur in the Claims it cites (0 to 1).
     pub min_cover: f64,
@@ -63,6 +63,9 @@ pub struct AnswerSettings {
     pub min_level: Level,
     /// The most Claims and Theories in one answer.
     pub max_notes: usize,
+    /// The configured source classes (T285). When set, only Claims that are certain under them are used
+    /// ([`crate::certain::check`]) and Theories are not; when `None`, the level and the Source's status decide.
+    pub admissible: Option<std::sync::Arc<crate::certain::Admissibility>>,
 }
 
 /// What a sentence stands for.
@@ -163,8 +166,12 @@ fn kind_of(note: &Note) -> String {
     prop(note, "type")
 }
 
-/// Whether a Claim or Theory may be used in an answer: its level is high enough and its Source is active.
+/// Whether a Claim or Theory may be used in an answer: its level is high enough and its Source is active; with
+/// admissible source classes set, only a certain Claim.
 fn accepted(index: &VaultIndex, note: &Note, settings: &AnswerSettings) -> bool {
+    if let Some(rules) = &settings.admissible {
+        return crate::certain::check(index, note, rules, settings.min_level).is_ok();
+    }
     let source = index.find(&link_name(&prop(note, "source_ref")));
     let usable =
         source.is_some_and(|s| matches!(prop(s, "status").as_str(), "active" | "superseded"));

@@ -4,6 +4,7 @@
 //! * [`gate`]: the only writer of the main-brain vault. A proposal is checked (shape, span, metadata, support,
 //!   contradiction search), then written with an audit record, refused with a reason or written with a Conflict.
 //!   Retracting or replacing a Source downgrades its dependants ([`gate::Gate::retract_source`]).
+//! * [`certain`]: the one rule for when a Claim may answer alone: admissible Source, resolution, quote found again.
 //! * [`answer`]: composes answers from accepted Claims and checks every sentence against the notes it cites.
 //! * [`tools`]: search, acquisition, metadata and quote verification, corroboration and checks, all feeding the gate.
 //! * [`dataset`]: decision examples from logs and scenarios, the sealed split and the text that may train ResearchLLM.
@@ -18,6 +19,7 @@
 
 pub mod answer;
 pub mod audit;
+pub mod certain;
 pub mod dataset;
 pub mod decide;
 pub mod gate;
@@ -28,6 +30,6 @@ pub mod text;
 pub mod tools;
 
 pub use gate::{
-    ClaimProposal, ConsolidationReport, Decision, Evidence, Gate, GateError, GateSettings,
-    MetadataCheck, Proposer, Refusal, SourceProposal, TheoryProposal,
+    Admission, ClaimProposal, ConsolidationReport, Decision, Evidence, Gate, GateError,
+    GateSettings, MetadataCheck, Proposer, Refusal, SourceProposal, TheoryProposal,
 };

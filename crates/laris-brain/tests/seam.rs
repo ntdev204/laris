@@ -55,6 +55,7 @@ const ANSWER: AnswerSettings = AnswerSettings {
     min_cover: 0.8,
     min_level: Level::Sourced,
     max_notes: 8,
+    admissible: None,
 };
 const RULES: RuleSettings = RuleSettings {
     required_level: Level::Sourced,
@@ -135,6 +136,7 @@ fn vault() -> Temp {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: proposer.clone(),
     })
     .expect("io");

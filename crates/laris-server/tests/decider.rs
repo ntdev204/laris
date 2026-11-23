@@ -47,12 +47,19 @@ fn decider(compose: bool) -> DeciderConfig {
             min_cover: 0.8,
             min_level: Level::Sourced,
             max_notes: 8,
+            admissible: None,
         },
         max_steps: 10,
         max_seconds: 180.0,
         compose_without_model: compose,
     }
 }
+
+/// The shipped source classes (T285).
+const CLASSES: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../configs/admissible-sources.json"
+);
 
 const PAPER: &str = "Aspirin reduces fever in adults. A dose of 500 mg was used in 2020.";
 const FACT: &str = "Aspirin reduces fever in adults.";
@@ -111,6 +118,10 @@ struct Server {
 }
 
 async fn start(compose: bool, grounding: Grounding, scripts: Vec<Script>) -> Server {
+    start_with(decider(compose), grounding, scripts).await
+}
+
+async fn start_with(config: DeciderConfig, grounding: Grounding, scripts: Vec<Script>) -> Server {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     let mut cfg = ServerConfig::with_bind(addr);
@@ -144,7 +155,7 @@ async fn start(compose: bool, grounding: Grounding, scripts: Vec<Script>) -> Ser
             Some(brain.clone()),
         )
         .unwrap()
-        .with_decider(decider(compose))
+        .with_decider(config)
         .unwrap(),
     );
     let traces = Arc::new(MemoryTraces::default());
@@ -344,6 +355,24 @@ async fn an_answer_from_accepted_claims_does_not_call_the_model() {
 }
 
 #[tokio::test]
+async fn with_source_classes_a_claim_without_an_admission_record_does_not_answer_alone() {
+    let mut config = decider(true);
+    config.answer.admissible = Some(Arc::new(
+        laris_brain::certain::Admissibility::load(Path::new(CLASSES)).unwrap(),
+    ));
+    let server = start_with(config, Grounding::Required, vec![answer("from the model")]).await;
+    store_fact(&server).await;
+    let reply = chat(&server, COVERED, None).await;
+    let (action, rule) = reply.decision.clone().expect("a decision");
+    assert_ne!(
+        (action.as_str(), rule.as_str()),
+        ("answer", "R3-covered"),
+        "the stored Source has no admission record, so its Claim is not certain"
+    );
+    assert!(reply.evidence.is_empty(), "{:?}", reply.evidence);
+}
+
+#[tokio::test]
 async fn a_covered_question_goes_to_the_model_when_composing_is_off() {
     let server = start(false, Grounding::Required, vec![]).await;
     let path = store_fact(&server).await;
@@ -488,11 +517,25 @@ fn the_settings_are_required_together_and_the_network_cannot_be_enabled() {
         ("LARIS_SERVER__DECIDER_ANSWER_MAX_NOTES", "8"),
         ("LARIS_SERVER__DECIDER_MAX_STEPS", "10"),
         ("LARIS_SERVER__DECIDER_MAX_SECONDS", "180"),
+        ("LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES", CLASSES),
     ]
     .into_iter()
     .map(|(k, v)| (k.to_owned(), v.to_owned()))
     .collect();
-    assert_eq!(DeciderConfig::from_env(&all).unwrap(), Some(decider(false)));
+    let mut expected = decider(false);
+    expected.answer.admissible = Some(std::sync::Arc::new(
+        laris_brain::certain::Admissibility::load(std::path::Path::new(CLASSES)).unwrap(),
+    ));
+    assert_eq!(DeciderConfig::from_env(&all).unwrap(), Some(expected));
+    let mut unreadable = all.clone();
+    unreadable.insert(
+        "LARIS_SERVER__DECIDER_ADMISSIBLE_SOURCES".into(),
+        "/nonexistent/classes.json".into(),
+    );
+    let error = DeciderConfig::from_env(&unreadable)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("ADMISSIBLE_SOURCES"), "{error}");
     assert_eq!(DeciderConfig::from_env(&HashMap::new()).unwrap(), None);
     for name in all.keys().filter(|k| !k.ends_with("ENABLED")) {
         let mut less = all.clone();

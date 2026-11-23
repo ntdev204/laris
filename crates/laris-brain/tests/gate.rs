@@ -61,6 +61,7 @@ fn source(title: &str, id: &str, text: &str) -> SourceProposal {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: who(),
     }
 }
@@ -525,6 +526,7 @@ fn a_tool_run_verifies_only_what_its_output_supports() {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::NotApplicable,
+        admission: None,
         proposer: who(),
     };
     g.submit_source(run(

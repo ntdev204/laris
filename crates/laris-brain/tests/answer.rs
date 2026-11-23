@@ -50,6 +50,7 @@ const ANSWER: AnswerSettings = AnswerSettings {
     min_cover: 0.8,
     min_level: Level::Sourced,
     max_notes: 8,
+    admissible: None,
 };
 
 const C1: &str = "Aspirin reduces fever in adults.";
@@ -82,6 +83,7 @@ fn brain() -> Brain {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: who(),
     };
     assert!(gate.submit_source(doc).expect("io").is_accepted());
@@ -188,6 +190,7 @@ fn a_conflict_is_presented_with_both_sides() {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: who(),
     };
     b.gate.submit_source(other).expect("io");

@@ -103,6 +103,7 @@
       "knowledge_max_question_words": 40
     },
     "model_free": true,
+    "brain_only": {"enabled": false, "min_option_words": 2, "note": "T285: answer from one certain Claim alone; off until B5 (0 wrong) is shown on development"},
     "retrieval": {
       "classes": [
         "knowledge",

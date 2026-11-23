@@ -251,6 +251,7 @@ class Trace:
     rule: str
     steps: List[Dict[str, Any]] = field(default_factory=list)
     model_free: bool = False
+    brain_only: bool = False
     draft: Optional[str] = None
     final: Optional[str] = None
     final_from: str = ""
@@ -410,10 +411,30 @@ class Harness:
 
     # -- the loop ------------------------------------------------------------------------------
 
-    def answer(self, item: Dict[str, Any], seed: int, notes: Optional[List[str]] = None) -> Trace:
+    def answer(
+        self,
+        item: Dict[str, Any],
+        seed: int,
+        notes: Optional[List[str]] = None,
+        certain: Optional[List[str]] = None,
+    ) -> Trace:
+        """`notes` are the passages shown to the model; `certain` the texts of the retrieved
+        Claims that are certain (T285, `laris-server brain retrieve` with source classes), the
+        only ones a brain-only answer may rest on."""
         decided = route(item, self.cfg["router"])
         trace = Trace(cls=decided.cls, rule=decided.rule)
         notes = list(notes or [])
+
+        only = self.cfg.get("brain_only") or {}
+        if only.get("enabled") and item["options"] and certain:
+            index = brain_only_option(item, certain, int(only["min_option_words"]))
+            trace.steps.append(
+                {"step": "brain_only", "answered": index is not None, "certain": len(certain)}
+            )
+            if index is not None:
+                trace.brain_only = True
+                trace.final, trace.final_from = LETTERS[index], "brain_only"
+                return trace
 
         if decided.cls == COMPUTABLE and not item["options"] and self.model_free is not None:
             began = time.perf_counter()
@@ -484,6 +505,19 @@ class Harness:
         return trace
 
 
+def brain_only_option(item: Dict[str, Any], certain: List[str], least: int) -> Optional[int]:
+    """The one option whose content words (at least `least` of them) all appear in one certain
+    Claim while no other option's do, else None (T285). Only certain Claims are read; the rule
+    never sees the gold answer."""
+    claims = [set(content_words(text)) for text in certain]
+    backed = []
+    for index, option in enumerate(item["options"]):
+        words = set(content_words(option))
+        if len(words) >= least and any(words <= claim for claim in claims):
+            backed.append(index)
+    return backed[0] if len(backed) == 1 else None
+
+
 # -- summaries ---------------------------------------------------------------------------------
 
 
@@ -505,6 +539,8 @@ def summarise_records(
     )
     free = [r for r in rows if r.get("model_free")]
     out["model_free"] = {"answered": len(free), "wrong": sum(1 for r in free if not r["correct"])}
+    alone = [r for r in rows if r.get("final_from") == "brain_only"]
+    out["brain_only"] = {"answered": len(alone), "wrong": sum(1 for r in alone if not r["correct"])}
     sources: Dict[str, Dict[str, int]] = {}
     for r in rows:
         slot = sources.setdefault(r.get("final_from") or "none", {"items": 0, "correct": 0})

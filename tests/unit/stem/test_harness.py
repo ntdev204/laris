@@ -332,3 +332,41 @@ def test_repaired_calls_pass_the_real_solver() -> None:
                "domain": "real", "substitutions": {"g": 2, "y": 4}}  # fmt: skip
     out = solve(h.repair(problem)[0], settings)
     assert sorted(out["answer"]) == ["-4", "4"]
+
+
+# -- T285: the brain-only path, from certain Claims only ----------------------------------------
+
+_CELLS = ["ribosome translation protein", "membrane lipid bilayer", "nucleus chromatin dna"]
+_CERTAIN = ["Ribosomes carry out translation of messenger RNA into protein; a ribosome is large."]
+
+
+def test_brain_only_is_off_by_default() -> None:
+    assert CONFIG["harness"]["brain_only"]["enabled"] is False
+    model = Scripted(draft="Answer: B")
+    trace = _harness(model, _solver(None)).answer(_choice(_CELLS), 1, [], _CERTAIN)
+    assert trace.final_from == "draft" and not trace.brain_only
+
+
+def test_brain_only_answers_from_one_certain_claim_without_the_model() -> None:
+    model = Scripted(draft="Answer: B")
+    on = {"enabled": True, "min_option_words": 2}
+    trace = _harness(model, _solver(None), brain_only=on).answer(_choice(_CELLS), 1, [], _CERTAIN)
+    assert trace.brain_only and trace.final == "A" and trace.final_from == "brain_only"
+    assert model.calls == []
+
+
+def test_brain_only_abstains_on_two_backed_options_or_uncertain_notes() -> None:
+    model = Scripted(draft="Answer: B", review_notes="Answer: B")
+    on = {"enabled": True, "min_option_words": 2}
+    both = _CERTAIN + ["The membrane is a lipid bilayer around the cell."]
+    trace = _harness(model, _solver(None), brain_only=on).answer(_choice(_CELLS), 1, [], both)
+    assert not trace.brain_only and trace.final_from == "draft"
+    # passages that are only notes (not certain) never answer alone
+    trace = _harness(model, _solver(None), brain_only=on).answer(_choice(_CELLS), 1, _CERTAIN, [])
+    assert not trace.brain_only
+
+
+def test_summary_counts_brain_only_answers() -> None:
+    rows = [_row(0, True, False, "brain_only"), _row(1, False, False, "brain_only")]
+    out = h.summarise_records(rows)
+    assert out["brain_only"] == {"answered": 2, "wrong": 1}

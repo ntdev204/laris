@@ -250,6 +250,7 @@ impl Tools<'_> {
             cites: document.cites,
             dataset: document.dataset,
             metadata: metadata.clone(),
+            admission: None,
             proposer: who.clone(),
         })?;
         Ok(Acquired { decision, metadata })
@@ -380,6 +381,7 @@ impl Tools<'_> {
             cites: vec![],
             dataset: None,
             metadata: MetadataCheck::NotApplicable,
+            admission: None,
             proposer: who.clone(),
         })?;
         if !stored.is_accepted() {

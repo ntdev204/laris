@@ -60,6 +60,7 @@ fn document(title: &str, text: &str) -> SourceProposal {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::Verified("registry-fixture".into()),
+        admission: None,
         proposer: who(),
     }
 }
@@ -75,6 +76,7 @@ fn tool_run(title: &str, output: &str) -> SourceProposal {
         cites: vec![],
         dataset: None,
         metadata: MetadataCheck::NotApplicable,
+        admission: None,
         proposer: who(),
     }
 }

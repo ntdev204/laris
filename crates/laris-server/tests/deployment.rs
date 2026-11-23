@@ -88,7 +88,7 @@ fn policy_and_weights_are_mounted_read_only_and_never_published() {
     let compose = docker("compose.yaml");
     let active = lines(&compose);
     for line in &active {
-        if line.contains(".laris") || line.contains("/weights") {
+        if line.contains(".laris") || line.contains("/weights") || line.contains(":/config/") {
             assert!(
                 line.trim_end_matches('"').ends_with(":ro"),
                 "not read-only: {line}"
@@ -100,6 +100,12 @@ fn policy_and_weights_are_mounted_read_only_and_never_published() {
             .iter()
             .any(|l| l.contains(".laris:/policy/.laris:ro")),
         "the policy is not mounted"
+    );
+    assert!(
+        active
+            .iter()
+            .any(|l| l.contains("admissible-sources.json:/config/admissible-sources.json:ro")),
+        "the source classes of the decider are not mounted (T285)"
     );
     assert!(
         active.iter().any(|l| l.contains(":/weights:ro")),

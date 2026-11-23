@@ -7,6 +7,11 @@
     python scripts/build_stem_brain.py scan NAME    # B6: 13-gram scan against every benchmark item
     python scripts/build_stem_brain.py recall NAME  # retrieval on the development splits
 
+T285 (admissible sources): `python scripts/acquire_papers.py propose|acquire` (network, once), then
+`build NAME --sources configs/admissible-sources.json` (admission records on every document
+Source, the CIAAW table and the admitted papers), `certify NAME` (Sources by class, Claims certain
+or not, by reason) and `brain-only NAME` (precision of brain-only answers on development).
+
 Settings: `configs/stem-brain.json`. The snapshot is `data/brain/snapshots/NAME/` (outside Git):
 `proposals.jsonl`, `vault/` (written only by the gate, through `laris-server brain import`),
 `import.json` (the gate's decisions, counted), `snapshot.json` (every file's SHA-256 and the
@@ -33,7 +38,7 @@ from typing import Any, Dict, List
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from laris.research.knowledge import build  # noqa: E402
+from laris.research.knowledge import build, papers  # noqa: E402
 from laris.research.stem import data, leakage  # noqa: E402
 
 _STOP = set(
@@ -114,20 +119,28 @@ def cmd_build(args: argparse.Namespace) -> int:
     links = build.SolverLinks(
         lambda problem: solver_run(problem, settings), config["build"]["proposer"], overlaps
     )
+    admitted = bool(args.sources)
     sources, claims, counts = build.openstax_lines(
-        config, ROOT, provenance, links, overlaps, int(bench_config["leakage"]["ngram"])
+        config,
+        ROOT,
+        provenance,
+        links,
+        overlaps,
+        int(bench_config["leakage"]["ngram"]),
+        admitted,
     )
     from laris.model.solver.constants import PACKAGED
 
     codata_table = Path(settings.codata_file) if settings.codata_file else PACKAGED
     c_sources, c_claims, c_counts = build.codata_lines(
-        config, codata_table, settings.codata_sha256, links, overlaps
+        config, codata_table, settings.codata_sha256, links, overlaps, admitted
     )
-    proposals = out / "proposals.jsonl"
-    total = build.write_lines(
-        proposals, [list(links.sources.values()), sources, c_sources, claims, c_claims]
-    )
+    groups = [list(links.sources.values()), sources, c_sources, claims, c_claims]
     counts.update(c_counts)
+    if admitted:
+        groups += admitted_extras(args, settings, config, overlaps, counts)
+    proposals = out / "proposals.jsonl"
+    total = build.write_lines(proposals, groups)
     counts["solver"] = {
         "tried": links.tried,
         "linked_by_status": links.linked,
@@ -149,6 +162,10 @@ def cmd_build(args: argparse.Namespace) -> int:
         "snapshot_sha256": manifest["snapshot_sha256"],
         "code_revision": git_revision(),
     }
+    if admitted:
+        record["sources_config_sha256"] = build.sha256((ROOT / args.sources).read_bytes())
+        papers_prov = ROOT / load(args.sources)["papers"]["data_dir"] / "provenance.json"
+        record["papers_provenance_sha256"] = build.sha256(papers_prov.read_bytes())
     (out / "import.json").write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
     summary = {
         k: manifest[k]
@@ -164,6 +181,135 @@ def cmd_build(args: argparse.Namespace) -> int:
     }
     print(json.dumps({"gate": decisions, "snapshot": summary}, indent=1))
     return 0 if manifest["lint_problems"] == 0 else 1
+
+
+def admitted_extras(
+    args: argparse.Namespace,
+    settings: Any,
+    config: Dict[str, Any],
+    overlaps: build.Overlap,
+    counts: Dict[str, Any],
+) -> List[List[Dict]]:
+    """T285: the CIAAW table and the admitted journal papers, read from the files the acquisition
+    kept (each checked against its recorded hash); no network."""
+    from laris.model.solver.elements import PACKAGED as CIAAW
+
+    proposer = config["build"]["proposer"]
+    table = Path(settings.atomic_weights_file) if settings.atomic_weights_file else CIAAW
+    a_sources, a_claims, a_counts = build.ciaaw_lines(
+        table, settings.atomic_weights_sha256, proposer, overlaps
+    )
+    counts.update(a_counts)
+    sources_config = load(args.sources)
+    paper_settings = sources_config["papers"]
+    folder = ROOT / paper_settings["data_dir"]
+    provenance = json.loads((folder / "provenance.json").read_text("utf-8"))
+    p_sources: List[Dict] = []
+    p_claims: List[Dict] = []
+    tally = {"admitted": 0, "refused_at_import": provenance.get("refused", {}), "claims": 0,
+             "paragraphs_left_out": 0}  # fmt: skip
+    for row in provenance["papers"]:
+        if not row["admitted"]:
+            continue
+        raw = (folder / "jats" / f"{acquire_safe(row['pmcid'])}.xml").read_bytes()
+        if build.sha256(raw) != row["jats_sha256"]:
+            raise SystemExit(f"{row['doi']}: the kept full text differs from its recorded hash")
+        cr = (folder / "crossref" / f"{acquire_safe(row['doi'])}.json").read_bytes()
+        verdict = papers.check_crossref(row["doi"], cr, paper_settings, sources_config["classes"])
+        jats = papers.parse_jats(raw)
+        papers.check_full_text(verdict, jats, paper_settings, sources_config["classes"])
+        if not verdict.admitted or verdict.admission != row["admission"]:
+            raise SystemExit(
+                f"{row['doi']}: the kept responses no longer give the recorded verdict"
+            )
+        s, c, n = papers.paper_lines(
+            verdict, jats, row["pmcid"], row["jats_sha256"], paper_settings, proposer, overlaps
+        )
+        p_sources += s
+        p_claims += c
+        tally["admitted"] += 1
+        tally["claims"] += n["claims"]
+        tally["paragraphs_left_out"] += n["paragraphs_left_out"]
+    counts["papers"] = tally
+    return [a_sources, p_sources, a_claims, p_claims]
+
+
+def acquire_safe(name: str) -> str:
+    """The file name the acquisition script gave a DOI or PMCID."""
+    return "".join(c if c.isalnum() or c in "-._" else "_" for c in name)
+
+
+def cmd_certify(args: argparse.Namespace) -> int:
+    """T285: Sources by class and Claims certain or not (by reason), from the server's rule."""
+    config = load(args.config)
+    out = snapshot_dir(config, args.name)
+    result = server(args, config, out / "vault", "certify", str(ROOT / args.sources))
+    report = json.loads(result.stdout)
+    report["sources_config_sha256"] = build.sha256((ROOT / args.sources).read_bytes())
+    (out / "certify.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=1))
+    return 0
+
+
+def cmd_brain_only(args: argparse.Namespace) -> int:
+    """T285: precision and coverage of brain-only answers on the development splits: an option is
+    answered only when exactly one option is backed by one certain retrieved Claim
+    (`harness.brain_only_option`). No model; reports carry counts, never item text."""
+    from laris.research.stem.harness import brain_only_option
+
+    config = load(args.config)
+    bench_config = data.load_config(ROOT / args.bench_config)
+    least = int(bench_config["harness"]["brain_only"]["min_option_words"])
+    k = int(bench_config["harness"]["retrieval"]["k"])
+    out = snapshot_dir(config, args.name)
+    report: Dict[str, Any] = {
+        "snapshot": json.loads((out / "snapshot.json").read_text("utf-8"))["snapshot_sha256"],
+        "rule": f"exactly one option backed by one certain Claim among the top {k} passages",
+        "min_option_words": least,
+        "benchmarks": {},
+    }
+    tmp = out / "brain-only-queries.jsonl"
+    for bench in ("mmlu_pro_stem", "gpqa_diamond", "math500"):
+        items = data.load_items(bench_config, ROOT, bench, "dev")
+        with tmp.open("w", encoding="utf-8") as f:
+            for item in items:
+                query = item["question"] + " " + " ".join(item.get("options") or [])
+                f.write(json.dumps({"id": item["id"], "query": query}) + "\n")
+        result = server(
+            args, config, out / "vault", "retrieve", str(tmp), str(k), str(ROOT / args.sources)
+        )
+        certain: Dict[str, List[str]] = {}
+        reasons: Dict[str, int] = {}
+        for line in result.stdout.splitlines():
+            row = json.loads(line)
+            certain[row["id"]] = [h["text"] for h in row["hits"] if h.get("certain") is True]
+            for h in row["hits"]:
+                if h.get("certain") is False:
+                    reasons[h["reason"]] = reasons.get(h["reason"], 0) + 1
+        answered = right = 0
+        for item in items:
+            if not item.get("options") or not certain.get(item["id"]):
+                continue
+            index = brain_only_option(item, certain[item["id"]], least)
+            if index is None:
+                continue
+            answered += 1
+            right += int(chr(ord("A") + index) == item["answer"].strip().upper())
+        report["benchmarks"][bench] = {
+            "items": len(items),
+            "with_certain_hit": sum(1 for i in items if certain.get(i["id"])),
+            "certain_hits": sum(len(v) for v in certain.values()),
+            "hits_not_certain_by_reason": reasons,
+            "answered": answered,
+            "right": right,
+            "wrong": answered - right,
+            "precision": round(right / answered, 4) if answered else None,
+            "coverage": round(answered / len(items), 4) if items else None,
+        }
+    tmp.unlink()
+    (out / "brain-only.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=1))
+    return 0
 
 
 def _benchmark_items(bench_config: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -282,9 +428,20 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--bench-config", default="configs/stem-benchmarks.json")
     parser.add_argument("--server-bin", default="target/release/laris-server")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, func in (("build", cmd_build), ("scan", cmd_scan), ("recall", cmd_recall)):
+    commands = (
+        ("build", cmd_build),
+        ("scan", cmd_scan),
+        ("recall", cmd_recall),
+        ("certify", cmd_certify),
+        ("brain-only", cmd_brain_only),
+    )
+    for name, func in commands:
         p = sub.add_parser(name)
         p.add_argument("name")
+        # T285: the source classes; with them, Sources carry admission records and the papers and
+        # the CIAAW table are added (build), and certainty is measured (certify, brain-only)
+        p.add_argument("--sources", default=None if name in ("build", "scan", "recall") else
+                       "configs/admissible-sources.json")  # fmt: skip
         p.set_defaults(func=func)
     args = parser.parse_args(argv)
     return args.func(args)
