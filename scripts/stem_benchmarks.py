@@ -658,9 +658,13 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 kept.append((bench, dict(item, question=out.question, options=out.options)))
         work = kept
         print(f"filter: {len(kept)} passed, {len(stopped)} stopped", flush=True)
-    wanted = [
-        (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
-    ]
+    net_file = hcfg["router"].get("network")
+    if net_file:  # T287: a promoted router network may send any class to a path with notes
+        wanted = list(work)
+    else:
+        wanted = [
+            (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
+        ]
     notes, certain, retrieval_s, snapshot = retrieve_notes(hcfg, wanted, out_dir, run)
     retrieval_share = retrieval_s / len(wanted) if wanted else 0.0
     print(f"retrieval: {len(wanted)} items, {retrieval_s:.1f} s", flush=True)
@@ -687,7 +691,34 @@ def cmd_harness(args: argparse.Namespace) -> int:
         return engine.one(prompt, dict(mode, max_new_tokens=max_tokens), seed)
 
     free = model_free if hcfg["model_free"] else None
-    harness = Harness(hcfg, base, model, solve, config["equivalence"], free)
+    choose = None
+    if net_file:
+        from laris.research.stem import routing
+
+        network = routing.RouterNetwork.from_json(
+            json.loads((ROOT / net_file).read_text(encoding="utf-8"))
+        )
+        gcfg = json.loads((ROOT / config["router_analysis"]["gates"]).read_text("utf-8"))
+        below = float(gcfg["n4_abstain_below"])
+
+        def choose(item: Dict[str, Any], trace: Any) -> Optional[Dict[str, Any]]:
+            screened = screens.get(item["id"])
+            x = routing.feature_vector(trace.features, screened.record() if screened else {})
+            rule_path = "model_solver" if trace.cls == "computable" else "notes_model"
+            decided = routing.decide(network, x, rule_path, below)
+            trace.steps.append(
+                {
+                    "step": "route",
+                    "path": decided.path,
+                    "by": decided.by,
+                    "confidence": decided.confidence,
+                }
+            )
+            if decided.by != "network" or decided.path == rule_path:
+                return None
+            return merge_path(hcfg, config["router_paths"][decided.path])
+
+    harness = Harness(hcfg, base, model, solve, config["equivalence"], free, choose)
     seed0 = int(base["generation_seed"])
     eq = config["equivalence"]
 
@@ -982,9 +1013,7 @@ def _router_rows(config: Dict[str, Any]) -> List[Dict[str, Any]]:
                 {
                     "id": item["id"],
                     "bench": bench,
-                    "x": routing.feature_vector(
-                        decided.features, seen.record(), runs["deterministic"][item["id"]]
-                    ),
+                    "x": routing.feature_vector(decided.features, seen.record()),
                     "labels": label[item["id"]],
                     "rule_path": routing.rule_choice(runs["rule"][item["id"]]),
                 }

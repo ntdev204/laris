@@ -166,3 +166,43 @@ def test_path_overrides_merge() -> None:
     assert merged["draft"]["max_retries"] == 0 and merged["formalise"]["classes"] == []
     assert merged["retrieval"]["k"] == CONFIG["harness"]["retrieval"]["k"]
     assert CONFIG["harness"]["draft"]["max_retries"] == 1
+
+
+def test_a_chosen_path_runs_with_its_own_settings() -> None:
+    from laris.research.stem import harness as h
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import stem_benchmarks as sb
+
+    calls = []
+
+    def model(prompt: str, seed: int, max_tokens: int) -> Dict[str, Any]:
+        calls.append("formalise" if "Translate the problem" in prompt else "draft")
+        return {
+            "text": "Answer: B",
+            "prompt_tokens": 1,
+            "generated_tokens": 1,
+            "truncated": False,
+            "seconds": 0.0,
+        }
+
+    def solve(problem: Dict[str, Any]):
+        return None, "refused:x"
+
+    item = {"id": "c/1", "question": "How far?", "options": ["1 m", "2 m"], "answer": "B"}
+    item["category"] = "physics"
+    notes_cfg = sb.merge_path(CONFIG["harness"], CONFIG["router_paths"]["notes_model"])
+
+    def choose(it: Dict[str, Any], trace: h.Trace) -> Dict[str, Any]:
+        trace.steps.append({"step": "route", "path": "notes_model", "by": "network"})
+        return notes_cfg
+
+    base = CONFIG["baseline"]
+    rule = h.Harness(CONFIG["harness"], base, model, solve, CONFIG["equivalence"])
+    rule.answer(item, 1, notes=["a passage"])
+    assert calls == ["draft", "formalise"]  # computable: the rule router formalises
+    calls.clear()
+    net = h.Harness(CONFIG["harness"], base, model, solve, CONFIG["equivalence"], None, choose)
+    trace = net.answer(item, 1, notes=["a passage"])
+    assert calls == ["draft"] and trace.notes == 1 and trace.cls == "computable"
+    assert trace.steps[0] == {"step": "route", "path": "notes_model", "by": "network"}

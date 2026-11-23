@@ -101,7 +101,8 @@
     "filter": {"enabled": true, "rules": "configs/prompt-filter.json", "fixture": "tests/fixtures/prompt_filter", "note": "T286: every prompt passes the filter before retrieval, the router and the model; a stop scores 0"},
     "router": {
       "numeric_option_share": 0.5,
-      "knowledge_max_question_words": 40
+      "knowledge_max_question_words": 40,
+      "network": null
     },
     "model_free": true,
     "brain_only": {"enabled": false, "min_option_words": 2, "note": "T285: answer from one certain Claim alone; off until B5 (0 wrong) is shown on development"},
@@ -148,6 +149,7 @@
     "notes_model": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}},
     "model_solver": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": ["computable", "knowledge", "reasoning"]}},
     "plain_retrieval": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"]}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
+    "bare_model": {"model_free": false, "brain_only": {"enabled": false}, "retrieval": {"classes": []}, "formalise": {"classes": []}, "draft": {"max_retries": 0}, "notes_check": {"enabled": false}},
     "deterministic": {"deterministic_only": true, "model_free": true, "brain_only": {"enabled": true}, "retrieval": {"classes": ["computable", "knowledge", "reasoning"], "snapshot": "stem-t285-2", "source_classes": "configs/admissible-sources.json"}}
   },
   "router_analysis": {

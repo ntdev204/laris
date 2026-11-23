@@ -285,6 +285,7 @@ class Harness:
         solve: SolverCall,
         equivalence: Dict[str, Any],
         model_free: Optional[ModelFree] = None,
+        choose: Optional[Callable[[Dict[str, Any], "Trace"], Optional[Dict[str, Any]]]] = None,
     ) -> None:
         self.cfg = cfg
         self.equivalence = equivalence
@@ -294,6 +295,9 @@ class Harness:
         self.model = model
         self.solve = solve
         self.model_free = model_free
+        # T287: after the deterministic steps, a router network may name another path; `choose`
+        # returns that path's harness settings, or None to keep the rule router's
+        self.choose = choose
 
     # -- steps ---------------------------------------------------------------------------------
 
@@ -465,6 +469,23 @@ class Harness:
 
         if self.cfg.get("deterministic_only"):
             return trace  # T287 path: the model-free and brain-only steps alone, no model
+
+        if self.choose is not None:
+            other = self.choose(item, trace)
+            if other is not None:
+                sub = Harness(
+                    dict(other, model_free=False, brain_only={"enabled": False}),
+                    self.base,
+                    self.model,
+                    self.solve,
+                    self.equivalence,
+                )
+                chosen = sub.answer(item, seed, notes, certain, quantities)
+                chosen.cls, chosen.rule, chosen.features = trace.cls, trace.rule, trace.features
+                chosen.steps = trace.steps + chosen.steps
+                chosen.solver_calls += trace.solver_calls
+                chosen.solver_seconds += trace.solver_seconds
+                return chosen
 
         base_prompt = prompt_for(item, self.base["prompts"])
         prompt = base_prompt

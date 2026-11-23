@@ -44,8 +44,6 @@ FEATURES = (
     "elements",
     "constants",
     "language_en",
-    "model_free_answered",
-    "brain_only_answered",
 )
 
 
@@ -142,12 +140,10 @@ def accuracy_row(name: str, rows: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 # -- features and the sealed split -------------------------------------------------------------
 
 
-def feature_vector(
-    route_features: Dict[str, Any], screen: Dict[str, Any], det: Dict[str, Any]
-) -> List[float]:
-    """The network's input, in the order of `FEATURES`: the router's item-shape features, the
-    filter's counts and language, and whether the deterministic paths answered (both known before
-    any model call). No text."""
+def feature_vector(route_features: Dict[str, Any], screen: Dict[str, Any]) -> List[float]:
+    """The network's input, in the order of `FEATURES`: the router's item-shape features and the
+    filter's counts and language, all known before any model call. No text. The network is asked
+    only after the deterministic steps found no answer, so their outcome is not a feature."""
     entities = screen.get("entities") or {}
     return [
         float(route_features["options"] == 0),
@@ -160,8 +156,6 @@ def feature_vector(
         float(entities.get("elements", 0)),
         float(entities.get("constants", 0)),
         float(screen.get("language") == "en"),
-        float(det.get("final_from") == "model_free"),
-        float(det.get("final_from") == "brain_only"),
     ]
 
 
