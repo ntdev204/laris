@@ -103,3 +103,6 @@ docker/laris.env
 
 # STEM benchmark data, splits and run records (T275, ADR-026): outside Git; GPQA text never in Git
 data/benchmarks/
+
+# Main-brain sources and snapshots (T277): textbooks, built vaults; outside Git
+data/brain/

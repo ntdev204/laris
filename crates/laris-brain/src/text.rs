@@ -186,6 +186,16 @@ pub fn opposite_words(a: &Facts, b: &Facts) -> bool {
     })
 }
 
+/// The support check's form of [`opposite_words`]: the statement uses a word whose opposite is in the quote while the
+/// quote never uses the word itself. A quote that says both ("below 2000 ... above 3000") supports a statement that
+/// says both; the contradiction search between two statements keeps [`opposite_words`].
+pub fn opposite_to_quote(statement: &Facts, quote: &Facts) -> bool {
+    OPPOSITES.iter().any(|&(x, y)| {
+        (statement.all.contains(x) && quote.all.contains(y) && !quote.all.contains(x))
+            || (statement.all.contains(y) && quote.all.contains(x) && !quote.all.contains(y))
+    })
+}
+
 /// True when the quantities cannot all hold: a number of one statement is missing from the other, which names a
 /// different number with the same unit that the first lacks (`120 patients` against `80 patients`).
 pub fn quantities_clash(a: &Facts, b: &Facts) -> bool {
@@ -231,7 +241,7 @@ pub fn unsupported(statement: &Facts, quote: &Facts, min_coverage: f64) -> Optio
     if statement.negated != quote.negated {
         return Some("the statement and the quote differ in polarity".to_string());
     }
-    if opposite_words(statement, quote) {
+    if opposite_to_quote(statement, quote) {
         return Some("the statement uses the opposite of a word of the quote".to_string());
     }
     let share = coverage(statement, quote);

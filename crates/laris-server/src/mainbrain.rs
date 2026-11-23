@@ -381,6 +381,9 @@ struct ClaimBody {
     requested: String,
     #[serde(default)]
     evidence: Vec<EvidenceBody>,
+    /// Note name of the `tool_run` Source holding the solver call for the Claim's formula.
+    #[serde(default)]
+    solver: Option<String>,
 }
 
 /// `POST /v1/admin/brain/claims`: proposes a Claim to the gate (`brain.manage`). The answer says whether it was
@@ -420,6 +423,7 @@ async fn claim_inner(
         quote: body.quote,
         requested,
         evidence,
+        solver: body.solver,
         proposer: proposer_of(principal.as_ref()),
     };
     let decision = brain.write(move |gate| gate.submit_claim(proposal)).await?;

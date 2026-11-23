@@ -28,7 +28,7 @@ types:
     folder: Sources
   claim:
     required: [type, level, source_ref, span_start, span_end, span_sha256, created]
-    links: [source_ref, corroborated_by, tool_run_ref, conflict_refs]
+    links: [source_ref, corroborated_by, tool_run_ref, solver_ref, conflict_refs]
     folder: Claims
   theory:
     required: [type, attributed_to, source_ref, span_start, span_end, span_sha256, created]
@@ -336,6 +336,19 @@ fn lint_claim(index: &VaultIndex, note: &Note, problems: &mut Vec<Problem>) {
                     "reviewed needs reviewer and reviewed_on",
                 ));
             }
+        }
+    }
+    if present(note, "solver_ref") {
+        let run = targets(index, note, "solver_ref").into_iter().next();
+        let ok = run
+            .and_then(|(_, n)| n)
+            .is_some_and(|n| kind_of(n) == "source" && text(n, "kind") == "tool_run");
+        if !ok {
+            problems.push(Problem::new(
+                &note.path,
+                "brain-evidence",
+                "solver_ref must point at a tool_run source",
+            ));
         }
     }
     if source.is_some_and(|s| text(s, "status") == "retracted") {

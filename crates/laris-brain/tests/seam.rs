@@ -145,6 +145,7 @@ fn vault() -> Temp {
             quote: C1.into(),
             requested: Level::Sourced,
             evidence: vec![],
+            solver: None,
             proposer,
         })
         .expect("io")

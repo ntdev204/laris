@@ -354,6 +354,7 @@ fn training_text_comes_only_from_sources_and_verified_quotes() {
             quote: C1.into(),
             requested: Level::Sourced,
             evidence: vec![],
+            solver: None,
             proposer: Proposer("advisor".into()),
         })
         .expect("io")

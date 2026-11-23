@@ -134,6 +134,9 @@ pub struct ClaimProposal {
     pub requested: Level,
     /// Evidence for levels above `sourced`.
     pub evidence: Vec<Evidence>,
+    /// Note name of a `tool_run` Source that holds the solver call computing with this Claim's formula. It links the
+    /// Claim to a computation; it is not evidence and does not raise the level.
+    pub solver: Option<String>,
     /// Who proposed it.
     pub proposer: Proposer,
 }
@@ -344,6 +347,12 @@ fn splice_front(text: &str, edit: Edit) -> Result<String, GateError> {
 fn canonical_body(text: &str) -> String {
     let probe = format!("---\ntype: probe\n---\n\n{}\n", text.trim());
     parse_note(&probe, "probe.md").body
+}
+
+/// The search the contradiction check reads: Claims and Theories.
+fn claim_search(index: &VaultIndex) -> NoteSearch {
+    let folders = ["Claims".to_string(), "Theories".to_string()];
+    NoteSearch::new(index, &folders)
 }
 
 /// The only writer of the main brain.
@@ -561,8 +570,58 @@ impl Gate {
     /// Check and store a Claim.
     pub fn submit_claim(&self, p: ClaimProposal) -> Result<Decision, GateError> {
         let index = self.index()?;
+        let search = claim_search(&index);
+        let outcome = self.claim_outcome(&index, &search, &p);
+        self.decide_claim(&p, outcome)
+    }
+
+    /// Check and store many Claims, one after the other, exactly as [`Gate::submit_claim`] would one by one: each
+    /// proposal sees the notes the earlier ones wrote (the duplicate check and the contradiction search included). The
+    /// brain is read once and the notes written are added to that reading, so a large ingestion does not read the
+    /// vault again for every proposal.
+    pub fn submit_claims(&self, proposals: Vec<ClaimProposal>) -> Result<Vec<Decision>, GateError> {
+        let mut index = self.index()?;
+        let mut search = claim_search(&index);
+        let mut out = Vec::with_capacity(proposals.len());
+        for p in proposals {
+            let outcome = self.claim_outcome(&index, &search, &p);
+            let decision = self.decide_claim(&p, outcome)?;
+            if let Decision::Accepted {
+                path, conflicts, ..
+            } = &decision
+            {
+                let note = self.read_note(path)?;
+                search.add(path, &note);
+                index.insert(note);
+                for conflict in conflicts {
+                    let note = self.read_note(conflict)?;
+                    // the sides stored earlier carry the new conflict now: read them again
+                    let sides = list_of(&note.props, "sides");
+                    index.insert(note);
+                    for side in sides {
+                        if let Some(rel) = index.find(&link_name(&side)).map(|n| n.path.clone()) {
+                            let fresh = self.read_note(&rel)?;
+                            index.insert(fresh);
+                        }
+                    }
+                }
+            }
+            out.push(decision);
+        }
+        Ok(out)
+    }
+
+    fn read_note(&self, rel: &str) -> Result<Note, GateError> {
+        let path = resolve_inside(&self.root, rel).map_err(|e| GateError(e.message))?;
+        Ok(parse_note(&fs::read_to_string(path)?, rel))
+    }
+
+    fn decide_claim(
+        &self,
+        p: &ClaimProposal,
+        outcome: Result<Decision, Refused>,
+    ) -> Result<Decision, GateError> {
         let target: String = p.statement.chars().take(60).collect();
-        let outcome = self.claim_outcome(&index, &p);
         self.decide(
             "claim",
             &p.proposer,
@@ -573,6 +632,7 @@ impl Gate {
                 "metadata",
                 "support",
                 "evidence",
+                "solver",
                 "contradiction",
                 "write",
             ],
@@ -638,7 +698,12 @@ impl Gate {
         Ok((note, start, end, words))
     }
 
-    fn claim_outcome(&self, index: &VaultIndex, p: &ClaimProposal) -> Result<Decision, Refused> {
+    fn claim_outcome(
+        &self,
+        index: &VaultIndex,
+        search: &NoteSearch,
+        p: &ClaimProposal,
+    ) -> Result<Decision, Refused> {
         if p.requested == Level::Candidate {
             return refuse(Refusal::Level, "a candidate never enters the main brain");
         }
@@ -662,6 +727,24 @@ impl Gate {
                 ),
             );
         }
+        let solver = match p.solver.as_deref().filter(|s| !s.trim().is_empty()) {
+            None => None,
+            Some(name) => {
+                let Some(run) = index.find(&link_name(name)) else {
+                    return refuse(Refusal::Evidence, format!("no note named {name}"));
+                };
+                if kind_of(run) != "source"
+                    || prop_text(run, "kind") != "tool_run"
+                    || prop_text(run, "status") != "active"
+                {
+                    return refuse(
+                        Refusal::Evidence,
+                        format!("the solver link {name} is not an active tool_run source"),
+                    );
+                }
+                Some(run.title.clone())
+            }
+        };
         let span = &source.body[start..end];
         let hash = sha256_hex(span.as_bytes());
         let name = format!(
@@ -677,7 +760,7 @@ impl Gate {
                 "this claim is stored already; raise it through evidence",
             );
         }
-        let conflicts = self.contradictions(index, &p.statement, &facts, &rel);
+        let conflicts = self.contradictions(index, search, &p.statement, &facts, &rel);
         let mut props = vec![
             ("type".to_string(), Value::Str("claim".into())),
             ("level".to_string(), Value::Str(level.as_str().into())),
@@ -690,6 +773,9 @@ impl Gate {
         ];
         for (k, v) in extra {
             merge_prop(&mut props, &k, v);
+        }
+        if let Some(run) = &solver {
+            props.push(("solver_ref".to_string(), link(run)));
         }
         let conflict_name = (!conflicts.is_empty()).then(|| conflict_title(&name, &conflicts));
         if let Some(c) = &conflict_name {
@@ -777,7 +863,8 @@ impl Gate {
             return refuse(Refusal::Duplicate, "this theory is stored already");
         }
         let facts = text::facts(&p.statement);
-        let conflicts = self.contradictions(index, &p.statement, &facts, &rel);
+        let search = claim_search(index);
+        let conflicts = self.contradictions(index, &search, &p.statement, &facts, &rel);
         let mut props = vec![
             ("type".to_string(), Value::Str("theory".into())),
             (
@@ -853,12 +940,11 @@ impl Gate {
     fn contradictions(
         &self,
         index: &VaultIndex,
+        search: &NoteSearch,
         statement: &str,
         facts: &Facts,
         own: &str,
     ) -> Vec<String> {
-        let folders = ["Claims".to_string(), "Theories".to_string()];
-        let search = NoteSearch::new(index, &folders);
         let mut found: BTreeSet<String> = BTreeSet::new();
         for hit in search.search(statement, self.settings.search_depth) {
             if hit.path == own {

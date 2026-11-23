@@ -80,6 +80,13 @@ Crates approved in T119 but not yet used are listed in `deny.toml`; each row is 
 | CIAAW abridged standard atomic weights 2024 | page of 2024-10-23, SHA-256 `f9e95544…31b907d`; extracted table `6019c080…cddb669` | IUPAC CIAAW data, cited as Atomic Weights 2021 (Prohaska et al., Pure Appl. Chem. 94 (2022) 573-600) with the 2024 revisions | `src/laris/model/solver/data/ciaaw-abridged-atomic-weights.tsv` | T276 follow-up (owner approval 2026-11-23) |
 | CODATA 2022 fundamental physical constants | NIST ASCII table, last modified 2024-05-07, SHA-256 `77fb90e6…3f67e67` | NIST data, cited as CODATA 2022 (NIST) | `src/laris/model/solver/data/codata-2022-allascii.txt` | T276 (owner approval 2026-11-23) |
 
+## Main-brain sources (T277; outside Git, in built snapshots only)
+
+| Source | Version | Licence | Used by | Task |
+| --- | --- | --- | --- | --- |
+| OpenStax textbooks (18: University Physics 1-3, College Physics 2e, Physics, Chemistry 2e, Chemistry: Atoms First 2e, College Algebra 2e, Algebra and Trigonometry 2e, Precalculus 2e, Intermediate Algebra 2e, Introductory Statistics 2e, Statistics, Biology 2e, Concepts of Biology, Microbiology, Astronomy 2e, Introduction to Python Programming) | CNXML at the git commits pinned in `configs/stem-brain.json` (the newest commit at which each book was CC BY 4.0) | CC BY 4.0 at those commits; attribution "OpenStax, Rice University" and the changes are stated in every Source note | `scripts/build_stem_brain.py`, `data/brain/` | T277 (owner decision 2026-11-23) |
+| CODATA 2022 fundamental physical constants | the table above | NIST data | the same | T277 |
+
 ## Tools (not vendored)
 
 `cargo-deny` 0.20.2 (CI and local), `cross` and `minisign` (release, ADR-021 section 4), `uv` (Python environment).

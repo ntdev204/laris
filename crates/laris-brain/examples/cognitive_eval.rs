@@ -282,6 +282,7 @@ fn vault(cfg: &Value, s: &Settings) -> Res<Temp> {
                 quote: statement.clone(),
                 requested: Level::Sourced,
                 evidence: vec![],
+                solver: None,
                 proposer: proposer.clone(),
             })
             .map_err(|e| e.to_string())?;
@@ -318,6 +319,7 @@ fn through_the_gate(cfg: &Value, s: &Settings, a: &Advisor) -> Res<GateCount> {
                 quote: p.quote.clone(),
                 requested: Level::Sourced,
                 evidence: vec![],
+                solver: None,
                 proposer: Proposer(a.name.clone()),
             })
             .map_err(|e| e.to_string())?;

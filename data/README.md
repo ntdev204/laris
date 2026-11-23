@@ -10,6 +10,7 @@ This directory is the local storage location for scientific literature and corpo
 - `data/processed/`: Normalized, deduplicated, and partitioned corpus splits.
 - `data/acquisition_manifest.json`: provenance, licence status, sizes and SHA-256 of every source acquired for the self-trained model; kept as a record.
 - `data/cache/`: Local index caches and temporary parsing buffers.
+- `data/brain/`: main-brain sources and snapshots of T277: `raw/openstax/` (CNXML at pinned commits with `provenance.json`) and `snapshots/NAME/` (proposals, the gate-written `vault/`, `import.json`, `snapshot.json`, `scan.json`, `recall.json`). Outside Git; a snapshot is built once and not changed.
 - `data/benchmarks/`: STEM benchmarks of ADR-026 (T275): raw files at pinned revisions with `provenance.json`, the seeded `splits/dev` and `splits/sealed`, `manifest.json`, the sealed-run log and run records. Outside Git; GPQA text never enters Git, reports or the brain. Sealed files are read only by a sealed run ordered by the owner.
 
 ## Self-trained model data

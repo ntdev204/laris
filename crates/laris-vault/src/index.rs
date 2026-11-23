@@ -310,6 +310,19 @@ impl VaultIndex {
         }
     }
 
+    /// Adds a note that was just written, without reading the folder again: its path and title become known to
+    /// [`VaultIndex::find`] and [`VaultIndex::resolve`]. Links, backlinks and fingerprints are not updated; a full
+    /// [`VaultIndex::build`] gives those. For a writer that adds many notes in one run (the brain's write gate).
+    pub fn insert(&mut self, note: Note) {
+        let path = note.path.clone();
+        let stems = self.stems.entry(note.title.to_lowercase()).or_default();
+        if !stems.contains(&path) {
+            stems.push(path.clone());
+            stems.sort();
+        }
+        self.notes.insert(path, note);
+    }
+
     /// The note a name points at, when exactly one does.
     pub fn find(&self, title: &str) -> Option<&Note> {
         let (target, status) = self.resolve(&Link::to(title), "");

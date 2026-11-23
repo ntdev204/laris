@@ -38,9 +38,63 @@ fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
             Err(e) => fail(e, 1),
         },
         _ => fail(
-            "usage: laris-server [policy verify|lock | probe HOST:PORT/PATH]",
+            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | probe HOST:PORT/PATH]",
             2,
         ),
+    }
+}
+
+const BRAIN_USAGE: &str = "usage: laris-server brain import PROPOSALS --date YYYY-MM-DD | freeze OUT | retrieve QUERIES K";
+
+/// `laris-server brain import|freeze|retrieve`: offline ingestion through the write gate, the snapshot manifest and
+/// the retrieval the pipeline uses (T277). The vault and the gate's thresholds come from `LARIS_SERVER__MAIN_BRAIN_*`.
+fn brain_command(args: &[String], env: &HashMap<String, String>) -> ExitCode {
+    use laris_server::brain_ingest;
+    let config = match laris_server::mainbrain::MainBrainConfig::from_env(env) {
+        Ok(Some(c)) => c,
+        Ok(None) => return fail("LARIS_SERVER__MAIN_BRAIN_DIR is not set", 2),
+        Err(e) => return fail(e, 2),
+    };
+    let arg = |i: usize| args.get(i).map(String::as_str);
+    let printed = |result: Result<serde_json::Value, String>| match result {
+        Ok(report) => {
+            println!("{report:#}");
+            ExitCode::SUCCESS
+        }
+        Err(e) => fail(e, 1),
+    };
+    match (arg(0), arg(1), arg(2), arg(3)) {
+        (Some("import"), Some(file), Some("--date"), Some(date)) => printed(brain_ingest::import(
+            &config,
+            std::path::Path::new(file),
+            date,
+        )),
+        (Some("freeze"), Some(out), None, None) => match brain_ingest::freeze(&config.dir) {
+            Ok(manifest) => {
+                let text = format!("{manifest:#}\n");
+                if let Err(e) = std::fs::write(out, text) {
+                    return fail(format!("{out}: {e}"), 1);
+                }
+                println!(
+                    "{}",
+                    manifest.get("snapshot_sha256").cloned().unwrap_or_default()
+                );
+                ExitCode::SUCCESS
+            }
+            Err(e) => fail(e, 1),
+        },
+        (Some("retrieve"), Some(queries), Some(k), None) => {
+            let Ok(k) = k.parse::<usize>() else {
+                return fail(BRAIN_USAGE, 2);
+            };
+            let stdout = std::io::stdout();
+            let mut lock = stdout.lock();
+            match brain_ingest::retrieve(&config, std::path::Path::new(queries), k, &mut lock) {
+                Ok(_) => ExitCode::SUCCESS,
+                Err(e) => fail(e, 1),
+            }
+        }
+        _ => fail(BRAIN_USAGE, 2),
     }
 }
 
@@ -82,12 +136,15 @@ async fn main() -> ExitCode {
         };
         return probe(target).await;
     }
+    if args.first().map(String::as_str) == Some("brain") {
+        return brain_command(&args[1..], &env);
+    }
     if args.first().map(String::as_str) == Some("policy") {
         return policy_command(args.get(1).map_or("", String::as_str), &env);
     }
     if !args.is_empty() {
         return fail(
-            "usage: laris-server [policy verify|lock | probe HOST:PORT/PATH]",
+            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | probe HOST:PORT/PATH]",
             2,
         );
     }

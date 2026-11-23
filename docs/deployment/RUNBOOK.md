@@ -183,6 +183,33 @@ CODATA release, set `solver_codata_file` and its hash, which is a policy change 
 packaged CIAAW abridged standard atomic weights 2024 (`solver_atomic_weights_file`, `solver_atomic_weights_sha256`;
 a newer CIAAW table is extracted with `scripts/extract_atomic_weights.py`).
 
+## STEM knowledge in the main brain (T277)
+
+The main brain's STEM knowledge is built offline, through the write gate, into a new folder, then frozen; it is not
+written by the running server. Sources: 18 OpenStax textbooks, each at the git commit where its licence was still CC BY
+4.0 (owner decision 2026-11-23: the live editions are CC BY-NC-SA 4.0; Calculus and Organic Chemistry never were CC BY
+and are not used), and NIST's CODATA 2022 table. Pins, dropped sections and gate thresholds are in
+`configs/stem-brain.json`.
+
+```
+python scripts/acquire_openstax.py              # network, once: CNXML at the pinned commits, licence and catalogue checked
+cargo build --release -p laris-server
+python scripts/build_stem_brain.py build NAME   # proposals -> laris-server brain import -> brain freeze
+python scripts/build_stem_brain.py scan NAME    # B6: 13-gram scan against every benchmark item (exit 1 on a hit)
+python scripts/build_stem_brain.py recall NAME  # retrieval proxy on the development splits
+```
+
+`laris-server brain import PROPOSALS --date YYYY-MM-DD` feeds JSON lines (`{"type": "source" | "claim", ...}`) to the
+gate of `LARIS_SERVER__MAIN_BRAIN_DIR` with the same five threshold variables as the server; Sources first, then all
+Claims in one batch (`Gate::submit_claims`, the same decisions as one at a time). `brain freeze OUT` writes the manifest
+(every file's SHA-256, notes by type, Claims by level, lint problems) and prints the snapshot hash; `brain retrieve
+QUERIES K` prints the passages the pipeline's retrieval returns. Every Source carries its provenance in its first lines
+(source, licence, location and file hash, what the conversion left out); every Claim is a line of its Source at level
+`sourced`; a formula the solver can compute with links its solver run (`solver_ref`, a `tool_run` Source holding the call
+and the solver's own status), which is not evidence. Text that shares a 13-word sequence with any benchmark item is left
+out of the build. To serve a snapshot, point `LARIS_SERVER__MAIN_BRAIN_DIR` at a copy of its `vault/`; the server then
+writes to that copy, so keep the frozen folder unchanged.
+
 ## Backup and restore
 
 `docker/backup.sh [--with-secrets] [DIR]` writes a `pg_dump` (custom format); `docker/restore.sh DUMP` restores it.

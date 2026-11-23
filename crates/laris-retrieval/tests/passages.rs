@@ -90,3 +90,42 @@ fn nothing_in_the_inbox_is_found_by_search_or_by_following_a_link() {
         .collect();
     assert_eq!(paths, ["Cells.md"], "the linked draft is not pulled in");
 }
+
+/// T277: notes added one by one score exactly as a fresh index over the same notes.
+#[test]
+fn notes_added_one_by_one_score_as_a_fresh_index() {
+    let dir: PathBuf = std::env::temp_dir().join(format!("laris-add-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("Claims")).unwrap();
+    let bodies = [
+        ("Claims/a.md", "force equals mass times acceleration"),
+        ("Claims/b.md", "the mass of an electron is small"),
+        (
+            "Claims/c.md",
+            "acceleration is the rate of change of velocity",
+        ),
+        ("Claims/d.md", "a force changes the velocity of a mass"),
+    ];
+    for (path, body) in &bodies[..2] {
+        std::fs::write(dir.join(path), format!("---\ntype: claim\n---\n\n{body}\n")).unwrap();
+    }
+    let mut grown = NoteSearch::new(&VaultIndex::build(&dir, None).unwrap(), &[]);
+    for (path, body) in &bodies[2..] {
+        std::fs::write(dir.join(path), format!("---\ntype: claim\n---\n\n{body}\n")).unwrap();
+    }
+    let full = VaultIndex::build(&dir, None).unwrap();
+    for (path, _) in &bodies[2..] {
+        grown.add(path, &full.notes[*path]);
+    }
+    let fresh = NoteSearch::new(&full, &[]);
+    assert_eq!(grown.len(), fresh.len());
+    for query in [
+        "mass acceleration",
+        "velocity",
+        "force mass velocity",
+        "electron",
+    ] {
+        assert_eq!(grown.search(query, 10), fresh.search(query, 10), "{query}");
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}
