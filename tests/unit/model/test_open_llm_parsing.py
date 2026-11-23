@@ -1,6 +1,12 @@
 """Parsing helpers of the open-weight chat backend (no weights are loaded)."""
 
-from laris.model.inference.open_llm import parse_tool_calls, split_reasoning, template_messages
+from laris.model.inference.open_llm import (
+    StreamEvents,
+    assistant_turn,
+    parse_tool_calls,
+    split_reasoning,
+    template_messages,
+)
 
 
 def test_reasoning_is_split_from_the_answer():
@@ -119,3 +125,19 @@ def test_generation_stops_at_the_end_of_an_assistant_turn():
     assert kwargs["eos_token_id"] == [7, 9]
     assert kwargs["pad_token_id"] == 7
     assert kwargs["max_new_tokens"] == 64
+
+
+def test_reasoning_opened_by_the_template():
+    turn = assistant_turn("cut off while reasoning", opened=True)
+    assert turn.reasoning == "cut off while reasoning" and turn.content is None
+    turn = assistant_turn("step\n</think>\n\nAnswer", opened=True)
+    assert turn.reasoning == "step" and turn.content.strip() == "Answer"
+
+
+def test_stream_events_hold_back_partial_tags():
+    events = StreamEvents(opened=True)
+    out = [e for piece in ["a", "b</th", "ink>", "\n\nok"] for e in events.feed(piece)]
+    out += list(events.finish())
+    assert "".join(e["delta"] for e in out if e["type"] == "reasoning") == "ab"
+    assert "".join(e["delta"] for e in out if e["type"] == "text").strip() == "ok"
+    assert out[-1]["turn"].content.strip() == "ok"

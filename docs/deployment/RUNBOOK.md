@@ -5,7 +5,7 @@ document_type: "architecture"
 status: "DRAFT"
 version: "0.1.0"
 created_at: "2026-11-19"
-updated_at: "2026-11-20"
+updated_at: "2026-11-23"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,14 +13,15 @@ related_documents:
   - "docs/adr/ADR-021-rust-generation.md"
 decision_references:
   - "ADR-021"
-change_summary: "Front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
+change_summary: "T282: the chat model is served by one vLLM server (BF16) that chat and the STEM benchmark runner share. Earlier: front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
 ---
 
 # Deployment runbook (SR-S8)
 
 One machine runs four containers from `docker/compose.yaml`: **Caddy** (the only one that publishes ports),
-**laris-server** (static, non-root Rust API), the **model service** (Python, P2) and **PostgreSQL**. The server,
-model and database sit on an internal network with no route out.
+**laris-server** (static, non-root Rust API), the **model service** (Python, P2) and **PostgreSQL**; with
+`docker/compose.chat.yaml` a fifth, **vllm**, serves the chat model. The server, model, vllm and database sit on an
+internal network with no route out.
 
 The placeholder backend answers chat until a chat model is configured (`model_service.backend`). A green smoke test
 proves the mechanics of the stack, not a capability: no model is qualified.
@@ -50,19 +51,41 @@ docker compose -f docker/compose.yaml cp server:/state/first_admin_key -   # the
 ```
 
 Ports default to 80 and 443; set `LARIS_HTTP_PORT` and `LARIS_HTTPS_PORT` to move them (the trial server uses 18080
-and 18443). To serve an open-weight chat model add `docker/compose.chat.yaml` (T235): it builds the model image with the `chat` extra,
-reserves the NVIDIA GPU and starts `OpenWeightChat` offline from the weights mounted at `/weights`. Use a separate project
-name so it keeps its own volumes and certificate authority:
+and 18443). To serve an open-weight chat model add `docker/compose.chat.yaml` (T282). It adds a fifth container,
+**vllm** (`vllm/vllm-openai:v0.34.0`), which holds the weights in BF16 on the NVIDIA GPU, offline, with the hub cache
+mounted read-only at `/weights` and on the internal network only. The model service stays the light image and forwards
+chat to it (`ServedChat`: the server renders the chat template, the model service fits the prompt to the input budget
+and splits reasoning and tool calls). `docker/laris.sh up` sets everything; by hand, with a separate project name so it
+keeps its own volumes and certificate authority:
 
 ```sh
-export LARIS_MODELS_DIR=$HOME/.cache/huggingface/hub LARIS_CHAT_SNAPSHOT=<snapshot folder of models--Qwen--Qwen3.5-9B>
+export LARIS_MODELS_DIR=$HOME/.cache/huggingface/hub LARIS_CHAT_SNAPSHOT=<snapshot folder of models--Qwen--Qwen3.5-4B>
+export LARIS_GPU_MEMORY_BYTES=$(( $(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i 0) * 1048576 ))
 export LARIS_HTTP_PORT=38080 LARIS_HTTPS_PORT=38443 LARIS_DOMAIN=localhost
 export LARIS_EDGE_SUBNET=172.31.61.0/24 LARIS_EDGE_GATEWAY=172.31.61.1 LARIS_SUBNET=172.31.60.0/24
 docker compose -p laris-qwen -f docker/compose.yaml -f docker/compose.chat.yaml up -d --build --wait --wait-timeout 900
 ```
 
-The whole hub cache is mounted because a model's blobs can live in a store shared with other models. The first request
-loads the weights (about 11 GB of VRAM at 8 bit); the model is NOT QUALIFIED.
+The whole hub cache is mounted because a model's blobs can live in a store shared with other models; the snapshot pins
+the revision. The vllm container takes two to four minutes to load and compile before it is healthy; the model service
+and the server wait for it. Its settings are environment variables with defaults in `docker/compose.chat.yaml`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `LARIS_ENGINE_GPU_SHARE` | 0.85 | share of GPU memory vLLM reserves; the model service's GPU queue counts the same share of `LARIS_GPU_MEMORY_BYTES` and refuses to start if it exceeds `vram_budget_bytes` |
+| `LARIS_ENGINE_MAX_MODEL_LEN` | 20480 | context of one request; the prompt budget is capped at this minus `LARIS_CHAT_MAX_NEW_TOKENS` |
+| `LARIS_ENGINE_MAX_SEQS` | 64 | requests vLLM batches at once (the default 256 exceeds the state blocks of the linear-attention layers) |
+| `LARIS_CHAT_CONCURRENCY` | 8 | chats the model service sends to vLLM at the same time |
+
+The GPU is the server's for as long as vllm runs: another GPU program (for example CARLA) must be closed first, and
+`docker/laris.sh down` frees it. The model is NOT QUALIFIED.
+
+**STEM evaluation on the same server.** `LARIS_ENGINE_PORT=38100 docker/laris.sh up` (or `-f
+docker/compose.engine-port.yaml` by hand) also binds vLLM to `127.0.0.1:38100` through a network that does not
+masquerade, so the server still has no route out. `scripts/stem_benchmarks.py baseline` then sends its requests there
+(`configs/stem-benchmarks.json`, `engine.base_url`) and records in its summary what the server serves. Chat and
+evaluation use one engine and one precision; a benchmark run shares the GPU with chat, so cost and latency figures
+are only comparable under the same load.
 
 ## Smoke test
 

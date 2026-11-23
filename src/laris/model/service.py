@@ -20,11 +20,14 @@ Embedder = Callable[[List[str]], List[List[float]]]
 
 
 def build_queue(backend: ChatProvider, cfg: Any) -> GpuQueue:
-    """The queue for this service from the `model_service` configuration."""
+    """The queue for this service from the `model_service` configuration. A backend whose weights
+    live in an inference server declares the server's reservation (`vram_bytes`); the queue counts
+    the larger of it and `chat_vram_bytes`, so the budget accounts for the server's share."""
+    size = max(cfg.chat_vram_bytes, int(getattr(backend, "vram_bytes", 0) or 0))
     models = {
         CHAT: ModelSpec(
             CHAT,
-            cfg.chat_vram_bytes,
+            size,
             getattr(backend, "load", lambda: None),
             getattr(backend, "unload", lambda: None),
         )

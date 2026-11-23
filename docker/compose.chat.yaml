@@ -1,24 +1,72 @@
-# Serves an open-weight chat model through the model service (T235, ADR-021). Use it on top of compose.yaml:
+# Serves an open-weight chat model (T282, ADR-021): the weights live in one vLLM server (BF16), the model service forwards
+# chat to it (`ServedChat`), and the STEM benchmark runner calls the same server (docker/compose.engine-port.yaml).
+# Use it on top of compose.yaml; docker/laris.sh sets every variable below:
 #   LARIS_MODELS_DIR=$HOME/.cache/huggingface/hub LARIS_CHAT_SNAPSHOT=<snapshot hash> \
+#   LARIS_GPU_MEMORY_BYTES=$(( $(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i 0) * 1048576 )) \
 #   docker compose -p laris-qwen -f docker/compose.yaml -f docker/compose.chat.yaml up -d --build --wait
 # LARIS_MODELS_DIR is the Hugging Face hub cache (mounted read-only at /weights): the model's blobs live in a store
 # shared with other models, so its own folder alone would hold broken links. The snapshot is the folder name under
-# models--Qwen--<LARIS_CHAT_MODEL, default Qwen3.5-4B>/snapshots/. The container has no route out: nothing is downloaded, the weights must be there.
-# Needs the NVIDIA container runtime. A different project name (-p) keeps its own volumes and certificate authority.
+# models--Qwen--<LARIS_CHAT_MODEL, default Qwen3.5-4B>/snapshots/ and pins the revision. The containers have no route out:
+# nothing is downloaded, the weights must be there. Needs the NVIDIA container runtime. A different project name (-p)
+# keeps its own volumes and certificate authority. The model is NOT QUALIFIED.
 services:
   model:
-    build:
-      args:
-        MODEL_EXTRAS: chat
-    image: laris-model-chat:${LARIS_TAG:-dev}
+    depends_on:
+      vllm:
+        condition: service_healthy
     environment:
-      LARIS_MODEL_SERVICE__BACKEND: laris.model.inference.open_llm:OpenWeightChat
-      LARIS_MODEL_SERVICE__CHAT_MODEL_ID: /weights/models--Qwen--${LARIS_CHAT_MODEL:-Qwen3.5-4B}/snapshots/${LARIS_CHAT_SNAPSHOT:?set LARIS_CHAT_SNAPSHOT to the snapshot folder name}
+      LARIS_MODEL_SERVICE__BACKEND: laris.model.inference.served_llm:ServedChat
+      LARIS_MODEL_SERVICE__CHAT_SERVER_URL: http://vllm:8000
+      LARIS_MODEL_SERVICE__CHAT_MODEL_ID: Qwen/${LARIS_CHAT_MODEL:-Qwen3.5-4B}   # the name the server serves
+      LARIS_MODEL_SERVICE__CHAT_QUANTIZATION: none   # BF16, the precision T275 evaluated
       LARIS_MODEL_SERVICE__CHAT_MAX_NEW_TOKENS: ${LARIS_CHAT_MAX_NEW_TOKENS:-1024}   # most tokens one reply may generate
       LARIS_MODEL_SERVICE__CHAT_MAX_INPUT_TOKENS: ${LARIS_CHAT_MAX_INPUT_TOKENS:-8192}   # prompt budget of one request
+      LARIS_MODEL_SERVICE__CHAT_SERVER_TIMEOUT_S: ${LARIS_CHAT_SERVER_TIMEOUT_S:-600}
+      # the GPU queue counts the server's reservation: its share of this GPU's memory
+      LARIS_MODEL_SERVICE__CHAT_SERVER_GPU_SHARE: ${LARIS_ENGINE_GPU_SHARE:-0.85}
+      LARIS_MODEL_SERVICE__GPU_MEMORY_BYTES: ${LARIS_GPU_MEMORY_BYTES:?set LARIS_GPU_MEMORY_BYTES to the GPU memory in bytes}
+      LARIS_MODEL_SERVICE__GPU_WORKERS: ${LARIS_CHAT_CONCURRENCY:-8}   # chats the server batches at the same time
+      LARIS_MODEL_SERVICE__QUEUE_WAIT_TIMEOUT_S: ${LARIS_CHAT_QUEUE_WAIT_S:-120}
+
+  vllm:
+    image: vllm/vllm-openai:v0.34.0   # approved by the owner 2026-11-23 (ADR-021 dependency record)
+    restart: unless-stopped
+    command:
+      - --model
+      - Qwen/${LARIS_CHAT_MODEL:-Qwen3.5-4B}
+      - --revision
+      - ${LARIS_CHAT_SNAPSHOT:?set LARIS_CHAT_SNAPSHOT to the snapshot folder name}
+      - --served-model-name
+      - Qwen/${LARIS_CHAT_MODEL:-Qwen3.5-4B}   # the name chat and the benchmark runner ask for
+      - --dtype
+      - bfloat16
+      - --max-model-len
+      - ${LARIS_ENGINE_MAX_MODEL_LEN:-20480}   # prompt budget plus reply, for chat and for the benchmark modes
+      - --gpu-memory-utilization
+      - ${LARIS_ENGINE_GPU_SHARE:-0.85}
+      - --max-num-seqs
+      - ${LARIS_ENGINE_MAX_SEQS:-64}   # the default 256 exceeds the state blocks of the linear-attention layers
+      - --enable-prefix-caching
+      - --limit-mm-per-prompt
+      - '{"image": 0, "video": 0}'
+      - --seed
+      - ${LARIS_ENGINE_SEED:-2752}   # the T275 generation seed; benchmark requests carry their own seeds
+    environment:
+      HF_HUB_CACHE: /weights
       HF_HUB_OFFLINE: "1"
-      PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True   # no fragmentation: memory freed after a reply really is free
+      VLLM_NO_USAGE_STATS: "1"
+      DO_NOT_TRACK: "1"
       HOME: /tmp
+      XDG_CACHE_HOME: /tmp/cache
+      VLLM_CACHE_ROOT: /tmp/vllm
+    volumes:
+      - ${LARIS_MODELS_DIR:-../artifacts/weights}:/weights:ro
+    networks: [internal]
+    shm_size: 2gb
+    read_only: true
+    tmpfs: ["/tmp:exec"]   # Triton and the graph compiler load the kernels they build there
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     deploy:
       resources:
         reservations:
@@ -27,4 +75,8 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      start_period: 120s
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 600s   # loading the weights and compiling the graphs

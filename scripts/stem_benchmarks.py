@@ -4,16 +4,17 @@
     python scripts/stem_benchmarks.py download        # network: pinned sources to data/benchmarks
     python scripts/stem_benchmarks.py split           # seeded dev / sealed splits, manifest (once)
     python scripts/stem_benchmarks.py scan NOTES_DIR  # 13-gram scan of notes against all items (B6)
-    python scripts/stem_benchmarks.py engine-up       # vLLM server container (BF16, loopback only)
+    LARIS_ENGINE_PORT=38100 docker/laris.sh up        # the stack's vLLM server, opened on 127.0.0.1
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
-    python scripts/stem_benchmarks.py engine-down
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
-splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server (the one
-engine for chat and evaluation, owner 2026-11-23), or `transformers`, in-process, kept for parity
-checks. Per-item records go to `data/benchmarks/runs/<run>.jsonl` (outside Git), the summary to
-`--summary`. A record holds ids, the extracted answer (a letter for multiple choice), scores and
-cost, never a question or an option. Inference only: no gradient, no optimiser. A baseline of the
+splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
+compose stack (`docker/compose.chat.yaml`, T282: the one engine for chat and evaluation, owner
+2026-11-23; its settings live there, the summary records what the server reports), or
+`transformers`, in-process, kept for parity checks. Per-item records go to
+`data/benchmarks/runs/<run>.jsonl` (outside Git), the summary to `--summary`. A record holds
+ids, the extracted answer (a letter for multiple choice), scores and cost, never a question or an
+option. Inference only: no gradient, no optimiser. A baseline of the
 bare model is not a qualification of anything.
 """
 
@@ -195,6 +196,24 @@ class HttpEngine:
         self.timeout_s = float(cfg["timeout_s"])
         self.vram = gpu_memory_used_bytes()
 
+    def identity(self) -> Dict[str, Any]:
+        """What the server says it serves (model, revision root, context, version)."""
+        import urllib.request
+
+        root = self.url.rstrip("/").removesuffix("/v1")
+        with urllib.request.urlopen(self.url.rstrip("/") + "/models", timeout=30) as response:
+            models = json.loads(response.read())["data"]
+        with urllib.request.urlopen(root + "/version", timeout=30) as response:
+            version = json.loads(response.read()).get("version", "")
+        entry = next((m for m in models if m["id"] == self.model_id), {})
+        if not entry:
+            raise SystemExit(f"the engine does not serve {self.model_id}")
+        return {
+            "model": entry["id"],
+            "max_model_len": entry.get("max_model_len"),
+            "vllm": version,
+        }
+
     def one(self, prompt: str, mode: Dict[str, Any], seed: int) -> Dict[str, Any]:
         import urllib.request
 
@@ -309,6 +328,7 @@ def cmd_baseline(args: argparse.Namespace) -> int:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
         engine = HttpEngine(engine_cfg, base["model_id"])
+        served = engine.identity()
         lock, count = threading.Lock(), 0
         with ThreadPoolExecutor(max_workers=engine.concurrency) as pool:
             futures = {
@@ -347,6 +367,8 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             )
     summary = summarise_run(out_path, config, args.mode, batch_size, base["quantization"])
     summary["engine"] = engine_kind
+    if engine_kind == "vllm_http":
+        summary["engine_server"] = served
     if args.summary:
         Path(args.summary).write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
@@ -417,50 +439,6 @@ def report_tables(summaries: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def engine_command(config: Dict[str, Any], hub_dir: str) -> List[str]:
-    """The `docker run` that starts the evaluation engine: offline, weights mounted read-only,
-    listening on the loopback interface only."""
-    engine = config["engine"]
-    return [
-        "docker",
-        "run",
-        "-d",
-        "--name",
-        engine["container"],
-        "--gpus",
-        "all",
-        "--ipc=host",
-        "-p",
-        f"127.0.0.1:{engine['host_port']}:8000",
-        "-v",
-        f"{hub_dir}:/root/.cache/huggingface/hub:ro",
-        "-e",
-        "HF_HUB_OFFLINE=1",
-        engine["image"],
-        "--model",
-        config["baseline"]["model_id"],
-        *engine["server_args"],
-    ]
-
-
-def cmd_engine_up(args: argparse.Namespace) -> int:
-    import os
-    import subprocess
-
-    config = _config(args.config)
-    hub = os.environ.get("HF_HUB_CACHE") or os.path.expanduser("~/.cache/huggingface/hub")
-    command = engine_command(config, hub)
-    print(" ".join(command), flush=True)
-    return subprocess.run(command, check=False).returncode
-
-
-def cmd_engine_down(args: argparse.Namespace) -> int:
-    import subprocess
-
-    name = _config(args.config)["engine"]["container"]
-    return subprocess.run(["docker", "rm", "-f", name], check=False).returncode
-
-
 def cmd_report(args: argparse.Namespace) -> int:
     summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
     print(report_tables(summaries), end="")
@@ -486,8 +464,6 @@ def main(argv: List[str] | None = None) -> int:
     base.add_argument("--engine", choices=["vllm_http", "transformers"], default="")
     base.add_argument("--summary", default="")
     base.set_defaults(func=cmd_baseline)
-    sub.add_parser("engine-up").set_defaults(func=cmd_engine_up)
-    sub.add_parser("engine-down").set_defaults(func=cmd_engine_down)
     rep = sub.add_parser("report")
     rep.add_argument("summaries", nargs="+")
     rep.set_defaults(func=cmd_report)

@@ -153,6 +153,56 @@ def fit_to_budget(
     return work
 
 
+TOOL_OPEN = "<tool_call>"
+
+
+def _hold_back(text: str, marks: Tuple[str, ...] = (THINK_OPEN, THINK_CLOSE)) -> str:
+    """`text` without a possible partial tag (one of `marks`) at its end."""
+    for cut in range(max(len(m) for m in marks) - 1, 0, -1):
+        if any(len(m) > cut and text.endswith(m[:cut]) for m in marks):
+            return text[:-cut]
+    return text
+
+
+def assistant_turn(raw: str, opened: bool = False) -> AssistantTurn:
+    """The assistant turn in a raw reply: reasoning, visible text and tool calls apart.
+    `opened`: the prompt ended inside the reasoning (the template wrote `<think>`), so the reply
+    is reasoning until `</think>`, even when it is cut off before the tag."""
+    reasoning, answer = split_reasoning(THINK_OPEN + raw if opened else raw)
+    content, calls = parse_tool_calls(answer)
+    return AssistantTurn(content=content or None, tool_calls=calls, reasoning=reasoning or None)
+
+
+class StreamEvents:
+    """Stream events of a raw reply that arrives in pieces: `reasoning` and `text` deltas as they
+    become certain, then the final `turn`. A possible partial tag and every tool-call block are
+    held back, so neither reaches the chat body."""
+
+    def __init__(self, opened: bool = False) -> None:
+        self.raw, self.opened, self._reasoning, self._text = "", opened, 0, 0
+
+    def feed(self, piece: str) -> Iterator[Dict[str, Any]]:
+        self.raw += piece
+        text = THINK_OPEN + self.raw if self.opened else self.raw
+        reasoning, answer = split_reasoning(text)
+        if THINK_OPEN in text and THINK_CLOSE not in text:  # still reasoning: it may end in a tag
+            reasoning = _hold_back(text[text.find(THINK_OPEN) + len(THINK_OPEN) :]).strip()
+        visible = _hold_back(answer.split(TOOL_OPEN)[0], (THINK_OPEN, THINK_CLOSE, TOOL_OPEN))
+        if len(reasoning) > self._reasoning:
+            yield {"type": "reasoning", "delta": reasoning[self._reasoning :]}
+            self._reasoning = len(reasoning)
+        if len(visible) > self._text:
+            yield {"type": "text", "delta": visible[self._text :]}
+            self._text = len(visible)
+
+    def finish(self) -> Iterator[Dict[str, Any]]:
+        turn = assistant_turn(self.raw, self.opened)
+        tail = (turn.content or "")[self._text :] if not turn.tool_calls else ""
+        if tail:
+            yield {"type": "text", "delta": tail}
+        yield {"type": "turn", "turn": turn}
+
+
 class OpenWeightChat(ChatProvider):
     name = "open-llm"
 
@@ -168,6 +218,7 @@ class OpenWeightChat(ChatProvider):
         self._model: Any = None
         self._tokenizer: Any = None
         self._lock = threading.Lock()
+        self._opened = False
 
     # -- weights -------------------------------------------------------------------------------
     def load(self) -> None:
@@ -232,9 +283,11 @@ class OpenWeightChat(ChatProvider):
         # The prompt (tool schemas plus every earlier tool result) is what makes memory climb during
         # tool use: the activations and the cache of one call grow with its length. Bound it.
         fitted = fit_to_budget(messages, measure, self.cfg.chat_max_input_tokens)
-        return self._tokenizer(
-            self._prompt(fitted, tools), return_tensors="pt", add_special_tokens=False
-        ).to(self._model.device)
+        prompt = self._prompt(fitted, tools)
+        self._opened = prompt.rstrip().endswith(THINK_OPEN)  # the reply starts inside the reasoning
+        return self._tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(
+            self._model.device
+        )
 
     def _release(self) -> None:
         """Hand the memory of a finished call back to the GPU, so tool turns do not pile up."""
@@ -279,12 +332,6 @@ class OpenWeightChat(ChatProvider):
                 ids.append(value)
         return ids
 
-    @staticmethod
-    def _turn(raw: str) -> AssistantTurn:
-        reasoning, answer = split_reasoning(raw)
-        content, calls = parse_tool_calls(answer)
-        return AssistantTurn(content=content or None, tool_calls=calls, reasoning=reasoning or None)
-
     def chat(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> AssistantTurn:
         import torch
 
@@ -300,7 +347,7 @@ class OpenWeightChat(ChatProvider):
             text = self._tokenizer.decode(new, skip_special_tokens=True)
             del out, new, inputs
             self._release()
-            return self._turn(text)
+            return assistant_turn(text, self._opened)
 
     def stream(
         self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]
@@ -325,29 +372,12 @@ class OpenWeightChat(ChatProvider):
 
             worker = threading.Thread(target=run, daemon=True)
             worker.start()
-            raw, sent_reasoning, sent_text = "", 0, 0
+            events = StreamEvents(self._opened)
             for piece in streamer:
-                raw += piece
-                reasoning, answer = split_reasoning(raw)
-                # hold back a possible partial tag or tool-call block at the end of the text
-                visible = answer.split("<tool_call>")[0]
-                for cut in range(1, len(THINK_CLOSE)):
-                    if visible.endswith(THINK_CLOSE[:cut]) or visible.endswith(THINK_OPEN[:cut]):
-                        visible = visible[:-cut]
-                        break
-                if len(reasoning) > sent_reasoning:
-                    yield {"type": "reasoning", "delta": reasoning[sent_reasoning:]}
-                    sent_reasoning = len(reasoning)
-                if len(visible) > sent_text:
-                    yield {"type": "text", "delta": visible[sent_text:]}
-                    sent_text = len(visible)
+                yield from events.feed(piece)
             worker.join()
             inputs = streamer = None  # let the prompt tensors go before the cache is released
             self._release()
             if failure:
                 raise ProviderError(f"generation failed: {type(failure[0]).__name__}")
-            turn = self._turn(raw)
-            tail = (turn.content or "")[sent_text:] if not turn.tool_calls else ""
-            if tail:
-                yield {"type": "text", "delta": tail}
-            yield {"type": "turn", "turn": turn}
+            yield from events.finish()
