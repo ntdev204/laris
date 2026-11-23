@@ -40,3 +40,11 @@ Goal: the whole cognitive loop with ResearchLLM (Qwen3.5-9B, D48) as advisor, me
 Tasks: T172
 Exit criteria:
 - The cognitive evaluation report (SR-K7) is produced with more than one advisor and reviewed by the owner.
+
+### Phase 58 — Precision of the gate's checks
+Goal: the write gate and the answer check tell real contradictions, strengthened claims and appended clauses from
+contrasts and paraphrases, each measured by a miss-rate fixture (ADR-024 section 6.3) before it changes.
+Tasks: T283
+Exit criteria:
+- On the fixture, false Conflicts fall and no real contradiction is missed; a rebuilt STEM snapshot (T277 procedure)
+  reports its Conflicts again; the frozen T277 snapshot is not changed.

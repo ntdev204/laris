@@ -100,3 +100,5 @@ Every item got passages (1,925 of 1,925).
 - Open for the owner: (1) the false Conflicts (585, 848 Claims) come from the vocabulary rule of the contradiction
   search; a subject-aware rule or a reviewed list would be a change to the brain's gate (programme 3); (2) Claims stay
   at `sourced`; raising them needs independent corroboration or a tool check that reproduces the statement.
+- Owner decision 2026-11-23: (1) goes to T283 (programme 3); (2) Claims stay at `sourced`, which the deployed decider
+  requires to answer.
