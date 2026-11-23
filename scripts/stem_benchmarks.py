@@ -4,14 +4,17 @@
     python scripts/stem_benchmarks.py download        # network: pinned sources to data/benchmarks
     python scripts/stem_benchmarks.py split           # seeded dev / sealed splits, manifest (once)
     python scripts/stem_benchmarks.py scan NOTES_DIR  # 13-gram scan of notes against all items (B6)
+    python scripts/stem_benchmarks.py engine-up       # vLLM server container (BF16, loopback only)
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
+    python scripts/stem_benchmarks.py engine-down
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
-splits only; its per-item records go to `data/benchmarks/runs/<run>.jsonl` (outside Git) and its
-summary to `--summary`. A record holds ids, the extracted answer (a letter for multiple choice),
-scores and cost, never a question or an option. It loads the model with `transformers` and
-generates: inference only, no gradient, no optimiser. A baseline of the bare model is not a
-qualification of anything.
+splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server (the one
+engine for chat and evaluation, owner 2026-11-23), or `transformers`, in-process, kept for parity
+checks. Per-item records go to `data/benchmarks/runs/<run>.jsonl` (outside Git), the summary to
+`--summary`. A record holds ids, the extracted answer (a letter for multiple choice), scores and
+cost, never a question or an option. Inference only: no gradient, no optimiser. A baseline of the
+bare model is not a qualification of anything.
 """
 
 from __future__ import annotations
@@ -177,6 +180,75 @@ class Generator:
         return results
 
 
+class HttpEngine:
+    """Requests to an OpenAI-compatible server (vLLM, continuous batching), `concurrency` at once.
+
+    `seconds` of an item is its request's wall time under that load; the server holds its GPU
+    memory from the start, so `peak_vram_bytes` is the GPU memory in use when the run began."""
+
+    def __init__(self, cfg: Dict[str, Any], model_id: str) -> None:
+        import os
+
+        self.url = os.environ.get(cfg["base_url_env"]) or cfg["base_url"]
+        self.model_id = model_id
+        self.concurrency = int(cfg["concurrency"])
+        self.timeout_s = float(cfg["timeout_s"])
+        self.vram = gpu_memory_used_bytes()
+
+    def one(self, prompt: str, mode: Dict[str, Any], seed: int) -> Dict[str, Any]:
+        import urllib.request
+
+        body = {
+            "model": self.model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": int(mode["max_new_tokens"]),
+            "temperature": float(mode["temperature"]),
+            "top_p": float(mode["top_p"]),
+            "top_k": int(mode["top_k"]),
+            "seed": seed,
+            "chat_template_kwargs": {"enable_thinking": bool(mode["enable_thinking"])},
+        }
+        request = urllib.request.Request(
+            self.url.rstrip("/") + "/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        start = time.perf_counter()
+        with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+            reply = json.loads(response.read())
+        seconds = time.perf_counter() - start
+        choice = reply["choices"][0]
+        message = choice["message"]
+        text = message.get("content") or ""
+        if message.get("reasoning_content"):  # a server with a reasoning parser splits it out
+            text = "<think>" + message["reasoning_content"] + "</think>" + text
+        return {
+            "text": text,
+            "prompt_tokens": int(reply["usage"]["prompt_tokens"]),
+            "generated_tokens": int(reply["usage"]["completion_tokens"]),
+            "truncated": choice.get("finish_reason") == "length",
+            "seconds": seconds,
+            "peak_vram_bytes": self.vram,
+        }
+
+
+def gpu_memory_used_bytes() -> int:
+    """GPU memory in use on device 0 (`nvidia-smi`), 0 when it cannot be read."""
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits", "-i", "0"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
+        ).stdout
+        return int(float(out.strip().splitlines()[0]) * 1024 * 1024)
+    except (OSError, ValueError, IndexError, subprocess.SubprocessError):
+        return 0
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     from laris.model.inference.open_llm import split_reasoning
 
@@ -192,55 +264,89 @@ def cmd_baseline(args: argparse.Namespace) -> int:
         done = {json.loads(line)["id"] for line in out_path.read_text().splitlines() if line}
     if args.quantization:
         base = dict(base, quantization=args.quantization)
-    generator = Generator(base)
+    engine_cfg = config["engine"]
+    engine_kind = args.engine or engine_cfg["kind"]
     batch_size = int(args.batch_size or mode["batch_size"])
     fraction = float(mode["sample_fraction"])
+    work: List[Any] = []
     for bench in args.bench or list(data.BENCHMARKS):
         items = data.load_items(config, ROOT, bench, "dev")
         if fraction < 1.0:  # seeded, stratified by category (the same rule as the MMLU-Pro split)
             items = data.stratified_sample(items, fraction, int(config["split_seed"]))
         if args.limit:
             items = items[: args.limit]
-        todo = [i for i in items if i["id"] not in done]
+        work += [(bench, i) for i in items if i["id"] not in done]
+    seed0 = int(base["generation_seed"])
+
+    def record(bench: str, item: Dict[str, Any], output: Dict[str, Any], share: float) -> str:
+        _, answer_text = split_reasoning(output["text"])
+        scored = score(item, answer_text, config["equivalence"])
+        cost = stats.CostRecord(
+            seconds=share,
+            prompt_tokens=output["prompt_tokens"],
+            generated_tokens=output["generated_tokens"],
+            model_calls=1,
+            solver_calls=0,
+            peak_vram_bytes=output["peak_vram_bytes"],
+        )
+        return json.dumps(
+            {
+                "id": item["id"],
+                "bench": bench,
+                "category": item["category"],
+                "mode": args.mode,
+                "engine": engine_kind,
+                "extracted": scored["extracted"],  # a letter for multiple choice
+                "correct": scored["correct"],
+                "truncated": output["truncated"],
+                "finished_at": time.time(),
+                "cost": cost.as_dict(),
+            }
+        )
+
+    if engine_kind == "vllm_http":
+        import threading
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        engine = HttpEngine(engine_cfg, base["model_id"])
+        lock, count = threading.Lock(), 0
+        with ThreadPoolExecutor(max_workers=engine.concurrency) as pool:
+            futures = {
+                pool.submit(
+                    engine.one,
+                    prompt_for(item, base["prompts"]),
+                    mode,
+                    seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000,
+                ): (bench, item)
+                for bench, item in work
+            }
+            for future in as_completed(futures):
+                bench, item = futures[future]
+                output = future.result()
+                line = record(bench, item, output, output["seconds"])
+                with lock, open(out_path, "a", encoding="utf-8") as handle:
+                    handle.write(line + "\n")
+                    count += 1
+                if count % 50 == 0 or count == len(work):
+                    print(f"{count}/{len(work)}", flush=True)
+    else:
+        generator = Generator(base)
         # similar prompt lengths in one batch: less padding
-        todo.sort(key=lambda i: len(prompt_for(i, base["prompts"])))
-        for start in range(0, len(todo), batch_size):
-            chunk = todo[start : start + batch_size]
+        work.sort(key=lambda w: (w[0], len(prompt_for(w[1], base["prompts"]))))
+        for start in range(0, len(work), batch_size):
+            chunk = work[start : start + batch_size]
             outputs = generator.run(
-                [prompt_for(i, base["prompts"]) for i in chunk],
-                mode,
-                int(base["generation_seed"]) + start,
+                [prompt_for(i, base["prompts"]) for _, i in chunk], mode, seed0 + start
             )
             with open(out_path, "a", encoding="utf-8") as handle:
-                for item, output in zip(chunk, outputs):
-                    _, answer_text = split_reasoning(output["text"])
-                    scored = score(item, answer_text, config["equivalence"])
-                    cost = stats.CostRecord(
-                        seconds=output["batch_seconds"] / len(chunk),
-                        prompt_tokens=output["prompt_tokens"],
-                        generated_tokens=output["generated_tokens"],
-                        model_calls=1,
-                        solver_calls=0,
-                        peak_vram_bytes=output["peak_vram_bytes"],
-                    )
-                    record = {
-                        "id": item["id"],
-                        "bench": bench,
-                        "category": item["category"],
-                        "mode": args.mode,
-                        "extracted": scored["extracted"],  # a letter for multiple choice
-                        "correct": scored["correct"],
-                        "truncated": output["truncated"],
-                        "batch_size": len(chunk),
-                        "batch_seconds": output["batch_seconds"],
-                        "cost": cost.as_dict(),
-                    }
-                    handle.write(json.dumps(record) + "\n")
+                for (bench, item), output in zip(chunk, outputs):
+                    share = output["batch_seconds"] / len(chunk)
+                    handle.write(record(bench, item, output, share) + "\n")
             print(
-                f"{bench} {start + len(chunk)}/{len(todo)} {outputs[0]['batch_seconds']:.0f}s",
-                flush=True,
+                f"{start + len(chunk)}/{len(work)} {outputs[0]['batch_seconds']:.0f}s", flush=True
             )
     summary = summarise_run(out_path, config, args.mode, batch_size, base["quantization"])
+    summary["engine"] = engine_kind
     if args.summary:
         Path(args.summary).write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
@@ -278,6 +384,89 @@ def summarise_run(
     return out
 
 
+def report_tables(summaries: List[Dict[str, Any]]) -> str:
+    """Markdown tables of run summaries: scores, intervals and cost; no item text."""
+    lines = [
+        "| Run | Benchmark | Items | Correct | Accuracy | Wilson 95 % | Unparsed | Truncated "
+        "| s/item median | s/item p95 | Gen. tokens median | p95 | Peak VRAM GB |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for summary in summaries:
+        for bench, b in summary["benchmarks"].items():
+            lines.append(
+                f"| {summary['mode']} | {bench} | {b['items']} | {b['correct']} "
+                f"| {100 * b['accuracy']:.1f} % "
+                f"| {100 * b['wilson_low']:.1f}-{100 * b['wilson_high']:.1f} "
+                f"| {b['unparsed']} | {b['truncated']} | {b['seconds_median']:.1f} "
+                f"| {b['seconds_p95']:.1f} | {b['generated_tokens_median']:.0f} "
+                f"| {b['generated_tokens_p95']:.0f} | {b['peak_vram_bytes'] / 1e9:.1f} |"
+            )
+    lines += [
+        "",
+        "| Run | Benchmark | Category | Items | Accuracy | Wilson 95 % |",
+        "|---|---|---|---|---|---|",
+    ]
+    for summary in summaries:
+        for bench, b in summary["benchmarks"].items():
+            for category, c in b["categories"].items():
+                lines.append(
+                    f"| {summary['mode']} | {bench} | {category} | {c['items']} "
+                    f"| {100 * c['accuracy']:.1f} % "
+                    f"| {100 * c['wilson_low']:.1f}-{100 * c['wilson_high']:.1f} |"
+                )
+    return "\n".join(lines) + "\n"
+
+
+def engine_command(config: Dict[str, Any], hub_dir: str) -> List[str]:
+    """The `docker run` that starts the evaluation engine: offline, weights mounted read-only,
+    listening on the loopback interface only."""
+    engine = config["engine"]
+    return [
+        "docker",
+        "run",
+        "-d",
+        "--name",
+        engine["container"],
+        "--gpus",
+        "all",
+        "--ipc=host",
+        "-p",
+        f"127.0.0.1:{engine['host_port']}:8000",
+        "-v",
+        f"{hub_dir}:/root/.cache/huggingface/hub:ro",
+        "-e",
+        "HF_HUB_OFFLINE=1",
+        engine["image"],
+        "--model",
+        config["baseline"]["model_id"],
+        *engine["server_args"],
+    ]
+
+
+def cmd_engine_up(args: argparse.Namespace) -> int:
+    import os
+    import subprocess
+
+    config = _config(args.config)
+    hub = os.environ.get("HF_HUB_CACHE") or os.path.expanduser("~/.cache/huggingface/hub")
+    command = engine_command(config, hub)
+    print(" ".join(command), flush=True)
+    return subprocess.run(command, check=False).returncode
+
+
+def cmd_engine_down(args: argparse.Namespace) -> int:
+    import subprocess
+
+    name = _config(args.config)["engine"]["container"]
+    return subprocess.run(["docker", "rm", "-f", name], check=False).returncode
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
+    print(report_tables(summaries), end="")
+    return 0
+
+
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", default="configs/stem-benchmarks.json")
@@ -294,8 +483,14 @@ def main(argv: List[str] | None = None) -> int:
     base.add_argument("--batch-size", type=int, default=0)
     base.add_argument("--run", default="")
     base.add_argument("--quantization", choices=["none", "8bit", "4bit"], default="")
+    base.add_argument("--engine", choices=["vllm_http", "transformers"], default="")
     base.add_argument("--summary", default="")
     base.set_defaults(func=cmd_baseline)
+    sub.add_parser("engine-up").set_defaults(func=cmd_engine_up)
+    sub.add_parser("engine-down").set_defaults(func=cmd_engine_down)
+    rep = sub.add_parser("report")
+    rep.add_argument("summaries", nargs="+")
+    rep.set_defaults(func=cmd_report)
     args = parser.parse_args(argv)
     return int(args.func(args))
 

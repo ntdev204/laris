@@ -56,6 +56,25 @@
   },
   "leakage": {"ngram": 13, "note_suffixes": [".md", ".txt"]},
   "equivalence": {"timeout_s": 5, "numeric_rel_tol": 1e-9},
+  "engine": {
+    "kind": "vllm_http",
+    "base_url": "http://127.0.0.1:38100/v1",
+    "base_url_env": "LARIS_STEM_ENGINE_URL",
+    "concurrency": 64,
+    "timeout_s": 3600,
+    "container": "laris-stem-vllm",
+    "image": "vllm/vllm-openai:v0.34.0",
+    "host_port": 38100,
+    "server_args": [
+      "--dtype", "bfloat16",
+      "--max-model-len", "12288",
+      "--gpu-memory-utilization", "0.85",
+      "--enable-prefix-caching",
+      "--max-num-seqs", "64",
+      "--limit-mm-per-prompt", "{\"image\": 0, \"video\": 0}",
+      "--seed", "2752"
+    ]
+  },
   "baseline": {
     "model_id": "Qwen/Qwen3.5-4B",
     "dtype": "bfloat16",
