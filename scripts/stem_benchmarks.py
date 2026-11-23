@@ -613,6 +613,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
     from laris.research.stem.router import route
     from laris.shared.config.loader import load_runtime_config
 
+    revision = code_revision()  # the code this run executes, taken before it starts
     config = _config(args.config)
     base, hcfg = config["baseline"], config["harness"]
     mode = base["modes"][hcfg["mode"]]
@@ -721,7 +722,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
         "model_id": base["model_id"],
         "settings": mode,
         "engine_server": served,
-        "code_revision": code_revision(),
+        "code_revision": revision,
         "brain_snapshot_sha256": snapshot,
         "harness_config_sha256": hashlib.sha256(
             json.dumps(hcfg, sort_keys=True).encode("utf-8")
