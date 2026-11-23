@@ -2,7 +2,7 @@
 document_id: "DOC-ADR-026"
 title: "ADR-026: STEM benchmark qualification of the system (light model, harness, RAG, deterministic brain)"
 document_type: "adr"
-status: "PROPOSED"
+status: "ACCEPTED"
 version: "0.1.0"
 created_at: "2026-11-23"
 updated_at: "2026-11-23"
@@ -19,13 +19,13 @@ decision_references:
   - "ADR-008"
   - "ADR-024"
   - "ADR-025"
-change_summary: "Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
+change_summary: "Accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
 ---
 
 # ADR-026: STEM benchmark qualification of the system
 
 ## Metadata
-- **Status:** PROPOSED on 2026-11-23 (task T274). The owner's choices (section 2) are decided; the protocol in sections 3-8 waits for the owner's acceptance. No benchmark is downloaded and no code is written before acceptance.
+- **Status:** ACCEPTED on 2026-11-23 by the owner ("Chấp nhận"), as drafted; T275 may start. Any change to D57-D64 or to the gates needs an amendment to this ADR.
 - **Requirements:** SR-M13, SR-M2, SR-M3, SR-K4 · **Task:** T274 · **Decisions:** D57-D64 · **Builds on:** ADR-008 (no claim without a held-out gate), ADR-004 (provenance), ADR-024 (brain, write gate), ADR-025 (server pipeline)
 - **Qualification:** the model (Qwen3.5-4B, the packaged default since T260) and ResearchLLM as a whole are **NOT QUALIFIED**. This ADR defines how a qualification could be earned; it earns none.
 
@@ -158,6 +158,9 @@ accepts the trade.
 - GPQA has 198 items: one item is about 0.5 point; the interval is reported.
 
 ## 12. Validation
+
+- Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
+
 
 - The owner accepts or changes this ADR; spec decisions D57-D64 and SR-M13 follow it.
 - `python scripts/validate_spec.py`, `cargo xtask spec` and `python scripts/validate_docs.py` pass.
