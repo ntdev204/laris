@@ -4,7 +4,7 @@
     python scripts/stem_benchmarks.py download        # network: pinned sources to data/benchmarks
     python scripts/stem_benchmarks.py split           # seeded dev / sealed splits, manifest (once)
     python scripts/stem_benchmarks.py scan NOTES_DIR  # 13-gram scan of notes against all items (B6)
-    LARIS_ENGINE_PORT=38100 docker/laris.sh up        # the stack's vLLM server, opened on 127.0.0.1
+    docker/laris.sh up                                # LARIS_ENGINE_PORT in docker/laris.env: vLLM
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
     python scripts/stem_benchmarks.py solver          # T276: model-free solver path on dev splits
     python scripts/stem_benchmarks.py harness [--bench B] [--limit N]  # T278: router and harness
@@ -190,9 +190,7 @@ class HttpEngine:
     memory from the start, so `peak_vram_bytes` is the GPU memory in use when the run began."""
 
     def __init__(self, cfg: Dict[str, Any], model_id: str) -> None:
-        import os
-
-        self.url = os.environ.get(cfg["base_url_env"]) or cfg["base_url"]
+        self.url = f"http://{cfg['host']}:{engine_port(cfg)}/v1"
         self.model_id = model_id
         self.concurrency = int(cfg["concurrency"])
         self.timeout_s = float(cfg["timeout_s"])
@@ -251,6 +249,19 @@ class HttpEngine:
             "seconds": seconds,
             "peak_vram_bytes": self.vram,
         }
+
+
+def engine_port(cfg: Dict[str, Any]) -> int:
+    """The engine's port: `port_variable` in `port_file` (docker/laris.env), the one place it is
+    set; docker/laris.sh opens the same port."""
+    path = ROOT / cfg["port_file"]
+    name = cfg["port_variable"]
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key, sep, value = line.strip().partition("=")
+            if sep and key.strip() == name and value.strip().strip("\"'").isdigit():
+                return int(value.strip().strip("\"'"))
+    raise SystemExit(f"set {name} in {cfg['port_file']} (see docker/laris.env.example)")
 
 
 def gpu_memory_used_bytes() -> int:
@@ -762,6 +773,51 @@ def score_answer(item: Dict[str, Any], answer: Optional[str], eq_cfg: Dict[str, 
     )
 
 
+def harness_tables(summary: Dict[str, Any]) -> str:
+    """Markdown tables of a harness summary: per benchmark and class against T275, steps, cost."""
+
+    def pct(x: float) -> str:
+        return f"{100 * x:.1f} %"
+
+    lines = [
+        "| Benchmark | Class | Items | Harness | Wilson 95 % | T275 same items | Gained | Lost "
+        "| Draft | Model calls | Solver calls | s median | s p95 | Gen. tokens median |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for bench, b in summary["benchmarks"].items():
+        for name, c in [("all", b)] + sorted(b["classes"].items()):
+            base = c.get("baseline") or {}
+            lines.append(
+                f"| {bench} | {name} | {c['items']} | {c['correct']} ({pct(c['accuracy'])}) "
+                f"| {pct(c['wilson_low'])}-{pct(c['wilson_high'])} "
+                f"| {base.get('correct', '-')} ({pct(base.get('accuracy', 0.0))}) "
+                f"| {base.get('gained', '-')} | {base.get('lost', '-')} | {c['draft_correct']} "
+                f"| {c['model_calls_mean']:.2f} | {c['solver_calls_mean']:.2f} "
+                f"| {c['seconds_median']:.1f} | {c['seconds_p95']:.1f} "
+                f"| {c['generated_tokens_median']:.0f} |"
+            )
+    lines += ["", "| Benchmark | Final answer from | Items | Correct |", "|---|---|---|---|"]
+    for bench, b in summary["benchmarks"].items():
+        for source, entry in sorted(b["final_from"].items()):
+            lines.append(f"| {bench} | {source} | {entry['items']} | {entry['correct']} |")
+    lines += [
+        "",
+        "| Benchmark | Review | Wrong to right | Right to wrong | Unchanged verdict |",
+        "|---|---|---|---|---|",
+    ]
+    for bench, b in summary["benchmarks"].items():
+        for how, flips in sorted(b["review_flips"].items()):
+            lines.append(
+                f"| {bench} | {how} | {flips['to_right']} | {flips['to_wrong']} | {flips['same']} |"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def cmd_harness_report(args: argparse.Namespace) -> int:
+    print(harness_tables(json.loads(Path(args.summary).read_text(encoding="utf-8"))), end="")
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
     print(report_tables(summaries), end="")
@@ -797,6 +853,9 @@ def main(argv: List[str] | None = None) -> int:
     harness.add_argument("--run", default="")
     harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
     harness.set_defaults(func=cmd_harness)
+    hrep = sub.add_parser("harness-report")
+    hrep.add_argument("summary")
+    hrep.set_defaults(func=cmd_harness_report)
     rep = sub.add_parser("report")
     rep.add_argument("summaries", nargs="+")
     rep.set_defaults(func=cmd_report)

@@ -58,11 +58,12 @@
   "equivalence": {"timeout_s": 5, "numeric_rel_tol": 1e-9},
   "engine": {
     "kind": "vllm_http",
-    "base_url": "http://127.0.0.1:38100/v1",
-    "base_url_env": "LARIS_STEM_ENGINE_URL",
+    "host": "127.0.0.1",
+    "port_file": "docker/laris.env",
+    "port_variable": "LARIS_ENGINE_PORT",
     "concurrency": 64,
     "timeout_s": 3600,
-    "server": "the vllm service of docker/compose.chat.yaml (T282), opened by docker/laris.sh with LARIS_ENGINE_PORT=38100"
+    "server": "the vllm service of docker/compose.chat.yaml (T282), opened by docker/laris.sh on the port LARIS_ENGINE_PORT of docker/laris.env"
   },
   "baseline": {
     "model_id": "Qwen/Qwen3.5-4B",

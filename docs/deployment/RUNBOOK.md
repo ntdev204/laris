@@ -80,10 +80,11 @@ and the server wait for it. Its settings are environment variables with defaults
 The GPU is the server's for as long as vllm runs: another GPU program (for example CARLA) must be closed first, and
 `docker/laris.sh down` frees it. The model is NOT QUALIFIED.
 
-**STEM evaluation on the same server.** `LARIS_ENGINE_PORT=38100 docker/laris.sh up` (or `-f
-docker/compose.engine-port.yaml` by hand) also binds vLLM to `127.0.0.1:38100` through a network that does not
-masquerade, so the server still has no route out. `scripts/stem_benchmarks.py baseline` then sends its requests there
-(`configs/stem-benchmarks.json`, `engine.base_url`) and records in its summary what the server serves. Chat and
+**STEM evaluation on the same server.** With `LARIS_ENGINE_PORT=38100` in `docker/laris.env` (the one place the port
+is set; a variable left in the shell is ignored, as for every setting of the script), `docker/laris.sh up` also binds
+vLLM to `127.0.0.1` at that port through a network that does not masquerade, so the server still has no route out.
+`scripts/stem_benchmarks.py baseline` and `harness` read the same line of `docker/laris.env`
+(`configs/stem-benchmarks.json`, `engine.port_file`) and send their requests there; the script records in its summary what the server serves. Chat and
 evaluation use one engine and one precision; a benchmark run shares the GPU with chat, so cost and latency figures
 are only comparable under the same load.
 

@@ -1,11 +1,11 @@
 # Opens the vLLM server of docker/compose.chat.yaml to this machine for the STEM benchmark runner (T282): chat and
-# evaluation call the same server. Off by default; docker/laris.sh adds it when LARIS_ENGINE_PORT is set (38100 is the
-# runner's default, configs/stem-benchmarks.json). The port is bound to 127.0.0.1 only. The `engine` network does not
+# evaluation call the same server. Off by default; docker/laris.sh adds it when LARIS_ENGINE_PORT is set in
+# docker/laris.env, the one place the port is set (the runner reads it from there too). The port is bound to 127.0.0.1 only. The `engine` network does not
 # masquerade, so it gives the server no route out to the Internet; the server stays offline (HF_HUB_OFFLINE).
 services:
   vllm:
     ports:
-      - "127.0.0.1:${LARIS_ENGINE_PORT:-38100}:8000"
+      - "127.0.0.1:${LARIS_ENGINE_PORT:?set LARIS_ENGINE_PORT in docker/laris.env}:8000"
     networks: [internal, engine]
 
 networks:
