@@ -3,6 +3,8 @@
 Versioned measurements belong here; specifications and plans belong in `docs/`.
 Reports describe a particular run and do not automatically qualify a model.
 
+- `benchmarks/`: STEM benchmark runs of ADR-026 (T275 bare-model baseline on the development splits): scores, Wilson
+  intervals and cost only, never benchmark text; a baseline is not a qualification.
 - `model_free/`: output of the model-free runner (retrieval, citation, extraction, leak,
   injection and vault round-trip on fixtures). Reproducible; says nothing about the core model.
 - `performance/`: output of `scripts/benchmark_vault.py` (10,000-note vault) and its budgets; `rust_bench.json` and
