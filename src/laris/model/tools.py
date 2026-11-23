@@ -16,6 +16,10 @@ Call sites of the Python code this replaces (inventory, T149):
   * `shared.scientific.units`                      -> `normalize_quantities`
 The research evaluation code keeps calling the library directly; the generation-2 client calls
 only the routes.
+
+`solve_stem` (T276) is the deterministic STEM solver (`laris.model.solver`): a structured problem
+in, an answer whose `status` is `verified` (re-checked by an independent route) or `proposal`.
+Each call runs in a worker process with the time and memory ceilings of `SolverSettings`.
 """
 
 from dataclasses import dataclass
@@ -29,6 +33,7 @@ DEFAULT_DOCUMENT_ID = "doc"
 HEAD_CHARS = 3000  # the head of a document read for its bibliography (as `docs_from_chunks`)
 CITATION_KINDS = ("summary", "edges", "cocitation", "coupling", "centrality", "unresolved")
 MINING_KINDS = ("overview", "term_trends", "near_duplicates", "groups")
+SOLVE_STEM = "solve_stem"
 
 
 class ToolError(Exception):
@@ -327,11 +332,77 @@ def _definitions() -> List[Dict[str, Any]]:
     ]
 
 
+def _solver_parameters() -> Dict[str, Any]:
+    from laris.model.solver.engine import OPERATIONS
+    from laris.model.solver.expr import ASSUMPTIONS
+
+    text = {"type": "string"}
+    integer = {"type": ["integer", "string"], "description": "An integer (a string for long ones)."}
+    number = {"type": ["string", "number"]}
+    names = {"type": "array", "items": {"type": "string"}}
+    return _object(
+        {
+            "operation": {"type": "string", "enum": sorted(OPERATIONS)},
+            "expression": {
+                **text,
+                "description": "Expression or equation in plain syntax: x^2 - 5*x + 6 = 0, "
+                "sqrt(2)*sin(pi/4), log(x, 2). No LaTeX.",
+            },
+            "expressions": {**names, "description": "Equations of a system."},
+            "variable": {**text, "description": "The variable (default: the only free one)."},
+            "variables": {**names, "description": "Unknowns of a system."},
+            "assume": {"type": "string", "enum": list(ASSUMPTIONS)},
+            "domain": {"type": "string", "enum": ["real", "complex"]},
+            "substitutions": {
+                "type": "object",
+                "description": "Values for names: a number or expression, or "
+                '{"constant": "<CODATA name or symbol>"}.',
+            },
+            "order": {"type": "integer", "minimum": 1, "maximum": 10},
+            "lower": {**number, "description": "Lower bound (oo, -oo allowed)."},
+            "upper": {**number, "description": "Upper bound (oo, -oo allowed)."},
+            "point": {**number, "description": "Point of a limit (oo, -oo allowed)."},
+            "direction": {"type": "string", "enum": ["+", "-", "+-"]},
+            "matrix": {"type": "array", "items": {"type": "array", "items": number}},
+            "vector": {"type": "array", "items": number},
+            "integers": {"type": "array", "items": integer},
+            "moduli": {"type": "array", "items": integer},
+            "integer": integer,
+            "base": integer,
+            "exponent": integer,
+            "modulus": integer,
+            "n": integer,
+            "k": integer,
+            "digits": {**text, "description": "Digits of a number in the given base."},
+            "value": {**number, "description": "The value of a quantity."},
+            "unit": {**text, "description": "Unit expression: km/h, J mol^-1 K^-1, degC."},
+            "target_unit": text,
+            "constant": {**text, "description": "CODATA 2022 name or symbol (c, h, G, k_B)."},
+            "reaction": {**text, "description": "Reaction: C3H8 + O2 -> CO2 + H2O; ions as Fe^3+."},
+            "species": text,
+            "amount": {**number, "description": "Amount of the species, in mol."},
+            "molar_masses": {"type": "object", "description": "g/mol per species."},
+        },
+        ["operation"],
+    )
+
+
+SOLVER_DESCRIPTION = (
+    "Deterministic STEM solver without a model: algebra, calculus, linear algebra, number "
+    "theory, unit conversion and dimensions, CODATA 2022 constants (NIST) and stoichiometry. "
+    "Give a structured problem; the answer's status is 'verified' when an independent route "
+    "re-checked it, otherwise 'proposal'."
+)
+
+
 class ToolBox:
     """The scientific tools, with the limits one call may use."""
 
-    def __init__(self, limits: Limits) -> None:
+    def __init__(self, limits: Limits, solver: Optional[Any] = None) -> None:
+        from laris.model.solver.settings import SolverSettings
+
         self.limits = limits
+        self.solver = solver if solver is not None else SolverSettings()
         self._tools: Dict[str, Tool] = {}
         for item in _definitions():
             run = item["run"]
@@ -341,6 +412,17 @@ class ToolBox:
                 item["parameters"],
                 lambda args, run=run: run(args, limits),  # type: ignore[misc]
             )
+        self._tools[SOLVE_STEM] = Tool(
+            SOLVE_STEM, SOLVER_DESCRIPTION, _solver_parameters(), self._solve
+        )
+
+    def _solve(self, args: Dict[str, Any]) -> Any:
+        from laris.model.solver import SolverError, run
+
+        try:
+            return run(args, self.solver)
+        except SolverError as exc:
+            raise ToolError(exc.code, exc.message) from None
 
     def schemas(self) -> List[Dict[str, Any]]:
         return [self._tools[name].schema() for name in sorted(self._tools)]

@@ -49,6 +49,8 @@ server = [
 model = [
     "fastapi>=0.162,<1",  # ADR-019: P2 model service
     "uvicorn>=0.54,<1",
+    "sympy==1.14.0",  # T276: deterministic STEM solver (owner approval 2026-11-23)
+    "mpmath==1.3.0",  # SymPy's required dependency; the solver's independent numeric route
 ]
 chat = [
     "fastapi>=0.162,<1",  # T231: the open-weight chat backend (ADR-021); exact pins, reviewed by the owner
@@ -76,6 +78,7 @@ where = ["src"]
 "laris.server.storage" = ["migrations/*.sql"]
 "laris.protocol" = ["e1.schema.json"]
 "laris.shared.config" = ["settings.schema.json"]
+"laris.model.solver" = ["data/*.txt"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

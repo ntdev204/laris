@@ -172,6 +172,15 @@ Attempts, passages and the abstention texts are the owner's policy in `.laris/ha
 are in the trace row (`stages`, `GET /v1/admin/traces`), never the message. The database needs migration 0003, which
 the server applies at start.
 
+## STEM solver (T276)
+
+The model service's tool `solve_stem` answers structured STEM problems without the chat model (SymPy 1.14.0, CODATA
+2022 from NIST, packaged in the image). Each call runs in a forked worker: `model_service.solver_timeout_s` (default
+10 s) and `solver_memory_bytes` (default 2 GiB) bound it, and a refusal comes back as a tool error (`timed_out`,
+`input_too_large`, `invalid_arguments`, `rejected`). An answer marked `proposal` was not re-checked and must not be
+shown as checked. The constants table is refused when its SHA-256 differs from `solver_codata_sha256`; to use a newer
+CODATA release, set `solver_codata_file` and its hash, which is a policy change for the owner.
+
 ## Backup and restore
 
 `docker/backup.sh [--with-secrets] [DIR]` writes a `pg_dump` (custom format); `docker/restore.sh DUMP` restores it.

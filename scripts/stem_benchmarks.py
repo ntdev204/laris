@@ -6,6 +6,7 @@
     python scripts/stem_benchmarks.py scan NOTES_DIR  # 13-gram scan of notes against all items (B6)
     LARIS_ENGINE_PORT=38100 docker/laris.sh up        # the stack's vLLM server, opened on 127.0.0.1
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
+    python scripts/stem_benchmarks.py solver          # T276: model-free solver path on dev splits
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
 splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
@@ -439,6 +440,77 @@ def report_tables(summaries: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def cmd_solver(args: argparse.Namespace) -> int:
+    """T276: the model-free path (strict patterns -> deterministic solver) on the development
+    splits. An item counts as answered only when the solver verified its result; precision is
+    over answered items. No model, no GPU; records hold ids, pattern, status and the score."""
+    from laris.model.solver import SolverSettings
+    from laris.research.stem.formalise import answer_model_free
+    from laris.shared.config.loader import load_runtime_config
+
+    config = _config(args.config)
+    eq = config["equivalence"]
+    settings = SolverSettings.from_config(load_runtime_config(ROOT).model_service)
+    out_dir = ROOT / config["data_dir"] / "runs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    records, summary = [], {"run": args.run, "solver": {}, "benchmarks": {}}
+    started = time.time()
+    for bench in args.bench or list(data.BENCHMARKS):
+        items = data.load_items(config, ROOT, bench, "dev")
+        counts = {"items": len(items), "formalised": 0, "answered": 0, "correct": 0}
+        by_pattern: Dict[str, Dict[str, int]] = {}
+        for item in items:
+            began = time.time()
+            out = answer_model_free(item, settings)
+            seconds = round(time.time() - began, 4)
+            correct = None
+            if out["answer"] is not None:
+                correct = bool(
+                    answers.math_equivalent(
+                        out["answer"], item["answer"], eq["numeric_rel_tol"], eq["timeout_s"]
+                    )
+                )
+            if out["pattern"]:
+                counts["formalised"] += 1
+                empty = {"formalised": 0, "answered": 0, "correct": 0}
+                slot = by_pattern.setdefault(out["pattern"], empty)
+                slot["formalised"] += 1
+                if out["answer"] is not None:
+                    slot["answered"] += 1
+                    slot["correct"] += int(bool(correct))
+            if out["answer"] is not None:
+                counts["answered"] += 1
+                counts["correct"] += int(bool(correct))
+            records.append(
+                {
+                    "bench": bench,
+                    "id": item["id"],
+                    "pattern": out["pattern"],
+                    "status": out["status"],
+                    "correct": correct,
+                    "seconds": seconds,
+                }
+            )
+        answered = counts["answered"]
+        counts["precision"] = round(counts["correct"] / answered, 4) if answered else None
+        counts["coverage"] = round(answered / len(items), 4) if items else 0.0
+        interval = stats.wilson_interval(counts["correct"], answered) if answered else None
+        counts["precision_wilson95"] = [round(v, 4) for v in interval] if interval else None
+        counts["patterns"] = by_pattern
+        summary["benchmarks"][bench] = counts
+    from laris.model.solver.engine import engine_versions
+
+    summary["solver"] = {**engine_versions(), "codata_sha256": settings.codata_sha256}
+    summary["wall_seconds"] = round(time.time() - started, 1)
+    run = args.run or "solver-dev"
+    path = out_dir / f"{run}.jsonl"
+    path.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+    summary_path = out_dir / f"{run}.summary.json"
+    summary_path.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(summary, indent=1))
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
     print(report_tables(summaries), end="")
@@ -464,6 +536,10 @@ def main(argv: List[str] | None = None) -> int:
     base.add_argument("--engine", choices=["vllm_http", "transformers"], default="")
     base.add_argument("--summary", default="")
     base.set_defaults(func=cmd_baseline)
+    solver = sub.add_parser("solver")
+    solver.add_argument("--bench", action="append", choices=list(data.BENCHMARKS))
+    solver.add_argument("--run", default="")
+    solver.set_defaults(func=cmd_solver)
     rep = sub.add_parser("report")
     rep.add_argument("summaries", nargs="+")
     rep.set_defaults(func=cmd_report)

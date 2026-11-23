@@ -1,0 +1,27 @@
+{
+ "result": {
+  "operation": "solve",
+  "status": "verified",
+  "answer": [
+   "2",
+   "3"
+  ],
+  "text": "x = 2, x = 3",
+  "checks": [
+   {
+    "route": "substitution into the equation (mpmath)",
+    "passed": true
+   },
+   {
+    "route": "completeness by mpmath polynomial roots",
+    "passed": true
+   }
+  ],
+  "engine": {
+   "sympy": "1.14.0",
+   "mpmath": "1.3.0"
+  },
+  "latex": "2, 3",
+  "domain": "algebra"
+ }
+}

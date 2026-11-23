@@ -506,7 +506,8 @@ Acceptance: the Rust server's P2 contract tests pass against the running service
 ### SR-M2 — Scientific tools as remote tools
 Owner: model
 Scientific extraction and scholarly parsing served as tool routes so the client has no NLP; the call sites of the
-Python code are inventoried first.
+Python code are inventoried first. The deterministic STEM solver (`solve_stem`, T276, ADR-026 section 5) is one of these
+tools: model-free, each answer `verified` by an independent route or marked a proposal.
 Acceptance: route schemas in `laris-protocol`; fixture tests reproduce the extraction results.
 
 ### SR-M3 — Model boundary and owner runs

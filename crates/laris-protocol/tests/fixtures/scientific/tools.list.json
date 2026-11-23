@@ -207,6 +207,259 @@
      "additionalProperties": false
     }
    }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "solve_stem",
+    "description": "Deterministic STEM solver without a model: algebra, calculus, linear algebra, number theory, unit conversion and dimensions, CODATA 2022 constants (NIST) and stoichiometry. Give a structured problem; the answer's status is 'verified' when an independent route re-checked it, otherwise 'proposal'.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "operation": {
+       "type": "string",
+       "enum": [
+        "balance",
+        "binomial",
+        "constant",
+        "convert_unit",
+        "crt",
+        "determinant",
+        "differentiate",
+        "dimension",
+        "divisors",
+        "eigenvalues",
+        "evaluate",
+        "expand",
+        "factor",
+        "factor_integer",
+        "factorial",
+        "from_base",
+        "gcd",
+        "integrate",
+        "inverse",
+        "is_prime",
+        "lcm",
+        "limit",
+        "mod_inverse",
+        "mod_pow",
+        "rank",
+        "simplify",
+        "solve",
+        "solve_linear",
+        "solve_system",
+        "stoichiometry",
+        "sum",
+        "to_base",
+        "totient"
+       ]
+      },
+      "expression": {
+       "type": "string",
+       "description": "Expression or equation in plain syntax: x^2 - 5*x + 6 = 0, sqrt(2)*sin(pi/4), log(x, 2). No LaTeX."
+      },
+      "expressions": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "Equations of a system."
+      },
+      "variable": {
+       "type": "string",
+       "description": "The variable (default: the only free one)."
+      },
+      "variables": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "Unknowns of a system."
+      },
+      "assume": {
+       "type": "string",
+       "enum": [
+        "none",
+        "real",
+        "positive",
+        "integer"
+       ]
+      },
+      "domain": {
+       "type": "string",
+       "enum": [
+        "real",
+        "complex"
+       ]
+      },
+      "substitutions": {
+       "type": "object",
+       "description": "Values for names: a number or expression, or {\"constant\": \"<CODATA name or symbol>\"}."
+      },
+      "order": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 10
+      },
+      "lower": {
+       "type": [
+        "string",
+        "number"
+       ],
+       "description": "Lower bound (oo, -oo allowed)."
+      },
+      "upper": {
+       "type": [
+        "string",
+        "number"
+       ],
+       "description": "Upper bound (oo, -oo allowed)."
+      },
+      "point": {
+       "type": [
+        "string",
+        "number"
+       ],
+       "description": "Point of a limit (oo, -oo allowed)."
+      },
+      "direction": {
+       "type": "string",
+       "enum": [
+        "+",
+        "-",
+        "+-"
+       ]
+      },
+      "matrix": {
+       "type": "array",
+       "items": {
+        "type": "array",
+        "items": {
+         "type": [
+          "string",
+          "number"
+         ]
+        }
+       }
+      },
+      "vector": {
+       "type": "array",
+       "items": {
+        "type": [
+         "string",
+         "number"
+        ]
+       }
+      },
+      "integers": {
+       "type": "array",
+       "items": {
+        "type": [
+         "integer",
+         "string"
+        ],
+        "description": "An integer (a string for long ones)."
+       }
+      },
+      "moduli": {
+       "type": "array",
+       "items": {
+        "type": [
+         "integer",
+         "string"
+        ],
+        "description": "An integer (a string for long ones)."
+       }
+      },
+      "integer": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "base": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "exponent": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "modulus": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "n": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "k": {
+       "type": [
+        "integer",
+        "string"
+       ],
+       "description": "An integer (a string for long ones)."
+      },
+      "digits": {
+       "type": "string",
+       "description": "Digits of a number in the given base."
+      },
+      "value": {
+       "type": [
+        "string",
+        "number"
+       ],
+       "description": "The value of a quantity."
+      },
+      "unit": {
+       "type": "string",
+       "description": "Unit expression: km/h, J mol^-1 K^-1, degC."
+      },
+      "target_unit": {
+       "type": "string"
+      },
+      "constant": {
+       "type": "string",
+       "description": "CODATA 2022 name or symbol (c, h, G, k_B)."
+      },
+      "reaction": {
+       "type": "string",
+       "description": "Reaction: C3H8 + O2 -> CO2 + H2O; ions as Fe^3+."
+      },
+      "species": {
+       "type": "string"
+      },
+      "amount": {
+       "type": [
+        "string",
+        "number"
+       ],
+       "description": "Amount of the species, in mol."
+      },
+      "molar_masses": {
+       "type": "object",
+       "description": "g/mol per species."
+      }
+     },
+     "required": [
+      "operation"
+     ],
+     "additionalProperties": false
+    }
+   }
   }
  ]
 }

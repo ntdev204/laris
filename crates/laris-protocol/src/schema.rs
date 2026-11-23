@@ -47,6 +47,8 @@ pub fn export() -> Value {
         "scientific" / "Quantities" => scientific::Quantities,
         "scientific" / "BibliographyResult" => scientific::BibliographyResult,
         "scientific" / "CitationResult" => scientific::CitationResult,
+        "scientific" / "SolveStemArgs" => scientific::SolveStemArgs,
+        "scientific" / "SolveStemResult" => scientific::SolveStemResult,
         "sse" / "StreamError" => sse::StreamError,
         "core" / "Event" => events::Event,
         "core" / "Command" => events::Command,

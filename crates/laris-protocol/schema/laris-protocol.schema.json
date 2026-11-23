@@ -3937,6 +3937,151 @@
       },
       "title": "Quantities",
       "type": "array"
+    },
+    "SolveStemArgs": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Arguments of `solve_stem`: the operation and the fields it reads (`expression`, `variable`, `matrix`, `integers`,\n`value`, `unit`, `target_unit`, `constant`, `reaction`, ...; the tool list carries the full schema). A field the\noperation does not read is refused.",
+      "properties": {
+        "operation": {
+          "description": "One of the solver's operations (`evaluate`, `solve`, `integrate`, `determinant`, `gcd`, `convert_unit`,\n`constant`, `balance`, ...).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "title": "SolveStemArgs",
+      "type": "object"
+    },
+    "SolveStemResult": {
+      "$defs": {
+        "SolverCheck": {
+          "description": "One independent check of a `solve_stem` answer.",
+          "properties": {
+            "detail": {
+              "description": "Why it did not, when it did not.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "passed": {
+              "description": "Whether it agreed.",
+              "type": "boolean"
+            },
+            "route": {
+              "description": "How the answer was re-checked (for example `mpmath identity at seeded points`).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "passed"
+          ],
+          "type": "object"
+        },
+        "SolverSource": {
+          "description": "A source of data a `solve_stem` answer used (the CODATA table).",
+          "properties": {
+            "name": {
+              "description": "Name and release, for example `CODATA 2022 (NIST)`.",
+              "type": "string"
+            },
+            "sha256": {
+              "description": "SHA-256 of the file the solver read.",
+              "type": "string"
+            },
+            "url": {
+              "description": "Where the data was published.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "url",
+            "sha256"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "description": "Result of `solve_stem`. `status` is `verified` only when every check ran and passed; otherwise `proposal`.",
+      "properties": {
+        "answer": {
+          "description": "The answer as a JSON value (a string, a list, an object, a number or a boolean)."
+        },
+        "checks": {
+          "description": "The independent checks.",
+          "items": {
+            "$ref": "#/$defs/SolverCheck"
+          },
+          "type": "array"
+        },
+        "domain": {
+          "description": "Its domain (`algebra`, `calculus`, `linear_algebra`, `number_theory`, `units`, `constants`, `chemistry`).",
+          "type": "string"
+        },
+        "engine": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Versions of the libraries that computed it.",
+          "type": "object"
+        },
+        "latex": {
+          "description": "The answer in LaTeX, when it is an expression.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "description": "Remarks (an unchecked completeness, a constant used).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "numeric": {
+          "description": "The numeric value, when the answer is a number.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "operation": {
+          "description": "The operation that ran.",
+          "type": "string"
+        },
+        "sources": {
+          "description": "Data sources used.",
+          "items": {
+            "$ref": "#/$defs/SolverSource"
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "`verified` or `proposal`.",
+          "type": "string"
+        },
+        "text": {
+          "description": "The answer as one line.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation",
+        "domain",
+        "status",
+        "answer",
+        "text",
+        "checks",
+        "engine"
+      ],
+      "title": "SolveStemResult",
+      "type": "object"
     }
   },
   "sse": {

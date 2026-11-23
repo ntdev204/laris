@@ -6,6 +6,16 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Added
+- **Deterministic STEM solver (T276):** the model service offers the tool `solve_stem`, a structured problem answered
+  without a model: algebra (evaluate, simplify, expand, factor, solve, systems), calculus (derivatives, integrals,
+  limits, sums), linear algebra, number theory, unit conversion and dimensions, CODATA 2022 constants (NIST, with
+  source and hash) and stoichiometry. Each answer says `verified` (re-checked by an independent route: mpmath values,
+  numeric roots, quadrature, a second algorithm, plain-integer recounts, `sympy.physics.units`) or `proposal`. Input
+  is parsed against a whitelist, never by `eval`; each call runs in a worker with time and memory ceilings
+  (`model_service.solver_*`). `scripts/stem_benchmarks.py solver` runs the model-free path on the development splits.
+  SymPy 1.14.0 and mpmath 1.3.0 are now in the `model` extra.
+
 ### Changed
 - **One engine for chat and evaluation (T282):** the packaged server (`docker/laris.sh up`) serves Qwen3.5-4B in BF16
   from a vLLM server container (`vllm/vllm-openai:v0.34.0`, internal network, offline, weights read-only). The model

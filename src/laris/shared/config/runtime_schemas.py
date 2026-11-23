@@ -228,6 +228,31 @@ class ModelServiceConfig(BaseModel):
     queue_wait_timeout_s: float = Field(default=60.0, gt=0.0)  # waiting longer gives 504
     tool_max_chars: int = Field(default=2_000_000, ge=1)  # most text one scientific tool call may carry
     tool_max_documents: int = Field(default=200, ge=1)  # most documents in one scholarly tool call
+    # deterministic STEM solver (`solve_stem`, T276): one forked worker per call
+    solver_timeout_s: float = Field(default=10.0, gt=0.0)  # the worker is killed after this
+    solver_memory_bytes: int = Field(default=2 * 1024**3, ge=0)  # address-space ceiling (0: none)
+    solver_isolate: bool = Field(default=True)  # False runs in the service process (tests only)
+    solver_max_expression_chars: int = Field(default=4000, ge=1)
+    solver_max_nodes: int = Field(default=2000, ge=1)  # syntax nodes of one expression
+    solver_max_integer_digits: int = Field(default=1000, ge=1)
+    solver_max_exponent: int = Field(default=10000, ge=1)  # constant exponents, factorial arguments
+    solver_max_matrix_size: int = Field(default=12, ge=1)
+    solver_max_items: int = Field(default=64, ge=1)  # equations, integers, species, substitutions
+    solver_max_sum_terms: int = Field(default=100000, ge=1)
+    solver_max_result_chars: int = Field(default=20000, ge=100)
+    solver_working_digits: int = Field(default=50, ge=20)  # mpmath precision of the checks
+    solver_output_digits: int = Field(default=15, ge=1)
+    solver_check_points: int = Field(default=6, ge=1)
+    solver_check_seed: int = Field(default=276)
+    solver_check_tolerance: float = Field(default=1e-20, gt=0.0)
+    solver_limit_tolerance: float = Field(default=1e-6, gt=0.0)
+    solver_quad_tolerance: float = Field(default=1e-15, gt=0.0)
+    solver_unit_tolerance: float = Field(default=1e-8, gt=0.0)
+    solver_codata_file: str = Field(default="")  # empty: the packaged NIST CODATA 2022 table
+    solver_codata_sha256: str = Field(
+        default="77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67",
+        pattern="^[0-9a-f]{64}$",
+    )
 
 
 class ServingConfig(BaseModel):

@@ -35,6 +35,7 @@ def calls():
         "parse_bibliography": {"text": documents[0]["text"][:600]},
         "analyse_citations": {"documents": documents},
         "mine_literature": {"documents": documents, "kind": "overview"},
+        "solve_stem": {"operation": "solve", "expression": "x^2 - 5*x + 6 = 0", "variable": "x"},
     }
 
 
