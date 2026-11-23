@@ -58,11 +58,12 @@
   "equivalence": {"timeout_s": 5, "numeric_rel_tol": 1e-9},
   "engine": {
     "kind": "vllm_http",
-    "base_url": "http://127.0.0.1:38100/v1",
-    "base_url_env": "LARIS_STEM_ENGINE_URL",
+    "host": "127.0.0.1",
+    "port_file": "docker/laris.env",
+    "port_variable": "LARIS_ENGINE_PORT",
     "concurrency": 64,
     "timeout_s": 3600,
-    "server": "the vllm service of docker/compose.chat.yaml (T282), opened by docker/laris.sh with LARIS_ENGINE_PORT=38100"
+    "server": "the vllm service of docker/compose.chat.yaml (T282), opened by docker/laris.sh on the port LARIS_ENGINE_PORT of docker/laris.env"
   },
   "baseline": {
     "model_id": "Qwen/Qwen3.5-4B",
@@ -92,6 +93,51 @@
     "prompts": {
       "math": "Solve the following problem. Reason step by step, and put your final answer within \\boxed{}.\n\n{question}",
       "choice": "Answer the following multiple choice question. Think step by step, then give the answer on the last line in the form \"Answer: X\", where X is one of the letters {letters}.\n\nQuestion: {question}\n\n{options}"
+    }
+  },
+  "harness": {
+    "mode": "thinking_off",
+    "concurrency": 64,
+    "router": {
+      "numeric_option_share": 0.5,
+      "knowledge_max_question_words": 40
+    },
+    "model_free": true,
+    "retrieval": {
+      "classes": [
+        "knowledge",
+        "reasoning"
+      ],
+      "k": 5,
+      "max_chars_per_note": 600,
+      "server_bin": "target/release/laris-server",
+      "brain_config": "configs/stem-brain.json",
+      "snapshot": "stem-t277-2"
+    },
+    "draft": {
+      "max_retries": 1
+    },
+    "formalise": {
+      "classes": [
+        "computable"
+      ],
+      "max_tokens": 1024
+    },
+    "solver_check": {
+      "option_rel_tol": 0.02,
+      "max_concurrency": 8
+    },
+    "notes_check": {
+      "enabled": true,
+      "min_option_words": 2
+    },
+    "prompts": {
+      "notes_prefix": "Notes from reference textbooks. They may or may not bear on the question; use them only where they apply.\n{notes}\n\n",
+      "retry_suffix": "\n\nKeep the reasoning short: a few steps at most, then the final answer in the form asked for.",
+      "formalise_math": "Translate the problem below into one call of a computer algebra system. Do not solve the problem yourself.\n\nWrite one JSON object inside ```json ... ```: an \"operation\" and its fields. Operations and their fields:\n- evaluate: expression, substitutions (an object: name -> number, or {\"constant\": \"<CODATA symbol, e.g. h, c, k_B, N_A, e, m_e, G>\"})\n- simplify, expand, factor: expression\n- solve: expression (an equation), variable, domain (\"real\" or \"complex\")\n- solve_system: expressions, variables\n- differentiate: expression, variable, order\n- integrate: expression, variable, lower, upper\n- limit: expression, variable, point, direction\n- sum: expression, variable, lower, upper (oo for infinity)\n- determinant, inverse, rank, eigenvalues: matrix; solve_linear: matrix, vector\n- gcd, lcm: integers; mod_pow: base, exponent, modulus; mod_inverse: integer, modulus; crt: integers, moduli\n- totient, divisors, factorial, factor_integer, is_prime: integer; binomial: n, k; to_base: integer, base; from_base: digits, base\n- convert_unit: value, unit, target_unit\n- balance: reaction; molar_mass: formula\nRules: prefer evaluate, with the formula already solved for the quantity asked and the given numbers written into it or into substitutions; only evaluate reads substitutions. Expressions use plain syntax: x^2 - 5*x + 6 = 0, sqrt(2), pi, log(x), exp(x), sin(x); no LaTeX, no units and no other functions. Angles are in radians (40 degrees is 40*pi/180). Every JSON value is a number, a string, a list or an object: write arithmetic only inside the expression string. A CODATA constant is a substitution {\"constant\": \"<symbol>\"}. Put quantities in SI units or in the unit asked for. Example: ```json\n{\"operation\": \"evaluate\", \"expression\": \"h*c/lam\", \"substitutions\": {\"h\": {\"constant\": \"h\"}, \"c\": {\"constant\": \"c\"}, \"lam\": 5e-7}}\n```\nThe call must compute exactly the final answer the problem asks for. If one call cannot compute it, write NONE.\n\nProblem: {question}",
+      "formalise_choice": "Translate the problem below into one call of a computer algebra system. Do not solve the problem yourself.\n\nWrite one JSON object inside ```json ... ```: an \"operation\" and its fields. Operations and their fields:\n- evaluate: expression, substitutions (an object: name -> number, or {\"constant\": \"<CODATA symbol, e.g. h, c, k_B, N_A, e, m_e, G>\"})\n- simplify, expand, factor: expression\n- solve: expression (an equation), variable, domain (\"real\" or \"complex\")\n- solve_system: expressions, variables\n- differentiate: expression, variable, order\n- integrate: expression, variable, lower, upper\n- limit: expression, variable, point, direction\n- sum: expression, variable, lower, upper (oo for infinity)\n- determinant, inverse, rank, eigenvalues: matrix; solve_linear: matrix, vector\n- gcd, lcm: integers; mod_pow: base, exponent, modulus; mod_inverse: integer, modulus; crt: integers, moduli\n- totient, divisors, factorial, factor_integer, is_prime: integer; binomial: n, k; to_base: integer, base; from_base: digits, base\n- convert_unit: value, unit, target_unit\n- balance: reaction; molar_mass: formula\nRules: prefer evaluate, with the formula already solved for the quantity asked and the given numbers written into it or into substitutions; only evaluate reads substitutions. Expressions use plain syntax: x^2 - 5*x + 6 = 0, sqrt(2), pi, log(x), exp(x), sin(x); no LaTeX, no units and no other functions. Angles are in radians (40 degrees is 40*pi/180). Every JSON value is a number, a string, a list or an object: write arithmetic only inside the expression string. A CODATA constant is a substitution {\"constant\": \"<symbol>\"}. Put quantities in SI units or in the unit asked for. Example: ```json\n{\"operation\": \"evaluate\", \"expression\": \"h*c/lam\", \"substitutions\": {\"h\": {\"constant\": \"h\"}, \"c\": {\"constant\": \"c\"}, \"lam\": 5e-7}}\n```\nThe call must compute exactly the quantity the question asks for, in the unit of the options. If one call cannot compute it, write NONE.\n\nQuestion: {question}\n\nOptions:\n{options}",
+      "review_solver": "\n\nA first answer to this problem was: {draft}\nA computer algebra system computed the formalisation {problem} and got: {value}\nThat computation is exact for the formalisation, but the formalisation may not match the problem. Check the first answer and the formalisation against the problem, then give your final answer in the form asked for above.",
+      "review_notes": "\n\nA first answer to this question was {draft}. These notes from reference textbooks bear on option {letter}:\n{notes}\nCheck the first answer against the question and the notes; the notes may not apply. Then give your final answer in the form asked for above."
     }
   }
 }

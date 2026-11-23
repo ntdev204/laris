@@ -6,6 +6,11 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Changed
+- **One engine port (T278):** `LARIS_ENGINE_PORT` is set only in `docker/laris.env`; `docker/laris.sh` and
+  `scripts/stem_benchmarks.py` both read it there. `LARIS_ENGINE_PORT=... docker/laris.sh up` never worked (the script
+  ignores shell variables), the compose file no longer defaults to 38100, and `LARIS_STEM_ENGINE_URL` is gone.
+
 ### Added
 - **Deterministic STEM solver (T276):** the model service offers the tool `solve_stem`, a structured problem answered
   without a model: algebra (evaluate, simplify, expand, factor, solve, systems), calculus (derivatives, integrals,

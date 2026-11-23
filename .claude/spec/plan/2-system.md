@@ -174,3 +174,11 @@ Exit criteria:
 - Every client tool answers with data when its first source refuses a program; the terminal client draws no tool call and no tool error; a repeated call gets its earlier result, and a loop notice keeps the turn's results and is never taken for a new question (T271).
 - The research-gap analysis runs in the Rust system with every intermediate result kept, its rules, conflict check and ranking written down and configured, and is measured against three baselines, a gold standard and people's judgements (T272).
 - The web client, which has no folder and no tools, gets research done on the server: the server searches the works index and the web, reads the papers (attached PDFs included), runs the research-gap analysis on them and shows each step and source, as Claude's server tools do; the server alone gets a route out, and only to public addresses (T273).
+
+### Phase 59 — STEM evaluation profile in the server
+Goal: the STEM router and harness measured in T278 run inside the server pipeline, so the deployed system is the one
+measured. Owner direction 2026-11-23 (T278).
+Tasks: T284
+Exit criteria:
+- The server's evaluation profile and the Python harness of T278 agree on development items within engine variance;
+  network tools are off in the profile. The system stays NOT QUALIFIED until B1-B6 pass (ADR-026).

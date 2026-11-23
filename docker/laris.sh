@@ -34,7 +34,7 @@ if [ -z "${LARIS_GPU_MEMORY_BYTES:-}" ] && command -v nvidia-smi >/dev/null 2>&1
 fi
 export LARIS_GPU_MEMORY_BYTES
 compose="docker compose -p $project -f $here/compose.yaml -f $here/compose.chat.yaml"
-# the STEM benchmark runner (T275) calls the same vLLM server: LARIS_ENGINE_PORT opens it on 127.0.0.1 only
+# the STEM benchmark runner (T275) calls the same vLLM server: LARIS_ENGINE_PORT in laris.env opens it on 127.0.0.1 only
 if [ -n "${LARIS_ENGINE_PORT:-}" ]; then
     compose="$compose -f $here/compose.engine-port.yaml"
 fi

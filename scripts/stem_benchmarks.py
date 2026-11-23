@@ -4,9 +4,10 @@
     python scripts/stem_benchmarks.py download        # network: pinned sources to data/benchmarks
     python scripts/stem_benchmarks.py split           # seeded dev / sealed splits, manifest (once)
     python scripts/stem_benchmarks.py scan NOTES_DIR  # 13-gram scan of notes against all items (B6)
-    LARIS_ENGINE_PORT=38100 docker/laris.sh up        # the stack's vLLM server, opened on 127.0.0.1
+    docker/laris.sh up                                # LARIS_ENGINE_PORT in docker/laris.env: vLLM
     python scripts/stem_benchmarks.py baseline --mode thinking_off [--bench math500] [--limit N]
     python scripts/stem_benchmarks.py solver          # T276: model-free solver path on dev splits
+    python scripts/stem_benchmarks.py harness [--bench B] [--limit N]  # T278: router and harness
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
 splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
@@ -27,7 +28,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
@@ -189,9 +190,7 @@ class HttpEngine:
     memory from the start, so `peak_vram_bytes` is the GPU memory in use when the run began."""
 
     def __init__(self, cfg: Dict[str, Any], model_id: str) -> None:
-        import os
-
-        self.url = os.environ.get(cfg["base_url_env"]) or cfg["base_url"]
+        self.url = f"http://{cfg['host']}:{engine_port(cfg)}/v1"
         self.model_id = model_id
         self.concurrency = int(cfg["concurrency"])
         self.timeout_s = float(cfg["timeout_s"])
@@ -250,6 +249,19 @@ class HttpEngine:
             "seconds": seconds,
             "peak_vram_bytes": self.vram,
         }
+
+
+def engine_port(cfg: Dict[str, Any]) -> int:
+    """The engine's port: `port_variable` in `port_file` (docker/laris.env), the one place it is
+    set; docker/laris.sh opens the same port."""
+    path = ROOT / cfg["port_file"]
+    name = cfg["port_variable"]
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key, sep, value = line.strip().partition("=")
+            if sep and key.strip() == name and value.strip().strip("\"'").isdigit():
+                return int(value.strip().strip("\"'"))
+    raise SystemExit(f"set {name} in {cfg['port_file']} (see docker/laris.env.example)")
 
 
 def gpu_memory_used_bytes() -> int:
@@ -511,6 +523,302 @@ def cmd_solver(args: argparse.Namespace) -> int:
     return 0
 
 
+def retrieve_notes(
+    hcfg: Dict[str, Any], work: List[Any], out_dir: Path, run: str
+) -> Tuple[Dict[str, List[str]], float, str]:
+    """Passages of the frozen brain snapshot for every item in `work` (pairs of bench and item),
+    through the server's own retrieval (`laris-server brain retrieve`), queried with the question
+    and its options as in T277. Returns the passages per id, the wall seconds and the snapshot
+    hash. The query file lives in the ignored run folder and is deleted afterwards."""
+    import os
+    import subprocess
+
+    rcfg = hcfg["retrieval"]
+    brain = json.loads((ROOT / rcfg["brain_config"]).read_text(encoding="utf-8"))
+    folder = ROOT / brain["data_dir"] / "snapshots" / rcfg["snapshot"]
+    snapshot = json.loads((folder / "snapshot.json").read_text("utf-8"))["snapshot_sha256"]
+    if not work:
+        return {}, 0.0, snapshot
+    gate = brain["gate"]
+    env = {k: v for k, v in os.environ.items() if not k.startswith("LARIS_SERVER__")}
+    env.update(
+        {
+            "LARIS_SERVER__MAIN_BRAIN_DIR": str(folder / "vault"),
+            "LARIS_SERVER__MAIN_BRAIN_MIN_SUPPORT": str(gate["min_support"]),
+            "LARIS_SERVER__MAIN_BRAIN_MIN_EQUIVALENCE": str(gate["min_equivalence"]),
+            "LARIS_SERVER__MAIN_BRAIN_SUBJECT_OVERLAP": str(gate["subject_overlap"]),
+            "LARIS_SERVER__MAIN_BRAIN_SEARCH_DEPTH": str(gate["search_depth"]),
+            "LARIS_SERVER__MAIN_BRAIN_MAX_BYTES": str(gate["max_bytes"]),
+        }
+    )
+    queries = out_dir / f"{run}.queries.jsonl"
+    with queries.open("w", encoding="utf-8") as handle:
+        for _, item in work:
+            query = item["question"] + " " + " ".join(item.get("options") or [])
+            handle.write(json.dumps({"id": item["id"], "query": query}) + "\n")
+    began = time.perf_counter()
+    try:
+        result = subprocess.run(
+            [str(ROOT / rcfg["server_bin"]), "brain", "retrieve", str(queries), str(rcfg["k"])],
+            env=env,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    finally:
+        queries.unlink()
+    seconds = time.perf_counter() - began
+    notes = {}
+    for line in result.stdout.splitlines():
+        row = json.loads(line)
+        notes[row["id"]] = [hit["text"] for hit in row["hits"]]
+    return notes, seconds, snapshot
+
+
+class VramSampler:
+    """The largest GPU memory in use, read by `nvidia-smi` every `period_s` while running."""
+
+    def __init__(self, period_s: float = 1.0) -> None:
+        import threading
+
+        self.period_s = period_s
+        self.peak = gpu_memory_used_bytes()
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+    def _loop(self) -> None:
+        while not self._stop.wait(self.period_s):
+            self.peak = max(self.peak, gpu_memory_used_bytes())
+
+    def __enter__(self) -> "VramSampler":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self._stop.set()
+        self._thread.join(5)
+
+
+def cmd_harness(args: argparse.Namespace) -> int:
+    """T278: the evaluation profile (router, model-free path, notes, draft, formalisation, checks,
+    review) on the development splits, against the T275 bare-model records of the same items.
+    Records hold ids, class, steps, answers (a letter or a value) and cost; never item text."""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from laris.model.solver import SolverError, SolverSettings
+    from laris.model.solver import run as solver_run
+    from laris.research.stem.formalise import answer_model_free
+    from laris.research.stem.harness import Harness, summarise_records
+    from laris.research.stem.router import route
+    from laris.shared.config.loader import load_runtime_config
+
+    revision = code_revision()  # the code this run executes, taken before it starts
+    config = _config(args.config)
+    base, hcfg = config["baseline"], config["harness"]
+    mode = base["modes"][hcfg["mode"]]
+    run = args.run or "harness-dev"
+    out_dir = ROOT / config["data_dir"] / "runs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{run}.jsonl"
+    done = set()
+    if out_path.exists():  # resume: items already scored are kept
+        done = {json.loads(line)["id"] for line in out_path.read_text().splitlines() if line}
+    work: List[Any] = []
+    for bench in args.bench or list(data.BENCHMARKS):
+        items = data.load_items(config, ROOT, bench, "dev")
+        if args.limit:
+            items = items[: args.limit]
+        work += [(bench, i) for i in items if i["id"] not in done]
+    wanted = [
+        (b, i) for b, i in work if route(i, hcfg["router"]).cls in hcfg["retrieval"]["classes"]
+    ]
+    notes, retrieval_s, snapshot = retrieve_notes(hcfg, wanted, out_dir, run)
+    retrieval_share = retrieval_s / len(wanted) if wanted else 0.0
+    print(f"retrieval: {len(wanted)} items, {retrieval_s:.1f} s", flush=True)
+
+    settings = SolverSettings.from_config(load_runtime_config(ROOT).model_service)
+    gate = threading.BoundedSemaphore(int(hcfg["solver_check"]["max_concurrency"]))
+
+    def solve(problem: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], str]:
+        with gate:
+            try:
+                result = solver_run(problem, settings)
+            except SolverError as exc:
+                return None, f"refused:{exc.code}"
+        return result, str(result.get("status"))
+
+    def model_free(item: Dict[str, Any]) -> Dict[str, Any]:
+        with gate:
+            return answer_model_free(item, settings)
+
+    engine = HttpEngine(config["engine"], base["model_id"])
+    served = engine.identity()
+
+    def model(prompt: str, seed: int, max_tokens: int) -> Dict[str, Any]:
+        return engine.one(prompt, dict(mode, max_new_tokens=max_tokens), seed)
+
+    free = model_free if hcfg["model_free"] else None
+    harness = Harness(hcfg, base, model, solve, config["equivalence"], free)
+    seed0 = int(base["generation_seed"])
+    eq = config["equivalence"]
+
+    def one(bench: str, item: Dict[str, Any]) -> str:
+        began = time.perf_counter()
+        seed = seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
+        has_notes = item["id"] in notes
+        trace = harness.answer(item, seed, notes.get(item["id"]))
+        seconds = time.perf_counter() - began + (retrieval_share if has_notes else 0.0)
+        final = score_answer(item, trace.final, eq)
+        draft = score_answer(item, trace.draft, eq) if trace.draft is not None else False
+        cost = stats.CostRecord(
+            seconds=seconds,
+            prompt_tokens=trace.prompt_tokens,
+            generated_tokens=trace.generated_tokens,
+            model_calls=trace.model_calls,
+            solver_calls=trace.solver_calls,
+            peak_vram_bytes=sampler.peak,
+        )
+        record = {
+            "id": item["id"],
+            "bench": bench,
+            "category": item["category"],
+            "mode": hcfg["mode"],
+            "extracted": trace.final,
+            "correct": final,
+            "draft_correct": draft,
+            "finished_at": time.time(),
+            "cost": cost.as_dict(),
+        }
+        trace_dict = trace.as_dict()
+        for key in ("prompt_tokens", "generated_tokens", "model_calls", "solver_calls"):
+            trace_dict.pop(key)
+        record.update(trace_dict)
+        return json.dumps(record)
+
+    lock, count = threading.Lock(), 0
+    with VramSampler() as sampler, ThreadPoolExecutor(max_workers=int(hcfg["concurrency"])) as pool:
+        futures = [pool.submit(one, bench, item) for bench, item in work]
+        for future in as_completed(futures):
+            line = future.result()
+            with lock, open(out_path, "a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
+                count += 1
+            if count % 50 == 0 or count == len(work):
+                print(f"{count}/{len(work)}", flush=True)
+        peak = sampler.peak
+
+    rows = [json.loads(line) for line in out_path.read_text().splitlines() if line]
+    baseline_path = ROOT / config["data_dir"] / "runs" / args.baseline_run
+    baseline = {}
+    if baseline_path.exists():
+        for line in baseline_path.read_text().splitlines():
+            if line:
+                row = json.loads(line)
+                baseline[row["id"]] = bool(row["correct"])
+    summary: Dict[str, Any] = {
+        "run": run,
+        "mode": hcfg["mode"],
+        "model_id": base["model_id"],
+        "settings": mode,
+        "engine_server": served,
+        "code_revision": revision,
+        "brain_snapshot_sha256": snapshot,
+        "harness_config_sha256": hashlib.sha256(
+            json.dumps(hcfg, sort_keys=True).encode("utf-8")
+        ).hexdigest(),
+        "equivalence_protocol": answers.EQUIVALENCE_PROTOCOL,
+        "baseline_run": args.baseline_run if baseline else None,
+        "peak_vram_bytes_sampled": peak,
+        "benchmarks": {},
+    }
+    for bench in data.BENCHMARKS:
+        bench_rows = [r for r in rows if r["bench"] == bench]
+        if not bench_rows:
+            continue
+        entry = summarise_records(bench_rows, baseline or None)
+        entry["classes"] = {
+            c: summarise_records([r for r in bench_rows if r["cls"] == c], baseline or None)
+            for c in sorted({r["cls"] for r in bench_rows})
+        }
+        summary["benchmarks"][bench] = entry
+    summary_path = out_dir / f"{run}.summary.json"
+    summary_path.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(summary, indent=1))
+    return 0
+
+
+def code_revision() -> str:
+    """HEAD, with `+changes` when tracked files differ from it."""
+    import subprocess
+
+    def git(*cmd: str) -> str:
+        return subprocess.run(
+            ["git", *cmd], cwd=ROOT, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+    dirty = git("status", "--porcelain", "--untracked-files=no")
+    return git("rev-parse", "HEAD") + ("+changes" if dirty else "")
+
+
+def score_answer(item: Dict[str, Any], answer: Optional[str], eq_cfg: Dict[str, Any]) -> bool:
+    """Whether an extracted answer (a letter, or a MATH value) is right under `math-equiv-1`."""
+    if answer is None:
+        return False
+    if item["options"]:
+        return bool(answer == item["answer"])
+    return bool(
+        answers.math_equivalent(
+            answer, item["answer"], float(eq_cfg["numeric_rel_tol"]), float(eq_cfg["timeout_s"])
+        )
+    )
+
+
+def harness_tables(summary: Dict[str, Any]) -> str:
+    """Markdown tables of a harness summary: per benchmark and class against T275, steps, cost."""
+
+    def pct(x: float) -> str:
+        return f"{100 * x:.1f} %"
+
+    lines = [
+        "| Benchmark | Class | Items | Harness | Wilson 95 % | T275 same items | Gained | Lost "
+        "| Draft | Model calls | Solver calls | s median | s p95 | Gen. tokens median |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for bench, b in summary["benchmarks"].items():
+        for name, c in [("all", b)] + sorted(b["classes"].items()):
+            base = c.get("baseline") or {}
+            lines.append(
+                f"| {bench} | {name} | {c['items']} | {c['correct']} ({pct(c['accuracy'])}) "
+                f"| {pct(c['wilson_low'])}-{pct(c['wilson_high'])} "
+                f"| {base.get('correct', '-')} ({pct(base.get('accuracy', 0.0))}) "
+                f"| {base.get('gained', '-')} | {base.get('lost', '-')} | {c['draft_correct']} "
+                f"| {c['model_calls_mean']:.2f} | {c['solver_calls_mean']:.2f} "
+                f"| {c['seconds_median']:.1f} | {c['seconds_p95']:.1f} "
+                f"| {c['generated_tokens_median']:.0f} |"
+            )
+    lines += ["", "| Benchmark | Final answer from | Items | Correct |", "|---|---|---|---|"]
+    for bench, b in summary["benchmarks"].items():
+        for source, entry in sorted(b["final_from"].items()):
+            lines.append(f"| {bench} | {source} | {entry['items']} | {entry['correct']} |")
+    lines += [
+        "",
+        "| Benchmark | Review | Wrong to right | Right to wrong | Unchanged verdict |",
+        "|---|---|---|---|---|",
+    ]
+    for bench, b in summary["benchmarks"].items():
+        for how, flips in sorted(b["review_flips"].items()):
+            lines.append(
+                f"| {bench} | {how} | {flips['to_right']} | {flips['to_wrong']} | {flips['same']} |"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def cmd_harness_report(args: argparse.Namespace) -> int:
+    print(harness_tables(json.loads(Path(args.summary).read_text(encoding="utf-8"))), end="")
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
     print(report_tables(summaries), end="")
@@ -540,6 +848,15 @@ def main(argv: List[str] | None = None) -> int:
     solver.add_argument("--bench", action="append", choices=list(data.BENCHMARKS))
     solver.add_argument("--run", default="")
     solver.set_defaults(func=cmd_solver)
+    harness = sub.add_parser("harness")
+    harness.add_argument("--bench", action="append", choices=list(data.BENCHMARKS))
+    harness.add_argument("--limit", type=int, default=0)
+    harness.add_argument("--run", default="")
+    harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
+    harness.set_defaults(func=cmd_harness)
+    hrep = sub.add_parser("harness-report")
+    hrep.add_argument("summary")
+    hrep.set_defaults(func=cmd_harness_report)
     rep = sub.add_parser("report")
     rep.add_argument("summaries", nargs="+")
     rep.set_defaults(func=cmd_report)

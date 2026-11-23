@@ -2221,3 +2221,24 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Status: done
 - Note: 2026-11-23, the owner's request: "integrate everything into the web; the web cannot reach the machine's folders, so it must use search tools, like Claude". The model stays NOT QUALIFIED: a 4B model may call the tools poorly; what the server checks is the quotations and citations, not whether a gap is scientifically valuable.
 - Evidence (outside Git, `artifacts/gap-eval/screenshots/web-*.png`): the web client asked "Tìm khoảng trống nghiên cứu về phát hiện ảo giác trong RAG, trích dẫn từng bài" in headless Chrome; the server searched the works index four times, read six documents (one publisher refused with 403, shown as such), registered and extracted four papers, ran the analysis and answered in 324 s. An earlier run's audit of the report: 0 nonexistent citations, 0 fabricated quotations. One run on one question is a working check, not a measurement.
+
+## Phase 59 — STEM evaluation profile in the server
+
+### T284 — STEM evaluation profile in the server pipeline
+- Requirements: SR-M13, SR-H14, SR-S6
+- Depends: T278
+- Deliverables:
+  - The prompt filter of T286, the certainty rule of T285, the router of T287 and the harness of T278 (route, model-free path, brain notes, draft and retry, the model's solver
+    formalisation with its mechanical repair, solver check, review, notes check) as an evaluation profile of the
+    `laris-server` pipeline (ADR-025): a decider over the closed action set, the solver called as the remote tool
+    `solve_stem`, retrieval through `MainBrain` on a frozen snapshot, the vLLM backend of T282; network tools off
+  - `scripts/stem_benchmarks.py` sends items to the server's profile instead of its own loop; the Python harness stays
+    as the reference for parity
+- Validation:
+  - Rust tests with a scripted model and a scripted solver for every step; on development items the server profile and
+    the Python harness give the same answer on the same seeds within the engine's own variance (T275 parity rule)
+- Status: pending
+- Note: created 2026-11-23 at the owner's request in T278 ("Chọn 1 nhưng phải tạo thêm task sau này hoàn thiện lên
+  rust server"): T278 measures the harness in Python; this task brings it into the server. It starts after T285-T287
+  (2026-11-23), so the server carries the filter, the certainty rule and the measured router. Whether the sealed run
+  (T281) waits for it is the owner's decision.
