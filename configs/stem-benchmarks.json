@@ -1,0 +1,89 @@
+{
+  "data_dir": "data/benchmarks",
+  "split_seed": 275,
+  "option_shuffle_seed": 2751,
+  "sealed_order_env": "LARIS_STEM_SEALED_ORDER",
+  "max_sealed_candidates": 3,
+  "sources": {
+    "math500": {
+      "repo": "HuggingFaceH4/MATH-500",
+      "revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+      "files": ["test.jsonl", "README.md"],
+      "licence_card": "none stated on the card",
+      "licence_source": "MIT (MATH, via openai/prm800k, ADR-026 section 3)"
+    },
+    "math_train": {
+      "repo": "EleutherAI/hendrycks_math",
+      "revision": "21a5633873b6a120296cce3e2df9d5550074f4a3",
+      "files": [
+        "algebra/train-00000-of-00001.parquet",
+        "counting_and_probability/train-00000-of-00001.parquet",
+        "geometry/train-00000-of-00001.parquet",
+        "intermediate_algebra/train-00000-of-00001.parquet",
+        "number_theory/train-00000-of-00001.parquet",
+        "prealgebra/train-00000-of-00001.parquet",
+        "precalculus/train-00000-of-00001.parquet",
+        "README.md"
+      ],
+      "licence_card": "mit",
+      "licence_source": "MIT (MATH)"
+    },
+    "mmlu_pro": {
+      "repo": "TIGER-Lab/MMLU-Pro",
+      "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+      "files": [
+        "data/test-00000-of-00001.parquet",
+        "data/validation-00000-of-00001.parquet",
+        "README.md"
+      ],
+      "licence_card": "mit",
+      "licence_source": "MIT"
+    },
+    "gpqa": {
+      "repo": "Idavidrein/gpqa",
+      "revision": "83022cefff930aea54f654c0b282e74b9eeda5c6",
+      "files": ["gpqa_main.csv", "gpqa_diamond.csv", "license.txt", "README.md"],
+      "licence_card": "cc-by-4.0",
+      "licence_source": "CC BY 4.0; gated: do not reveal examples online"
+    }
+  },
+  "splits": {
+    "math500": {"dev_size": 500},
+    "mmlu_pro_stem": {
+      "categories": ["math", "physics", "chemistry", "biology", "engineering", "computer science"],
+      "dev_fraction": 0.2
+    }
+  },
+  "leakage": {"ngram": 13, "note_suffixes": [".md", ".txt"]},
+  "equivalence": {"timeout_s": 5, "numeric_rel_tol": 1e-9},
+  "baseline": {
+    "model_id": "Qwen/Qwen3.5-4B",
+    "dtype": "bfloat16",
+    "quantization": "none",
+    "generation_seed": 2752,
+    "modes": {
+      "thinking_off": {
+        "enable_thinking": false,
+        "sample_fraction": 1.0,
+        "batch_size": 16,
+        "max_new_tokens": 4096,
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20
+      },
+      "thinking_on": {
+        "enable_thinking": true,
+        "sample_fraction": 0.25,
+        "batch_size": 8,
+        "max_new_tokens": 8192,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20
+      }
+    },
+    "prompts": {
+      "math": "Solve the following problem. Reason step by step, and put your final answer within \\boxed{}.\n\n{question}",
+      "choice": "Answer the following multiple choice question. Think step by step, then give the answer on the last line in the form \"Answer: X\", where X is one of the letters {letters}.\n\nQuestion: {question}\n\n{options}"
+    }
+  }
+}
