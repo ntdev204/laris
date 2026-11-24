@@ -887,6 +887,34 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-24 (owner: "Thực hiện T280"; then "các việc để lại thì làm nốt, chọn phù hợp nhất"; the agent may start and stop the stack for inference). Branch `feature/T280-dev-iterations`. Error analysis of `combo-fp8-early-sc` (454 / 998 / 153): the main loss is a reply cut at 4,096 tokens twice (draft and retry: 32 / 85 / 42 items, 13 / 37 / 17 with no answer), which also sets p95. Lever `conclude` (`laris.research.stem.harness`: a cut reply is continued as the model's own turn with a closing sentence and the answer opening; `tests/unit/stem/test_iterations.py`); `seed_offset` and levers `seed_b`, `seed_c`, `thinking_kr`, `thinking_k`. Iterations against the reference (`reports/benchmarks/T280-iterations.md`): (1) conclude after the retry 456 / 1,017 / 160, p95 362 / 406 / 401 s; (2) conclude in place of the retry 463 / 1,014 / 148, p95 279 / 319 / 332 s, carried; seeds b, c 462 / 1,006 / 158 and 449 / 1,007 / 151 (no seed beyond noise vs the reference); (3) + thinking 2,048 on the knowledge class (MMLU-Pro knowledge 47 gained / 21 lost pooled over three seeds, p = 0.002; reasoning no gain) 463 / 1,011 / 149, median 19.3 / 41.9 / 65.7 s, p95 300.7 / 324.0 / 339.8 s, peak 15.0 GB, model-free 29 / 0 wrong. Open items closed: GPQA whitespace-changed items with / without the filter 5 up / 7 down over two seeds (p = 0.77), filter stays; GPQA forced paths over two seeds, no path better in any class (computable: solver 222, rule 216, notes 208 of 356), rule router stays and the router-beats-baselines criterion is still not shown on GPQA; an unchanged MATH setting moved +14 (p = 0.02) between runs, so one paired p near 0.02 is engine variance. Concluded answers are right about half the time (e.g. MATH 20-43 of 51-65) against 96-98 % for the rest: guesses, recorded per item (`concluded`); labelling them in chat is the owner's call (programme 2). Frozen candidate: code `77546576`, harness section `3dddd9ab…`, brain `stem-t277-2` `fb01dd03…`, Qwen/Qwen3.5-4B `851bf6e8…` (shards `26a93f06…`, `cb544bd9…`), vLLM 0.34.0 FP8. On development B1 fails (89.8-92.6 %), B2 above (85.6-86.3 %), B4 p95 fails and the GPQA median is 65.7 s; per ADR-026 section 10 the options for B1 go to the owner. No sealed file read. The model and the system are NOT QUALIFIED.
 
+### T288 — Handover scope: B3 leaves the gate, Phase 49 cancelled
+- Requirements: SR-M13
+- Depends: T280
+- Deliverables:
+  - ADR-026 amendment A1 (D65, D66); T245-T248 superseded
+- Validation:
+  - `python scripts/validate_spec.py` and `scripts/validate_docs.py` pass
+- Status: done
+- Note: 2026-11-24 (owner, in the handover goal: "Bỏ B3 khỏi gate", "Bỏ, đánh dấu cancelled", "Cho phép, 1 lần mỗi ứng viên", "Giữ 95 %, mở rộng solver trước"). One task per session is lifted: the agent runs the remaining tasks in plan order in one session. B1 stays at 95.0 %. The sealed order may be set by the agent once per frozen candidate (at most three) when development is stable over three seeds; push, tag and release stay with the owner.
+
+### T289 — Wider solver and model review of solver answers (B1)
+- Requirements: SR-M13
+- Depends: T288
+- Deliverables:
+  - Error analysis of the MATH development misses (the T280 frozen candidate, four runs); solver operations for the problem types the analysis shows missing, each tested, general by problem type and never written for a development item; a tier for solver answers that are not certain enough to be model-free (agree with the draft: exit; disagree: the model reviews the solver value, then self-consistency), measured with and without review, paired by exact McNemar on three seeds
+- Validation:
+  - Development MATH, three seeds, reported in `reports/benchmarks/T289-solver-and-review.md`; B5 stays at 0 wrong model-free; no sealed file read; leakage scan 0 hits for any new brain or few-shot material
+- Status: pending
+
+### T290 — B4: the token budget that fits 180 s at 64 requests
+- Requirements: SR-M13
+- Depends: T289
+- Deliverables:
+  - Measure how generated tokens per item set the p95 and the median at 64 concurrent requests (the T280 candidate: p95 300-340 s against 180 s), and set the draft cap, the conclude rule and the self-consistency rule so B4 holds without lowering B1 / B2 on development; the trade-off between B1 and B4 reported figure by figure
+- Validation:
+  - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-latency.md`; B4 thresholds unchanged (median ≤ 60 s, p95 ≤ 180 s, peak ≤ 15.5 GB)
+- Status: pending
+
 ### T281 — Sealed runs and the owner's decision
 - Requirements: SR-M13, SR-M12
 - Depends: T280

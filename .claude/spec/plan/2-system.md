@@ -114,7 +114,7 @@ Exit criteria:
 - The fix is released and the owner confirms it on Windows.
 
 ### Phase 49 — The Laris model family
-Goal: the client shows the current model, and the user can use Laris Optimus (everyday, no thinking) or Laris Megatron (strongest, thinking, deep reasoning).
+Goal: CANCELLED 2026-11-24 (ADR-026 amendment A1, D66). The client showed the current model and a choice between Laris Optimus and Laris Megatron; the handover ships one light model.
 Tasks: T245, T246, T247, T248
 Exit criteria:
 - ADR-026 accepted; the server serves the named models with per-role access and a VRAM budget; the client shows the model and role in its banner and switches with `/model`; both models are measured and reported as system measurements. The names are not qualifications.
