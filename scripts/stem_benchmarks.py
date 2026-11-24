@@ -753,6 +753,9 @@ def cmd_harness(args: argparse.Namespace) -> int:
         items = data.load_items(config, ROOT, bench, "dev")
         if args.limit:
             items = items[: args.limit]
+        if getattr(args, "ids", ""):  # T290: only the development items listed in a file (one id per line)
+            only = set(Path(args.ids).read_text().split())
+            items = [i for i in items if i["id"] in only]
         work += [(bench, i) for i in items if i["id"] not in done]
     fcfg = hcfg.get("filter") or {}
     screens: Dict[str, Any] = {}
@@ -1408,6 +1411,7 @@ def main(argv: List[str] | None = None) -> int:
     harness = sub.add_parser("harness")
     harness.add_argument("--bench", action="append", choices=list(data.BENCHMARKS))
     harness.add_argument("--limit", type=int, default=0)
+    harness.add_argument("--ids", default="", help="T290: file with development item ids, one per line")
     harness.add_argument("--run", default="")
     harness.add_argument("--baseline-run", default="baseline-thinking_off.jsonl")
     harness.add_argument("--no-filter", action="store_true", help="skip the T286 prompt filter")
