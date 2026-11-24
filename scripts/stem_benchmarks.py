@@ -193,12 +193,136 @@ class HttpEngine:
     `seconds` of an item is its request's wall time under that load; the server holds its GPU
     memory from the start, so `peak_vram_bytes` is the GPU memory in use when the run began."""
 
-    def __init__(self, cfg: Dict[str, Any], model_id: str) -> None:
+    def __init__(
+        self, cfg: Dict[str, Any], model_id: str, repetition: Optional[Dict[str, Any]] = None
+    ) -> None:
+        import threading
+
         self.url = f"http://{cfg['host']}:{engine_port(cfg)}/v1"
         self.model_id = model_id
         self.concurrency = int(cfg["concurrency"])
         self.timeout_s = float(cfg["timeout_s"])
         self.vram = gpu_memory_used_bytes()
+        # T279: with repetition detection on, replies are streamed and a loop ends the request
+        self.repetition = dict(repetition or {})
+        self._tokenizer: Any = None
+        self._lock = threading.Lock()
+
+    def template(self, prompt: str) -> str:
+        """The chat template of one user turn with thinking on (ends inside `<think>`), from the
+        tokenizer files of the served model in the local Hugging Face cache (offline)."""
+        with self._lock:
+            if self._tokenizer is None:
+                import os
+
+                from transformers import AutoTokenizer
+
+                os.environ.setdefault("HF_HUB_OFFLINE", "1")
+                self._tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+            return str(
+                self._tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}],
+                    add_generation_prompt=True,
+                    tokenize=False,
+                    enable_thinking=True,
+                )
+            )
+
+    def _post(self, path: str, body: Dict[str, Any]) -> Dict[str, Any]:
+        """One request; streamed (and cut at a loop) when repetition detection is on. Returns
+        text, usage, finish reason, seconds and whether a loop ended it."""
+        import urllib.request
+
+        from laris.research.stem.cost import RepetitionWatch
+
+        watch = RepetitionWatch(self.repetition)
+        if watch.enabled:
+            body = dict(body, stream=True, stream_options={"include_usage": True})
+        request = urllib.request.Request(
+            self.url.rstrip("/") + path,
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        start = time.perf_counter()
+        if not watch.enabled:
+            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                reply = json.loads(response.read())
+            choice = reply["choices"][0]
+            if "message" in choice:
+                message = choice["message"]
+                text = message.get("content") or ""
+                if message.get("reasoning_content"):  # a server with a reasoning parser
+                    text = "<think>" + message["reasoning_content"] + "</think>" + text
+            else:
+                text = choice.get("text") or ""
+            return {
+                "text": text,
+                "prompt_tokens": int(reply["usage"]["prompt_tokens"]),
+                "generated_tokens": int(reply["usage"]["completion_tokens"]),
+                "finish": choice.get("finish_reason"),
+                "seconds": time.perf_counter() - start,
+                "repetition": False,
+            }
+        pieces = 0
+        finish, usage, looped = None, None, False
+        with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+            for raw in response:  # server-sent events, one `data:` line each
+                line = raw.decode("utf-8").strip()
+                if not line.startswith("data:"):
+                    continue
+                payload = line[5:].strip()
+                if payload == "[DONE]":
+                    break
+                event = json.loads(payload)
+                if event.get("usage"):
+                    usage = event["usage"]
+                for choice in event.get("choices") or []:
+                    delta = choice.get("delta") or {}
+                    piece = (
+                        choice.get("text")
+                        or (delta.get("reasoning_content") or "") + (delta.get("content") or "")
+                        or ""
+                    )
+                    if piece:
+                        pieces += 1
+                        if watch.feed(piece):
+                            looped = True
+                    finish = choice.get("finish_reason") or finish
+                if looped:
+                    break  # closing the connection makes the server abort the request
+        return {
+            "text": watch.text,
+            "prompt_tokens": int(usage["prompt_tokens"]) if usage else 0,
+            "generated_tokens": int(usage["completion_tokens"]) if usage else pieces,
+            "finish": "repetition" if looped else finish,
+            "seconds": time.perf_counter() - start,
+            "repetition": looped,
+        }
+
+    def complete(self, raw: str, mode: Dict[str, Any], seed: int) -> Dict[str, Any]:
+        """A raw completion (T279 budget forcing): `raw` is the templated prompt."""
+        out = self._post(
+            "/completions",
+            {
+                "model": self.model_id,
+                "prompt": raw,
+                "max_tokens": int(mode["max_new_tokens"]),
+                "temperature": float(mode["temperature"]),
+                "top_p": float(mode["top_p"]),
+                "top_k": int(mode["top_k"]),
+                "seed": seed,
+                "skip_special_tokens": False,
+            },
+        )
+        return {
+            "text": out["text"],
+            "prompt_tokens": out["prompt_tokens"],
+            "generated_tokens": out["generated_tokens"],
+            "truncated": out["finish"] in ("length", "repetition"),
+            "repetition": out["repetition"],
+            "seconds": out["seconds"],
+            "peak_vram_bytes": self.vram,
+        }
 
     def identity(self) -> Dict[str, Any]:
         """What the server says it serves (model, revision root, context, version)."""
@@ -219,8 +343,6 @@ class HttpEngine:
         }
 
     def one(self, prompt: str, mode: Dict[str, Any], seed: int) -> Dict[str, Any]:
-        import urllib.request
-
         body = {
             "model": self.model_id,
             "messages": [{"role": "user", "content": prompt}],
@@ -231,26 +353,14 @@ class HttpEngine:
             "seed": seed,
             "chat_template_kwargs": {"enable_thinking": bool(mode["enable_thinking"])},
         }
-        request = urllib.request.Request(
-            self.url.rstrip("/") + "/chat/completions",
-            data=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        start = time.perf_counter()
-        with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-            reply = json.loads(response.read())
-        seconds = time.perf_counter() - start
-        choice = reply["choices"][0]
-        message = choice["message"]
-        text = message.get("content") or ""
-        if message.get("reasoning_content"):  # a server with a reasoning parser splits it out
-            text = "<think>" + message["reasoning_content"] + "</think>" + text
+        out = self._post("/chat/completions", body)
         return {
-            "text": text,
-            "prompt_tokens": int(reply["usage"]["prompt_tokens"]),
-            "generated_tokens": int(reply["usage"]["completion_tokens"]),
-            "truncated": choice.get("finish_reason") == "length",
-            "seconds": seconds,
+            "text": out["text"],
+            "prompt_tokens": out["prompt_tokens"],
+            "generated_tokens": out["generated_tokens"],
+            "truncated": out["finish"] in ("length", "repetition"),
+            "repetition": out["repetition"],
+            "seconds": out["seconds"],
             "peak_vram_bytes": self.vram,
         }
 
@@ -627,6 +737,8 @@ def cmd_harness(args: argparse.Namespace) -> int:
     if path != "rule":  # T287: one path forced on every item
         hcfg = json.loads(json.dumps(hcfg))
         hcfg = merge_path(hcfg, config["router_paths"][path])
+    for lever in getattr(args, "lever", None) or []:  # T279: cost levers, applied in order
+        hcfg = merge_path(json.loads(json.dumps(hcfg)), config["cost_levers"][lever])
     mode = base["modes"][hcfg["mode"]]
     run = args.run or "harness-dev"
     out_dir = ROOT / config["data_dir"] / "runs"
@@ -684,11 +796,15 @@ def cmd_harness(args: argparse.Namespace) -> int:
         with gate:
             return answer_model_free(item, settings)
 
-    engine = HttpEngine(config["engine"], base["model_id"])
+    engine = HttpEngine(config["engine"], base["model_id"], hcfg.get("repetition"))
     served = engine.identity()
+    thinking = base["modes"]["thinking_on"]
 
     def model(prompt: str, seed: int, max_tokens: int) -> Dict[str, Any]:
         return engine.one(prompt, dict(mode, max_new_tokens=max_tokens), seed)
+
+    def complete(raw: str, seed: int, max_tokens: int) -> Dict[str, Any]:
+        return engine.complete(raw, dict(thinking, max_new_tokens=max_tokens), seed)
 
     free = model_free if hcfg["model_free"] else None
     choose = None
@@ -718,7 +834,9 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 return None
             return merge_path(hcfg, config["router_paths"][decided.path])
 
-    harness = Harness(hcfg, base, model, solve, config["equivalence"], free, choose)
+    harness = Harness(
+        hcfg, base, model, solve, config["equivalence"], free, choose, complete, engine.template
+    )
     seed0 = int(base["generation_seed"])
     eq = config["equivalence"]
 
@@ -812,6 +930,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
     summary: Dict[str, Any] = {
         "run": run,
         "path": path,
+        "levers": list(getattr(args, "lever", None) or []),
         "mode": hcfg["mode"],
         "model_id": base["model_id"],
         "settings": mode,
@@ -1177,6 +1296,68 @@ def cmd_harness_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cost_report(args: argparse.Namespace) -> int:
+    """T279: each run against the reference run on the same items (paired), per benchmark:
+    accuracy, items gained and lost, McNemar p, seconds per item (median, p95), generated tokens
+    and model calls; with `--offline`, the reference's counterfactuals without the solver review
+    or the formalisation (from its own records, no engine run)."""
+    from laris.research.stem import cost
+
+    config = _config(args.config)
+    reference = _records(args.reference, config)
+    runs = {name: _records(name, config) for name in args.runs}
+    out: Dict[str, Any] = {"reference": args.reference, "benchmarks": {}}
+    lines = [
+        f"Reference: `{args.reference}`",
+        "",
+        "| Benchmark | Run | Items | Right (ref.) | Gained | Lost | p (McNemar) "
+        "| s median (ref.) | s p95 (ref.) | Gen. tokens mean (ref.) | Model calls (ref.) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for bench in data.BENCHMARKS:
+        entry: Dict[str, Any] = {}
+        for name, run in runs.items():
+            c = cost.compare_runs(run, reference, bench)
+            if not c["items"]:
+                continue
+            entry[name] = c
+            k, r = c["cost"], c["reference_cost"]
+            lines.append(
+                f"| {bench} | {name} | {c['items']} | {c['correct']} ({c['reference_correct']}) "
+                f"| {c['gained']} | {c['lost']} | {c['p_mcnemar']:.3f} "
+                f"| {k['seconds_median']:.1f} ({r['seconds_median']:.1f}) "
+                f"| {k['seconds_p95']:.1f} ({r['seconds_p95']:.1f}) "
+                f"| {k['generated_tokens_mean']:.0f} ({r['generated_tokens_mean']:.0f}) "
+                f"| {k['model_calls_mean']:.2f} ({r['model_calls_mean']:.2f}) |"
+            )
+        if args.offline:
+            rows = [r for r in reference.values() if r["bench"] == bench]
+            entry["offline"] = {
+                "reference_correct": sum(1 for r in rows if r["correct"]),
+                "without_review": cost.counterfactual(rows, "review"),
+                "without_formalisation": cost.counterfactual(rows, "formalise"),
+            }
+        out["benchmarks"][bench] = entry
+    if args.offline:
+        lines += [
+            "",
+            "| Benchmark | Reference right | Without the solver review | Without formalisation |",
+            "|---|---|---|---|",
+        ]
+        for bench, entry in out["benchmarks"].items():
+            o = entry.get("offline")
+            if o:
+                lines.append(
+                    f"| {bench} | {o['reference_correct']} | {o['without_review']} "
+                    f"| {o['without_formalisation']} |"
+                )
+    if args.out:
+        path = ROOT / config["data_dir"] / "runs" / args.out
+        path.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+    print("\n".join(lines))
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     summaries = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.summaries]
     print(report_tables(summaries), end="")
@@ -1218,6 +1399,11 @@ def main(argv: List[str] | None = None) -> int:
         choices=["rule", "notes_model", "model_solver", "plain_retrieval", "deterministic"],
         help="T287: force one path on every item (router_paths in the configuration)",
     )
+    harness.add_argument(
+        "--lever",
+        action="append",
+        help="T279: apply a named override of cost_levers in the configuration (repeatable)",
+    )
     harness.set_defaults(func=cmd_harness)
     feval = sub.add_parser("filter-eval")
     feval.add_argument("--run", default="")
@@ -1236,6 +1422,12 @@ def main(argv: List[str] | None = None) -> int:
     hrep = sub.add_parser("harness-report")
     hrep.add_argument("summary")
     hrep.set_defaults(func=cmd_harness_report)
+    crep = sub.add_parser("cost-report")
+    crep.add_argument("--reference", required=True, help="run file name in the runs folder")
+    crep.add_argument("--offline", action="store_true")
+    crep.add_argument("--out", default="", help="summary file name in the runs folder")
+    crep.add_argument("runs", nargs="*")
+    crep.set_defaults(func=cmd_cost_report)
     rep = sub.add_parser("report")
     rep.add_argument("summaries", nargs="+")
     rep.set_defaults(func=cmd_report)

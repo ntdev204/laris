@@ -8,11 +8,19 @@ One benchmark item in, one final answer out (pass@1), with every step and its co
 3. **Notes** (classes in `retrieval.classes`): passages of the frozen brain snapshot, retrieved by
    the caller beforehand, go into the draft prompt. Closed book: nothing else is read.
 4. **Draft**: the model answers the benchmark prompt. An unparsed or truncated draft is retried with
-   a request to be brief and another seed, up to `draft.max_retries` times.
+   a request to be brief and another seed, up to `draft.max_retries` times. T279 levers (off by
+   default): a thinking budget per class (`draft.thinking`), and escalation of an unparsed or
+   truncated draft to a budgeted thinking call (`draft.escalate`) in place of that retry; a
+   thinking call that reaches its budget is closed and the model writes the answer (budget
+   forcing).
 5. **Formalisation** (classes in `formalise.classes`): the model writes one solver call for the
    quantity asked; the solver computes it. A `verified` result is compared with the draft: an
    agreement ends the item; a disagreement asks the model to review the draft against the result.
    When no draft could be read, the solver's value (or the option it matches) is the answer.
+   T279 levers: formalise only when the draft is uncertain (`formalise.when`), keep the draft on
+   a disagreement (`formalise.review`), and self-consistency (`self_consistency`): more drafts on
+   other seeds, voted with the draft (and the solver's answer), on a disagreement or a retried
+   draft.
 6. **Notes check** (multiple choice with notes): when the notes support exactly one option, by all
    of its content words in one passage, and the draft chose another, the model reviews the draft
    against those notes.
@@ -41,6 +49,11 @@ ModelCall = Callable[[str, int, int], Dict[str, Any]]
 SolverCall = Callable[[Dict[str, Any]], Tuple[Optional[Dict[str, Any]], str]]
 # The model-free path: item -> {"pattern", "status", "answer"} (formalise.answer_model_free)
 ModelFree = Callable[[Dict[str, Any]], Dict[str, Any]]
+# T279: a raw completion (raw prompt, seed, max_tokens) -> the ModelCall dict plus "repetition";
+# sampled with the thinking-on settings
+CompleteCall = Callable[[str, int, int], Dict[str, Any]]
+# T279: the chat template of a user prompt with thinking on, ending inside the open <think>
+TemplateCall = Callable[[str], str]
 
 _STOP = frozenset(
     "the and for are but not with that this from was were has have had its into than then them "
@@ -257,6 +270,8 @@ class Trace:
     final: Optional[str] = None
     final_from: str = ""
     truncated: bool = False
+    retried: bool = False
+    votes: Optional[Dict[str, int]] = None
     solver_status: str = ""
     agreement: Optional[bool] = None
     notes: int = 0
@@ -286,6 +301,8 @@ class Harness:
         equivalence: Dict[str, Any],
         model_free: Optional[ModelFree] = None,
         choose: Optional[Callable[[Dict[str, Any], "Trace"], Optional[Dict[str, Any]]]] = None,
+        complete: Optional[CompleteCall] = None,
+        template: Optional[TemplateCall] = None,
     ) -> None:
         self.cfg = cfg
         self.equivalence = equivalence
@@ -298,6 +315,9 @@ class Harness:
         # T287: after the deterministic steps, a router network may name another path; `choose`
         # returns that path's harness settings, or None to keep the rule router's
         self.choose = choose
+        # T279: budgeted thinking needs a raw completion and the chat template
+        self.complete = complete
+        self.template = template
 
     # -- steps ---------------------------------------------------------------------------------
 
@@ -311,10 +331,55 @@ class Harness:
         trace.model_seconds += float(out["seconds"])
         _, text = split_reasoning(out["text"])
         out = dict(out, answer_text=text)
-        trace.steps.append(
-            {"step": step, "truncated": bool(out["truncated"]), "tokens": out["generated_tokens"]}
-        )
+        entry = {
+            "step": step,
+            "truncated": bool(out["truncated"]),
+            "tokens": out["generated_tokens"],
+        }
+        if out.get("repetition"):
+            entry["repetition"] = True
+        trace.steps.append(entry)
         return out
+
+    def _think(
+        self, trace: Trace, step: str, prompt: str, seed: int, budget: int, answer_tokens: int
+    ) -> Dict:
+        """A thinking call of at most `budget` reasoning tokens; when the reasoning does not close
+        within it (or loops), it is closed and the model writes the answer in at most
+        `answer_tokens` tokens (budget forcing). Returns the ModelCall dict with `answer_text`."""
+        from laris.research.stem.cost import THINK_CLOSE, forced_prompt
+
+        if self.complete is None or self.template is None:
+            raise ValueError("a thinking budget needs the raw completion and the chat template")
+        raw = self.template(prompt)
+        first = self.complete(raw, seed, budget)
+        calls = [first]
+        thinking = first["text"]
+        forced = THINK_CLOSE not in thinking
+        if forced:
+            second = self.complete(forced_prompt(raw, thinking), seed + 1, answer_tokens)
+            calls.append(second)
+            answer_text = second["text"]
+            truncated = bool(second["truncated"])
+        else:
+            answer_text = thinking.split(THINK_CLOSE, 1)[1]
+            truncated = bool(first["truncated"])
+        tokens = sum(int(c["generated_tokens"]) for c in calls)
+        trace.model_calls += len(calls)
+        trace.prompt_tokens += sum(int(c["prompt_tokens"]) for c in calls)
+        trace.generated_tokens += tokens
+        trace.model_seconds += sum(float(c["seconds"]) for c in calls)
+        entry: Dict[str, Any] = {
+            "step": step,
+            "truncated": truncated,
+            "tokens": tokens,
+            "thinking": True,
+            "forced": forced,
+        }
+        if first.get("repetition"):
+            entry["repetition"] = True
+        trace.steps.append(entry)
+        return {"answer_text": answer_text, "truncated": truncated, "generated_tokens": tokens}
 
     def _extract(self, item: Dict[str, Any], text: str) -> Optional[str]:
         if item["options"]:
@@ -330,12 +395,38 @@ class Harness:
         return result, status
 
     def _draft(self, item: Dict[str, Any], trace: Trace, prompt: str, seed: int) -> Optional[str]:
-        out = self._call(trace, "draft", prompt, seed, int(self.mode["max_new_tokens"]))
+        dcfg = self.cfg["draft"]
+        budget = int((dcfg.get("thinking") or {}).get(trace.cls, 0))
+        answer_tokens = int(dcfg.get("answer_tokens", 1024))
+        if budget > 0:
+            out = self._think(trace, "draft", prompt, seed, budget, answer_tokens)
+        else:
+            out = self._call(trace, "draft", prompt, seed, int(self.mode["max_new_tokens"]))
         answer = self._extract(item, out["answer_text"])
         truncated = bool(out["truncated"])
-        for attempt in range(1, int(self.cfg["draft"]["max_retries"]) + 1):
+        escalate = dcfg.get("escalate") or {}
+        if escalate.get("enabled") and budget == 0:
+            if answer is None or truncated:
+                trace.retried = True
+                out = self._think(
+                    trace,
+                    "escalate",
+                    prompt,
+                    seed + 1000,
+                    int(escalate["thinking_budget"]),
+                    int(escalate.get("answer_tokens", answer_tokens)),
+                )
+                again = self._extract(item, out["answer_text"])
+                if again is not None:
+                    answer, truncated = again, bool(out["truncated"])
+                elif answer is None:
+                    truncated = bool(out["truncated"])
+            trace.truncated = truncated and answer is None
+            return answer
+        for attempt in range(1, int(dcfg["max_retries"]) + 1):
             if answer is not None and not truncated:
                 break
+            trace.retried = True
             retry = prompt + self.prompts["retry_suffix"]
             out = self._call(
                 trace, "retry", retry, seed + 1000 * attempt, int(self.mode["max_new_tokens"])
@@ -424,6 +515,52 @@ class Harness:
                 supported.append(index)
         return supported[0] if len(supported) == 1 else None
 
+    def _same(self, item: Dict[str, Any], a: str, b: str) -> bool:
+        return a == b if item["options"] else self._agrees(item, a, b)
+
+    def _consistency_on(self, when: str) -> bool:
+        sc = self.cfg.get("self_consistency") or {}
+        return bool(sc.get("enabled")) and when in sc.get("when", [])
+
+    def _vote(
+        self,
+        item: Dict[str, Any],
+        trace: Trace,
+        prompt: str,
+        seed: int,
+        extra: List[str],
+    ) -> None:
+        """Self-consistency (T279): `samples` more thinking-off drafts on other seeds; the answer
+        most of them, the draft and `extra` (the solver's answer) share wins; a tie goes to the
+        earliest of the tied answers, the draft first."""
+        samples = int(self.cfg["self_consistency"]["samples"])
+        answers_seen: List[str] = [trace.draft] if trace.draft is not None else []
+        for k in range(1, samples + 1):
+            out = self._call(
+                trace, "sample", prompt, seed + 31 * k, int(self.mode["max_new_tokens"])
+            )
+            found = self._extract(item, out["answer_text"])
+            if found is not None:
+                answers_seen.append(found)
+        answers_seen += extra
+        groups: List[List[str]] = []
+        for answer in answers_seen:
+            for group in groups:
+                if self._same(item, group[0], answer):
+                    group.append(answer)
+                    break
+            else:
+                groups.append([answer])
+        if not groups:
+            return
+        best = max(groups, key=len)  # max keeps the first of equal lengths
+        trace.votes = {g[0]: len(g) for g in groups}
+        trace.steps.append({"step": "vote", "groups": len(groups), "top": len(best)})
+        if best[0] != trace.final:
+            trace.final, trace.final_from = best[0], "vote"
+        elif trace.final_from == "draft":
+            trace.final_from = "vote"
+
     # -- the loop ------------------------------------------------------------------------------
 
     def answer(
@@ -497,7 +634,10 @@ class Harness:
         trace.draft = self._draft(item, trace, prompt, seed)
         trace.final, trace.final_from = trace.draft, "draft"
 
-        if decided.cls in self.cfg["formalise"]["classes"]:
+        fcfg = self.cfg["formalise"]
+        uncertain = trace.draft is None or trace.retried
+        when = fcfg.get("when", "always")
+        if decided.cls in fcfg["classes"] and (when == "always" or uncertain):
             problem, result = self._formalise(item, trace, seed + 7, quantities)
             solved = self._solver_answer(item, result) if result is not None else None
             if solved is not None:
@@ -507,6 +647,11 @@ class Harness:
                 trace.agreement = self._agrees(item, trace.draft, solved)
                 if trace.agreement:
                     return trace
+                if self._consistency_on("disagree"):
+                    self._vote(item, trace, prompt, seed, [solved])
+                    return trace
+                if not fcfg.get("review", True):
+                    return trace  # T279: the draft stands on a disagreement
                 shown_value = result.get("text") if result else ""
                 review = base_prompt + fill(
                     self.prompts["review_solver"],
@@ -518,6 +663,10 @@ class Harness:
                 if final is not None:
                     trace.final, trace.final_from = final, "review_solver"
                 return trace
+
+        if trace.retried and self._consistency_on("retried"):
+            self._vote(item, trace, prompt + self.prompts["retry_suffix"], seed, [])
+            return trace
 
         if (
             item["options"]
