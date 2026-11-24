@@ -3,7 +3,7 @@ document_id: "DOC-ADR-026"
 title: "ADR-026: STEM benchmark qualification of the system (light model, harness, RAG, deterministic brain)"
 document_type: "adr"
 status: "ACCEPTED"
-version: "0.3.0"
+version: "0.4.0"
 created_at: "2026-11-23"
 updated_at: "2026-11-24"
 owner: "LARIS Architecture Team"
@@ -19,7 +19,7 @@ decision_references:
   - "ADR-008"
   - "ADR-024"
   - "ADR-025"
-change_summary: "0.3.0 (T286, T287, 2026-11-24): section 4.1 writes down the prompt filter and the router rules of the evaluation profile with their thresholds, and the gates of a router network, fixed by the owner before any number (configs/stem-router-gates.json); no gate B1-B6 changed. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
+change_summary: "0.4.0 (2026-11-24, owner): amendment A1, B3 (GPQA Diamond) leaves the gate and is measured and reported only (D65); Phase 49 cancelled (D66). 0.3.0 (T286, T287, 2026-11-24): section 4.1 writes down the prompt filter and the router rules of the evaluation profile with their thresholds, and the gates of a router network, fixed by the owner before any number (configs/stem-router-gates.json); no gate B1-B6 changed. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
 ---
 
 # ADR-026: STEM benchmark qualification of the system
@@ -127,7 +127,7 @@ Written down here as the rules in force; the thresholds live in configuration on
 |---|---|---|
 | B1 | MATH-500 accuracy (answer equivalence by SymPy plus normalised string, protocol frozen in T275) | ≥ 95.0 % |
 | B2 | MMLU-Pro STEM accuracy, micro-averaged over items | **≥ 84.8 %** (fixed by the owner 2026-11-23: bare-model dev baseline 79.8 %, thinking off, + 5 points; T275 report) |
-| B3 | GPQA Diamond accuracy | open: fixed by the owner after GPQA is measured with a thinking budget (the thinking-off dev baseline, 49.2 %, is far below the model's vendor figure; T275 report) |
+| B3 | GPQA Diamond accuracy | **removed from the gate by amendment A1 (D65); measured and reported only.** Was: open, fixed by the owner after GPQA is measured with a thinking budget (the thinking-off dev baseline, 49.2 %, is far below the model's vendor figure; T275 report) |
 | B4 | Cost and latency on this GPU (RTX 5070 Ti, 16 GB): median and 95th-percentile seconds per item, generated tokens per item, peak VRAM | per benchmark, under the baseline's load (64 concurrent requests): **median ≤ 60 s, p95 ≤ 180 s per item, peak VRAM ≤ 15.5 GB** (fixed by the owner 2026-11-23); generated tokens reported |
 | B5 | Model-free answers of the brain: share wrong among those it gave, on all three sealed sets | 0 wrong; coverage reported |
 | B6 | Leakage: 13-gram overlap between the brain snapshot (and few-shot material) and every benchmark question and option | 0 hits |
@@ -137,6 +137,19 @@ Written down here as the rules in force; the thresholds live in configuration on
 - B1-B3 are separate gates; the system is qualified on STEM only when B1-B6 all pass. A partial pass is reported as
   such ("qualified on MATH-500"), never as qualification on STEM.
 - No threshold is changed after the sealed run without a new ADR.
+
+## 6.1 Amendment A1 (owner, 2026-11-24, before any sealed run)
+
+- **D65.** B3 is removed from the gate. GPQA Diamond is still run on the sealed set with the same cost record and a
+  Wilson interval, and is reported next to the gates, but it neither passes nor fails the system. The gates are
+  B1, B2, B4, B5, B6. The threshold of none of them is changed (B1 stays at 95.0 %).
+- Wording that follows: the system may be called **"qualified on MATH-500 and MMLU-Pro STEM"** when B1, B2, B4-B6 all
+  pass; it must not be called qualified on GPQA, and the GPQA figure must be shown. A partial pass is reported as
+  such. The agent never writes "qualified" before the sealed result and the owner's record say so.
+- **D66.** Phase 49 (T245-T248, a model family with per-request choice) is cancelled: one light model (D64).
+- Sealed runs: the owner authorises the agent to set `LARIS_STEM_SEALED_ORDER` once per frozen candidate (at most
+  three) when the candidate's development result is stable over three seeds; every result is reported, failures
+  included.
 
 ## 7. Development and the sealed run
 

@@ -187,6 +187,8 @@ changes in the ADR named in the task.
 | D62 | Deterministic brain | SymPy solver as a remote tool and verified notes through the write gate; model-free answers gated on precision (B5: 0 wrong) | SymPy and the sources approved by the owner 2026-11-23; accepted 2026-11-23 (ADR-026) |
 | D63 | Benchmark leakage | 13-gram scan of brain and few-shot material against every benchmark item, 0 hits (B6); GPQA text never in Git, reports or the brain | accepted 2026-11-23 (ADR-026) |
 | D64 | Model size | Light model Qwen3.5-4B, the only model measured (owner 2026-11-24); served at FP8 (online, vLLM `--quantization fp8`) as the one precision for chat and evaluation (owner 2026-11-24, T279) | decided by the owner 2026-11-23 (light model); measured in T279 (`reports/benchmarks/T279-cost.md`) |
+| D65 | B3 gate | GPQA Diamond leaves the gate; measured and reported, never claimed as qualified | owner 2026-11-24 (ADR-026 amendment A1) |
+| D66 | Model family | One light model; Phase 49 (Optimus / Megatron, T245-T248) cancelled | owner 2026-11-24 (ADR-026 amendment A1) |
 
 ## 7. Requirements
 

@@ -1840,7 +1840,8 @@ Owner's direction 2026-11-20: the banner shows the current model, and the models
   - What each model may be called in the interface and in reports (system names, not capability claims)
 - Validation:
   - The owner accepts the ADR; no code before it
-- Status: pending
+- Status: superseded
+- Note: 2026-11-24 (owner: "Bỏ, đánh dấu cancelled"): Phase 49 (Optimus / Megatron, model chosen per request) is dropped for the handover. The system ships one qualified light model (D64, Qwen3.5-4B); a second model and per-request choice contradict D64 and the no-training rule. Superseded by ADR-026 amendment A1 (D66); nothing was built.
 
 ### T246 — Server model catalogue and per-request model choice
 - Requirements: SR-M1, SR-S6, SR-S2
@@ -1849,7 +1850,8 @@ Owner's direction 2026-11-20: the banner shows the current model, and the models
   - A model table in the server and model-service configuration (name, backend, weights path, quantisation, thinking, token budget, VRAM, allowed roles); `/v1/models` lists the names; the chat route takes a model name, refuses an unknown or forbidden one with a typed error, and the GPU queue loads and unloads the right weights; usage and traces record the model name; nothing is hardcoded
 - Validation:
   - Contract and server tests with scripted backends: the default is Optimus, Megatron runs with thinking and its larger budget, a role without access is refused, two models never exceed the VRAM budget; the compose stack runs both on this machine if the ADR's sizes fit
-- Status: pending
+- Status: superseded
+- Note: 2026-11-24 (owner: "Bỏ, đánh dấu cancelled"): Phase 49 (Optimus / Megatron, model chosen per request) is dropped for the handover. The system ships one qualified light model (D64, Qwen3.5-4B); a second model and per-request choice contradict D64 and the no-training rule. Superseded by ADR-026 amendment A1 (D66); nothing was built.
 
 ### T247 — Client: the current model in the banner, `/model` and the account role
 - Requirements: SR-C1, SR-C4
@@ -1858,7 +1860,8 @@ Owner's direction 2026-11-20: the banner shows the current model, and the models
   - The `ready` event gains optional `model` and `role` fields (older peers ignore them; the schema is regenerated and checked); the client asks the server for its model list and the account at start; the banner's second line becomes `Laris Optimus · admin` (the server address leaves the banner); `/model` lists and switches between the models; the `model` setting defaults to Optimus; the status line shows the model; snapshots regenerated
 - Validation:
   - Protocol schema check, contract tests, emulator tests of the banner and of `/model`; an unreachable server still starts the client with a banner that says the model is unknown
-- Status: pending
+- Status: superseded
+- Note: 2026-11-24 (owner: "Bỏ, đánh dấu cancelled"): Phase 49 (Optimus / Megatron, model chosen per request) is dropped for the handover. The system ships one qualified light model (D64, Qwen3.5-4B); a second model and per-request choice contradict D64 and the no-training rule. Superseded by ADR-026 amendment A1 (D66); nothing was built.
 
 ### T248 — Optimus and Megatron compared as system measurements
 - Requirements: SR-K7, SR-M1
@@ -1867,7 +1870,8 @@ Owner's direction 2026-11-20: the banner shows the current model, and the models
   - The cognitive evaluation (T172) and a latency and token measurement run with each model as the advisor, on the same questions, through the server; a report with the figures and what they do not show
 - Validation:
   - The owner reviews the report; it states system measurements only, claims no qualification of either model and does not say Megatron is better unless the measurements say so
-- Status: pending
+- Status: superseded
+- Note: 2026-11-24 (owner: "Bỏ, đánh dấu cancelled"): Phase 49 (Optimus / Megatron, model chosen per request) is dropped for the handover. The system ships one qualified light model (D64, Qwen3.5-4B); a second model and per-request choice contradict D64 and the no-training rule. Superseded by ADR-026 amendment A1 (D66); nothing was built.
 
 ## Phase 50 — Auto permission mode
 
