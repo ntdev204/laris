@@ -195,6 +195,12 @@ accepts the trade.
 - 2026-11-24 (T286, T287): section 4.1 records the filter, the router rules and the network gates; reports
   `reports/benchmarks/T286-filter.md` and `T287-router.md`.
 
+- 2026-11-24 (T279): the levers of section 8 measured on development (`reports/benchmarks/T279-cost.md`): solver
+  first, early exit and FP8 kept (accuracy within noise); escalation to budgeted thinking and a thinking budget for
+  every draft rejected (accuracy lower beyond noise); repetition stop and prefix caching off without measured gain;
+  self-consistency raises accuracy at about twice the p95, left to the owner. Candidate p95 180.6 / 196.0 / 206.9 s,
+  over B4's 180 s; medians 19.2 / 24.1 / 53.2 s and peak memory 14.9 GB within B4.
+
 - Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
 
 
