@@ -137,7 +137,17 @@ median time, same reserved memory). At the owner's choice the shared engine of `
 evaluation, T282) stays BF16 for now; FP8 is a server argument (`--quantization fp8_per_tensor`) to set there when
 the owner decides, before a sealed run, so the sealed run measures the deployed precision.
 
-## 6. Limits
+## 6. Owner's decisions (2026-11-24, after the report)
+
+- **Self-consistency kept**, the p95 trade accepted: the evaluation profile is solver first + early exit +
+  self-consistency on FP8 (`configs/stem-benchmarks.json`, harness section; the measured combination
+  `combo-fp8-early-sc`: 454 / 998 / 153, median 18.6 / 25.8 / 51.4 s, p95 273.8 / 383.0 / 398.5 s). B4 is not changed
+  and is judged on the sealed run; at these numbers its p95 would fail.
+- **One precision, FP8**, for chat and evaluation: `docker/compose.chat.yaml` serves `--quantization fp8` (checked:
+  the compose vLLM service starts healthy and logs `quantization=fp8`); `model_service.chat_quantization` records
+  `fp8`. T275-T287 were measured in BF16.
+
+## 7. Limits
 
 - One run per lever; the noise reference is one rerun. Effects of a few items are not read as effects.
 - Each lever was measured alone against BF16; FP8 was combined only with the kept levers.

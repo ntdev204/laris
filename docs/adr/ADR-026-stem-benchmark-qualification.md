@@ -200,6 +200,10 @@ accepts the trade.
   every draft rejected (accuracy lower beyond noise); repetition stop and prefix caching off without measured gain;
   self-consistency raises accuracy at about twice the p95, left to the owner. Candidate p95 180.6 / 196.0 / 206.9 s,
   over B4's 180 s; medians 19.2 / 24.1 / 53.2 s and peak memory 14.9 GB within B4.
+- 2026-11-24, owner's decisions on T279: (1) self-consistency is kept: its p95 cost (274 / 383 / 399 s with FP8 and
+  early exit) is accepted as the trade for its accuracy (section 8); B4 itself is unchanged and is still judged on the
+  sealed run; (2) one precision, FP8, for chat and evaluation: the vLLM server of `docker/compose.chat.yaml` serves
+  online FP8. The evaluation profile is now solver first + early exit + self-consistency on FP8.
 
 - Accepted 2026-11-23: spec decisions D57-D64 and SR-M13 are recorded in the spec.
 

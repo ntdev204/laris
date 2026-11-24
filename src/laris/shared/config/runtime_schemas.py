@@ -209,7 +209,8 @@ class ModelServiceConfig(BaseModel):
     placeholder_name: str = Field(default="laris-placeholder")  # reported by the placeholder
     backend: str = Field(default="")  # package.module:ClassName; empty selects the placeholder
     chat_model_id: str = Field(default="")  # open-weight chat model (Hugging Face id or local dir)
-    chat_quantization: str = Field(default="none", pattern="^(none|8bit|4bit)$")  # none: BF16
+    # none: BF16; 8bit/4bit: local bitsandbytes; fp8: the vLLM server only (T279)
+    chat_quantization: str = Field(default="none", pattern="^(none|8bit|4bit|fp8)$")
     chat_max_new_tokens: int = Field(default=1024, ge=1)  # most tokens one reply may generate
     chat_max_input_tokens: int = Field(default=8192, ge=0)  # prompt budget; older tool results are shortened (0: off)
     chat_release_cache: bool = Field(default=True)  # return GPU memory to the driver after every reply

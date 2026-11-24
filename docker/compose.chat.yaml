@@ -1,4 +1,4 @@
-# Serves an open-weight chat model (T282, ADR-021): the weights live in one vLLM server (BF16), the model service forwards
+# Serves an open-weight chat model (T282, ADR-021): the weights live in one vLLM server (FP8 since T279), the model service forwards
 # chat to it (`ServedChat`), and the STEM benchmark runner calls the same server (docker/compose.engine-port.yaml).
 # Use it on top of compose.yaml; docker/laris.sh sets every variable below:
 #   LARIS_MODELS_DIR=$HOME/.cache/huggingface/hub LARIS_CHAT_SNAPSHOT=<snapshot hash> \
@@ -18,7 +18,7 @@ services:
       LARIS_MODEL_SERVICE__BACKEND: laris.model.inference.served_llm:ServedChat
       LARIS_MODEL_SERVICE__CHAT_SERVER_URL: http://vllm:8000
       LARIS_MODEL_SERVICE__CHAT_MODEL_ID: Qwen/${LARIS_CHAT_MODEL:-Qwen3.5-4B}   # the name the server serves
-      LARIS_MODEL_SERVICE__CHAT_QUANTIZATION: none   # BF16, the precision T275 evaluated
+      LARIS_MODEL_SERVICE__CHAT_QUANTIZATION: fp8   # the server's precision (T279, owner 2026-11-24: one precision, FP8, for chat and evaluation)
       LARIS_MODEL_SERVICE__CHAT_MAX_NEW_TOKENS: ${LARIS_CHAT_MAX_NEW_TOKENS:-1024}   # most tokens one reply may generate
       LARIS_MODEL_SERVICE__CHAT_MAX_INPUT_TOKENS: ${LARIS_CHAT_MAX_INPUT_TOKENS:-8192}   # prompt budget of one request
       LARIS_MODEL_SERVICE__CHAT_SERVER_TIMEOUT_S: ${LARIS_CHAT_SERVER_TIMEOUT_S:-600}
@@ -40,6 +40,8 @@ services:
       - Qwen/${LARIS_CHAT_MODEL:-Qwen3.5-4B}   # the name chat and the benchmark runner ask for
       - --dtype
       - bfloat16
+      - --quantization
+      - fp8   # online FP8 of the BF16 weights, the setting T279 measured (vLLM 0.34.0 also names it fp8_per_tensor)
       - --max-model-len
       - ${LARIS_ENGINE_MAX_MODEL_LEN:-20480}   # prompt budget plus reply, for chat and for the benchmark modes
       - --gpu-memory-utilization

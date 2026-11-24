@@ -230,6 +230,8 @@ class OpenWeightChat(ChatProvider):
         cfg = self.cfg
         device = cfg.device or ("cuda:0" if torch.cuda.is_available() else "cpu")
         kwargs: Dict[str, Any] = {"dtype": torch.bfloat16}
+        if cfg.chat_quantization == "fp8":
+            raise ProviderError("fp8 is a setting of the vLLM server (T279), not of local loading")
         if cfg.chat_quantization != "none":
             if device == "cpu":
                 raise ProviderError("quantised loading needs a GPU")
