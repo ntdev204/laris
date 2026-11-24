@@ -208,9 +208,10 @@ class HttpEngine:
         self._tokenizer: Any = None
         self._lock = threading.Lock()
 
-    def template(self, prompt: str) -> str:
-        """The chat template of one user turn with thinking on (ends inside `<think>`), from the
-        tokenizer files of the served model in the local Hugging Face cache (offline)."""
+    def template(self, prompt: str, thinking: bool = True) -> str:
+        """The chat template of one user turn, with thinking on (ends inside `<think>`) or off
+        (T280: ends where the reply begins), from the tokenizer files of the served model in the
+        local Hugging Face cache (offline)."""
         with self._lock:
             if self._tokenizer is None:
                 import os
@@ -224,7 +225,7 @@ class HttpEngine:
                     [{"role": "user", "content": prompt}],
                     add_generation_prompt=True,
                     tokenize=False,
-                    enable_thinking=True,
+                    enable_thinking=thinking,
                 )
             )
 
@@ -806,6 +807,11 @@ def cmd_harness(args: argparse.Namespace) -> int:
     def complete(raw: str, seed: int, max_tokens: int) -> Dict[str, Any]:
         return engine.complete(raw, dict(thinking, max_new_tokens=max_tokens), seed)
 
+    def conclude(prompt: str, partial: str, seed: int, max_tokens: int) -> Dict[str, Any]:
+        """T280: the unfinished thinking-off turn `partial` continued with the mode's sampling."""
+        raw = engine.template(prompt, thinking=bool(mode["enable_thinking"])) + partial
+        return engine.complete(raw, dict(mode, max_new_tokens=max_tokens), seed)
+
     free = model_free if hcfg["model_free"] else None
     choose = None
     if net_file:
@@ -835,14 +841,25 @@ def cmd_harness(args: argparse.Namespace) -> int:
             return merge_path(hcfg, config["router_paths"][decided.path])
 
     harness = Harness(
-        hcfg, base, model, solve, config["equivalence"], free, choose, complete, engine.template
+        hcfg,
+        base,
+        model,
+        solve,
+        config["equivalence"],
+        free,
+        choose,
+        complete,
+        engine.template,
+        conclude,
     )
     seed0 = int(base["generation_seed"])
+    offset = int(hcfg.get("seed_offset", 0))  # T280: repeated seeds of one configuration
     eq = config["equivalence"]
 
     def one(bench: str, item: Dict[str, Any]) -> str:
         began = time.perf_counter()
-        seed = seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
+        digest = int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16)
+        seed = seed0 + offset + digest % 100000
         has_notes = item["id"] in notes
         screened = screens.get(item["id"])
         trace = harness.answer(

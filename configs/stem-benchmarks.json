@@ -99,6 +99,7 @@
   "harness": {
     "mode": "thinking_off",
     "concurrency": 64,
+    "seed_offset": 0,
     "filter": {"enabled": true, "rules": "configs/prompt-filter.json", "fixture": "tests/fixtures/prompt_filter", "note": "T286: every prompt passes the filter before retrieval, the router and the model; a stop scores 0"},
     "router": {
       "numeric_option_share": 0.5,
@@ -120,7 +121,7 @@
     },
     "draft": {
       "max_retries": 1,
-      "thinking": {},
+      "thinking": {"knowledge": 2048},
       "answer_tokens": 1024,
       "escalate": {"enabled": false, "thinking_budget": 4096, "answer_tokens": 1024}
     },
@@ -133,6 +134,7 @@
       "review": false
     },
     "self_consistency": {"enabled": true, "samples": 2, "when": ["disagree", "retried"]},
+    "conclude": {"enabled": true, "replace_retry": true, "samples": true, "max_tokens_choice": 16, "max_tokens_math": 96, "note": "T280: a reply cut at its token cap without a readable answer is continued by prompts.conclude_* and the model writes only the answer; replace_retry concludes a cut draft in place of the keep-it-short retry; frozen candidate of T280: on with replace_retry, with a 2,048-token thinking budget on the knowledge class"},
     "repetition": {"enabled": false, "min_period": 16, "max_period": 512, "repeats": 6, "min_chars": 1000, "every_chars": 256},
     "solver_check": {
       "option_rel_tol": 0.02,
@@ -146,6 +148,8 @@
     "prompts": {
       "notes_prefix": "Notes from reference textbooks. They may or may not bear on the question; use them only where they apply.\n{notes}\n\n",
       "retry_suffix": "\n\nKeep the reasoning short: a few steps at most, then the final answer in the form asked for.",
+      "conclude_math": "\n\nI have to stop the working here and commit to the most likely answer from what I have so far.\n\nFinal answer: $\\boxed{",
+      "conclude_choice": "\n\nI have to stop the working here and commit to the most likely option from what I have so far.\n\nAnswer:",
       "formalise_math": "Translate the problem below into one call of a computer algebra system. Do not solve the problem yourself.\n\nWrite one JSON object inside ```json ... ```: an \"operation\" and its fields. Operations and their fields:\n- evaluate: expression, substitutions (an object: name -> number, or {\"constant\": \"<CODATA symbol, e.g. h, c, k_B, N_A, e, m_e, G>\"})\n- simplify, expand, factor: expression\n- solve: expression (an equation), variable, domain (\"real\" or \"complex\")\n- solve_system: expressions, variables\n- differentiate: expression, variable, order\n- integrate: expression, variable, lower, upper\n- limit: expression, variable, point, direction\n- sum: expression, variable, lower, upper (oo for infinity)\n- determinant, inverse, rank, eigenvalues: matrix; solve_linear: matrix, vector\n- gcd, lcm: integers; mod_pow: base, exponent, modulus; mod_inverse: integer, modulus; crt: integers, moduli\n- totient, divisors, factorial, factor_integer, is_prime: integer; binomial: n, k; to_base: integer, base; from_base: digits, base\n- convert_unit: value, unit, target_unit\n- balance: reaction; molar_mass: formula\nRules: prefer evaluate, with the formula already solved for the quantity asked and the given numbers written into it or into substitutions; only evaluate reads substitutions. Expressions use plain syntax: x^2 - 5*x + 6 = 0, sqrt(2), pi, log(x), exp(x), sin(x); no LaTeX, no units and no other functions. Angles are in radians (40 degrees is 40*pi/180). Every JSON value is a number, a string, a list or an object: write arithmetic only inside the expression string. A CODATA constant is a substitution {\"constant\": \"<symbol>\"}. Put quantities in SI units or in the unit asked for. Example: ```json\n{\"operation\": \"evaluate\", \"expression\": \"h*c/lam\", \"substitutions\": {\"h\": {\"constant\": \"h\"}, \"c\": {\"constant\": \"c\"}, \"lam\": 5e-7}}\n```\nThe call must compute exactly the final answer the problem asks for. If one call cannot compute it, write NONE.\n\nProblem: {question}",
       "formalise_choice": "Translate the problem below into one call of a computer algebra system. Do not solve the problem yourself.\n\nWrite one JSON object inside ```json ... ```: an \"operation\" and its fields. Operations and their fields:\n- evaluate: expression, substitutions (an object: name -> number, or {\"constant\": \"<CODATA symbol, e.g. h, c, k_B, N_A, e, m_e, G>\"})\n- simplify, expand, factor: expression\n- solve: expression (an equation), variable, domain (\"real\" or \"complex\")\n- solve_system: expressions, variables\n- differentiate: expression, variable, order\n- integrate: expression, variable, lower, upper\n- limit: expression, variable, point, direction\n- sum: expression, variable, lower, upper (oo for infinity)\n- determinant, inverse, rank, eigenvalues: matrix; solve_linear: matrix, vector\n- gcd, lcm: integers; mod_pow: base, exponent, modulus; mod_inverse: integer, modulus; crt: integers, moduli\n- totient, divisors, factorial, factor_integer, is_prime: integer; binomial: n, k; to_base: integer, base; from_base: digits, base\n- convert_unit: value, unit, target_unit\n- balance: reaction; molar_mass: formula\nRules: prefer evaluate, with the formula already solved for the quantity asked and the given numbers written into it or into substitutions; only evaluate reads substitutions. Expressions use plain syntax: x^2 - 5*x + 6 = 0, sqrt(2), pi, log(x), exp(x), sin(x); no LaTeX, no units and no other functions. Angles are in radians (40 degrees is 40*pi/180). Every JSON value is a number, a string, a list or an object: write arithmetic only inside the expression string. A CODATA constant is a substitution {\"constant\": \"<symbol>\"}. Put quantities in SI units or in the unit asked for. Example: ```json\n{\"operation\": \"evaluate\", \"expression\": \"h*c/lam\", \"substitutions\": {\"h\": {\"constant\": \"h\"}, \"c\": {\"constant\": \"c\"}, \"lam\": 5e-7}}\n```\nThe call must compute exactly the quantity the question asks for, in the unit of the options. If one call cannot compute it, write NONE.\n\nQuestion: {question}\n\nOptions:\n{options}",
       "review_solver": "\n\nA first answer to this problem was: {draft}\nA computer algebra system computed the formalisation {problem} and got: {value}\nThat computation is exact for the formalisation, but the formalisation may not match the problem. Check the first answer and the formalisation against the problem, then give your final answer in the form asked for above.",
@@ -166,7 +170,13 @@
     "escalate": {"draft": {"escalate": {"enabled": true}}},
     "early_exit": {"formalise": {"when": "uncertain", "review": false}},
     "self_consistency": {"self_consistency": {"enabled": true}},
-    "thinking": {"draft": {"thinking": {"computable": 2048, "knowledge": 2048, "reasoning": 2048}}}
+    "thinking": {"draft": {"thinking": {"computable": 2048, "knowledge": 2048, "reasoning": 2048}}},
+    "conclude": {"conclude": {"enabled": true}},
+    "conclude_first": {"conclude": {"enabled": true, "replace_retry": true}},
+    "seed_b": {"seed_offset": 100003},
+    "seed_c": {"seed_offset": 200003},
+    "thinking_kr": {"draft": {"thinking": {"knowledge": 2048, "reasoning": 2048}}},
+    "thinking_k": {"draft": {"thinking": {"knowledge": 2048}}}
   },
   "router_analysis": {
     "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",

@@ -121,9 +121,12 @@ def _harness(cfg: Dict[str, Any], model: Any, solve: Any, raw: Any = None) -> h.
 
 
 def test_configuration_holds_the_owner_approved_candidate() -> None:
-    """T279, owner 2026-11-24: early exit and self-consistency on; the rejected levers off."""
+    """T279, owner 2026-11-24: early exit and self-consistency on; the rejected levers off (T280
+    added concluding and thinking on the knowledge class, see test_iterations.py)."""
     cfg = CONFIG["harness"]
-    assert cfg["draft"]["thinking"] == {} and not cfg["draft"]["escalate"]["enabled"]
+    assert (
+        cfg["draft"]["thinking"] == {"knowledge": 2048} and not cfg["draft"]["escalate"]["enabled"]
+    )
     assert cfg["formalise"]["when"] == "uncertain" and cfg["formalise"]["review"] is False
     assert cfg["self_consistency"]["enabled"] and not cfg["repetition"]["enabled"]
     assert cfg["model_free"] is True and CONFIG["engine"]["precision"].startswith("fp8")

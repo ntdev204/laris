@@ -21,6 +21,11 @@ One benchmark item in, one final answer out (pass@1), with every step and its co
    a disagreement (`formalise.review`), and self-consistency (`self_consistency`): more drafts on
    other seeds, voted with the draft (and the solver's answer), on a disagreement or a retried
    draft.
+   T280 lever (off by default): a reply cut at its token cap without a readable answer is
+   concluded (`conclude`): the reply so far, a closing sentence from the configuration and the
+   answer's opening (`\\boxed{` or `Answer:`) go back to the model as its own unfinished turn, and
+   it writes only the answer in a few tokens; `replace_retry` concludes a cut draft in place of
+   the "keep it short" retry.
 6. **Notes check** (multiple choice with notes): when the notes support exactly one option, by all
    of its content words in one passage, and the draft chose another, the model reviews the draft
    against those notes.
@@ -54,6 +59,9 @@ ModelFree = Callable[[Dict[str, Any]], Dict[str, Any]]
 CompleteCall = Callable[[str, int, int], Dict[str, Any]]
 # T279: the chat template of a user prompt with thinking on, ending inside the open <think>
 TemplateCall = Callable[[str], str]
+# T280: the model's own unfinished turn continued (user prompt, reply so far, seed, max_tokens) ->
+# the ModelCall dict of the continuation only; sampled with the harness mode's settings
+ConcludeCall = Callable[[str, str, int, int], Dict[str, Any]]
 
 _STOP = frozenset(
     "the and for are but not with that this from was were has have had its into than then them "
@@ -271,6 +279,7 @@ class Trace:
     final_from: str = ""
     truncated: bool = False
     retried: bool = False
+    concluded: int = 0
     votes: Optional[Dict[str, int]] = None
     solver_status: str = ""
     agreement: Optional[bool] = None
@@ -303,6 +312,7 @@ class Harness:
         choose: Optional[Callable[[Dict[str, Any], "Trace"], Optional[Dict[str, Any]]]] = None,
         complete: Optional[CompleteCall] = None,
         template: Optional[TemplateCall] = None,
+        conclude: Optional[ConcludeCall] = None,
     ) -> None:
         self.cfg = cfg
         self.equivalence = equivalence
@@ -318,6 +328,8 @@ class Harness:
         # T279: budgeted thinking needs a raw completion and the chat template
         self.complete = complete
         self.template = template
+        # T280: a cut reply continued into its answer
+        self.conclude = conclude
 
     # -- steps ---------------------------------------------------------------------------------
 
@@ -394,6 +406,38 @@ class Harness:
         trace.steps.append({"step": "solver", "status": status})
         return result, status
 
+    def _concluding(self) -> Dict[str, Any]:
+        ccfg = self.cfg.get("conclude") or {}
+        return ccfg if ccfg.get("enabled") else {}
+
+    def _conclude(
+        self, item: Dict[str, Any], trace: Trace, step: str, prompt: str, reply: str, seed: int
+    ) -> Optional[str]:
+        """T280: the answer of a reply cut at its cap, continued from the reply so far by the
+        closing sentence and the answer's opening (`prompts.conclude_*`); None if still unread."""
+        ccfg = self._concluding()
+        if self.conclude is None:
+            raise ValueError("concluding a cut reply needs the continuation call")
+        opening = self.prompts["conclude_choice" if item["options"] else "conclude_math"]
+        cap = int(ccfg["max_tokens_choice" if item["options"] else "max_tokens_math"])
+        out = self.conclude(prompt, reply + opening, seed, cap)
+        trace.model_calls += 1
+        trace.prompt_tokens += int(out["prompt_tokens"])
+        trace.generated_tokens += int(out["generated_tokens"])
+        trace.model_seconds += float(out["seconds"])
+        found = self._extract(item, opening + out["text"])
+        trace.steps.append(
+            {
+                "step": "conclude",
+                "of": step,
+                "tokens": out["generated_tokens"],
+                "answered": found is not None,
+            }
+        )
+        if found is not None:
+            trace.concluded += 1
+        return found
+
     def _draft(self, item: Dict[str, Any], trace: Trace, prompt: str, seed: int) -> Optional[str]:
         dcfg = self.cfg["draft"]
         budget = int((dcfg.get("thinking") or {}).get(trace.cls, 0))
@@ -423,6 +467,13 @@ class Harness:
                     truncated = bool(out["truncated"])
             trace.truncated = truncated and answer is None
             return answer
+        ccfg = self._concluding()
+        if ccfg.get("replace_retry") and truncated:
+            trace.retried = True  # uncertain as a retried draft: formalised and voted on
+            found = self._conclude(item, trace, "draft", prompt, out["answer_text"], seed + 500)
+            answer = found if found is not None else answer
+            trace.truncated = answer is None
+            return answer
         for attempt in range(1, int(dcfg["max_retries"]) + 1):
             if answer is not None and not truncated:
                 break
@@ -436,6 +487,14 @@ class Harness:
                 answer, truncated = again, bool(out["truncated"])
             elif answer is None:
                 truncated = bool(out["truncated"])
+            if answer is None and truncated and ccfg:
+                answer = self._conclude(
+                    item, trace, "retry", retry, out["answer_text"], seed + 1000 * attempt + 500
+                )
+                truncated = answer is None
+        if answer is None and truncated and ccfg and not trace.retried:
+            answer = self._conclude(item, trace, "draft", prompt, out["answer_text"], seed + 500)
+            truncated = answer is None
         trace.truncated = truncated and answer is None
         return answer
 
@@ -540,6 +599,10 @@ class Harness:
                 trace, "sample", prompt, seed + 31 * k, int(self.mode["max_new_tokens"])
             )
             found = self._extract(item, out["answer_text"])
+            if found is None and out["truncated"] and self._concluding().get("samples"):
+                found = self._conclude(
+                    item, trace, "sample", prompt, out["answer_text"], seed + 31 * k + 500
+                )
             if found is not None:
                 answers_seen.append(found)
         answers_seen += extra
