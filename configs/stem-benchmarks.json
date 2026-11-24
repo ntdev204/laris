@@ -175,7 +175,8 @@
     "conclude_first": {"conclude": {"enabled": true, "replace_retry": true}},
     "seed_b": {"seed_offset": 100003},
     "seed_c": {"seed_offset": 200003},
-    "thinking_kr": {"draft": {"thinking": {"knowledge": 2048, "reasoning": 2048}}}
+    "thinking_kr": {"draft": {"thinking": {"knowledge": 2048, "reasoning": 2048}}},
+    "thinking_k": {"draft": {"thinking": {"knowledge": 2048}}}
   },
   "router_analysis": {
     "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",
