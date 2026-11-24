@@ -1676,7 +1676,7 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
 - Validation:
   - Terminal emulator tests of the full-screen layout, the scrolling and the restore on exit and on a panic; the existing T158 scenarios still pass; the owner tries it on Windows Terminal
 - Status: done
-- Note: 2026-11-24 closed by the owner ("T237 được phép đóng"). Built and checked on Linux (8 emulator tests, pty run). **Not verified on Windows Terminal**: that check stays with the owner and is listed in the handover document. Earlier note follows.
+- Note: 2026-11-24 closed by the owner ("T237 được phép đóng"). Built and checked on Linux (8 emulator tests, pty run). Then the owner ran it on Windows and approved the close ("tôi đã chạy trên windows và duyệt đóng"); the agent did not run it on Windows. Earlier note follows.
   
 - Note: 2026-11-20 (owner: "giống vim, nhưng lịch sử hội thoại vẫn giữ theo session"). The flicker part is already done in T236's follow-up: `Screen::draw` writes one synchronised update (`CSI ?2026h/l`) per frame and the spinner advances every 120 ms and only while a turn runs (it ran at 25 frames a second). Not yet verified on Windows.
   2026-11-20 built: `FullScreen` in `laris-tui` (alternate screen, mouse reported, header = the banner rows pinned on top,
