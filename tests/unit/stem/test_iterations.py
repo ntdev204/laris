@@ -41,12 +41,15 @@ def _harness(cfg: Dict[str, Any], model: Any, conclude: Any) -> h.Harness:
 
 
 def _on(**extra: Any) -> Dict[str, Any]:
-    return _cfg(conclude=dict(CONFIG["harness"]["conclude"], enabled=True, **extra))
+    return _cfg(
+        conclude=dict(CONFIG["harness"]["conclude"], enabled=True, replace_retry=False) | extra
+    )
 
 
-def test_conclude_is_off_in_the_evaluation_profile() -> None:
-    cfg = CONFIG["harness"]["conclude"]
-    assert cfg["enabled"] is False and cfg["replace_retry"] is False
+def test_the_frozen_candidate_concludes_first_and_thinks_on_knowledge() -> None:
+    cfg = CONFIG["harness"]
+    assert cfg["conclude"]["enabled"] is True and cfg["conclude"]["replace_retry"] is True
+    assert cfg["draft"]["thinking"] == {"knowledge": 2048} and cfg["seed_offset"] == 0
     assert CONFIG["cost_levers"]["conclude"] == {"conclude": {"enabled": True}}
     assert CONFIG["cost_levers"]["conclude_first"]["conclude"]["replace_retry"] is True
 

@@ -121,7 +121,7 @@
     },
     "draft": {
       "max_retries": 1,
-      "thinking": {},
+      "thinking": {"knowledge": 2048},
       "answer_tokens": 1024,
       "escalate": {"enabled": false, "thinking_budget": 4096, "answer_tokens": 1024}
     },
@@ -134,7 +134,7 @@
       "review": false
     },
     "self_consistency": {"enabled": true, "samples": 2, "when": ["disagree", "retried"]},
-    "conclude": {"enabled": false, "replace_retry": false, "samples": true, "max_tokens_choice": 16, "max_tokens_math": 96, "note": "T280: a reply cut at its token cap without a readable answer is continued by prompts.conclude_* and the model writes only the answer; replace_retry concludes a cut draft in place of the keep-it-short retry"},
+    "conclude": {"enabled": true, "replace_retry": true, "samples": true, "max_tokens_choice": 16, "max_tokens_math": 96, "note": "T280: a reply cut at its token cap without a readable answer is continued by prompts.conclude_* and the model writes only the answer; replace_retry concludes a cut draft in place of the keep-it-short retry; frozen candidate of T280: on with replace_retry, with a 2,048-token thinking budget on the knowledge class"},
     "repetition": {"enabled": false, "min_period": 16, "max_period": 512, "repeats": 6, "min_chars": 1000, "every_chars": 256},
     "solver_check": {
       "option_rel_tol": 0.02,

@@ -858,7 +858,8 @@ def cmd_harness(args: argparse.Namespace) -> int:
 
     def one(bench: str, item: Dict[str, Any]) -> str:
         began = time.perf_counter()
-        seed = seed0 + offset + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
+        digest = int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16)
+        seed = seed0 + offset + digest % 100000
         has_notes = item["id"] in notes
         screened = screens.get(item["id"])
         trace = harness.answer(

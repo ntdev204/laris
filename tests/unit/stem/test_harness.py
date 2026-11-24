@@ -19,10 +19,13 @@ EQ = CONFIG["equivalence"]
 def t278_harness() -> Dict[str, Any]:
     """The harness section with the T278 behaviour these tests describe: formalise every
     computable item, review on a disagreement, no self-consistency (T279 turned on early exit and
-    self-consistency in the configuration; those levers are tested in test_cost.py)."""
+    self-consistency in the configuration; those levers are tested in test_cost.py; T280 turned on
+    concluding a cut reply and thinking on the knowledge class, tested in test_iterations.py)."""
     cfg = json.loads(json.dumps(CONFIG["harness"]))
     cfg["formalise"].update(when="always", review=True)
     cfg["self_consistency"]["enabled"] = False
+    cfg["conclude"].update(enabled=False, replace_retry=False)
+    cfg["draft"]["thinking"] = {}
     return cfg
 
 
