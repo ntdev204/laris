@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One command for the whole server (T236):  docker/laris.sh up | down | status | key [label] [tokens]
-#   up      starts Caddy, the server, the model service, the vLLM server (Qwen on the GPU, BF16) and PostgreSQL; with Tailscale HTTPS it first
+#   up      starts Caddy, the server, the model service, the vLLM server (Qwen on the GPU, FP8) and PostgreSQL; with Tailscale HTTPS it first
 #           gets a public certificate for this machine's tailnet name, so clients need no CA
 #   down    stops everything (volumes, keys and the certificate authority are kept)
 #   status  what runs, and the address clients use

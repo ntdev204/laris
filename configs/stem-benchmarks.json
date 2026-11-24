@@ -63,6 +63,7 @@
     "port_variable": "LARIS_ENGINE_PORT",
     "concurrency": 64,
     "timeout_s": 3600,
+    "precision": "fp8 (online FP8 of the BF16 weights, vLLM --quantization fp8; owner 2026-11-24, T279); T275-T287 ran BF16",
     "server": "the vllm service of docker/compose.chat.yaml (T282), opened by docker/laris.sh on the port LARIS_ENGINE_PORT of docker/laris.env"
   },
   "baseline": {
@@ -128,10 +129,10 @@
         "computable"
       ],
       "max_tokens": 1024,
-      "when": "always",
-      "review": true
+      "when": "uncertain",
+      "review": false
     },
-    "self_consistency": {"enabled": false, "samples": 2, "when": ["disagree", "retried"]},
+    "self_consistency": {"enabled": true, "samples": 2, "when": ["disagree", "retried"]},
     "repetition": {"enabled": false, "min_period": 16, "max_period": 512, "repeats": 6, "min_chars": 1000, "every_chars": 256},
     "solver_check": {
       "option_rel_tol": 0.02,

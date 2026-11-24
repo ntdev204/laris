@@ -935,6 +935,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
         "model_id": base["model_id"],
         "settings": mode,
         "engine_server": served,
+        "engine_precision": config["engine"].get("precision"),
         "code_revision": revision,
         "brain_snapshot_sha256": snapshot,
         "harness_config_sha256": hashlib.sha256(

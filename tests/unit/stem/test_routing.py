@@ -198,11 +198,13 @@ def test_a_chosen_path_runs_with_its_own_settings() -> None:
         return notes_cfg
 
     base = CONFIG["baseline"]
-    rule = h.Harness(CONFIG["harness"], base, model, solve, CONFIG["equivalence"])
+    from .test_harness import t278_harness
+
+    rule = h.Harness(t278_harness(), base, model, solve, CONFIG["equivalence"])
     rule.answer(item, 1, notes=["a passage"])
     assert calls == ["draft", "formalise"]  # computable: the rule router formalises
     calls.clear()
-    net = h.Harness(CONFIG["harness"], base, model, solve, CONFIG["equivalence"], None, choose)
+    net = h.Harness(t278_harness(), base, model, solve, CONFIG["equivalence"], None, choose)
     trace = net.answer(item, 1, notes=["a passage"])
     assert calls == ["draft"] and trace.notes == 1 and trace.cls == "computable"
     assert trace.steps[0] == {"step": "route", "path": "notes_model", "by": "network"}

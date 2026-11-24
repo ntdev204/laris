@@ -179,7 +179,9 @@ class _Model:
 
 
 def _run(action: str) -> h.Trace:
-    cfg = json.loads(json.dumps(CONFIG["harness"]))
+    from .test_harness import t278_harness
+
+    cfg = t278_harness()
     cfg["formalisation_check"]["action"] = action
     model = _Model(
         {

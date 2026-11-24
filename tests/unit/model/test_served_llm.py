@@ -99,8 +99,9 @@ def test_configuration_is_checked():
         ServedChat(ModelServiceConfig(chat_model_id=MODEL))
     with pytest.raises(ProviderError, match="chat_model_id"):
         ServedChat(ModelServiceConfig(chat_server_url="http://x"))
-    with pytest.raises(ProviderError, match="BF16"):
+    with pytest.raises(ProviderError, match="BF16 or FP8"):
         ServedChat(_cfg("http://x", chat_quantization="8bit"))
+    assert ServedChat(_cfg("http://x", chat_quantization="fp8")).cfg.chat_quantization == "fp8"
 
 
 def test_reply_is_split_into_reasoning_and_text(server):

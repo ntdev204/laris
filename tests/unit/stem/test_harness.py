@@ -16,6 +16,16 @@ CONFIG = json.loads((ROOT / "configs/stem-benchmarks.json").read_text(encoding="
 EQ = CONFIG["equivalence"]
 
 
+def t278_harness() -> Dict[str, Any]:
+    """The harness section with the T278 behaviour these tests describe: formalise every
+    computable item, review on a disagreement, no self-consistency (T279 turned on early exit and
+    self-consistency in the configuration; those levers are tested in test_cost.py)."""
+    cfg = json.loads(json.dumps(CONFIG["harness"]))
+    cfg["formalise"].update(when="always", review=True)
+    cfg["self_consistency"]["enabled"] = False
+    return cfg
+
+
 def _math(question: str = "What is $1+1$?", answer: str = "2") -> Dict[str, Any]:
     return {"id": "m/1", "question": question, "options": [], "answer": answer, "category": "A"}
 
@@ -72,7 +82,7 @@ def _solver(result: Optional[Dict[str, Any]], status: str = "verified"):
 
 
 def _harness(model, solve, model_free=None, **overrides: Any) -> h.Harness:
-    cfg = json.loads(json.dumps(CONFIG["harness"]))
+    cfg = t278_harness()
     for key, value in overrides.items():
         cfg[key] = value
     return h.Harness(cfg, CONFIG["baseline"], model, solve, EQ, model_free)

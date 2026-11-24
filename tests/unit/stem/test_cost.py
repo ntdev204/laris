@@ -3,7 +3,6 @@ self-consistency) and the run comparison, with a scripted model (no GPU, no trai
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -12,7 +11,7 @@ import pytest
 from laris.research.stem import cost
 from laris.research.stem import harness as h
 
-from .test_harness import CONFIG, EQ, Scripted, _choice, _math, _solver
+from .test_harness import CONFIG, EQ, Scripted, _choice, _math, _solver, t278_harness
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -111,7 +110,7 @@ def _template(prompt: str) -> str:
 
 
 def _cfg(**override: Any) -> Dict[str, Any]:
-    cfg = json.loads(json.dumps(CONFIG["harness"]))
+    cfg = t278_harness()
     for key, value in override.items():
         cfg[key] = dict(cfg.get(key, {}), **value) if isinstance(value, dict) else value
     return cfg
@@ -121,11 +120,13 @@ def _harness(cfg: Dict[str, Any], model: Any, solve: Any, raw: Any = None) -> h.
     return h.Harness(cfg, CONFIG["baseline"], model, solve, EQ, None, None, raw, _template)
 
 
-def test_levers_are_off_by_default() -> None:
+def test_configuration_holds_the_owner_approved_candidate() -> None:
+    """T279, owner 2026-11-24: early exit and self-consistency on; the rejected levers off."""
     cfg = CONFIG["harness"]
     assert cfg["draft"]["thinking"] == {} and not cfg["draft"]["escalate"]["enabled"]
-    assert cfg["formalise"]["when"] == "always" and cfg["formalise"]["review"] is True
-    assert not cfg["self_consistency"]["enabled"] and not cfg["repetition"]["enabled"]
+    assert cfg["formalise"]["when"] == "uncertain" and cfg["formalise"]["review"] is False
+    assert cfg["self_consistency"]["enabled"] and not cfg["repetition"]["enabled"]
+    assert cfg["model_free"] is True and CONFIG["engine"]["precision"].startswith("fp8")
     for name, lever in CONFIG["cost_levers"].items():
         assert name == "note" or isinstance(lever, dict)
 

@@ -73,10 +73,12 @@ class ServedChat(ChatProvider):
             raise ProviderError("model_service.chat_server_url is not set")
         if not cfg.chat_model_id:
             raise ProviderError("model_service.chat_model_id is not set")
-        if cfg.chat_quantization != "none":
-            # the server holds the weights in BF16; a quantised setting here would be a false record
+        if cfg.chat_quantization not in ("none", "fp8"):
+            # the server holds the weights in BF16 or FP8 (T279); a bitsandbytes setting here
+            # would be a false record of what it serves
             raise ProviderError(
-                "the served model runs in BF16: set model_service.chat_quantization to none"
+                "the served model runs in BF16 or FP8: "
+                "set model_service.chat_quantization to none or fp8"
             )
         self.cfg = cfg
         self._open = opener or urllib.request.urlopen
