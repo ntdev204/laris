@@ -99,6 +99,7 @@
   "harness": {
     "mode": "thinking_off",
     "concurrency": 64,
+    "seed_offset": 0,
     "filter": {"enabled": true, "rules": "configs/prompt-filter.json", "fixture": "tests/fixtures/prompt_filter", "note": "T286: every prompt passes the filter before retrieval, the router and the model; a stop scores 0"},
     "router": {
       "numeric_option_share": 0.5,
@@ -171,7 +172,10 @@
     "self_consistency": {"self_consistency": {"enabled": true}},
     "thinking": {"draft": {"thinking": {"computable": 2048, "knowledge": 2048, "reasoning": 2048}}},
     "conclude": {"conclude": {"enabled": true}},
-    "conclude_first": {"conclude": {"enabled": true, "replace_retry": true}}
+    "conclude_first": {"conclude": {"enabled": true, "replace_retry": true}},
+    "seed_b": {"seed_offset": 100003},
+    "seed_c": {"seed_offset": 200003},
+    "thinking_kr": {"draft": {"thinking": {"knowledge": 2048, "reasoning": 2048}}}
   },
   "router_analysis": {
     "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",

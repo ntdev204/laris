@@ -853,11 +853,12 @@ def cmd_harness(args: argparse.Namespace) -> int:
         conclude,
     )
     seed0 = int(base["generation_seed"])
+    offset = int(hcfg.get("seed_offset", 0))  # T280: repeated seeds of one configuration
     eq = config["equivalence"]
 
     def one(bench: str, item: Dict[str, Any]) -> str:
         began = time.perf_counter()
-        seed = seed0 + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
+        seed = seed0 + offset + int(hashlib.sha256(item["id"].encode()).hexdigest()[:8], 16) % 100000
         has_notes = item["id"] in notes
         screened = screens.get(item["id"])
         trace = harness.answer(
