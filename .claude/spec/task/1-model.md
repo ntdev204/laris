@@ -906,13 +906,13 @@ returned logs, manifests and reports.
   - Development MATH, three seeds, reported in `reports/benchmarks/T289-solver-and-review.md`; B5 stays at 0 wrong model-free; no sealed file read; leakage scan 0 hits for any new brain or few-shot material
 - Status: pending
 
-### T290 — B4: the token budget that fits 180 s at 64 requests
+### T290 — Thinking budget at the VRAM ceiling (B1; B4 time limits lifted by D67)
 - Requirements: SR-M13
 - Depends: T289
 - Deliverables:
-  - Measure how generated tokens per item set the p95 and the median at 64 concurrent requests (the T280 candidate: p95 300-340 s against 180 s), and set the draft cap, the conclude rule and the self-consistency rule so B4 holds without lowering B1 / B2 on development; the trade-off between B1 and B4 reported figure by figure
+  - ADR-026 amendment A2 (D67); the thinking budget and the draft, conclusion and sample caps raised on development as far as the context and KV cache allow with peak VRAM ≤ 15.5 GB, by problem class; each step measured on three seeds (accuracy, seconds, tokens, peak VRAM); the values written into the frozen candidate
 - Validation:
-  - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-latency.md`; B4 thresholds unchanged (median ≤ 60 s, p95 ≤ 180 s, peak ≤ 15.5 GB)
+  - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-thinking-budget.md`; peak VRAM ≤ 15.5 GB in every run; time and tokens reported, not gated
 - Status: pending
 
 ### T281 — Sealed runs and the owner's decision
