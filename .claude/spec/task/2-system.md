@@ -1675,7 +1675,9 @@ Status values and rules as in [task/1-model.md](1-model.md). Run `python scripts
   - The interactive client runs on the alternate screen like `vim`: a header, a conversation area that scrolls (keys and mouse wheel), the input box and the status line fixed at the bottom; on exit the terminal is restored. The conversation of a session is read back from the event log when it is resumed (`--resume`), so the history of a session is kept; no flicker (one synchronised frame, a slow spinner)
 - Validation:
   - Terminal emulator tests of the full-screen layout, the scrolling and the restore on exit and on a panic; the existing T158 scenarios still pass; the owner tries it on Windows Terminal
-- Status: in_progress
+- Status: done
+- Note: 2026-11-24 closed by the owner ("T237 được phép đóng"). Built and checked on Linux (8 emulator tests, pty run). **Not verified on Windows Terminal**: that check stays with the owner and is listed in the handover document. Earlier note follows.
+  
 - Note: 2026-11-20 (owner: "giống vim, nhưng lịch sử hội thoại vẫn giữ theo session"). The flicker part is already done in T236's follow-up: `Screen::draw` writes one synchronised update (`CSI ?2026h/l`) per frame and the spinner advances every 120 ms and only while a turn runs (it ran at 25 frames a second). Not yet verified on Windows.
   2026-11-20 built: `FullScreen` in `laris-tui` (alternate screen, mouse reported, header = the banner rows pinned on top,
   conversation area between, input box / menus / status line / footer pinned at the bottom; only changed rows are
@@ -2096,7 +2098,9 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   - Tests with a scripted stand-in program; a scan still falls through to `pdftoppm` + `tesseract`
 - Validation:
   - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`
-- Status: pending
+- Status: superseded
+- Note: 2026-11-24 closed by the owner ("T264 được phép đóng") without implementation: no `markitdownCommand`, no reader change. The text-layer path (`pdftotext`, Tesseract for scans) stays the reader of papers. Reopen as a new task if MarkItDown is wanted. Earlier note follows.
+  
 - Note: 2026-11-21 owner's direction. MarkItDown reads a text layer (pdfminer); it does not OCR scans by itself, so scans keep the Tesseract path unless an OCR plugin is installed. Nothing is installed by LARIS; the owner installs the tool.
 
 ### T265 — A trigger phrase selects the workflow
