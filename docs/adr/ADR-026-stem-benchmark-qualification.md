@@ -210,3 +210,9 @@ accepts the trade.
 
 - The owner accepts or changes this ADR; spec decisions D57-D64 and SR-M13 follow it.
 - `python scripts/validate_spec.py`, `cargo xtask spec` and `python scripts/validate_docs.py` pass.
+
+- 2026-11-24 (T280): development iterations (`reports/benchmarks/T280-iterations.md`): concluding a cut reply in place
+  of the retry and a 2,048-token thinking budget on the knowledge class kept; frozen candidate code `77546576`, harness
+  section `3dddd9ab…`, brain `stem-t277-2`, Qwen3.5-4B `851bf6e8…` in FP8. On development B1 stays below 95 %
+  (89.8-92.6 %) and B4's p95 is not met; under section 10 the options are the owner's. Concluded answers are guesses
+  (about half right) and are recorded per item.
