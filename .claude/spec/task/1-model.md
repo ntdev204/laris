@@ -910,12 +910,13 @@ returned logs, manifests and reports.
 
 ### T290 — Thinking budget at the VRAM ceiling (B1; B4 time limits lifted by D67)
 - Requirements: SR-M13
-- Depends: T289
+- Depends: T288
 - Deliverables:
   - ADR-026 amendment A2 (D67); the thinking budget and the draft, conclusion and sample caps raised on development as far as the context and KV cache allow with peak VRAM ≤ 15.5 GB, by problem class; each step measured on three seeds (accuracy, seconds, tokens, peak VRAM); the values written into the frozen candidate
 - Validation:
   - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-thinking-budget.md`; peak VRAM ≤ 15.5 GB in every run; time and tokens reported, not gated
-- Status: pending
+- Status: done
+- Note: 2026-11-27 (owner: "kết quả này chốt luôn"): closed on the measured development figures. MATH 483 / 486 / 484 of 500 and MMLU-Pro STEM 1,028 / 1,025 / 1,025 of 1,175 on three seeds, peak VRAM at most 14.93 GB, B5 29 / 0, B6 0 hits. GPQA has one complete seed (164 / 250), not the three of the validation; the others were stopped on this order. Run ahead of T289 on the owner's direction, so its dependency is now T288 (was T289); T289 stays pending. Development only: the model and the system are NOT QUALIFIED.
 
 ### T281 — Sealed runs and the owner's decision
 - Requirements: SR-M13, SR-M12

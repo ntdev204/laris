@@ -49,7 +49,8 @@ def _on(**extra: Any) -> Dict[str, Any]:
 def test_the_frozen_candidate_concludes_first_and_thinks_on_knowledge() -> None:
     cfg = CONFIG["harness"]
     assert cfg["conclude"]["enabled"] is True and cfg["conclude"]["replace_retry"] is True
-    assert cfg["draft"]["thinking"] == {"knowledge": 2048} and cfg["seed_offset"] == 0
+    assert cfg["draft"]["thinking"] == {"computable": 56000, "knowledge": 2048}  # T290, D67
+    assert cfg["seed_offset"] == 0
     assert CONFIG["cost_levers"]["conclude"] == {"conclude": {"enabled": True}}
     assert CONFIG["cost_levers"]["conclude_first"]["conclude"]["replace_retry"] is True
 

@@ -125,7 +125,7 @@ def test_configuration_holds_the_owner_approved_candidate() -> None:
     added concluding and thinking on the knowledge class, see test_iterations.py)."""
     cfg = CONFIG["harness"]
     assert (
-        cfg["draft"]["thinking"] == {"knowledge": 2048} and not cfg["draft"]["escalate"]["enabled"]
+        cfg["draft"]["thinking"] == {"computable": 56000, "knowledge": 2048} and not cfg["draft"]["escalate"]["enabled"]
     )
     assert cfg["formalise"]["when"] == "uncertain" and cfg["formalise"]["review"] is False
     assert cfg["self_consistency"]["enabled"] and not cfg["repetition"]["enabled"]

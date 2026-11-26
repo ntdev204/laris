@@ -43,7 +43,7 @@ services:
       - --quantization
       - fp8   # online FP8 of the BF16 weights, the setting T279 measured (vLLM 0.34.0 also names it fp8_per_tensor)
       - --max-model-len
-      - ${LARIS_ENGINE_MAX_MODEL_LEN:-20480}   # prompt budget plus reply, for chat and for the benchmark modes
+      - ${LARIS_ENGINE_MAX_MODEL_LEN:-65536}   # prompt budget plus reply, for chat and for the benchmark modes
       - --gpu-memory-utilization
       - ${LARIS_ENGINE_GPU_SHARE:-0.85}
       - --max-num-seqs

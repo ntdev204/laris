@@ -3,9 +3,9 @@ document_id: "DOC-DEPLOY-RUNBOOK-001"
 title: "Deployment runbook"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-19"
-updated_at: "2026-11-23"
+updated_at: "2026-11-27"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -13,7 +13,7 @@ related_documents:
   - "docs/adr/ADR-021-rust-generation.md"
 decision_references:
   - "ADR-021"
-change_summary: "T282: the chat model is served by one vLLM server (BF16) that chat and the STEM benchmark runner share. Earlier: front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
+change_summary: "T290: the engine context default is 65536 (thinking budget of the STEM candidate). Earlier: T282: the chat model is served by one vLLM server (BF16) that chat and the STEM benchmark runner share. Earlier: front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
 ---
 
 # Deployment runbook (SR-S8)
@@ -73,7 +73,7 @@ and the server wait for it. Its settings are environment variables with defaults
 | Variable | Default | Meaning |
 |---|---|---|
 | `LARIS_ENGINE_GPU_SHARE` | 0.85 | share of GPU memory vLLM reserves; the model service's GPU queue counts the same share of `LARIS_GPU_MEMORY_BYTES` and refuses to start if it exceeds `vram_budget_bytes` |
-| `LARIS_ENGINE_MAX_MODEL_LEN` | 20480 | context of one request; the prompt budget is capped at this minus `LARIS_CHAT_MAX_NEW_TOKENS` |
+| `LARIS_ENGINE_MAX_MODEL_LEN` | 65536 | context of one request; the prompt budget is capped at this minus `LARIS_CHAT_MAX_NEW_TOKENS` |
 | `LARIS_ENGINE_MAX_SEQS` | 64 | requests vLLM batches at once (the default 256 exceeds the state blocks of the linear-attention layers) |
 | `LARIS_CHAT_CONCURRENCY` | 8 | chats the model service sends to vLLM at the same time |
 
