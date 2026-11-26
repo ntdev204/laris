@@ -3,9 +3,9 @@ document_id: "DOC-ADR-026"
 title: "ADR-026: STEM benchmark qualification of the system (light model, harness, RAG, deterministic brain)"
 document_type: "adr"
 status: "ACCEPTED"
-version: "0.5.0"
+version: "0.6.0"
 created_at: "2026-11-23"
-updated_at: "2026-11-24"
+updated_at: "2026-11-27"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -19,7 +19,7 @@ decision_references:
   - "ADR-008"
   - "ADR-024"
   - "ADR-025"
-change_summary: "0.5.0 (2026-11-24, owner): amendment A2, the time limits of B4 are lifted and the thinking budget may rise to what the VRAM ceiling allows (D67). 0.4.0 (2026-11-24, owner): amendment A1, B3 (GPQA Diamond) leaves the gate and is measured and reported only (D65); Phase 49 cancelled (D66). 0.3.0 (T286, T287, 2026-11-24): section 4.1 writes down the prompt filter and the router rules of the evaluation profile with their thresholds, and the gates of a router network, fixed by the owner before any number (configs/stem-router-gates.json); no gate B1-B6 changed. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
+change_summary: "0.6.0 (2026-11-27, owner): amendment A3, the sealed run is optional for closing and handover; the rule for qualification is unchanged (D68). 0.5.0 (2026-11-24, owner): amendment A2, the time limits of B4 are lifted and the thinking budget may rise to what the VRAM ceiling allows (D67). 0.4.0 (2026-11-24, owner): amendment A1, B3 (GPQA Diamond) leaves the gate and is measured and reported only (D65); Phase 49 cancelled (D66). 0.3.0 (T286, T287, 2026-11-24): section 4.1 writes down the prompt filter and the router rules of the evaluation profile with their thresholds, and the gates of a router network, fixed by the owner before any number (configs/stem-router-gates.json); no gate B1-B6 changed. 0.2.0 (T275, 2026-11-23): the owner fixed B2 at 84.8 % and B4 (median at most 60 s and 95th percentile at most 180 s per item under the baseline load, peak VRAM at most 15.5 GB) from the measured baseline; B3 stays open until GPQA is measured with a thinking budget. 0.1.0: accepted by the owner 2026-11-23 (\"Chấp nhận\"). Drafted in task T274 from the owner's choices of 2026-11-23: three world STEM benchmarks as gates, MATH-500 at 95 %, the other thresholds fixed after a measured baseline, a light model carried by the harness, RAG and a deterministic brain; protocol, splits, leakage rules, cost and latency measures."
 ---
 
 # ADR-026: STEM benchmark qualification of the system
@@ -161,6 +161,12 @@ Written down here as the rules in force; the thresholds live in configuration on
   budget uses the preallocated KV cache, so it costs time and concurrency, not memory. Every value is fixed on
   development before a sealed run and written into the frozen candidate.
 - The gates are now B1, B2, B4 (VRAM only), B5, B6.
+
+### Amendment A3 (owner, 2026-11-27, before any sealed run)
+
+- **D68.** The sealed run (T281) is optional: it may be run or left out, and closing or handing over the project does
+  not wait for it. Gates, thresholds and wording are unchanged: without a sealed result and the owner's record, the
+  model and the system are **NOT QUALIFIED**, and development figures are reported as development figures.
 
 ## 7. Development and the sealed run
 

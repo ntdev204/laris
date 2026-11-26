@@ -190,6 +190,7 @@ changes in the ADR named in the task.
 | D65 | B3 gate | GPQA Diamond leaves the gate; measured and reported, never claimed as qualified | owner 2026-11-24 (ADR-026 amendment A1) |
 | D66 | Model family | One light model; Phase 49 (Optimus / Megatron, T245-T248) cancelled | owner 2026-11-24 (ADR-026 amendment A1) |
 | D67 | B4 time limits | Median and p95 time limits lifted; peak VRAM ≤ 15.5 GB kept; thinking budget may rise to the VRAM ceiling | owner 2026-11-24 (ADR-026 amendment A2) |
+| D68 | Sealed run | T281 is optional: closing and handover do not wait for it; without it the model and the system stay NOT QUALIFIED | owner 2026-11-27 (ADR-026 amendment A3) |
 
 ## 7. Requirements
 

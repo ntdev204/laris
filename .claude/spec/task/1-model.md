@@ -918,7 +918,7 @@ returned logs, manifests and reports.
 - Status: done
 - Note: 2026-11-27 (owner: "kết quả này chốt luôn"): closed on the measured development figures. MATH 483 / 486 / 484 of 500 and MMLU-Pro STEM 1,028 / 1,025 / 1,025 of 1,175 on three seeds, peak VRAM at most 14.93 GB, B5 29 / 0, B6 0 hits. GPQA has one complete seed (164 / 250), not the three of the validation; the others were stopped on this order. Run ahead of T289 on the owner's direction, so its dependency is now T288 (was T289); T289 stays pending. Development only: the model and the system are NOT QUALIFIED.
 
-### T281 — Sealed runs and the owner's decision
+### T281 — Sealed runs and the owner's decision (optional)
 - Requirements: SR-M13, SR-M12
 - Depends: T280
 - Deliverables:
@@ -926,3 +926,4 @@ returned logs, manifests and reports.
 - Validation:
   - Every sealed result is reported, failures included; the owner records qualified or not qualified per gate
 - Status: pending
+- Note: 2026-11-27 (owner, D68): optional. It may be run or left out, and closing or handing over the project does not wait for it. Without it no gate is judged on the sealed test and the model and the system stay NOT QUALIFIED.
