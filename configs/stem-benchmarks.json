@@ -179,7 +179,8 @@
     "thinking_k": {"draft": {"thinking": {"knowledge": 2048}}},
     "think_c8k": {"draft": {"thinking": {"computable": 8192, "knowledge": 2048}}},
     "think_c16k": {"draft": {"thinking": {"computable": 16384, "knowledge": 2048}}},
-    "think_c28k": {"draft": {"thinking": {"computable": 28000, "knowledge": 2048}}}
+    "think_c28k": {"draft": {"thinking": {"computable": 28000, "knowledge": 2048}}},
+    "think_c56k": {"draft": {"thinking": {"computable": 56000, "knowledge": 2048}}}
   },
   "router_analysis": {
     "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",
