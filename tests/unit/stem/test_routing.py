@@ -174,6 +174,8 @@ def test_a_chosen_path_runs_with_its_own_settings() -> None:
     sys.path.insert(0, str(ROOT / "scripts"))
     import stem_benchmarks as sb
 
+    from .test_harness import t278_harness
+
     calls = []
 
     def model(prompt: str, seed: int, max_tokens: int) -> Dict[str, Any]:
@@ -191,15 +193,13 @@ def test_a_chosen_path_runs_with_its_own_settings() -> None:
 
     item = {"id": "c/1", "question": "How far?", "options": ["1 m", "2 m"], "answer": "B"}
     item["category"] = "physics"
-    notes_cfg = sb.merge_path(CONFIG["harness"], CONFIG["router_paths"]["notes_model"])
+    notes_cfg = sb.merge_path(t278_harness(), CONFIG["router_paths"]["notes_model"])
 
     def choose(it: Dict[str, Any], trace: h.Trace) -> Dict[str, Any]:
         trace.steps.append({"step": "route", "path": "notes_model", "by": "network"})
         return notes_cfg
 
     base = CONFIG["baseline"]
-    from .test_harness import t278_harness
-
     rule = h.Harness(t278_harness(), base, model, solve, CONFIG["equivalence"])
     rule.answer(item, 1, notes=["a passage"])
     assert calls == ["draft", "formalise"]  # computable: the rule router formalises

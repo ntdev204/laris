@@ -121,7 +121,7 @@
     },
     "draft": {
       "max_retries": 1,
-      "thinking": {"knowledge": 2048},
+      "thinking": {"computable": 56000, "knowledge": 2048},
       "answer_tokens": 1024,
       "escalate": {"enabled": false, "thinking_budget": 4096, "answer_tokens": 1024}
     },
@@ -176,7 +176,11 @@
     "seed_b": {"seed_offset": 100003},
     "seed_c": {"seed_offset": 200003},
     "thinking_kr": {"draft": {"thinking": {"knowledge": 2048, "reasoning": 2048}}},
-    "thinking_k": {"draft": {"thinking": {"knowledge": 2048}}}
+    "thinking_k": {"draft": {"thinking": {"computable": 56000, "knowledge": 2048}}},
+    "think_c8k": {"draft": {"thinking": {"computable": 8192, "knowledge": 2048}}},
+    "think_c16k": {"draft": {"thinking": {"computable": 16384, "knowledge": 2048}}},
+    "think_c28k": {"draft": {"thinking": {"computable": 28000, "knowledge": 2048}}},
+    "think_c56k": {"draft": {"thinking": {"computable": 56000, "knowledge": 2048}}}
   },
   "router_analysis": {
     "note": "T287: the run records read by router-report and router-dataset (data/benchmarks/runs, outside Git)",

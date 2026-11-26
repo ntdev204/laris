@@ -697,7 +697,9 @@ returned logs, manifests and reports.
   - The owner deletes `artifacts/checkpoints` (about 39 GB), `tokenizer`, `pilots`, `colab`, `profiles`, `llm_similarity`, `weights` and the Drive copies when sure
 - Validation:
   - The owner confirms; the agent does not delete these files
-- Status: in_progress
+- Status: done
+- Note: 2026-11-24 closed by the owner ("T234 được phép đóng"). The local part was checked on 2026-11-20: nothing left to delete. The Drive folder `laris/runs` (about 28 GB) was found and **not deleted by the agent**; its removal remains the owner's own action. Earlier note follows.
+  
 - Note: 2026-11-20 (owner: "thực hiện T234"). Local part: checked, nothing left to delete. `artifacts/` holds no `checkpoints`, `tokenizer`, `pilots`, `colab`, `profiles`, `llm_similarity` or `weights` folder, and no `*.pt`, `*.safetensors` or `tokenizer.model` file over 50 MB exists under the home directory outside the Hugging Face cache (Qwen3.5-9B and DistilBERT). `scripts/colab` is a source folder in the repository and was left alone; `data/` (75 GB of datasets) is not in this task's list and was left alone. Drive part: found, not deleted. The folder `laris/runs` (Drive id 1KQtUpRfOhQMVVunu7CuOFmK6ODsqkNKx, created 2026-11-18 to 2026-11-20) holds the runs `english-r1-stage1-rerun`, `english-r1-stage2`, `english-r1-stage2-long-step1000` and `english-r1-control`, with `model.pt` (2.2 GB) and `training_state.pt` (4.4 GB) files and logs, about 28 GB in all. Closes when the owner confirms which Drive items go.
 
 ### T235 — Serve the open-weight chat model in the compose stack
@@ -906,14 +908,15 @@ returned logs, manifests and reports.
   - Development MATH, three seeds, reported in `reports/benchmarks/T289-solver-and-review.md`; B5 stays at 0 wrong model-free; no sealed file read; leakage scan 0 hits for any new brain or few-shot material
 - Status: pending
 
-### T290 — B4: the token budget that fits 180 s at 64 requests
+### T290 — Thinking budget at the VRAM ceiling (B1; B4 time limits lifted by D67)
 - Requirements: SR-M13
-- Depends: T289
+- Depends: T288
 - Deliverables:
-  - Measure how generated tokens per item set the p95 and the median at 64 concurrent requests (the T280 candidate: p95 300-340 s against 180 s), and set the draft cap, the conclude rule and the self-consistency rule so B4 holds without lowering B1 / B2 on development; the trade-off between B1 and B4 reported figure by figure
+  - ADR-026 amendment A2 (D67); the thinking budget and the draft, conclusion and sample caps raised on development as far as the context and KV cache allow with peak VRAM ≤ 15.5 GB, by problem class; each step measured on three seeds (accuracy, seconds, tokens, peak VRAM); the values written into the frozen candidate
 - Validation:
-  - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-latency.md`; B4 thresholds unchanged (median ≤ 60 s, p95 ≤ 180 s, peak ≤ 15.5 GB)
-- Status: pending
+  - Development, three benchmarks, three seeds, reported in `reports/benchmarks/T290-thinking-budget.md`; peak VRAM ≤ 15.5 GB in every run; time and tokens reported, not gated
+- Status: done
+- Note: 2026-11-27 (owner: "kết quả này chốt luôn"): closed on the measured development figures. MATH 483 / 486 / 484 of 500 and MMLU-Pro STEM 1,028 / 1,025 / 1,025 of 1,175 on three seeds, peak VRAM at most 14.93 GB, B5 29 / 0, B6 0 hits. GPQA has one complete seed (164 / 250), not the three of the validation; the others were stopped on this order. Run ahead of T289 on the owner's direction, so its dependency is now T288 (was T289); T289 stays pending. Development only: the model and the system are NOT QUALIFIED.
 
 ### T281 — Sealed runs and the owner's decision
 - Requirements: SR-M13, SR-M12
