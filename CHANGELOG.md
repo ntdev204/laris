@@ -6,6 +6,8 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-27
+
 ### Changed
 - **Math in answers (T291):** the web client typesets LaTeX in answers with KaTeX (`$…$`, `$$…$$`, `\(…\)`, `\[…\]`,
   a bare `\boxed{…}`), also while a reply streams, and no longer loses backslashes such as `\,` to Markdown escapes;
