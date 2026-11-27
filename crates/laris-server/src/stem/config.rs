@@ -302,6 +302,11 @@ pub struct ChatCfg {
     pub min_options: usize,
     /// The answer line after the draft (`{answer}`, `{from}`).
     pub answer_line: String,
+    /// How an answer written in LaTeX is put in the answer line (`{answer}`): as Markdown math, so a client typesets
+    /// it and Markdown does not eat its backslashes (T291).
+    pub answer_math: String,
+    /// Characters that mark an answer as LaTeX.
+    pub math_marks: String,
     /// The text of a turn that ended with no answer.
     pub no_answer: String,
     /// Names of where the final answer came from, by `final_from`.

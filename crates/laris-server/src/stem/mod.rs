@@ -462,9 +462,15 @@ impl StemProfile {
                     .get(&trace.final_from)
                     .cloned()
                     .unwrap_or_else(|| trace.final_from.clone());
+                let answer = self.redactor.redact(answer);
+                let answer = if answer.chars().any(|c| chat.math_marks.contains(c)) {
+                    text::fill(&chat.answer_math, &[("answer", answer.as_ref())])
+                } else {
+                    answer.into_owned()
+                };
                 said.push_str(&text::fill(
                     &chat.answer_line,
-                    &[("answer", &self.redactor.redact(answer)), ("from", &from)],
+                    &[("answer", &answer), ("from", &from)],
                 ));
             }
             None => said.push_str(&chat.no_answer),

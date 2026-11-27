@@ -192,6 +192,7 @@ changes in the ADR named in the task.
 | D67 | B4 time limits | Median and p95 time limits lifted; peak VRAM ≤ 15.5 GB kept; thinking budget may rise to the VRAM ceiling | owner 2026-11-24 (ADR-026 amendment A2) |
 | D68 | Sealed run | T281 is optional: closing and handover do not wait for it; without it the model and the system stay NOT QUALIFIED | owner 2026-11-27 (ADR-026 amendment A3) |
 | D69 | STEM profile in the server | The T278-T290 harness is a pipeline stage after the Prefilter and the research tools; a runner item always enters, a chat turn enters automatically when it is the first question of its conversation, has no attached documents and passes the prompt filter with a STEM signal; web and terminal client are answered under the configuration the benchmark runs (thinking budget 56,000 on computable questions); network tools off | owner 2026-11-27 (T284: "Cấu hình 56k và web + cli cùng đồng nhất", entry "Automatic"; ADR-025 amendment A1) |
+| D70 | Math in answers | Answers are Markdown with LaTeX math: the web client typesets `$…$`, `$$…$$`, `\(…\)`, `\[…\]` and a bare `\boxed{…}` with KaTeX (`remark-math`, `rehype-katex`, `katex`, one patched `katex` for all through `overrides`; no `trust`); the terminal client keeps math exactly as written in its own style; the STEM answer line puts a LaTeX answer in `$…$` | owner 2026-11-27 (T291: "response mặc định dạng md để có thể nhận cả các ký hiệu toán học hay công thức dạng latex") |
 
 ## 7. Requirements
 
@@ -456,6 +457,7 @@ Acceptance: one scenario suite per level passes against the compose stack; repor
 Owner: client
 Banner, bordered multi-line input, streamed Markdown with highlighting, tool and diff blocks, approvals, status line, footer
 hints; Esc interrupts; Ctrl+C twice exits; typing while the agent works; history search; no tool, permission or storage logic.
+LaTeX math in an answer is shown exactly as written, in its own style (D70).
 Acceptance: translated golden scenarios pass through the interface; render tests at 60 and 100 columns; owner screenshot review.
 
 ### SR-C2 — Commands and input
@@ -497,8 +499,10 @@ A responsive Next.js interface composed from shadcn/ui sends messages to the con
 replies. Users can start, find, rename and delete conversations, stop a reply and retry a failed turn. The browser stores
 chat history and attachments locally and keeps the API key in tab memory. UTF-8 files are sent as text with the user's
 message and share the gateway request limit.
+Replies, finished and streaming, are Markdown with LaTeX math typeset by KaTeX (D70).
 Acceptance: a desktop and mobile viewport can send a chat and manage its history. An attached UTF-8 file reaches P1 as
-message text, and a streamed error preserves the partial answer for the user.
+message text, and a streamed error preserves the partial answer for the user. LaTeX in an answer keeps its backslashes
+and is typeset; code is left as written.
 
 ### 7.7 Model service
 
@@ -648,4 +652,4 @@ gate, brain write gate with provenance, sealed test splits and data checksums. L
 The authoritative status of every task is in the task files. Programme 1: Phase 19: T92-T94. Phase 20: T95-T98.
 Programme 2: Phase 26: T119-T122. Phase 27: T123-T127. Phase 28: T128-T131. Phase 29: T132-T138, T214. Phase 30: T139-T140.
 Phase 31: T141-T144. Phase 32: T145-T148, T215, T217. Phase 33: T149-T151. Phase 34: T152-T154. Phase 35: T155-T159.
-Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260. Phase 56: T261-T273. Phase 57: T274-T281, T288-T290 (STEM benchmark qualification, ADR-026; programme 1). Phase 58: T283-T283 (precision of the gate's checks; programme 3). Phase 59: T284-T284 (STEM evaluation profile in the server; programme 2).
+Phase 36: T160-T161. Programme 3: Phase 37: T162-T162. Phase 38: T163-T166. Phase 39: T167-T171. Phase 40: T172-T172. Phase 41: T173-T191 (stage-1 re-scope, D46; programme 1). Phase 42: T185-T187 (TF-IDF, word vectors, NER head; programme 1). Phase 43: T192-T219 (pair-task remediation; programme 1). Phase 44: T227-T235. Phase 45: T236-T236. Phase 46: T237-T237. Phase 47: T238-T243. Phase 48: T244-T244. Phase 49: T245-T248 (open-weight LLM, D48; programme 1). Phase 50: T249-T249. Phase 51: T250-T250. Phase 52: T251-T251. Phase 53: T252-T252. Phase 54: T253-T257. Phase 55: T258-T260. Phase 56: T261-T273. Phase 57: T274-T281, T288-T290 (STEM benchmark qualification, ADR-026; programme 1). Phase 58: T283-T283 (precision of the gate's checks; programme 3). Phase 59: T284-T284 (STEM evaluation profile in the server; programme 2). Phase 60: T291-T291 (math in answers; programme 2).

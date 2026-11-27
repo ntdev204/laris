@@ -168,6 +168,15 @@
   @apply border px-3 py-1;
 }
 
+/* LaTeX typeset by KaTeX (T291): a wide formula scrolls instead of widening the reply. */
+.markdown .katex-display {
+  @apply overflow-x-auto overflow-y-hidden py-1;
+}
+
+.markdown .katex {
+  overflow-wrap: normal;
+}
+
 /* Markdown of the research-gap pages (T272): the app has no typography plugin. */
 .prose h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
 .prose h2 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }

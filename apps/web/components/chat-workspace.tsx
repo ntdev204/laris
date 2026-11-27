@@ -9,7 +9,6 @@ import {
   MoreHorizontal, Paperclip, Pencil, Plus, Search, Send, Sparkles, Square, Trash2, X,
 } from "lucide-react";
 import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ import {
   type ToolRecord,
 } from "@/lib/chat";
 import { readHistory, writeHistory } from "@/lib/history";
+import { answerSource, rehypePlugins, remarkPlugins } from "@/lib/markdown";
 
 const emptyDraft = { text: "", files: [] as Attachment[], issue: "" };
 const suggestions = [
@@ -148,11 +148,20 @@ function ToolTrail({ tools, report, running }: { tools?: ToolRecord[]; report?: 
             Báo cáo đầy đủ của hệ thống (trích dẫn đã kiểm tra trong bài)
           </summary>
           <div className="markdown mt-2">
-            <Markdown remarkPlugins={[remarkGfm]} skipHtml>{report}</Markdown>
+            <Markdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins} skipHtml>{answerSource(report)}</Markdown>
           </div>
         </details>
       )}
     </div>
+  );
+}
+
+/** An answer as Markdown with typeset LaTeX (T291); images show only their description. */
+function AnswerMarkdown({ text }: { text: string }) {
+  return (
+    <Markdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins} skipHtml components={{
+      img: ({ alt }) => alt ? <span>{alt}</span> : null,
+    }}>{answerSource(text)}</Markdown>
   );
 }
 
@@ -531,9 +540,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                         <ToolTrail tools={message.tools} report={message.report} />
                         <StemTrail steps={message.stem} />
                         <div className="markdown">
-                          <Markdown remarkPlugins={[remarkGfm]} skipHtml components={{
-                            img: ({ alt }) => alt ? <span>{alt}</span> : null,
-                          }}>{message.text}</Markdown>
+                          <AnswerMarkdown text={message.text} />
                         </div>
                         {message.interrupted && <p className="mt-2 text-sm text-muted-foreground">Phản hồi chưa hoàn tất</p>}
                         <Button variant="ghost" size="icon-sm" className="mt-2 text-muted-foreground"
@@ -550,8 +557,8 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                     <div className="reply-label"><Sparkles /> Laris</div>
                     <ToolTrail tools={live.tools} report={live.report} running={!live.text} />
                     <StemTrail steps={live.stem} running={!live.text} />
-                    <div className="markdown whitespace-pre-wrap [overflow-wrap:anywhere]">
-                      {live.text || <span className="text-muted-foreground" role="status">
+                    <div className="markdown">
+                      {live.text ? <AnswerMarkdown text={live.text} /> : <span className="text-muted-foreground" role="status">
                         {live.tools?.length ? "Đang đọc tài liệu và soạn câu trả lời…"
                           : live.stem?.length ? "Đang giải bài, có thể mất vài phút…" : "Đang chờ phản hồi…"}
                       </span>}

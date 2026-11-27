@@ -2262,3 +2262,33 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
   (`scripts/stem_profile_fixtures.py`). Parity on 64 development items (`reports/benchmarks/T284-server-profile.md`):
   same route 64/64, same answer 61/64 (three long GPQA replies), correct 54 vs 53, McNemar p = 1.0, seeds 64/64 by the
   runner's formula, peak 14.76 GB. Development only: the model and the system are NOT QUALIFIED.
+
+## Phase 60 — Math in answers
+
+### T291 — Markdown answers with LaTeX math in the web and terminal client
+- Requirements: SR-C1, SR-C7
+- Depends: T284
+- Deliverables:
+  - Web client (`apps/web`): `lib/math.ts` rewrites `\(…\)`, `\[…\]` and a bare `\boxed{…}` / `\fbox{…}` to dollar
+    math outside code (a `$$…$$` alone on its line becomes a display block); `lib/markdown.ts` holds one plugin set
+    (`remark-gfm`, `remark-math`, `rehype-katex` with `throwOnError: false`, `strict: "ignore"`, `trust: false`) used for
+    finished replies, the streaming reply (formerly plain text) and the system's report; KaTeX CSS and fonts are bundled
+    from `node_modules`; a wide formula scrolls
+  - Dependencies approved by the owner 2026-11-27: `remark-math` 6.0.0, `rehype-katex` 7.0.1, `katex` 0.19.1; an npm
+    `overrides` entry gives every package the one `katex`, so the copy `rehype-katex` would pull (0.16.47,
+    GHSA-238p-pmpm-9mq7) is not installed; `npm audit` reports 0 vulnerabilities
+  - Terminal client (`laris-tui`): `markdown::inline` keeps `$…$`, `$$…$$`, `\(…\)` and `\[…\]` verbatim, backslashes
+    included, in `Theme::math`; a single `$` opens only before a non-space and closes only after a non-space and before
+    a non-digit; `\$` is an escaped dollar
+  - Server STEM profile: an answer containing one of `server_profile.chat.math_marks` is put in the answer line through
+    `server_profile.chat.answer_math` (`${answer}$`), so `**Answer: t = 3 \, \text{s}**` no longer loses `\,`; the
+    `harness` section and its hash are unchanged
+- Validation:
+  - `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check`, `cargo xtask spec`;
+    `npm run typecheck`, `npm test`, `npm run build` in `apps/web`
+  - A headless-Chrome rendering of the owner's free-fall answer shows every formula typeset (working check, outside Git)
+- Status: done
+- Note: 2026-11-27, the owner reported a web answer where `45 \, \text{m}` showed as `45 , \text{m}` and `$$…$$` stayed
+  raw: the server sent correct Markdown, but `react-markdown` without math support read `\,` as an escaped comma. A
+  display change only; the model stays NOT QUALIFIED.
+

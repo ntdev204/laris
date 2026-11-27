@@ -297,6 +297,11 @@ impl Theme {
         self.colour(Color::Yellow)
     }
 
+    /// LaTeX math (`$…$`, `$$…$$`, `\(…\)`, `\[…\]`), shown as written since a terminal cannot typeset it.
+    pub fn math(self) -> Style {
+        self.colour(Color::Green).on(Style::PLAIN.italic())
+    }
+
     /// Links.
     pub fn link(self) -> Style {
         self.colour(Color::Blue).on(Style::PLAIN.underline())

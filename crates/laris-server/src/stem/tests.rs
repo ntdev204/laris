@@ -579,6 +579,33 @@ async fn a_chat_question_is_answered_with_its_draft_steps_and_answer_line() {
     assert_eq!((usage.prompt_tokens, usage.completion_tokens), (30, 200));
 }
 
+#[tokio::test]
+async fn an_answer_in_latex_is_put_in_the_answer_line_as_math() {
+    let reply = Reply {
+        text: "Fall time.</think>\n\nSo \\boxed{t = 3 \\, \\text{s}}.".into(),
+        prompt_tokens: 30,
+        generated_tokens: 200,
+        truncated: false,
+        seconds: 0.1,
+    };
+    let p = profile(Entry::Auto, Arc::new(TurnChecks), vec![reply]);
+    let r = request(vec![(Role::User, "Compute  2+2.")], None);
+    let w = p.wanted(&r, "Compute  2+2.").expect("first turn");
+    let chunks = collect(
+        p.clone()
+            .run(w, Vec::new())
+            .await
+            .expect("run")
+            .expect("stream"),
+    )
+    .await;
+    let said = content(&chunks);
+    assert!(
+        said.contains("**Answer: $t = 3 \\, \\text{s}$** (the model's draft)"),
+        "{said}"
+    );
+}
+
 #[test]
 fn step_codes_carry_no_text() {
     assert_eq!(
