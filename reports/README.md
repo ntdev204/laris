@@ -9,6 +9,8 @@ Reports describe a particular run and do not automatically qualify a model.
   injection and vault round-trip on fixtures). Reproducible; says nothing about the core model.
 - `performance/`: output of `scripts/benchmark_vault.py` (10,000-note vault) and its budgets; `rust_bench.json` and
   `rust_budgets.json` are the figures and budgets of `cargo xtask bench` (server, redactor, evidence gate, retrieval).
+- `research-gap/`: measured runs of the research-gap workflow (T272) and their reports; the run folders and
+  screenshots stay in `artifacts/gap-eval/`.
 - `security/`: `report.json` of `cargo xtask security`, one verdict per threat-model test id.
 - `verification/`: the open-LLM selection report (T228). Reports of the dropped self-trained model were removed (D48); they remain in git history.
 
