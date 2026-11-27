@@ -191,6 +191,7 @@ changes in the ADR named in the task.
 | D66 | Model family | One light model; Phase 49 (Optimus / Megatron, T245-T248) cancelled | owner 2026-11-24 (ADR-026 amendment A1) |
 | D67 | B4 time limits | Median and p95 time limits lifted; peak VRAM ≤ 15.5 GB kept; thinking budget may rise to the VRAM ceiling | owner 2026-11-24 (ADR-026 amendment A2) |
 | D68 | Sealed run | T281 is optional: closing and handover do not wait for it; without it the model and the system stay NOT QUALIFIED | owner 2026-11-27 (ADR-026 amendment A3) |
+| D69 | STEM profile in the server | The T278-T290 harness is a pipeline stage after the Prefilter and the research tools; a runner item always enters, a chat turn enters automatically when it is the first question of its conversation, has no attached documents and passes the prompt filter with a STEM signal; web and terminal client are answered under the configuration the benchmark runs (thinking budget 56,000 on computable questions); network tools off | owner 2026-11-27 (T284: "Cấu hình 56k và web + cli cùng đồng nhất", entry "Automatic"; ADR-025 amendment A1) |
 
 ## 7. Requirements
 

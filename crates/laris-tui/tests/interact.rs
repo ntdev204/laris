@@ -752,6 +752,28 @@ fn the_stages_of_the_server_pipeline_and_the_sources_of_an_answer_are_shown() {
     );
 }
 
+#[test]
+fn the_steps_of_the_stem_profile_are_shown_as_they_end() {
+    let mut a = app();
+    let step = |code: &str| Event::Status {
+        kind: "pipeline".into(),
+        data: json!({"stage": "stem", "outcome": "ok", "ms": 3, "code": code})
+            .as_object()
+            .cloned()
+            .unwrap(),
+    };
+    feed(&mut a, step("filter:pass"));
+    feed(&mut a, step("draft:thinking 900 tokens"));
+    feed(&mut a, pipeline("model", "ok"));
+    assert_eq!(
+        notices(&a),
+        [
+            "STEM profile: filter:pass",
+            "STEM profile: draft:thinking 900 tokens"
+        ]
+    );
+}
+
 // -- update notice and /restart --------------------------------------------------------------
 
 fn update_event(version: &str) -> Event {

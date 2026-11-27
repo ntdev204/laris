@@ -8,6 +8,8 @@ export type ToolRecord = {
   paper_id?: string;
   sources: { title: string; url: string; year?: number | null }[];
 };
+/** One step of the server's STEM profile (T284) as it ended: its code (step and outcome, never text) and time. */
+export type StemStep = { code: string; ms: number; outcome: string };
 export type Message = {
   id: string;
   role: "user" | "assistant";
@@ -16,8 +18,9 @@ export type Message = {
   interrupted?: boolean;
   tools?: ToolRecord[];
   report?: string;
+  stem?: StemStep[];
 };
-export type Meta = { tools?: ToolRecord[]; report?: string };
+export type Meta = { tools?: ToolRecord[]; report?: string; stem?: StemStep[] };
 export type Chat = { id: string; title: string; updatedAt: number; messages: Message[] };
 
 export const textExtensions = [
@@ -104,6 +107,7 @@ export async function streamReply(
   const separator = /(?:\r\n|\n)(?:\r\n|\n)/;
   let buffer = "";
   let receivedText = false;
+  const stem: StemStep[] = [];
   try {
     while (true) {
       const { value, done } = await reader.read();
@@ -133,6 +137,14 @@ export async function streamReply(
             ...(Array.isArray(extra.server_tools) ? { tools: extra.server_tools } : {}),
             ...(typeof extra.gap_report === "string" ? { report: extra.gap_report } : {}),
           });
+        }
+        // the steps of the STEM profile (T284), shown as they end, as the terminal client shows them
+        const steps = Array.isArray(extra?.steps) ? extra.steps : [];
+        const ended = steps.filter((step: { stage?: string }) => step?.stage === "stem");
+        if (ended.length) {
+          stem.push(...ended.map((step: StemStep) => ({ code: String(step.code ?? ""), ms: Number(step.ms ?? 0),
+            outcome: String(step.outcome ?? "") })));
+          onMeta({ stem: [...stem] });
         }
         const text = chunk.choices?.find((choice: { index: number }) => choice.index === 0)?.delta?.content;
         if (typeof text === "string" && text) {

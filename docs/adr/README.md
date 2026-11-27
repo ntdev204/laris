@@ -42,7 +42,7 @@ Only the principle ADRs remain; the decisions about the Python generation's stru
 | [ADR-022](ADR-022-english-only-foundation.md) | English-only foundation encoder | SUPERSEDED by D48 (spec.md) | 2026-11-14 | Model block |
 | [ADR-023](ADR-023-vram-ceiling-by-device.md) | VRAM ceiling by device for training and profile runs | SUPERSEDED by D48 (spec.md) | 2026-11-18 | Model block, owner runs |
 | [ADR-024](ADR-024-main-brain-design.md) | Main brain: the brain decides, the model advises (notes, write gate, decision network, gates) | ACCEPTED | 2026-11-20 | Brain, harness, server |
-| [ADR-025](ADR-025-request-pipeline-in-server.md) | Request pipeline in the server: stage order, what moves, shared main brain, P1 steps and evidence (D49-D56) | ACCEPTED | 2026-11-20 | Server, client, protocol |
+| [ADR-025](ADR-025-request-pipeline-in-server.md) | Request pipeline in the server: stage order, what moves, shared main brain, P1 steps and evidence (D49-D56; A1 adds the STEM profile stage, D69) | ACCEPTED | 2026-11-20 | Server, client, protocol |
 | [ADR-026](ADR-026-stem-benchmark-qualification.md) | STEM benchmark qualification: MATH-500, MMLU-Pro STEM, GPQA Diamond; light model, harness, RAG, deterministic brain (D57-D68; A1 drops B3 from the gate, A2 lifts the B4 time limits, A3 makes the sealed run optional) | ACCEPTED | 2026-11-23 | Model block, brain, server |
 
 ## Freeze Register

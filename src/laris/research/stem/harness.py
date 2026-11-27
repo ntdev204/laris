@@ -128,6 +128,26 @@ def match_option(value: float, options: List[str], rel_tol: float) -> Optional[i
     return close[0] if len(close) == 1 else None
 
 
+def solver_answer(
+    result: Dict[str, Any], question: str, options: List[str], rel_tol: float
+) -> Optional[str]:
+    """A verified solver result as an answer: the letter of the one option within `rel_tol` of
+    its value, or MATH-style LaTeX for an open question (None for SymPy's complex principal branch
+    where the question names no `i`). Shared by the harness and the server's profile (T284)."""
+    from laris.research.stem.formalise import _complex, math_style
+
+    if options:
+        value = solver_value(result)
+        if value is None:
+            return None
+        index = match_option(value, options, rel_tol)
+        return LETTERS[index] if index is not None else None
+    if _complex(result) and not re.search(r"(?<![A-Za-z\\])i(?![A-Za-z])", question):
+        return None  # SymPy's principal branch where the problem means a real value
+    text = result.get("latex") or result.get("text")
+    return math_style(text) if isinstance(text, str) and text else None
+
+
 def first_json_object(text: str) -> Optional[Dict[str, Any]]:
     """The first balanced `{...}` of `text` that parses as a JSON object, or None."""
     start = text.find("{")
@@ -532,20 +552,12 @@ class Harness:
 
     def _solver_answer(self, item: Dict[str, Any], result: Dict[str, Any]) -> Optional[str]:
         """The solver's result as an answer: an option letter, or MATH-style LaTeX."""
-        from laris.research.stem.formalise import _complex, math_style
-
-        if item["options"]:
-            value = solver_value(result)
-            if value is None:
-                return None
-            index = match_option(
-                value, item["options"], float(self.cfg["solver_check"]["option_rel_tol"])
-            )
-            return LETTERS[index] if index is not None else None
-        if _complex(result) and not re.search(r"(?<![A-Za-z\\])i(?![A-Za-z])", item["question"]):
-            return None  # SymPy's principal branch where the problem means a real value
-        text = result.get("latex") or result.get("text")
-        return math_style(text) if isinstance(text, str) and text else None
+        return solver_answer(
+            result,
+            item["question"],
+            item["options"],
+            float(self.cfg["solver_check"]["option_rel_tol"]),
+        )
 
     def _agrees(self, item: Dict[str, Any], draft: str, solved: str) -> bool:
         if item["options"]:

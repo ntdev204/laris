@@ -104,6 +104,7 @@
     "stage_model": "Asking the model",
     "stage_gate": "Checking the answer against its sources",
     "stage_assembly": "Putting the answer together",
+    "stage_stem": "STEM profile: {code}",
     "stage_other": "Working: {stage}",
     "sources": "Sources: {list}",
     "compacted": "Context compacted: {before} → {after} tokens",

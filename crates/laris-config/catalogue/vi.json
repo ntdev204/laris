@@ -104,6 +104,7 @@
     "stage_model": "Đang hỏi mô hình",
     "stage_gate": "Đang đối chiếu câu trả lời với nguồn",
     "stage_assembly": "Đang ghép câu trả lời",
+    "stage_stem": "Hồ sơ STEM: {code}",
     "stage_other": "Đang xử lý: {stage}",
     "sources": "Nguồn: {list}",
     "compacted": "Đã nén ngữ cảnh: {before} → {after} token",

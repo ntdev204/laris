@@ -71,6 +71,23 @@ test("passes on what the server searched and read, and its report", async () => 
   assert.deepEqual(metas.at(-1), { tools, report: "# R" });
 });
 
+test("passes on the steps of the STEM profile as they end, and ignores keep-alive events", async () => {
+  const step = (code: string) => ({ stage: "stem", outcome: "ok", ms: 5, code });
+  const content = `data: ${JSON.stringify({ choices: [], laris: { steps: [{ stage: "prefilter", outcome: "ok", ms: 1, code: "" }] } })}\n\n`
+    + `data: ${JSON.stringify({ choices: [], laris: { steps: [step("filter:pass")] } })}\n\n`
+    + `data: ${JSON.stringify({ id: "laris-stem", choices: [] })}\n\n`
+    + `data: ${JSON.stringify({ choices: [], laris: { steps: [step("draft:thinking 900 tokens")] } })}\n\n`
+    + `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: "**Answer: 4**" } }] })}\n\ndata: [DONE]\n\n`;
+  const metas: unknown[] = [];
+  let text = "";
+  await streamReply(splitStream(content), (delta) => { text += delta; }, (meta) => metas.push(meta));
+  assert.equal(text, "**Answer: 4**");
+  assert.deepEqual(metas.at(-1), { stem: [
+    { code: "filter:pass", ms: 5, outcome: "ok" },
+    { code: "draft:thinking 900 tokens", ms: 5, outcome: "ok" },
+  ] });
+});
+
 test("rejects unsupported, binary, oversized and invalid UTF-8 files", async () => {
   await assert.rejects(readAttachment(new File(["mock"], "file.docx"), 100), /văn bản UTF-8/);
   await assert.rejects(readAttachment(new File(["mock"], "file.pdf"), 2), /dung lượng/);

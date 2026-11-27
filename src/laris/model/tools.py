@@ -20,6 +20,11 @@ only the routes.
 `solve_stem` (T276) is the deterministic STEM solver (`laris.model.solver`): a structured problem
 in, an answer whose `status` is `verified` (re-checked by an independent route) or `proposal`.
 Each call runs in a worker process with the time and memory ceilings of `SolverSettings`.
+
+`stem_check` (T284) holds the deterministic steps of the server's STEM profile (prompt filter,
+model-free path, repair, solver answer, equivalence, cross-check; `laris.research.stem.checks`).
+It is served only when `model_service.stem_config` names the profile's configuration, and it is
+never listed in `schemas()`: the server calls it by name, the chat model is not offered it.
 """
 
 from dataclasses import dataclass
@@ -34,6 +39,7 @@ HEAD_CHARS = 3000  # the head of a document read for its bibliography (as `docs_
 CITATION_KINDS = ("summary", "edges", "cocitation", "coupling", "centrality", "unresolved")
 MINING_KINDS = ("overview", "term_trends", "near_duplicates", "groups")
 SOLVE_STEM = "solve_stem"
+STEM_CHECK = "stem_check"  # T284: the STEM profile's deterministic steps, not listed
 
 
 class ToolError(Exception):
@@ -403,11 +409,16 @@ SOLVER_DESCRIPTION = (
 class ToolBox:
     """The scientific tools, with the limits one call may use."""
 
-    def __init__(self, limits: Limits, solver: Optional[Any] = None) -> None:
+    def __init__(
+        self, limits: Limits, solver: Optional[Any] = None, stem: Optional[Any] = None
+    ) -> None:
         from laris.model.solver.settings import SolverSettings
 
         self.limits = limits
         self.solver = solver if solver is not None else SolverSettings()
+        # T284: the deterministic steps of the STEM profile (`laris.research.stem.checks`), served
+        # by name to the server and never listed, so the chat model is not offered them
+        self.stem = stem
         self._tools: Dict[str, Tool] = {}
         for item in _definitions():
             run = item["run"]
@@ -432,8 +443,26 @@ class ToolBox:
     def schemas(self) -> List[Dict[str, Any]]:
         return [self._tools[name].schema() for name in sorted(self._tools)]
 
+    def _stem_check(self, arguments: Optional[Any]) -> Any:
+        from laris.research.stem.checks import StemCheckError
+
+        if self.stem is None:
+            raise UnknownTool(STEM_CHECK)
+        if not isinstance(arguments, dict):
+            raise ToolError("invalid_arguments", "arguments must be an object")
+        try:
+            return self.stem.call(arguments)
+        except StemCheckError as exc:
+            raise ToolError(exc.code, exc.message) from None
+        except LarisError as exc:
+            raise ToolError("rejected", f"the input was refused ({type(exc).__name__})") from exc
+        except Exception as exc:
+            raise ToolError("tool_failed", f"the tool failed ({type(exc).__name__})") from exc
+
     def call(self, name: str, arguments: Optional[Any]) -> Any:
         """The result of tool `name`; raises `UnknownTool` or `ToolError`."""
+        if name == STEM_CHECK:
+            return self._stem_check(arguments)
         tool = self._tools.get(name)
         if tool is None:
             raise UnknownTool(name)

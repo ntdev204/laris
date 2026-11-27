@@ -12,6 +12,8 @@
     python scripts/stem_benchmarks.py harness --path P --run path-P   # T287: one path on every item
     python scripts/stem_benchmarks.py router-report  # T287: labels, baselines, oracle
     python scripts/stem_benchmarks.py router-dataset --out DIR; router-gates --dataset DIR [--net F]
+    python scripts/stem_benchmarks.py harness --server-bin | --server URL --key-file F  # T284
+    python scripts/stem_benchmarks.py harness-parity PY_RUN.jsonl SERVER_RUN.jsonl   # T284
 
 Settings come from `configs/stem-benchmarks.json` (`--config`). `baseline` reads the development
 splits only and sends them to the engine of `engine.kind`: `vllm_http`, the vLLM server of the
@@ -727,7 +729,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
     from laris.model.solver import SolverError, SolverSettings
     from laris.model.solver import run as solver_run
     from laris.research.stem.formalise import answer_model_free
-    from laris.research.stem.harness import Harness, summarise_records
+    from laris.research.stem.harness import Harness
     from laris.research.stem.router import route
     from laris.shared.config.loader import load_runtime_config
 
@@ -757,6 +759,13 @@ def cmd_harness(args: argparse.Namespace) -> int:
             only = set(Path(args.ids).read_text().split())
             items = [i for i in items if i["id"] in only]
         work += [(bench, i) for i in items if i["id"] not in done]
+    if getattr(args, "server", "") or getattr(args, "server_bin", False):
+        if path != "rule" or getattr(args, "lever", None) or args.no_filter:
+            raise SystemExit(
+                "the server profile runs the configuration as it is:"
+                " no --path, --lever or --no-filter"
+            )
+        return harness_via_server(args, config, work, out_dir, out_path, run, revision)
     fcfg = hcfg.get("filter") or {}
     screens: Dict[str, Any] = {}
     stopped: List[Any] = []
@@ -939,6 +948,50 @@ def cmd_harness(args: argparse.Namespace) -> int:
                 print(f"{count}/{len(work)}", flush=True)
         peak = sampler.peak
 
+    filter_sha = (
+        hashlib.sha256((ROOT / fcfg["rules"]).read_bytes()).hexdigest()
+        if fcfg.get("enabled") and not args.no_filter
+        else None
+    )
+    meta = {"via": "python", "levers": list(getattr(args, "lever", None) or [])}
+    return write_harness_summary(
+        args,
+        config,
+        hcfg,
+        path,
+        out_dir,
+        out_path,
+        run,
+        served,
+        revision,
+        snapshot,
+        filter_sha,
+        peak,
+        meta,
+    )
+
+
+def write_harness_summary(
+    args: argparse.Namespace,
+    config: Dict[str, Any],
+    hcfg: Dict[str, Any],
+    path: str,
+    out_dir: Path,
+    out_path: Path,
+    run: str,
+    served: Dict[str, Any],
+    revision: str,
+    snapshot: str,
+    filter_sha: Optional[str],
+    peak: int,
+    meta: Dict[str, Any],
+) -> int:
+    """The run summary of a harness run (either path): accuracy, cost and steps per benchmark and
+    class, against the T275 baseline of the same items."""
+    from laris.research.stem.harness import summarise_records
+
+    base = config["baseline"]
+    mode = base["modes"][hcfg["mode"]]
     rows = [json.loads(line) for line in out_path.read_text().splitlines() if line]
     baseline_path = ROOT / config["data_dir"] / "runs" / args.baseline_run
     baseline = {}
@@ -950,7 +1003,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
     summary: Dict[str, Any] = {
         "run": run,
         "path": path,
-        "levers": list(getattr(args, "lever", None) or []),
+        **meta,
         "mode": hcfg["mode"],
         "model_id": base["model_id"],
         "settings": mode,
@@ -961,11 +1014,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
         "harness_config_sha256": hashlib.sha256(
             json.dumps(hcfg, sort_keys=True).encode("utf-8")
         ).hexdigest(),
-        "filter_rules_sha256": (
-            hashlib.sha256((ROOT / fcfg["rules"]).read_bytes()).hexdigest()
-            if fcfg.get("enabled") and not args.no_filter
-            else None
-        ),
+        "filter_rules_sha256": filter_sha,
         "equivalence_protocol": answers.EQUIVALENCE_PROTOCOL,
         "baseline_run": args.baseline_run if baseline else None,
         "peak_vram_bytes_sampled": peak,
@@ -985,6 +1034,254 @@ def cmd_harness(args: argparse.Namespace) -> int:
     summary_path.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=1))
     return 0
+
+
+# -- T284: the server's STEM profile ------------------------------------------------------
+
+TRACE_KEYS = (
+    "cls", "rule", "features", "steps", "model_free", "brain_only", "draft", "final", "final_from",
+    "truncated", "retried", "concluded", "votes", "solver_status", "agreement", "notes",
+    "crosscheck", "model_seconds", "solver_seconds",
+)
+
+
+def server_record(
+    bench: str, item: Dict[str, Any], got: Dict[str, Any], mode: str, eq: Dict[str, Any], peak: int
+) -> Dict[str, Any]:
+    """A run record, as the Python path writes it, from the server's `laris.stem` record (ids,
+    answers, steps and cost; the server sends no item text)."""
+    final = got.get("final")
+    draft = got.get("draft")
+    record = {
+        "id": item["id"],
+        "bench": bench,
+        "category": item["category"],
+        "mode": mode,
+        "via": "server",
+        "extracted": final,
+        "correct": score_answer(item, final, eq),
+        "draft_correct": score_answer(item, draft, eq) if draft is not None else False,
+        "finished_at": time.time(),
+        "cost": stats.CostRecord(
+            seconds=float(got.get("seconds") or 0.0),
+            prompt_tokens=int(got.get("prompt_tokens") or 0),
+            generated_tokens=int(got.get("generated_tokens") or 0),
+            model_calls=int(got.get("model_calls") or 0),
+            solver_calls=int(got.get("solver_calls") or 0),
+            peak_vram_bytes=peak,
+        ).as_dict(),
+        "seed": got.get("seed"),
+        "profile_config_sha256": got.get("profile_config_sha256"),
+    }
+    if got.get("filter") is not None:
+        record["filter"] = got["filter"]
+    for key in TRACE_KEYS:
+        if key in got:
+            record[key] = got[key]
+    return record
+
+
+def _server_items(work: List[Any], path: Path) -> None:
+    """The items as the server takes them (`laris.stem`): id, question, options; unfiltered, the
+    server's profile runs the filter itself. The file lives in the ignored run folder."""
+    with path.open("w", encoding="utf-8") as handle:
+        for _, item in work:
+            row = {"id": item["id"], "question": item["question"], "options": item["options"]}
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def _records_from_bin(args: argparse.Namespace, config: Dict[str, Any], items: Path):
+    """`laris-server stem run` on the local binary: the profile with the settings a server gets
+    (the configuration and root of this checkout, the engine port of docker/laris.env, the model
+    service's tools at `--tools-url`)."""
+    import os
+    import subprocess
+
+    hcfg = config["harness"]
+    env = {k: v for k, v in os.environ.items() if not k.startswith("LARIS_SERVER__")}
+    env.update(
+        {
+            "LARIS_SERVER__STEM_PROFILE": "request",
+            "LARIS_SERVER__STEM_CONFIG": str((ROOT / args.config).resolve()),
+            "LARIS_SERVER__STEM_ROOT": str(ROOT),
+            "LARIS_SERVER__STEM_ENGINE_URL": f"http://{config['engine']['host']}:{engine_port(config['engine'])}",
+            "LARIS_SERVER__MODEL_URL": args.tools_url,
+            "LARIS_SERVER__MODEL_MAX_CONCURRENT": str(
+                int(hcfg["solver_check"]["max_concurrency"]) * 2
+            ),
+            "LARIS_SERVER__MODEL_HEADER_TIMEOUT_MS": "600000",
+            "LARIS_SERVER__MODEL_QUEUE_WAIT_MS": "3600000",
+        }
+    )
+    binary = ROOT / hcfg["retrieval"]["server_bin"]
+    with subprocess.Popen(
+        [str(binary), "stem", "run", str(items)], env=env, stdout=subprocess.PIPE, text=True
+    ) as proc:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            if line.strip():
+                yield json.loads(line)
+        if proc.wait() != 0:
+            print("laris-server stem run reported failed items", file=sys.stderr)
+
+
+def _records_from_http(args: argparse.Namespace, config: Dict[str, Any], work: List[Any]):
+    """Each item as a chat turn to a running server (`POST /v1/laris/chat` with `laris.stem`), at
+    most `harness.concurrency` at once; the key is read from `--key-file`."""
+    import ssl
+    import urllib.request
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    key = Path(args.key_file).read_text(encoding="utf-8").strip()
+    context = ssl.create_default_context(cafile=args.ca_file or None)
+    url = args.server.rstrip("/") + "/v1/laris/chat"
+
+    def ask(item: Dict[str, Any]) -> Dict[str, Any]:
+        body = {
+            "messages": [{"role": "user", "content": item["question"]}],
+            "stream": True,
+            "laris": {
+                "kind": "turn",
+                "stem": {
+                    "id": item["id"],
+                    "question": item["question"],
+                    "options": item["options"],
+                },
+            },
+        }
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {key}",
+                "X-Laris-Protocol": "2",
+            },
+        )
+        found: Dict[str, Any] = {"id": item["id"], "error": "no record"}
+        # the server sends a keep-alive event while a step runs, so a quiet socket means a fault
+        with urllib.request.urlopen(request, timeout=600, context=context) as response:
+            for raw in response:
+                line = raw.decode("utf-8").strip()
+                if not line.startswith("data:") or line[5:].strip() == "[DONE]":
+                    continue
+                event = json.loads(line[5:])
+                if event.get("error"):
+                    return {"id": item["id"], "error": "the server failed the item"}
+                stem = (event.get("laris") or {}).get("stem")
+                if stem is not None:
+                    found = stem
+        return found
+
+    with ThreadPoolExecutor(max_workers=int(config["harness"]["concurrency"])) as pool:
+        futures = [pool.submit(ask, item) for _, item in work]
+        for future in as_completed(futures):
+            yield future.result()
+
+
+def harness_via_server(
+    args: argparse.Namespace,
+    config: Dict[str, Any],
+    work: List[Any],
+    out_dir: Path,
+    out_path: Path,
+    run: str,
+    revision: str,
+) -> int:
+    """T284: the development items sent to the server's STEM profile instead of the Python loop;
+    the records and the summary have the Python path's form (the Python harness stays the
+    reference for parity, `harness-parity`)."""
+    base, hcfg = config["baseline"], config["harness"]
+    by_id = {item["id"]: (bench, item) for bench, item in work}
+    engine = HttpEngine(config["engine"], base["model_id"])
+    served = engine.identity()
+    eq = config["equivalence"]
+    items_path = out_dir / f"{run}.items.jsonl"
+    failed = 0
+    with VramSampler() as sampler:
+        if args.server:
+            records = _records_from_http(args, config, work)
+        else:
+            _server_items(work, items_path)
+            records = _records_from_bin(args, config, items_path)
+        try:
+            for count, got in enumerate(records, 1):
+                if "error" in got:
+                    failed += 1
+                    print(f"{got.get('id')}: {got['error']}", file=sys.stderr)
+                    continue
+                bench, item = by_id[got["id"]]
+                record = server_record(bench, item, got, hcfg["mode"], eq, sampler.peak)
+                with open(out_path, "a", encoding="utf-8") as handle:
+                    handle.write(json.dumps(record) + "\n")
+                if count % 50 == 0 or count == len(work):
+                    print(f"{count}/{len(work)}", flush=True)
+        finally:
+            items_path.unlink(missing_ok=True)
+        peak = sampler.peak
+    brain = json.loads((ROOT / hcfg["retrieval"]["brain_config"]).read_text(encoding="utf-8"))
+    folder = ROOT / brain["data_dir"] / "snapshots" / hcfg["retrieval"]["snapshot"]
+    snapshot = json.loads((folder / "snapshot.json").read_text("utf-8"))["snapshot_sha256"]
+    fcfg = hcfg.get("filter") or {}
+    filter_sha = (
+        hashlib.sha256((ROOT / fcfg["rules"]).read_bytes()).hexdigest()
+        if fcfg.get("enabled")
+        else None
+    )
+    meta = {"via": "server-http" if args.server else "server-bin", "levers": [], "failed": failed}
+    write_harness_summary(
+        args,
+        config,
+        hcfg,
+        "rule",
+        out_dir,
+        out_path,
+        run,
+        served,
+        revision,
+        snapshot,
+        filter_sha,
+        peak,
+        meta,
+    )
+    return 1 if failed else 0
+
+
+def parity_table(a: Dict[str, Dict[str, Any]], b: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """Two runs on the same items: same final answer, same verdict, each run's correct count, and
+    the exact McNemar p of the verdicts (T275 parity rule: the same verdict within engine noise)."""
+    from laris.research.stem.cost import mcnemar_exact
+
+    out: Dict[str, Any] = {}
+    for bench in data.BENCHMARKS:
+        ids = sorted(i for i in a if i in b and a[i]["bench"] == bench)
+        if not ids:
+            continue
+        up = sum(1 for i in ids if b[i]["correct"] and not a[i]["correct"])
+        down = sum(1 for i in ids if a[i]["correct"] and not b[i]["correct"])
+        out[bench] = {
+            "items": len(ids),
+            "same_final": sum(1 for i in ids if a[i].get("final") == b[i].get("final")),
+            "same_verdict": sum(1 for i in ids if a[i]["correct"] == b[i]["correct"]),
+            "same_route": sum(1 for i in ids if a[i].get("cls") == b[i].get("cls")),
+            "correct_a": sum(1 for i in ids if a[i]["correct"]),
+            "correct_b": sum(1 for i in ids if b[i]["correct"]),
+            "b_right_a_wrong": up,
+            "a_right_b_wrong": down,
+            "mcnemar_p": mcnemar_exact(up, down),
+        }
+    return out
+
+
+def cmd_harness_parity(args: argparse.Namespace) -> int:
+    """T284: a server-profile run against a Python-harness run on the same items and seeds."""
+    config = _config(args.config)
+    a, b = _records(args.reference, config), _records(args.candidate, config)
+    table = parity_table(a, b)
+    out = {"reference": args.reference, "candidate": args.candidate, "benchmarks": table}
+    print(json.dumps(out, indent=1))
+    return 0
+
 
 
 def cmd_filter_eval(args: argparse.Namespace) -> int:
@@ -1426,7 +1723,30 @@ def main(argv: List[str] | None = None) -> int:
         action="append",
         help="T279: apply a named override of cost_levers in the configuration (repeatable)",
     )
+    harness.add_argument(
+        "--server",
+        default="",
+        help="T284: send the items to the STEM profile of a running server (https://host:port)",
+    )
+    harness.add_argument("--key-file", default="", help="T284: the API key for --server")
+    harness.add_argument(
+        "--ca-file", default="", help="T284: the certificate authority of --server"
+    )
+    harness.add_argument(
+        "--server-bin",
+        action="store_true",
+        help="T284: send the items to the local `laris-server stem run` (the profile without HTTP)",
+    )
+    harness.add_argument(
+        "--tools-url",
+        default="http://127.0.0.1:38201",
+        help="T284: the model service serving solve_stem and stem_check for --server-bin",
+    )
     harness.set_defaults(func=cmd_harness)
+    hpar = sub.add_parser("harness-parity")
+    hpar.add_argument("reference", help="run file of the Python harness (runs folder)")
+    hpar.add_argument("candidate", help="run file of the server profile (runs folder)")
+    hpar.set_defaults(func=cmd_harness_parity)
     feval = sub.add_parser("filter-eval")
     feval.add_argument("--run", default="")
     feval.add_argument("--fixture", default="", help="folder with prompts.json and quantities.json")

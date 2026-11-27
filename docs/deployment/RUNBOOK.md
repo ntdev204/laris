@@ -3,7 +3,7 @@ document_id: "DOC-DEPLOY-RUNBOOK-001"
 title: "Deployment runbook"
 document_type: "architecture"
 status: "DRAFT"
-version: "0.2.0"
+version: "0.3.0"
 created_at: "2026-11-19"
 updated_at: "2026-11-27"
 owner: "LARIS Architecture Team"
@@ -13,7 +13,7 @@ related_documents:
   - "docs/adr/ADR-021-rust-generation.md"
 decision_references:
   - "ADR-021"
-change_summary: "T290: the engine context default is 65536 (thinking budget of the STEM candidate). Earlier: T282: the chat model is served by one vLLM server (BF16) that chat and the STEM benchmark runner share. Earlier: front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
+change_summary: "T284: the STEM profile is a stage of the server pipeline; web and terminal chat and the benchmark runner are answered under one configuration. Earlier: T290: the engine context default is 65536 (thinking budget of the STEM candidate). Earlier: T282: the chat model is served by one vLLM server (BF16) that chat and the STEM benchmark runner share. Earlier: front matter added; the self-trained model is removed, the model service serves an open-weight chat model (T233)."
 ---
 
 # Deployment runbook (SR-S8)
@@ -87,6 +87,38 @@ vLLM to `127.0.0.1` at that port through a network that does not masquerade, so 
 (`configs/stem-benchmarks.json`, `engine.port_file`) and send their requests there; the script records in its summary what the server serves. Chat and
 evaluation use one engine and one precision; a benchmark run shares the GPU with chat, so cost and latency figures
 are only comparable under the same load.
+
+**STEM profile in the server (T284).** `docker/compose.chat.yaml` turns on the server's STEM profile
+(`LARIS_STEM_PROFILE`, default `auto`): the first question of a chat from the web or the terminal client that passes
+the prompt filter with a STEM signal, and every item the benchmark runner sends, is answered by the harness of the
+frozen candidate in `configs/stem-benchmarks.json` (T290: thinking budget 56,000 tokens on computable questions, 2,048
+on knowledge questions; conclusion of a cut reply; self-consistency; notes of the frozen snapshot). A hard question
+can take several minutes; both clients list the profile's steps as they end and the answer ends with one line naming
+where it came from. Other turns go through the pipeline as before.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `LARIS_STEM_PROFILE` | `auto` | `auto`: runner items and first STEM questions of a chat; `request`: runner items only; `off` |
+| `LARIS_STEM_SNAPSHOT` | `stem-t277-2` | folder under `data/brain/snapshots/` mounted read-only; must be the configuration's `harness.retrieval.snapshot`, or the server does not start |
+
+The server reads `configs/stem-benchmarks.json` and `configs/stem-brain.json` read-only; the model service serves the
+profile's deterministic steps (`stem_check`) from the same file, the prompt-filter rules and `.laris/prefilter.toml`.
+Changing the configuration changes chat and evaluation together; restart `server` and `model` after a change.
+
+Runner against the server's profile (same records and summary as the Python path):
+
+```sh
+# the deployed server: a key with enough tokens for 56k-token thinking
+python scripts/stem_benchmarks.py harness --server https://localhost:38443 --key-file KEY --ca-file CA.crt --run R
+# or the profile without HTTP: the local binary, vLLM on the engine port, a model service with the tools
+LARIS_MODEL_SERVICE__STEM_CONFIG=configs/stem-benchmarks.json LARIS_MODEL_SERVICE__STEM_ROOT=$PWD \
+  python -m cli.model serve --host 127.0.0.1 --port 38201 &
+python scripts/stem_benchmarks.py harness --server-bin --run R
+python scripts/stem_benchmarks.py harness-parity PYTHON_RUN.jsonl R.jsonl
+```
+
+The profile is not a qualification: the model and the system are NOT QUALIFIED until gates B1-B6 pass on the sealed
+test (ADR-026).
 
 ## Smoke test
 
