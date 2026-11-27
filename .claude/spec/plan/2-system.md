@@ -185,3 +185,15 @@ Exit criteria:
 Status: done 2026-11-27 (T284): same route 64/64 and same answer 61/64 on development items, McNemar p = 1.0
 (`reports/benchmarks/T284-server-profile.md`); chat from the web and the terminal client is answered by the same
 profile (D69, ADR-025 amendment A1).
+
+### Phase 60 — Math in answers
+Goal: an answer written in Markdown with LaTeX reads as mathematics in the web client and keeps its LaTeX intact in the
+terminal client. Owner direction 2026-11-27 (T291, D70).
+Tasks: T291
+Exit criteria:
+- The web client typesets `$…$`, `$$…$$`, `\(…\)`, `\[…\]` and a bare `\boxed{…}` in finished and streaming replies;
+  no backslash is lost to Markdown escapes; code stays as written; KaTeX runs without `trust`.
+- The terminal client shows math spans verbatim in their own style; prices such as `$5 and $10` stay text.
+- The STEM answer line puts a LaTeX answer in math (`server_profile.chat.answer_math`, `math_marks`); the harness
+  configuration hash is unchanged.
+Status: done 2026-11-27 (T291).

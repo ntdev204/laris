@@ -154,6 +154,41 @@ fn inline_markers_that_do_not_close_stay_as_written() {
 }
 
 #[test]
+fn latex_math_is_kept_as_written() {
+    let theme = Theme::of(laris_config::settings::Theme::Dark);
+    let spans = |s: &str| inline(s, Style::PLAIN, theme);
+    let show = |s: &str| spans(s).iter().map(|s| s.text.clone()).collect::<String>();
+    for math in [
+        r"$h = 45 \, \text{m}$",
+        r"$$45 = \frac{1}{2} \cdot 10 \cdot t^2$$",
+        r"\(v = \sqrt{2gh}\)",
+        r"\[t = \sqrt{9} = 3 \, \text{s}\]",
+        r"$a_1 * b_2 * c$",
+    ] {
+        let line = format!("so {math} holds");
+        assert_eq!(show(&line), line);
+        let found = spans(&line);
+        let span = found
+            .iter()
+            .find(|s| s.text == math)
+            .expect("one math span");
+        assert_eq!(span.style, theme.math());
+    }
+    assert_eq!(
+        show(r"\boxed{t = 3 \, \text{s}}"),
+        r"\boxed{t = 3 \, \text{s}}"
+    );
+    assert_eq!(show("$5 and $10"), "$5 and $10");
+    assert!(
+        spans("costs $5 and $10")
+            .iter()
+            .all(|s| s.style == Style::PLAIN)
+    );
+    assert_eq!(show(r"\$x\$"), "$x$");
+    assert_eq!(show(r"\(open"), "(open");
+}
+
+#[test]
 fn bold_and_italic_are_styles_not_characters() {
     let spans = inline(
         "x **b** *i* `c`",

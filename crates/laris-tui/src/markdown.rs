@@ -1,5 +1,5 @@
 //! Markdown for the terminal: headings, paragraphs, lists, quotes, rules, tables as rows, fenced code with
-//! highlighting, and inline code, bold, italic and links.
+//! highlighting, and inline code, bold, italic and links. LaTeX math is kept exactly as written, in its own style.
 //!
 //! [`render`] turns *complete lines* of Markdown into screen lines. A streamed answer is rendered by cutting it at its
 //! last newline ([`split_complete`]): the lines before are final (rendering a longer text never changes them) and the
@@ -17,8 +17,8 @@ pub fn split_complete(text: &str) -> (&str, &str) {
     }
 }
 
-/// The inline spans of one paragraph line: `code`, **bold**, *italic*, [text](url). Unmatched markers stay as
-/// written. `base` is the style underneath.
+/// The inline spans of one paragraph line: `code`, **bold**, *italic*, [text](url) and math (`$…$`, `$$…$$`, `\(…\)`,
+/// `\[…\]`, its backslashes untouched). Unmatched markers stay as written. `base` is the style underneath.
 pub fn inline(text: &str, base: Style, theme: Theme) -> Vec<Span> {
     let chars: Vec<char> = text.chars().collect();
     let mut spans: Vec<Span> = Vec::new();
@@ -45,7 +45,16 @@ pub fn inline(text: &str, base: Style, theme: Theme) -> Vec<Span> {
     let mut i = 0;
     while i < chars.len() {
         let c = chars[i];
-        if c == '\\' && i + 1 < chars.len() && "\\`*_[]()#>-+.!".contains(chars[i + 1]) {
+        if let Some((open, close)) = math_at(&chars, i)
+            && let Some(end) = math_end(&chars, i + open, close)
+        {
+            flush(&mut spans, &mut plain);
+            let math: String = chars[i..end + close.len()].iter().collect();
+            spans.push(Span::new(math, base.on(theme.math())));
+            i = end + close.len();
+            continue;
+        }
+        if c == '\\' && i + 1 < chars.len() && "\\`*_[]()#>-+.!$".contains(chars[i + 1]) {
             plain.push(chars[i + 1]);
             i += 2;
             continue;
@@ -109,6 +118,38 @@ pub fn inline(text: &str, base: Style, theme: Theme) -> Vec<Span> {
     }
     flush(&mut spans, &mut plain);
     spans
+}
+
+/// The math delimiter opening at `i`: its length and the closing marker. A single `$` opens only before a non-space,
+/// so a price such as `$5 and $10` stays text.
+fn math_at(chars: &[char], i: usize) -> Option<(usize, &'static [char])> {
+    let next = chars.get(i + 1).copied();
+    match chars[i] {
+        '\\' if next == Some('(') => Some((2, &['\\', ')'])),
+        '\\' if next == Some('[') => Some((2, &['\\', ']'])),
+        '$' if next == Some('$') => Some((2, &['$', '$'])),
+        '$' if next.is_some_and(|n| !n.is_whitespace()) => Some((1, &['$'])),
+        _ => None,
+    }
+}
+
+/// Where `close` starts after `from`, skipping escaped characters. A single `$` closes only after a non-space and
+/// before a non-digit; an empty span is no math.
+fn math_end(chars: &[char], from: usize, close: &[char]) -> Option<usize> {
+    let mut j = from;
+    while j + close.len() <= chars.len() {
+        if chars[j..j + close.len()] == *close && j > from {
+            if close != ['$'] {
+                return Some(j);
+            }
+            let after = chars.get(j + 1);
+            if !chars[j - 1].is_whitespace() && after.is_none_or(|a| !a.is_ascii_digit()) {
+                return Some(j);
+            }
+        }
+        j += if chars[j] == '\\' { 2 } else { 1 };
+    }
+    None
 }
 
 fn clean(text: &str) -> String {

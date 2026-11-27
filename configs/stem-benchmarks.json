@@ -278,6 +278,8 @@
       "option_line": "^\\s*\\(?([A-Ja-j])[\\).:]\\s+(.+?)\\s*$",
       "min_options": 2,
       "answer_line": "\n\n**Answer: {answer}** ({from})",
+      "answer_math": "${answer}$",
+      "math_marks": "\\^_{",
       "no_answer": "No answer could be read from the model's reply.",
       "from": {
         "draft": "the model's draft",
