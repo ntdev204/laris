@@ -3,9 +3,9 @@ document_id: "DOC-ADR-025"
 title: "ADR-025: Request pipeline in the server"
 document_type: "adr"
 status: "ACCEPTED"
-version: "0.1.0"
+version: "0.2.0"
 created_at: "2026-11-20"
-updated_at: "2026-11-20"
+updated_at: "2026-11-27"
 owner: "LARIS Architecture Team"
 reviewers: []
 source_of_truth: true
@@ -180,6 +180,41 @@ The server already receives every user message; the pipeline does not widen what
 | D54 | Decider | Rule decider behind the ADR-024 seam; closed set unchanged; `run_tool`, `acquire`, `verify` not decided by the server pipeline; network off | Network on the server now: not promoted, no held-out result |
 | D55 | P1 | Optional `laris.steps`, `decision`, `evidence`; the request side drops them; `X-Laris-Protocol` bumped | Separate events endpoint: two connections, ordering problems |
 | D56 | Rollout | Every stage is configuration-gated and off by default until T243 passes; all off equals today's behaviour | Switch on at once: no rollback |
+| D69 | STEM profile (A1) | A stage after the Prefilter and the research tools; entry by a runner item, or automatic for a first STEM question of a chat; loop in Rust, SymPy and the rule set behind the model service's `stem_check`; network tools off | An explicit STEM mode in each client: the owner chose automatic |
+
+### 10.1 Amendment A1 (owner, 2026-11-27, T284): the STEM evaluation profile as a stage
+
+The harness measured in Python (T278-T280, T285-T287, frozen candidate of T290) runs inside the pipeline, so the
+system that is measured is the one deployed, and the web client, the terminal client and the benchmark runner are
+answered alike under one configuration (`configs/stem-benchmarks.json`: its `baseline` and `harness` sections, read
+unchanged, and a `server_profile` section for what only the server needs).
+
+- **Place.** After the Prefilter and after the server's research tools (a research turn stays a research turn);
+  before retrieval over the main brain. A turn it takes never reaches the policy gateway: network tools are off.
+- **Entry (D69).** A request that carries an item (`laris.stem`: id, question, options; the runner) always enters.
+  With `LARIS_SERVER__STEM_PROFILE=auto` (the owner's choice, 2026-11-27: "Automatic") a chat turn enters when it is
+  the first question of its conversation, has no attached documents and passes the prompt filter with a STEM signal;
+  lettered trailing lines (`A.`, `B)`, `(C)`, in order, at least two) are read as options. Any other turn, a filter
+  stop included, goes on through the pipeline as before. `request` takes only runner items; `off` (the default
+  outside `docker/compose.chat.yaml`) turns the stage off.
+- **What runs where.** The loop (router, notes, draft with the thinking budget per class, conclusion of a cut reply,
+  retries, formalisation, self-consistency, review, notes check) is Rust (`laris-server::stem`). The engine is the vLLM
+  server of T282, the chat template rendered by the engine itself (`/tokenize`, `/detokenize`). The solver is the
+  remote tool `solve_stem`; the deterministic steps that need SymPy or the T286 rule set (prompt filter, model-free
+  patterns, repair, solver answer, answer equivalence, cross-check) are the remote tool `stem_check` of the model
+  service, which runs the reference's own Python code and is not offered to the chat model. Retrieval reads the frozen
+  snapshot (`harness.retrieval.snapshot`) through `MainBrain`, mounted read-only; a missing or different snapshot stops
+  the server.
+- **Display.** Each step ends in a step event of stage `stem` whose code names the step and its outcome, never text;
+  both clients list them. The answer is the visible text of the reply the draft was read from, then one answer line
+  (`server_profile.chat.answer_line`: the answer and where it came from). The record of the turn (route, steps,
+  answers, cost, configuration and snapshot hashes; no item text) goes in `laris.stem`. While a step runs the server
+  sends an empty keep-alive event every `server_profile.heartbeat_ms`.
+- **Parity.** `scripts/stem_profile_fixtures.py` runs the Python harness on scripted scenarios and the Rust tests
+  replay them call for call; on development items `scripts/stem_benchmarks.py harness --server-bin` (or `--server`)
+  and the Python harness are compared by `harness-parity`. The Python harness stays the reference.
+- **Not a qualification.** The profile answers without citations; the evidence gate of normal chat is unchanged. The
+  model and the system are NOT QUALIFIED until gates B1-B6 pass on the sealed test (ADR-026).
 
 ## 11. Alternatives considered
 - **Keep the engine on the client (the 2026-11-13 position).** Fails the owner's goal: a modified client skips every check, and the main brain cannot ground answers without being copied out.

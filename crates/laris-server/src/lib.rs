@@ -24,6 +24,7 @@ pub mod proxy;
 pub mod read;
 mod serve;
 mod stall;
+pub mod stem;
 pub mod storage;
 pub mod trace;
 

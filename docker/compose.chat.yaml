@@ -27,6 +27,32 @@ services:
       LARIS_MODEL_SERVICE__GPU_MEMORY_BYTES: ${LARIS_GPU_MEMORY_BYTES:?set LARIS_GPU_MEMORY_BYTES to the GPU memory in bytes}
       LARIS_MODEL_SERVICE__GPU_WORKERS: ${LARIS_CHAT_CONCURRENCY:-8}   # chats the server batches at the same time
       LARIS_MODEL_SERVICE__QUEUE_WAIT_TIMEOUT_S: ${LARIS_CHAT_QUEUE_WAIT_S:-120}
+      # the STEM profile's deterministic steps (`stem_check`, T284): the same configuration the server and the runner read
+      LARIS_MODEL_SERVICE__STEM_CONFIG: /app/configs/stem-benchmarks.json
+      LARIS_MODEL_SERVICE__STEM_ROOT: /app
+    volumes:
+      - ../configs/stem-benchmarks.json:/app/configs/stem-benchmarks.json:ro
+      - ../configs/prompt-filter.json:/app/configs/prompt-filter.json:ro
+      - ../.laris/prefilter.toml:/app/.laris/prefilter.toml:ro
+
+  # the STEM profile (T284): a chat turn from the web or the terminal client that is the first question of a
+  # conversation and passes the prompt filter with a STEM signal is answered by the harness of the frozen candidate
+  # (configs/stem-benchmarks.json, T290: thinking budget 56,000 tokens on computable questions); the benchmark runner
+  # sends its items the same way. LARIS_STEM_PROFILE=request takes only the runner's items, off turns it off.
+  server:
+    environment:
+      LARIS_SERVER__STEM_PROFILE: ${LARIS_STEM_PROFILE:-auto}
+      LARIS_SERVER__STEM_CONFIG: /stem/configs/stem-benchmarks.json
+      LARIS_SERVER__STEM_ROOT: /stem
+      LARIS_SERVER__STEM_ENGINE_URL: http://vllm:8000
+    volumes:
+      - ../configs/stem-benchmarks.json:/stem/configs/stem-benchmarks.json:ro
+      - ../configs/stem-brain.json:/stem/configs/stem-brain.json:ro
+      # the frozen snapshot the configuration names (harness.retrieval.snapshot); a mismatch stops the server
+      - ../data/brain/snapshots/${LARIS_STEM_SNAPSHOT:-stem-t277-2}:/stem/data/brain/snapshots/${LARIS_STEM_SNAPSHOT:-stem-t277-2}:ro
+    depends_on:
+      vllm:
+        condition: service_healthy
 
   vllm:
     image: vllm/vllm-openai:v0.34.0   # approved by the owner 2026-11-23 (ADR-021 dependency record)

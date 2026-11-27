@@ -33,6 +33,7 @@ def serve(argv: Sequence[str]) -> int:
     from laris.model.service import ModelService, build_queue
     from laris.model.solver.settings import SolverSettings
     from laris.model.tools import Limits, ToolBox
+    from laris.research.stem import checks as stem_checks
     from laris.shared.backend import load_backend
     from laris.shared.config.loader import load_runtime_config
 
@@ -50,6 +51,7 @@ def serve(argv: Sequence[str]) -> int:
             ToolBox(
                 Limits(cfg.tool_max_chars, cfg.tool_max_documents),
                 SolverSettings.from_config(cfg),
+                stem_checks.load(cfg.stem_config, cfg.stem_root, SolverSettings.from_config(cfg)),
             ),
         ),
         cfg.max_body_bytes,

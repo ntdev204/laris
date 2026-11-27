@@ -6,6 +6,16 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+### Added
+- **STEM profile in the server (T284):** the harness of the frozen candidate (router, model-free solver, notes of the
+  frozen snapshot, draft with a 56,000-token thinking budget on computable questions, conclusion of a cut reply,
+  formalisation and solver check, self-consistency, review, notes check) is a stage of the `laris-server` pipeline
+  (`laris-server::stem`, ADR-025 amendment A1). The web and the terminal client get it automatically for the first
+  STEM question of a chat and list its steps; the benchmark runner sends its items to it (`harness --server`,
+  `--server-bin`, `harness-parity`), under the same `configs/stem-benchmarks.json`. The model service serves the
+  profile's deterministic steps as `stem_check` (not offered to the chat model); `laris-server stem run` runs the
+  profile without HTTP. The model and the system are NOT QUALIFIED.
+
 ### Changed
 - **One engine port (T278):** `LARIS_ENGINE_PORT` is set only in `docker/laris.env`; `docker/laris.sh` and
   `scripts/stem_benchmarks.py` both read it there. `LARIS_ENGINE_PORT=... docker/laris.sh up` never worked (the script

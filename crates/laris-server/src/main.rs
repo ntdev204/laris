@@ -38,7 +38,7 @@ fn policy_command(action: &str, env: &HashMap<String, String>) -> ExitCode {
             Err(e) => fail(e, 1),
         },
         _ => fail(
-            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | probe HOST:PORT/PATH]",
+            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | stem run | probe HOST:PORT/PATH]",
             2,
         ),
     }
@@ -134,6 +134,101 @@ async fn probe(address: &str) -> ExitCode {
     }
 }
 
+/// The STEM profile of `env` (T284), its tools on the model service behind `tools`; `Ok(None)` when it is off.
+fn stem_profile(
+    env: &HashMap<String, String>,
+    tools: Arc<dyn Backend>,
+) -> Result<Option<Arc<laris_server::stem::StemProfile>>, ExitCode> {
+    let cfg = match laris_server::stem::StemConfig::from_env(env) {
+        Ok(None) => return Ok(None),
+        Ok(Some(c)) => Arc::new(c),
+        Err(e) => return Err(fail(e, 2)),
+    };
+    let profile = laris_server::stem::StemProfile::build(
+        cfg.clone(),
+        tools,
+        Arc::new(laris_policy::Redactor::standard()),
+    )
+    .map_err(|e| fail(e, 1))?;
+    eprintln!(
+        "laris-server: STEM profile on ({:?}); configuration {}, snapshot {}",
+        cfg.entry,
+        &cfg.config_sha256[..12],
+        &cfg.snapshot_sha256[..cfg.snapshot_sha256.len().min(12)]
+    );
+    Ok(Some(Arc::new(profile)))
+}
+
+const STEM_USAGE: &str = "usage: laris-server stem run ITEMS (JSON lines {id, question, options, seed?}; records on stdout)";
+
+/// `laris-server stem run ITEMS`: the STEM profile over the runner's items without HTTP (T284), with the settings of
+/// a server (`LARIS_SERVER__STEM_*`, the model service at `LARIS_SERVER__MODEL_URL` for the tools). One record per line
+/// on standard output, in the order the items finish.
+async fn stem_command(args: &[String], env: &HashMap<String, String>) -> ExitCode {
+    use futures_util::StreamExt;
+    let (Some("run"), Some(items), None) =
+        (args.first().map(String::as_str), args.get(1), args.get(2))
+    else {
+        return fail(STEM_USAGE, 2);
+    };
+    let tools: Arc<dyn Backend> = match ModelConfig::from_env(env) {
+        Ok(Some(c)) => match ModelBackend::new(c) {
+            Ok(m) => Arc::new(m),
+            Err(e) => return fail(e, 2),
+        },
+        Ok(None) => {
+            return fail(
+                "LARIS_SERVER__MODEL_URL is not set (the profile's tools)",
+                2,
+            );
+        }
+        Err(e) => return fail(e, 2),
+    };
+    let profile = match stem_profile(env, tools) {
+        Ok(Some(p)) => p,
+        Ok(None) => return fail("LARIS_SERVER__STEM_PROFILE is off", 2),
+        Err(code) => return code,
+    };
+    let text = match std::fs::read_to_string(items) {
+        Ok(t) => t,
+        Err(e) => return fail(format!("{items}: {e}"), 1),
+    };
+    let mut work = Vec::new();
+    for (n, line) in text
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty())
+    {
+        match serde_json::from_str::<serde_json::Value>(line) {
+            Ok(serde_json::Value::Object(item)) => work.push(item),
+            _ => return fail(format!("line {}: expected a JSON object", n + 1), 2),
+        }
+    }
+    let at_once = profile.config().harness.concurrency.max(1);
+    let mut done = futures_util::stream::iter(work)
+        .map(|item| {
+            let p = profile.clone();
+            let id = item.get("id").cloned().unwrap_or_default();
+            async move { (id, p.record(item).await) }
+        })
+        .buffer_unordered(at_once);
+    let mut failed = 0_u64;
+    while let Some((id, out)) = done.next().await {
+        match out {
+            Ok(record) => println!("{record}"),
+            Err(e) => {
+                failed += 1;
+                println!("{}", serde_json::json!({"id": id, "error": e.to_string()}));
+            }
+        }
+    }
+    if failed > 0 {
+        eprintln!("laris-server: {failed} items failed");
+        return ExitCode::from(1);
+    }
+    ExitCode::SUCCESS
+}
+
 #[tokio::main]
 async fn main() -> ExitCode {
     let mut env: HashMap<String, String> = std::env::vars()
@@ -155,9 +250,12 @@ async fn main() -> ExitCode {
     if args.first().map(String::as_str) == Some("policy") {
         return policy_command(args.get(1).map_or("", String::as_str), &env);
     }
+    if args.first().map(String::as_str) == Some("stem") {
+        return stem_command(&args[1..], &env).await;
+    }
     if !args.is_empty() {
         return fail(
-            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | probe HOST:PORT/PATH]",
+            "usage: laris-server [policy verify|lock | brain import|freeze|retrieve | stem run | probe HOST:PORT/PATH]",
             2,
         );
     }
@@ -254,7 +352,12 @@ async fn main() -> ExitCode {
         Ok(c) => c,
         Err(e) => return fail(e, 2),
     };
-    let backend: Arc<dyn Backend> = if pipeline_config.enabled() {
+    // the STEM profile (T284): its engine, the model service's tools and the frozen snapshot
+    let stem = match stem_profile(&env, gap_model.clone()) {
+        Ok(p) => p,
+        Err(code) => return code,
+    };
+    let backend: Arc<dyn Backend> = if pipeline_config.enabled() || stem.is_some() {
         let built = laris_server::pipeline::Pipeline::new(
             gateway,
             pipeline_config,
@@ -263,6 +366,10 @@ async fn main() -> ExitCode {
             main_brain.clone(),
         );
         let built = built.map(|p| p.with_policy(policy.clone()));
+        let built = match stem {
+            Some(profile) => built.map(|p| p.with_stem(profile)),
+            None => built,
+        };
         let built = match (built, decider_config) {
             (Ok(p), Some(d)) => p.with_decider(d),
             (other, _) => other,

@@ -123,7 +123,9 @@ class ModelApiConfig(BaseModel):
     timeout_s: float = Field(default=120.0, gt=0.0)
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     allow_remote: bool = Field(default=False)  # internal prompts may only go to loopback hosts
-    internal_url: str = Field(default="")  # server side: the model block (P2), e.g. http://model:8001/v1
+    internal_url: str = Field(
+        default=""
+    )  # server side: the model block (P2), e.g. http://model:8001/v1
 
 
 class SecurityConfig(BaseModel):
@@ -212,8 +214,12 @@ class ModelServiceConfig(BaseModel):
     # none: BF16; 8bit/4bit: local bitsandbytes; fp8: the vLLM server only (T279)
     chat_quantization: str = Field(default="none", pattern="^(none|8bit|4bit|fp8)$")
     chat_max_new_tokens: int = Field(default=1024, ge=1)  # most tokens one reply may generate
-    chat_max_input_tokens: int = Field(default=8192, ge=0)  # prompt budget; older tool results are shortened (0: off)
-    chat_release_cache: bool = Field(default=True)  # return GPU memory to the driver after every reply
+    chat_max_input_tokens: int = Field(
+        default=8192, ge=0
+    )  # prompt budget; older tool results are shortened (0: off)
+    chat_release_cache: bool = Field(
+        default=True
+    )  # return GPU memory to the driver after every reply
     chat_thinking: bool = Field(default=False)  # let the model reason before it answers
     chat_temperature: float = Field(default=0.0, ge=0.0)  # 0 is greedy decoding
     device: str = Field(default="")  # cuda or cpu; empty selects automatically
@@ -227,8 +233,14 @@ class ModelServiceConfig(BaseModel):
     gpu_workers: int = Field(default=1, ge=1)  # jobs running on the GPU at the same time
     queue_max_waiting: int = Field(default=64, ge=1)  # beyond this, requests get 503
     queue_wait_timeout_s: float = Field(default=60.0, gt=0.0)  # waiting longer gives 504
-    tool_max_chars: int = Field(default=2_000_000, ge=1)  # most text one scientific tool call may carry
+    tool_max_chars: int = Field(
+        default=2_000_000, ge=1
+    )  # most text one scientific tool call may carry
     tool_max_documents: int = Field(default=200, ge=1)  # most documents in one scholarly tool call
+    # the STEM profile's deterministic steps (`stem_check`, T284): configs/stem-benchmarks.json and
+    # the folder its relative paths (filter rules, .laris/prefilter.toml) start from; empty: off
+    stem_config: str = Field(default="")
+    stem_root: str = Field(default="")
     # deterministic STEM solver (`solve_stem`, T276): one forked worker per call
     solver_timeout_s: float = Field(default=10.0, gt=0.0)  # the worker is killed after this
     solver_memory_bytes: int = Field(default=2 * 1024**3, ge=0)  # address-space ceiling (0: none)

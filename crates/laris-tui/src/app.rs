@@ -1073,8 +1073,14 @@ impl App {
                 "pipeline" => {
                     let stage = data.get("stage").and_then(Value::as_str).unwrap_or("");
                     let failed = data.get("outcome").and_then(Value::as_str) == Some("error");
-                    // the working stages (checking, deciding, asking) stay out of the client; only a failed one shows
-                    if !stage.is_empty() && failed {
+                    // the STEM profile's steps (T284) show as they end, as the web client shows them
+                    if stage == "stem" && !failed {
+                        let code = data.get("code").and_then(Value::as_str).unwrap_or("");
+                        let text = self.text("ui.stage_stem", &[("code", code)]);
+                        self.notice(text, Tone::Dim);
+                    } else if !stage.is_empty() && failed {
+                        // the working stages (checking, deciding, asking) stay out of the client; only a failed one
+                        // shows
                         let key = match stage {
                             "prefilter" | "retrieval" | "decider" | "model" | "gate"
                             | "assembly" => {

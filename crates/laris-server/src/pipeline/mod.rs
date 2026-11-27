@@ -201,6 +201,8 @@ struct Inner {
     config: PipelineConfig,
     /// The policy, to tell a turn the server researches with its own tools (T273).
     policy: Option<Arc<crate::policy::Policy>>,
+    /// The STEM profile (T284): a turn it takes is answered there, with network tools off.
+    stem: Option<Arc<crate::stem::StemProfile>>,
 }
 
 /// A [`Backend`] that runs the Prefilter, retrieval and the harness around another one.
@@ -236,6 +238,7 @@ impl Pipeline {
                 brain,
                 decider: None,
                 policy: None,
+                stem: None,
                 shield: Arc::new(Shield::new(Arc::new(Redactor::standard()))),
                 config,
             }),
@@ -250,6 +253,15 @@ impl Pipeline {
     pub fn with_policy(mut self, policy: Arc<crate::policy::Policy>) -> Self {
         let inner = Arc::get_mut(&mut self.inner).expect("the pipeline is not shared yet");
         inner.policy = Some(policy);
+        self
+    }
+
+    /// Puts the STEM profile (T284) after the Prefilter: a turn it takes skips retrieval, the harness and the policy
+    /// gateway's tools.
+    #[must_use]
+    pub fn with_stem(mut self, stem: Arc<crate::stem::StemProfile>) -> Self {
+        let inner = Arc::get_mut(&mut self.inner).expect("the pipeline is not shared yet");
+        inner.stem = Some(stem);
         self
     }
 
@@ -473,7 +485,7 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
     let caller = who.key_id;
     // a summary, a workflow-free continuation after a tool result and a pipeline with every stage off are not turns
     // this pipeline checks
-    let question = (this.config.enabled()
+    let question = ((this.config.enabled() || this.stem.is_some())
         && request.laris.kind == Kind::Turn
         && !continues_tool_work(&request.messages))
     .then(|| latest_user_message(&request.messages))
@@ -513,6 +525,18 @@ async fn run(this: Arc<Inner>, request: ChatRequest, who: Caller) -> Result<Chun
             "server_tools",
         ));
         return free(this.clone(), request, caller, steps).await;
+    }
+
+    // the STEM profile (T284): an item from the runner, or a first STEM question of a chat
+    if let Some(stem) = &this.stem
+        && let Some(wanted) = stem.wanted(&request, &question)
+    {
+        let before: Vec<ChatResponseChunk> = steps.iter().map(step_chunk).collect();
+        match stem.clone().run(wanted, before).await {
+            Ok(Some(answer)) => return Ok(answer),
+            Ok(None) => {}
+            Err(e) => return Err(ApiError::BadGateway(e.to_string())),
+        }
     }
 
     // stage 4: retrieval

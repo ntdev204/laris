@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   fileAccept, makeRequest, readAttachment, streamReply, type Attachment, type Chat, type Message,
+  type StemStep,
   type ToolRecord,
 } from "@/lib/chat";
 import { readHistory, writeHistory } from "@/lib/history";
@@ -47,7 +48,52 @@ const suggestions = [
 ];
 type Draft = typeof emptyDraft;
 type Modal = "key" | "rename" | "delete";
-type LiveReply = { chatId: string; text: string; tools?: ToolRecord[]; report?: string };
+type LiveReply = { chatId: string; text: string; tools?: ToolRecord[]; report?: string; stem?: StemStep[] };
+
+/** What each step of the STEM profile is (T284); the code after the colon is the step's outcome. */
+const stemLabels: Record<string, string> = {
+  filter: "Lọc câu hỏi",
+  notes: "Ghi chú từ bộ não",
+  brain_only: "Trả lời từ một nguồn chắc chắn",
+  model_free: "Bộ giải, không dùng mô hình",
+  draft: "Bản nháp của mô hình",
+  retry: "Bản nháp lại, ngắn hơn",
+  conclude: "Kết luận một bản nháp bị cắt",
+  formalise: "Mô hình viết bài toán cho bộ giải",
+  repair: "Sửa lỗi hình thức của bài toán",
+  solver: "Bộ giải",
+  crosscheck: "Đối chiếu số liệu với đề bài",
+  sample: "Thêm một bản nháp",
+  vote: "Biểu quyết giữa các bản nháp",
+  review: "Mô hình xem lại",
+  notes_check: "Đối chiếu với ghi chú",
+};
+
+/** The steps the server's STEM profile took for an answer, as they ended (T284). */
+function StemTrail({ steps, running }: { steps?: StemStep[]; running?: boolean }) {
+  if (!steps?.length) return null;
+  return (
+    <details className="stem-trail mb-3 rounded-lg border bg-secondary/40 px-3 py-2 text-sm" open={running}>
+      <summary className="flex cursor-pointer list-none items-center gap-2 font-medium">
+        {running ? <Loader2 className="size-4 animate-spin text-primary" /> : <ChevronRight className="size-4" />}
+        <ListChecks className="size-4 text-primary" />
+        {running ? "Đang giải" : "Đã giải"}: {steps.length} bước
+      </summary>
+      <ol className="mt-2 space-y-1">
+        {steps.map((step, index) => {
+          const [name, ...rest] = step.code.split(":");
+          return (
+            <li key={index} className="border-l-2 border-primary/40 pl-3">
+              <span className="font-medium">{stemLabels[name] ?? name}</span>
+              {rest.length > 0 && <span className="text-muted-foreground"> · {rest.join(":")}</span>}
+              {step.ms >= 1000 && <span className="text-muted-foreground"> · {(step.ms / 1000).toFixed(1)} s</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </details>
+  );
+}
 
 const toolLabels: Record<string, string> = {
   PaperSearch: "Tìm bài báo (OpenAlex)",
@@ -227,6 +273,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
     let interrupted = false;
     let tools: ToolRecord[] | undefined;
     let report: string | undefined;
+    let stem: StemStep[] | undefined;
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
       if (apiKey) headers.set("Authorization", `Bearer ${apiKey}`);
@@ -235,11 +282,12 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
       });
       await streamReply(response, (delta) => {
         text += delta;
-        setLive({ chatId: next.id, text, tools, report });
+        setLive({ chatId: next.id, text, tools, report, stem });
       }, (meta) => {
         tools = meta.tools ?? tools;
         report = meta.report ?? report;
-        setLive({ chatId: next.id, text, tools, report });
+        stem = meta.stem ?? stem;
+        setLive({ chatId: next.id, text, tools, report, stem });
       });
     } catch (error) {
       interrupted = true;
@@ -254,6 +302,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
         const reply: Message = {
           id: crypto.randomUUID(), role: "assistant", text, interrupted,
           ...(tools?.length ? { tools } : {}), ...(report ? { report } : {}),
+          ...(stem?.length ? { stem } : {}),
         };
         const finished = { ...next, messages: [...next.messages, reply] };
         setChats((current) => current.map((item) => item.id === next.id ? finished : item));
@@ -480,6 +529,7 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                       <>
                         <div className="reply-label"><Sparkles /> Laris</div>
                         <ToolTrail tools={message.tools} report={message.report} />
+                        <StemTrail steps={message.stem} />
                         <div className="markdown">
                           <Markdown remarkPlugins={[remarkGfm]} skipHtml components={{
                             img: ({ alt }) => alt ? <span>{alt}</span> : null,
@@ -499,9 +549,11 @@ function Workspace({ maxRequestBytes }: { maxRequestBytes: number }) {
                   <li className="min-w-0">
                     <div className="reply-label"><Sparkles /> Laris</div>
                     <ToolTrail tools={live.tools} report={live.report} running={!live.text} />
+                    <StemTrail steps={live.stem} running={!live.text} />
                     <div className="markdown whitespace-pre-wrap [overflow-wrap:anywhere]">
                       {live.text || <span className="text-muted-foreground" role="status">
-                        {live.tools?.length ? "Đang đọc tài liệu và soạn câu trả lời…" : "Đang chờ phản hồi…"}
+                        {live.tools?.length ? "Đang đọc tài liệu và soạn câu trả lời…"
+                          : live.stem?.length ? "Đang giải bài, có thể mất vài phút…" : "Đang chờ phản hồi…"}
                       </span>}
                     </div>
                   </li>

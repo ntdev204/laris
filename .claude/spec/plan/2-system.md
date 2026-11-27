@@ -182,3 +182,6 @@ Tasks: T284
 Exit criteria:
 - The server's evaluation profile and the Python harness of T278 agree on development items within engine variance;
   network tools are off in the profile. The system stays NOT QUALIFIED until B1-B6 pass (ADR-026).
+Status: done 2026-11-27 (T284): same route 64/64 and same answer 61/64 on development items, McNemar p = 1.0
+(`reports/benchmarks/T284-server-profile.md`); chat from the web and the terminal client is answered by the same
+profile (D69, ADR-025 amendment A1).

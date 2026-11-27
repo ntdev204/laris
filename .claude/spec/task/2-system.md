@@ -2245,8 +2245,20 @@ Owner's direction 2026-11-21: the client must be able to reach the network and s
 - Validation:
   - Rust tests with a scripted model and a scripted solver for every step; on development items the server profile and
     the Python harness give the same answer on the same seeds within the engine's own variance (T275 parity rule)
-- Status: pending
+- Status: done
 - Note: created 2026-11-23 at the owner's request in T278 ("Chọn 1 nhưng phải tạo thêm task sau này hoàn thiện lên
   rust server"): T278 measures the harness in Python; this task brings it into the server. It starts after T285-T287
   (2026-11-23), so the server carries the filter, the certainty rule and the measured router. Whether the sealed run
   (T281) waits for it is the owner's decision.
+- Note: done 2026-11-27 (owner: "Thực hiện T284 với Cấu hình 56k và web + cli cùng đồng nhất luôn"; entry
+  "Automatic", display "answer + draft + steps"; D69, ADR-025 amendment A1). The loop is `laris-server::stem`, a
+  pipeline stage after the Prefilter and the research tools rather than a decider action: a turn it takes never
+  reaches the decider or the policy gateway, so network tools are off by construction. The engine is vLLM (template by
+  `/tokenize` + `/detokenize`); `solve_stem` and the new unlisted `stem_check` (filter, model-free, repair, solver
+  answer, equivalence, cross-check: the reference's own Python) are model-service tools; notes come from the frozen
+  snapshot through `MainBrain`. Configuration is `configs/stem-benchmarks.json` unchanged plus `server_profile` (the
+  harness hash is unchanged). Web and terminal client list the steps; `docker/compose.chat.yaml` sets
+  `LARIS_STEM_PROFILE=auto`. Rust tests replay 10 scenarios of the Python harness call for call
+  (`scripts/stem_profile_fixtures.py`). Parity on 64 development items (`reports/benchmarks/T284-server-profile.md`):
+  same route 64/64, same answer 61/64 (three long GPQA replies), correct 54 vs 53, McNemar p = 1.0, seeds 64/64 by the
+  runner's formula, peak 14.76 GB. Development only: the model and the system are NOT QUALIFIED.
