@@ -6,12 +6,17 @@
 #[allow(dead_code)]
 mod harness;
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use serde_json::Value;
 
 fn report() -> Value {
+    // one file per call: the tests run in parallel and each removes its own report
+    static N: AtomicU32 = AtomicU32::new(0);
     let out = std::env::temp_dir().join(format!(
-        "laris-cognition-report-{}.json",
-        std::process::id()
+        "laris-cognition-report-{}-{}.json",
+        std::process::id(),
+        N.fetch_add(1, Ordering::SeqCst)
     ));
     let config = concat!(
         env!("CARGO_MANIFEST_DIR"),

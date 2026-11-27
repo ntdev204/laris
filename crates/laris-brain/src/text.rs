@@ -108,6 +108,154 @@ pub struct Facts {
     pub all: BTreeSet<String>,
     /// The hedges and quantifiers used.
     pub hedges: BTreeSet<String>,
+    /// The content words of each clause, in order ([`CLAUSE_WORDS`] and `,` `;` `:` end a clause); clauses without
+    /// content words are left out.
+    pub clauses: Vec<BTreeSet<String>>,
+    /// What the statement is about, when its form shows it ([`subject`]); `None` when it does not.
+    pub subject: Option<BTreeSet<String>>,
+    /// Each word of [`OPPOSITES`] used, with the content word after it ([`opposite_words`]).
+    pub opposites: BTreeSet<(String, String)>,
+}
+
+/// Words that start a new clause: a statement that adds a clause the source does not hold is caught by the clause,
+/// not by the whole statement's share of words.
+pub const CLAUSE_WORDS: [&str; 10] = [
+    "and",
+    "but",
+    "or",
+    "while",
+    "whereas",
+    "which",
+    "because",
+    "so",
+    "thus",
+    "therefore",
+];
+
+/// Words that end the subject of a statement: copulas, auxiliaries, the verbs of definitions and of attribution. The
+/// subject also ends at a number, a negation, a hedge and a word of [`OPPOSITES`].
+pub const SUBJECT_ENDS: [&str; 34] = [
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "has",
+    "have",
+    "had",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "may",
+    "might",
+    "will",
+    "would",
+    "shall",
+    "should",
+    "must",
+    "occurs",
+    "occur",
+    "describes",
+    "describe",
+    "means",
+    "mean",
+    "refers",
+    "refer",
+    "states",
+    "state",
+    "says",
+    "holds",
+];
+
+/// Words that open a leading condition (`When r is positive, ...`); the condition is then the subject.
+pub const CONDITION_WORDS: [&str; 5] = ["when", "if", "as", "once", "whenever"];
+
+/// The longest subject, in words, that the form of a statement is trusted to show.
+const SUBJECT_WORDS: usize = 12;
+
+fn subject_word(raw: &str) -> String {
+    raw.trim_matches(|c: char| !c.is_alphanumeric())
+        .to_lowercase()
+}
+
+fn subject_set<'a>(raw: impl Iterator<Item = &'a str>) -> Option<BTreeSet<String>> {
+    let out: BTreeSet<String> = raw
+        .map(subject_word)
+        .filter(|w| !w.is_empty() && !STOP_WORDS.contains(&w.as_str()))
+        .collect();
+    (!out.is_empty()).then_some(out)
+}
+
+/// What a statement is about: the words before its predicate, read from the form of the statement, in this order:
+///
+/// 1. a label: the words before the first `:` or ` | ` within the first 12 words (`term: text`, `name | formula`),
+///    numbers included (`Type 1 error: ...`);
+/// 2. a leading condition: from `when`, `if`, `as` ([`CONDITION_WORDS`]) to the first comma or `then`
+///    (`When r is positive, ...`);
+/// 3. the words before the first number (a table row, `name value unit`), `=`, or word of [`SUBJECT_ENDS`],
+///    [`NEGATIONS`], [`HEDGES`] or [`OPPOSITES`].
+///
+/// Words are split at whitespace and lowered, so `step-up` and `step-down` stay different; stop words are dropped.
+/// `None` when nothing ends it within 12 words or it would be empty: the statement's form then does not show its
+/// subject, and the contradiction search compares the statements as before.
+pub fn subject(text: &str) -> Option<BTreeSet<String>> {
+    let tokens: Vec<&str> = text.split_whitespace().take(SUBJECT_WORDS + 1).collect();
+    if let Some(at) = tokens
+        .iter()
+        .take(SUBJECT_WORDS)
+        .position(|t| *t == "|" || t.ends_with(':'))
+    {
+        let mut label: Vec<&str> = tokens[..at].to_vec();
+        if tokens[at] != "|" {
+            label.push(tokens[at]);
+        }
+        return subject_set(label.into_iter());
+    }
+    let first = tokens.first().map(|t| subject_word(t)).unwrap_or_default();
+    if CONDITION_WORDS.contains(&first.as_str()) {
+        let mut condition = Vec::new();
+        for t in tokens.iter().take(SUBJECT_WORDS).skip(1) {
+            if subject_word(t) == "then" {
+                return subject_set(condition.into_iter());
+            }
+            condition.push(*t);
+            if t.ends_with(',') {
+                return subject_set(condition.into_iter());
+            }
+        }
+        return None;
+    }
+    let mut out = Vec::new();
+    for raw in tokens.iter().take(SUBJECT_WORDS) {
+        let word = subject_word(raw);
+        let w = word.as_str();
+        let number = raw
+            .trim_start_matches(['-', '+', '\u{2212}', '(', '~'])
+            .starts_with(|c: char| c.is_ascii_digit());
+        if number
+            || raw.starts_with('=')
+            || SUBJECT_ENDS.contains(&w)
+            || NEGATIONS.contains(&w)
+            || HEDGES.contains(&w)
+            || OPPOSITES.iter().any(|&(x, y)| w == x || w == y)
+            || w.ends_with("n't")
+            || w.ends_with("n\u{2019}t")
+        {
+            return subject_set(out.into_iter());
+        }
+        out.push(*raw);
+    }
+    None
+}
+
+/// True when both statements show their subject and the subjects differ: they speak of different things, so no
+/// negation, opposite word or number can make them disagree.
+pub fn different_subjects(a: &Facts, b: &Facts) -> bool {
+    matches!((&a.subject, &b.subject), (Some(x), Some(y)) if x != y)
 }
 
 /// The facts of `text`.
@@ -159,6 +307,41 @@ pub fn facts(text: &str) -> Facts {
         out.all.insert(word);
     }
     out.negated = negations % 2 == 1;
+    out.clauses = clauses_of(text);
+    out.subject = subject(text);
+    out.opposites = directed(text);
+    out
+}
+
+fn content_word(word: &str) -> bool {
+    !(STOP_WORDS.contains(&word)
+        || NEGATIONS.contains(&word)
+        || HEDGES.contains(&word)
+        || CLAUSE_WORDS.contains(&word)
+        || word.chars().all(|c| c.is_ascii_digit())
+        || word == "t")
+}
+
+fn clauses_of(text: &str) -> Vec<BTreeSet<String>> {
+    let mut out = Vec::new();
+    let mut current = BTreeSet::new();
+    for piece in text.to_lowercase().split_inclusive([',', ';', ':']) {
+        for word in words(piece) {
+            if CLAUSE_WORDS.contains(&word.as_str()) {
+                if !current.is_empty() {
+                    out.push(std::mem::take(&mut current));
+                }
+            } else if content_word(&word) {
+                current.insert(word);
+            }
+        }
+        if piece.ends_with([',', ';', ':']) && !current.is_empty() {
+            out.push(std::mem::take(&mut current));
+        }
+    }
+    if !current.is_empty() {
+        out.push(current);
+    }
     out
 }
 
@@ -179,11 +362,47 @@ pub fn overlap(a: &Facts, b: &Facts) -> f64 {
     a.content.intersection(&b.content).count() as f64 / union as f64
 }
 
-/// True when one statement uses a word whose opposite the other uses.
+/// The opposite words of a statement with the content word that follows each (`increases voltage`), or an empty word
+/// at the end of the statement.
+fn directed(text: &str) -> BTreeSet<(String, String)> {
+    let all = words(text);
+    let mut out = BTreeSet::new();
+    for (i, w) in all.iter().enumerate() {
+        if OPPOSITES.iter().any(|&(x, y)| w == x || w == y) {
+            let object = all[i + 1..]
+                .iter()
+                .find(|n| content_word(n))
+                .cloned()
+                .unwrap_or_default();
+            out.insert((w.clone(), object));
+        }
+    }
+    out
+}
+
+/// True when one statement says the opposite of the other about the same thing: it uses a word of [`OPPOSITES`]
+/// before a content word (`decreases voltage`) where the other uses the word's opposite before the same content word
+/// and never the word itself (`increases voltage`). A statement that holds both (`increases voltage and decreases
+/// current`, `the increase, or decrease, of the size`) is not opposed by one that holds either; two identical
+/// statements never are.
 pub fn opposite_words(a: &Facts, b: &Facts) -> bool {
-    OPPOSITES.iter().any(|&(x, y)| {
-        (a.all.contains(x) && b.all.contains(y)) || (a.all.contains(y) && b.all.contains(x))
-    })
+    let opposed = |x: &BTreeSet<(String, String)>, y: &BTreeSet<(String, String)>| {
+        x.iter().any(|(w, object)| {
+            OPPOSITES.iter().any(|&(p, q)| {
+                let other = if w == p {
+                    q
+                } else if w == q {
+                    p
+                } else {
+                    return false;
+                };
+                y.contains(&(other.to_string(), object.clone()))
+                    && !y.contains(&(w.clone(), object.clone()))
+                    && !x.contains(&(other.to_string(), object.clone()))
+            })
+        })
+    };
+    opposed(&a.opposites, &b.opposites) || opposed(&b.opposites, &a.opposites)
 }
 
 /// The support check's form of [`opposite_words`]: the statement uses a word whose opposite is in the quote while the
@@ -222,14 +441,61 @@ pub const ATTRIBUTION_WORDS: [&str; 8] = [
 pub fn attributed_facts(text: &str, holder: &str) -> Facts {
     let mut out = facts(text);
     let holder = words(holder);
-    out.content
-        .retain(|w| !holder.contains(w) && !ATTRIBUTION_WORDS.contains(&w.as_str()));
+    let keep = |w: &String| !holder.contains(w) && !ATTRIBUTION_WORDS.contains(&w.as_str());
+    out.content.retain(keep);
+    for clause in &mut out.clauses {
+        clause.retain(keep);
+    }
+    out.clauses.retain(|c| !c.is_empty());
     out
+}
+
+/// The quantifier or hedge rule of ADR-024 6.3, the same in the gate and the answer check: a statement may neither add
+/// a quantifier or hedge its source does not use (`always`, `all`: a strengthened claim) nor drop one it uses (`may`,
+/// `some`). The reason, or `None`.
+pub fn hedge_change(statement: &Facts, source: &Facts) -> Option<String> {
+    if let Some(h) = statement.hedges.difference(&source.hedges).next() {
+        return Some(format!("the statement adds the quantifier or hedge `{h}`"));
+    }
+    if let Some(h) = source.hedges.difference(&statement.hedges).next() {
+        return Some(format!("the statement drops the quantifier or hedge `{h}`"));
+    }
+    None
+}
+
+/// The appended-clause rule, the same in the gate and the answer check: every clause of the statement must have
+/// `min_share` of its content words in the source, so a clause added to a supported statement (`... and prevents
+/// heart attacks`) is caught even when the whole statement's share is high enough. Words for which `ignore` is true do
+/// not count. The reason, or `None`.
+pub fn uncovered_clause(
+    statement: &Facts,
+    source: &Facts,
+    min_share: f64,
+    ignore: &dyn Fn(&str) -> bool,
+) -> Option<String> {
+    for clause in &statement.clauses {
+        let own: Vec<&String> = clause.iter().filter(|w| !ignore(w)).collect();
+        if own.is_empty() {
+            continue;
+        }
+        let held = own.iter().filter(|w| source.content.contains(**w)).count();
+        let share = held as f64 / own.len() as f64;
+        if share < min_share {
+            let words: Vec<&str> = own.iter().map(|w| w.as_str()).collect();
+            return Some(format!(
+                "the clause `{}` has only {:.0} % of its content words in the source",
+                words.join(" "),
+                share * 100.0
+            ));
+        }
+    }
+    None
 }
 
 /// Why a quote does not support a statement; `None` when it does. A statement is supported when every number in it is
 /// in the quote, its polarity matches, no opposite word is introduced and `min_coverage` of its content words occur
-/// in the quote.
+/// in the quote, it adds or drops no quantifier or hedge ([`hedge_change`]) and every clause reaches `min_coverage`
+/// ([`uncovered_clause`]).
 pub fn unsupported(statement: &Facts, quote: &Facts, min_coverage: f64) -> Option<String> {
     if let Some(extra) = statement
         .quantities
@@ -244,6 +510,9 @@ pub fn unsupported(statement: &Facts, quote: &Facts, min_coverage: f64) -> Optio
     if opposite_to_quote(statement, quote) {
         return Some("the statement uses the opposite of a word of the quote".to_string());
     }
+    if let Some(why) = hedge_change(statement, quote) {
+        return Some(why);
+    }
     let share = coverage(statement, quote);
     if share < min_coverage {
         return Some(format!(
@@ -251,7 +520,7 @@ pub fn unsupported(statement: &Facts, quote: &Facts, min_coverage: f64) -> Optio
             share * 100.0
         ));
     }
-    None
+    uncovered_clause(statement, quote, min_coverage, &|_| false)
 }
 
 /// Two statements say the same thing: same numbers, same polarity, no opposites and `min_overlap` of content in common.
@@ -262,10 +531,11 @@ pub fn equivalent(a: &Facts, b: &Facts, min_overlap: f64) -> bool {
         && overlap(a, b) >= min_overlap
 }
 
-/// Two statements on the same subject disagree: enough shared content, and they differ in polarity, use opposite words
-/// or give clashing quantities.
+/// Two statements on the same subject disagree: the subjects do not differ ([`different_subjects`]; the subject is
+/// compared first), enough content is shared, and they differ in polarity, use opposite words or give clashing
+/// quantities.
 pub fn contradicts(a: &Facts, b: &Facts, min_overlap: f64) -> bool {
-    if overlap(a, b) < min_overlap {
+    if different_subjects(a, b) || overlap(a, b) < min_overlap {
         return false;
     }
     a.negated != b.negated || opposite_words(a, b) || quantities_clash(a, b)

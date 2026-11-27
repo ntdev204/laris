@@ -1,0 +1,494 @@
+{
+ "fixture": "T283 miss-rate fixture of the gate's checks (ADR-024 6.3)",
+ "date": "2026-11-27",
+ "labels": "contradiction, supported and faithful are the agent's reading of each pair; the T277 pairs are measured Conflicts, the T172 cases measured misses, the rest constructed. Read by vocabulary only: a filter, not a proof.",
+ "contradiction_pairs": [
+  {
+   "label": "contrast: sulfite and sulfate",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "hydrogen sulfite: HSO _3^− ion",
+   "b": "hydrogen sulfate: HSO _4^− ion",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: Type I and Type II error",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "A Type I error occurs when a true null hypothesis is rejected.",
+   "b": "A Type II error occurs when a false null hypothesis is not rejected.",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: Type 1 and Type 2 error (numbered)",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Type 2 error: the decision is not to reject the null hypothesis when, in fact, the null hypothesis is false",
+   "b": "Type 1 error: the decision is to reject the null hypothesis when, in fact, the null hypothesis is true",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: step-up and step-down transformer",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "step-up transformer: transformer that increases voltage and decreases current",
+   "b": "step-down transformer: transformer that decreases voltage and increases current",
+   "contradiction": false
+  },
+  {
+   "label": "paraphrase: one statement holds both opposite words",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "step-up transformer: a transformer that increases voltage",
+   "b": "A step-up transformer increases voltage and decreases current, whereas a step-down transformer decreases voltage and increases current.",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: hypotonic and hypertonic",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "hypotonic: describes a solution in which extracellular fluid has lower osmolarity than the fluid inside the cell",
+   "b": "hypertonic: describes a solution in which extracellular fluid has higher osmolarity than the fluid inside the cell",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: two hybrid orbitals",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "sp^3d^2 hybrid orbital: one of a set of six orbitals with an octahedral arrangement that results from combining one s, three p, and two d orbitals",
+   "b": "sp^3 hybrid orbital: one of a set of four orbitals with a tetrahedral arrangement that results from combining one s and three p orbitals",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: volume and surface charge density",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "volume charge density: amount of charge in an element of a three-dimensional charge distribution; its units are C/m^3",
+   "b": "surface charge density: amount of charge in an element of a two-dimensional charge distribution (the thickness is small); its units are C/m^2",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: Celsius and Fahrenheit scale",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Celsius scale: temperature scale in which the freezing point of water is 0 °C and the boiling point of water is 100 °C at 1 atm of pressure",
+   "b": "Fahrenheit scale: temperature scale in which the freezing point of water is 32°F and the boiling point of water is 212°F",
+   "contradiction": false
+  },
+  {
+   "label": "CODATA: two constants, same words in another order",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "inverse meter-hertz relationship 299 792 458 (exact) Hz",
+   "b": "hertz-inverse meter relationship 3.335 640 951... e-9 (exact) m^-1",
+   "contradiction": false
+  },
+  {
+   "label": "CODATA: two constants, similar names, one unit",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "electron mass energy equivalent in MeV 0.510 998 950 69 0.000 000 000 16 MeV",
+   "b": "muon mass energy equivalent in MeV 105.658 3755 0.000 0023 MeV",
+   "contradiction": false
+  },
+  {
+   "label": "CODATA: two Compton wavelengths",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "muon Compton wavelength 1.173 444 110 e-14 0.000 000 026 e-14 m",
+   "b": "neutron Compton wavelength 1.319 590 903 82 e-15 0.000 000 000 67 e-15 m",
+   "contradiction": false
+  },
+  {
+   "label": "CODATA: two magnetons",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "nuclear magneton in eV/T 3.152 451 254 17 e-8 0.000 000 000 98 e-8 eV T^-1",
+   "b": "Bohr magneton in eV/T 5.788 381 7982 e-5 0.000 000 0018 e-5 eV T^-1",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: dependent and inconsistent system (known remaining false Conflict: the difference is after `is`)",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "A system of equations in three variables is dependent if it has an infinite number of solutions. After performing elimination operations, the result is an identity. See .",
+   "b": "A system of equations in three variables is inconsistent if no solution exists. After performing elimination operations, the result is a contradiction. See .",
+   "contradiction": false
+  },
+  {
+   "label": "identical statements from two books",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "As the sample size increases, the EBM decreases.",
+   "b": "As the sample size increases, the EBM decreases.",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: two conditions",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "When r is negative, x will increase and y will decrease, or the opposite, x will decrease and y will increase.",
+   "b": "When r is positive, the x and y will tend to increase and decrease together.",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: two key-equation rows",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Quadratic function | f(x) = x^2",
+   "b": "Reciprocal function | f(x) = 1/x",
+   "contradiction": false
+  },
+  {
+   "label": "contrast: two titled boxes",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Quotient Property of Radical Expressions If root(a, n) and root(b, n) are real numbers, b ≠ 0, and for any integer n ≥ 2 then, root(a/b, n) = (root(a, n))/(root(b, n)) and (root(a, n))/(root(b, n)) = root(a/b, n)",
+   "b": "Product Property of n^th Roots If root(a, n) and root(b, n) are real numbers, and n ≥ 2 is an integer, then root(ab, n) = root(a, n) · root(b, n) and root(a, n) · root(b, n) = root(ab, n)",
+   "contradiction": false
+  },
+  {
+   "label": "paraphrase: the increase, or decrease",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Thermal expansion is the increase, or decrease, of the size (length, area, or volume) of a body due to a change in temperature.",
+   "b": "Thermal expansion is the increase of the size (length, area, or volume) of a body due to a change in temperature, usually a rise. Thermal contraction is the decrease in size due to a change in temperature, usually a fall in temperature.",
+   "contradiction": false
+  },
+  {
+   "label": "paraphrase: N(0, 1) and N(0,1) (known remaining false Conflict: `0,1` reads as a decimal)",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "z-score: the linear transformation of the form z = (x–μ)/σ ; if this transformation is applied to any normal distribution X ~ N(μ, σ), the result is the standard normal distribution Z ~ N(0, 1).",
+   "b": "z-score: the linear transformation of the form z = (x–μ)/σ ; if this transformation is applied to any normal distribution X ~ N(μ, σ) the result is the standard normal distribution Z ~ N(0,1).",
+   "contradiction": false
+  },
+  {
+   "label": "same constant at two pressures (known remaining false Conflict: the condition is in parentheses)",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Sackur-Tetrode constant (1 K, 101.325 kPa) -1.164 870 521 49 0.000 000 000 47",
+   "b": "Sackur-Tetrode constant (1 K, 100 kPa) -1.151 707 534 96 0.000 000 000 47",
+   "contradiction": false
+  },
+  {
+   "label": "paraphrase with no and ceases (known remaining false Conflict: polarity by vocabulary)",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised",
+   "a": "Absolute zero is the temperature at which there is no molecular motion.",
+   "b": "absolute zero: the lowest possible temperature; the temperature at which all molecular motion ceases",
+   "contradiction": false
+  },
+  {
+   "label": "books disagree: last coefficient a_1 or a_0",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised; a real disagreement (one book's typo)",
+   "a": "general form of a polynomial function | f(x) = a_nx^n + a_{n-1}x^{n-1} + ... + a_2x^2 + a_1x + a_1",
+   "b": "general form of a polynomial function | f(x) = a_nx^n + ... + a_2x^2 + a_1x + a_0",
+   "contradiction": true
+  },
+  {
+   "label": "books disagree: mean of the F distribution",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised; a real disagreement",
+   "a": "Mean of the F distribution: µ = (df(num))/(df(denom) − 1)",
+   "b": "Mean of the F distribution: µ = (df(num))/(df(denom) − 2)",
+   "contradiction": true
+  },
+  {
+   "label": "books disagree: 92 or 98 natural elements",
+   "origin": "T277 snapshot stem-t277-2, a Conflict the old rule raised; a real disagreement",
+   "a": "All of the 92 elements that occur naturally have unique qualities that allow them to combine in various ways to create compounds or molecules.",
+   "b": "All of the 98 elements that occur naturally have unique qualities that allow them to combine in various ways to create molecules, which in turn combine to form cells, tissues, organ systems, and organisms.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "Vitamin D raises serum calcium in adults.",
+   "b": "Vitamin D does not raise serum calcium in adults.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "The vaccine is safe in children.",
+   "b": "The vaccine is unsafe in children.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "The study enrolled 300 participants in 2018.",
+   "b": "The study enrolled 450 participants in 2018.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "Exercise increases bone density in adults.",
+   "b": "Exercise decreases bone density in adults.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "The drug lowers blood pressure in patients.",
+   "b": "The drug never lowers blood pressure in patients.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "The compound is effective against the virus.",
+   "b": "The compound is ineffective against the virus.",
+   "contradiction": true
+  },
+  {
+   "label": "seeded contradiction",
+   "origin": "seeded (tests/gate.rs, T165)",
+   "a": "The treatment lasted 12 weeks.",
+   "b": "The treatment lasted 8 weeks.",
+   "contradiction": true
+  },
+  {
+   "label": "formula changed",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "hydrogen sulfate: HSO _4^− ion",
+   "b": "hydrogen sulfate: HSO _3^− ion",
+   "contradiction": true
+  },
+  {
+   "label": "negation added",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "A Type I error occurs when a true null hypothesis is rejected.",
+   "b": "A Type I error occurs when a true null hypothesis is not rejected.",
+   "contradiction": true
+  },
+  {
+   "label": "opposite verb in a definition",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "step-up transformer: a transformer that increases voltage",
+   "b": "step-up transformer: a transformer that decreases voltage",
+   "contradiction": true
+  },
+  {
+   "label": "opposite comparison in a definition",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "hypotonic: describes a solution in which extracellular fluid has lower osmolarity than the fluid inside the cell",
+   "b": "hypotonic: describes a solution in which extracellular fluid has higher osmolarity than the fluid inside the cell",
+   "contradiction": true
+  },
+  {
+   "label": "both opposite verbs swapped",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "A step-up transformer increases voltage and decreases current.",
+   "b": "A step-up transformer decreases voltage and increases current.",
+   "contradiction": true
+  },
+  {
+   "label": "opposite under the same condition",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "When r is positive, x and y tend to increase together.",
+   "b": "When r is positive, x and y tend to decrease together.",
+   "contradiction": true
+  },
+  {
+   "label": "CODATA value changed",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "muon mass energy equivalent in MeV 105.658 3755 0.000 0023 MeV",
+   "b": "muon mass energy equivalent in MeV 106.658 3755 0.000 0023 MeV",
+   "contradiction": true
+  },
+  {
+   "label": "key-equation row changed",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "Quadratic function | f(x) = x^2",
+   "b": "Quadratic function | f(x) = x^3",
+   "contradiction": true
+  },
+  {
+   "label": "numbered term negated",
+   "origin": "constructed on a T277 statement: the statement changed so that it contradicts",
+   "a": "Type 1 error: the decision is to reject the null hypothesis when, in fact, the null hypothesis is true",
+   "b": "Type 1 error: the decision is not to reject the null hypothesis when, in fact, the null hypothesis is true",
+   "contradiction": true
+  }
+ ],
+ "gate_support": [
+  {
+   "label": "strengthened: always ... all",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), overconfident-scripted proposal accepted by the gate",
+   "quote": "Aspirin reduces fever in adults.",
+   "statement": "Aspirin always reduces fever in all adults.",
+   "supported": false
+  },
+  {
+   "label": "strengthened: all",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), overconfident-scripted proposal accepted by the gate",
+   "quote": "Ibuprofen reduces pain in adults.",
+   "statement": "Ibuprofen reduces pain in all adults.",
+   "supported": false
+  },
+  {
+   "label": "hedge dropped: some",
+   "origin": "constructed",
+   "quote": "Some adults report headaches after the vaccine.",
+   "statement": "Adults report headaches after the vaccine.",
+   "supported": false
+  },
+  {
+   "label": "appended clause above the whole-statement bar",
+   "origin": "constructed: 15 of 16 content words in the quote (94 %, above 0.9)",
+   "quote": "Vitamin D supplementation raises serum calcium and serum phosphate in older adults with low baseline vitamin levels during winter months.",
+   "statement": "Vitamin D supplementation raises serum calcium and serum phosphate in older adults with low baseline vitamin levels during winter months and heals.",
+   "supported": false
+  },
+  {
+   "label": "appended clause",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), hallucinating-scripted rewording as a proposal",
+   "quote": "Vitamin D supplementation raises serum calcium in older adults.",
+   "statement": "Vitamin D supplementation raises serum calcium in older adults and cures osteoporosis.",
+   "supported": false
+  },
+  {
+   "label": "statement is its quote",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), supported proposal",
+   "quote": "Ibuprofen reduces pain in adults.",
+   "statement": "Ibuprofen reduces pain in adults.",
+   "supported": true
+  },
+  {
+   "label": "book definition with both opposite words",
+   "origin": "T277 statement",
+   "quote": "A step-up transformer increases voltage and decreases current, whereas a step-down transformer decreases voltage and increases current.",
+   "statement": "A step-up transformer increases voltage and decreases current, whereas a step-down transformer decreases voltage and increases current.",
+   "supported": true
+  },
+  {
+   "label": "book statement with a hedge",
+   "origin": "T277 statement",
+   "quote": "Not all solutes can pass through a semi-permeable membrane.",
+   "statement": "Not all solutes can pass through a semi-permeable membrane.",
+   "supported": true
+  },
+  {
+   "label": "book definition with clauses",
+   "origin": "T277 statement",
+   "quote": "sp^3 hybrid orbital: one of a set of four orbitals with a tetrahedral arrangement that results from combining one s and three p orbitals",
+   "statement": "sp^3 hybrid orbital: one of a set of four orbitals with a tetrahedral arrangement that results from combining one s and three p orbitals",
+   "supported": true
+  },
+  {
+   "label": "one sentence of a wider quote",
+   "origin": "constructed",
+   "quote": "Aspirin reduces fever in adults. A dose of 500 mg was used in 2020.",
+   "statement": "Aspirin reduces fever in adults.",
+   "supported": true
+  },
+  {
+   "label": "one sentence of a wider quote that holds a hedge (known false refusal: the hedge rule reads the whole quote)",
+   "origin": "constructed",
+   "quote": "Aspirin reduces fever in adults. It may cause bleeding.",
+   "statement": "Aspirin reduces fever in adults.",
+   "supported": true
+  }
+ ],
+ "answer_check": [
+  {
+   "label": "faithful-scripted c1",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Aspirin reduces fever in adults.",
+   "sentence": "Aspirin lowers fever in adults.",
+   "faithful": true
+  },
+  {
+   "label": "faithful-scripted c2",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Serum calcium rises in older adults who take vitamin D supplementation.",
+   "faithful": true
+  },
+  {
+   "label": "faithful-scripted c3",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "In type 2 diabetes, metformin lowers fasting glucose.",
+   "faithful": true
+  },
+  {
+   "label": "hallucinating-scripted c1",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Aspirin reduces fever in adults.",
+   "sentence": "Aspirin reduces fever in adults and prevents heart attacks.",
+   "faithful": false
+  },
+  {
+   "label": "hallucinating-scripted c2",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Vitamin D supplementation raises serum calcium in older adults and cures osteoporosis.",
+   "faithful": false
+  },
+  {
+   "label": "hallucinating-scripted c3",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "Metformin lowers fasting glucose in type 2 diabetes and extends life by ten years.",
+   "faithful": false
+  },
+  {
+   "label": "overconfident-scripted c1",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Aspirin reduces fever in adults.",
+   "sentence": "Aspirin always reduces fever in all adults.",
+   "faithful": false
+  },
+  {
+   "label": "overconfident-scripted c2",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Vitamin D supplementation always raises serum calcium in all older adults.",
+   "faithful": false
+  },
+  {
+   "label": "overconfident-scripted c3",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "Metformin always lowers fasting glucose in all type 2 diabetes.",
+   "faithful": false
+  },
+  {
+   "label": "corrupting-scripted c1",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Aspirin reduces fever in adults.",
+   "sentence": "Aspirin does not reduce fever in adults.",
+   "faithful": false
+  },
+  {
+   "label": "corrupting-scripted c2",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Vitamin D supplementation raises serum calcium in older adults by 20 mg.",
+   "faithful": false
+  },
+  {
+   "label": "corrupting-scripted c3",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), configs/cognitive-eval.json",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "Metformin lowers fasting glucose in adults with type 2 diabetes.",
+   "faithful": true
+  },
+  {
+   "label": "Qwen3.5-9B c1",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), recorded rewording (labels reviewed by the owner 2026-11-27)",
+   "claim": "Aspirin reduces fever in adults.",
+   "sentence": "Adults can lower their fever by taking aspirin.",
+   "faithful": true
+  },
+  {
+   "label": "Qwen3.5-9B c2",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), recorded rewording (labels reviewed by the owner 2026-11-27)",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Vitamin D supplements increase serum calcium levels in older adults.",
+   "faithful": true
+  },
+  {
+   "label": "Qwen3.5-9B c3",
+   "origin": "T172 report (reports/brain/T172-cognitive-evaluation.json), recorded rewording (labels reviewed by the owner 2026-11-27)",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "Metformin reduces fasting blood sugar levels in individuals with type 2 diabetes.",
+   "faithful": true
+  },
+  {
+   "label": "appended clause after a comma",
+   "origin": "constructed",
+   "claim": "Vitamin D supplementation raises serum calcium in older adults.",
+   "sentence": "Vitamin D supplementation raises serum calcium in older adults, preventing fractures.",
+   "faithful": false
+  },
+  {
+   "label": "leading phrase after a comma",
+   "origin": "constructed",
+   "claim": "Metformin lowers fasting glucose in type 2 diabetes.",
+   "sentence": "In type 2 diabetes, metformin lowers fasting glucose.",
+   "faithful": true
+  }
+ ]
+}

@@ -1,0 +1,894 @@
+{
+ "task": "T283",
+ "date": "2026-11-27",
+ "fixture": "crates/laris-brain/tests/fixtures/check-precision.json",
+ "settings": {
+  "gate": {
+   "min_support": 0.9,
+   "subject_overlap": 0.5,
+   "search_depth": 10
+  },
+  "answer": {
+   "min_cover": 0.8
+  }
+ },
+ "before": {
+  "code": "main 7832575a",
+  "summary": {
+   "contradiction": {
+    "false_pairs": 22,
+    "false_raised": 22,
+    "found": 19,
+    "real": 19
+   },
+   "gate": {
+    "supported": 6,
+    "supported_refused": 0,
+    "unsupported": 5,
+    "unsupported_accepted": 4
+   },
+   "answer": {
+    "faithful": 8,
+    "faithful_kept": 3,
+    "unfaithful": 9,
+    "unfaithful_kept": 2
+   }
+  },
+  "cases": [
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: sulfite and sulfate",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Type I and Type II error",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Type 1 and Type 2 error (numbered)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: step-up and step-down transformer",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: one statement holds both opposite words",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: hypotonic and hypertonic",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two hybrid orbitals",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: volume and surface charge density",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Celsius and Fahrenheit scale",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two constants, same words in another order",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two constants, similar names, one unit",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two Compton wavelengths",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two magnetons",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: dependent and inconsistent system (known remaining false Conflict: the difference is after `is`)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "identical statements from two books",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two conditions",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two key-equation rows",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two titled boxes",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: the increase, or decrease",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: N(0, 1) and N(0,1) (known remaining false Conflict: `0,1` reads as a decimal)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "same constant at two pressures (known remaining false Conflict: the condition is in parentheses)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase with no and ceases (known remaining false Conflict: polarity by vocabulary)",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: last coefficient a_1 or a_0",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: mean of the F distribution",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: 92 or 98 natural elements",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "formula changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "negation added",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite verb in a definition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite comparison in a definition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "both opposite verbs swapped",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite under the same condition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "CODATA value changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "key-equation row changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "numbered term negated",
+    "raised": true
+   },
+   {
+    "accepted": true,
+    "expected": false,
+    "group": "gate",
+    "label": "strengthened: always ... all"
+   },
+   {
+    "accepted": true,
+    "expected": false,
+    "group": "gate",
+    "label": "strengthened: all"
+   },
+   {
+    "accepted": true,
+    "expected": false,
+    "group": "gate",
+    "label": "hedge dropped: some"
+   },
+   {
+    "accepted": true,
+    "expected": false,
+    "group": "gate",
+    "label": "appended clause above the whole-statement bar"
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "appended clause"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "statement is its quote"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book definition with both opposite words"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book statement with a hedge"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book definition with clauses"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "one sentence of a wider quote"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "one sentence of a wider quote that holds a hedge (known false refusal: the hedge rule reads the whole quote)"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "faithful-scripted c1"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "faithful-scripted c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "faithful-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "hallucinating-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": true,
+    "label": "hallucinating-scripted c2"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "hallucinating-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c2"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "corrupting-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "corrupting-scripted c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "corrupting-scripted c3"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c1"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": true,
+    "label": "appended clause after a comma"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "leading phrase after a comma"
+   }
+  ]
+ },
+ "after": {
+  "summary": {
+   "contradiction": {
+    "false_pairs": 22,
+    "false_raised": 4,
+    "found": 19,
+    "real": 19
+   },
+   "gate": {
+    "supported": 6,
+    "supported_refused": 1,
+    "unsupported": 5,
+    "unsupported_accepted": 0
+   },
+   "answer": {
+    "faithful": 8,
+    "faithful_kept": 3,
+    "unfaithful": 9,
+    "unfaithful_kept": 0
+   }
+  },
+  "cases": [
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: sulfite and sulfate",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Type I and Type II error",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Type 1 and Type 2 error (numbered)",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: step-up and step-down transformer",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: one statement holds both opposite words",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: hypotonic and hypertonic",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two hybrid orbitals",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: volume and surface charge density",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: Celsius and Fahrenheit scale",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two constants, same words in another order",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two constants, similar names, one unit",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two Compton wavelengths",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "CODATA: two magnetons",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: dependent and inconsistent system (known remaining false Conflict: the difference is after `is`)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "identical statements from two books",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two conditions",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two key-equation rows",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "contrast: two titled boxes",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: the increase, or decrease",
+    "raised": false
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase: N(0, 1) and N(0,1) (known remaining false Conflict: `0,1` reads as a decimal)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "same constant at two pressures (known remaining false Conflict: the condition is in parentheses)",
+    "raised": true
+   },
+   {
+    "expected": false,
+    "group": "contradiction",
+    "label": "paraphrase with no and ceases (known remaining false Conflict: polarity by vocabulary)",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: last coefficient a_1 or a_0",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: mean of the F distribution",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "books disagree: 92 or 98 natural elements",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "seeded contradiction",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "formula changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "negation added",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite verb in a definition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite comparison in a definition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "both opposite verbs swapped",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "opposite under the same condition",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "CODATA value changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "key-equation row changed",
+    "raised": true
+   },
+   {
+    "expected": true,
+    "group": "contradiction",
+    "label": "numbered term negated",
+    "raised": true
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "strengthened: always ... all"
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "strengthened: all"
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "hedge dropped: some"
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "appended clause above the whole-statement bar"
+   },
+   {
+    "accepted": false,
+    "expected": false,
+    "group": "gate",
+    "label": "appended clause"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "statement is its quote"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book definition with both opposite words"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book statement with a hedge"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "book definition with clauses"
+   },
+   {
+    "accepted": true,
+    "expected": true,
+    "group": "gate",
+    "label": "one sentence of a wider quote"
+   },
+   {
+    "accepted": false,
+    "expected": true,
+    "group": "gate",
+    "label": "one sentence of a wider quote that holds a hedge (known false refusal: the hedge rule reads the whole quote)"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "faithful-scripted c1"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "faithful-scripted c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "faithful-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "hallucinating-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "hallucinating-scripted c2"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "hallucinating-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c2"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "overconfident-scripted c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "corrupting-scripted c1"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "corrupting-scripted c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "corrupting-scripted c3"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c1"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c2"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": false,
+    "label": "Qwen3.5-9B c3"
+   },
+   {
+    "expected": false,
+    "group": "answer",
+    "kept": false,
+    "label": "appended clause after a comma"
+   },
+   {
+    "expected": true,
+    "group": "answer",
+    "kept": true,
+    "label": "leading phrase after a comma"
+   }
+  ]
+ },
+ "qualified": false,
+ "reading": "Vocabulary rules on a small labelled fixture; labels are the agent's reading. A filter, not a proof."
+}

@@ -120,7 +120,12 @@ whose only Source is retracted falls to `candidate` and leaves the main brain; a
 Source falls to `sourced`), re-evaluates open Conflicts, and writes the audit trail. The walk is deterministic and idempotent.
 
 **Honest limit.** The contradiction search is a retrieval-and-rule check; it will miss contradictions that use different
-vocabulary. Its miss rate is *measured* on seeded fixtures (T164, T166 report) and stated, never assumed zero.
+vocabulary. Its miss rate is *measured* on seeded fixtures (T164, T166 report) and stated, never assumed zero. Since T283 the
+subject of the two statements is compared first, read from their form (a `term:` or `name |` label, a leading condition,
+or the words before the predicate, a number or a negation): statements about different subjects (sulfite and sulfate,
+two CODATA constants) never conflict, and an opposite word counts only when it governs the same following word in one
+statement and not in the other. The fixture `crates/laris-brain/tests/fixtures/check-precision.json` measures both
+directions (false Conflicts of the T277 snapshot, real contradictions that must still be found).
 
 ## 5. Decision network: closed action set and inputs
 
@@ -199,7 +204,10 @@ named entity and negation in the sentence must occur in the cited Claims (after 
 polarity may flip; comparatives, quantifiers and hedges are matched against a closed lexicon. A sentence that fails is
 dropped and the original Claim wording is used instead. An optional advisor-as-judge pass may add a veto but **never an
 approval**. The check is a filter, not a proof: its **miss rate is measured** on fixtures with inserted unsupported
-sentences (T166) and reported; the system is described as "faithful to accepted Claims up to the measured miss rate".
+sentences (T166) and reported; the system is described as "faithful to accepted Claims up to the measured miss rate". The
+quantifier and hedge rule (no hedge added or dropped) and the clause rule (every clause, not only the whole sentence,
+reaches the coverage bar) are one implementation shared with the gate's support check (T283), so the two checks no
+longer disagree on a strengthened claim.
 
 ## 7. Cold start: the rule decider
 

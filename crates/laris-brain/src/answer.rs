@@ -346,7 +346,9 @@ fn polarities(notes: &[&Note]) -> BTreeSet<bool> {
 }
 
 /// The outside-set check of ADR-024 6.3 for one Claim or Theory sentence: it must cite accepted notes, and every
-/// number, name, negation and hedge in it must occur in them, with no opposite word and enough shared content.
+/// number, name, negation and hedge in it must occur in them, with no opposite word and enough shared content in the
+/// sentence and in each of its clauses. The hedge and clause rules are the gate's ([`text::hedge_change`],
+/// [`text::uncovered_clause`]).
 pub fn check_sentence(
     index: &VaultIndex,
     s: &Sentence,
@@ -380,11 +382,8 @@ pub fn check_sentence(
     if !polarities(&notes).contains(&said.negated) {
         return Err("the sentence flips the polarity of the cited notes".into());
     }
-    if let Some(h) = said.hedges.difference(&cited.hedges).next() {
-        return Err(format!("the sentence adds the quantifier or hedge `{h}`"));
-    }
-    if let Some(h) = cited.hedges.difference(&said.hedges).next() {
-        return Err(format!("the sentence drops the quantifier or hedge `{h}`"));
+    if let Some(why) = text::hedge_change(&said, &cited) {
+        return Err(why.replacen("statement", "sentence", 1));
     }
     if let Some(w) = said.all.iter().find(|w| {
         !cited.all.contains(*w)
@@ -422,6 +421,11 @@ pub fn check_sentence(
             "only {:.0} % of the content words are in the cited notes",
             share * 100.0
         ));
+    }
+    if let Some(why) = text::uncovered_clause(&said, &cited, settings.min_cover, &|w| {
+        FRAME_WORDS.contains(&w)
+    }) {
+        return Err(why.replace("the source", "the cited notes"));
     }
     Ok(())
 }
