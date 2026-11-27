@@ -6,6 +6,19 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-27
+
+### Changed
+- **Precision of the main brain's checks (T283):** the write gate's contradiction search compares the subject of two
+  statements first (a `term:` or `name |` label, a leading condition, or the words before the predicate), so contrasts
+  such as sulfite and sulfate, Type I and Type II error or two CODATA constants no longer raise a Conflict; an opposite
+  word counts only with the word it governs. The gate and the answer check share one quantifier and hedge rule (no
+  `always` or `all` added, no `may` dropped) and one clause rule (every clause must be held by the source), so a
+  strengthened claim or an appended unsupported clause is refused by both. On the T283 fixture false Conflicts fall
+  from 22/22 to 4/22 with every real contradiction kept; a STEM snapshot rebuilt by the T277 procedure has 104
+  Conflicts instead of 585 (`reports/brain/T283-check-precision.md`). Thresholds are unchanged; the deployed snapshot
+  is still `stem-t277-2`.
+
 ### Added
 - **STEM profile in the server (T284):** the harness of the frozen candidate (router, model-free solver, notes of the
   frozen snapshot, draft with a 56,000-token thinking budget on computable questions, conclusion of a cut reply,
