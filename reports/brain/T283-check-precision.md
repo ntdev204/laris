@@ -66,7 +66,7 @@ T172 report itself is kept unchanged as the measured evidence of that date.
 | Snapshot | Claims | Refused | Conflicts | Lint | B6 (13-gram, 14,524 items) | SHA-256 |
 |---|---|---|---|---|---|---|
 | `stem-t277-2` (frozen) | 19,925 | 0 | 585 (258 CODATA, 323 book, 4 mixed) | 0 | 0 hits | `fb01dd03…ddeacb` |
-| **`stem-t283-1`** (T277 procedure) | 19,925 | 0 | **104** (5 CODATA, 98 book, 1 mixed) | 0 | **0 hits** | `37f787aa…0c679d50` |
+| **`stem-t283-1`** (T277 procedure; a clean-tree rebuild at `3b9a05dc` gave the same hash) | 19,925 | 0 | **104** (5 CODATA, 98 book, 1 mixed) | 0 | **0 hits** | `37f787aa…0c679d50` |
 | `stem-t285-2` (frozen) | 20,380 | 0 | 668 | 0 | 0 hits | `5019e63b…a9c4` |
 | `stem-t283-2` (T285 procedure, `--sources`) | 20,380 | 0 | 104 | 0 | 0 hits | `d5e1ce90…56d8fc2` |
 
