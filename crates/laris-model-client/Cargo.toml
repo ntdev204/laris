@@ -10,8 +10,8 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-laris-config = { path = "../laris-config", version = "1.7.0" }
-laris-protocol = { path = "../laris-protocol", version = "1.7.0" }
+laris-config = { path = "../laris-config", version = "1.7.1" }
+laris-protocol = { path = "../laris-protocol", version = "1.7.1" }
 serde = "1"
 serde_json = "1"
 sha2 = "0.10"

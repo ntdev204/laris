@@ -6,6 +6,17 @@ this is the first release of the Rust generation. History lives in git.
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-27
+
+### Added
+- **Research-gap evaluation report:** `reports/research-gap/2026-11-27/` (Markdown and Word, in Vietnamese) measures the
+  research-gap workflow (T272) on two topics of 18 papers each: concept tags, candidates before and after filtering
+  with the reasons, the system against a closed-book and a RAG baseline on the same 8 papers (nonexistent citations,
+  uncited claims, "nobody has done" claims), extraction precision and recall against an independent gold standard
+  (201 and 183 items), a time split at 2024, the G2 conflict rule and a review of gap 5 (a false conflict), the
+  ranking weights and the actual rankings, with the system's own reports as appendices. Tag precision, a team
+  member's gold standard and expert 1–5 ratings are not done yet. The model stays NOT QUALIFIED. No code changed.
+
 ## [1.7.0] - 2026-11-27
 
 ### Changed
